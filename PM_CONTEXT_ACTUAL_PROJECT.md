@@ -60,9 +60,10 @@ label illustrative rules clearly.
   - Frontend dashboard: `https://dashboard.render.com/static/srv-d9v01afqj5pc738lpi5g`
   - Frontend URL: `https://team04-marine-observation-frontend.onrender.com`
   The frontend deploy log reports “Your site is live”. The API deploy log
-  reports “Your service is live”, but an external smoke request currently
-  returns Render `404 / no-server`; this needs a follow-up check before demo
-  use.
+  reports “Your service is live”. After setting the API health-check path to
+  `/health` and restarting the service, external smoke checks passed: `GET /`,
+  `GET /health`, `GET /api/observations` returned 200, `POST
+  /api/observations` returned 201, and the frontend returned 200.
 - LeanKit home at `https://monashie.leankit.com/` still exposes the existing
   Team 04 board but no board-creation control. The old board was not renamed,
   edited or reused for the actual project.
