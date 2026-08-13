@@ -1,4 +1,7 @@
-const API_BASE = window.MARINE_API_BASE || "http://localhost:5000";
+const API_BASE = window.MARINE_API_BASE ||
+  (location.hostname === "localhost"
+    ? "http://localhost:5000"
+    : "https://team04-marine-observation-api.onrender.com");
 const list = document.querySelector("#observations");
 const message = document.querySelector("#form-message");
 
@@ -39,4 +42,3 @@ document.querySelector("#report-form").addEventListener("submit", async (event) 
 });
 
 loadObservations();
-

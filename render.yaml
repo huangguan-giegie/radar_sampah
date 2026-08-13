@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: team04-marine-observation-api
+    runtime: python
+    rootDir: actual-project/backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app
+    healthCheckPath: /health
+    plan: free
+
+  - type: web
+    name: team04-marine-observation-frontend
+    runtime: static
+    rootDir: actual-project/frontend
+    buildCommand: echo "Static site"
+    staticPublishPath: .
+    plan: free
+
