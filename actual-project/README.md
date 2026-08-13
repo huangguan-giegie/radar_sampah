@@ -1,5 +1,15 @@
 # Team 04 — Marine Litter Hotspot & Marine-Life Observation MVP
 
+## Project links
+
+- GitHub: https://github.com/huangguan-giegie/team04-marine-observation-mvp
+- Miro: https://miro.com/app/board/uXjVHySKbPY=/
+- Drive governance folder: https://drive.google.com/drive/folders/18Px2njE27SCiZ4bs-40zgUgm_sRE70Kx
+
+Render and LeanKit links will be added after account permissions allow the new
+service and board to be created. The old HealthFirst spaces remain unchanged
+and are reference-only.
+
 ## Working title
 
 **Marine Litter Hotspot & Marine-Life Observation Platform**

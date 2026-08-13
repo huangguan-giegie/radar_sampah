@@ -5,6 +5,13 @@
 Real Project Governance Portfolio (PGIE):
 https://drive.google.com/drive/folders/18Px2njE27SCiZ4bs-40zgUgm_sRE70Kx
 
+New project spaces:
+
+- GitHub: https://github.com/huangguan-giegie/team04-marine-observation-mvp
+- Miro: https://miro.com/app/board/uXjVHySKbPY=/
+- Render: project created; service pending GitHub App repository permission
+- LeanKit: new board pending board-creation permission; old board unchanged
+
 ## Existing example project
 
 HealthFirst Onboarding Project:
