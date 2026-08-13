@@ -27,6 +27,9 @@ label illustrative rules clearly.
   observations only.
 - Pushed the local project to the new GitHub repository (`main`, commit
   `0ecca35`).
+- Invited the five confirmed team GitHub accounts (`hlii0333`, `hnin0011`,
+  `kcho0072`, `qjia0033-dev` and `SUBENSHUAI`); all are currently pending
+  acceptance.
 - Created five Drive folders and uploaded the rewritten governance docs, the
   starter frontend/backend folders and selected HealthFirst materials under a
   clearly labelled reference folder.
