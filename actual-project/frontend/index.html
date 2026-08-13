@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Team 04 Marine Observation MVP</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <p class="eyebrow">TEAM 04 · SOURCE2SEA MY</p>
+      <h1>Marine Litter Hotspot &amp; Marine-Life Observation</h1>
+      <p class="lead">
+        A small reporting flow for one Malaysian coastal area, with an OBIS
+        marine-life context layer planned for the next build.
+      </p>
+      <p class="notice">Demo only: use synthetic observations. This is not a pollution-source proof.</p>
+
+      <section class="card" aria-labelledby="report-title">
+        <h2 id="report-title">Report a litter observation</h2>
+        <form id="report-form">
+          <label>Category <input name="category" value="plastic packaging" required /></label>
+          <label>Area <input name="area" value="Selected Malaysian coastal area" required /></label>
+          <div class="grid">
+            <label>Latitude <input name="latitude" type="number" step="any" value="3.1390" required /></label>
+            <label>Longitude <input name="longitude" type="number" step="any" value="101.6869" required /></label>
+          </div>
+          <button type="submit">Save demo report</button>
+          <p id="form-message" role="status"></p>
+        </form>
+      </section>
+
+      <section class="card" aria-labelledby="list-title">
+        <h2 id="list-title">Current demo observations</h2>
+        <ul id="observations" aria-live="polite"></ul>
+      </section>
+    </main>
+    <script src="app.js"></script>
+  </body>
+</html>
+
