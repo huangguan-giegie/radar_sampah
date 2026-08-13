@@ -52,8 +52,17 @@ label illustrative rules clearly.
 
 - Render project page is reachable at
   `https://dashboard.render.com/project/prj-d9uverdbedkc73b6p130`.
-  The new-service screen lists only the old `healthfirst-team04-mvp`
-  repository, so the private marine repository still needs GitHub App access.
+  GitHub App access now lists both `healthfirst-team04-mvp` and
+  `team04-marine-observation-mvp`.
+- Free Render services were created from `main`:
+  - API dashboard: `https://dashboard.render.com/web/srv-d9v00r3ncjis73amjvi0`
+  - API URL: `https://team04-marine-observation-api.onrender.com`
+  - Frontend dashboard: `https://dashboard.render.com/static/srv-d9v01afqj5pc738lpi5g`
+  - Frontend URL: `https://team04-marine-observation-frontend.onrender.com`
+  The frontend deploy log reports “Your site is live”. The API deploy log
+  reports “Your service is live”, but an external smoke request currently
+  returns Render `404 / no-server`; this needs a follow-up check before demo
+  use.
 - LeanKit home at `https://monashie.leankit.com/` still exposes the existing
   Team 04 board but no board-creation control. The old board was not renamed,
   edited or reused for the actual project.
