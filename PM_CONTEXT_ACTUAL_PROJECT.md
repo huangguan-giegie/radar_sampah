@@ -31,7 +31,8 @@ label illustrative rules clearly.
   starter frontend/backend folders and selected HealthFirst materials under a
   clearly labelled reference folder.
 - Created and named the new Miro board. The old HealthFirst Miro board remains
-  unchanged.
+  unchanged. The new board now has three concise cards: current scope, MVP
+  flow and open decisions.
 
 ## Next actions
 
@@ -41,4 +42,3 @@ label illustrative rules clearly.
    grant Huang board-creation permission.
 3. Once those permissions exist, configure Render from `main`, then add the
    new service and board links here.
-
