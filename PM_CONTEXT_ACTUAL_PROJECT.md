@@ -25,6 +25,8 @@ label illustrative rules clearly.
 - Created `realwork/` with actual-project docs, references and migration manifest.
 - Added a minimal Flask API and static frontend starter using synthetic in-memory
   observations only.
+- Added `render.yaml` for free API and static-site services; the API smoke test
+  passed health, list, valid create and invalid-coordinate checks (4/4).
 - Pushed the local project to the new GitHub repository (`main`, commit
   `0ecca35`).
 - Invited the five confirmed team GitHub accounts (`hlii0333`, `hnin0011`,
