@@ -39,3 +39,10 @@ The HealthFirst material remains preserved. It is not the new product scope.
 - New Miro board for the actual project's discovery and reflection.
 - New LeanKit board/cards for the actual project.
 - New Drive subfolders for scope, governance, design, build and evidence.
+
+## Current handoff status — 14 August 2026
+
+GitHub, Drive and Miro are created and verified. Render has a new project but
+cannot see the private repository until the GitHub App permission is expanded.
+LeanKit still needs a board administrator to create the new board or grant
+board-creation permission. The original HealthFirst spaces remain unchanged.

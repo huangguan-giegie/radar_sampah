@@ -47,3 +47,15 @@ label illustrative rules clearly.
    grant Huang board-creation permission.
 3. Once those permissions exist, configure Render from `main`, then add the
    new service and board links here.
+
+## Verification snapshot — 14 August 2026
+
+- Render project page is reachable at
+  `https://dashboard.render.com/project/prj-d9uverdbedkc73b6p130`.
+  The new-service screen lists only the old `healthfirst-team04-mvp`
+  repository, so the private marine repository still needs GitHub App access.
+- LeanKit home at `https://monashie.leankit.com/` still exposes the existing
+  Team 04 board but no board-creation control. The old board was not renamed,
+  edited or reused for the actual project.
+- The actual Miro board and Drive destination remain available and were
+  reopened for handoff during this check.
