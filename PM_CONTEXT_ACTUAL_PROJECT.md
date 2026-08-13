@@ -17,8 +17,9 @@ label illustrative rules clearly.
 - Drive: https://drive.google.com/drive/folders/18Px2njE27SCiZ4bs-40zgUgm_sRE70Kx
 - Render: project `Team 04 Marine Observation` created; GitHub repository
   permission is still required before the new Web Service can be created.
-- LeanKit: the existing HealthFirst board is preserved; the current account
-  exposes no new-board control, so a board-admin action is still required.
+- LeanKit: the existing HealthFirst board is preserved. The PM has decided to
+  defer the new-board setup for now; no LeanKit board changes are required in
+  this migration.
 
 ## Work completed
 
@@ -43,10 +44,9 @@ label illustrative rules clearly.
 
 1. A repository owner must complete the GitHub Render App permission step; do
    not make the private repository public just to bypass this.
-2. A LeanKit board administrator must create `Team 04 Marine Observation` or
-   grant Huang board-creation permission.
-3. Once those permissions exist, configure Render from `main`, then add the
-   new service and board links here.
+2. LeanKit setup is deferred by the PM; do not modify the old HealthFirst
+   board.
+3. Keep the GitHub, Drive, Miro and Render links in sync as the MVP evolves.
 
 ## Verification snapshot — 14 August 2026
 
