@@ -14,5 +14,5 @@ reporting flow. All records are synthetic demo data and are held in memory.
 No personal data, external AI, or production database is used in this starter.
 
 The repository root contains `render.yaml` for the free API and static-site
-services. The Render GitHub App must be granted access to this private
-repository before the Blueprint can be applied.
+services. The Render GitHub App is connected to this private repository; the
+current free services were configured from `main`.

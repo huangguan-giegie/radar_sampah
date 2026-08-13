@@ -5,10 +5,11 @@
 - GitHub: https://github.com/huangguan-giegie/team04-marine-observation-mvp
 - Miro: https://miro.com/app/board/uXjVHySKbPY=/
 - Drive governance folder: https://drive.google.com/drive/folders/18Px2njE27SCiZ4bs-40zgUgm_sRE70Kx
+- Render frontend: https://team04-marine-observation-frontend.onrender.com
+- Render API: https://team04-marine-observation-api.onrender.com
 
-Render and LeanKit links will be added after account permissions allow the new
-service and board to be created. The old HealthFirst spaces remain unchanged
-and are reference-only.
+LeanKit setup is deferred by the PM. The old HealthFirst spaces remain
+unchanged and are reference-only.
 
 ## Working title
 
