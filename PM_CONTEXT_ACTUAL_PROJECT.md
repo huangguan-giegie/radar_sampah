@@ -67,3 +67,19 @@ label illustrative rules clearly.
   edited or reused for the actual project.
 - The actual Miro board and Drive destination remain available and were
   reopened for handoff during this check.
+
+## Drive re-scan update — 14 August 2026
+
+The old HealthFirst Drive space was checked again, including the user-provided
+course-plan PDF and Team Information document. Additional folders found were
+Team Formation, Design Artefacts, System Architecture, Iteration Build, Data
+Governance, Others, Feedbacks and Retrospective. These contain HealthFirst
+personas, epics/user stories, architecture diagrams, draft governance, mentor
+feedback, peer-review videos and retrospective evidence.
+
+The Team Information DOCX was archived locally and uploaded unchanged into the
+new Drive's `99 Reference - HealthFirst Example` folder. The course-plan PDF,
+raw videos and cross-team evidence remain source-only because they are not
+marine-project artefacts and some are shared-folder material. The migration
+manifest records the source links and classification. No old Drive file was
+deleted, renamed or edited.
