@@ -14,7 +14,12 @@ button, select { cursor: pointer; }
 
 .app-shell { min-height: 100vh; display: grid; grid-template-columns: minmax(275px, .75fr) minmax(0, 1.75fr); }
 .project-rail { position: relative; overflow: hidden; padding: clamp(32px, 5vw, 72px) clamp(28px, 5vw, 72px); background: #075f65; color: #f4fffd; }
+.project-rail > *:not(.liquid-layer) { position: relative; z-index: 1; }
 .project-rail::after { position: absolute; right: -90px; bottom: -130px; width: 330px; height: 330px; border: 36px solid #168f91; border-radius: 48% 52% 60% 40%; content: ""; opacity: .6; transform: rotate(-18deg); }
+.liquid-layer { position: absolute; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
+.liquid-orb { position: absolute; display: block; width: 250px; height: 250px; border: 1px solid #9ce5d733; border-radius: 42% 58% 62% 38%; background: radial-gradient(circle at 35% 30%, #bde9de66, #168f9140 50%, transparent 72%); filter: blur(1px); opacity: .7; pointer-events: none; transform: rotate(18deg); }
+.liquid-orb-one { top: 18%; left: -90px; animation: liquid-drift 14s ease-in-out infinite; }
+.liquid-orb-two { right: -120px; top: 47%; width: 310px; height: 310px; border-color: #f2c96f30; background: radial-gradient(circle at 60% 36%, #f2c96f44, #168f9140 52%, transparent 74%); animation: liquid-drift 18s ease-in-out -5s infinite reverse; }
 .brand { display: inline-flex; align-items: center; gap: 10px; color: inherit; font-size: .96rem; font-weight: 500; letter-spacing: .06em; line-height: 1.05; text-decoration: none; text-transform: uppercase; }
 .brand strong { color: #bde9de; font-size: 1.18rem; letter-spacing: .12em; }
 .brand-mark { display: grid; width: 35px; height: 35px; place-items: center; border: 1px solid #89d6cb; border-radius: 50%; font-size: 2rem; line-height: 1; }
@@ -82,7 +87,9 @@ button, select { cursor: pointer; }
 .fact-card p { margin: 0 0 7px; color: #5a7a7c; font-size: .69rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
 .fact-card strong { color: #17434b; font-size: .9rem; overflow-wrap: anywhere; }
 .failure-card { grid-column: 1 / -1; border-color: #e1b8ad; background: #fff7f4; color: #7d3f37; line-height: 1.55; }
-.context-section { margin-top: 38px; padding-top: 28px; border-top: 1px solid #ccdfdc; }
+.context-section { position: relative; margin-top: 38px; padding-top: 28px; border-top: 1px solid #ccdfdc; }
+.context-section > *:not(.liquid-orb-results) { position: relative; z-index: 1; }
+.liquid-orb-results { top: 52px; right: 5%; width: 220px; height: 140px; border-color: #168f912b; background: radial-gradient(circle at 45% 40%, #bde9de66, transparent 70%); opacity: .45; transform: rotate(-12deg); animation: liquid-drift 16s ease-in-out -3s infinite; }
 .section-heading { display: flex; align-items: end; justify-content: space-between; gap: 18px; margin-bottom: 18px; }
 .section-heading h3 { margin: 6px 0 0; color: #173d44; font-size: 1.5rem; letter-spacing: -.035em; }
 .map-key { display: inline-flex; align-items: center; gap: 7px; color: #59787a; font-size: .76rem; font-weight: 700; }
@@ -98,6 +105,7 @@ button, select { cursor: pointer; }
 .is-hidden { display: none !important; }
 
 @keyframes panel-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-@media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .001ms !important; transition-duration: .001ms !important; } }
+@keyframes liquid-drift { 0%, 100% { border-radius: 42% 58% 62% 38%; transform: translate3d(0, 0, 0) rotate(18deg) scale(1); } 50% { border-radius: 58% 42% 38% 62%; transform: translate3d(16px, -12px, 0) rotate(28deg) scale(1.04); } }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .001ms !important; transition-duration: .001ms !important; } .liquid-orb { animation: none !important; } }
 @media (max-width: 850px) { .app-shell { grid-template-columns: 1fr; } .project-rail { padding-bottom: 34px; } .project-rail .rail-label { margin-top: 46px; } .progress { grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 35px 0 28px; } .progress li { align-items: flex-start; gap: 8px; } .progress small { display: none; } .rail-boundary { max-width: none; } }
 @media (max-width: 600px) { .workspace { padding: 27px 20px 42px; } .topline { align-items: flex-start; flex-direction: column; margin-bottom: 32px; } .field-grid, .result-summary, .record-facts { grid-template-columns: 1fr; } .review-list { grid-template-columns: 1fr; } .review-list dt { padding-bottom: 5px; border-bottom: 0; } .review-list dd { padding-top: 5px; } .review-list dt:nth-last-of-type(1) { border-bottom: 0; } .context-list li { grid-template-columns: 1fr; } .context-list a { grid-row: auto; margin-top: 6px; } .project-rail h1 { font-size: 2.6rem; } }

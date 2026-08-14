@@ -1,4 +1,7 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import test from "node:test";
 
 import {
@@ -19,6 +22,8 @@ const validDraft = {
   image_url: "/assets/demo-plastic.jpg",
   note: "Synthetic demonstration record",
 };
+
+const frontendDir = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
 test("accepts a complete synthetic observation and converts coordinates to numbers", () => {
   assert.deepEqual(validateObservation(validDraft), {});
@@ -141,4 +146,14 @@ test("marks earlier stages complete without removing the active stage", () => {
     review: "complete",
     results: "active",
   });
+});
+
+test("includes accessible decorative liquid effect hooks without changing the workflow", () => {
+  const html = readFileSync(resolve(frontendDir, "index.html"), "utf8");
+  const css = readFileSync(resolve(frontendDir, "styles.css"), "utf8");
+
+  assert.match(html, /class="liquid-layer" aria-hidden="true"/);
+  assert.match(html, /class="liquid-orb\b[^\"]*" aria-hidden="true"/);
+  assert.match(css, /@keyframes liquid-drift/);
+  assert.match(css, /prefers-reduced-motion/);
 });

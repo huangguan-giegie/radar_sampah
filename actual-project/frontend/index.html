@@ -14,6 +14,10 @@
   <body>
     <main class="app-shell">
       <aside class="project-rail" aria-label="Project information">
+        <div class="liquid-layer" aria-hidden="true">
+          <span class="liquid-orb liquid-orb-one"></span>
+          <span class="liquid-orb liquid-orb-two"></span>
+        </div>
         <a class="brand" href="#report-step" aria-label="Source2Sea MY home">
           <span class="brand-mark" aria-hidden="true">≈</span>
           <span>Source2Sea<br /><strong>MY</strong></span>
@@ -116,6 +120,7 @@
 
           <div id="result-summary" class="result-summary"></div>
           <section class="context-section" aria-labelledby="map-title">
+            <div class="liquid-orb liquid-orb-results" aria-hidden="true"></div>
             <div class="section-heading"><div><p class="section-kicker">Source-visible context</p><h3 id="map-title">Approximate coastal context</h3></div><span class="map-key"><i aria-hidden="true"></i> Observation</span></div>
             <div id="map" class="map" aria-label="Map of the submitted observation and approximate marine context"></div>
             <p id="map-fallback-message" class="map-fallback-message">The map is optional. The accessible source list below contains the same context.</p>
