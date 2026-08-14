@@ -91,3 +91,9 @@ reference boundary.
 The previously missed `TM04 Team Info` Google Doc was checked, exported
 unchanged and added to the reference archive under `Team Formation`. It is
 HealthFirst reference material, not a marine-project requirement.
+
+The direct Slides link for `HealthFirst Expo Slides` was checked and compared
+with the existing Week 2 deck. It is a separate 13-slide HealthFirst Expo
+presentation, so it was exported unchanged and uploaded to
+`99 Reference - HealthFirst Example` as `HealthFirst Expo Slides - original.pptx`.
+It remains reference material only; it is not evidence for the marine project.
