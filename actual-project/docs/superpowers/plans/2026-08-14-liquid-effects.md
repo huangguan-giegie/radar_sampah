@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
-**Goal:** Add a subtle, accessible CSS-only liquid visual treatment to the Marine Observation frontend without changing business behavior or introducing a runtime dependency.
+**Goal:** Add a visible, accessible CSS-only liquid visual treatment to the Marine Observation frontend without changing business behavior or introducing a runtime dependency.
 
-**Architecture:** Add two decorative, `aria-hidden` layers to the existing project rail and results context area. CSS pseudo-elements and keyframes provide soft teal/sand blobs and a slow ripple-like drift. The effect is disabled or reduced under `prefers-reduced-motion` and remains decorative only.
+**Architecture:** Add decorative, `aria-hidden` layers to the existing project rail, workspace and results context area. CSS elements and keyframes provide teal/sand blobs, wave ribbons, droplets and soft glows. The effect is disabled or reduced under `prefers-reduced-motion` and remains decorative only.
 
 **Tech Stack:** Existing HTML, CSS, and Node test runner; no new package or CDN.
 

@@ -20,6 +20,14 @@ button, select { cursor: pointer; }
 .liquid-orb { position: absolute; display: block; width: 250px; height: 250px; border: 1px solid #9ce5d733; border-radius: 42% 58% 62% 38%; background: radial-gradient(circle at 35% 30%, #bde9de66, #168f9140 50%, transparent 72%); filter: blur(1px); opacity: .7; pointer-events: none; transform: rotate(18deg); }
 .liquid-orb-one { top: 18%; left: -90px; animation: liquid-drift 14s ease-in-out infinite; }
 .liquid-orb-two { right: -120px; top: 47%; width: 310px; height: 310px; border-color: #f2c96f30; background: radial-gradient(circle at 60% 36%, #f2c96f44, #168f9140 52%, transparent 74%); animation: liquid-drift 18s ease-in-out -5s infinite reverse; }
+.liquid-ribbons { position: absolute; inset: 0; overflow: hidden; }
+.liquid-ribbon { position: absolute; display: block; width: 125%; height: 112px; border: 1px solid #bde9de55; border-radius: 48% 52% 42% 58%; background: linear-gradient(90deg, transparent 0%, #9ce5d71c 22%, #bde9de3d 48%, #f2c96f18 72%, transparent 100%); filter: blur(.35px); opacity: .9; mix-blend-mode: screen; }
+.liquid-ribbon-one { top: 30%; left: -18%; transform: rotate(-9deg); animation: liquid-wave 15s ease-in-out infinite; }
+.liquid-ribbon-two { top: 57%; left: -8%; height: 150px; border-color: #f2c96f36; background: linear-gradient(90deg, transparent, #168f9160 28%, #f2c96f28 58%, transparent); transform: rotate(8deg); animation: liquid-wave 21s ease-in-out -6s infinite reverse; }
+.liquid-drop { position: absolute; display: block; width: 28px; height: 28px; border: 1px solid #bde9de72; border-radius: 62% 38% 48% 52%; background: radial-gradient(circle at 30% 25%, #e4fff866, #168f9140 68%, transparent); filter: blur(.2px); opacity: .8; }
+.liquid-drop-one { top: 21%; right: 18%; animation: liquid-drop-rise 11s ease-in-out infinite; }
+.liquid-drop-two { top: 63%; left: 14%; width: 18px; height: 18px; animation: liquid-drop-rise 14s ease-in-out -4s infinite reverse; }
+.liquid-drop-three { top: 71%; right: 33%; width: 42px; height: 42px; border-color: #f2c96f55; background: radial-gradient(circle at 35% 28%, #f2c96f5c, #168f9140 70%, transparent); animation: liquid-drop-rise 17s ease-in-out -8s infinite; }
 .brand { display: inline-flex; align-items: center; gap: 10px; color: inherit; font-size: .96rem; font-weight: 500; letter-spacing: .06em; line-height: 1.05; text-decoration: none; text-transform: uppercase; }
 .brand strong { color: #bde9de; font-size: 1.18rem; letter-spacing: .12em; }
 .brand-mark { display: grid; width: 35px; height: 35px; place-items: center; border: 1px solid #89d6cb; border-radius: 50%; font-size: 2rem; line-height: 1; }
@@ -39,7 +47,12 @@ button, select { cursor: pointer; }
 .rail-boundary strong { color: #f2c96f; font-size: .76rem; letter-spacing: .08em; text-transform: uppercase; }
 .rail-boundary p { margin: 8px 0 0; color: #cbe8e3; font-size: .82rem; line-height: 1.55; }
 
-.workspace { padding: clamp(28px, 5vw, 75px); }
+.workspace { position: relative; overflow: hidden; padding: clamp(28px, 5vw, 75px); }
+.workspace > *:not(.liquid-workspace) { position: relative; z-index: 1; }
+.liquid-workspace { position: absolute; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
+.workspace-glow { position: absolute; display: block; width: 420px; height: 250px; border-radius: 50%; filter: blur(30px); opacity: .46; }
+.workspace-glow-one { top: -90px; right: -70px; background: radial-gradient(ellipse, #bde9de75 0%, #9ce5d729 44%, transparent 72%); animation: liquid-shimmer 13s ease-in-out infinite; }
+.workspace-glow-two { bottom: -120px; left: -90px; background: radial-gradient(ellipse, #f2c96f38 0%, #bde9de2b 45%, transparent 72%); animation: liquid-shimmer 17s ease-in-out -7s infinite reverse; }
 .topline { display: flex; align-items: center; justify-content: space-between; gap: 18px; max-width: 1000px; margin: 0 auto 44px; color: #58777a; font-size: .78rem; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; }
 .topline p { margin: 0; }
 .data-chip { display: inline-flex; padding: 8px 10px; border: 1px solid #b7d9d4; border-radius: 999px; color: #267570; font-size: .67rem; letter-spacing: .08em; white-space: nowrap; }
@@ -106,6 +119,9 @@ button, select { cursor: pointer; }
 
 @keyframes panel-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes liquid-drift { 0%, 100% { border-radius: 42% 58% 62% 38%; transform: translate3d(0, 0, 0) rotate(18deg) scale(1); } 50% { border-radius: 58% 42% 38% 62%; transform: translate3d(16px, -12px, 0) rotate(28deg) scale(1.04); } }
-@media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .001ms !important; transition-duration: .001ms !important; } .liquid-orb { animation: none !important; } }
+@keyframes liquid-wave { 0%, 100% { border-radius: 48% 52% 42% 58%; transform: translate3d(-1%, 0, 0) rotate(-9deg) scaleY(1); } 50% { border-radius: 58% 42% 56% 44%; transform: translate3d(4%, -14px, 0) rotate(-4deg) scaleY(1.12); } }
+@keyframes liquid-drop-rise { 0%, 100% { transform: translate3d(0, 16px, 0) rotate(8deg) scale(.88); } 50% { transform: translate3d(18px, -18px, 0) rotate(-14deg) scale(1.08); } }
+@keyframes liquid-shimmer { 0%, 100% { transform: translate3d(0, 0, 0) scale(1); opacity: .36; } 50% { transform: translate3d(-24px, 16px, 0) scale(1.14); opacity: .58; } }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .001ms !important; transition-duration: .001ms !important; } .liquid-orb, .liquid-ribbon, .liquid-drop, .workspace-glow { animation: none !important; } }
 @media (max-width: 850px) { .app-shell { grid-template-columns: 1fr; } .project-rail { padding-bottom: 34px; } .project-rail .rail-label { margin-top: 46px; } .progress { grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 35px 0 28px; } .progress li { align-items: flex-start; gap: 8px; } .progress small { display: none; } .rail-boundary { max-width: none; } }
 @media (max-width: 600px) { .workspace { padding: 27px 20px 42px; } .topline { align-items: flex-start; flex-direction: column; margin-bottom: 32px; } .field-grid, .result-summary, .record-facts { grid-template-columns: 1fr; } .review-list { grid-template-columns: 1fr; } .review-list dt { padding-bottom: 5px; border-bottom: 0; } .review-list dd { padding-top: 5px; } .review-list dt:nth-last-of-type(1) { border-bottom: 0; } .context-list li { grid-template-columns: 1fr; } .context-list a { grid-row: auto; margin-top: 6px; } .project-rail h1 { font-size: 2.6rem; } }

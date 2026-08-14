@@ -157,3 +157,14 @@ test("includes accessible decorative liquid effect hooks without changing the wo
   assert.match(css, /@keyframes liquid-drift/);
   assert.match(css, /prefers-reduced-motion/);
 });
+
+test("includes layered liquid ribbons for the hero and workspace", () => {
+  const html = readFileSync(resolve(frontendDir, "index.html"), "utf8");
+  const css = readFileSync(resolve(frontendDir, "styles.css"), "utf8");
+
+  assert.match(html, /class="liquid-ribbons" aria-hidden="true"/);
+  assert.match(html, /class="liquid-ribbon liquid-ribbon-one"/);
+  assert.match(html, /class="liquid-workspace" aria-hidden="true"/);
+  assert.match(css, /@keyframes liquid-wave/);
+  assert.match(css, /@keyframes liquid-shimmer/);
+});
