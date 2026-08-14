@@ -21,7 +21,8 @@ not a second reporting workflow.
 - One coastal area and five litter categories.
 - Coordinates, time, approximate area, optional sample-image URL and note.
 - PostgreSQL in Render with local SQLite fallback.
-- A static source-labelled OBIS sample with sensitive records location-masked.
+- A five-record static source-labelled OBIS Malaysia-region context bundle
+  (`obis-malaysia-public-2026-08-14-v1`) with coarse coordinates.
 - Leaflet/OpenStreetMap plus an accessible list fallback.
 - Transparent rules only; no LLM, external CV or live unreviewed model.
 - Synthetic/public data only.
