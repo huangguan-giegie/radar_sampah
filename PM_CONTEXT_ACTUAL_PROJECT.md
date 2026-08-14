@@ -92,6 +92,10 @@ DiveSafe runtime.
   `/api/species`, `/api/briefing/tioman-demo` and `/api/context`. A synthetic
   profile, fallback recognition and sighting were written and read back. The
   frontend now contains the DiveSafe flow and points to the Render API.
+- Drive sync is complete for the Real Project files. The raw PPTX and DOCX
+  files were updated in place; a new editable Slides copy was added because
+  Google Slides Office files cannot be replaced through the Slides API. The
+  old editable deck is clearly archived. Sample Project PGIE was not changed.
 
 The current code keeps the old litter API for rollback. It does not make a
 claim that an external recognition provider, a legal rule or a scientific
