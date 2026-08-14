@@ -4,9 +4,16 @@ services:
     runtime: python
     rootDir: actual-project/backend
     buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn app:app
+    startCommand: gunicorn --bind 0.0.0.0:$PORT app:app
     healthCheckPath: /health
     plan: free
+    envVars:
+      - key: FRONTEND_ORIGINS
+        value: https://team04-marine-observation-frontend.onrender.com
+      # Enter the Render PostgreSQL connection string in the dashboard.
+      # It is intentionally not stored in this repository.
+      - key: DATABASE_URL
+        sync: false
 
   - type: web
     name: team04-marine-observation-frontend
@@ -15,4 +22,3 @@ services:
     buildCommand: echo "Static site"
     staticPublishPath: .
     plan: free
-

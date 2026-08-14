@@ -10,6 +10,25 @@ The system must not claim that it proves pollution sources, exact threatened
 species locations, or environmental outcomes. Use public or synthetic data and
 label illustrative rules clearly.
 
+## Active implementation contract - 14 August 2026
+
+- The deployable MVP flow is Report -> Review/edit -> Confirm -> Results.
+- Supported litter categories are Plastic packaging, Fishing gear, Glass,
+  Metal and Other.
+- The API contract is `/health`, `GET/POST /api/observations` and
+  `GET /api/context`.
+- Render storage uses PostgreSQL through `DATABASE_URL`; local development
+  falls back to SQLite when it is not set.
+- The map uses Leaflet/OpenStreetMap with an accessible list fallback. Marine
+  context is a static, source-labelled OBIS sample; sensitive locations are
+  masked or aggregated.
+- Classification uses fixed-category rules. Priority is illustrative and must
+  never be presented as pollution-source proof or enforcement advice.
+- External AI and CV are disabled. Observation image input is an optional demo
+  asset path or HTTPS URL; raw files are not stored.
+- HealthFirst remains a reference-only archive. No health fields, thresholds,
+  medical tables or medical AI logic are used by the marine runtime.
+
 ## Spaces created
 
 - GitHub: https://github.com/huangguan-giegie/team04-marine-observation-mvp

@@ -1,0 +1,15 @@
+[
+  {
+    "id": "obis-demo-malaysia-coast-1",
+    "source": "OBIS",
+    "source_url": "https://obis.org/",
+    "retrieved_at": "2026-08-14",
+    "license": "OBIS data policy; attribution required",
+    "approximate_location": {
+      "latitude": 3.14,
+      "longitude": 101.69
+    },
+    "taxon_or_context_label": "Public marine-life context sample near the selected Malaysian coastal area",
+    "sensitivity": "aggregated"
+  }
+]

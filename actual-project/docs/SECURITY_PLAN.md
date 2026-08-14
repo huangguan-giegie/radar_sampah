@@ -1,22 +1,37 @@
-# Security Plan — Marine Observation MVP
+# Security Plan - Marine Observation MVP
 
-## Implemented or intended MVP controls
+## Implemented MVP boundary
 
-- Use synthetic and public data only.
-- Avoid names, contact details and account identifiers.
-- Validate category, timestamp and location fields on the server.
-- Mask or aggregate locations for threatened species.
-- Keep API keys in deployment environment variables, never in Git.
-- Label AI/classification output as illustrative.
+- Accept synthetic/public demonstration data only.
+- Reject names, contact details, account identifiers and secrets from the API
+  payload.
+- Validate category, timestamp, coordinates, image URL scheme and text fields
+  on the server.
+- Store database credentials only in Render environment variables.
+- Allow the deployed frontend through `FRONTEND_ORIGINS`; do not use an open
+  CORS policy in the deployed configuration.
+- Mask or aggregate sensitive marine-context locations before display.
+- Keep external AI and computer vision disabled.
+- Use rule-based classification and illustrative priority with visible limits.
 
-## Not yet established
+## Not claimed or not implemented
 
-- Production authentication and role-based access.
-- Encryption and formal retention/deletion controls.
-- PDPA or other formal privacy review.
-- Environmental enforcement or scientific validation.
-- Production monitoring and incident response.
+- Production authentication, role-based access or MFA.
+- Formal encryption, retention/deletion workflow or PDPA compliance.
+- Scientific validation, pollution-source attribution or enforcement workflow.
+- Public file upload storage, malware scanning or production incident response.
+- Real-time OBIS retrieval or verified species identification.
 
 ## Release gates
 
-Do not use real personal data, exact sensitive-species locations or unreviewed external AI output in the demo. Do not claim that a hotspot score proves the source of pollution or directs enforcement action.
+Before any use beyond the class demo, confirm all of the following:
+
+- a privacy and retention process for real reports;
+- authenticated access and a reviewed role model;
+- database backups, monitoring and incident handling;
+- a reviewed source/update process for marine context data;
+- a review of any future external AI or CV data flow;
+- a separate approval for publishing locations that could be sensitive.
+
+The deployed demo must never claim that a priority level proves where pollution
+came from or directs an official clean-up or enforcement action.

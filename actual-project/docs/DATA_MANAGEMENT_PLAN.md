@@ -1,23 +1,51 @@
-# Data Management Plan — Marine Observation MVP
+# Data Management Plan - Marine Observation MVP
+
+## Purpose and data boundary
+
+The MVP demonstrates a marine-litter reporting flow for one selected Malaysian
+coastal area. It uses synthetic observations and a static public OBIS context
+sample. It is not a public data-collection service.
+
+Do not enter real names, contact details, account identifiers, secrets or raw
+personal images. Do not use exact threatened-species locations.
 
 ## Data classes
 
-- User-submitted observation: category, approximate area, timestamp and optional sample image.
-- Public context: OBIS marine-life records and other approved public environmental datasets.
-- Derived demo fields: category label, map marker and illustrative priority explanation.
+| Data class | Examples | Storage and use |
+|---|---|---|
+| Observation | fixed category, approximate area, time, latitude/longitude, optional demo image URL, note | `observations`; shown as a demo record |
+| Derived result | fixed-category rule, illustrative priority, rule explanation | `observation_classifications` and `observation_priorities`; separate from the original observation |
+| Marine context | static OBIS sample, attribution, retrieval date, approximate/masked location, sensitivity flag | `marine_context`; map and source-visible context |
 
-## Collection boundary
+## Storage
 
-The MVP uses synthetic values and public data. It should not collect names, phone numbers, account identifiers or precise threatened-species locations.
+- Render uses PostgreSQL through `DATABASE_URL`.
+- Local development falls back to SQLite when `DATABASE_URL` is absent.
+- Schema setup is idempotent. It creates the four data tables without deleting
+  existing records.
+- Database passwords are environment variables only and are never included in
+  Git, screenshots or PGP evidence.
+- The MVP does not store raw upload files. `image_url` is only a local demo
+  asset path or HTTPS link.
 
-## Storage and retention
+## Quality and safety controls
 
-The initial implementation should use a local or team-controlled database for the demo. The team must document the chosen schema, retention period and deletion process before any public deployment or real user submission.
+- Validate the five fixed categories, coordinates, ISO timestamp, optional URL
+  scheme and text lengths on the server.
+- Keep original observations separate from derived results.
+- Label classification and priority as `demo`/`illustrative` in the API and UI.
+- Mask or aggregate sensitive context locations before they reach the map.
+- Keep the OBIS source URL, retrieval date and attribution in every context
+  record.
 
-## Data quality
+## Retention and sharing
 
-Validate required fields, category values, coordinates and timestamps. Mark model or rule-based classification as illustrative. Keep the original submitted observation separate from derived labels.
+Use synthetic/public data for the course demo. If the project later collects
+real reports, the team must agree a retention period, deletion procedure,
+access model and privacy review before deployment. Do not export PostgreSQL
+records outside the team without that review.
 
 ## External services
 
-Do not send personal or sensitive location data to external AI services. If an external model is later enabled, show the data flow to users and review the provider, retention and cost settings first.
+External AI and computer-vision services are disabled in this MVP. No
+observation data is sent to an LLM or image-analysis provider.

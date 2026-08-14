@@ -1,31 +1,31 @@
-# Team 04 — Marine Observation Project Information
+# Team 04 - Marine Observation Project Information
 
 ## Project
 
 **Marine Litter Hotspot & Marine-Life Observation MVP (Source2Sea MY)**
 
-The project has one clear reporting flow for marine litter in one selected
-Malaysian coastal area. An OBIS marine-life map layer supplies ecological
-context. The first build uses public or synthetic data and transparent,
-illustrative rules.
+The project has one reporting workflow for marine litter in a selected
+Malaysian coastal area. Static OBIS context supports a map layer; it is not a
+second animal-reporting flow. The first build uses source-visible public data,
+synthetic demo reports and transparent rules.
 
 ## Team roles
 
 | Member | Working role | Main responsibility |
 |---|---|---|
 | Huang Guan | Project Manager and integration | Scope, decisions, repository, deployment and evidence |
-| Hnin Darli | Data analysis and visualisation | Dataset review, source notes and map context |
-| Qian Jiang | UI/UX and frontend | Reporting flow, accessible copy and interface |
+| Hnin Darli | Data analysis and visualisation | Dataset review, OBIS source notes and map context |
+| Qian Jiang | UI/UX and frontend | Report/review/results flow, accessible copy and interface |
 | LiHanXia | Backend/API | Validation, observation API and service integration |
-| Keith Junn Chong | Database/data integration | Storage fields, data connection and benchmark handling |
-| Benshuai Su | AI/LLM or classification support | Transparent classification or explanation support |
+| Keith Junn Chong | Database/data integration | PostgreSQL schema, persistence and source data loading |
+| Benshuai Su | Classification support | Transparent rule explanations and future-model boundary |
 
 ## Shared boundaries
 
-- Do not create a second marine-animal reporting flow in the MVP.
-- Do not claim that the system proves pollution sources or environmental
-  outcomes.
+- Use only Plastic packaging, Fishing gear, Glass, Metal and Other in the MVP.
+- Do not create a second marine-animal reporting flow.
+- Use synthetic/public data and do not collect personal details.
 - Do not publish exact threatened-species locations.
-- Use synthetic/public data only until the team confirms a safe data process.
-- Label demo rules and future work clearly.
-
+- Do not claim pollution-source proof, verified species identity, environmental
+  outcomes or enforcement decisions.
+- Keep HealthFirst files and code as reference-only material.

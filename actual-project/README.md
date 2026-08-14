@@ -1,49 +1,82 @@
-# Team 04 — Marine Litter Hotspot & Marine-Life Observation MVP
+# Team 04 Marine Litter Observation MVP
 
-## Project links
+## Purpose
 
-- GitHub: https://github.com/huangguan-giegie/team04-marine-observation-mvp
-- Miro: https://miro.com/app/board/uXjVHySKbPY=/
-- Drive governance folder: https://drive.google.com/drive/folders/18Px2njE27SCiZ4bs-40zgUgm_sRE70Kx
-- Render frontend: https://team04-marine-observation-frontend.onrender.com
-- Render API: https://team04-marine-observation-api.onrender.com
+This is a small, deployable MVP for reporting marine litter in one selected
+Malaysian coastal area. It uses a fixed category list, transparent rules and a
+static OBIS context sample. The project is for demonstration and learning only.
 
-LeanKit setup is deferred by the PM. The old HealthFirst spaces remain
-unchanged and are reference-only.
+The workflow is:
 
-## Working title
+`Report -> Review and confirm -> Save -> View results and map context`
 
-**Marine Litter Hotspot & Marine-Life Observation Platform**
+## Scope and boundaries
 
-## Current scope
+- Categories: Plastic packaging, Fishing gear, Glass, Metal and Other.
+- Data: synthetic observation records and public/static context only.
+- Map: Leaflet with OpenStreetMap tiles and an accessible observation list.
+- Context: a source-labelled static OBIS sample; sensitive records are
+  aggregated or location-masked.
+- Rules: fixed-category classification and an illustrative clean-up priority.
+- No external AI, computer vision, user account, real personal data or image
+  upload storage is enabled.
+- Results do not prove a pollution source, species identity, ecological change
+  or an enforcement decision.
 
-1. A user reports marine litter from one selected Malaysian coastal area.
-2. The report records a photo or illustrative sample image, category, approximate area and time.
-3. The system classifies a small, fixed set of litter categories using rules or a clearly labelled demo model.
-4. The map shows litter observations and an OBIS marine-life layer.
-5. The system highlights areas for possible clean-up attention using transparent, non-enforcement wording.
+HealthFirst material under `../references/healthfirst-example/` is read-only
+reference material. It is not part of this product or its runtime code.
 
-## Explicitly out of scope for the first MVP
+## Run locally
 
-- A separate marine-animal reporting workflow.
-- Broad multi-coastal deployment.
-- Claims that the system proves pollution sources or population change.
-- Exact locations of threatened species.
-- Unreviewed automated environmental decisions.
+Start the API:
 
-## Suggested flow
+```powershell
+cd backend
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+python app.py
+```
 
-`Report litter → validate fields → classify category → map observation → combine litter density with ecological sensitivity → show an illustrative clean-up priority`
+Without `DATABASE_URL`, the API uses a local SQLite fallback. To test with a
+PostgreSQL instance, set `DATABASE_URL` in your shell before starting the API.
+Never commit a real connection string or `.env` file.
 
-## Team roles
+Serve the frontend from another terminal:
 
-- Huang Guan — Project Manager and integration
-- Hnin Darli — Data analysis and visualisation
-- Qian Jiang — UI/UX and frontend
-- LiHanXia — Backend/API
-- Keith Junn Chong — Database/data integration
-- Benshuai Su — AI/LLM or classification support
+```powershell
+cd frontend
+python -m http.server 8080
+```
 
-## First build boundary
+Open `http://localhost:8080`. The frontend uses `http://localhost:5000` when
+running locally.
 
-Start with a local demo and public/synthetic data. Freeze the coastal area, category list, API fields and map layer before adding model features.
+## API
+
+- `GET /health`
+- `GET /api/observations`
+- `POST /api/observations`
+- `GET /api/context`
+
+The API contract is documented in [docs/API.md](docs/API.md). The deploy and
+data controls are documented in [docs/INTEGRATION_CHECKLIST.md](docs/INTEGRATION_CHECKLIST.md)
+and [docs/DATA_MANAGEMENT_PLAN.md](docs/DATA_MANAGEMENT_PLAN.md).
+
+## Render deployment
+
+`../render.yaml` defines two services:
+
+- Python API: `actual-project/backend`, built with `pip install -r requirements.txt`
+  and started with Gunicorn.
+- Static frontend: `actual-project/frontend`.
+
+Set these API environment variables in Render:
+
+- `DATABASE_URL`: the private Render PostgreSQL connection string. Add it in
+  the Render dashboard; do not put its value in Git.
+- `FRONTEND_ORIGINS`: `https://team04-marine-observation-frontend.onrender.com`
+  (already declared in the Blueprint; update it if the frontend URL changes).
+
+After deployment, verify `/health`, create one synthetic observation, refresh
+the list and confirm that the record remains available.

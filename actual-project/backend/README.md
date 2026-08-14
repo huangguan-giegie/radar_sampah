@@ -1,6 +1,10 @@
 # Marine Observation API
 
-Run locally from this directory:
+This Flask API records synthetic/public marine-litter observations and returns
+transparent, illustrative results. It does not use external AI, computer
+vision, health data or HealthFirst code.
+
+## Local setup
 
 ```powershell
 python -m venv .venv
@@ -9,10 +13,30 @@ pip install -r requirements.txt
 python app.py
 ```
 
-The service exposes `/health`, `/api/observations` and a small `POST`
-reporting flow. All records are synthetic demo data and are held in memory.
-No personal data, external AI, or production database is used in this starter.
+The development server listens on `http://localhost:5000` by default.
 
-The repository root contains `render.yaml` for the free API and static-site
-services. The Render GitHub App is connected to this private repository; the
-current free services were configured from `main`.
+## Storage
+
+- If `DATABASE_URL` is set, use PostgreSQL.
+- If it is not set, use the local SQLite fallback for development.
+- Schema initialisation must be idempotent and must create `observations`,
+  `observation_classifications`, `observation_priorities` and `marine_context`.
+- Do not store names, contact details, account identifiers, secrets or raw
+  uploaded image files. `image_url` is optional and must be an approved demo
+  path or HTTPS URL.
+
+For Render, set `DATABASE_URL` manually in the service environment variables.
+The value is a secret and must never be committed.
+
+## Endpoints
+
+- `GET /health` returns a service health response.
+- `GET /api/observations` returns stored observations and their saved derived
+  results.
+- `POST /api/observations` validates and saves one confirmed observation,
+  computes its fixed-category classification and illustrative priority, then
+  returns the result.
+- `GET /api/context` returns source-visible static OBIS context records with
+  sensitive locations masked or aggregated.
+
+See `../docs/API.md` for request and response details.

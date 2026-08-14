@@ -32,6 +32,25 @@ The HealthFirst material remains preserved. It is not the new product scope.
 | Render deployment pattern | Recreate only after the new repository exists | Actual MVP deployment |
 | HealthFirst deck, ERD and screenshots | Preserve as reference only | Do not reuse as actual product evidence |
 
+## Runtime migration boundary
+
+The new marine MVP reuses only general project patterns from the HealthFirst
+example: a staged report/review/results flow, frontend/API separation,
+validation and error handling, deployment documentation, test evidence and
+clear safety wording.
+
+The new runtime does not copy HealthFirst product logic. It does not use
+medical input fields, BMI, clinical thresholds, health-risk assessment,
+health-specific PostgreSQL tables, medical action cards or external medical AI.
+Those materials remain under `references/healthfirst-example/` as read-only
+examples.
+
+The marine runtime target is a Flask API with PostgreSQL on Render plus a local
+SQLite fallback, a static frontend, static source-labelled OBIS context,
+Leaflet/OpenStreetMap and transparent category/illustrative-priority rules.
+Database credentials remain Render environment variables, not migration files
+or Git history.
+
 ## External resources to create
 
 - New GitHub repository for the marine project.

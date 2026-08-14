@@ -3,39 +3,132 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Team 04 Marine Observation MVP</title>
+    <meta name="description" content="A synthetic marine litter observation demonstration for Team 04." />
+    <title>Source2Sea MY | Marine Observation</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <main class="shell">
-      <p class="eyebrow">TEAM 04 · SOURCE2SEA MY</p>
-      <h1>Marine Litter Hotspot &amp; Marine-Life Observation</h1>
-      <p class="lead">
-        A small reporting flow for one Malaysian coastal area, with an OBIS
-        marine-life context layer planned for the next build.
-      </p>
-      <p class="notice">Demo only: use synthetic observations. This is not a pollution-source proof.</p>
+    <main class="app-shell">
+      <aside class="project-rail" aria-label="Project information">
+        <a class="brand" href="#report-step" aria-label="Source2Sea MY home">
+          <span class="brand-mark" aria-hidden="true">≈</span>
+          <span>Source2Sea<br /><strong>MY</strong></span>
+        </a>
+        <p class="rail-label">Marine litter observation</p>
+        <h1>Make a field note.<br />Keep the context clear.</h1>
+        <p class="rail-copy">A small, source-visible reporting flow for one Malaysian coastal demonstration area.</p>
 
-      <section class="card" aria-labelledby="report-title">
-        <h2 id="report-title">Report a litter observation</h2>
-        <form id="report-form">
-          <label>Category <input name="category" value="plastic packaging" required /></label>
-          <label>Area <input name="area" value="Selected Malaysian coastal area" required /></label>
-          <div class="grid">
-            <label>Latitude <input name="latitude" type="number" step="any" value="3.1390" required /></label>
-            <label>Longitude <input name="longitude" type="number" step="any" value="101.6869" required /></label>
+        <ol class="progress" aria-label="Observation progress">
+          <li class="is-active" data-progress="report"><span>1</span><div><strong>Report</strong><small>Record a synthetic observation</small></div></li>
+          <li data-progress="review"><span>2</span><div><strong>Confirm</strong><small>Check before sharing</small></div></li>
+          <li data-progress="results"><span>3</span><div><strong>Context</strong><small>Read the illustrative result</small></div></li>
+        </ol>
+
+        <div class="rail-boundary">
+          <strong>Demo boundary</strong>
+          <p>Use synthetic or public data only. This tool does not prove pollution sources, species identity, or enforcement outcomes.</p>
+        </div>
+      </aside>
+
+      <section class="workspace" aria-live="polite">
+        <div class="topline">
+          <p>Team 04 · Version 2 prototype</p>
+          <span class="data-chip">PUBLIC / SYNTHETIC DATA</span>
+        </div>
+
+        <section id="report-step" class="step-panel" aria-labelledby="report-title">
+          <p class="section-kicker">Step 01</p>
+          <h2 id="report-title">Record a litter observation</h2>
+          <p class="intro">Add only what is needed for this demonstration. Do not enter names, phone numbers, account details, or real personal information.</p>
+
+          <form id="report-form" novalidate>
+            <div class="field-grid">
+              <label class="field">
+                <span>Litter category</span>
+                <select name="category" required>
+                  <option>Plastic packaging</option>
+                  <option>Fishing gear</option>
+                  <option>Glass</option>
+                  <option>Metal</option>
+                  <option>Other</option>
+                </select>
+                <small data-error-for="category"></small>
+              </label>
+              <label class="field">
+                <span>Approximate area</span>
+                <input name="area" maxlength="120" value="Selected Malaysian coastal area" required />
+                <small data-error-for="area"></small>
+              </label>
+              <label class="field">
+                <span>Observation date and time</span>
+                <input name="observed_at" type="datetime-local" required />
+                <small data-error-for="observed_at"></small>
+              </label>
+              <label class="field">
+                <span>Sample image URL <em>optional</em></span>
+                <input name="image_url" type="url" inputmode="url" placeholder="https://… or /assets/demo-image.jpg" />
+                <small data-error-for="image_url"></small>
+              </label>
+              <label class="field">
+                <span>Latitude</span>
+                <input name="latitude" type="number" step="any" min="-90" max="90" value="3.1390" required />
+                <small data-error-for="latitude"></small>
+              </label>
+              <label class="field">
+                <span>Longitude</span>
+                <input name="longitude" type="number" step="any" min="-180" max="180" value="101.6869" required />
+                <small data-error-for="longitude"></small>
+              </label>
+            </div>
+            <label class="field field-note">
+              <span>Short field note <em>optional</em></span>
+              <textarea name="note" maxlength="500" rows="4" placeholder="For example: packaging seen beside a public access path."></textarea>
+              <small data-error-for="note"></small>
+            </label>
+            <div class="form-actions">
+              <button class="button button-primary" type="submit">Review observation <span aria-hidden="true">→</span></button>
+              <p id="form-message" class="form-message" role="status"></p>
+            </div>
+          </form>
+        </section>
+
+        <section id="review-step" class="step-panel is-hidden" aria-labelledby="review-title" tabindex="-1">
+          <p class="section-kicker">Step 02</p>
+          <h2 id="review-title">Confirm the information</h2>
+          <p class="intro">Please check the record. The server only receives it after you confirm.</p>
+          <dl id="review-list" class="review-list"></dl>
+          <div class="boundary-callout"><strong>Before you continue</strong><span>Only synthetic or public data should be submitted for this prototype.</span></div>
+          <div class="form-actions">
+            <button id="edit-button" class="button button-secondary" type="button">Edit observation</button>
+            <button id="confirm-button" class="button button-primary" type="button">Confirm and get context <span aria-hidden="true">→</span></button>
+            <p id="confirm-message" class="form-message" role="status"></p>
           </div>
-          <button type="submit">Save demo report</button>
-          <p id="form-message" role="status"></p>
-        </form>
-      </section>
+        </section>
 
-      <section class="card" aria-labelledby="list-title">
-        <h2 id="list-title">Current demo observations</h2>
-        <ul id="observations" aria-live="polite"></ul>
+        <section id="results-step" class="step-panel is-hidden" aria-labelledby="results-title" tabindex="-1">
+          <p class="section-kicker">Step 03</p>
+          <h2 id="results-title">Observation context</h2>
+          <p class="intro">The result below is a transparent demonstration aid. It does not confirm a pollution source, verify a species identity, or create an enforcement outcome.</p>
+
+          <div id="result-summary" class="result-summary"></div>
+          <section class="context-section" aria-labelledby="map-title">
+            <div class="section-heading"><div><p class="section-kicker">Source-visible context</p><h3 id="map-title">Approximate coastal context</h3></div><span class="map-key"><i aria-hidden="true"></i> Observation</span></div>
+            <div id="map" class="map" aria-label="Map of the submitted observation and approximate marine context"></div>
+            <p id="map-fallback-message" class="map-fallback-message">The map is optional. The accessible source list below contains the same context.</p>
+            <ul id="context-list" class="context-list" aria-label="Marine context sources"></ul>
+          </section>
+          <div class="form-actions">
+            <button id="retry-button" class="button button-secondary is-hidden" type="button">Retry submission</button>
+            <button id="new-observation-button" class="button button-primary" type="button">Record another observation</button>
+          </div>
+        </section>
       </section>
     </main>
-    <script src="app.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script type="module" src="app.js"></script>
   </body>
 </html>
-
