@@ -70,6 +70,9 @@ label illustrative rules clearly.
 - Uploaded the DOCX/Markdown sources to the new Drive Governance/Evidence
   folders and the PPTX to the new Design folder. The file IDs and links are
   recorded in `drive-migration/MIGRATION_MANIFEST.md`.
+- Imported a native editable Google Slides copy into `03 Design` and verified
+  its outline contains all 19 slides; the original PPTX remains there as the
+  downloadable source copy.
 - Generated DOCX copies from the Markdown sources and checked their paragraph,
   table and package structure. A local LibreOffice/`soffice` binary is not
   available in this environment, so DOCX-to-PNG rendering remains a follow-up

@@ -116,6 +116,11 @@ These are new project outputs, not unchanged HealthFirst copies:
 | `deliverables/Team04_Marine_Miro_Reflection_Speaking_Notes.docx` | Reflection facilitation | [Google Doc](https://docs.google.com/document/d/1V0IVCBnqlVUG-Be1lKUJpqiFNZEhD5-Y/edit) |
 | `deliverables/presentation/Team04 Marine Observation Onboarding Presentation.pptx` | 19-slide English onboarding deck | [Google Slides](https://docs.google.com/presentation/d/1aU_HQoaEwIZ-__RMElYfMce7wdPLfnX4/edit) |
 
+An editable native Slides copy is also available for team updates:
+[Team04 Marine Observation Onboarding Presentation - editable](https://docs.google.com/presentation/d/1vGFr8Px9Tffn62yLFJdaGqdVSPnVpDC8DP2AN_9X65A/edit).
+The imported copy was checked through the Slides outline and contains all 19
+slides.
+
 Matching Markdown sources remain in `deliverables/documents/`; runtime code and
 API/deployment documents remain in `actual-project/`. The PPTX passed slide
 overflow checks and the DOCX files passed structural/text checks. The local
