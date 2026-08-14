@@ -257,3 +257,36 @@ Huang Guan manually tried all five area labels in the deployed frontend. This
 confirms UI coverage across the full catalogue. The release record still needs
 the individual response statuses, saved-record/read-back evidence and
 screenshots before those checks are marked as formally passed.
+
+## Final release test record - 14 August 2026
+
+At 2026-08-14 21:27 KST / 12:27 UTC, Huang Guan completed the deployed
+release checks using synthetic values only. Both Render services were manually
+deployed from GitHub `main` commit `5373128d3b5dcbefac08a34a57faa5bdd1ee9e08`.
+
+- `/health`: HTTP 200; PostgreSQL is configured on Render.
+- `/api/options`: HTTP 200; catalogue `marine-form-options-2026-08-14-v1`
+  returned all five area labels.
+- `/api/context`: HTTP 200; five OBIS records returned with data version
+  `obis-malaysia-public-2026-08-14-v1`.
+- Valid `POST /api/observations`: HTTP 201; synthetic records were created.
+- `GET /api/observations`: HTTP 200; a newly created record was read back.
+- Missing category and out-of-range latitude: HTTP 400 with safe validation
+  messages.
+- Deployed frontend: Report -> Review -> Confirm -> Results completed with
+  synthetic data; result showed the area, coordinates, rule, priority, OBIS
+  source and safety boundary.
+- Frontend workflow tests: 12/12 passed, including the API-unavailable retry
+  state. A live outage was not injected into Render, so production failure
+  recovery remains covered by the automated test rather than a live outage.
+
+Evidence files are stored in the Drive Testing folder:
+
+- [Final release test report](https://drive.google.com/file/d/1mYg31Nhzi-asp7SbWt7hqJmOCC2NAPah/view)
+- [Area options screenshot](https://drive.google.com/file/d/1wF3AokNFVzICjt5sPKDSTwRpvnVnWqT3/view)
+- [Results screenshot](https://drive.google.com/file/d/1VxIwlptuP2FUCssCldQnoFIptPdPAC-S/view)
+
+Darli still needs to confirm the five area names and source wording before the
+team adds new categories or more precise locations. The current records and
+priority output remain synthetic/illustrative and are not a survey, scientific
+finding or enforcement decision.
