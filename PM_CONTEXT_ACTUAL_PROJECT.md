@@ -87,3 +87,7 @@ deleted, renamed or edited.
 The new Drive root now contains `README.md`, which explains the purpose and
 usage of every project folder, the GitHub/Render workflow, and the HealthFirst
 reference boundary.
+
+The previously missed `TM04 Team Info` Google Doc was checked, exported
+unchanged and added to the reference archive under `Team Formation`. It is
+HealthFirst reference material, not a marine-project requirement.

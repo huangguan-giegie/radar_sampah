@@ -67,6 +67,7 @@ Two user-provided links were checked directly:
 
 - Course plan PDF: [FIT5120_Work_Plan_English.pdf](https://drive.google.com/file/d/1M77x8psaQ_E5XhwDgGP52cPEY5t8CHhc/view?usp=drive_link). It is a 22-page course/deadline guide, not a product artefact. Keep the source link; do not copy course-wide instructions into the marine scope.
 - Team information document: [Team 04 – HealthFirst Team Information](https://docs.google.com/document/d/1ewGaDQvGQbnLW1Q3UvoVHeYL5LNrF0zf/edit?usp=drive_link). An unchanged DOCX copy is archived locally at `realwork/references/healthfirst-example/additional/Team 04 – HealthFirst Team Information - original.docx` and uploaded to the new Drive reference folder.
+- Additional team document: [TM04 Team Info](https://docs.google.com/document/d/1hlf3fuAZF-GO_xGNOfx6etE56BKj03P_qDWguxnTPVE/edit?tab=t.0). This was missing from the first pass. An unchanged DOCX copy is archived at `realwork/references/healthfirst-example/additional/TM04 Team Info - original.docx` and uploaded under `99 Reference - HealthFirst Example/Team Formation`.
 
 This re-scan does not change the actual marine-project scope. HealthFirst files
 are labelled as examples so they cannot be mistaken for marine requirements,
