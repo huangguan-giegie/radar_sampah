@@ -97,3 +97,8 @@ with the existing Week 2 deck. It is a separate 13-slide HealthFirst Expo
 presentation, so it was exported unchanged and uploaded to
 `99 Reference - HealthFirst Example` as `HealthFirst Expo Slides - original.pptx`.
 It remains reference material only; it is not evidence for the marine project.
+
+The second old-root deck, `TM04 Onboarding Project Presentation`, was also
+copied unchanged into the same reference folder as `TM04 Onboarding Project
+Presentation - original`. It is kept as a source reference and is not part of
+the marine-project scope.
