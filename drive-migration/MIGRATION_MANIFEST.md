@@ -71,3 +71,6 @@ Two user-provided links were checked directly:
 This re-scan does not change the actual marine-project scope. HealthFirst files
 are labelled as examples so they cannot be mistaken for marine requirements,
 data, testing evidence or claims.
+
+The Drive root now includes `README.md`, which explains the folder structure,
+the code/evidence workflow and the HealthFirst reference boundary.
