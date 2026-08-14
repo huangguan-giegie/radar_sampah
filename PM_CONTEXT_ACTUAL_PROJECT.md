@@ -51,6 +51,9 @@ label illustrative rules clearly.
   API smoke checks and `git diff --check`.
 - Pushed the complete project to the new GitHub repository (`main`, commit
   `c2f3dae66c6a5caea088537a0afa0b92db318ca9`).
+- Pushed the adapted governance and presentation deliverables in commit
+  `f9b5dc4926cc07028bc3e013e344b6d1531531f1`. This is documentation/PPTX
+  only; the deployed runtime code remains the verified `c2f3dae` build.
 - Invited the five confirmed team GitHub accounts (`hlii0333`, `hnin0011`,
   `kcho0072`, `qjia0033-dev` and `SUBENSHUAI`); all are currently pending
   acceptance.
