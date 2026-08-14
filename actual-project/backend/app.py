@@ -897,8 +897,9 @@ def create_app(database_url: str | None = None, testing: bool = False) -> Flask:
             return jsonify({"error": "image_url must use HTTPS or a local /assets/ path"}), 400
         catalog = tidetrace_catalogue()
         categories = {item["value"] for item in catalog["categories"]}
-        result = recognise_litter(image_url, str(payload.get("category_hint") or "").strip() or None, categories)
-        return jsonify({"recognition": {**result, "image_url": image_url, "demo": True}, "data_version": catalog["version"]})
+        result = {**recognise_litter(image_url, str(payload.get("category_hint") or "").strip() or None, categories), "image_url": image_url, "demo": True}
+        # Keep both names while the team moves from the older recognition wording.
+        return jsonify({"detection": result, "recognition": result, "data_version": catalog["version"]})
 
     @application.get("/api/litter-reports")
     def get_litter_reports():
