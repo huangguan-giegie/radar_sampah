@@ -16,7 +16,7 @@ personal images. Do not use exact threatened-species locations.
 | Observation | fixed category, approximate area, time, latitude/longitude, optional demo image URL, note | `observations`; shown as a demo record |
 | Derived result | fixed-category rule, illustrative priority, rule explanation | `observation_classifications` and `observation_priorities`; separate from the original observation |
 | Marine context | five-record static OBIS Malaysia-region sample, attribution, retrieval date, approximate/masked location, sensitivity flag | `marine_context`; map and source-visible context |
-| Form options | broad litter examples and coarse area suggestions with source notes | `backend/data/litter_options.json`; `/api/options`; form hints only |
+| Form options | broad litter examples and five coarse area suggestions with source notes | `backend/data/litter_options.json` (`marine-form-options-2026-08-14-v1`); `/api/options`; native-select guidance only |
 
 ## Storage
 
@@ -33,6 +33,8 @@ personal images. Do not use exact threatened-species locations.
 
 - Validate the five fixed categories, coordinates, ISO timestamp, optional URL
   scheme and text lengths on the server.
+- Treat the five area labels as UI suggestions only. They are aggregated public
+  context labels and are not verified litter-survey sites.
 - Keep original observations separate from derived results.
 - Label classification and priority as `demo`/`illustrative` in the API and UI.
 - Mask or aggregate sensitive context locations before they reach the map.

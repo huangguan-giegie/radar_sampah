@@ -18,6 +18,8 @@
 - [ ] Missing fields, invalid categories, coordinates, timestamps and image
   URLs return `400`.
 - [ ] `GET /api/context` returns a source-visible static OBIS sample.
+- [ ] `GET /api/options` returns the current catalogue version and five area
+  labels; the frontend renders all five in the Approximate area dropdown.
 - [ ] PostgreSQL initialises and persists observations after a service restart.
 - [ ] Local startup without `DATABASE_URL` uses SQLite successfully.
 - [ ] Original observations, classifications and priorities are stored in their
@@ -26,6 +28,8 @@
 ## Frontend and accessibility
 
 - [ ] Report -> Review/edit -> Confirm -> Results completes with synthetic data.
+- [ ] The Approximate area control is a native select and shows all five coarse
+  labels after the options request completes.
 - [ ] Editing a reviewed report invalidates the previous confirmation.
 - [ ] The result shows category rule, illustrative priority, sources and limits.
 - [ ] The Leaflet map and accessible list show consistent observation/context

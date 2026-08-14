@@ -231,3 +231,22 @@ it does not expand the API scope or turn the area labels into survey sites.
 
 The catalogue is also stored in the Real Project Drive Datasets folder:
 https://drive.google.com/file/d/1Kh60z7ggY9YDCI4uwdrsqzHqcEYIn2Af/view
+
+## Area dropdown correction record - 14 August 2026
+
+The first catalogue release used a text input with a `datalist`, which made the
+browser show only the current matching suggestion. Commit `aea23c9` changed the
+control to a native required `<select>` and kept the API contract unchanged.
+The deployed frontend now loads all five `/api/options` area labels after the
+catalogue request. Frontend tests are 12/12 passing, and the live Render page
+was checked to contain all five options. This is a UI clarity fix, not a change
+to the allowed observation categories, database schema or location precision.
+
+## Immediate next steps after the dropdown fix
+
+1. Run one synthetic end-to-end submission for each of the five area labels and
+   record the selected label, response status and Render commit in PGP.
+2. Re-run the API and frontend release checklist, including refresh/read-back
+   and API-failure retry behaviour.
+3. Keep the option catalogue source-labelled and review it with Darli before
+   adding any new category or more precise location.

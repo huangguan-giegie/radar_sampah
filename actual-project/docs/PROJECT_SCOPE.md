@@ -18,7 +18,10 @@ not a second reporting workflow.
 
 ## MVP acceptance boundary
 
-- One coastal area and five litter categories.
+- Five fixed litter categories and five coarse area suggestions in the form:
+  Selected Malaysian coastal area, North-west Peninsular Malaysia coast, East
+  coast Peninsular Malaysia, Terengganu coastal waters and Selangor coastal
+  waters. The labels are demonstration context, not survey sites.
 - Coordinates, time, approximate area, optional sample-image URL and note.
 - PostgreSQL in Render with local SQLite fallback.
 - A five-record static source-labelled OBIS Malaysia-region context bundle

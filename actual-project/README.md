@@ -13,6 +13,9 @@ The workflow is:
 ## Scope and boundaries
 
 - Categories: Plastic packaging, Fishing gear, Glass, Metal and Other.
+- Form options: the category list remains fixed, while the Approximate area
+  field is a native select with five coarse Malaysian-region suggestions from
+  `backend/data/litter_options.json` (`marine-form-options-2026-08-14-v1`).
 - Data: synthetic observation records and public/static context only.
 - Map: Leaflet with OpenStreetMap tiles and an accessible observation list.
 - Context: five source-labelled static OBIS Malaysia-region samples; sensitive

@@ -31,3 +31,12 @@
   identity, ecological outcomes or enforcement action.
 - HealthFirst code and documents remain read-only examples; no medical fields,
   thresholds, database tables or AI logic are carried into the marine runtime.
+
+## 2026-08-14 - Form option clarity
+
+- Keep the five fixed litter categories and expose the coarse area catalogue
+  through a native required dropdown rather than a free-text input with a
+  `datalist`.
+- The catalogue version is `marine-form-options-2026-08-14-v1`. Its five area
+  labels are aggregated demonstration context from the OBIS snapshot, not
+  verified litter-survey sites or a new location-precision feature.

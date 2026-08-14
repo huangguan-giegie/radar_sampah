@@ -106,6 +106,18 @@ marine-litter vocabulary, and provides coarse Malaysian-region area
 suggestions from the OBIS context snapshot. These are demonstration choices,
 not a Malaysian litter survey or a claim about a specific beach.
 
+The current area labels are:
+
+- `Selected Malaysian coastal area`
+- `North-west Peninsular Malaysia coast`
+- `East coast Peninsular Malaysia`
+- `Terengganu coastal waters`
+- `Selangor coastal waters`
+
+The frontend presents these labels in a native dropdown. They are aggregated
+demonstration context only; they do not restrict the API to a verified survey
+site or expose sensitive coordinates.
+
 ## Result boundaries
 
 Classification is a transparent category rule. Priority is illustrative and

@@ -9,6 +9,17 @@ Malaysian coastal area. Static OBIS context supports a map layer; it is not a
 second animal-reporting flow. The first build uses source-visible public data,
 synthetic demo reports and transparent rules.
 
+The report form keeps five fixed litter categories and exposes five coarse
+area labels through a native dropdown: Selected Malaysian coastal area,
+North-west Peninsular Malaysia coast, East coast Peninsular Malaysia,
+Terengganu coastal waters and Selangor coastal waters. These labels are
+aggregated demonstration context, not verified litter-survey sites.
+
+The API contract includes `GET /api/options`, which returns the versioned
+catalogue used by the form. The frontend must show all five labels after the
+catalogue loads; this does not add a second reporting workflow or more precise
+location data.
+
 ## Team roles
 
 | Member | Working role | Main responsibility |

@@ -97,9 +97,10 @@ data, testing evidence or claims.
 The Drive root now includes `README.md`, which explains the folder structure,
 the code/evidence workflow and the HealthFirst reference boundary.
 
-The `99 Reference - HealthFirst Example` folder now mirrors the old source
-layout with subfolders for Retrospective, Team Formation, System Architecture,
-Iteration Build, Data Governance, Others, Feedbacks and Design Artefacts.
+The archived `99 Reference - HealthFirst Example` folder now mirrors the old
+source layout with subfolders for Retrospective, Team Formation, System
+Architecture, Iteration Build, Data Governance, Others, Feedbacks and Design
+Artefacts.
 Selected reference files remain at the reference root for easy access; this
 does not alter the actual marine-project folders.
 
@@ -122,7 +123,135 @@ The imported copy was checked through the Slides outline and contains all 19
 slides.
 
 Matching Markdown sources remain in `deliverables/documents/`; runtime code and
-API/deployment documents remain in `actual-project/`. The PPTX passed slide
-overflow checks and the DOCX files passed structural/text checks. The local
-environment has no LibreOffice binary, so DOCX pixel rendering is explicitly
-not claimed as complete.
+API/deployment documents remain in `actual-project/`. LibreOffice 26.2.5.2 is
+  now installed. All five DOCX files were converted to PDF and inspected as
+  page PNGs (17 pages total); the 19-slide PPTX was rendered with LibreOffice
+  and artifact-tool. Backend tests passed 10/10 and frontend workflow tests
+  passed 8/8. The checks found no blank pages, clipped tables, unexpected
+  overlap or broken page markers.
+
+## Quality upgrade and overwrite record - 14 August 2026
+
+The deliverables were rebuilt with a mixed template approach: the old
+HealthFirst reference supplies the narrative skeleton, spacing, heading levels,
+cards, tables, footer and page numbering; all visible content, examples and
+boundaries were rewritten for the Marine Observation MVP. No HealthFirst
+medical logic or health data appears in the Marine deck or governance files.
+
+Before any Drive replacement, the previous local outputs were copied to
+`realwork/tmp/backups/quality-upgrade-2026-08-14/` and hashed in
+`backup-sha256.csv`. The five raw DOCX files and the raw PPTX are then updated
+in place using their existing Drive file IDs, preserving the links above. The
+Google-native editable Slides handoff remains a separate file because its MIME
+type cannot accept raw PPTX bytes; it remains a 19-slide editable copy.
+
+Runtime alignment for this record is `c2f3dae`: Report -> Review/edit ->
+Confirm -> Results; `/health`, `/api/observations`, `/api/context`; Render
+PostgreSQL with local SQLite fallback; Leaflet/OpenStreetMap with an accessible
+list fallback; static source-labelled OBIS context; rule-based illustrative
+priority; external AI/CV disabled; synthetic/public data only.
+
+## PGIE structure alignment - 14 August 2026
+
+The Real Project root (`18Px2njE27SCiZ4bs-40zgUgm_sRE70Kx`) now has a parallel
+PGIE structure based on the Sample Project root (`1cp6A59lG5dYyOX_4Hi1ocD59TBiWdboe`):
+
+`Team Information`, `Testing`, `Team Meeting`, `System Architecture`, `Others`,
+`Iteration Build`, `Security Aspects`, `Design and Analysis Artifacts`, `Risks`,
+`Retrospective`, `Feedbacks`, `Industry Mentor Communications`, `Handover`, and
+`Data Governance`.
+
+The matching nested paths are present at:
+
+- `Design and Analysis Artifacts/Iteration 1`, `Iteration 2`, `System Vision`
+- `Handover/Handover`, `Handover/Implementation Plan`
+- `Data Governance/Onboarding project Analysis & Datasets/Datasets`
+- `Data Governance/Onboarding project Analysis & Datasets/Analysis`
+- `Data Governance/Onboarding project Analysis & Datasets/Datasets/Additional sources`
+
+The numbered Real folders remain as empty legacy navigation shells after the
+active files were moved into their canonical mirrored locations. Sample Project
+files were copied into the matching Real locations without editing the Sample Project. Copied source
+material includes Marine-specific datasets and analysis documents only. The
+HealthFirst dataset copies were subsequently moved to `Archive - Removed
+Sample Files`; the archived copies are explicitly reference-only and do not
+alter the Marine API, schema or deployed inputs.
+
+Marine supplements added to the mirrored tree include:
+
+- `Analysis/MARINE_DATA_DICTIONARY.md`
+- `Analysis/MARINE_ANALYSIS_NOTES.md`
+- `Analysis/API.md — Marine runtime`
+- `Analysis/DATA_MANAGEMENT_PLAN.md — Marine runtime`
+- `Analysis/DECISIONS.md — Marine runtime`
+- `Analysis/PROJECT_SCOPE.md — Marine runtime`
+- `Analysis/INTEGRATION_CHECKLIST.md — Marine runtime`
+- `Security Aspects/SECURITY_PLAN.md — Marine runtime`
+- `Team Information/TEAM_INFORMATION.md — Marine project`
+- `Datasets/MARINE_SYNTHETIC_OBSERVATIONS.csv`
+- `Datasets/obis_context.json — Marine runtime`
+- root `miro board link`
+
+The exact Drive IDs for these folders and files are retained in the Drive
+activity record and can be rechecked from the root links. The root item
+`team reflection vedio - pending` records an evidence gap only; it is not a fake
+recording. The original Sample Project tree remains unchanged.
+
+## Canonical path migration - 14 August 2026
+
+The active Marine files were moved (not re-uploaded) from the numbered folders
+to the matching Sample-style folders. File IDs and Drive file URLs therefore
+remain stable:
+
+| Previous location | Canonical location |
+|---|---|
+| `01 Governance` project information and social contract | `Team Information` |
+| `01 Governance` Miro reflection notes | `Retrospective` |
+| `01 Governance` work plan and handover | `Handover/Implementation Plan` |
+| `01 Governance` migration manifest and PM context | Real Project root |
+| `03 Design` PPTX and editable Slides | `Design and Analysis Artifacts` |
+| `04 Build` README, `render.yaml`, frontend and backend | `Iteration Build` |
+| `05 Evidence` QA checklist | `Testing` |
+
+Superseded duplicate drafts from `01 Governance` and `02 Product Scope` were
+moved to `Archive - Superseded Marine Drafts` at the Real root and renamed with
+an `ARCHIVE -` prefix. They are retained for recovery only. The numbered folder
+shells remain as legacy navigation markers, but the mirrored folders are now
+the canonical working paths. No Sample Project item was moved, renamed or
+edited.
+
+## Drive cleanup - 14 August 2026
+
+The actual project root was cleaned without changing the Sample Project PGIE
+(`1RfEiGPd5_v2Ka5TieeeLSh4-YB0mUjvk`) or any of its descendants.
+
+The following items were moved, not deleted, to the recoverable archive
+`Archive - Removed Sample Files`
+(`1tWAKHAZ5RHkeoAkijmVrWzS_UWjBRP8v`):
+
+- the complete `99 Reference - HealthFirst Example` subtree;
+- HealthFirst medical datasets and mortality PDFs from
+  `Data Governance/Onboarding project Analysis & Datasets/Datasets`;
+- `Additional sources` after its medical files were moved;
+- HealthFirst analysis documents and workbooks from the mixed `Analysis`
+  folder;
+- `TM04 Team Info - original.docx` from `Team Information`.
+
+The Marine files retained in the mixed area are `MARINE_SYNTHETIC_OBSERVATIONS.csv`,
+`obis_context.json — Marine runtime`, the Marine data dictionary, analysis notes,
+API, data-management, decisions, project-scope and integration-checklist files.
+
+The archive move preserved Drive file IDs and links. A final readback confirmed
+the protected Sample Project PGIE still has its original parent and the Marine
+dataset/analysis folders contain only the retained Marine materials.
+
+## Form catalogue alignment - 14 August 2026
+
+The Marine runtime now uses catalogue version
+`marine-form-options-2026-08-14-v1`. The Approximate area control is a native
+required dropdown containing five coarse Malaysian-region labels. The labels
+are aggregated demonstration context, not verified litter-survey sites, and do
+not expose more precise or sensitive locations. README, API, data-management,
+scope, decisions, integration-checklist, QA and project-information documents
+were updated to describe the same behaviour. The live Render frontend was
+checked to load all five labels from `GET /api/options` after commit `aea23c9`.
