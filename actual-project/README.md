@@ -39,6 +39,7 @@ reference material. It is not product code or evidence.
 - GitHub: https://github.com/huangguan-giegie/team04-marine-observation-mvp
 - Render frontend: https://team04-marine-observation-frontend.onrender.com
 - Render API: https://team04-marine-observation-api.onrender.com
+- Editable deck: https://docs.google.com/presentation/d/1bFR83Sng4uYm_rUPjwVuzTzwKwcVLWPVoPJl9d-xbTU/edit
 - Miro: https://miro.com/app/board/uXjVHySKbPY=/
 
 The Sample Project PGIE was not modified.

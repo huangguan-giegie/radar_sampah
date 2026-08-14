@@ -46,6 +46,7 @@ date, attribution, sensitivity and version stay with each static sample.
 - GitHub: https://github.com/huangguan-giegie/team04-marine-observation-mvp
 - Frontend: https://team04-marine-observation-frontend.onrender.com
 - API: https://team04-marine-observation-api.onrender.com
+- Editable deck: https://docs.google.com/presentation/d/1bFR83Sng4uYm_rUPjwVuzTzwKwcVLWPVoPJl9d-xbTU/edit
 - Real Project Drive: https://drive.google.com/drive/folders/18Px2njE27SCiZ4bs-40zgUgm_sRE70Kx
 - Miro: https://miro.com/app/board/uXjVHySKbPY=/
 - LeanKit: the old HealthFirst board is preserved; new-board setup remains
