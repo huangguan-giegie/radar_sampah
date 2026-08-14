@@ -17,6 +17,11 @@ Use synthetic/public data, broad area labels and source notes. Do not collect id
 - Database: reports, missions, anonymous joins and evidence are separate from legacy tables.
 - DiveSafe MY and older routes remain rollback paths only.
 
+The TideTrace implementation is on `main` at commit `f6b3e14`. Local checks on
+15 August passed: backend `25 passed`, frontend `8 passed`, Python compileall,
+JavaScript syntax checks and PPT overflow checks. The deployment still needs a
+Render rebuild from this commit before it is called the live demo.
+
 ## Rollback record
 
 Commit `d75264e` is the preserved DiveSafe MY rollback point. Keep it available
