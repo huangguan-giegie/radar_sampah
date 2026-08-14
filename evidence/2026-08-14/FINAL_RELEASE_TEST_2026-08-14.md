@@ -2,8 +2,8 @@
 
 ## Test record
 
-- Test time: 2026-08-14 21:27 KST / 2026-08-14 12:27 UTC
-- GitHub main: `5373128d3b5dcbefac08a34a57faa5bdd1ee9e08`
+- Test time: 2026-08-14 21:31 KST / 2026-08-14 12:31 UTC
+- GitHub main: `7138abf401ed7efad92b330088d2f15f167c0dae`
 - Render frontend: `https://team04-marine-observation-frontend.onrender.com`
 - Render API: `https://team04-marine-observation-api.onrender.com`
 - Data boundary: synthetic/public data only; no personal or sensitive data
@@ -12,8 +12,8 @@
 ## Deployment alignment
 
 The Render frontend and API were manually redeployed from the latest `main`
-commit `5373128`. Render logs showed the checkout of that commit and a
-successful build. The API returned successfully after the redeploy.
+commit `7138abf`. Render logs showed the checkout of that commit and successful
+builds for both services. The API returned successfully after the redeploy.
 
 ## Live API checks
 
@@ -22,9 +22,8 @@ successful build. The API returned successfully after the redeploy.
 | `GET /health` | Passed — HTTP 200, database configured | response: `{"database":"configured","status":"ok"}` |
 | `GET /api/options` | Passed — HTTP 200, five area labels and version returned | `marine-form-options-2026-08-14-v1` |
 | `GET /api/context` | Passed — HTTP 200, five OBIS records and data version returned | `obis-malaysia-public-2026-08-14-v1` |
-| Valid `POST /api/observations` | Passed — HTTP 201 | synthetic Plastic packaging record, id 11 |
-| Valid `POST /api/observations` status check | Passed — HTTP 201 | synthetic Glass record, id 13 |
-| `GET /api/observations` after create | Passed — HTTP 200; id 13 was read back | 13 synthetic records currently returned |
+| Valid `POST /api/observations` | Passed — HTTP 201 | synthetic Metal record, id 16 |
+| `GET /api/observations` after create | Passed — HTTP 200; id 16 was read back | 16 synthetic records currently returned |
 | Missing category | Passed — HTTP 400 | `Missing required fields` |
 | Out-of-range latitude | Passed — HTTP 400 | `Coordinates are out of range` |
 

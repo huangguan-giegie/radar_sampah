@@ -260,17 +260,17 @@ screenshots before those checks are marked as formally passed.
 
 ## Final release test record - 14 August 2026
 
-At 2026-08-14 21:27 KST / 12:27 UTC, Huang Guan completed the deployed
+At 2026-08-14 21:31 KST / 12:31 UTC, Huang Guan completed the deployed
 release checks using synthetic values only. Both Render services were manually
-deployed from GitHub `main` commit `5373128d3b5dcbefac08a34a57faa5bdd1ee9e08`.
+deployed from GitHub `main` commit `7138abf401ed7efad92b330088d2f15f167c0dae`.
 
 - `/health`: HTTP 200; PostgreSQL is configured on Render.
 - `/api/options`: HTTP 200; catalogue `marine-form-options-2026-08-14-v1`
   returned all five area labels.
 - `/api/context`: HTTP 200; five OBIS records returned with data version
   `obis-malaysia-public-2026-08-14-v1`.
-- Valid `POST /api/observations`: HTTP 201; synthetic records were created.
-- `GET /api/observations`: HTTP 200; a newly created record was read back.
+- Valid `POST /api/observations`: HTTP 201; synthetic record id 16 was created.
+- `GET /api/observations`: HTTP 200; id 16 was read back after creation.
 - Missing category and out-of-range latitude: HTTP 400 with safe validation
   messages.
 - Deployed frontend: Report -> Review -> Confirm -> Results completed with
