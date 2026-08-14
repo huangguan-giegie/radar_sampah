@@ -71,6 +71,8 @@ DiveSafe runtime.
 
 ## DiveSafe implementation check — 15 August 2026
 
+- Release commits: `73f133f` contains the product switch and `4689ac7` records
+  the deployment check.
 - Backend tests: `python -m pytest tests -q` from `actual-project/backend` — 18
   passed.
 - Frontend tests: `node --test actual-project/frontend/tests/workflow.test.mjs`
@@ -86,6 +88,10 @@ DiveSafe runtime.
   earlier Marine Litter build (`/api/dive-sites` returned 404). Push the new
   `main` commit, wait for both Render services to redeploy, then repeat the
   DiveSafe smoke path against PostgreSQL.
+- After the push, the live API returned `/health`, `/api/dive-sites`,
+  `/api/species`, `/api/briefing/tioman-demo` and `/api/context`. A synthetic
+  profile, fallback recognition and sighting were written and read back. The
+  frontend now contains the DiveSafe flow and points to the Render API.
 
 The current code keeps the old litter API for rollback. It does not make a
 claim that an external recognition provider, a legal rule or a scientific
