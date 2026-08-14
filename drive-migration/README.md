@@ -69,6 +69,13 @@ deck, QA notes, team information and course references can show format or
 process, but they must not be copied as marine requirements, data claims,
 testing evidence or product screenshots.
 
+The reference area mirrors the old HealthFirst folder structure with these
+subfolders: `Retrospective`, `Team Formation`, `System Architecture`,
+`Iteration Build`, `Data Governance`, `Others`, `Feedbacks` and
+`Design Artefacts`. The selected files already migrated remain visible at the
+reference-folder root; source-only videos and cross-team material stay in the
+old Drive space and are recorded in the migration manifest.
+
 ## Working rules
 
 - Keep the actual scope and safety limits visible.

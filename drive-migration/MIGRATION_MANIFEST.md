@@ -74,3 +74,9 @@ data, testing evidence or claims.
 
 The Drive root now includes `README.md`, which explains the folder structure,
 the code/evidence workflow and the HealthFirst reference boundary.
+
+The `99 Reference - HealthFirst Example` folder now mirrors the old source
+layout with subfolders for Retrospective, Team Formation, System Architecture,
+Iteration Build, Data Governance, Others, Feedbacks and Design Artefacts.
+Selected reference files remain at the reference root for easy access; this
+does not alter the actual marine-project folders.
