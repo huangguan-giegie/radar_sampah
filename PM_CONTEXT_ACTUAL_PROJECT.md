@@ -250,3 +250,10 @@ to the allowed observation categories, database schema or location precision.
    and API-failure retry behaviour.
 3. Keep the option catalogue source-labelled and review it with Darli before
    adding any new category or more precise location.
+
+## Manual area coverage note - 14 August 2026
+
+Huang Guan manually tried all five area labels in the deployed frontend. This
+confirms UI coverage across the full catalogue. The release record still needs
+the individual response statuses, saved-record/read-back evidence and
+screenshots before those checks are marked as formally passed.
