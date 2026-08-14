@@ -112,6 +112,13 @@ test("uses the source-labelled option catalogue for category examples and areas"
   assert.deepEqual(getAreaSuggestions(catalog), ["East coast Peninsular Malaysia"]);
 });
 
+test("renders approximate area as a select so all catalogue choices are visible", () => {
+  const html = readFileSync(resolve(frontendDir, "index.html"), "utf8");
+
+  assert.match(html, /<select name="area"[^>]*required/);
+  assert.doesNotMatch(html, /<input name="area"/);
+});
+
 test("keeps the submitted draft available when the API cannot be reached", () => {
   assert.equal(
     getRetryMessage(),

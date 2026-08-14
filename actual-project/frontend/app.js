@@ -39,7 +39,7 @@ const retryButton = document.querySelector("#retry-button");
 const confirmButton = document.querySelector("#confirm-button");
 const categorySelect = form.elements.namedItem("category");
 const categoryHint = document.querySelector("#category-hint");
-const areaOptions = document.querySelector("#area-options");
+const areaSelect = document.querySelector("#area-options");
 const areaHint = document.querySelector("#area-hint");
 
 function updateCategoryHint() {
@@ -49,12 +49,24 @@ function updateCategoryHint() {
 
 function renderOptionCatalog(catalog) {
   state.optionCatalog = catalog;
-  areaOptions.replaceChildren();
-  getAreaSuggestions(catalog).forEach((area) => {
+  const currentArea = areaSelect.value;
+  const areas = getAreaSuggestions(catalog);
+  areaSelect.replaceChildren();
+  areas.forEach((area) => {
     const option = document.createElement("option");
     option.value = area;
-    areaOptions.append(option);
+    option.textContent = area;
+    areaSelect.append(option);
   });
+  if (!areaSelect.options.length) {
+    const fallback = document.createElement("option");
+    fallback.value = "Selected Malaysian coastal area";
+    fallback.textContent = fallback.value;
+    areaSelect.append(fallback);
+  }
+  areaSelect.value = areas.includes(currentArea)
+    ? currentArea
+    : areaSelect.options[0].value;
   updateCategoryHint();
   if (catalog.area_source?.scope_note) areaHint.textContent = catalog.area_source.scope_note;
 }

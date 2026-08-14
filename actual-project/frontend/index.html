@@ -76,8 +76,9 @@
               </label>
               <label class="field">
                 <span>Approximate area</span>
-                <input name="area" maxlength="120" value="Selected Malaysian coastal area" list="area-options" aria-describedby="area-hint" required />
-                <datalist id="area-options"></datalist>
+                <select name="area" id="area-options" aria-describedby="area-hint" required>
+                  <option value="Selected Malaysian coastal area">Selected Malaysian coastal area</option>
+                </select>
                 <small id="area-hint" class="field-hint">Choose a coarse demonstration area; it is not a litter survey site.</small>
                 <small data-error-for="area"></small>
               </label>
