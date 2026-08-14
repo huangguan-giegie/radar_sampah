@@ -83,3 +83,7 @@ raw videos and cross-team evidence remain source-only because they are not
 marine-project artefacts and some are shared-folder material. The migration
 manifest records the source links and classification. No old Drive file was
 deleted, renamed or edited.
+
+The new Drive root now contains `README.md`, which explains the purpose and
+usage of every project folder, the GitHub/Render workflow, and the HealthFirst
+reference boundary.
