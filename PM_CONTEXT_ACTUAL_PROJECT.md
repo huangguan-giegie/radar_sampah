@@ -290,3 +290,16 @@ Darli still needs to confirm the five area names and source wording before the
 team adds new categories or more precise locations. The current records and
 priority output remain synthetic/illustrative and are not a survey, scientific
 finding or enforcement decision.
+
+## Post-redeploy smoke recheck - 14 August 2026
+
+At 21:37 KST / 12:37 UTC, both Render services were live from `main` commit
+`0357dbb52d514da256f56f02ad18926bdedf2dcc`. `/health`, `/api/options`, and
+`/api/context` returned HTTP 200. A synthetic Metal observation returned HTTP
+201 as id 17 and was read back through `GET /api/observations`; missing category
+returned HTTP 400. The deployed UI completed Report -> Review -> Confirm ->
+Results for North-west Peninsular Malaysia coast at 5.5, 100.5. Frontend
+workflow tests remained 12/12, including API-unavailable retry. No live outage
+was injected into Render. Darli was asked to confirm the five area labels and
+OBIS/CEFAS-Defra source wording before any new categories or precise locations
+are added.

@@ -54,3 +54,15 @@ changing the deployed runtime; this remains a controlled-test limitation.
   remain disabled.
 - Darli still needs to confirm the five area labels and the source wording
   before any new category or more precise location is added.
+
+## Post-redeploy smoke recheck
+
+- Test time: 2026-08-14 21:37 KST / 12:37 UTC
+- Render services were live from `main` commit `0357dbb52d514da256f56f02ad18926bdedf2dcc`.
+- `/health`, `/api/options`, and `/api/context` returned HTTP 200.
+- A synthetic Metal observation returned HTTP 201 as id 17; a subsequent
+  `GET /api/observations` returned the same record.
+- A missing-category request returned HTTP 400.
+- The deployed UI completed Report -> Review -> Confirm -> Results with the
+  North-west Peninsular Malaysia coast label and coordinates 5.5, 100.5.
+- The automated frontend suite remained 12/12, including API failure retry.
