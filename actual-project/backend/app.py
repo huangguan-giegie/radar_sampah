@@ -34,7 +34,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.engine import Engine
 
-from recognition_adapter import recognise
+from recognition_adapter import recognise, recognise_litter
 
 
 DATA_VERSION = "marine-observation-v1"
@@ -188,6 +188,71 @@ badges_table = Table(
     Column("label", String(160), nullable=False),
     Column("created_at", DateTime(timezone=True), nullable=False),
 )
+litter_reports_table = Table(
+    "litter_reports",
+    metadata,
+    Column("id", Integer, primary_key=True),
+    Column("area_id", String(80), nullable=False),
+    Column("category", String(64), nullable=False),
+    Column("quantity", Integer, nullable=False, default=1),
+    Column("observed_at", String(40), nullable=False),
+    Column("detection", String(80), nullable=False),
+    Column("priority", String(12), nullable=False),
+    Column("image_url", String(500)),
+    Column("note", Text),
+    Column("created_at", DateTime(timezone=True), nullable=False),
+)
+litter_detections_table = Table(
+    "litter_detections",
+    metadata,
+    Column("id", Integer, primary_key=True),
+    Column("report_id", ForeignKey("litter_reports.id"), nullable=False, unique=True),
+    Column("method", String(80), nullable=False),
+    Column("status", String(40), nullable=False),
+    Column("category", String(64), nullable=False),
+    Column("created_at", DateTime(timezone=True), nullable=False),
+)
+litter_priorities_table = Table(
+    "litter_priorities",
+    metadata,
+    Column("id", Integer, primary_key=True),
+    Column("report_id", ForeignKey("litter_reports.id"), nullable=False, unique=True),
+    Column("level", String(12), nullable=False),
+    Column("severity_score", Integer, nullable=False),
+    Column("reason", Text, nullable=False),
+    Column("created_at", DateTime(timezone=True), nullable=False),
+)
+cleanup_missions_table = Table(
+    "cleanup_missions",
+    metadata,
+    Column("id", String(80), primary_key=True),
+    Column("title", String(160), nullable=False),
+    Column("area_id", String(80), nullable=False),
+    Column("region", String(80), nullable=False),
+    Column("scheduled_for", String(40), nullable=False),
+)
+cleanup_joins_table = Table(
+    "cleanup_joins",
+    metadata,
+    Column("id", Integer, primary_key=True),
+    Column("mission_id", ForeignKey("cleanup_missions.id"), nullable=False),
+    Column("created_at", DateTime(timezone=True), nullable=False),
+)
+cleanup_evidence_table = Table(
+    "cleanup_evidence",
+    metadata,
+    Column("id", Integer, primary_key=True),
+    Column("mission_id", ForeignKey("cleanup_missions.id")),
+    Column("before_report_id", ForeignKey("litter_reports.id")),
+    Column("after_report_id", ForeignKey("litter_reports.id")),
+    Column("item_count", Integer, nullable=False),
+    Column("image_url", String(500)),
+    Column("before_image_url", String(500)),
+    Column("after_image_url", String(500)),
+    Column("impact_note", Text),
+    Column("note", Text),
+    Column("created_at", DateTime(timezone=True), nullable=False),
+)
 
 
 def normalise_database_url(database_url: str | None) -> str:
@@ -219,12 +284,16 @@ def load_data_file(filename: str) -> dict[str, Any]:
 
 def contains_personal_identifier(payload: Any) -> bool:
     if isinstance(payload, dict):
-        return bool(PERSONAL_IDENTIFIER_FIELDS.intersection(payload)) or any(
+        return bool(PERSONAL_IDENTIFIER_FIELDS.intersection(str(key).lower() for key in payload)) or any(
             contains_personal_identifier(value) for value in payload.values()
         )
     if isinstance(payload, list):
         return any(contains_personal_identifier(value) for value in payload)
     return False
+
+
+def contains_precise_location(payload: Any) -> bool:
+    return isinstance(payload, dict) and bool(PRECISE_LOCATION_FIELDS.intersection(str(key).lower() for key in payload))
 
 
 def create_engine_for_url(database_url: str) -> Engine:
@@ -240,6 +309,7 @@ def initialise_database(engine: Engine) -> None:
         load_data_file("species_directory.json"),
         load_data_file("responsible_diving_briefings.json"),
     )
+    tidetrace_catalog = load_data_file("tidetrace_catalog.json")
     sample_ids = {sample["id"] for sample in samples}
     with engine.begin() as connection:
         existing_ids = set(connection.execute(select(context_table.c.id)).scalars().all())
@@ -306,6 +376,9 @@ def initialise_database(engine: Engine) -> None:
                         checks=json.dumps(briefing["checks"]),
                     )
                 )
+        for mission in tidetrace_catalog["missions"]:
+            if connection.execute(select(cleanup_missions_table.c.id).where(cleanup_missions_table.c.id == mission["id"])).first() is None:
+                connection.execute(insert(cleanup_missions_table).values(**mission))
 
 
 def parse_payload(payload: Any) -> tuple[dict[str, Any] | None, str | None]:
@@ -506,7 +579,7 @@ def parse_sighting_payload(payload: Any, site_ids: set[str], species_ids: set[st
         return None, "A JSON object is required"
     if contains_personal_identifier(payload):
         return None, "Personal identifier fields are not accepted"
-    if PRECISE_LOCATION_FIELDS.intersection(payload):
+    if contains_precise_location(payload):
         return None, "Exact coordinate fields are not accepted"
     site_id = str(payload.get("site_id") or "").strip()
     species_id = str(payload.get("species_id") or "").strip()
@@ -523,6 +596,106 @@ def parse_sighting_payload(payload: Any, site_ids: set[str], species_ids: set[st
     if note and len(note) > 600:
         return None, "note must be at most 600 characters"
     return {"site_id": site_id, "species_id": species_id, "observed_at": observed_at.isoformat(), "note": note}, None
+
+
+def tidetrace_catalogue() -> dict[str, Any]:
+    return load_data_file("tidetrace_catalog.json")
+
+
+def parse_litter_report_payload(payload: Any, area_ids: set[str]) -> tuple[dict[str, Any] | None, str | None]:
+    if not isinstance(payload, dict):
+        return None, "A JSON object is required"
+    if contains_personal_identifier(payload):
+        return None, "Personal identifier fields are not accepted"
+    if contains_precise_location(payload):
+        return None, "Exact coordinate fields are not accepted"
+    area_id = str(payload.get("area_id") or "").strip()
+    category = ALLOWED_CATEGORIES.get(str(payload.get("category") or "").strip().lower())
+    if area_id not in area_ids or category is None:
+        return None, "A known area_id and supported category are required"
+    try:
+        quantity = int(payload.get("quantity", 1))
+    except (TypeError, ValueError):
+        return None, "quantity must be a positive whole number"
+    if quantity < 1 or quantity > 500:
+        return None, "quantity must be between 1 and 500"
+    timestamp = str(payload.get("observed_at") or datetime.now(timezone.utc).isoformat()).strip()
+    try:
+        observed_at = datetime.fromisoformat(timestamp.replace("Z", "+00:00"))
+    except ValueError:
+        return None, "observed_at must be a valid ISO 8601 timestamp"
+    if observed_at.tzinfo is None:
+        observed_at = observed_at.replace(tzinfo=timezone.utc)
+    image_url = str(payload.get("image_url") or "").strip() or None
+    if image_url and not (image_url.startswith("/assets/") or image_url.startswith("https://")):
+        return None, "image_url must use HTTPS or a local /assets/ path"
+    note = str(payload.get("note") or "").strip() or None
+    if note and len(note) > 600:
+        return None, "note must be at most 600 characters"
+    priority = "high" if category == "Fishing gear" else "medium" if category in {"Plastic packaging", "Glass", "Metal"} else "low"
+    return {"area_id": area_id, "category": category, "quantity": quantity, "observed_at": observed_at.isoformat(), "detection": "reporter_selected", "priority": priority, "image_url": image_url, "note": note}, None
+
+
+def litter_report_dict(row: Any) -> dict[str, Any]:
+    return {"id": row.id, "area_id": row.area_id, "category": row.category, "quantity": row.quantity, "observed_at": row.observed_at, "detection": row.detection, "priority": row.priority, "image_url": row.image_url, "note": row.note, "created_at": row.created_at.isoformat(), "location_precision": "area", "demo": True}
+
+
+def litter_assessments(engine: Engine, report_id: int) -> tuple[dict[str, Any], dict[str, Any]]:
+    with engine.connect() as connection:
+        detection = connection.execute(select(litter_detections_table).where(litter_detections_table.c.report_id == report_id)).first()
+        priority = connection.execute(select(litter_priorities_table).where(litter_priorities_table.c.report_id == report_id)).first()
+    return (
+        {"method": detection.method, "status": detection.status, "category": detection.category, "needs_user_confirmation": False, "illustrative": True},
+        {"level": priority.level, "severity_score": priority.severity_score, "reason": priority.reason, "illustrative": True, "disclaimer": "Illustrative demonstration priority only; it is not an enforcement decision."},
+    )
+
+
+def mission_dict(engine: Engine, row: Any) -> dict[str, Any]:
+    with engine.connect() as connection:
+        joined_count = connection.execute(select(func.count()).select_from(cleanup_joins_table).where(cleanup_joins_table.c.mission_id == row.id)).scalar_one()
+    return {"id": row.id, "title": row.title, "area_id": row.area_id, "region": row.region, "scheduled_for": row.scheduled_for, "joined_count": joined_count, "demo": True}
+
+
+def parse_cleanup_evidence_payload(payload: Any, mission_ids: set[str], report_ids: set[int]) -> tuple[dict[str, Any] | None, str | None]:
+    if not isinstance(payload, dict):
+        return None, "A JSON object is required"
+    if contains_personal_identifier(payload):
+        return None, "Personal identifier fields are not accepted"
+    if contains_precise_location(payload):
+        return None, "Exact coordinate fields are not accepted"
+    mission_id = str(payload.get("mission_id") or "").strip()
+    before_report_id = payload.get("before_report_id")
+    after_report_id = payload.get("after_report_id")
+    try:
+        before_report_id = int(before_report_id) if before_report_id is not None else None
+        after_report_id = int(after_report_id) if after_report_id is not None else None
+    except (TypeError, ValueError):
+        return None, "before_report_id and after_report_id must be report IDs"
+    try:
+        item_count = int(payload.get("item_count", 0))
+    except (TypeError, ValueError):
+        return None, "item_count must be a positive whole number"
+    if (mission_id and mission_id not in mission_ids) or item_count < 0 or item_count > 10000:
+        return None, "item_count must be between 0 and 10000 and mission_id must be known when supplied"
+    if before_report_id is not None and before_report_id not in report_ids:
+        return None, "before_report_id must reference a known report"
+    if after_report_id is not None and after_report_id not in report_ids:
+        return None, "after_report_id must reference a known report"
+    if not mission_id and before_report_id is None and after_report_id is None:
+        return None, "mission_id or a before_report_id/after_report_id is required"
+    image_url = str(payload.get("image_url") or "").strip() or None
+    before_image_url = str(payload.get("before_image_url") or "").strip() or None
+    after_image_url = str(payload.get("after_image_url") or "").strip() or None
+    for field, value in (("image_url", image_url), ("before_image_url", before_image_url), ("after_image_url", after_image_url)):
+        if value and not (value.startswith("/assets/") or value.startswith("https://")):
+            return None, f"{field} must use HTTPS or a local /assets/ path"
+    note = str(payload.get("note") or "").strip() or None
+    if note and len(note) > 600:
+        return None, "note must be at most 600 characters"
+    impact_note = str(payload.get("impact_note") or "").strip() or None
+    if impact_note and len(impact_note) > 600:
+        return None, "impact_note must be at most 600 characters"
+    return {"mission_id": mission_id or None, "before_report_id": before_report_id, "after_report_id": after_report_id, "item_count": item_count, "image_url": image_url, "before_image_url": before_image_url, "after_image_url": after_image_url, "impact_note": impact_note, "note": note}, None
 
 
 def create_app(database_url: str | None = None, testing: bool = False) -> Flask:
@@ -706,6 +879,113 @@ def create_app(database_url: str | None = None, testing: bool = False) -> Flask:
                 )
             )
         return jsonify({"recognition": {**result, "image_url": image_url, "demo": True}, "data_version": DIVE_SAFE_DATA_VERSION})
+
+    @application.get("/api/litter-options")
+    def get_litter_options():
+        catalog = tidetrace_catalogue()
+        return jsonify({"categories": catalog["categories"], "areas": catalog["areas"], "demo": True, "data_version": catalog["version"]})
+
+    @application.post("/api/litter-recognize")
+    def recognize_litter():
+        payload = request.get_json(silent=True)
+        if not isinstance(payload, dict):
+            return jsonify({"error": "A JSON object is required"}), 400
+        if contains_personal_identifier(payload) or contains_precise_location(payload):
+            return jsonify({"error": "Personal identifier and exact coordinate fields are not accepted"}), 400
+        image_url = str(payload.get("image_url") or "").strip()
+        if not image_url or not (image_url.startswith("/assets/") or image_url.startswith("https://")):
+            return jsonify({"error": "image_url must use HTTPS or a local /assets/ path"}), 400
+        catalog = tidetrace_catalogue()
+        categories = {item["value"] for item in catalog["categories"]}
+        result = recognise_litter(image_url, str(payload.get("category_hint") or "").strip() or None, categories)
+        return jsonify({"recognition": {**result, "image_url": image_url, "demo": True}, "data_version": catalog["version"]})
+
+    @application.get("/api/litter-reports")
+    def get_litter_reports():
+        with engine.connect() as connection:
+            rows = connection.execute(select(litter_reports_table).order_by(litter_reports_table.c.id)).all()
+        return jsonify({"reports": [litter_report_dict(row) for row in rows], "demo": True, "data_version": tidetrace_catalogue()["version"]})
+
+    @application.post("/api/litter-reports")
+    def create_litter_report():
+        catalog = tidetrace_catalogue()
+        data, error = parse_litter_report_payload(request.get_json(silent=True), {item["id"] for item in catalog["areas"]})
+        if error:
+            return jsonify({"error": error}), 400
+        assert data is not None
+        with engine.begin() as connection:
+            inserted = connection.execute(insert(litter_reports_table).values(**data, created_at=datetime.now(timezone.utc)))
+            report_id = inserted.inserted_primary_key[0]
+            severity_score = 90 if data["priority"] == "high" else 55 if data["priority"] == "medium" else 25
+            connection.execute(insert(litter_detections_table).values(report_id=report_id, method=data["detection"], status="reporter_suggestion", category=data["category"], created_at=datetime.now(timezone.utc)))
+            connection.execute(insert(litter_priorities_table).values(report_id=report_id, level=data["priority"], severity_score=severity_score, reason="Illustrative priority derived from the selected litter category.", created_at=datetime.now(timezone.utc)))
+            row = connection.execute(select(litter_reports_table).where(litter_reports_table.c.id == report_id)).first()
+        detection, priority = litter_assessments(engine, report_id)
+        return jsonify({"report": litter_report_dict(row), "detection": detection, "priority": priority, "demo": True, "data_version": catalog["version"]}), 201
+
+    @application.get("/api/litter-heatmap")
+    def get_litter_heatmap():
+        catalog = tidetrace_catalogue()
+        with engine.connect() as connection:
+            rows = connection.execute(select(litter_reports_table.c.area_id, litter_reports_table.c.category)).all()
+        areas = []
+        for area in catalog["areas"]:
+            area_reports = [row for row in rows if row.area_id == area["id"]]
+            category_counts = {category: sum(row.category == category for row in area_reports) for category in ALLOWED_CATEGORIES.values()}
+            high_risk_count = category_counts["Fishing gear"]
+            severity_score = min(100, sum(30 if row.category == "Fishing gear" else 20 if row.category in {"Plastic packaging", "Glass", "Metal"} else 10 for row in area_reports))
+            priority = "high" if high_risk_count or severity_score >= 60 else "medium" if severity_score else "low"
+            areas.append({**area, "report_count": len(area_reports), "category_counts": category_counts, "severity_score": severity_score, "priority": priority, "approximate": True, "no_exact_location": True})
+        return jsonify({"areas": areas, "demo": True, "data_version": catalog["version"]})
+
+    @application.get("/api/cleanup-missions")
+    def get_cleanup_missions():
+        with engine.connect() as connection:
+            rows = connection.execute(select(cleanup_missions_table).order_by(cleanup_missions_table.c.scheduled_for)).all()
+        return jsonify({"missions": [mission_dict(engine, row) for row in rows], "demo": True, "data_version": tidetrace_catalogue()["version"]})
+
+    @application.post("/api/cleanup-missions/<mission_id>/join")
+    def join_cleanup_mission(mission_id: str):
+        payload = request.get_json(silent=True)
+        if payload not in ({}, None) or (isinstance(payload, dict) and (contains_personal_identifier(payload) or PRECISE_LOCATION_FIELDS.intersection(payload))):
+            return jsonify({"error": "Anonymous join requests do not accept personal or location data"}), 400
+        with engine.begin() as connection:
+            row = connection.execute(select(cleanup_missions_table).where(cleanup_missions_table.c.id == mission_id)).first()
+            if row is None:
+                return jsonify({"error": "Unknown cleanup mission"}), 404
+            connection.execute(insert(cleanup_joins_table).values(mission_id=mission_id, created_at=datetime.now(timezone.utc)))
+        return jsonify({"mission": mission_dict(engine, row), "demo": True, "data_version": tidetrace_catalogue()["version"]}), 201
+
+    @application.post("/api/cleanup-evidence")
+    def create_cleanup_evidence():
+        with engine.connect() as connection:
+            mission_ids = set(connection.execute(select(cleanup_missions_table.c.id)).scalars().all())
+            report_ids = set(connection.execute(select(litter_reports_table.c.id)).scalars().all())
+        data, error = parse_cleanup_evidence_payload(request.get_json(silent=True), mission_ids, report_ids)
+        if error:
+            return jsonify({"error": error}), 400
+        assert data is not None
+        with engine.begin() as connection:
+            inserted = connection.execute(insert(cleanup_evidence_table).values(**data, created_at=datetime.now(timezone.utc)))
+            row = connection.execute(select(cleanup_evidence_table).where(cleanup_evidence_table.c.id == inserted.inserted_primary_key[0])).first()
+        impact = "stable"
+        if row.before_report_id is not None and row.after_report_id is not None:
+            with engine.connect() as connection:
+                before_quantity = connection.execute(select(litter_reports_table.c.quantity).where(litter_reports_table.c.id == row.before_report_id)).scalar_one()
+                after_quantity = connection.execute(select(litter_reports_table.c.quantity).where(litter_reports_table.c.id == row.after_report_id)).scalar_one()
+            impact = "improved" if after_quantity < before_quantity else "higher" if after_quantity > before_quantity else "stable"
+        evidence = {"id": row.id, "mission_id": row.mission_id, "before_report_id": row.before_report_id, "after_report_id": row.after_report_id, "item_count": row.item_count, "image_url": row.image_url, "before_image_url": row.before_image_url, "after_image_url": row.after_image_url, "impact_note": row.impact_note, "impact": impact, "note": row.note, "created_at": row.created_at.isoformat(), "demo": True}
+        impact_payload = {"level": impact, "illustrative": True, "disclaimer": "Illustrative before/after comparison only; not an enforcement finding."}
+        return jsonify({"evidence": evidence, "impact": impact_payload, "demo": True, "data_version": tidetrace_catalogue()["version"]}), 201
+
+    @application.get("/api/community-progress")
+    def get_community_progress():
+        with engine.connect() as connection:
+            report_count = connection.execute(select(func.count()).select_from(litter_reports_table)).scalar_one()
+            join_count = connection.execute(select(func.count()).select_from(cleanup_joins_table)).scalar_one()
+            item_count = connection.execute(select(func.coalesce(func.sum(cleanup_evidence_table.c.item_count), 0))).scalar_one()
+            mission_count = connection.execute(select(func.count()).select_from(cleanup_missions_table)).scalar_one()
+        return jsonify({"progress": {"report_count": report_count, "mission_join_count": join_count, "verified_item_count": item_count, "mission_count": mission_count, "privacy_note": "Anonymous, region-level demonstration counters only."}, "demo": True, "data_version": tidetrace_catalogue()["version"]})
 
     @application.get("/api/sightings")
     def get_sightings():

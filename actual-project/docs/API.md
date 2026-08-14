@@ -1,66 +1,58 @@
-# DiveSafe MY API Contract
+# TideTrace MY API Contract
 
-Local base URL: `http://localhost:5000`. Render uses the API URL in the
-project links. All examples use synthetic data.
+Local base URL: `http://localhost:5000`. All request examples are synthetic
+or illustrative. This student demo never accepts exact coordinates or personal
+details.
 
 ## Active endpoints
 
-### Catalogues
+- `GET /health` returns `200` when the Flask process and database are ready.
+- `GET /api/litter-options` returns the five fixed litter types and broad
+  Malaysian reporting areas. Areas are labels, not survey coordinates.
+- `POST /api/litter-reports` accepts `area_id`, `category`, optional positive
+  `quantity`, optional `observed_at`, a safe `image_url` and a short `note`.
+  It returns the saved demo report and a fixed-category,
+  illustrative priority. It rejects names, contacts, credentials and precise
+  locations.
+- `GET /api/litter-reports` returns saved demo reports without coordinates.
+- `POST /api/litter-recognize` accepts an approved HTTPS image URL or
+  `/assets/` demo path and an optional `category_hint`. The normal result is a labelled demo
+  fallback. A provider call is possible only when
+  `LITTER_RECOGNITION_ENABLED=true` and a private HTTPS endpoint is configured.
+  Detection is a suggestion, not verified evidence.
+- `GET /api/litter-heatmap` returns broad, source-labelled area summaries with
+  an illustrative severity score and priority. It is not a live alert map.
+- `GET /api/cleanup-missions` returns demo missions. `POST
+  /api/cleanup-missions/<mission_id>/join` increments an anonymous demo join
+  count. Neither route is dispatch, safety approval or a permit.
+- `POST /api/cleanup-evidence` accepts a mission ID, item count, optional safe
+  image URLs, before/after image URLs and short impact/note text. It records
+  illustrative evidence only.
+- `GET /api/community-progress` returns simple demo report, mission, join and
+  item counts. It does not prove litter removal, pollution reduction or impact.
 
-- `GET /api/dive-sites` returns broad site cards with region and source/version
-  labels. No exact wildlife coordinates are returned.
-- `GET /api/species` returns the source-labelled species directory.
-- `GET /api/species/<site_id>` returns the directory for a known demo site.
-- `GET /api/briefing/<site_id>` returns safety checks and a reminder to follow
-  the operator and current official instructions.
+## Typical flow
 
-### Profile
+1. Read `GET /api/litter-options`.
+2. Create one broad-area report with `POST /api/litter-reports`.
+3. Confirm the demo or provider suggestion from `POST /api/litter-recognize`.
+4. Read `GET /api/litter-heatmap`, join a demo mission and add evidence.
+5. Read `GET /api/community-progress` and list endpoints after a refresh.
 
-`POST /api/profile` accepts a synthetic nickname, experience level and a short
-interest list. Names, email, phone, account and password fields are rejected.
-The response is a demo profile ID and privacy note. No login is created.
+## Configuration boundary
 
-### Recognition
+`DATABASE_URL` is private on Render; local development falls back to SQLite.
+`FRONTEND_ORIGINS` contains the deployed frontend URL.
 
-`POST /api/recognize` accepts an approved HTTPS image URL or `/assets/` demo
-path and an optional species hint. Without a private HTTPS adapter it returns:
+`LITTER_RECOGNITION_ENABLED` defaults to `false`. A live provider is allowed
+only when it is exactly `true` and `LITTER_RECOGNITION_API_URL` is HTTPS.
+`LITTER_RECOGNITION_API_KEY` stays private in Render. The timeout is set by
+`LITTER_RECOGNITION_TIMEOUT_MS` (default `4000`). No key is returned or stored
+in report data.
 
-```json
-{
-  "status": "demo_fallback",
-  "candidates": ["clownfish-demo"],
-  "provider": "demo",
-  "needs_user_confirmation": true,
-  "source": "synthetic/public demonstration data"
-}
-```
+## Legacy rollback routes
 
-An external provider suggestion uses `status: provider_suggestion` and still
-needs user confirmation. A provider key never appears in a response.
-
-### Sightings
-
-`POST /api/sightings` accepts only `site_id`, `species_id`, `observed_at` and
-an optional short `note`. Exact latitude/longitude, names and contacts are
-rejected. A successful response is `201` and contains the saved site-level
-record plus collection/badge information.
-
-`GET /api/sightings` returns saved synthetic records without coordinates.
-`GET /api/collection/<profile_id>` returns the demo collection and badges.
-
-### Health
-
-`GET /health` returns `200` when the Flask process and database are ready.
-
-## Legacy compatibility routes
-
-`GET/POST /api/observations`, `GET /api/context` and `GET /api/options` remain
-for rollback and old sample checks. They are not shown in the DiveSafe main
-flow and must not be used to claim a litter survey or enforcement outcome.
-
-## Data boundary
-
-PostgreSQL is used when `DATABASE_URL` is set; local SQLite is the fallback.
-Static JSON data records source URL, retrieval date, attribution, version and
-sensitivity. Broad locations are for demonstration only. No endpoint proves a
-species identity, ecological change, permit status or enforcement decision.
+DiveSafe routes (`/api/profile`, `/api/dive-sites`, `/api/species`,
+`/api/briefing`, `/api/recognize`, `/api/sightings` and collection routes) and
+the earlier observation routes remain in the repository as legacy rollback
+paths. They are not part of TideTrace MY, its screenshots or its demo claim.

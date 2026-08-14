@@ -1,10 +1,10 @@
-# TEAM 04 | DIVESAFE MY DELIVERABLES
+# TEAM 04 | TIDETRACE MY DELIVERABLES
 
-**Version 2.0 | 15 August 2026**
+**Version 3.0 | 15 August 2026**
 
 This folder contains the English handover, social contract, QA checklist,
-reflection notes and onboarding deck for DiveSafe MY. The wording is short on
-purpose so a student can explain it in a demo.
+reflection notes and onboarding deck for TideTrace MY. The wording is short so
+a student can explain the demo.
 
 ## Files
 
@@ -15,23 +15,25 @@ purpose so a student can explain it in a demo.
 | `documents/Marine_MVP_Work_Plan_and_Handover.md` | Ownership and handover |
 | `documents/Marine_MVP_QA_and_Deployment_Checklist.md` | Browser/API release checks |
 | `documents/Team04_Marine_Miro_Reflection_Speaking_Notes.md` | Team and PM reflection |
-| `presentation/Team04 Marine Observation Onboarding Presentation.pptx` | DiveSafe MY 19-slide deck |
+| `presentation/Team04 Marine Observation Onboarding Presentation.pptx` | TideTrace MY 19-slide deck |
 
-The DOCX files are generated from the Markdown sources with
-`python build_documents.py`. The deck is edited separately and follows the
-same DiveSafe flow.
+Markdown is the editable source. DOCX files can be regenerated with
+`python build_documents.py`; the deck is edited separately. Existing Drive
+copies are retained until a deliberate rebuild and visual QA are recorded.
 
 ## Product boundary
 
-DiveSafe MY uses a synthetic profile, broad dive sites, source-labelled species
-examples, a responsible-diving briefing, an approximate map and a confirmed
-synthetic sighting. Optional recognition is a demo suggestion unless a private
-adapter is approved. No names, contact details, passwords or exact sensitive
-wildlife locations are stored.
+TideTrace MY uses a broad litter report, fixed categories, a clear demo
+recognition suggestion, broad heatmap context, anonymous mission joins,
+illustrative evidence and progress. No identity data, credentials or exact
+coordinates are stored.
 
-The old HealthFirst and marine-litter files are read-only references or
-rollback material. They are not evidence for the DiveSafe product. The Sample
-Project PGIE was not changed.
+The old DiveSafe, earlier marine-litter and HealthFirst files remain as
+legacy/rollback or reference material. They are not current TideTrace evidence.
+The Sample Project PGIE was not changed.
+
+Commit `d75264e` is the preserved DiveSafe rollback point. Keep it available
+for recovery; do not use it as TideTrace demo evidence.
 
 ## Project links
 
@@ -45,4 +47,5 @@ Project PGIE was not changed.
 
 Record the commit, test time, screenshots, API statuses and known limits in
 the QA checklist and PM context. Passing a checklist supports a course demo;
-it does not prove a species, permit, ecological impact or enforcement result.
+it does not prove a detection, pollution source, cleanup outcome, legal result
+or environmental impact.

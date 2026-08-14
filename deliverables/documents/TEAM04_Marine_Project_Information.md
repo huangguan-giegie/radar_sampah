@@ -1,25 +1,25 @@
-# Team 04 - DiveSafe MY Project Information
+# Team 04 - TideTrace MY Project Information
 
-**Version 2.0 | 15 August 2026**
+**Version 3.0 | 15 August 2026**
 
-> Use synthetic or public data only. This student demo is not a permit, legal
-> guide, scientific proof or enforcement tool.
+> Use synthetic or public data only. This student demo is not survey proof,
+> emergency dispatch, legal advice or enforcement evidence.
 
 ## Project overview
 
-DiveSafe MY is a small web guide for divers in Malaysia. A user chooses a
-practice profile, opens a broad dive-site guide, reads a responsible-diving
-briefing and records a synthetic sighting. The page also shows a species
-directory and an approximate map.
+TideTrace MY is a small web demo for marine-litter reporting and cleanup
+planning in Malaysia. A user records a broad-area litter report, sees a
+labelled suggestion, reads broad heatmap context, joins a demo mission and
+views simple progress.
 
-`Profile -> Site -> Guide -> Briefing -> Confirm -> Sighting`
+`Report -> Recognize -> Heatmap -> Join mission -> Evidence -> Progress`
 
 ## Team roles
 
 | Member | Main role |
 |---|---|
 | Huang Guan | PM, integration, release checks and evidence |
-| Hnin Darli | Data review, source notes and map context |
+| Hnin Darli | Data review, source notes and heatmap context |
 | Qian Jiang | UI/UX, frontend and accessibility |
 | LiHanXia | Flask API and validation |
 | Keith Junn Chong | PostgreSQL/SQLite and persistence |
@@ -27,20 +27,18 @@ directory and an approximate map.
 
 ## Included in this MVP
 
-- Synthetic profile with nickname, experience level and interests.
-- Two broad demo dive sites and a source-labelled species directory.
-- Responsible-diving briefing, approximate map and accessible list fallback.
-- Optional image suggestion. With no approved provider, it is a local demo
-  suggestion and needs user confirmation.
-- Sighting, collection count and an illustrative contributor badge.
+- Five fixed litter types and broad Malaysian reporting areas.
+- A short report, deterministic demo recognition and clear confirmation text.
+- Broad heatmap/list context, anonymous mission join and item-count evidence.
+- Simple community progress labels.
 - PostgreSQL on Render and SQLite fallback for local work.
 
 ## Not claimed
 
-We do not save names, contact details, passwords or exact sensitive locations.
-We do not claim verified species identity, live conditions, ecological impact,
-permit status, pollution source or enforcement action. Quizzes and community
-features belong to Iteration 3 and are not part of this build.
+We do not save identity data, passwords, credentials or exact coordinates. We
+do not claim verified detection, pollution source, cleanup completion,
+environmental impact, safety risk or legal result. DiveSafe MY is retained as
+legacy rollback material, not current TideTrace scope.
 
 ## Links
 

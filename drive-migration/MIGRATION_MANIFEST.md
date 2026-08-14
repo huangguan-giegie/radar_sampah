@@ -305,3 +305,32 @@ created at [Team04 DiveSafe MY Onboarding Presentation - editable](https://docs.
 because the old native Slides file could not be replaced byte-for-byte. The old
 editable copy was renamed `Archive - Marine Observation editable (pre-DiveSafe)`;
 the raw PPTX file kept its existing Drive ID.
+
+## TideTrace MY documentation alignment - 15 August 2026
+
+The active student-demo name is now **TideTrace MY - Marine Litter Reporting
+and Cleanup Demo for Malaysia**. The active flow is `Report -> Recognize ->
+Heatmap -> Join mission -> Evidence -> Progress`. It uses five fixed litter
+categories, broad Malaysian area labels, source-labelled/synthetic context and
+anonymous demo counts.
+
+This is a scope and documentation alignment. The existing GitHub repository
+and Render service names retain their historical marine-observation identifiers
+because they are already connected deployment identifiers. TideTrace is not a
+live reporting, emergency-dispatch, survey or enforcement system. No active
+endpoint accepts identity data or exact coordinates. Detection, priority,
+heatmap, mission, evidence and progress outputs are illustrative only.
+
+Render's official recognition configuration is
+`LITTER_RECOGNITION_ENABLED`, `LITTER_RECOGNITION_API_URL`,
+`LITTER_RECOGNITION_API_KEY` and `LITTER_RECOGNITION_TIMEOUT_MS`.
+Recognition is disabled by default and may call a provider only with exactly
+`true` and a private HTTPS URL. Values stay in Render, not Git or Drive.
+
+DiveSafe MY and earlier marine-observation paths are preserved as legacy
+rollback records. They are not deleted and must not be presented as TideTrace
+features, current screenshots or product evidence. HealthFirst and Sample
+Project material remains reference-only and unchanged.
+
+The preserved DiveSafe rollback commit is `d75264e`. It remains available for
+recovery while TideTrace MY is the active documented scope.

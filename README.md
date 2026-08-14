@@ -1,31 +1,28 @@
 # Team 04 Real Project Migration
 
-This folder separates the new project from the earlier HealthFirst onboarding example.
+This folder holds the active TideTrace MY student project and preserved reference/rollback material.
 
-## Current project decision
+## Current project
 
-The latest Team 04 discussion selected **Idea 1 Version 2** as the working direction:
+**TideTrace MY - Marine Litter Reporting and Cleanup Demo for Malaysia** is the active scope:
 
-> Marine-life observation and reporting layer only.
+`Report -> Recognize -> Heatmap -> Join mission -> Evidence -> Progress`
 
-The latest scope refinement is to use **marine litter as the main reporting flow** and use marine-life data from OBIS as a map/context layer. The MVP should use one Malaysian coastal area, one reporting flow and a small set of litter categories. The team should not build a second marine-animal reporting flow in the first iteration.
+The MVP uses five fixed litter categories, broad Malaysian area labels, synthetic/public examples and anonymous demo counts. It does not collect identity data, exact coordinates or secrets. It does not prove litter source, cleanup completion, environmental impact, legal status or enforcement action.
+
+Recognition is a labelled demo fallback by default. A private provider is only allowed when `LITTER_RECOGNITION_ENABLED=true` and an HTTPS URL has been reviewed by the team.
 
 ## Folder layout
 
-- `actual-project/` — new project documents and starter code/configuration.
-- `references/healthfirst-example/` — copied examples from the earlier HealthFirst project. These are reference material only and must not be treated as the new product scope.
-- `drive-migration/` — record of the files and links selected for the new Project Governance Portfolio.
+- `actual-project/` - active runtime, docs and deployment configuration.
+- `deliverables/` - editable Markdown sources and Drive-ready documents.
+- `references/healthfirst-example/` - read-only historical examples.
+- `drive-migration/` - governance and migration record.
 
-## Safety boundary
+## Legacy and rollback boundary
 
-Use synthetic or public data only. Do not collect personal identifiers. Do not expose exact locations of threatened species. AI/CV output must be labelled as an illustrative aid and must not be presented as verified species identity, pollution source proof or an environmental enforcement decision.
+DiveSafe MY and the earlier marine-observation/litter paths are retained as rollback history. They are not the active TideTrace product flow. HealthFirst material is reference-only and must not be used as TideTrace evidence.
 
 ## Deliverables
 
-The adapted governance documents, handover and QA material, reflection notes
-and 19-slide Marine Observation onboarding deck are in `deliverables/`. The
-Markdown files there are editable sources; the DOCX/PPTX files are the copies
-for Drive and the Project Governance Portfolio.
-
-The old HealthFirst deck, documents and screenshots remain under
-`references/healthfirst-example/` for structure and process reference only.
+The editable sources are in `deliverables/documents/`. Existing DOCX/PPTX copies are retained for Drive. Do not claim they were regenerated unless the document build and visual QA were actually run.

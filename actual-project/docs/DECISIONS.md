@@ -1,44 +1,34 @@
 # Team 04 Decisions
 
-## 2026-08-15 - DiveSafe MY product switch
+## 2026-08-15 - TideTrace MY direction
 
-- The active product name is **DiveSafe MY - Endangered Species Hotspot Guide
-  for Divers in Malaysia**.
-- The user journey is profile, site, species guide, briefing, confirmation and
-  sighting.
-- The old marine-litter endpoints and tables stay as a rollback layer. They are
-  not shown in the new frontend or presentation.
-- Iteration 1 is Prepare and Explore. Iteration 2 is Identify and Contribute.
-  Iteration 3 is Learn and Connect. Quizzes, community feed and larger social
-  features stay on the roadmap.
+- The active product is **TideTrace MY - Marine Litter Reporting and Cleanup
+  Demo for Malaysia**.
+- The demo flow is Report -> Recognize -> Heatmap -> Join mission -> Evidence
+  -> Community progress.
+- It uses one broad Malaysian-area catalogue, five fixed litter categories and
+  anonymous demo counts.
+- DiveSafe MY remains in the repository as a legacy rollback record. It is not
+  the current user journey, deck story or evidence claim.
 
-## 2026-08-15 - Data and safety
+## 2026-08-15 - Safety and AI boundary
 
-- Profiles use synthetic nicknames only. No names, contact details, accounts or
-  passwords are accepted.
-- Sites and species use public or synthetic source-labelled data. Sensitive
-  locations are coarse or masked.
-- A sighting stores site ID, species ID, date and a short note. It never stores
-  exact wildlife coordinates.
-- Recognition is a deterministic demo fallback unless a private HTTPS adapter
-  is approved. A suggestion is not a confirmed species result.
-- No external AI or computer vision is required for the first demo.
-- Briefings must not state unverified permit or legal rules as facts.
+- Reports use `area_id`, not latitude, longitude, GPS or exact location.
+- No names, contact details, accounts, passwords or secrets are accepted.
+- Recognition defaults to a deterministic demo fallback. A provider can be
+  called only when `LITTER_RECOGNITION_ENABLED=true` and its private URL is
+  HTTPS.
+- A detection, heatmap, priority, mission, evidence count or progress value is
+  illustrative. None proves litter source, safety risk, legal duty, cleanup or
+  environmental impact.
 
-## 2026-08-14 - Technical choices
+## 2026-08-15 - Technical choices
 
-- Flask and Gunicorn serve the API. The static frontend uses plain HTML, CSS
-  and JavaScript with Leaflet and an accessible list fallback.
-- Render uses PostgreSQL through `DATABASE_URL`; local work uses SQLite when it
-  is absent.
-- Profile, dive-site, species, briefing, sighting, recognition, collection and
-  badge data have separate tables. Legacy observations remain separate.
-- Static JSON files are loaded at startup so the demo does not rely on live
-  OBIS or a live recognition provider.
-
-## 2026-08-14 - Reference links
-
-- Su's GitHub search and MakerBay repository are architecture references only.
-  We do not copy their old PHP, MySQL or Arduino implementation.
-- Public source URLs, retrieval dates, attribution and sensitivity flags stay
-  beside the sample data and in the API response.
+- Flask/Gunicorn serves the API; the frontend is plain HTML, CSS and
+  JavaScript with an accessible list fallback.
+- Render uses PostgreSQL through `DATABASE_URL`; local development uses SQLite
+  when it is absent.
+- Active data is stored separately for reports, missions, anonymous joins and
+  cleanup evidence. Legacy DiveSafe and observation data is retained.
+- Static source-labelled data is used for the demo. The flow does not depend
+  on a live environmental feed or external AI service.

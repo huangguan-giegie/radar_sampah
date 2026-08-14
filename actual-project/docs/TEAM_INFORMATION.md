@@ -1,52 +1,37 @@
-# Team 04 - DiveSafe MY Project Information
+# Team 04 - TideTrace MY Project Information
 
-**DiveSafe MY - Marine-safety learning MVP**
+**TideTrace MY - Student marine-litter demo**
 
 ## Project overview
 
-DiveSafe MY helps a diver prepare for a Malaysian dive, open a broad dive-site
-guide, read a short wildlife briefing and record a synthetic sighting. The
-project uses source-labelled public data and simple rules. It does not replace
-a guide, a permit check or a species expert.
-
-The active flow is:
-
-`Profile -> Site -> Species directory -> Briefing -> Confirm -> Sighting`
-
-The site map uses broad demo pins. Exact sensitive wildlife locations are never
-accepted or returned.
+TideTrace MY helps a user record a broad litter report, see a labelled demo
+suggestion, explore broad area context and join a demo cleanup mission. It
+uses synthetic/public examples and anonymous counts. It is not a reporting
+authority, emergency service or environmental survey.
 
 ## Team roles
 
 | Member | Working role | Main responsibility |
 |---|---|---|
-| Huang Guan | Project Manager and integration | Scope, decisions, repository, deployment and evidence |
-| Hnin Darli | Data analysis and visualisation | Public-data review, source notes and map context |
-| Qian Jiang | UI/UX and frontend | Accessible interface, responsive layout and interaction flow |
-| LiHanXia | Backend/API | Validation, Flask routes and service integration |
-| Keith Junn Chong | Database/data integration | PostgreSQL/SQLite schema, persistence and source loading |
-| Benshuai Su | Recognition and reference support | Adapter boundary, source register and plain-language limits |
+| Huang Guan | Project Manager and integration | scope, decisions, deployment and evidence |
+| Hnin Darli | Data analysis and visualisation | source notes, category data and heatmap context |
+| Qian Jiang | UI/UX and frontend | accessible flow, responsive layout and retry path |
+| LiHanXia | Backend/API | validation, Flask routes and service integration |
+| Keith Junn Chong | Database/data integration | PostgreSQL/SQLite schema and persistence |
+| Benshuai Su | Recognition and reference support | fallback boundary and source register |
 
 ## Shared boundaries
 
 - Use synthetic or public data only.
-- Do not collect names, emails, phone numbers, accounts or passwords.
-- Do not publish exact threatened-species locations.
-- Treat recognition as a demo suggestion until a provider is reviewed.
-- Do not claim verified species identity, ecological outcomes, legal advice or
-  enforcement decisions.
-- Keep the old HealthFirst and marine-litter material as reference/rollback
-  only.
+- Do not collect identity data, secrets or exact coordinates.
+- Keep recognition, priorities, mission counts and impact wording illustrative.
+- Do not claim a pollution source, legal result, real cleanup or ecological
+  outcome.
+- Keep DiveSafe and HealthFirst material as legacy/rollback or reference only.
 
-## Main routes
+## Active routes
 
-`/api/dive-sites`, `/api/species`, `/api/briefing/<site_id>`, `/api/profile`,
-`/api/recognize`, `/api/sightings` and `/api/collection/<profile_id>` are the
-active DiveSafe routes. The older observation routes remain compatible but are
-not the main product journey.
-
-## Source register
-
-- [OBIS Malaysia-region occurrence query](https://api.obis.org/occurrence?geometry=POLYGON((99%203,105%203,105%207,99%207,99%203))&size=50) - public context reference.
-- [CEFAS/Defra CLiP vocabulary](https://environment.data.gov.uk/dataset/faaf9538-2665-48c9-afc2-b976daa77cd2) - broad marine-litter reference only.
-- Su's [MakerBay reference repository](https://github.com/MakerBay/Marine_Litter_Detective) - architecture inspiration only; its old PHP, MySQL and Arduino code is not copied.
+`/api/litter-options`, `/api/litter-reports`, `/api/litter-recognize`,
+`/api/litter-heatmap`, `/api/cleanup-missions`, `/api/cleanup-evidence` and
+`/api/community-progress` support the TideTrace demo. Earlier routes remain
+available only for rollback.

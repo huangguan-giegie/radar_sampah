@@ -1,33 +1,28 @@
-# Security Plan - DiveSafe MY
+# Security Plan - TideTrace MY
 
-## Implemented demo controls
+## Demo controls
 
-- Accept synthetic/public profile and sighting data only.
-- Reject names, contact details, accounts, passwords and exact coordinates.
-- Validate site IDs, species IDs, timestamps, note length and image URL scheme.
-- Store PostgreSQL credentials only in Render environment variables.
-- Use `FRONTEND_ORIGINS` for the deployed frontend.
-- Keep sensitive wildlife locations coarse or masked.
-- Use a deterministic recognition fallback unless a private HTTPS adapter is
-  approved.
-- Keep source, version and demo/non-enforcement wording visible.
+- Accept a broad area ID, fixed litter type and short description only.
+- Reject personal details, secrets and exact coordinates.
+- Validate IDs, text length, confirmation state, team size, equipment choice
+  and image URL scheme.
+- Store `DATABASE_URL`, `LITTER_RECOGNITION_API_KEY` and provider URL only in
+  Render environment settings.
+- Keep `LITTER_RECOGNITION_ENABLED=false` unless the team approves a provider
+  and its data flow. A call needs both `true` and an HTTPS URL.
+- Use `FRONTEND_ORIGINS` for the deployed frontend and keep source/version and
+  demo wording visible.
 
 ## Not claimed
 
-This MVP has no production authentication, role model, MFA, formal retention
-process, PDPA compliance claim, public raw-file storage or incident-response
-system. It does not provide verified species recognition, legal advice,
-pollution-source attribution, ecological assessment or enforcement support.
-
-## Adapter boundary
-
-An adapter URL and key may be configured privately in Render later. The key is
-never committed, returned by the API or written into a sighting. Provider
-errors, timeouts and unknown results fall back to a suggestion that needs user
-confirmation.
+This MVP has no production login, role model, public upload storage, formal
+retention process, PDPA compliance claim, incident-response service or
+emergency dispatch. Detection, hotspot context, priority, mission and impact
+are illustrative. They do not prove pollution source, waste ownership, safety
+risk, legal duty, cleanup completion or environmental benefit.
 
 ## Before real use
 
-The team would need a privacy review, access model, retention/deletion process,
-backups, monitoring, source update review and a separate decision about any
-external recognition data flow. The class demo should stay synthetic.
+The team would need privacy and safety reviews, consent, access controls,
+moderation, retention/deletion rules, backups, monitoring, source refresh
+review, provider agreement and a real operational escalation process.

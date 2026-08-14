@@ -1,46 +1,45 @@
-# Data Management Plan - DiveSafe MY
+# Data Management Plan - TideTrace MY
 
-## Purpose and boundary
+## Purpose
 
-DiveSafe MY is a student learning MVP. It uses synthetic profiles, public or
-synthetic site/species examples and coarse locations. It is not a public data
-collection service and does not store real diver identity data.
+TideTrace MY is a student marine-litter reporting and cleanup-planning demo.
+It uses synthetic/public examples and broad area labels. It is not a live
+reporting service, survey database or enforcement system.
 
 ## Data classes
 
-| Class | Examples | Table or file |
+| Class | Examples | Use |
 |---|---|---|
-| Demo profile | nickname, level, interests | `demo_profiles` |
-| Site catalogue | name, broad region, habitat, precision label | `dive_sites`, `data/dive_sites.json` |
-| Species catalogue | common/scientific label, note, sensitivity | `species`, `data/species_directory.json` |
-| Briefing | checks, title and emergency reminder | `briefings`, `data/responsible_diving_briefings.json` |
-| Sighting | site ID, species ID, date and short note | `sightings` |
-| Recognition | image URL, candidate, status and method | `recognition_results` |
-| Collection | confirmed sighting count and badge | `species_collections`, `contributor_badges` |
-| Legacy data | earlier litter observations/context | legacy tables and files only |
+| Litter options | five fixed types and broad areas | report form only |
+| Report | area ID, litter type, short description, time | illustrative record |
+| Detection | label, method, confidence/status | suggestion only |
+| Hotspot context | source, version, broad label | learning context |
+| Cleanup mission | confirmed report, team size, equipment plan | demo planning |
+| Impact | report/mission counts and progress labels | demo feedback |
+| Legacy data | DiveSafe and earlier observation records | rollback only |
 
-## Storage controls
+## Storage and quality
 
-- Render uses PostgreSQL through `DATABASE_URL`; local work uses SQLite.
-- Schema setup is idempotent and does not delete old tables.
-- `site_species` keeps the directory relationship separate from the site and
-  species records.
-- No names, emails, phone numbers, passwords or raw image files are stored.
-- Exact sensitive wildlife coordinates are rejected and never returned.
-- Image input is only a safe demo path or HTTPS URL.
-- Source URL, retrieval date, attribution, sensitivity and data version stay
-  beside each static sample.
+- Render uses PostgreSQL through private `DATABASE_URL`; local development uses
+  SQLite when it is absent.
+- Schema setup is idempotent and does not delete legacy tables.
+- Reports use a broad area ID. Exact latitude, longitude, GPS and coordinates
+  are rejected and never returned by active endpoints.
+- Names, email, phone, accounts, passwords, API keys and raw image files are
+  not collected. An image input is a demo asset path or HTTPS URL only.
+- Static samples keep a source URL, retrieval date, licence/attribution,
+  sensitivity and version where available.
 
-## Recognition and sharing
+## External recognition
 
-With no approved adapter, recognition is a deterministic local fallback. A
-private HTTPS adapter may be configured later with Render environment values.
-Its result is always a suggestion and needs user confirmation. Provider keys
-are not committed or written to the database.
+Recognition is off by default. It can only call a private HTTPS provider when
+`LITTER_RECOGNITION_ENABLED=true`; its URL, key and timeout are Render-only
+environment values. A result remains a suggestion and does not prove litter
+type, source, ownership, risk or cleanup priority.
 
-## Retention and use
+## Retention and sharing
 
-The current data is for a class demo. If the project later accepts real reports,
-the team must agree access, retention and deletion rules before deployment.
-The data cannot be used as a biodiversity survey, permit decision, pollution
-source claim or enforcement record.
+Current records are for a class demo. Before collecting real reports, the team
+must agree on consent, access, retention, deletion, moderation, incident
+handling and provider-data rules. Do not use this data to claim pollution
+trends, ecological impact, legal status or enforcement evidence.

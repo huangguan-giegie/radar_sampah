@@ -1,50 +1,46 @@
-export const DEMO_DIVE_SITES = [
-  { id: "tioman-demo", name: "Tioman reef demonstration zone", map_latitude: 2.788, map_longitude: 104.169, briefing: "Check your buddy, buoyancy and sea state. Stay with your guide." },
-  { id: "perhentian-demo", name: "Perhentian reef demonstration zone", map_latitude: 5.918, map_longitude: 102.736, briefing: "Use calm entries, watch your depth and protect the reef." },
+export const DEMO_HOTSPOTS = [
+  { id: "tioman-coast", area: "Tioman coastal area", level: "High", context: "Illustrative reports of packaging after busy weekends." },
+  { id: "kuala-selangor-coast", area: "Kuala Selangor coastal area", level: "Medium", context: "Mixed shoreline litter reported by local volunteers." },
+  { id: "terengganu-coast", area: "Terengganu coastal area", level: "Watch", context: "Recurring fishing-gear and container reports." },
 ];
 
-export const DEMO_SPECIES = [
-  { id: "clownfish-demo", name: "Clownfish", note: "Orange body with pale bands; similar species exist." },
-  { id: "parrotfish-demo", name: "Parrotfish", note: "A broad reef-fish demo label." },
-  { id: "seahorse-sensitive-demo", name: "Seahorse", note: "Sensitive example. Exact locations are never recorded." },
-];
+const litterTypes = ["Plastic packaging", "Fishing gear", "Glass", "Metal", "Other"];
+const equipmentPlans = ["Gloves, bags and sorting sheet", "Gloves, tongs and sharps container", "Join an organised cleanup"];
 
-const profiles = ["Open Water student", "Certified recreational diver", "Dive guide (demo)"];
-const activities = ["Sighting only", "Collection with operator support"];
+export function getDemoHotspots() { return DEMO_HOTSPOTS; }
 
-export function getDemoDiveSites() { return DEMO_DIVE_SITES; }
-export function getSpeciesForSite(siteId) {
-  return DEMO_DIVE_SITES.some((site) => site.id === siteId)
-    ? DEMO_SPECIES.map((species) => ({ ...species, source: "DiveSafe MY demo directory" }))
-    : [];
-}
-
-export function getProgressState(step) {
-  const stages = ["profile", "site", "briefing", "confirm", "record"];
-  const activeIndex = stages.indexOf(step);
-  return Object.fromEntries(stages.map((stage, index) => [stage, index < activeIndex ? "complete" : index === activeIndex ? "active" : "pending"]));
-}
-
-export function getRetryMessage() {
-  return "The service is unavailable. Your confirmed demo record is still here; try again or continue with the demo result.";
-}
-
-export function validateSighting(draft) {
+export function validateLitterReport(draft) {
   const errors = {};
-  if (!profiles.includes(draft.profile)) errors.profile = "Choose your demo diver profile.";
-  if (!DEMO_DIVE_SITES.some((site) => site.id === draft.site_id)) errors.site_id = "Choose a dive site.";
-  if (!getSpeciesForSite(draft.site_id).some((species) => species.id === draft.species_id)) errors.species_id = "Choose a species from the directory.";
-  if (!activities.includes(draft.activity)) errors.activity = "Choose sighting only or collection.";
-  if (!draft.observed_at || Number.isNaN(Date.parse(draft.observed_at))) errors.observed_at = "Enter a valid date and time.";
-  if ((draft.note || "").trim().length > 500) errors.note = "Keep the note within 500 characters.";
+  if (!DEMO_HOTSPOTS.some((hotspot) => hotspot.id === draft.area_id)) errors.area_id = "Choose a broad reporting area.";
+  if (!litterTypes.includes(draft.litter_type)) errors.litter_type = "Choose the main litter type.";
+  if (!(draft.description || "").trim()) errors.description = "Describe what needs attention.";
+  if ((draft.description || "").trim().length > 500) errors.description = "Keep the description within 500 characters.";
   return errors;
 }
 
-export function buildSightingPayload(draft) {
-  return {
-    site_id: draft.site_id,
-    species_id: draft.species_id,
-    observed_at: draft.observed_at.length === 16 ? `${draft.observed_at}:00` : draft.observed_at,
-    note: draft.note?.trim() || null,
-  };
+export function buildLitterReport(draft) {
+  return { area_id: draft.area_id, litter_type: draft.litter_type, description: draft.description.trim() };
+}
+
+export function getDemoDetection(draft) {
+  const label = draft.litter_type === "Mixed litter" ? "Likely mixed shoreline litter" : `Likely ${draft.litter_type.toLowerCase()}`;
+  return { label, confidence: 82, source: "Demo fallback" };
+}
+
+export function validateCleanupMission(mission) {
+  const errors = {};
+  if (!Number.isInteger(Number(mission.team_size)) || Number(mission.team_size) < 1) errors.team_size = "Enter at least one cleanup participant.";
+  if (!equipmentPlans.includes(mission.equipment)) errors.equipment = "Choose the equipment plan.";
+  if (mission.confirmed !== true && mission.confirmed !== "on") errors.confirmed = "Confirm the detection before starting a mission.";
+  return errors;
+}
+
+export function getRetryMessage() {
+  return "Detection is unavailable. Your report is saved locally; retry or continue with the demo result.";
+}
+
+export function getProgressState(step) {
+  const stages = ["report", "detection", "context", "mission", "impact", "progress"];
+  const activeIndex = stages.indexOf(step);
+  return Object.fromEntries(stages.map((stage, index) => [stage, index < activeIndex ? "complete" : index === activeIndex ? "active" : "pending"]));
 }

@@ -1,0 +1,20 @@
+{
+  "version": "tidetrace-my-2026-08-15-v1",
+  "demo": true,
+  "categories": [
+    {"value": "Plastic packaging", "label": "Plastic packaging"},
+    {"value": "Fishing gear", "label": "Fishing gear"},
+    {"value": "Glass", "label": "Glass"},
+    {"value": "Metal", "label": "Metal"},
+    {"value": "Other", "label": "Other"}
+  ],
+  "areas": [
+    {"id": "tioman-coast", "label": "Tioman coastal area", "region": "Pahang"},
+    {"id": "kuala-selangor-coast", "label": "Kuala Selangor coastal area", "region": "Selangor"},
+    {"id": "terengganu-coast", "label": "Terengganu coastal area", "region": "Terengganu"}
+  ],
+  "missions": [
+    {"id": "tioman-shoreline-demo", "title": "Tioman shoreline clean-up", "area_id": "tioman-coast", "region": "Pahang", "scheduled_for": "2026-08-22T09:00:00+08:00"},
+    {"id": "selangor-river-mouth-demo", "title": "Kuala Selangor river-mouth clean-up", "area_id": "kuala-selangor-coast", "region": "Selangor", "scheduled_for": "2026-08-29T09:00:00+08:00"}
+  ]
+}
