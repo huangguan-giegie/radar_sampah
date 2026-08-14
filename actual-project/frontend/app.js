@@ -1,5 +1,7 @@
 import {
   buildObservationPayload,
+  getAreaSuggestions,
+  getCategoryExamples,
   getContextMarkers,
   getProgressState,
   getRetryMessage,
@@ -19,6 +21,7 @@ const state = {
   map: null,
   markers: null,
   result: null,
+  optionCatalog: null,
 };
 
 const form = document.querySelector("#report-form");
@@ -34,6 +37,27 @@ const formMessage = document.querySelector("#form-message");
 const confirmMessage = document.querySelector("#confirm-message");
 const retryButton = document.querySelector("#retry-button");
 const confirmButton = document.querySelector("#confirm-button");
+const categorySelect = form.elements.namedItem("category");
+const categoryHint = document.querySelector("#category-hint");
+const areaOptions = document.querySelector("#area-options");
+const areaHint = document.querySelector("#area-hint");
+
+function updateCategoryHint() {
+  const examples = getCategoryExamples(state.optionCatalog, categorySelect.value);
+  categoryHint.textContent = `Examples from the public litter vocabulary: ${examples}.`;
+}
+
+function renderOptionCatalog(catalog) {
+  state.optionCatalog = catalog;
+  areaOptions.replaceChildren();
+  getAreaSuggestions(catalog).forEach((area) => {
+    const option = document.createElement("option");
+    option.value = area;
+    areaOptions.append(option);
+  });
+  updateCategoryHint();
+  if (catalog.area_source?.scope_note) areaHint.textContent = catalog.area_source.scope_note;
+}
 
 function setStep(step) {
   Object.entries(panels).forEach(([name, panel]) => panel.classList.toggle("is-hidden", name !== step));
@@ -208,6 +232,16 @@ async function loadContext() {
   }
 }
 
+async function loadOptionCatalog() {
+  try {
+    const response = await fetch(`${API_BASE}/api/options`);
+    if (!response.ok) return;
+    renderOptionCatalog(await response.json());
+  } catch {
+    // 保留 HTML 中的安全默认选项，API 不可用时表单仍可提交。
+  }
+}
+
 async function submitConfirmedObservation() {
   if (!state.lastPayload) return;
   confirmButton.disabled = true;
@@ -283,3 +317,5 @@ document.querySelector("#new-observation-button").addEventListener("click", () =
 });
 
 loadContext();
+categorySelect.addEventListener("change", updateCategoryHint);
+loadOptionCatalog();

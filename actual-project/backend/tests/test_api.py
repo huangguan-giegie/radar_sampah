@@ -35,6 +35,25 @@ def test_health_reports_ready_status(client):
     assert response.get_json()["status"] == "ok"
 
 
+def test_options_endpoint_exposes_source_labelled_form_choices(client):
+    response = client.get("/api/options")
+
+    assert response.status_code == 200
+    body = response.get_json()
+    assert body["demo"] is True
+    assert body["category_source"]["license"] == "Open Government Licence v3.0"
+    assert {item["value"] for item in body["categories"]} == {
+        "Plastic packaging",
+        "Fishing gear",
+        "Glass",
+        "Metal",
+        "Other",
+    }
+    assert len(body["areas"]) >= 4
+    assert all("latitude" in item and "longitude" in item for item in body["areas"])
+    assert all(item["sensitivity"] == "aggregated" for item in body["areas"])
+
+
 def test_creating_valid_observation_returns_saved_rule_based_result(client):
     response = client.post("/api/observations", json=valid_observation())
 

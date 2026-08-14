@@ -220,3 +220,14 @@ seeded into the `marine_context` table at API startup. The deployment still
 uses static public context rather than live OBIS requests; the records support
 source-visible demonstration context only and do not prove species identity,
 pollution source or enforcement outcomes.
+
+## Form option catalogue record - 14 August 2026
+
+The entry form now loads `/api/options` from `backend/data/litter_options.json`.
+It keeps the five agreed MVP categories, adds short examples from the public
+CEFAS/Defra marine-litter vocabulary, and offers coarse Malaysian-region area
+suggestions from the OBIS context snapshot. The catalogue is UI guidance only;
+it does not expand the API scope or turn the area labels into survey sites.
+
+The catalogue is also stored in the Real Project Drive Datasets folder:
+https://drive.google.com/file/d/1Kh60z7ggY9YDCI4uwdrsqzHqcEYIn2Af/view

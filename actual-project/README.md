@@ -81,6 +81,7 @@ running locally.
 - `GET /api/observations`
 - `POST /api/observations`
 - `GET /api/context`
+- `GET /api/options`
 
 The API contract is documented in [docs/API.md](docs/API.md). The deploy and
 data controls are documented in [docs/INTEGRATION_CHECKLIST.md](docs/INTEGRATION_CHECKLIST.md)

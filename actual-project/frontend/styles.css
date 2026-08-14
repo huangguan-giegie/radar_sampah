@@ -68,6 +68,7 @@ button, select { cursor: pointer; }
 .field input:focus, .field select:focus, .field textarea:focus { border-color: #13817f; box-shadow: 0 0 0 4px #168f9121; }
 .field [aria-invalid="true"] { border-color: #bd4d4d; background: #fff8f6; }
 .field small { min-height: 1.05rem; color: #ab3f3f; font-size: .72rem; line-height: 1.3; }
+.field .field-hint { min-height: 0; color: #5b7a7d; font-size: .72rem; font-weight: 500; }
 .field-note { margin-top: 18px; }
 .form-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 13px; margin-top: 26px; }
 .button { min-height: 47px; padding: 12px 17px; border: 1px solid transparent; border-radius: 10px; font-weight: 800; letter-spacing: -.01em; transition: transform .15s, background .15s; }

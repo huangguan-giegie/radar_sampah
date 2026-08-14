@@ -7,6 +7,8 @@ import test from "node:test";
 import {
   buildObservationPayload,
   getContextMarkers,
+  getAreaSuggestions,
+  getCategoryExamples,
   getProgressState,
   getRetryMessage,
   normaliseApiResult,
@@ -98,6 +100,16 @@ test("normalises the backend OBIS context shape for the map and source list", ()
       },
     ],
   );
+});
+
+test("uses the source-labelled option catalogue for category examples and areas", () => {
+  const catalog = {
+    categories: [{ value: "Plastic packaging", examples: ["bottles", "bags"] }],
+    areas: [{ value: "East coast Peninsular Malaysia" }],
+  };
+
+  assert.equal(getCategoryExamples(catalog, "Plastic packaging"), "bottles, bags");
+  assert.deepEqual(getAreaSuggestions(catalog), ["East coast Peninsular Malaysia"]);
 });
 
 test("keeps the submitted draft available when the API cannot be reached", () => {

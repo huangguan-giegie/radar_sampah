@@ -98,6 +98,14 @@ URL, retrieval date, attribution, approximate location, taxon/context label and
 a sensitivity flag. Sensitive records must use masked or aggregated
 coordinates; these samples use coarse coordinates and are context only.
 
+## `GET /api/options`
+
+Returns the source-labelled form option catalogue used by the frontend. It
+keeps the five MVP categories, adds short examples from the public CEFAS/Defra
+marine-litter vocabulary, and provides coarse Malaysian-region area
+suggestions from the OBIS context snapshot. These are demonstration choices,
+not a Malaysian litter survey or a claim about a specific beach.
+
 ## Result boundaries
 
 Classification is a transparent category rule. Priority is illustrative and

@@ -40,5 +40,8 @@ The value is a secret and must never be committed.
   context bundle (`obis-malaysia-public-2026-08-14-v1`) with sensitive
   locations masked or aggregated. The bundle is copied into the database at
   startup; the deployed API does not depend on a live OBIS request.
+- `GET /api/options` returns the source-labelled form catalogue used for
+  category examples and coarse area suggestions. It does not expand the
+  five-category MVP or claim that the suggestions are litter survey sites.
 
 See `../docs/API.md` for request and response details.

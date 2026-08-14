@@ -126,6 +126,12 @@ def load_context_samples() -> list[dict[str, Any]]:
         return json.load(context_file)
 
 
+def load_option_catalog() -> dict[str, Any]:
+    data_path = Path(__file__).parent / "data" / "litter_options.json"
+    with data_path.open(encoding="utf-8") as options_file:
+        return json.load(options_file)
+
+
 def create_engine_for_url(database_url: str) -> Engine:
     connect_args = {"check_same_thread": False} if database_url.startswith("sqlite") else {}
     return create_engine(database_url, future=True, connect_args=connect_args)
@@ -341,6 +347,10 @@ def create_app(database_url: str | None = None, testing: bool = False) -> Flask:
     @application.get("/api/context")
     def get_context():
         return jsonify(context_payload(engine))
+
+    @application.get("/api/options")
+    def get_options():
+        return jsonify(load_option_catalog())
 
     @application.get("/api/observations")
     def get_observations():

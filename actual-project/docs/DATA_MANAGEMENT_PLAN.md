@@ -16,6 +16,7 @@ personal images. Do not use exact threatened-species locations.
 | Observation | fixed category, approximate area, time, latitude/longitude, optional demo image URL, note | `observations`; shown as a demo record |
 | Derived result | fixed-category rule, illustrative priority, rule explanation | `observation_classifications` and `observation_priorities`; separate from the original observation |
 | Marine context | five-record static OBIS Malaysia-region sample, attribution, retrieval date, approximate/masked location, sensitivity flag | `marine_context`; map and source-visible context |
+| Form options | broad litter examples and coarse area suggestions with source notes | `backend/data/litter_options.json`; `/api/options`; form hints only |
 
 ## Storage
 

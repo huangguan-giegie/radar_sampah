@@ -64,18 +64,21 @@
             <div class="field-grid">
               <label class="field">
                 <span>Litter category</span>
-                <select name="category" required>
+                <select name="category" required aria-describedby="category-hint">
                   <option>Plastic packaging</option>
                   <option>Fishing gear</option>
                   <option>Glass</option>
                   <option>Metal</option>
                   <option>Other</option>
                 </select>
+                <small id="category-hint" class="field-hint">Examples from the public litter vocabulary: bottles, bags, wrappers, food containers.</small>
                 <small data-error-for="category"></small>
               </label>
               <label class="field">
                 <span>Approximate area</span>
-                <input name="area" maxlength="120" value="Selected Malaysian coastal area" required />
+                <input name="area" maxlength="120" value="Selected Malaysian coastal area" list="area-options" aria-describedby="area-hint" required />
+                <datalist id="area-options"></datalist>
+                <small id="area-hint" class="field-hint">Choose a coarse demonstration area; it is not a litter survey site.</small>
                 <small data-error-for="area"></small>
               </label>
               <label class="field">

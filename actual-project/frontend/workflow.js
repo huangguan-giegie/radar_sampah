@@ -85,6 +85,17 @@ export function normaliseContextItem(item) {
   return normalised;
 }
 
+export function getCategoryExamples(catalog, category) {
+  const item = catalog?.categories?.find((entry) => entry.value === category);
+  return item?.examples?.join(", ") || "public litter examples are not loaded yet";
+}
+
+export function getAreaSuggestions(catalog) {
+  return Array.isArray(catalog?.areas)
+    ? catalog.areas.map((area) => area.value).filter(Boolean)
+    : [];
+}
+
 export function getContextMarkers(contextItems) {
   return contextItems
     .map(normaliseContextItem)
