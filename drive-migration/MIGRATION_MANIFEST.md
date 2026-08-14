@@ -140,9 +140,10 @@ These are new project outputs, not unchanged HealthFirst copies:
 | `deliverables/presentation/Team04 Marine Observation Onboarding Presentation.pptx` | 19-slide English onboarding deck | [Google Slides](https://docs.google.com/presentation/d/1aU_HQoaEwIZ-__RMElYfMce7wdPLfnX4/edit) |
 
 An editable native Slides copy is also available for team updates:
-[Team04 Marine Observation Onboarding Presentation - editable](https://docs.google.com/presentation/d/1vGFr8Px9Tffn62yLFJdaGqdVSPnVpDC8DP2AN_9X65A/edit).
+[Team04 DiveSafe MY Onboarding Presentation - editable](https://docs.google.com/presentation/d/1bFR83Sng4uYm_rUPjwVuzTzwKwcVLWPVoPJl9d-xbTU/edit).
 The imported copy was checked through the Slides outline and contains all 19
-slides.
+slides. The previous editable Marine Observation file is archived and is not
+the current deck.
 
 Matching Markdown sources remain in `deliverables/documents/`; runtime code and
 API/deployment documents remain in `actual-project/`. LibreOffice 26.2.5.2 is
@@ -167,11 +168,13 @@ in place using their existing Drive file IDs, preserving the links above. The
 Google-native editable Slides handoff remains a separate file because its MIME
 type cannot accept raw PPTX bytes; it remains a 19-slide editable copy.
 
-Runtime alignment for this record is `c2f3dae`: Report -> Review/edit ->
-Confirm -> Results; `/health`, `/api/observations`, `/api/context`; Render
-PostgreSQL with local SQLite fallback; Leaflet/OpenStreetMap with an accessible
-list fallback; static source-labelled OBIS context; rule-based illustrative
-priority; external AI/CV disabled; synthetic/public data only.
+Runtime alignment for this record is `b1e5baf`: Profile -> Dive site -> Species
+directory -> Briefing -> Confirm -> Sighting; `/health`, `/api/dive-sites`,
+`/api/species`, `/api/briefing/<site_id>`, `/api/profile`, `/api/recognize` and
+`/api/sightings`; Render PostgreSQL with local SQLite fallback;
+Leaflet/OpenStreetMap with an accessible list fallback; static source-labelled
+public/synthetic context; deterministic recognition fallback; external AI/CV
+disabled by default; no exact sensitive locations.
 
 ## PGIE structure alignment - 14 August 2026
 
