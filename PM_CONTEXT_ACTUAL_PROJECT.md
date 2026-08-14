@@ -73,6 +73,8 @@ label illustrative rules clearly.
 - Imported a native editable Google Slides copy into `03 Design` and verified
   its outline contains all 19 slides; the original PPTX remains there as the
   downloadable source copy.
+- The latest `main` also records this editable-slide handoff in commit
+  `022f9f732f19238b8c9c3db6b444f3c6e40fa9a2`.
 - Generated DOCX copies from the Markdown sources and checked their paragraph,
   table and package structure. A local LibreOffice/`soffice` binary is not
   available in this environment, so DOCX-to-PNG rendering remains a follow-up
