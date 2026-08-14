@@ -262,7 +262,7 @@ screenshots before those checks are marked as formally passed.
 
 At 2026-08-14 21:31 KST / 12:31 UTC, Huang Guan completed the deployed
 release checks using synthetic values only. Both Render services were manually
-deployed from GitHub `main` commit `7138abf401ed7efad92b330088d2f15f167c0dae`.
+deployed from GitHub `main` commit `649277c2e75497451c9cef0dfefe9f07ed9745e0`.
 
 - `/health`: HTTP 200; PostgreSQL is configured on Render.
 - `/api/options`: HTTP 200; catalogue `marine-form-options-2026-08-14-v1`

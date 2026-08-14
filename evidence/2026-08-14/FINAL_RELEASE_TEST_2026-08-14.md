@@ -3,7 +3,7 @@
 ## Test record
 
 - Test time: 2026-08-14 21:31 KST / 2026-08-14 12:31 UTC
-- GitHub main: `7138abf401ed7efad92b330088d2f15f167c0dae`
+- GitHub main: `649277c2e75497451c9cef0dfefe9f07ed9745e0`
 - Render frontend: `https://team04-marine-observation-frontend.onrender.com`
 - Render API: `https://team04-marine-observation-api.onrender.com`
 - Data boundary: synthetic/public data only; no personal or sensitive data
@@ -12,7 +12,7 @@
 ## Deployment alignment
 
 The Render frontend and API were manually redeployed from the latest `main`
-commit `7138abf`. Render logs showed the checkout of that commit and successful
+commit `649277c`. Render logs showed the checkout of that commit and successful
 builds for both services. The API returned successfully after the redeploy.
 
 ## Live API checks
