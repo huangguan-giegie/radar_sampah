@@ -97,3 +97,11 @@ the provider and its data flow. Values stay in Render, not in Git or Drive.
 After a deploy, check `/health`, the site and species catalogues, one synthetic
 profile, one sighting, refresh reads and the retry path. Keep all demo wording
 visible.
+
+## Release check — 15 August 2026
+
+`main` commit `73f133f` is the DiveSafe MY switch. The live API returned the
+health, site, species and briefing responses after the Render redeploy. A
+synthetic profile, demo recognition fallback and sighting were created, then
+read back from PostgreSQL; the fallback response stayed marked
+`needs_user_confirmation: true`.
