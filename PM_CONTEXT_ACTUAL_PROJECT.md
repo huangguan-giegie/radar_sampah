@@ -60,12 +60,26 @@ label illustrative rules clearly.
 - Created and named the new Miro board. The old HealthFirst Miro board remains
   unchanged. The new board now has three concise cards: current scope, MVP
   flow and open decisions.
+- Added the adapted deliverable set under `deliverables/`: project information,
+  social contract, work-plan handover, QA/deployment checklist, Miro reflection
+  notes and a 19-slide Marine Observation onboarding deck. These use the old
+  deck/document structure but contain only the marine MVP scope.
+- Uploaded the DOCX/Markdown sources to the new Drive Governance/Evidence
+  folders and the PPTX to the new Design folder. The file IDs and links are
+  recorded in `drive-migration/MIGRATION_MANIFEST.md`.
+- Generated DOCX copies from the Markdown sources and checked their paragraph,
+  table and package structure. A local LibreOffice/`soffice` binary is not
+  available in this environment, so DOCX-to-PNG rendering remains a follow-up
+  visual check; the PPTX was rendered slide-by-slide and passed the overflow
+  test.
 
 ## Next actions
 
 1. LeanKit setup is deferred by the PM; do not modify the old HealthFirst
    board.
 2. Keep the GitHub, Drive, Miro and Render links in sync as the MVP evolves.
+3. Upload the verified `deliverables/` DOCX and PPTX files into the new Drive
+   Governance/Design/Evidence folders and record their links in the manifest.
 
 ## Verification snapshot — 14 August 2026
 

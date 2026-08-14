@@ -26,6 +26,13 @@ The workflow is:
 HealthFirst material under `../references/healthfirst-example/` is read-only
 reference material. It is not part of this product or its runtime code.
 
+## Governance and presentation handoff
+
+Adapted project information, social contract, work handover, QA checklist,
+Miro reflection notes and the 19-slide onboarding deck are in
+`../deliverables/`. They use this same API, PostgreSQL/SQLite boundary, Render
+services and source-labelled OBIS context.
+
 ## Run locally
 
 Start the API:

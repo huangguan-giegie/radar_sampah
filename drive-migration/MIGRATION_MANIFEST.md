@@ -102,3 +102,22 @@ layout with subfolders for Retrospective, Team Formation, System Architecture,
 Iteration Build, Data Governance, Others, Feedbacks and Design Artefacts.
 Selected reference files remain at the reference root for easy access; this
 does not alter the actual marine-project folders.
+
+## Adapted marine deliverables — 14 August 2026
+
+These are new project outputs, not unchanged HealthFirst copies:
+
+| Local output | Purpose | Drive link |
+|---|---|---|
+| `deliverables/TEAM04_Marine_Project_Information.docx` | Team, scope and links | [Google Doc](https://docs.google.com/document/d/1TS_3soYkpeXXs8wzo9m2_9Khs6k0eU49/edit) |
+| `deliverables/TM04_Marine_Social_Contract.docx` | Working agreement | [Google Doc](https://docs.google.com/document/d/1qMRH9_it0VLtjlyf5WcbwFOpWXha_TQn/edit) |
+| `deliverables/Marine_MVP_Work_Plan_and_Handover.docx` | Ownership and handover | [Google Doc](https://docs.google.com/document/d/19W1niQXJdC3rVam4MTLN1w4Z1enoXo6Y/edit) |
+| `deliverables/Marine_MVP_QA_and_Deployment_Checklist.docx` | Acceptance and release evidence | [Google Doc](https://docs.google.com/document/d/1HJjSd-xeY4y8JJUx3m9qJdcSWaP8SAMD/edit) |
+| `deliverables/Team04_Marine_Miro_Reflection_Speaking_Notes.docx` | Reflection facilitation | [Google Doc](https://docs.google.com/document/d/1V0IVCBnqlVUG-Be1lKUJpqiFNZEhD5-Y/edit) |
+| `deliverables/presentation/Team04 Marine Observation Onboarding Presentation.pptx` | 19-slide English onboarding deck | [Google Slides](https://docs.google.com/presentation/d/1aU_HQoaEwIZ-__RMElYfMce7wdPLfnX4/edit) |
+
+Matching Markdown sources remain in `deliverables/documents/`; runtime code and
+API/deployment documents remain in `actual-project/`. The PPTX passed slide
+overflow checks and the DOCX files passed structural/text checks. The local
+environment has no LibreOffice binary, so DOCX pixel rendering is explicitly
+not claimed as complete.

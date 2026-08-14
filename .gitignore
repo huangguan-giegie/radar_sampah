@@ -6,4 +6,5 @@ __pycache__/
 *.db
 test_*.db
 .DS_Store
-
+tmp/
+*.inspect.ndjson

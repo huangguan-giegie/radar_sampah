@@ -18,6 +18,9 @@ marine-observation project. The earlier HealthFirst project is kept under
    https://github.com/huangguan-giegie/team04-marine-observation-mvp
 5. Put screenshots, test notes, deployment evidence and PGP links in
    `05 Evidence`.
+6. Use `03 Design` for the adapted 19-slide onboarding deck and
+   `01 Governance` for the editable DOCX/Markdown handover documents listed in
+   the migration manifest.
 
 ## Folder guide
 
@@ -61,6 +64,25 @@ Current demo services:
 Use this folder for dated screenshots, API responses, deployment checks,
 usability notes and links to PGP evidence. Name files with the date and a
 short description so another team member can find the evidence quickly.
+
+The adapted QA and deployment checklist is stored here alongside future test
+evidence. It covers the same Render API, PostgreSQL configuration and
+synthetic/public-data boundary as the code in `04 Build`.
+
+### Adapted marine deliverables
+
+The new project copies the useful structure of the old onboarding artefacts
+without copying HealthFirst medical content:
+
+- project information and social contract;
+- work-plan handover and QA/deployment checklist;
+- Miro reflection speaking notes;
+- a 19-slide English Marine Observation onboarding deck.
+
+The editable Markdown sources and DOCX copies are in `01 Governance`; the
+PPTX is in `03 Design`. The local source bundle is under
+`realwork/deliverables/` and the exact Drive links are recorded in
+`MIGRATION_MANIFEST.md`.
 
 ### `99 Reference - HealthFirst Example`
 

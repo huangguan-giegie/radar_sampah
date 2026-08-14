@@ -19,3 +19,13 @@ The latest scope refinement is to use **marine litter as the main reporting flow
 ## Safety boundary
 
 Use synthetic or public data only. Do not collect personal identifiers. Do not expose exact locations of threatened species. AI/CV output must be labelled as an illustrative aid and must not be presented as verified species identity, pollution source proof or an environmental enforcement decision.
+
+## Deliverables
+
+The adapted governance documents, handover and QA material, reflection notes
+and 19-slide Marine Observation onboarding deck are in `deliverables/`. The
+Markdown files there are editable sources; the DOCX/PPTX files are the copies
+for Drive and the Project Governance Portfolio.
+
+The old HealthFirst deck, documents and screenshots remain under
+`references/healthfirst-example/` for structure and process reference only.
