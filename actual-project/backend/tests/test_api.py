@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 
 import pytest
 
-from app import create_app
+from app import context_table, create_app
 
 
 @pytest.fixture
@@ -113,3 +113,29 @@ def test_context_endpoint_exposes_source_and_safety_metadata(client):
     } <= sample.keys()
     assert all(item["source"] == "OBIS" for item in body["context"])
     assert all(item["sensitivity"] == "aggregated" for item in body["context"])
+
+
+def test_context_initialisation_removes_stale_static_records(tmp_path):
+    database_url = f"sqlite:///{tmp_path / 'marine_test.db'}"
+    application = create_app(database_url=database_url, testing=True)
+    engine = application.extensions["marine_engine"]
+    with engine.begin() as connection:
+        connection.execute(
+            context_table.insert().values(
+                id="obsolete-demo-context",
+                source="OBIS",
+                source_url="https://obis.org/",
+                retrieved_at="2026-08-14",
+                license="OBIS data policy",
+                latitude=3.14,
+                longitude=101.69,
+                taxon_or_context_label="Obsolete placeholder",
+                sensitivity="aggregated",
+            )
+        )
+
+    refreshed = create_app(database_url=database_url, testing=True)
+    context = refreshed.test_client().get("/api/context").get_json()["context"]
+
+    assert len(context) == 5
+    assert all(item["id"] != "obsolete-demo-context" for item in context)
