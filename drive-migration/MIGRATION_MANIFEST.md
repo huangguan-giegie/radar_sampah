@@ -295,3 +295,10 @@ The source-of-truth files are the current `actual-project` backend, frontend,
 documents and `deliverables` deck. The Sample Project PGIE remains protected and
 was not edited. Before deployment, keep the current stable commit available for
 rollback and verify the Render frontend points to the matching API service.
+
+Drive sync on 15 August updated the existing Markdown, DOCX, raw PPTX, frontend
+and backend files in the Real Project folders. A new editable Slides copy was
+created at [Team04 DiveSafe MY Onboarding Presentation - editable](https://docs.google.com/presentation/d/1bFR83Sng4uYm_rUPjwVuzTzwKwcVLWPVoPJl9d-xbTU/edit)
+because the old native Slides file could not be replaced byte-for-byte. The old
+editable copy was renamed `Archive - Marine Observation editable (pre-DiveSafe)`;
+the raw PPTX file kept its existing Drive ID.
