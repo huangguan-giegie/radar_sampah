@@ -335,7 +335,10 @@ Project material remains reference-only and unchanged.
 The preserved DiveSafe rollback commit is `d75264e`. It remains available for
 recovery while TideTrace MY is the active documented scope.
 
-The TideTrace code and documentation commit is `f6b3e14`. It includes the new
+The TideTrace code and documentation commit is `393affd`. It includes the new
 litter report, demo recognition, area heatmap, cleanup mission, before/after
-evidence and community progress paths. Render must be rebuilt from this main
-commit before the team presents the new flow.
+evidence and community progress paths. Both Render services were rebuilt from
+this `main` commit. The API smoke check used synthetic data only: health,
+options, recognition fallback, report creation, heatmap, mission join,
+before/after impact and read-back all returned the expected status. PostgreSQL
+was configured on Render and the recognition provider remained disabled.
