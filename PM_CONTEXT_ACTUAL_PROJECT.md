@@ -15,8 +15,8 @@ label illustrative rules clearly.
 - The deployable MVP flow is Report -> Review/edit -> Confirm -> Results.
 - Supported litter categories are Plastic packaging, Fishing gear, Glass,
   Metal and Other.
-- The API contract is `/health`, `GET/POST /api/observations` and
-  `GET /api/context`.
+- The API contract is `/health`, `GET/POST /api/observations`,
+  `GET /api/context` and `GET /api/options`.
 - Render storage uses PostgreSQL through `DATABASE_URL`; local development
   falls back to SQLite when it is not set.
 - The map uses Leaflet/OpenStreetMap with an accessible list fallback. Marine
