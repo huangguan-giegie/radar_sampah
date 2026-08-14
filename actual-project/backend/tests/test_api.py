@@ -98,9 +98,10 @@ def test_context_endpoint_exposes_source_and_safety_metadata(client):
     assert response.status_code == 200
     body = response.get_json()
     assert body["source"] == "OBIS"
-    assert body["data_version"] == "obis-static-sample-v1"
+    assert body["data_version"] == "obis-malaysia-public-2026-08-14-v1"
     assert body["demo"] is True
-    assert len(body["context"]) >= 1
+    assert len(body["context"]) >= 5
+    assert len({item["id"] for item in body["context"]}) == len(body["context"])
     sample = body["context"][0]
     assert {
         "source_url",
@@ -110,3 +111,5 @@ def test_context_endpoint_exposes_source_and_safety_metadata(client):
         "taxon_or_context_label",
         "sensitivity",
     } <= sample.keys()
+    assert all(item["source"] == "OBIS" for item in body["context"])
+    assert all(item["sensitivity"] == "aggregated" for item in body["context"])

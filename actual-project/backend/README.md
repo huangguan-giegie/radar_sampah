@@ -36,7 +36,9 @@ The value is a secret and must never be committed.
 - `POST /api/observations` validates and saves one confirmed observation,
   computes its fixed-category classification and illustrative priority, then
   returns the result.
-- `GET /api/context` returns source-visible static OBIS context records with
-  sensitive locations masked or aggregated.
+- `GET /api/context` returns the five-record static OBIS Malaysia-region
+  context bundle (`obis-malaysia-public-2026-08-14-v1`) with sensitive
+  locations masked or aggregated. The bundle is copied into the database at
+  startup; the deployed API does not depend on a live OBIS request.
 
 See `../docs/API.md` for request and response details.

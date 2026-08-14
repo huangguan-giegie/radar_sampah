@@ -35,7 +35,7 @@ from sqlalchemy.engine import Engine
 
 
 DATA_VERSION = "marine-observation-v1"
-OBIS_DATA_VERSION = "obis-static-sample-v1"
+OBIS_DATA_VERSION = "obis-malaysia-public-2026-08-14-v1"
 SOURCE_LABEL = "synthetic/public demonstration data"
 ALLOWED_CATEGORIES = {
     "plastic packaging": "Plastic packaging",

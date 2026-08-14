@@ -15,8 +15,9 @@ The workflow is:
 - Categories: Plastic packaging, Fishing gear, Glass, Metal and Other.
 - Data: synthetic observation records and public/static context only.
 - Map: Leaflet with OpenStreetMap tiles and an accessible observation list.
-- Context: a source-labelled static OBIS sample; sensitive records are
-  aggregated or location-masked.
+- Context: five source-labelled static OBIS Malaysia-region samples; sensitive
+  records are aggregated or location-masked. The current data version is
+  `obis-malaysia-public-2026-08-14-v1`.
 - Rules: fixed-category classification and an illustrative clean-up priority.
 - No external AI, computer vision, user account, real personal data or image
   upload storage is enabled.
@@ -25,6 +26,21 @@ The workflow is:
 
 HealthFirst material under `../references/healthfirst-example/` is read-only
 reference material. It is not part of this product or its runtime code.
+
+## Drive project workspace
+
+The active governance files are kept in the Real Project PGIE:
+
+https://drive.google.com/drive/folders/18Px2njE27SCiZ4bs-40zgUgm_sRE70Kx
+
+The final Drive audit moved the HealthFirst sample copy and unrelated medical
+datasets out of the active workspace into the recoverable archive:
+
+https://drive.google.com/drive/folders/1tWAKHAZ5RHkeoAkijmVrWzS_UWjBRP8v
+
+The active data area now contains only the Marine synthetic observation sample,
+the source-labelled OBIS context and Marine analysis documents. The separate
+Sample Project PGIE was not modified and remains reference-only.
 
 ## Governance and presentation handoff
 

@@ -73,13 +73,13 @@ returns `201` with this shape:
     "illustrative": true
   },
   "context": {
-    "id": "obis-demo-malaysia-coast-1",
+    "id": "obis-malaysia-ambassis-interrupta-000c8b50",
     "source": "OBIS",
-    "source_url": "https://obis.org/",
+    "source_url": "https://api.obis.org/occurrence?geometry=POLYGON((99%203,105%203,105%207,99%207,99%203))&size=50",
     "retrieved_at": "2026-08-14",
-    "license": "OBIS data policy; attribution required",
-    "approximate_location": { "latitude": 3.14, "longitude": 101.69 },
-    "taxon_or_context_label": "Public marine-life context sample near the selected Malaysian coastal area",
+    "license": "OBIS data policy; dataset-level attribution required",
+    "approximate_location": { "latitude": 5.7, "longitude": 102.7 },
+    "taxon_or_context_label": "Public Malaysia-region occurrence sample",
     "sensitivity": "aggregated"
   },
   "source": "synthetic/public demonstration data",
@@ -90,10 +90,13 @@ returns `201` with this shape:
 
 ## `GET /api/context`
 
-Returns `{ "context": [...], "source": "OBIS", "data_version",
-"demo": true }`. Each record includes a source URL, retrieval date,
-attribution, approximate location, taxon/context label and a sensitivity flag.
-Sensitive records must use masked or aggregated coordinates.
+Returns `{ "context": [...], "source": "OBIS", "data_version":
+"obis-malaysia-public-2026-08-14-v1", "demo": true }`. The current static
+bundle contains five public Malaysia-region occurrence samples retrieved on
+2026-08-14 from a bounded OBIS occurrence query. Each record includes a source
+URL, retrieval date, attribution, approximate location, taxon/context label and
+a sensitivity flag. Sensitive records must use masked or aggregated
+coordinates; these samples use coarse coordinates and are context only.
 
 ## Result boundaries
 

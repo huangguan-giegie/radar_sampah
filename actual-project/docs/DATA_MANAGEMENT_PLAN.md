@@ -15,7 +15,7 @@ personal images. Do not use exact threatened-species locations.
 |---|---|---|
 | Observation | fixed category, approximate area, time, latitude/longitude, optional demo image URL, note | `observations`; shown as a demo record |
 | Derived result | fixed-category rule, illustrative priority, rule explanation | `observation_classifications` and `observation_priorities`; separate from the original observation |
-| Marine context | static OBIS sample, attribution, retrieval date, approximate/masked location, sensitivity flag | `marine_context`; map and source-visible context |
+| Marine context | five-record static OBIS Malaysia-region sample, attribution, retrieval date, approximate/masked location, sensitivity flag | `marine_context`; map and source-visible context |
 
 ## Storage
 
@@ -37,6 +37,9 @@ personal images. Do not use exact threatened-species locations.
 - Mask or aggregate sensitive context locations before they reach the map.
 - Keep the OBIS source URL, retrieval date and attribution in every context
   record.
+- Current bundle: `obis-malaysia-public-2026-08-14-v1`, retrieved 2026-08-14
+  from the bounded OBIS occurrence query used in `backend/data/obis_context.json`.
+  The records are public context examples, not a complete biodiversity survey.
 
 ## Retention and sharing
 

@@ -76,18 +76,39 @@ label illustrative rules clearly.
 - The latest `main` also records this editable-slide handoff in commit
   `022f9f732f19238b8c9c3db6b444f3c6e40fa9a2`.
 - Generated DOCX copies from the Markdown sources and checked their paragraph,
-  table and package structure. A local LibreOffice/`soffice` binary is not
-  available in this environment, so DOCX-to-PNG rendering remains a follow-up
-  visual check; the PPTX was rendered slide-by-slide and passed the overflow
-  test.
+  table and package structure. LibreOffice 26.2.5.2 is now installed and the
+  five DOCX files were exported to PDF and inspected as page PNGs. The current
+  files are readable, have no blank pages or clipped tables, and keep the
+  Marine-only scope. The 19-slide PPTX was regenerated and rendered through
+  LibreOffice plus artifact-tool; no unintended overlap or overflow was found.
 
 ## Next actions
 
 1. LeanKit setup is deferred by the PM; do not modify the old HealthFirst
    board.
 2. Keep the GitHub, Drive, Miro and Render links in sync as the MVP evolves.
-3. Upload the verified `deliverables/` DOCX and PPTX files into the new Drive
-   Governance/Design/Evidence folders and record their links in the manifest.
+3. Keep the verified `deliverables/` DOCX and PPTX files aligned with the
+   Drive Governance/Design/Evidence folders; the quality-upgrade overwrite
+   record and local backup are in the migration manifest.
+
+## Quality upgrade record - 14 August 2026
+
+- Approach: reuse the HealthFirst reference skeleton (narrative order,
+  hierarchy, spacing, footer and page markers) while rewriting all visible
+  content for Marine Observation and retaining the navy/teal/sand theme.
+- Local backup: `realwork/tmp/backups/quality-upgrade-2026-08-14/`, with
+  SHA-256 manifest in `backup-sha256.csv`.
+- Runtime source of truth remains `c2f3dae`; no runtime code or database
+  contract was changed in this presentation/document pass.
+- QA evidence: five DOCX files rendered with LibreOffice to PDFs/PNGs (17
+  pages total); the 19-slide deck rendered with LibreOffice and artifact-tool
+  with no overflow; backend tests passed 10/10, frontend workflow tests passed
+  8/8, syntax checks and `git diff --check` passed; deployed smoke endpoints
+  returned 200/201 using synthetic data and the frontend returned 200.
+- Drive raw DOCX/PPTX files are updated in place after the local QA gate so
+  their existing file IDs and links remain stable. The native editable Slides
+  copy is retained as a separate handoff because Google-native presentations
+  cannot be replaced with raw PPTX bytes in place.
 
 ## Verification snapshot — 14 August 2026
 
@@ -148,3 +169,54 @@ The second old-root deck, `TM04 Onboarding Project Presentation`, was also
 copied unchanged into the same reference folder as `TM04 Onboarding Project
 Presentation - original`. It is kept as a source reference and is not part of
 the marine-project scope.
+
+## PGIE structure alignment record - 14 August 2026
+
+To make handover easier, the Real Project Drive root now contains the same
+named PGIE folder layers as the Sample Project while retaining the original
+numbered Real folders as legacy navigation shells. The aligned tree includes Team Information, Testing,
+Team Meeting, System Architecture, Others, Iteration Build, Security Aspects,
+Design and Analysis Artifacts, Risks, Retrospective, Feedbacks, Industry Mentor
+Communications, Handover and Data Governance, plus the matching nested design,
+handover and analysis/dataset folders.
+
+The Sample Project was not changed. Its datasets, analysis files and template
+placeholders were copied into the matching Real locations as reference
+material. Marine-specific supplements were added alongside them: a data
+dictionary, analysis notes, synthetic observations CSV, source-labelled OBIS
+context JSON, runtime API/DMP/decisions/scope/checklist notes and the Marine
+team-information file. The copied HealthFirst material is not read by the
+Marine runtime and must not be used as Marine evidence.
+
+The Real root also has the current Miro link. A `team reflection vedio - pending`
+item records that an approved recording is still required; no invented video or
+test evidence was added. The migration manifest and root README describe this
+boundary and the preserved numbered structure.
+
+## Canonical Drive path update - 14 August 2026
+
+The active deliverables have now been moved to the Sample-style folders so the
+team can use one clear path: Team Information, Retrospective,
+Handover/Implementation Plan, Testing, Design and Analysis Artifacts and
+Iteration Build. The migration manifest and PM context are at the Real Project
+root. File IDs and links were preserved when the files were moved.
+
+Older duplicate Marine drafts were moved to the root folder
+`Archive - Superseded Marine Drafts` and marked `ARCHIVE -`; they are not
+current evidence. The numbered folders remain only as legacy navigation shells,
+while the mirrored tree is the canonical working structure. The Sample Project
+folder remains unchanged.
+
+## Public dataset integration record - 14 August 2026
+
+The Marine runtime context bundle was refreshed from a bounded public OBIS
+occurrence query covering the Malaysian-region demonstration area. Five records
+are stored in `actual-project/backend/data/obis_context.json` with retrieval
+date, source URL, attribution note and coarse aggregated coordinates. The
+bundle version is `obis-malaysia-public-2026-08-14-v1`.
+
+The same JSON was updated in the Real Project Drive `Datasets` folder and is
+seeded into the `marine_context` table at API startup. The deployment still
+uses static public context rather than live OBIS requests; the records support
+source-visible demonstration context only and do not prove species identity,
+pollution source or enforcement outcomes.
