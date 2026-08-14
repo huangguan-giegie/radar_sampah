@@ -1,35 +1,38 @@
-# Project Scope - Idea 1 Version 2
+# Project Scope - DiveSafe MY
 
 ## Product focus
 
-The Marine Litter Hotspot & Marine-Life Observation MVP helps people record a
-marine-litter observation in one selected Malaysian coastal area and view it
-alongside source-visible marine context. Marine life is an OBIS context layer,
-not a second reporting workflow.
+DiveSafe MY is a marine-safety learning MVP for divers in Malaysia. A user
+chooses a synthetic profile, picks a broad site, reads the wildlife directory
+and briefing, then confirms a synthetic sighting. The map is approximate and
+the list remains available without Leaflet.
 
 ## User journey
 
-1. Enter one synthetic/public litter observation.
-2. Review every field and return to edit if needed.
-3. Confirm and save the report.
-4. See the fixed-category result, illustrative clean-up priority and map/list
-   view.
-5. Review the static OBIS context source and the result boundaries.
+1. Choose a synthetic profile.
+2. Choose a broad demo dive site.
+3. Read the species directory and responsible-dive briefing.
+4. Optionally request a demo recognition suggestion.
+5. Confirm the species and record a site-level sighting.
+6. View collection and badge feedback.
 
-## MVP acceptance boundary
+## MVP boundary
 
-- Five fixed litter categories and five coarse area suggestions in the form:
-  Selected Malaysian coastal area, North-west Peninsular Malaysia coast, East
-  coast Peninsular Malaysia, Terengganu coastal waters and Selangor coastal
-  waters. The labels are demonstration context, not survey sites.
-- Coordinates, time, approximate area, optional sample-image URL and note.
-- PostgreSQL in Render with local SQLite fallback.
-- A five-record static source-labelled OBIS Malaysia-region context bundle
-  (`obis-malaysia-public-2026-08-14-v1`) with coarse coordinates.
-- Leaflet/OpenStreetMap plus an accessible list fallback.
-- Transparent rules only; no LLM, external CV or live unreviewed model.
-- Synthetic/public data only.
+- Two broad demo sites and three source-labelled species examples.
+- Site-level data only; exact sensitive coordinates are rejected.
+- PostgreSQL on Render with SQLite fallback locally.
+- Optional private recognition adapter with a deterministic fallback.
+- Synthetic/public data only and no identity fields.
+- Iteration 3 social and quiz features are roadmap items.
 
-The MVP does not prove pollution sources, species identity, ecological change,
-or environmental enforcement decisions. It does not accept personal details,
-store raw uploaded images or publish exact sensitive-species locations.
+The MVP does not prove species identity, live conditions, ecological change,
+permit status, pollution source or enforcement action. Legacy litter endpoints
+remain for rollback but are not part of the new flow.
+
+## Iterations
+
+| Iteration | Outcome | Status boundary |
+|---|---|---|
+| 1 | Prepare and Explore | profile, sites, directory, briefing and broad map |
+| 2 | Identify and Contribute | fallback suggestion, confirmation, sighting, collection and badge |
+| 3 | Learn and Connect | quizzes, community feed and wider gamification roadmap |

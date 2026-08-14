@@ -1,8 +1,9 @@
 # Team 04 Real Project Drive Guide
 
 This Drive is the working Project Governance Portfolio for the new Team 04
-marine-observation project. The earlier HealthFirst project is kept under
-`99 Reference - HealthFirst Example` and is not the current product.
+marine-observation project. The earlier HealthFirst project is kept in the
+recoverable `Archive - Removed Sample Files` area and is not the current
+product.
 
 ## Start here
 
@@ -84,14 +85,14 @@ PPTX is in `03 Design`. The local source bundle is under
 `realwork/deliverables/` and the exact Drive links are recorded in
 `MIGRATION_MANIFEST.md`.
 
-### `99 Reference - HealthFirst Example`
+### `Archive - Removed Sample Files`
 
 This is a read-only learning/reference area. Its social contract, onboarding
 deck, QA notes, team information and course references can show format or
 process, but they must not be copied as marine requirements, data claims,
 testing evidence or product screenshots.
 
-The reference area mirrors the old HealthFirst folder structure with these
+The archived reference area mirrors the old HealthFirst folder structure with these
 subfolders: `Retrospective`, `Team Formation`, `System Architecture`,
 `Iteration Build`, `Data Governance`, `Others`, `Feedbacks` and
 `Design Artefacts`. The selected files already migrated remain visible at the

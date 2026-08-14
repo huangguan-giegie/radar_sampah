@@ -1,42 +1,40 @@
-# Team 04 — Marine Project Social Contract
+# Team 04 Social Contract - DiveSafe MY
 
-## Shared goal
+**Version 2.0 | 15 August 2026**
 
-We will build a small, useful and honest marine-observation MVP. We will keep the reporting flow simple, use public or synthetic data, and make the limits of every result visible.
+> We use short, clear English because every member should be able to explain
+> the work in the demo.
 
-## Values
+## How we work
 
-| Value | How we show it |
-|---|---|
-| Respect | Listen without interrupting and give specific, kind feedback. |
-| Inclusion | Make space for every member to explain their work and raise concerns. |
-| Accountability | Keep one owner and one next action for every task. |
-| Early communication | Raise blockers when they appear, not on the deadline. |
-| Evidence | Record decisions, sources, tests and deployment results. |
-| Sustainable pace | Reduce scope before asking people to work through the night. |
+- Share a small update when a decision changes the product.
+- Keep one owner and one next action on each LeanKit or GitHub task.
+- Use a branch, quick review, merge, integrated test and then deploy.
+- Raise a blocker early. We fix the concrete problem together.
+- Use synthetic/public data and keep source links beside claims.
+- Keep the recognition fallback honest: it is a demo suggestion, not proof.
 
-## Working agreement
+## Communication
 
-- WhatsApp is for short updates and urgent questions. Drive/PGP stores the durable document or evidence.
-- A decision that changes scope, data, safety wording or deployment is recorded in `docs/DECISIONS.md` within 24 hours.
-- Each GitHub change uses a feature branch, a quick review, a merge, an integrated test and then deployment.
-- `Checks (0)` alone is not a merge blocker. Secrets, non-running code, destructive database changes and breaking API changes remain blockers.
-- The team works with synthetic/public data only. No one uploads personal identifiers or private observations.
-- If a task may be late, the owner tells the group early so we can reallocate, reduce scope or set a new time.
+We use the Team 04 chat for quick updates and the Drive/GitHub files for the
+version that others should follow. A message should say what changed, who is
+affected and what happens next. No one is expected to answer immediately when
+they are in class or an exam.
 
-## Decision and conflict path
+## Review and safety
 
-1. Discuss the issue directly with the person involved.
-2. If it affects the whole project, Huang facilitates a short team discussion and records the decision.
-3. If no agreement is reached, use a majority vote and record the domain owner's technical advice.
-4. Escalate wellbeing or serious conduct issues to the mentor or Unit Coordinator.
+We review code for secrets, broken routes, destructive changes and unsafe
+claims first. Formatting and small cleanup can be fixed after integration.
+We do not store names, contacts, passwords or exact sensitive wildlife
+locations. We do not turn a demo suggestion into a confirmed species result.
 
-## Review schedule
+## Support and conflict
 
-- Before each demo: check scope, source labels, data boundary, owner and next action.
-- After each merge: run the integrated Report → API → Database → Results path.
-- At the end of each studio: record what worked, what needs changing and the next concrete action.
+Ask for help in the group before a small issue becomes a deadline problem. If
+two views differ, write down the evidence, test the smallest safe option and
+let the PM record the decision. Everyone can disagree without being judged.
 
-## Sign-off
+## Definition of done
 
-This contract is a working agreement for the Marine Observation MVP. It can be amended when the team records the reason and the new decision in the PGP.
+A change is done when the owner has added evidence, the integrated flow still
+runs, the docs use the same wording and the next owner knows what to do.

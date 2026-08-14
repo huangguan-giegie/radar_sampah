@@ -1,5 +1,27 @@
 # Migration Manifest
 
+## DiveSafe MY alignment — 15 August 2026
+
+The active documentation name is **DiveSafe MY**. This is a naming and
+governance alignment, not a migration of the deployed implementation. The
+current GitHub repository and Render services retain their legacy marine
+observation/litter names because those are the hosting identifiers currently
+connected and tested. The current code also contains the DiveSafe MY flow;
+legacy litter routes remain compatibility paths.
+
+| Iteration | Migrated/recorded outcome | Boundary |
+|---|---|---|
+| 1 | Scope, team roles and source/safety decisions. | No runtime feature claim. |
+| 2 | Runnable DiveSafe MY profile, site, briefing and synthetic-sighting flow. | Legacy repository and Render identifiers remain active. |
+| 3 | Integration evidence, source register and documentation alignment. | Optional recognition is illustrative; enforcement remains out of scope. |
+
+The source register for Benshuai Su includes the [OBIS Malaysia-region
+query](https://api.obis.org/occurrence?geometry=POLYGON((99%203,105%203,105%207,99%207,99%203))&size=50) and
+the [CEFAS/Defra CLiP vocabulary](https://environment.data.gov.uk/dataset/faaf9538-2665-48c9-afc2-b976daa77cd2).
+They support static source-labelled examples only. Approximate areas and
+derived priorities are not survey evidence, incident dispatch, attribution or
+enforcement decisions.
+
 ## New destination
 
 Real Project Governance Portfolio (PGIE):
@@ -255,3 +277,21 @@ not expose more precise or sensitive locations. README, API, data-management,
 scope, decisions, integration-checklist, QA and project-information documents
 were updated to describe the same behaviour. The live Render frontend was
 checked to load all five labels from `GET /api/options` after commit `aea23c9`.
+
+## DiveSafe MY theme switch — 15 August 2026
+
+The active product scope is now **DiveSafe MY — Endangered Species Hotspot
+Guide for Divers in Malaysia**. The Marine Litter flow stays in the repository
+as a rollback-compatible legacy path, but it is not the main user journey,
+presentation story or new evidence set.
+
+The new working flow is `Profile -> Dive site -> Species directory -> Briefing
+-> Confirm -> Sighting`. It uses broad synthetic/public locations, source labels,
+an optional recognition adapter with a local fallback, and no exact sensitive
+species coordinates. Su's GitHub links are architecture references only; the
+old PHP, MySQL and Arduino code was not copied into the runtime.
+
+The source-of-truth files are the current `actual-project` backend, frontend,
+documents and `deliverables` deck. The Sample Project PGIE remains protected and
+was not edited. Before deployment, keep the current stable commit available for
+rollback and verify the Render frontend points to the matching API service.

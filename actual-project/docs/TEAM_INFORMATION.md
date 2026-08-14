@@ -1,42 +1,52 @@
-# Team 04 - Marine Observation Project Information
+# Team 04 - DiveSafe MY Project Information
 
-## Project
+**DiveSafe MY - Marine-safety learning MVP**
 
-**Marine Litter Hotspot & Marine-Life Observation MVP (Source2Sea MY)**
+## Project overview
 
-The project has one reporting workflow for marine litter in a selected
-Malaysian coastal area. Static OBIS context supports a map layer; it is not a
-second animal-reporting flow. The first build uses source-visible public data,
-synthetic demo reports and transparent rules.
+DiveSafe MY helps a diver prepare for a Malaysian dive, open a broad dive-site
+guide, read a short wildlife briefing and record a synthetic sighting. The
+project uses source-labelled public data and simple rules. It does not replace
+a guide, a permit check or a species expert.
 
-The report form keeps five fixed litter categories and exposes five coarse
-area labels through a native dropdown: Selected Malaysian coastal area,
-North-west Peninsular Malaysia coast, East coast Peninsular Malaysia,
-Terengganu coastal waters and Selangor coastal waters. These labels are
-aggregated demonstration context, not verified litter-survey sites.
+The active flow is:
 
-The API contract includes `GET /api/options`, which returns the versioned
-catalogue used by the form. The frontend must show all five labels after the
-catalogue loads; this does not add a second reporting workflow or more precise
-location data.
+`Profile -> Site -> Species directory -> Briefing -> Confirm -> Sighting`
+
+The site map uses broad demo pins. Exact sensitive wildlife locations are never
+accepted or returned.
 
 ## Team roles
 
 | Member | Working role | Main responsibility |
 |---|---|---|
 | Huang Guan | Project Manager and integration | Scope, decisions, repository, deployment and evidence |
-| Hnin Darli | Data analysis and visualisation | Dataset review, OBIS source notes and map context |
-| Qian Jiang | UI/UX and frontend | Report/review/results flow, accessible copy and interface |
-| LiHanXia | Backend/API | Validation, observation API and service integration |
-| Keith Junn Chong | Database/data integration | PostgreSQL schema, persistence and source data loading |
-| Benshuai Su | Classification support | Transparent rule explanations and future-model boundary |
+| Hnin Darli | Data analysis and visualisation | Public-data review, source notes and map context |
+| Qian Jiang | UI/UX and frontend | Accessible interface, responsive layout and interaction flow |
+| LiHanXia | Backend/API | Validation, Flask routes and service integration |
+| Keith Junn Chong | Database/data integration | PostgreSQL/SQLite schema, persistence and source loading |
+| Benshuai Su | Recognition and reference support | Adapter boundary, source register and plain-language limits |
 
 ## Shared boundaries
 
-- Use only Plastic packaging, Fishing gear, Glass, Metal and Other in the MVP.
-- Do not create a second marine-animal reporting flow.
-- Use synthetic/public data and do not collect personal details.
+- Use synthetic or public data only.
+- Do not collect names, emails, phone numbers, accounts or passwords.
 - Do not publish exact threatened-species locations.
-- Do not claim pollution-source proof, verified species identity, environmental
-  outcomes or enforcement decisions.
-- Keep HealthFirst files and code as reference-only material.
+- Treat recognition as a demo suggestion until a provider is reviewed.
+- Do not claim verified species identity, ecological outcomes, legal advice or
+  enforcement decisions.
+- Keep the old HealthFirst and marine-litter material as reference/rollback
+  only.
+
+## Main routes
+
+`/api/dive-sites`, `/api/species`, `/api/briefing/<site_id>`, `/api/profile`,
+`/api/recognize`, `/api/sightings` and `/api/collection/<profile_id>` are the
+active DiveSafe routes. The older observation routes remain compatible but are
+not the main product journey.
+
+## Source register
+
+- [OBIS Malaysia-region occurrence query](https://api.obis.org/occurrence?geometry=POLYGON((99%203,105%203,105%207,99%207,99%203))&size=50) - public context reference.
+- [CEFAS/Defra CLiP vocabulary](https://environment.data.gov.uk/dataset/faaf9538-2665-48c9-afc2-b976daa77cd2) - broad marine-litter reference only.
+- Su's [MakerBay reference repository](https://github.com/MakerBay/Marine_Litter_Detective) - architecture inspiration only; its old PHP, MySQL and Arduino code is not copied.

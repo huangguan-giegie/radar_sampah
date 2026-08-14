@@ -1,0 +1,18 @@
+{
+  "version": "divesafe-my-briefings-2026-08-15-v1",
+  "demo": true,
+  "briefings": [
+    {
+      "site_id": "tioman-demo",
+      "title": "Responsible reef dive briefing",
+      "checks": ["Confirm conditions with your operator", "Stay within your certification and buddy plan", "Do not touch coral or wildlife", "Do not record exact wildlife locations"],
+      "emergency_note": "Follow the dive operator's emergency plan and local instructions."
+    },
+    {
+      "site_id": "perhentian-demo",
+      "title": "Responsible reef dive briefing",
+      "checks": ["Confirm conditions with your operator", "Stay within your certification and buddy plan", "Keep neutral buoyancy near coral", "Do not record exact wildlife locations"],
+      "emergency_note": "Follow the dive operator's emergency plan and local instructions."
+    }
+  ]
+}

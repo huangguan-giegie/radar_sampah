@@ -1,125 +1,66 @@
-# Marine Observation API Contract
+# DiveSafe MY API Contract
 
-Base URL: the local API is `http://localhost:5000`; the deployed API is the
-Render API URL configured by the frontend.
+Local base URL: `http://localhost:5000`. Render uses the API URL in the
+project links. All examples use synthetic data.
 
-## `GET /health`
+## Active endpoints
 
-Returns `200` when the API process is ready to receive requests. It is the
-Render health-check endpoint.
+### Catalogues
 
-## `GET /api/observations`
+- `GET /api/dive-sites` returns broad site cards with region and source/version
+  labels. No exact wildlife coordinates are returned.
+- `GET /api/species` returns the source-labelled species directory.
+- `GET /api/species/<site_id>` returns the directory for a known demo site.
+- `GET /api/briefing/<site_id>` returns safety checks and a reminder to follow
+  the operator and current official instructions.
 
-Returns `{ "observations": [...], "source", "data_version", "demo" }`.
-Each stored observation includes its saved classification and illustrative
-priority. This endpoint must not expose database credentials, personal data or
-unmasked sensitive-species locations.
+### Profile
 
-## `POST /api/observations`
+`POST /api/profile` accepts a synthetic nickname, experience level and a short
+interest list. Names, email, phone, account and password fields are rejected.
+The response is a demo profile ID and privacy note. No login is created.
 
-Creates one confirmed demonstration observation.
+### Recognition
 
-```json
-{
-  "category": "Plastic packaging",
-  "area": "Selected Malaysian coastal area",
-  "latitude": 3.139,
-  "longitude": 101.6869,
-  "observed_at": "2026-08-14T10:00:00Z",
-  "image_url": "/assets/demo-plastic.jpg",
-  "note": "Synthetic demonstration record"
-}
-```
-
-Required fields are `category`, `area`, `latitude`, `longitude` and
-`observed_at`. `image_url` and `note` are optional.
-
-Validation rules:
-
-- Category must be one of `Plastic packaging`, `Fishing gear`, `Glass`,
-  `Metal` or `Other`.
-- Latitude must be between `-90` and `90`; longitude must be between `-180`
-  and `180`.
-- `observed_at` must be a valid ISO 8601 timestamp.
-- `image_url` must be an approved local demo asset path or an HTTPS URL.
-- Text must be non-empty after trimming and must stay within the documented
-  input limits.
-- Names, phone numbers, account identifiers and secrets are not accepted.
-
-An invalid request returns `400` with an `error` string. A valid request
-returns `201` with this shape:
+`POST /api/recognize` accepts an approved HTTPS image URL or `/assets/` demo
+path and an optional species hint. Without a private HTTPS adapter it returns:
 
 ```json
 {
-  "observation": {
-    "id": "obs-example",
-    "category": "Plastic packaging",
-    "area": "Selected Malaysian coastal area",
-    "latitude": 3.139,
-    "longitude": 101.6869,
-    "observed_at": "2026-08-14T10:00:00Z",
-    "image_url": "/assets/demo-plastic.jpg",
-    "note": "Synthetic demonstration record"
-  },
-  "classification": {
-    "label": "Plastic packaging",
-    "rule": "category_passthrough_v1",
-    "method": "Fixed demonstration category selected by the reporter."
-  },
-  "priority": {
-    "level": "medium",
-    "reason": "Illustrative rule explanation",
-    "disclaimer": "Illustrative demo priority only; this is not a pollution-source proof, scientific finding, or enforcement decision.",
-    "illustrative": true
-  },
-  "context": {
-    "id": "obis-malaysia-ambassis-interrupta-000c8b50",
-    "source": "OBIS",
-    "source_url": "https://api.obis.org/occurrence?geometry=POLYGON((99%203,105%203,105%207,99%207,99%203))&size=50",
-    "retrieved_at": "2026-08-14",
-    "license": "OBIS data policy; dataset-level attribution required",
-    "approximate_location": { "latitude": 5.7, "longitude": 102.7 },
-    "taxon_or_context_label": "Public Malaysia-region occurrence sample",
-    "sensitivity": "aggregated"
-  },
-  "source": "synthetic/public demonstration data",
-  "data_version": "marine-observation-v1",
-  "demo": true
+  "status": "demo_fallback",
+  "candidates": ["clownfish-demo"],
+  "provider": "demo",
+  "needs_user_confirmation": true,
+  "source": "synthetic/public demonstration data"
 }
 ```
 
-## `GET /api/context`
+An external provider suggestion uses `status: provider_suggestion` and still
+needs user confirmation. A provider key never appears in a response.
 
-Returns `{ "context": [...], "source": "OBIS", "data_version":
-"obis-malaysia-public-2026-08-14-v1", "demo": true }`. The current static
-bundle contains five public Malaysia-region occurrence samples retrieved on
-2026-08-14 from a bounded OBIS occurrence query. Each record includes a source
-URL, retrieval date, attribution, approximate location, taxon/context label and
-a sensitivity flag. Sensitive records must use masked or aggregated
-coordinates; these samples use coarse coordinates and are context only.
+### Sightings
 
-## `GET /api/options`
+`POST /api/sightings` accepts only `site_id`, `species_id`, `observed_at` and
+an optional short `note`. Exact latitude/longitude, names and contacts are
+rejected. A successful response is `201` and contains the saved site-level
+record plus collection/badge information.
 
-Returns the source-labelled form option catalogue used by the frontend. It
-keeps the five MVP categories, adds short examples from the public CEFAS/Defra
-marine-litter vocabulary, and provides coarse Malaysian-region area
-suggestions from the OBIS context snapshot. These are demonstration choices,
-not a Malaysian litter survey or a claim about a specific beach.
+`GET /api/sightings` returns saved synthetic records without coordinates.
+`GET /api/collection/<profile_id>` returns the demo collection and badges.
 
-The current area labels are:
+### Health
 
-- `Selected Malaysian coastal area`
-- `North-west Peninsular Malaysia coast`
-- `East coast Peninsular Malaysia`
-- `Terengganu coastal waters`
-- `Selangor coastal waters`
+`GET /health` returns `200` when the Flask process and database are ready.
 
-The frontend presents these labels in a native dropdown. They are aggregated
-demonstration context only; they do not restrict the API to a verified survey
-site or expose sensitive coordinates.
+## Legacy compatibility routes
 
-## Result boundaries
+`GET/POST /api/observations`, `GET /api/context` and `GET /api/options` remain
+for rollback and old sample checks. They are not shown in the DiveSafe main
+flow and must not be used to claim a litter survey or enforcement outcome.
 
-Classification is a transparent category rule. Priority is illustrative and
-supports discussion of possible clean-up attention only. Neither result proves
-pollution sources, species identity, ecological change or regulatory action.
+## Data boundary
+
+PostgreSQL is used when `DATABASE_URL` is set; local SQLite is the fallback.
+Static JSON data records source URL, retrieval date, attribution, version and
+sensitivity. Broad locations are for demonstration only. No endpoint proves a
+species identity, ecological change, permit status or enforcement decision.

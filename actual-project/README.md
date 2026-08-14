@@ -1,56 +1,47 @@
-# Team 04 Marine Litter Observation MVP
+# DiveSafe MY - Team 04 Student MVP
 
 ## Purpose
 
-This is a small, deployable MVP for reporting marine litter in one selected
-Malaysian coastal area. It uses a fixed category list, transparent rules and a
-static OBIS context sample. The project is for demonstration and learning only.
+DiveSafe MY is a small student MVP for divers in Malaysia. It helps a user
+pick a broad demo site, read a short wildlife briefing and record a synthetic
+sighting. It is a learning demo, not a permit, guide or scientific system.
 
-The workflow is:
+The demo flow is:
 
-`Report -> Review and confirm -> Save -> View results and map context`
+`Profile -> Dive site -> Species guide -> Briefing -> Confirm -> Sighting`
 
-## Scope and boundaries
+## Current boundary
 
-- Categories: Plastic packaging, Fishing gear, Glass, Metal and Other.
-- Form options: the category list remains fixed, while the Approximate area
-  field is a native select with five coarse Malaysian-region suggestions from
-  `backend/data/litter_options.json` (`marine-form-options-2026-08-14-v1`).
-- Data: synthetic observation records and public/static context only.
-- Map: Leaflet with OpenStreetMap tiles and an accessible observation list.
-- Context: five source-labelled static OBIS Malaysia-region samples; sensitive
-  records are aggregated or location-masked. The current data version is
-  `obis-malaysia-public-2026-08-14-v1`.
-- Rules: fixed-category classification and an illustrative clean-up priority.
-- No external AI, computer vision, user account, real personal data or image
-  upload storage is enabled.
-- Results do not prove a pollution source, species identity, ecological change
-  or an enforcement decision.
+- Demo profiles use a nickname, experience level and interests only.
+- Dive sites and species use source-labelled public or synthetic data.
+- Site locations are coarse. Exact sensitive wildlife locations are never
+  accepted, stored or returned.
+- Leaflet shows broad demo pins. The same information is available as a list
+  when the map is unavailable.
+- Briefings cover calm entries, buoyancy, reef care, no-touch behaviour and
+  checking local rules before a real dive.
+- A sighting stores a site ID, species ID, date and short note only.
+- Collection cards and badges are illustrative. They are not proof of a
+  species record, ecological change or an enforcement decision.
+
+The old marine-litter routes and tables remain as a rollback layer. They are
+not part of the new screen flow and are not removed destructively.
+
+`POST /api/recognize` is optional. Without a private HTTPS adapter it returns
+a clear demo suggestion. It is not verified species identification.
 
 HealthFirst material under `../references/healthfirst-example/` is read-only
-reference material. It is not part of this product or its runtime code.
+reference material. It is not product code or evidence.
 
-## Drive project workspace
+## Project spaces
 
-The active governance files are kept in the Real Project PGIE:
+- Real Project Drive: https://drive.google.com/drive/folders/18Px2njE27SCiZ4bs-40zgUgm_sRE70Kx
+- GitHub: https://github.com/huangguan-giegie/team04-marine-observation-mvp
+- Render frontend: https://team04-marine-observation-frontend.onrender.com
+- Render API: https://team04-marine-observation-api.onrender.com
+- Miro: https://miro.com/app/board/uXjVHySKbPY=/
 
-https://drive.google.com/drive/folders/18Px2njE27SCiZ4bs-40zgUgm_sRE70Kx
-
-The final Drive audit moved the HealthFirst sample copy and unrelated medical
-datasets out of the active workspace into the recoverable archive:
-
-https://drive.google.com/drive/folders/1tWAKHAZ5RHkeoAkijmVrWzS_UWjBRP8v
-
-The active data area now contains only the Marine synthetic observation sample,
-the source-labelled OBIS context and Marine analysis documents. The separate
-Sample Project PGIE was not modified and remains reference-only.
-
-## Governance and presentation handoff
-
-Adapted project information, social contract, work handover, QA checklist,
-Miro reflection notes and the 19-slide onboarding deck are in
-`../deliverables/`. They use this same API, PostgreSQL/SQLite boundary, Render
-services and source-labelled OBIS context.
+The Sample Project PGIE was not modified.
 
 ## Run locally
 
@@ -64,46 +55,45 @@ pip install -r requirements.txt
 python app.py
 ```
 
-Without `DATABASE_URL`, the API uses a local SQLite fallback. To test with a
-PostgreSQL instance, set `DATABASE_URL` in your shell before starting the API.
-Never commit a real connection string or `.env` file.
+Without `DATABASE_URL`, the API uses SQLite. For Render, set
+`DATABASE_URL` privately. Never commit a connection string or `.env` file.
 
-Serve the frontend from another terminal:
+Serve the frontend in another terminal:
 
 ```powershell
 cd frontend
 python -m http.server 8080
 ```
 
-Open `http://localhost:8080`. The frontend uses `http://localhost:5000` when
-running locally.
+Open `http://localhost:8080`. The local frontend uses
+`http://localhost:5000` for the API.
 
-## API
+## API overview
+
+Active DiveSafe routes:
 
 - `GET /health`
-- `GET /api/observations`
-- `POST /api/observations`
-- `GET /api/context`
-- `GET /api/options`
+- `GET /api/dive-sites`
+- `GET /api/species` and `GET /api/species/<site_id>`
+- `GET /api/briefing/<site_id>`
+- `POST /api/profile`
+- `POST /api/recognize`
+- `POST /api/sightings`
+- `GET /api/sightings` and `GET /api/collection/<profile_id>`
 
-The API contract is documented in [docs/API.md](docs/API.md). The deploy and
-data controls are documented in [docs/INTEGRATION_CHECKLIST.md](docs/INTEGRATION_CHECKLIST.md)
-and [docs/DATA_MANAGEMENT_PLAN.md](docs/DATA_MANAGEMENT_PLAN.md).
+Legacy routes remain available for rollback: `/api/observations`,
+`/api/context` and `/api/options`. The full contract is in `docs/API.md`.
 
 ## Render deployment
 
-`../render.yaml` defines two services:
+`../render.yaml` defines a Gunicorn Flask API and a static frontend. Render
+uses PostgreSQL through `DATABASE_URL`; local work falls back to SQLite.
+`FRONTEND_ORIGINS` should contain the frontend URL.
 
-- Python API: `actual-project/backend`, built with `pip install -r requirements.txt`
-  and started with Gunicorn.
-- Static frontend: `actual-project/frontend`.
+Recognition is deliberately optional. `RECOGNITION_ADAPTER_URL` or the
+`SPECIES_RECOGNITION_API_*` variables may be set only after the team approves
+the provider and its data flow. Values stay in Render, not in Git or Drive.
 
-Set these API environment variables in Render:
-
-- `DATABASE_URL`: the private Render PostgreSQL connection string. Add it in
-  the Render dashboard; do not put its value in Git.
-- `FRONTEND_ORIGINS`: `https://team04-marine-observation-frontend.onrender.com`
-  (already declared in the Blueprint; update it if the frontend URL changes).
-
-After deployment, verify `/health`, create one synthetic observation, refresh
-the list and confirm that the record remains available.
+After a deploy, check `/health`, the site and species catalogues, one synthetic
+profile, one sighting, refresh reads and the retry path. Keep all demo wording
+visible.

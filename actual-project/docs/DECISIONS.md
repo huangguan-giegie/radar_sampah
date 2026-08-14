@@ -1,42 +1,44 @@
 # Team 04 Decisions
 
-## 2026-08-13 - Project direction
+## 2026-08-15 - DiveSafe MY product switch
 
-- The vote favoured `Idea 1 Version 2` (4 votes) over `Idea 1` (2 votes).
-- Working title: Marine Litter Hotspot & Marine-Life Observation Platform.
-- Marine litter is the only reporting flow; marine life is a context/map layer.
-- The MVP is limited to one selected Malaysian coastal area.
-- The reporting categories are Plastic packaging, Fishing gear, Glass, Metal
-  and Other.
+- The active product name is **DiveSafe MY - Endangered Species Hotspot Guide
+  for Divers in Malaysia**.
+- The user journey is profile, site, species guide, briefing, confirmation and
+  sighting.
+- The old marine-litter endpoints and tables stay as a rollback layer. They are
+  not shown in the new frontend or presentation.
+- Iteration 1 is Prepare and Explore. Iteration 2 is Identify and Contribute.
+  Iteration 3 is Learn and Connect. Quizzes, community feed and larger social
+  features stay on the roadmap.
 
-## 2026-08-14 - Build and data decisions
+## 2026-08-15 - Data and safety
 
-- The interaction follows Report -> Review/confirm -> Results.
-- PostgreSQL is used in Render through `DATABASE_URL`; local development uses
-  SQLite when that variable is absent.
-- The schema separates observations, classifications, priorities and marine
-  context records.
-- A static, source-visible OBIS sample is used first; do not depend on live
-  OBIS requests for the demo.
-- Sensitive context locations are aggregated or masked before display.
-- An optional image field is a demo asset path or HTTPS URL only. Raw files are
-  not stored.
+- Profiles use synthetic nicknames only. No names, contact details, accounts or
+  passwords are accepted.
+- Sites and species use public or synthetic source-labelled data. Sensitive
+  locations are coarse or masked.
+- A sighting stores site ID, species ID, date and a short note. It never stores
+  exact wildlife coordinates.
+- Recognition is a deterministic demo fallback unless a private HTTPS adapter
+  is approved. A suggestion is not a confirmed species result.
+- No external AI or computer vision is required for the first demo.
+- Briefings must not state unverified permit or legal rules as facts.
 
-## 2026-08-14 - Safety and explanation
+## 2026-08-14 - Technical choices
 
-- Classification uses a fixed-category rule; clean-up priority is illustrative.
-- The API and UI must label results as demo/illustrative and show their source.
-- Do not use external AI or computer vision in the first MVP.
-- Do not accept personal data or claim pollution-source proof, verified species
-  identity, ecological outcomes or enforcement action.
-- HealthFirst code and documents remain read-only examples; no medical fields,
-  thresholds, database tables or AI logic are carried into the marine runtime.
+- Flask and Gunicorn serve the API. The static frontend uses plain HTML, CSS
+  and JavaScript with Leaflet and an accessible list fallback.
+- Render uses PostgreSQL through `DATABASE_URL`; local work uses SQLite when it
+  is absent.
+- Profile, dive-site, species, briefing, sighting, recognition, collection and
+  badge data have separate tables. Legacy observations remain separate.
+- Static JSON files are loaded at startup so the demo does not rely on live
+  OBIS or a live recognition provider.
 
-## 2026-08-14 - Form option clarity
+## 2026-08-14 - Reference links
 
-- Keep the five fixed litter categories and expose the coarse area catalogue
-  through a native required dropdown rather than a free-text input with a
-  `datalist`.
-- The catalogue version is `marine-form-options-2026-08-14-v1`. Its five area
-  labels are aggregated demonstration context from the OBIS snapshot, not
-  verified litter-survey sites or a new location-precision feature.
+- Su's GitHub search and MakerBay repository are architecture references only.
+  We do not copy their old PHP, MySQL or Arduino implementation.
+- Public source URLs, retrieval dates, attribution and sensitivity flags stay
+  beside the sample data and in the API response.

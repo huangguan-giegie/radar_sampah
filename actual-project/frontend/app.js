@@ -1,77 +1,22 @@
-import {
-  buildObservationPayload,
-  getAreaSuggestions,
-  getCategoryExamples,
-  getContextMarkers,
-  getProgressState,
-  getRetryMessage,
-  normaliseApiResult,
-  normaliseContextItem,
-  validateObservation,
-} from "./workflow.js";
+import { buildSightingPayload, getDemoDiveSites, getProgressState, getRetryMessage, getSpeciesForSite, validateSighting } from "./workflow.js";
 
-const API_BASE = window.MARINE_API_BASE || (location.hostname === "localhost"
-  ? "http://localhost:5000"
-  : "https://team04-marine-observation-api.onrender.com");
-
-const state = {
-  context: [],
-  draft: null,
-  lastPayload: null,
-  map: null,
-  markers: null,
-  result: null,
-  optionCatalog: null,
-};
-
-const form = document.querySelector("#report-form");
-const panels = {
-  report: document.querySelector("#report-step"),
-  review: document.querySelector("#review-step"),
-  results: document.querySelector("#results-step"),
-};
+const API_BASE = window.DIVESAFE_API_BASE || (
+  location.hostname === "localhost"
+    ? "http://localhost:5000"
+    : "https://team04-marine-observation-api.onrender.com"
+);
+const state = { step: "profile", draft: null, payload: null, map: null, markers: null };
+const form = document.querySelector("#dive-form");
+const panels = Object.fromEntries(["profile", "site", "briefing", "confirm", "record"].map((name) => [name, document.querySelector(`#${name}-step`)]));
+const siteSelect = form.elements.namedItem("site_id");
+const speciesSelect = form.elements.namedItem("species_id");
 const reviewList = document.querySelector("#review-list");
-const resultSummary = document.querySelector("#result-summary");
-const contextList = document.querySelector("#context-list");
 const formMessage = document.querySelector("#form-message");
-const confirmMessage = document.querySelector("#confirm-message");
 const retryButton = document.querySelector("#retry-button");
-const confirmButton = document.querySelector("#confirm-button");
-const categorySelect = form.elements.namedItem("category");
-const categoryHint = document.querySelector("#category-hint");
-const areaSelect = document.querySelector("#area-options");
-const areaHint = document.querySelector("#area-hint");
 
-function updateCategoryHint() {
-  const examples = getCategoryExamples(state.optionCatalog, categorySelect.value);
-  categoryHint.textContent = `Examples from the public litter vocabulary: ${examples}.`;
-}
-
-function renderOptionCatalog(catalog) {
-  state.optionCatalog = catalog;
-  const currentArea = areaSelect.value;
-  const areas = getAreaSuggestions(catalog);
-  areaSelect.replaceChildren();
-  areas.forEach((area) => {
-    const option = document.createElement("option");
-    option.value = area;
-    option.textContent = area;
-    areaSelect.append(option);
-  });
-  if (!areaSelect.options.length) {
-    const fallback = document.createElement("option");
-    fallback.value = "Selected Malaysian coastal area";
-    fallback.textContent = fallback.value;
-    areaSelect.append(fallback);
-  }
-  areaSelect.value = areas.includes(currentArea)
-    ? currentArea
-    : areaSelect.options[0].value;
-  updateCategoryHint();
-  if (catalog.area_source?.scope_note) areaHint.textContent = catalog.area_source.scope_note;
-}
-
+function readDraft() { return Object.fromEntries(new FormData(form)); }
 function setStep(step) {
+  state.step = step;
   Object.entries(panels).forEach(([name, panel]) => panel.classList.toggle("is-hidden", name !== step));
   const progress = getProgressState(step);
   document.querySelectorAll("[data-progress]").forEach((item) => {
@@ -81,253 +26,120 @@ function setStep(step) {
   panels[step].focus({ preventScroll: true });
   panels[step].scrollIntoView({ behavior: "smooth", block: "start" });
 }
-
-function readDraft() {
-  return Object.fromEntries(new FormData(form));
-}
-
 function clearErrors() {
-  form.querySelectorAll("[data-error-for]").forEach((message) => {
-    message.textContent = "";
-    message.previousElementSibling?.removeAttribute("aria-invalid");
-  });
+  form.querySelectorAll("[data-error-for]").forEach((node) => { node.textContent = ""; node.previousElementSibling?.removeAttribute("aria-invalid"); });
 }
-
 function showErrors(errors) {
   clearErrors();
-  Object.entries(errors).forEach(([field, message]) => {
-    const input = form.elements.namedItem(field);
-    const error = form.querySelector(`[data-error-for="${field}"]`);
-    if (input && error) {
-      input.setAttribute("aria-invalid", "true");
-      error.textContent = message;
-    }
+  Object.entries(errors).forEach(([name, message]) => {
+    const input = form.elements.namedItem(name);
+    const target = form.querySelector(`[data-error-for="${name}"]`);
+    if (input && target) { input.setAttribute("aria-invalid", "true"); target.textContent = message; }
   });
 }
-
-function appendReviewRow(label, value) {
-  const term = document.createElement("dt");
-  const detail = document.createElement("dd");
-  term.textContent = label;
-  detail.textContent = value || "Not provided";
-  reviewList.append(term, detail);
-}
-
-function renderReview(draft) {
-  reviewList.replaceChildren();
-  appendReviewRow("Litter category", draft.category);
-  appendReviewRow("Approximate area", draft.area);
-  appendReviewRow("Observation date and time", draft.observed_at.replace("T", " "));
-  appendReviewRow("Latitude", draft.latitude);
-  appendReviewRow("Longitude", draft.longitude);
-  appendReviewRow("Sample image URL", draft.image_url);
-  appendReviewRow("Short field note", draft.note);
-}
-
-function createFact(label, value) {
-  const box = document.createElement("article");
-  const heading = document.createElement("p");
-  const text = document.createElement("strong");
-  box.className = "fact-card";
-  heading.textContent = label;
-  text.textContent = value;
-  box.append(heading, text);
-  return box;
-}
-
-function renderResult(result) {
-  resultSummary.replaceChildren();
-  const classification = document.createElement("article");
-  classification.className = "result-card classification-card";
-  classification.innerHTML = "<p class=\"section-kicker\">Recorded category</p>";
-  const category = document.createElement("h3");
-  const method = document.createElement("p");
-  category.textContent = result.classification.label;
-  method.textContent = result.classification.method;
-  classification.append(category, method);
-
-  const priority = document.createElement("article");
-  priority.className = "result-card priority-card";
-  priority.innerHTML = "<p class=\"section-kicker\">Illustrative clean-up priority</p>";
-  const level = document.createElement("p");
-  level.className = "priority-level";
-  level.textContent = `${result.priority.level} priority`;
-  const reason = document.createElement("p");
-  reason.textContent = result.priority.reason;
-  priority.append(level, reason);
-
-  const record = document.createElement("section");
-  record.className = "record-facts";
-  record.setAttribute("aria-label", "Submitted observation");
-  record.append(
-    createFact("Area", result.observation.area),
-    createFact("Coordinates", `${result.observation.latitude}, ${result.observation.longitude}`),
-    createFact("Data label", result.demo ? "Synthetic / public demo" : "Public context"),
-  );
-  resultSummary.append(classification, priority, record);
-}
-
-function renderContextList(context) {
-  contextList.replaceChildren();
-  if (!context.length) {
-    const item = document.createElement("li");
-    item.textContent = "No additional context is available from the API yet. The submitted observation is still saved.";
-    contextList.append(item);
-    return;
-  }
-  context.forEach((item) => {
-    const row = document.createElement("li");
-    const title = document.createElement("strong");
-    const description = document.createElement("span");
-    title.textContent = item.label || item.taxon || "Marine context record";
-    description.textContent = `${item.source || "OBIS public example"}${item.sensitive ? " · approximate location shown" : ""}`;
-    row.append(title, description);
-    if (item.source_url) {
-      const link = document.createElement("a");
-      link.href = item.source_url;
-      link.target = "_blank";
-      link.rel = "noreferrer";
-      link.textContent = "View source";
-      row.append(link);
-    }
-    contextList.append(row);
+function renderSites() {
+  const list = document.querySelector("#site-list");
+  list.replaceChildren(); siteSelect.replaceChildren();
+  getDemoDiveSites().forEach((site) => {
+    siteSelect.add(new Option(site.name, site.id));
+    const item = document.createElement("li"); item.textContent = `${site.name}: ${site.briefing}`; list.append(item);
   });
 }
-
-function renderMap(result) {
-  const fallback = document.querySelector("#map-fallback-message");
-  const mapElement = document.querySelector("#map");
-  if (!window.L) {
-    mapElement.classList.add("is-map-unavailable");
-    fallback.textContent = "Map tiles are unavailable. Use the accessible source list below for the same context.";
-    return;
-  }
-  const observation = result.observation;
-  const markers = [
-    { label: "Submitted observation", latitude: Number(observation.latitude), longitude: Number(observation.longitude), sensitive: false },
-    ...getContextMarkers(result.context),
-  ].filter((item) => Number.isFinite(item.latitude) && Number.isFinite(item.longitude));
-  if (!markers.length) return;
+function renderSpecies() {
+  const site = getDemoDiveSites().find((item) => item.id === siteSelect.value) || getDemoDiveSites()[0];
+  document.querySelector("#briefing-copy").textContent = site.briefing;
+  speciesSelect.replaceChildren();
+  const list = document.querySelector("#species-list"); list.replaceChildren();
+  getSpeciesForSite(site.id).forEach((species) => {
+    speciesSelect.add(new Option(species.name, species.id));
+    const item = document.createElement("li"); item.textContent = `${species.name} · ${species.note}`; list.append(item);
+  });
+}
+function renderMap() {
+  const mapElement = document.querySelector("#site-map");
+  const message = document.querySelector("#map-message");
+  if (!window.L) { mapElement.classList.add("is-map-unavailable"); message.textContent = "Map unavailable. Use the accessible dive-site list above."; return; }
   if (!state.map) {
-    state.map = window.L.map(mapElement, { scrollWheelZoom: false, zoomControl: true });
-    window.L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution: "© OpenStreetMap contributors",
-      maxZoom: 18,
-    }).addTo(state.map);
+    state.map = window.L.map(mapElement, { scrollWheelZoom: false });
+    window.L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { attribution: "© OpenStreetMap contributors", maxZoom: 18 }).addTo(state.map);
     state.markers = window.L.layerGroup().addTo(state.map);
   }
   state.markers.clearLayers();
-  const bounds = [];
-  markers.forEach((marker, index) => {
-    const point = window.L.circleMarker([marker.latitude, marker.longitude], {
-      radius: index === 0 ? 9 : 7,
-      color: index === 0 ? "#075f65" : "#c9802a",
-      fillColor: index === 0 ? "#1d9a99" : "#f6bf76",
-      fillOpacity: 0.9,
-      weight: 2,
-    }).addTo(state.markers);
-    point.bindPopup(marker.label);
-    bounds.push([marker.latitude, marker.longitude]);
+  const pins = getDemoDiveSites();
+  pins.forEach((site) => window.L.circleMarker([site.map_latitude, site.map_longitude], { radius: 8, color: "#0c5f69", fillColor: "#54c3ba", fillOpacity: .9 }).bindPopup(site.name).addTo(state.markers));
+  state.map.fitBounds(pins.map((site) => [site.map_latitude, site.map_longitude]), { padding: [28, 28], maxZoom: 6 });
+  message.textContent = "Demo pins use OpenStreetMap. The accessible list has the same site details.";
+}
+function renderReview(draft) {
+  reviewList.replaceChildren();
+  const site = getDemoDiveSites().find((item) => item.id === draft.site_id);
+  const species = getSpeciesForSite(draft.site_id).find((item) => item.id === draft.species_id);
+  [["Profile", draft.profile], ["Site", site?.name], ["Species", species?.name], ["Activity", draft.activity]].forEach(([label, value]) => {
+    const term = document.createElement("dt"); const detail = document.createElement("dd"); term.textContent = label; detail.textContent = value; reviewList.append(term, detail);
   });
-  state.map.fitBounds(bounds, { padding: [30, 30], maxZoom: 12 });
-  fallback.textContent = "Map markers use OpenStreetMap. Sensitive context is shown at an approximate location; the accessible source list below remains available.";
 }
-
-async function loadContext() {
-  try {
-    const response = await fetch(`${API_BASE}/api/context`);
-    if (!response.ok) return;
-    const data = await response.json();
-    state.context = (data.context || data.items || []).map(normaliseContextItem);
-  } catch {
-    state.context = [];
-  }
+function validateCurrent() {
+  const errors = validateSighting(readDraft());
+  showErrors(errors);
+  return errors;
 }
-
-async function loadOptionCatalog() {
-  try {
-    const response = await fetch(`${API_BASE}/api/options`);
-    if (!response.ok) return;
-    renderOptionCatalog(await response.json());
-  } catch {
-    // 保留 HTML 中的安全默认选项，API 不可用时表单仍可提交。
-  }
+function move(next) {
+  const draft = readDraft();
+  if (next === "site" && !draft.profile) return;
+  if (next === "briefing" && !draft.site_id) { validateCurrent(); return; }
+  if (next === "confirm") { renderReview(draft); }
+  setStep(next);
+  if (next === "site") window.setTimeout(renderMap, 60);
 }
-
-async function submitConfirmedObservation() {
-  if (!state.lastPayload) return;
-  confirmButton.disabled = true;
+async function submitRecord() {
+  const draft = readDraft(); const errors = validateSighting(draft);
+  if (Object.keys(errors).length) { showErrors(errors); formMessage.textContent = "Check the highlighted fields."; return; }
+  state.draft = draft; state.payload = buildSightingPayload(draft); formMessage.textContent = "Saving your demo record…";
   retryButton.classList.add("is-hidden");
-  confirmMessage.textContent = "Submitting the confirmed synthetic observation…";
   try {
-    const response = await fetch(`${API_BASE}/api/observations`, {
+    if (!API_BASE) throw new Error("Demo mode");
+    const response = await fetch(`${API_BASE}/api/sightings`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(state.payload) });
+    if (!response.ok) throw new Error("Service rejected record");
+    document.querySelector("#record-summary").textContent = `${draft.activity}: ${draft.species_id} at ${draft.site_id}. Saved with the connected service.`;
+  } catch {
+    document.querySelector("#record-summary").textContent = `${draft.activity}: ${draft.species_id} at ${draft.site_id}. Shown as a local demo result because no service was available.`;
+    retryButton.classList.remove("is-hidden"); formMessage.textContent = getRetryMessage();
+  }
+  setStep("record");
+}
+
+async function recogniseOptionalImage() {
+  const imageUrl = form.elements.namedItem("image_url").value.trim();
+  const message = document.querySelector("#recognition-message");
+  if (!imageUrl) { message.textContent = "Add an approved image URL first."; return; }
+  const fallback = () => {
+    message.textContent = `Demo suggestion: ${speciesSelect.selectedOptions[0]?.textContent || "selected species"}. Not AI identification.`;
+  };
+  if (!API_BASE) { fallback(); return; }
+  try {
+    const response = await fetch(`${API_BASE}/api/recognize`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(state.lastPayload),
+      body: JSON.stringify({ image_url: imageUrl, species_hint: speciesSelect.value }),
     });
-    const result = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(result.error || "The observation was not accepted.");
-    state.result = normaliseApiResult(result, state.context);
-    renderResult(state.result);
-    renderContextList(state.result.context);
-    setStep("results");
-    window.setTimeout(() => renderMap(state.result), 100);
-  } catch (error) {
-    confirmMessage.textContent = getRetryMessage();
-    formMessage.textContent = getRetryMessage();
-    retryButton.classList.remove("is-hidden");
-    setStep("results");
-    resultSummary.replaceChildren();
-    const failure = document.createElement("article");
-    failure.className = "result-card failure-card";
-    failure.textContent = "The confirmed observation was not submitted. Your input has been kept unchanged so you can retry it.";
-    resultSummary.append(failure);
-    renderContextList(state.context);
-  } finally {
-    confirmButton.disabled = false;
-  }
+    const result = await response.json();
+    if (!response.ok || !result.recognition?.species_id) throw new Error("Recognition unavailable");
+    speciesSelect.value = result.recognition.species_id;
+    message.textContent = `Demo suggestion: ${speciesSelect.selectedOptions[0]?.textContent || result.recognition.species_id}. Not verified.`;
+  } catch { fallback(); }
 }
 
-form.addEventListener("submit", (event) => {
-  event.preventDefault();
-  const draft = readDraft();
-  const errors = validateObservation(draft);
-  if (Object.keys(errors).length) {
-    showErrors(errors);
-    formMessage.textContent = "Check the highlighted fields before reviewing the observation.";
-    return;
-  }
-  clearErrors();
-  formMessage.textContent = "";
-  state.draft = draft;
-  renderReview(draft);
-  setStep("review");
-});
+async function loadDemoProfile() {
+  if (!API_BASE) return;
+  try { await fetch(`${API_BASE}/api/profile`); } catch { /* 本地演示不需要个人资料。 */ }
+}
 
-form.addEventListener("input", () => {
-  if (state.draft) {
-    state.draft = null;
-    state.lastPayload = null;
-    formMessage.textContent = "Changes detected. Review and confirm the updated observation before it is submitted.";
-  }
-});
+document.querySelectorAll("[data-next]").forEach((button) => button.addEventListener("click", () => move(button.dataset.next)));
+document.querySelectorAll("[data-back]").forEach((button) => button.addEventListener("click", () => setStep(button.dataset.back)));
+siteSelect.addEventListener("change", renderSpecies);
+document.querySelector("#recognize-button").addEventListener("click", recogniseOptionalImage);
+form.addEventListener("submit", (event) => { event.preventDefault(); submitRecord(); });
+retryButton.addEventListener("click", submitRecord);
+document.querySelector("#new-record-button").addEventListener("click", () => { form.reset(); renderSpecies(); clearErrors(); formMessage.textContent = ""; setStep("profile"); });
 
-document.querySelector("#edit-button").addEventListener("click", () => setStep("report"));
-confirmButton.addEventListener("click", () => {
-  state.lastPayload = buildObservationPayload(state.draft);
-  submitConfirmedObservation();
-});
-retryButton.addEventListener("click", submitConfirmedObservation);
-document.querySelector("#new-observation-button").addEventListener("click", () => {
-  form.reset();
-  state.draft = null;
-  state.lastPayload = null;
-  state.result = null;
-  clearErrors();
-  formMessage.textContent = "";
-  setStep("report");
-});
-
-loadContext();
-categorySelect.addEventListener("change", updateCategoryHint);
-loadOptionCatalog();
+renderSites(); renderSpecies(); setStep("profile"); loadDemoProfile();

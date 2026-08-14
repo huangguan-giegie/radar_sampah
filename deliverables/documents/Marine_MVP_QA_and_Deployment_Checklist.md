@@ -1,103 +1,60 @@
-# Marine MVP QA and Deployment Checklist
+# DiveSafe MY QA and Deployment Checklist
 
-**Document control:** Version 1.0 | 14 August 2026 | Release evidence template
+**Version 2.0 | 15 August 2026**
 
-**Audience:** Testers, integrators, demonstrators and release reviewers
-
-> **Safety boundary:** Use synthetic or public data only. This MVP is a demonstration and learning tool. It does not prove a pollution source, verify species identity, establish ecological impact, or direct environmental enforcement or official clean-up action.
+> Test with synthetic values only. A demo suggestion is not a verified species
+> result or legal advice.
 
 ## Test record
 
-Complete this block for each release candidate.
-
 | Field | Evidence |
 |---|---|
-| Test date and time |  |
-| Tester |  |
-| GitHub commit |  |
-| Render frontend URL | https://team04-marine-observation-frontend.onrender.com |
-| Render API URL | https://team04-marine-observation-api.onrender.com |
-| Synthetic test case |  |
-| Overall result | Pass / Pass with limitations / Fail |
+| Date and time | |
+| Tester | |
+| GitHub commit | |
+| Frontend | https://team04-marine-observation-frontend.onrender.com |
+| API | https://team04-marine-observation-api.onrender.com |
+| Synthetic profile/site/species | |
+| Result and limits | |
 
-## Preconditions
+## Browser flow
 
-- [ ] The release commit is identified and matches the intended `main` state.
-- [ ] The frontend and API services are reachable over HTTPS.
-- [ ] `DATABASE_URL` is configured privately in Render and is not visible in Git or screenshots.
-- [ ] The test uses invented values and a non-sensitive demonstration location.
-- [ ] The tester has opened the browser console and can capture status codes or error evidence.
+- [ ] Profile accepts a synthetic nickname only.
+- [ ] Site list shows broad sites and the map has a list fallback.
+- [ ] Species directory and briefing load for the chosen site.
+- [ ] Optional recognition shows a demo suggestion and asks for confirmation.
+- [ ] Review shows the chosen site and species before submission.
+- [ ] Editing a value requires a new confirmation.
+- [ ] Confirmed sighting reaches the result page and keeps the safe boundary text.
+- [ ] Collection and badge update only after a sighting is saved.
+- [ ] API failure keeps the draft and shows a retry action.
+- [ ] Keyboard focus, labels and 375px layout work.
 
-## End-to-end functional checks
+## API smoke checks
 
-- [ ] The report form accepts one supported category, area, time and valid coordinates.
-- [ ] The Approximate area native dropdown displays all five source-labelled
-  coarse area suggestions after `/api/options` loads.
-- [ ] Optional notes and a safe HTTPS image URL behave as documented.
-- [ ] Review displays every entered value and provides a clear edit action.
-- [ ] Editing a reviewed value invalidates the previous confirmation.
-- [ ] Only explicit confirmation submits the record.
-- [ ] A successful submission shows the saved observation, category result, illustrative priority and disclaimer.
-- [ ] Refreshing the observation view can read back the saved synthetic record.
-- [ ] OBIS context shows source, data version and a list fallback beside the map.
-- [ ] Sensitive context coordinates are approximate or masked.
-- [ ] API failure keeps the confirmed draft and provides a clear retry message.
+| Request | Expected |
+|---|---|
+| `GET /health` | 200 |
+| `GET /api/dive-sites` | 200, coarse locations |
+| `GET /api/species` | 200, source/version present |
+| `GET /api/briefing/tioman-demo` | 200, safety wording present |
+| `POST /api/profile` | 201, no PII fields |
+| `POST /api/recognize` without provider | 200, demo fallback and confirmation flag |
+| `POST /api/sightings` | 201, site/species IDs only |
+| `GET /api/sightings` | 200, no coordinates |
+| `GET /api/collection/divesafe-demo-diver` | 200, collection/badge response |
 
-## Validation and error checks
+Reject names, phone numbers, emails, passwords, exact coordinates, unknown
+sites/species and unsafe image URLs. Never show a provider key.
 
-- [ ] An unsupported category is rejected with a clear message.
-- [ ] Missing required values are rejected before submission.
-- [ ] Latitude outside -90 to 90 and longitude outside -180 to 180 are rejected.
-- [ ] A future observation time, unsafe image URL or overlong notes are rejected.
-- [ ] Validation identifies the field that needs correction.
-- [ ] The interface does not display raw stack traces, database details or credentials.
+## Release checks
 
-## API checks
+- [ ] Render points at the intended `main` commit.
+- [ ] PostgreSQL is private in Render; no connection string is in Git.
+- [ ] No exact sensitive wildlife location is shown.
+- [ ] The old litter routes are not shown as the DiveSafe journey.
+- [ ] PPT and docs use the same routes, sources and limitations.
+- [ ] PGP records time, commit, screenshots, response status and open issues.
 
-| Check | Expected result | Evidence |
-|---|---|---|
-| `GET /health` | HTTP 200; service, synthetic/public boundary and database mode are present |  |
-| `GET /api/context` | HTTP 200; OBIS source and data version are present |  |
-| `GET /api/options` | HTTP 200; catalogue version and five area labels are present |  |
-| Valid `POST /api/observations` | HTTP 201; observation and derived fields are returned |  |
-| Invalid `POST /api/observations` | HTTP 400 with a safe, actionable validation message |  |
-| `GET /api/observations` after create | The saved synthetic record is returned after refresh |  |
-| Response privacy review | No names, phone numbers, accounts, private locations, keys or connection strings |  |
-
-## Accessibility and responsive checks
-
-- [ ] Every input and control has a programmatic label.
-- [ ] Keyboard focus is visible and the full flow can be completed without a mouse.
-- [ ] Error messages are announced near the field that needs correction.
-- [ ] Status is explained with text or symbols and not by colour alone.
-- [ ] The map has an accessible list fallback containing equivalent context.
-- [ ] The 375 px layout has no horizontal overflow or clipped controls.
-- [ ] Zoom at 200% keeps content readable and actions available.
-- [ ] Headings, landmarks and reading order are logical.
-
-## Data, safety and interpretation checks
-
-- [ ] All entered observation data is synthetic and contains no personal identifiers.
-- [ ] OBIS context displays source and version information.
-- [ ] Exact sensitive species locations are not exposed.
-- [ ] Category and priority wording is clearly illustrative and rule-based.
-- [ ] No screen claims to prove a pollution source, species identity or ecological impact.
-- [ ] No screen directs enforcement or presents an official clean-up priority.
-- [ ] External AI, computer vision and real raw-file upload remain disabled.
-
-## Deployment and evidence checks
-
-- [ ] The frontend calls the intended Render API URL.
-- [ ] Both services use HTTPS and no mixed-content error appears.
-- [ ] A cold-start or temporary API delay produces a recoverable experience.
-- [ ] One screenshot shows the completed result and visible boundary wording.
-- [ ] The PGP records commit, test time, URLs, synthetic inputs, response status and known limitations.
-- [ ] The release owner records any failed item with an owner and next action.
-
-## Known limitations to disclose
-
-The first release uses a static OBIS sample and deterministic illustrative rules. It does not provide real-time monitoring, verified species identification, pollution-source attribution, ecological assessment, automated clean-up scheduling or enforcement support. Passing this checklist supports a course demonstration, not production readiness.
-
-## Project spaces
-
-[GitHub](https://github.com/huangguan-giegie/team04-marine-observation-mvp) | [Render frontend](https://team04-marine-observation-frontend.onrender.com) | [Render API](https://team04-marine-observation-api.onrender.com) | [Drive PGP](https://drive.google.com/drive/folders/18Px2njE27SCiZ4bs-40zgUgm_sRE70Kx) | [Miro](https://miro.com/app/board/uXjVHySKbPY=/)
+Passing this list supports a course demo only. It does not support a real
+survey, species claim, permit decision or enforcement action.

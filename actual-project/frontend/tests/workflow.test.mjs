@@ -5,185 +5,87 @@ import { fileURLToPath } from "node:url";
 import test from "node:test";
 
 import {
-  buildObservationPayload,
-  getContextMarkers,
-  getAreaSuggestions,
-  getCategoryExamples,
+  buildSightingPayload,
+  getDemoDiveSites,
   getProgressState,
   getRetryMessage,
-  normaliseApiResult,
-  validateObservation,
+  getSpeciesForSite,
+  validateSighting,
 } from "../workflow.js";
-
-const validDraft = {
-  category: "Plastic packaging",
-  area: "Selected Malaysian coastal area",
-  observed_at: "2026-08-14T10:00",
-  latitude: "3.1390",
-  longitude: "101.6869",
-  image_url: "/assets/demo-plastic.jpg",
-  note: "Synthetic demonstration record",
-};
 
 const frontendDir = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
-test("accepts a complete synthetic observation and converts coordinates to numbers", () => {
-  assert.deepEqual(validateObservation(validDraft), {});
-  assert.deepEqual(buildObservationPayload(validDraft), {
-    category: "Plastic packaging",
-    area: "Selected Malaysian coastal area",
+const validDraft = {
+  profile: "Open Water student",
+  site_id: "tioman-demo",
+  species_id: "clownfish-demo",
+  recognition: "Green turtle (demo suggestion)",
+  activity: "Sighting only",
+  observed_at: "2026-08-14T10:00",
+  note: "Turtle moved calmly over the reef.",
+};
+
+test("offers Malaysian demo dive sites when an external catalogue is unavailable", () => {
+  assert.deepEqual(getDemoDiveSites().map((site) => site.name), [
+    "Tioman reef demonstration zone",
+    "Perhentian reef demonstration zone",
+  ]);
+});
+
+test("shows backend-safe species directory ids", () => {
+  assert.deepEqual(getSpeciesForSite("tioman-demo").map((species) => species.id), [
+    "clownfish-demo",
+    "parrotfish-demo",
+    "seahorse-sensitive-demo",
+  ]);
+});
+
+test("accepts a complete synthetic dive sighting and keeps it clearly labelled", () => {
+  assert.deepEqual(validateSighting(validDraft), {});
+  assert.deepEqual(buildSightingPayload(validDraft), {
+    site_id: "tioman-demo",
+    species_id: "clownfish-demo",
     observed_at: "2026-08-14T10:00:00",
-    latitude: 3.139,
-    longitude: 101.6869,
-    image_url: "/assets/demo-plastic.jpg",
-    note: "Synthetic demonstration record",
+    note: "Turtle moved calmly over the reef.",
   });
 });
 
-test("rejects a category outside the agreed demonstration list", () => {
-  assert.equal(
-    validateObservation({ ...validDraft, category: "Organic waste" }).category,
-    "Choose one of the five demonstration categories.",
-  );
+test("requires backend-safe ids and a sighting choice before confirmation", () => {
+  const errors = validateSighting({ ...validDraft, site_id: "", species_id: "Unknown", activity: "" });
+  assert.equal(errors.site_id, "Choose a dive site.");
+  assert.equal(errors.species_id, "Choose a species from the directory.");
+  assert.equal(errors.activity, "Choose sighting only or collection.");
 });
 
-test("rejects unsafe sample image addresses", () => {
-  assert.equal(
-    validateObservation({ ...validDraft, image_url: "http://example.com/photo.jpg" }).image_url,
-    "Use an HTTPS link or a local /assets/ demo image.",
-  );
-});
-
-test("rounds sensitive marine context locations before they are used as map markers", () => {
-  assert.deepEqual(
-    getContextMarkers([
-      {
-        label: "Sensitive marine-life context",
-        latitude: 3.14159,
-        longitude: 101.69876,
-        sensitive: true,
-        source: "OBIS example",
-      },
-    ]),
-    [
-      {
-        label: "Sensitive marine-life context",
-        latitude: 3.1,
-        longitude: 101.7,
-        sensitive: true,
-        source: "OBIS example",
-      },
-    ],
-  );
-});
-
-test("normalises the backend OBIS context shape for the map and source list", () => {
-  assert.deepEqual(
-    getContextMarkers([
-      {
-        source: "OBIS",
-        approximate_location: { latitude: 3.14, longitude: 101.69 },
-        taxon_or_context_label: "Public marine-life context sample",
-        sensitivity: "aggregated",
-      },
-    ]),
-    [
-      {
-        source: "OBIS",
-        approximate_location: { latitude: 3.14, longitude: 101.69 },
-        taxon_or_context_label: "Public marine-life context sample",
-        sensitivity: "aggregated",
-        label: "Public marine-life context sample",
-        sensitive: false,
-        latitude: 3.14,
-        longitude: 101.69,
-      },
-    ],
-  );
-});
-
-test("uses the source-labelled option catalogue for category examples and areas", () => {
-  const catalog = {
-    categories: [{ value: "Plastic packaging", examples: ["bottles", "bags"] }],
-    areas: [{ value: "East coast Peninsular Malaysia" }],
-  };
-
-  assert.equal(getCategoryExamples(catalog, "Plastic packaging"), "bottles, bags");
-  assert.deepEqual(getAreaSuggestions(catalog), ["East coast Peninsular Malaysia"]);
-});
-
-test("renders approximate area as a select so all catalogue choices are visible", () => {
-  const html = readFileSync(resolve(frontendDir, "index.html"), "utf8");
-
-  assert.match(html, /<select name="area"[^>]*required/);
-  assert.doesNotMatch(html, /<input name="area"/);
-});
-
-test("keeps the submitted draft available when the API cannot be reached", () => {
+test("keeps the confirmed draft available after a request failure", () => {
   assert.equal(
     getRetryMessage(),
-    "The API could not be reached. Your confirmed input is still here; try again when the service is available.",
+    "The service is unavailable. Your confirmed demo record is still here; try again or continue with the demo result.",
   );
 });
 
-test("uses safe illustrative defaults when an older API returns only an observation", () => {
-  assert.deepEqual(
-    normaliseApiResult({
-      id: "demo-8",
-      category: "Metal",
-      area: "Selected Malaysian coastal area",
-      latitude: 3.139,
-      longitude: 101.6869,
-    }, [{ label: "OBIS example" }]),
-    {
-      observation: {
-        id: "demo-8",
-        category: "Metal",
-        area: "Selected Malaysian coastal area",
-        latitude: 3.139,
-        longitude: 101.6869,
-      },
-      classification: {
-        label: "Metal",
-        method: "Fixed demonstration category selected by the reporter.",
-      },
-      priority: {
-        level: "medium",
-        reason: "Illustrative clean-up priority only; it is not a pollution-source finding or enforcement decision.",
-      },
-      context: [{ label: "OBIS example" }],
-      source: "Synthetic/public demonstration data",
-      data_version: "demo-v1",
-      demo: true,
-    },
-  );
-});
-
-test("marks earlier stages complete without removing the active stage", () => {
-  assert.deepEqual(getProgressState("results"), {
-    report: "complete",
-    review: "complete",
-    results: "active",
+test("tracks the DiveSafe stages without removing the active stage", () => {
+  assert.deepEqual(getProgressState("briefing"), {
+    profile: "complete",
+    site: "complete",
+    briefing: "active",
+    confirm: "pending",
+    record: "pending",
   });
 });
 
-test("includes accessible decorative liquid effect hooks without changing the workflow", () => {
+test("keeps Leaflet and an accessible species list in the page", () => {
   const html = readFileSync(resolve(frontendDir, "index.html"), "utf8");
-  const css = readFileSync(resolve(frontendDir, "styles.css"), "utf8");
-
-  assert.match(html, /class="liquid-layer" aria-hidden="true"/);
-  assert.match(html, /class="liquid-orb\b[^\"]*" aria-hidden="true"/);
-  assert.match(css, /@keyframes liquid-drift/);
-  assert.match(css, /prefers-reduced-motion/);
+  assert.match(html, /id="site-map"/);
+  assert.match(html, /id="species-list"/);
+  assert.match(html, /leaflet@1\.9\.4/);
 });
 
-test("includes layered liquid ribbons for the hero and workspace", () => {
+test("uses the sighting endpoint and never collects precise coordinates", () => {
   const html = readFileSync(resolve(frontendDir, "index.html"), "utf8");
-  const css = readFileSync(resolve(frontendDir, "styles.css"), "utf8");
-
-  assert.match(html, /class="liquid-ribbons" aria-hidden="true"/);
-  assert.match(html, /class="liquid-ribbon liquid-ribbon-one"/);
-  assert.match(html, /class="liquid-workspace" aria-hidden="true"/);
-  assert.match(css, /@keyframes liquid-wave/);
-  assert.match(css, /@keyframes liquid-shimmer/);
+  const app = readFileSync(resolve(frontendDir, "app.js"), "utf8");
+  assert.doesNotMatch(html, /name="latitude"|name="longitude"/);
+  assert.match(app, /\/api\/sightings/);
+  assert.match(app, /\/api\/recognize/);
+  assert.doesNotMatch(app, /dive-sightings|latitude:|longitude:/);
 });

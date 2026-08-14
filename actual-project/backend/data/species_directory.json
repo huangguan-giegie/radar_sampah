@@ -1,0 +1,27 @@
+{
+  "version": "divesafe-my-species-2026-08-15-v1",
+  "demo": true,
+  "species": [
+    {
+      "id": "clownfish-demo",
+      "common_name": "Clownfish",
+      "scientific_name": "Amphiprion ocellaris",
+      "identification_note": "Orange body with pale vertical bands; similar species exist.",
+      "sensitivity": "public"
+    },
+    {
+      "id": "parrotfish-demo",
+      "common_name": "Parrotfish",
+      "scientific_name": "Scaridae spp.",
+      "identification_note": "Robust reef fish with a beak-like mouth; group-level demo label.",
+      "sensitivity": "public"
+    },
+    {
+      "id": "seahorse-sensitive-demo",
+      "common_name": "Seahorse",
+      "scientific_name": "Hippocampus spp.",
+      "identification_note": "Sensitive example: this app never collects or publishes an exact location.",
+      "sensitivity": "sensitive"
+    }
+  ]
+}

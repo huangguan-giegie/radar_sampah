@@ -1,49 +1,54 @@
-# Marine Observation MVP — Work Plan and Handover
+# DiveSafe MY Work Plan and Handover
 
-## Product slice
+**Version 2.0 | 15 August 2026**
 
-The MVP has one reporting flow for marine litter in one Malaysian coastal placeholder area. Marine-life information is a contextual OBIS map layer, not a second reporting flow.
+> Use synthetic or public data only. Results are illustrative and do not prove
+> species identity, ecological impact or legal status.
 
-## Delivery sequence
+## Goal
 
-| Stage | Output | Owner |
+Deliver one simple diver journey that can run on Render:
+
+`Profile -> Site -> Species guide -> Briefing -> Confirm -> Sighting`
+
+## Iterations
+
+| Iteration | Focus | Boundary |
 |---|---|---|
-| Scope | Frozen category list, boundary statement and sources | Huang + team |
-| Report | Accessible entry form and validation | Qian + Hanxia |
-| Review | Editable review screen and explicit confirmation | Qian + Hanxia |
-| Save | PostgreSQL on Render, SQLite fallback locally | Keith + Hanxia |
-| Results | Rule-based classification, illustrative priority and source labels | Su + Darli |
-| Context | Static OBIS sample, masked map markers and list fallback | Darli + Qian |
-| Release | Render smoke check, screenshots and PGP evidence | Huang |
+| 1 | Prepare and Explore | profile, site guide, species directory, briefing and broad map |
+| 2 | Identify and Contribute | demo recognition, confirmation, sighting, collection and badge |
+| 3 | Learn and Connect | quizzes, community feed and wider gamification roadmap |
 
-## Technical handover
+## Ownership
 
-- Backend entry point: `actual-project/backend/app.py`.
-- Local API: `python app.py` from `actual-project/backend`.
-- Frontend entry point: `actual-project/frontend/index.html`; local server `python -m http.server 8080`.
-- API contract: `GET /health`, `GET /api/observations`, `POST /api/observations`, `GET /api/context`.
-- Render uses `DATABASE_URL`; local development falls back to SQLite.
-- Runtime tables separate original observations, classifications, priorities and marine context.
-- `actual-project/backend/data/obis_context.json` is the versioned static source sample.
+| Area | Owner | Handover evidence |
+|---|---|---|
+| Scope and release | Huang | decision log, links and final smoke test |
+| Sources and map context | Hnin | source URLs, dates and location limits |
+| Frontend and accessibility | Qian | workflow test and browser check |
+| API and validation | LiHanXia | Flask tests and API examples |
+| Database | Keith | schema, Render variable and read-back check |
+| Recognition boundary | Benshuai | fallback response and provider notes |
 
-## Integration rules
+## API handover
 
-1. Branch from `main`.
-2. Make the smallest change that can be tested.
-3. Open a Pull Request and review the API/data/safety impact.
-4. Merge reasonably safe work, then run the integrated flow.
-5. Fix concrete integration failures and redeploy from `main`.
-6. Record the commit, test time, URL and limitations in the PGP.
+- `GET /health`
+- `GET /api/dive-sites`
+- `GET /api/species` and `/api/species/<site_id>`
+- `GET /api/briefing/<site_id>`
+- `POST /api/profile`, `/api/recognize`, `/api/sightings`
+- `GET /api/sightings` and `/api/collection/<profile_id>`
 
-## Release boundary
+The earlier `/api/observations`, `/api/context` and `/api/options` routes stay
+as a legacy rollback layer only.
 
-The demo must use synthetic/public records. External AI/CV, real uploads, exact threatened-species locations, scientific validation and enforcement workflows are outside this MVP.
+## Integration steps
 
-## Handover checklist
+1. Branch from `main` and make a small change.
+2. Do a quick review for secrets, broken code or API mismatch.
+3. Merge safe work, run the whole flow and fix real failures.
+4. Deploy from `main` and record commit, time, URL and synthetic input.
 
-- [ ] `main` and Render service point to the intended code.
-- [ ] `DATABASE_URL` is set only in Render, never in Git.
-- [ ] `/health` and `/api/context` return 200.
-- [ ] A synthetic observation can be created and read back.
-- [ ] The frontend keeps the draft when the API fails.
-- [ ] Evidence and known limitations are linked in the PGP.
+Render uses `DATABASE_URL` for PostgreSQL. Local work uses SQLite when it is
+missing. Recognition is a local fallback unless a reviewed HTTPS adapter is
+set privately. Never commit a key or a real diver profile.

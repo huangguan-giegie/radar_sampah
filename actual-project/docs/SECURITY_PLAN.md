@@ -1,37 +1,33 @@
-# Security Plan - Marine Observation MVP
+# Security Plan - DiveSafe MY
 
-## Implemented MVP boundary
+## Implemented demo controls
 
-- Accept synthetic/public demonstration data only.
-- Reject names, contact details, account identifiers and secrets from the API
-  payload.
-- Validate category, timestamp, coordinates, image URL scheme and text fields
-  on the server.
-- Store database credentials only in Render environment variables.
-- Allow the deployed frontend through `FRONTEND_ORIGINS`; do not use an open
-  CORS policy in the deployed configuration.
-- Mask or aggregate sensitive marine-context locations before display.
-- Keep external AI and computer vision disabled.
-- Use rule-based classification and illustrative priority with visible limits.
+- Accept synthetic/public profile and sighting data only.
+- Reject names, contact details, accounts, passwords and exact coordinates.
+- Validate site IDs, species IDs, timestamps, note length and image URL scheme.
+- Store PostgreSQL credentials only in Render environment variables.
+- Use `FRONTEND_ORIGINS` for the deployed frontend.
+- Keep sensitive wildlife locations coarse or masked.
+- Use a deterministic recognition fallback unless a private HTTPS adapter is
+  approved.
+- Keep source, version and demo/non-enforcement wording visible.
 
-## Not claimed or not implemented
+## Not claimed
 
-- Production authentication, role-based access or MFA.
-- Formal encryption, retention/deletion workflow or PDPA compliance.
-- Scientific validation, pollution-source attribution or enforcement workflow.
-- Public file upload storage, malware scanning or production incident response.
-- Real-time OBIS retrieval or verified species identification.
+This MVP has no production authentication, role model, MFA, formal retention
+process, PDPA compliance claim, public raw-file storage or incident-response
+system. It does not provide verified species recognition, legal advice,
+pollution-source attribution, ecological assessment or enforcement support.
 
-## Release gates
+## Adapter boundary
 
-Before any use beyond the class demo, confirm all of the following:
+An adapter URL and key may be configured privately in Render later. The key is
+never committed, returned by the API or written into a sighting. Provider
+errors, timeouts and unknown results fall back to a suggestion that needs user
+confirmation.
 
-- a privacy and retention process for real reports;
-- authenticated access and a reviewed role model;
-- database backups, monitoring and incident handling;
-- a reviewed source/update process for marine context data;
-- a review of any future external AI or CV data flow;
-- a separate approval for publishing locations that could be sensitive.
+## Before real use
 
-The deployed demo must never claim that a priority level proves where pollution
-came from or directs an official clean-up or enforcement action.
+The team would need a privacy review, access model, retention/deletion process,
+backups, monitoring, source update review and a separate decision about any
+external recognition data flow. The class demo should stay synthetic.
