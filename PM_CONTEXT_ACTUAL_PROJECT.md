@@ -43,12 +43,14 @@ label illustrative rules clearly.
 ## Work completed
 
 - Created `realwork/` with actual-project docs, references and migration manifest.
-- Added a minimal Flask API and static frontend starter using synthetic in-memory
-  observations only.
-- Added `render.yaml` for free API and static-site services; the API smoke test
-  passed health, list, valid create and invalid-coordinate checks (4/4).
-- Pushed the local project to the new GitHub repository (`main`, commit
-  `0ecca35`).
+- Replaced the starter with the complete marine MVP: Flask API, PostgreSQL/
+  SQLite schema, static OBIS context, rule-based classification/priority and a
+  three-step accessible frontend with Leaflet plus list fallback.
+- Added `render.yaml` for free API and static-site services; local verification
+  passed backend tests (10/10), frontend workflow tests (8/8), syntax checks,
+  API smoke checks and `git diff --check`.
+- Pushed the complete project to the new GitHub repository (`main`, commit
+  `c2f3dae66c6a5caea088537a0afa0b92db318ca9`).
 - Invited the five confirmed team GitHub accounts (`hlii0333`, `hnin0011`,
   `kcho0072`, `qjia0033-dev` and `SUBENSHUAI`); all are currently pending
   acceptance.
@@ -76,11 +78,14 @@ label illustrative rules clearly.
   - API URL: `https://team04-marine-observation-api.onrender.com`
   - Frontend dashboard: `https://dashboard.render.com/static/srv-d9v01afqj5pc738lpi5g`
   - Frontend URL: `https://team04-marine-observation-frontend.onrender.com`
-  The frontend deploy log reports “Your site is live”. The API deploy log
-  reports “Your service is live”. After setting the API health-check path to
-  `/health` and restarting the service, external smoke checks passed: `GET /`,
-  `GET /health`, `GET /api/observations` returned 200, `POST
-  /api/observations` returned 201, and the frontend returned 200.
+  The frontend and API deploy logs both report that the services are live from
+  `c2f3dae`. The API service now has `DATABASE_URL` and `FRONTEND_ORIGINS`
+  configured in Render; the URL value is intentionally not recorded here.
+  External smoke checks passed: `GET /health` and `GET /api/context` returned
+  200, a synthetic `POST /api/observations` returned 201 with the expected
+  classification and illustrative priority, `GET /api/observations` returned
+  the saved record, and the frontend returned 200. The browser flow also
+  passed Report → Confirm → Results against the deployed services.
 - LeanKit home at `https://monashie.leankit.com/` still exposes the existing
   Team 04 board but no board-creation control. The old board was not renamed,
   edited or reused for the actual project.
