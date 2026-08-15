@@ -3,7 +3,8 @@
 :root { --ink: #052d3b; --deep: #073b4c; --sea: #0f6775; --tide: #72d7ca; --foam: #e6f4ef; --sand: #f5f1e7; --coral: #f3976c; --muted: #64808a; }
 * { box-sizing: border-box; }
 body { margin: 0; color: var(--ink); background: var(--sand); font: 500 16px/1.55 Manrope, sans-serif; }
-.app-shell { display: grid; grid-template-columns: 330px minmax(0, 1fr); min-height: 100vh; }
+.liquid-canvas { position: fixed; inset: 0; z-index: 0; width: 100%; height: 100%; pointer-events: none; opacity: .46; mix-blend-mode: multiply; }
+.app-shell { position: relative; z-index: 1; display: grid; grid-template-columns: 330px minmax(0, 1fr); min-height: 100vh; }
 .project-rail { padding: 42px 34px; color: #f7fffc; background: radial-gradient(circle at 12% 85%, #147082 0 10%, transparent 10.5%), radial-gradient(circle at 88% 23%, #15596c 0 16%, transparent 16.5%), var(--deep); }
 .brand { display: inline-flex; gap: 9px; color: inherit; text-decoration: none; font-weight: 800; letter-spacing: -.04em; font-size: 23px; }.brand span { color: var(--tide); }
 .rail-label,.kicker,.eyebrow { margin: 36px 0 8px; color: var(--tide); font: 500 11px/1.2 'DM Mono', monospace; letter-spacing: .12em; text-transform: uppercase; }

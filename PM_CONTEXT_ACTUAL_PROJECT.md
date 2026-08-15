@@ -12,6 +12,7 @@ Use synthetic/public data, broad area labels and source notes. Do not collect id
 
 - Backend: Flask/Gunicorn, PostgreSQL on Render and SQLite fallback.
 - Frontend: plain HTML/CSS/JavaScript with an accessible list fallback.
+- Visual layer: a small WebGL fragment shader adds a decorative liquid effect; it is hidden when WebGL is unavailable and stays still for reduced-motion users.
 - Active API: litter options/reports/recognition/heatmap, cleanup missions and evidence, plus community progress.
 - Recognition: deterministic fallback by default. A provider needs `LITTER_RECOGNITION_ENABLED=true`, a private HTTPS URL and team review.
 - Database: reports, missions, anonymous joins and evidence are separate from legacy tables.

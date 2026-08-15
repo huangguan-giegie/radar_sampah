@@ -86,3 +86,19 @@ test("uses the planned report and recognition requests without a precise locatio
   assert.match(app, /\/api\/litter-recognize/);
   assert.doesNotMatch(app, /latitude:|longitude:/i);
 });
+
+test("includes a decorative liquid shader with safe fallbacks", () => {
+  const html = readFileSync(resolve(frontendDir, "index.html"), "utf8");
+  const css = readFileSync(resolve(frontendDir, "styles.css"), "utf8");
+  const shader = readFileSync(resolve(frontendDir, "liquid-shader.js"), "utf8");
+
+  assert.match(html, /id="liquid-canvas"/);
+  assert.match(html, /liquid-shader\.js/);
+  assert.match(css, /\.liquid-canvas/);
+  assert.match(css, /pointer-events:\s*none/);
+  assert.match(shader, /u_time/);
+  assert.match(shader, /u_resolution/);
+  assert.match(shader, /prefers-reduced-motion/);
+  assert.match(shader, /requestAnimationFrame/);
+  assert.match(shader, /canvas\.hidden\s*=\s*true/);
+});
