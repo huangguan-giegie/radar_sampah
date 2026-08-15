@@ -50,3 +50,11 @@ claim or demo path.
 ## Evidence boundary
 
 Passing a checklist supports a course demo only. It does not prove a real detection, pollution source, safety risk, dispatch, legal duty, cleanup result or ecological impact. HealthFirst stays read-only reference material; the Sample Project PGIE is not changed.
+
+## Repository rename record
+
+On 15 August 2026 the active GitHub repository was renamed from
+`team04-marine-observation-mvp` to `tidetrace-my-mvp` to match the TideTrace MY
+scope. The local `origin` and active project links were updated, and the
+documentation-link commit is `ca801b0`. Render service names and deployment
+URLs were not changed; check the next deployment source before the next demo.
