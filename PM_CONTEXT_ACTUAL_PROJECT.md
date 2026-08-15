@@ -18,10 +18,10 @@ Use synthetic/public data, broad area labels and source notes. Do not collect id
 - Database: reports, missions, anonymous joins and evidence are separate from legacy tables.
 - DiveSafe MY and older routes remain rollback paths only.
 
-The TideTrace implementation is on `main` at commit `d19557e`. Local checks on
-15 August passed: backend `25 passed`, frontend `8 passed`, Python compileall,
-JavaScript syntax checks and PPT overflow checks. Render was rebuilt from
-`d19557e` for both the API and static frontend. A synthetic smoke check returned
+The TideTrace implementation is on `main` at commit `7826641`. Local checks on
+15 August passed: backend `25 passed`, frontend `9 passed`, Python compileall,
+JavaScript syntax checks and shader contract checks. Render was rebuilt from
+`7826641` for both the API and static frontend. A synthetic smoke check returned
 200 for health/options/context, 200 for demo recognition, 201 for a report,
 mission join and before/after evidence, and the report was readable after a
 fresh GET. Render reported `database: configured`; no recognition provider was
