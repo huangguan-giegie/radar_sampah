@@ -37,7 +37,7 @@ for recovery; do not use it as TideTrace demo evidence.
 
 ## Project links
 
-- GitHub: https://github.com/huangguan-giegie/team04-marine-observation-mvp
+- GitHub: https://github.com/huangguan-giegie/tidetrace-my-mvp
 - Frontend: https://team04-marine-observation-frontend.onrender.com
 - API: https://team04-marine-observation-api.onrender.com
 - Drive: https://drive.google.com/drive/folders/18Px2njE27SCiZ4bs-40zgUgm_sRE70Kx

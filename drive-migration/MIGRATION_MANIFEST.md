@@ -29,7 +29,7 @@ https://drive.google.com/drive/folders/18Px2njE27SCiZ4bs-40zgUgm_sRE70Kx
 
 New project spaces:
 
-- GitHub: https://github.com/huangguan-giegie/team04-marine-observation-mvp
+- GitHub: https://github.com/huangguan-giegie/tidetrace-my-mvp
 - Miro: https://miro.com/app/board/uXjVHySKbPY=/
 - Render: project and free API/frontend services created and verified
 - LeanKit: new board deferred by PM; old board unchanged
