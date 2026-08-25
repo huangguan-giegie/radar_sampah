@@ -1895,3 +1895,24 @@ key card text/header values were re-read from the live board.
   text, images and data were not copied. Sample Project PGIE and HealthFirst
   reference files were not modified.
 
+## Radar Sampah ePortfolio visual evidence - 25 August 2026
+
+- Added project-owned visual blocks to the team04-FIT5120 About page so the
+  page now has evidence alongside the written sections, following the sample
+  page's pattern without copying its content.
+- Added: `Project overview — beach cleanup context`, `Persona — Amirah`,
+  `Prototype — manual litter report`, `Broad-area map and severity`,
+  `Cleanup evidence — before and after`, `Confirmation — review before submit`,
+  `Litter categories and quantities`, `Cleanup outcome and follow-up`, and
+  `System architecture — data flow`.
+- The images came from the local Radar Sampah design-thinking image set:
+  `01_coastal_cleanup_hero.png`, `persona-amirah.png`,
+  `02_phone_litter_documentation.png`, `03_broad_area_coast_map.png`,
+  `04_beach_before_after.png`, `05_litter_categories.png`,
+  `06_user_confirmation.png`, and `07_area_data_flow.png`.
+- The screenshot used for layout review is
+  `backups/eportfolio-radar-sampah-images-2026-08-25.png`. The page was
+  reopened in display mode after saving; image blocks and their titles were
+  re-read from the live page. All images are synthetic/project demonstration
+  visuals and do not add real personal data or exact sensitive locations.
+
