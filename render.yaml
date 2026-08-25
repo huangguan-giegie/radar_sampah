@@ -29,6 +29,6 @@ services:
     name: radar-sampah-frontend
     runtime: static
     rootDir: actual-project/frontend
-    buildCommand: echo "Static site"
-    staticPublishPath: .
+    buildCommand: npm ci && npm run build
+    staticPublishPath: dist
     plan: free
