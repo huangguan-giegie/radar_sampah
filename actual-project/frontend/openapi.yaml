@@ -1,0 +1,531 @@
+openapi: 3.0.3
+info:
+  title: Radar Sampah API
+  version: "1.0.0"
+  description: |
+    Iteration 1 (Core MVP) 的后端接口。文字版说明和定稿理由见 API.md。
+
+    要点：
+    - 有效记录 < 3 条时 severity/band/composition 必须为 null，不要兜底成 Low
+    - 重复记录返回 201 + status=Duplicate，不是错误
+    - GPS 精确坐标只用于查重和海滩匹配，任何响应都不得返回
+    - 照片必须剥离 EXIF 定位信息
+    - /scoring-method 是可选接口（US4.3 由前端交付），但 §7 的计算必须用同一组数字
+    - 认证是匿名参与者编号：不收集姓名、邮箱、密码
+
+servers:
+  - url: https://api.example.com
+    description: 替换成真实地址
+
+tags:
+  - name: Auth
+  - name: Beaches
+  - name: Scoring
+  - name: Geo
+  - name: Uploads
+  - name: Reports
+
+security:
+  - bearerAuth: []
+
+paths:
+  /auth/anonymous:
+    post:
+      tags: [Auth]
+      security: []
+      summary: 领一个匿名参与者编号
+      description: 不收集姓名、邮箱、密码。返回一个 4 位编号。
+      responses:
+        "201":
+          description: 新参与者
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AuthSession" }
+
+  /auth/restore:
+    post:
+      tags: [Auth]
+      security: []
+      summary: 换设备时用已有编号继续
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [participantId]
+              properties:
+                participantId: { type: string, example: "1637" }
+      responses:
+        "200":
+          description: 会话
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AuthSession" }
+        "404":
+          $ref: "#/components/responses/Error"
+
+  /auth/logout:
+    post:
+      tags: [Auth]
+      summary: 登出
+      responses:
+        "204": { description: 已登出 }
+
+  /auth/me:
+    get:
+      tags: [Auth]
+      summary: 当前用户
+      responses:
+        "200":
+          description: 用户
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/User" }
+        "401":
+          $ref: "#/components/responses/Error"
+
+  /beaches:
+    get:
+      tags: [Beaches]
+      security: []
+      summary: 海滩列表（地图与首页用）
+      responses:
+        "200":
+          description: 全部支持的海滩
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/BeachSummary" }
+
+  /beaches/{beachId}:
+    get:
+      tags: [Beaches]
+      security: []
+      summary: 海滩详情
+      parameters:
+        - { name: beachId, in: path, required: true, schema: { type: string }, example: morib }
+      responses:
+        "200":
+          description: 详情
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BeachDetail" }
+        "404":
+          $ref: "#/components/responses/Error"
+
+  /scoring-method:
+    get:
+      tags: [Scoring]
+      security: []
+      summary: "【可选】公布的评分规则（权重、阈值、窗口）"
+      description: |
+        US4.3 为 non-blocking stretch，规则由前端交付（src/config/scoring.ts），
+        这个接口不实现也不影响前端。
+
+        但后端算严重度时**必须使用 API.md §3 那组权重和阈值** ——
+        公布的规则和实际计算的规则不一致，US4.3 就失去意义了。
+        实现了且返回值与前端不同时，前端以后端为准并在 dev 模式告警。
+      responses:
+        "200":
+          description: 规则
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ScoringMethod" }
+
+  /geo/resolve-beach:
+    post:
+      tags: [Geo]
+      summary: 一次性坐标反查支持的海滩（坐标不落库）
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [lat, lng]
+              properties:
+                lat: { type: number, format: double, example: 2.7461 }
+                lng: { type: number, format: double, example: 101.4402 }
+      responses:
+        "200":
+          description: 命中返回海滩；25km 内没有支持的海滩时返回 null
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - { $ref: "#/components/schemas/BeachSummary" }
+                  - { type: "null" }
+
+  /uploads/photos:
+    post:
+      tags: [Uploads]
+      summary: 上传照片（后端必须剥离 EXIF 定位信息）
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [photo]
+              properties:
+                photo:
+                  type: string
+                  format: binary
+                  description: JPEG / PNG / HEIC，≤ 10 MB
+      responses:
+        "201":
+          description: 上传成功
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/UploadedPhoto" }
+        "400":
+          $ref: "#/components/responses/Error"
+        "413":
+          $ref: "#/components/responses/Error"
+
+  /reports:
+    post:
+      tags: [Reports]
+      summary: 提交一条记录（状态在本次请求内同步判定）
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CreateReport" }
+      responses:
+        "201":
+          description: |
+            已保存。注意 status 可能是 Duplicate —— 那是正常结果，不是错误。
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LitterReport" }
+        "400":
+          $ref: "#/components/responses/Error"
+
+  /reports/mine:
+    get:
+      tags: [Reports]
+      summary: 我的记录，按创建时间倒序
+      parameters:
+        - name: status
+          in: query
+          required: false
+          schema: { $ref: "#/components/schemas/ReportStatus" }
+      responses:
+        "200":
+          description: 记录列表
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/LitterReport" }
+
+  /reports/mine/counts:
+    get:
+      tags: [Reports]
+      summary: 我的记录三态计数
+      responses:
+        "200":
+          description: 计数
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ReportCounts" }
+
+  /reports/{reportId}:
+    patch:
+      tags: [Reports]
+      summary: 修正记录（改完要重跑状态判定）
+      parameters:
+        - { name: reportId, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                beachId: { type: string }
+                category: { $ref: "#/components/schemas/LitterCategory" }
+                quantity: { $ref: "#/components/schemas/QuantityBand" }
+                photoId: { type: string }
+      responses:
+        "200":
+          description: 更新后的记录
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LitterReport" }
+        "403":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+    delete:
+      tags: [Reports]
+      summary: 删除记录
+      parameters:
+        - { name: reportId, in: path, required: true, schema: { type: string } }
+      responses:
+        "204": { description: 已删除 }
+        "403":
+          $ref: "#/components/responses/Error"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  responses:
+    Error:
+      description: 错误
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+
+  schemas:
+    Error:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: string
+          description: 机器可读错误码
+          enum:
+            - VALIDATION_FAILED
+            - PHOTO_REQUIRED
+            - PHOTO_TOO_LARGE
+            - PHOTO_UNSUPPORTED_TYPE
+            - UNAUTHENTICATED
+            - NOT_OWNER
+            - NOT_FOUND
+            - UNKNOWN_PARTICIPANT
+            - PAYLOAD_TOO_LARGE
+            - RATE_LIMITED
+            - INTERNAL_ERROR
+        message:
+          type: string
+          description: 给用户看的英文成句，前端原样展示
+
+    User:
+      type: object
+      required: [id, participantId, role]
+      properties:
+        id: { type: string, example: u_01H8XK }
+        participantId:
+          type: string
+          example: "1637"
+          description: 4 位匿名编号，随机生成，不重复。
+        role: { type: string, enum: [volunteer, moderator] }
+
+    AuthSession:
+      type: object
+      required: [token, user]
+      properties:
+        token: { type: string, description: "JWT，有效期 30 天" }
+        user: { $ref: "#/components/schemas/User" }
+
+    SeverityBand:
+      type: string
+      enum: [Low, Moderate, High, Severe]
+
+    LitterCategory:
+      type: string
+      enum: [Plastic, Fishing gear, Glass, Metal, Paper, Other]
+
+    QuantityBand:
+      type: string
+      enum: [Small, Medium, Large, Very Large]
+
+    ReportStatus:
+      type: string
+      enum: [Counted, Duplicate, Incomplete]
+
+    SpeciesGlyph:
+      type: string
+      enum: [turtle, bird, mangrove, grass, crab, fish]
+
+    BeachSummary:
+      type: object
+      required:
+        [id, name, area, lat, lng, severity, band, insufficientData, validReports,
+         lastReportedAt, freshnessKind, habitat, habitatTag, sensitivity,
+         primarySpeciesGlyph, coverImageUrl, scene]
+      properties:
+        id: { type: string, example: morib }
+        name: { type: string, example: Pantai Morib }
+        area: { type: string, example: "Banting, Selangor" }
+        lat: { type: number, format: double }
+        lng: { type: number, format: double }
+        severity:
+          allOf: [{ $ref: "#/components/schemas/SeverityBand" }]
+          nullable: true
+          description: 有效记录 < 3 条时必须为 null
+        band:
+          type: integer
+          nullable: true
+          minimum: 1
+          maximum: 4
+          description: 与 severity 一一对应，同时为 null
+        insufficientData: { type: boolean }
+        validReports:
+          type: integer
+          description: 只数 Counted 的记录
+        lastReportedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: 最近一条 Counted 记录的时间，不受 90 天窗口限制
+        freshnessKind:
+          type: string
+          enum: [ok, aging, stale]
+          description: "< 30 天 / 30-90 天 / > 90 天或从无记录"
+        habitat: { type: string, example: "Intertidal mudflat & sandy shore" }
+        habitatTag: { type: string, example: MUDFLAT }
+        sensitivity: { type: string, example: Migratory feeding ground }
+        primarySpeciesGlyph: { $ref: "#/components/schemas/SpeciesGlyph" }
+        coverImageUrl:
+          type: string
+          format: uri
+          nullable: true
+          description: 没配图就给 null，前端退回 scene 渐变
+        scene:
+          type: string
+          description: 无图时的 CSS background 占位，种子数据里已有
+
+    Species:
+      type: object
+      required: [name, glyph, text, source]
+      properties:
+        name: { type: string, example: Green Sea Turtle }
+        glyph: { $ref: "#/components/schemas/SpeciesGlyph" }
+        text: { type: string }
+        source: { type: string, example: "DoF Malaysia · 2024" }
+        likelihood:
+          nullable: true
+          description: |
+            Epic 5 建模出现概率。省略或 null 时前端退回纯科普展示。
+            绝不与垃圾严重度合并成一个数；前端会用独立样式并标注 MODELLED · ESTIMATE。
+          allOf: [{ $ref: "#/components/schemas/SpeciesLikelihood" }]
+
+    SpeciesLikelihood:
+      type: object
+      required: [percent, basis]
+      properties:
+        percent: { type: integer, minimum: 0, maximum: 100, example: 38 }
+        basis:
+          type: string
+          example: Habitat match + 2024 sighting records
+          description: 模型或数据依据，界面上会显示，不能留空
+
+    CompositionSlice:
+      type: object
+      required: [category, percent]
+      properties:
+        category: { $ref: "#/components/schemas/LitterCategory" }
+        percent: { type: integer, minimum: 0, maximum: 100 }
+
+    BeachDetail:
+      allOf:
+        - $ref: "#/components/schemas/BeachSummary"
+        - type: object
+          required: [composition, species, ecologicalNote]
+          properties:
+            composition:
+              type: array
+              nullable: true
+              description: 按 percent 降序，合计 100；insufficientData 时必须为 null
+              items: { $ref: "#/components/schemas/CompositionSlice" }
+            species:
+              type: array
+              maxItems: 5
+              items: { $ref: "#/components/schemas/Species" }
+            ecologicalNote: { type: string }
+
+    ScoringMethod:
+      type: object
+      required: [categoryWeights, quantityWeights, bands, windowDays, minReports]
+      properties:
+        categoryWeights:
+          type: array
+          items:
+            type: object
+            required: [category, weight]
+            properties:
+              category: { $ref: "#/components/schemas/LitterCategory" }
+              weight: { type: number, format: float }
+        quantityWeights:
+          type: array
+          items:
+            type: object
+            required: [quantity, weight]
+            properties:
+              quantity: { $ref: "#/components/schemas/QuantityBand" }
+              weight: { type: number, format: float }
+        bands:
+          type: array
+          items:
+            type: object
+            required: [band, range, color]
+            properties:
+              band: { $ref: "#/components/schemas/SeverityBand" }
+              range: { type: string, example: "1.5 – 2.4" }
+              color: { type: string, example: "#D9A24B" }
+        windowDays: { type: integer, example: 90 }
+        minReports: { type: integer, example: 3 }
+
+    UploadedPhoto:
+      type: object
+      required: [id, url, metadataStripped]
+      properties:
+        id: { type: string }
+        url: { type: string, format: uri }
+        metadataStripped:
+          type: boolean
+          description: EXIF 定位信息确实剥干净了才给 true
+
+    CreateReport:
+      type: object
+      required: [beachId, category, quantity, photoId, locationSource]
+      properties:
+        beachId: { type: string, example: morib }
+        category: { $ref: "#/components/schemas/LitterCategory" }
+        quantity: { $ref: "#/components/schemas/QuantityBand" }
+        photoId: { type: string }
+        locationSource:
+          type: string
+          enum: [gps, manual]
+        coords:
+          type: object
+          nullable: true
+          description: 仅 locationSource=gps 时携带；只用于查重，绝不出现在任何响应里
+          required: [lat, lng]
+          properties:
+            lat: { type: number, format: double }
+            lng: { type: number, format: double }
+
+    LitterReport:
+      type: object
+      required: [id, beachId, beachName, category, quantity, createdAt, status]
+      properties:
+        id: { type: string }
+        beachId: { type: string }
+        beachName: { type: string }
+        category: { $ref: "#/components/schemas/LitterCategory" }
+        quantity: { $ref: "#/components/schemas/QuantityBand" }
+        createdAt: { type: string, format: date-time }
+        status: { $ref: "#/components/schemas/ReportStatus" }
+        statusNote:
+          type: string
+          nullable: true
+          description: 被排除的原因，英文成句，前端原样展示；Counted 时不返回
+        photoUrl: { type: string, format: uri, nullable: true }
+
+    ReportCounts:
+      type: object
+      required: [counted, duplicate, incomplete]
+      properties:
+        counted: { type: integer }
+        duplicate: { type: integer }
+        incomplete: { type: integer }
