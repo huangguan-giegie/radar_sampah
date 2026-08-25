@@ -1,13 +1,82 @@
 <!doctype html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1" />
-    <meta name="theme-color" content="#0B2161" />
-    <title>Radar Sampah</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Radar Sampah | Marine litter action</title>
+    <link rel="stylesheet" href="styles.css">
   </head>
   <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
+    <canvas id="liquid-canvas" class="liquid-canvas" aria-hidden="true"></canvas>
+    <main class="app-shell">
+      <aside class="project-rail">
+        <a class="brand" href="#report-step"><span aria-hidden="true">◌</span> Radar Sampah</a>
+        <p class="rail-label">Marine litter action desk</p>
+        <h1>Turn a shoreline report into practical action.</h1>
+        <p class="rail-copy">A privacy-safe Malaysia demo that works with broad areas only — never exact coordinates.</p>
+        <ol class="progress" aria-label="Radar Sampah workflow">
+          <li data-progress="report"><span>01</span><strong>Report</strong></li>
+          <li data-progress="detection"><span>02</span><strong>Confirm detection</strong></li>
+          <li data-progress="context"><span>03</span><strong>View context</strong></li>
+          <li data-progress="mission"><span>04</span><strong>Plan cleanup</strong></li>
+          <li data-progress="impact"><span>05</span><strong>Record impact</strong></li>
+          <li data-progress="progress"><span>06</span><strong>Track progress</strong></li>
+        </ol>
+        <p class="boundary"><strong>Demo boundary</strong> All places and results are synthetic. Follow local safety guidance and use an organised cleanup for hazardous waste.</p>
+      </aside>
+      <section class="workspace">
+        <header class="topline"><p>Malaysia · community demo</p><span>Broad-area privacy by design</span></header>
+        <form id="litter-form" novalidate>
+          <section id="report-step" class="step-panel" tabindex="-1">
+            <p class="kicker">Stage 01 · Report</p><h2>What needs attention?</h2>
+            <p>Choose a broad public area, then describe the litter. Do not add an address or precise location.</p>
+            <label class="field"><span>Reporting area</span><select name="area_id" id="area-select" required></select><small data-error-for="area_id"></small></label>
+            <label class="field"><span>Main litter type</span><select name="litter_type" required><option value="">Choose a type</option><option>Plastic packaging</option><option>Fishing gear</option><option>Glass</option><option>Metal</option><option>Other</option></select><small data-error-for="litter_type"></small></label>
+            <label class="field"><span>What can volunteers expect?</span><textarea name="description" rows="4" maxlength="500" placeholder="For example: bottles collected along the public beach edge."></textarea><small data-error-for="description"></small></label>
+            <label class="field"><span>Optional evidence image</span><input name="image_url" type="url" placeholder="https://example.org/demo-photo.jpg"><small>Used only for the optional recognition check.</small></label>
+            <div class="field-grid"><label class="field"><span>Estimated items</span><input name="quantity" type="number" min="1" value="1"></label><label class="field"><span>Observed at</span><input name="observed_at" type="datetime-local"></label></div>
+            <button class="button primary" type="button" data-next="detection">Check demo detection →</button>
+          </section>
+          <section id="detection-step" class="step-panel is-hidden" tabindex="-1">
+            <p class="kicker">Stage 02 · Detection confirmation</p><h2>Check the result before action.</h2>
+            <article class="detection-card"><p id="detection-source" class="eyebrow"></p><strong id="detection-label"></strong><span id="detection-confidence"></span></article>
+            <p id="detection-message" class="message" role="status"></p>
+            <label class="check-field"><input name="detection_confirmed" type="checkbox"><span>I reviewed this demo result and confirm it before submitting the report or planning a cleanup.</span></label>
+            <small data-error-for="detection_confirmed"></small>
+            <div class="actions"><button class="button secondary" type="button" data-back="report">Back</button><button id="retry-detection" class="button secondary" type="button">Retry detection</button><button class="button primary" type="button" data-next="context">Confirm and view context →</button></div>
+          </section>
+          <section id="context-step" class="step-panel is-hidden" tabindex="-1">
+            <p class="kicker">Stage 03 · Heatmap & context</p><h2>See the pattern, not a pinpoint.</h2>
+            <p>These broad-area signals help decide where community effort is useful. They do not show live locations.</p>
+            <div class="heatmap" aria-hidden="true"><span class="warm"></span><span class="cool"></span><span class="warm"></span></div>
+            <ul id="hotspot-list" class="accessible-list" aria-label="Broad-area litter context"></ul>
+            <div class="actions"><button class="button secondary" type="button" data-back="detection">Back</button><button class="button primary" type="button" data-next="mission">Plan a cleanup mission →</button></div>
+          </section>
+          <section id="mission-step" class="step-panel is-hidden" tabindex="-1">
+            <p class="kicker">Stage 04 · Cleanup mission</p><h2>Prepare a small, safe mission.</h2>
+            <label class="field"><span>Participants</span><input name="team_size" type="number" min="1" value="2"><small data-error-for="team_size"></small></label>
+            <label class="field"><span>Equipment plan</span><select name="equipment"><option value="">Choose a plan</option><option>Gloves, bags and sorting sheet</option><option>Gloves, tongs and sharps container</option><option>Join an organised cleanup</option></select><small data-error-for="equipment"></small></label>
+            <p class="boundary"><strong>Before leaving</strong> Bring water, work with a buddy, and leave sharp, chemical or heavy waste to local authorities or an organised team.</p>
+            <div class="actions"><button class="button secondary" type="button" data-back="context">Back</button><button class="button primary" type="button" data-next="impact">Start impact record →</button></div>
+          </section>
+          <section id="impact-step" class="step-panel is-hidden" tabindex="-1">
+            <p class="kicker">Stage 05 · Before / after</p><h2>Make the change visible.</h2>
+            <div class="comparison"><article><span>Before</span><strong id="before-summary"></strong></article><article><span>After</span><strong>Ready for your cleanup result</strong></article></div>
+            <label class="field"><span>Bags or containers removed</span><input name="bags_removed" type="number" min="0" value="1"></label>
+            <label class="field"><span>Outcome note</span><textarea name="outcome_note" rows="3" placeholder="For example: sorted bottles for recycling with the local group."></textarea></label>
+            <div class="actions"><button class="button secondary" type="button" data-back="mission">Back</button><button class="button primary" type="button" data-next="progress">Save demo impact →</button></div>
+          </section>
+        </form>
+        <section id="progress-step" class="step-panel is-hidden" tabindex="-1">
+          <p class="kicker">Stage 06 · Community progress</p><h2>One report can start a tide of action.</h2>
+          <p id="progress-summary"></p>
+          <ul id="impact-list" class="accessible-list" aria-label="Cleanup impact summary"></ul>
+          <article class="boundary"><strong>Demo saved locally</strong> This result is a demo fallback until a connected service accepts it.</article>
+          <div class="actions"><button id="new-report-button" class="button primary" type="button">Start another report</button></div>
+        </section>
+      </section>
+    </main>
+    <script src="liquid-shader.js" defer></script>
+    <script type="module" src="app.js"></script>
   </body>
 </html>
