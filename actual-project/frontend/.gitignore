@@ -9,6 +9,7 @@ tsconfig.tsbuildinfo
 .env
 .env.local
 .env.*.local
+!.env.example
 
 # 打包给别人的压缩包
 *.zip

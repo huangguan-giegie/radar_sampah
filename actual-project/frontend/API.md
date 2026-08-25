@@ -2,7 +2,7 @@
 
 > **这份文档是接口契约，不是需求讨论稿。** 前端已经完整实现并按这套契约跑通，
 > 后端照着实现即可。所有原先待定的点都已定稿，理由写在每节的「定稿理由」里 ——
-> 后端如果有实现上的困难要改，改之前先说，前端跟着调 `src/api/real.ts` 一处即可。
+> 后端如果有实现上的困难要改，改之前先说，前端跟着调 `src/api.ts` 一处即可。
 >
 > 机器可读版本：[`openapi.yaml`](./openapi.yaml)（可直接导入 Swagger UI / 用来生成
 > 服务端骨架）。
@@ -210,7 +210,7 @@ Iteration 1 会上线建模的物种出现概率。前端已经预留好槽位�
 | GET | `/scoring-method` | 否 | **可选**，不实现也不影响前端 |
 
 **团队决议：US4.3 为 non-blocking stretch，规则由前端交付。** 权重、阈值、窗口
-都写死在前端 `src/config/scoring.ts`，评分说明页直出，离线也能看，不依赖后端。
+都写死在前端 `src/scoring.ts`，评分说明页直出，离线也能看，不依赖后端。
 
 ```json
 {
@@ -244,7 +244,7 @@ Iteration 1 会上线建模的物种出现概率。前端已经预留好槽位�
 严重度是后端算的（§7），公布的规则是前端展示的。两边用的数字必须一模一样 ——
 否则页面上写着「Plastic 0.85」，后端却按 0.9 在算，那 US4.3 的整个意义就没了。
 
-- 上面这组数字是**规范**，`src/config/scoring.ts` 是它的可执行副本
+- 上面这组数字是**规范**，`src/scoring.ts` 是它的可执行副本
 - 后端如果实现了这个接口且返回值不同，前端会**以后端为准**（那才是真正在算的
   规则），并在开发模式下 console 告警指出哪个数字对不上
 - 要改任何一个权重或阈值，两边同时改，并升 `RULE_VERSION`
@@ -478,7 +478,7 @@ photos           id, url, mime, bytes, metadata_stripped, created_at, report_id(
 ```
 
 `beaches` 和 `beach_species` 是**种子数据**，Iteration 1 固定四个海滩，
-没有增删改接口。种子内容照抄前端 `src/api/mock/data.ts`，字段名一一对应。
+没有增删改接口。种子内容照抄前端 `src/mockData.ts`，字段名一一对应。
 
 ---
 
@@ -499,5 +499,5 @@ cp .env.example .env
 npm run dev
 ```
 
-前端会自动从 mock 切到真实 HTTP，页面代码不用改。字段对不上时，改动只落在
-`src/api/real.ts`（映射）和 `src/api/endpoints.ts`（路径）。
+前端会自动从 mock 切到真实 HTTP，页面代码不用改。字段或路径对不上时，改动集中在
+`src/api.ts`。

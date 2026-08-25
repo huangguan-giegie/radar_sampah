@@ -121,7 +121,7 @@ paths:
       security: []
       summary: "【可选】公布的评分规则（权重、阈值、窗口）"
       description: |
-        US4.3 为 non-blocking stretch，规则由前端交付（src/config/scoring.ts），
+        US4.3 为 non-blocking stretch，规则由前端交付（src/scoring.ts），
         这个接口不实现也不影响前端。
 
         但后端算严重度时**必须使用 API.md §3 那组权重和阈值** ——
