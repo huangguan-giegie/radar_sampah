@@ -193,9 +193,13 @@ export default function MapScreen() {
         >
           <WifiOff />
           <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 12.5, fontWeight: 600 }}>You're offline</div>
+            <div style={{ fontSize: 12.5, fontWeight: 600 }}>
+              {offline ? 'Offline preview' : 'Map refresh failed'}
+            </div>
             <div style={{ fontSize: 11, color: C.mist }}>
-              Showing last synced verified data. New reports queue until you reconnect.
+              {offline
+                ? 'Cached map data may be outdated. Real API submissions require a connection.'
+                : 'Could not refresh map data. Check your connection and retry.'}
             </div>
           </div>
           <button

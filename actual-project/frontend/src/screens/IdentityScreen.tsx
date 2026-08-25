@@ -9,11 +9,12 @@ import { C, MONO } from '../theme';
 import { ShieldCheck } from '../components/Icon';
 import { BackButton, ErrorNote, PrimaryButton, TextButton } from '../components/ui';
 import { useApp } from '../AppContext';
+import { safeNextPath } from '../flowRules';
 
 export default function IdentityScreen() {
   const nav = useNavigate();
   const [params] = useSearchParams();
-  const next = params.get('next') || '/home';
+  const next = safeNextPath(params.get('next'));
   const { createId, restore } = useApp();
 
   const [mode, setMode] = useState<'new' | 'existing'>('new');

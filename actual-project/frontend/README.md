@@ -2,6 +2,8 @@
 
 Mobile-first frontend built with React, Vite and TypeScript.
 
+Requires Node.js 20.19 or newer.
+
 ## Run locally
 
 ```bash
@@ -36,6 +38,7 @@ Every real HTTP request used by `src/api.ts` is documented in `API.md` and
 ```bash
 npm run dev
 npm run typecheck
+npm test
 npm run build
 npm run preview
 ```

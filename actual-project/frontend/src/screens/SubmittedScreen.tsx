@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { getMyReports } from '../api';
 import { ArrowRight, Check, ChevronRight } from '../components/Icon';
@@ -6,10 +6,11 @@ import { GhostButton, PrimaryButton, Skeleton } from '../components/ui';
 import { C, MONO } from '../theme';
 import { useApp } from '../AppContext';
 import type { LitterReport } from '../types';
+import { reportOutcome } from '../flowRules';
 
 export default function SubmittedScreen() {
   const nav = useNavigate();
-  const { lastSavedReportId, patchDraft, reportsVersion } = useApp();
+  const { lastSavedReportId, patchDraft, resetDraft, reportsVersion } = useApp();
   const [reports, setReports] = useState<LitterReport[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -20,8 +21,33 @@ export default function SubmittedScreen() {
       .finally(() => setLoading(false));
   }, [reportsVersion]);
 
-  // 刚保存的那条；找不到就用最新的一条
-  const saved = reports.find((r) => r.id === lastSavedReportId) || reports[0];
+  const saved = reports.find((r) => r.id === lastSavedReportId);
+
+  if (!lastSavedReportId) return <Navigate to="/reports" replace />;
+
+  if (loading) {
+    return (
+      <div className="screen scroll-y" style={{ zIndex: 26 }}>
+        <div className="pt-page-lg" style={{ paddingInline: 20, display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <Skeleton h={80} r={40} />
+          <Skeleton h={28} />
+          <Skeleton h={180} r={22} />
+        </div>
+      </div>
+    );
+  }
+
+  if (!saved) return <Navigate to="/reports" replace />;
+
+  const outcome = reportOutcome(saved.status);
+  const outcomeColor =
+    outcome.tone === 'success' ? C.green : outcome.tone === 'warning' ? C.red : C.muted;
+  const outcomeBackground =
+    outcome.tone === 'success'
+      ? C.greenBg
+      : outcome.tone === 'warning'
+        ? 'rgba(196,87,74,.13)'
+        : 'rgba(30,36,44,.08)';
 
   const row = (label: string, value: string, badge?: string, last = false) => (
     <div
@@ -55,7 +81,7 @@ export default function SubmittedScreen() {
               width: 80,
               height: 80,
               borderRadius: 40,
-              background: C.green,
+              background: outcomeColor,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -65,7 +91,7 @@ export default function SubmittedScreen() {
             <Check size={34} color={C.white} strokeWidth={2.4} />
           </div>
           <div style={{ fontSize: 28, fontWeight: 650, letterSpacing: '-.7px', marginTop: 14 }}>
-            Nice one — it's on the map
+            {outcome.title}
           </div>
           <div
             style={{
@@ -75,36 +101,25 @@ export default function SubmittedScreen() {
               marginTop: 9,
               padding: '7px 13px',
               borderRadius: 999,
-              background: C.greenBg,
-              color: C.green,
+              background: outcomeBackground,
+              color: outcomeColor,
               fontSize: 10.5,
               fontWeight: 750,
               letterSpacing: '.08em',
             }}
           >
-            VALID · NOT A DUPLICATE · COUNTED
+            {outcome.badge}
           </div>
           <div style={{ fontSize: 13, color: C.muted, marginTop: 10, lineHeight: 1.5, maxWidth: 296 }}>
-            Thanks for this. Your report passed the checks, so it now counts toward this beach's
-            rating — that's one more piece of evidence for the coast.
+            {outcome.message}
           </div>
         </div>
 
         <div style={{ background: C.white, border: `1px solid ${C.line}`, borderRadius: 22, overflow: 'hidden' }}>
-          {loading && !saved ? (
-            <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <Skeleton h={14} />
-              <Skeleton h={14} />
-              <Skeleton h={14} />
-            </div>
-          ) : (
-            <>
-              {row('Beach', saved?.beachName ?? '—')}
-              {row('Category', saved?.category ?? '—')}
-              {row('Quantity', saved?.quantity ?? '—')}
-              {row('Location', 'Beach level only', 'GPS PRIVATE', true)}
-            </>
-          )}
+          {row('Beach', saved.beachName)}
+          {row('Category', saved.category)}
+          {row('Quantity', saved.quantity)}
+          {row('Location', 'Beach level only', undefined, true)}
         </div>
 
         <button
@@ -126,7 +141,7 @@ export default function SubmittedScreen() {
         </button>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
-          <PrimaryButton onClick={() => saved && nav(`/beach/${saved.beachId}`)}>
+          <PrimaryButton onClick={() => nav(`/beach/${saved.beachId}`)}>
             View Beach
             <ArrowRight />
           </PrimaryButton>
@@ -135,12 +150,15 @@ export default function SubmittedScreen() {
               height={50}
               style={{ borderRadius: 16, fontSize: 13.5 }}
               onClick={() => {
-                if (!saved) return;
+                resetDraft();
                 patchDraft({
                   editingReportId: saved.id,
                   beachId: saved.beachId,
                   category: saved.category,
                   quantity: saved.quantity,
+                  existingPhotoUrl: saved.photoUrl ?? null,
+                  locationSource: 'manual',
+                  coords: null,
                 });
                 nav('/report/details');
               }}

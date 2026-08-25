@@ -34,9 +34,14 @@ a:hover {
 
 input,
 textarea,
+select,
 button {
   font-family: inherit;
-  outline: none;
+}
+
+:where(a, button, input, textarea, select):focus-visible {
+  outline: 3px solid #14317e;
+  outline-offset: 3px;
 }
 
 button {

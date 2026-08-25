@@ -15,7 +15,7 @@ const TABS: Tab[] = ['All', 'Counted', 'Excluded'];
 export default function MyReportsScreen() {
   const nav = useNavigate();
   const [params, setParams] = useSearchParams();
-  const { patchDraft, reportsVersion } = useApp();
+  const { patchDraft, resetDraft, reportsVersion } = useApp();
 
   const tab = (params.get('tab') as Tab) ?? 'All';
   const [reports, setReports] = useState<LitterReport[]>([]);
@@ -111,14 +111,17 @@ export default function MyReportsScreen() {
                 type="button"
                 onClick={() => {
                   if (!fixable) return;
+                  resetDraft();
                   patchDraft({
                     editingReportId: r.id,
                     beachId: r.beachId,
                     category: r.category,
                     quantity: r.quantity,
                     locationSource: 'manual',
+                    coords: null,
+                    existingPhotoUrl: r.photoUrl ?? null,
                   });
-                  nav('/report/details');
+                  nav('/report/photo');
                 }}
                 className="card-hover"
                 style={{

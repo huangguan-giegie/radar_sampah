@@ -12,17 +12,20 @@ export default function PhotoScreen() {
   const cameraRef = useRef<HTMLInputElement>(null);
   const libraryRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
-  const [uploadError, setUploadError] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
 
   async function handleFile(file: File | undefined) {
     if (!file) return;
     setUploading(true);
-    setUploadError(false);
+    setUploadError(null);
     try {
       const photo = await uploadPhoto(file);
+      if (!photo.metadataStripped) {
+        throw new Error('Location metadata could not be removed. Please choose another photo.');
+      }
       patchDraft({ photo });
-    } catch {
-      setUploadError(true);
+    } catch (error) {
+      setUploadError(error instanceof Error ? error.message : 'Photo upload failed. Please try again.');
       patchDraft({ photo: null });
     } finally {
       setUploading(false);
@@ -37,7 +40,7 @@ export default function PhotoScreen() {
       <input
         ref={cameraRef}
         type="file"
-        accept="image/*"
+        accept="image/jpeg,image/png,image/heic,.heic"
         capture="environment"
         hidden
         onChange={(e) => handleFile(e.target.files?.[0])}
@@ -45,7 +48,7 @@ export default function PhotoScreen() {
       <input
         ref={libraryRef}
         type="file"
-        accept="image/jpeg,image/png"
+        accept="image/jpeg,image/png,image/heic,.heic"
         hidden
         onChange={(e) => handleFile(e.target.files?.[0])}
       />
@@ -70,7 +73,7 @@ export default function PhotoScreen() {
         {uploadError && (
           <ErrorNote
             title="Photo upload failed"
-            body="Check your connection and try again. Your report isn't lost."
+            body={uploadError}
             onRetry={() => cameraRef.current?.click()}
           />
         )}
@@ -140,7 +143,7 @@ export default function PhotoScreen() {
               </div>
               <div style={{ flex: 1 }}>
                 <div style={{ fontSize: 15, fontWeight: 640 }}>Upload Photo</div>
-                <div style={{ fontSize: 12, color: C.dim, marginTop: 2 }}>JPG or PNG · from your library</div>
+                <div style={{ fontSize: 12, color: C.dim, marginTop: 2 }}>JPG, PNG or HEIC · from your library</div>
               </div>
               <ChevronRight size={14} />
             </button>

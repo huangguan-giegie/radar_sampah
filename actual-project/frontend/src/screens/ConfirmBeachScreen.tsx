@@ -62,7 +62,7 @@ export default function ConfirmBeachScreen() {
           zIndex: 820,
         }}
       >
-        GPS USED ONCE · PRIVATE
+        {manual ? 'MANUAL BEACH SELECTION' : 'GPS USED ONCE · PRIVATE'}
       </div>
 
       <div
@@ -135,7 +135,11 @@ export default function ConfirmBeachScreen() {
                   <Check />
                   Yes, Confirm
                 </PrimaryButton>
-                <TextButton onClick={() => patchDraft({ locationSource: 'manual' })}>
+                <TextButton
+                  onClick={() =>
+                    patchDraft({ locationSource: 'manual', coords: null, beachId: null })
+                  }
+                >
                   Choose Another Beach
                 </TextButton>
               </div>
@@ -170,7 +174,7 @@ export default function ConfirmBeachScreen() {
                     key={b.id}
                     type="button"
                     onClick={() => {
-                      patchDraft({ beachId: b.id, locationSource: draft.locationSource ?? 'manual' });
+                      patchDraft({ beachId: b.id, locationSource: 'manual', coords: null });
                       nav('/report/details');
                     }}
                     className="chip-hover"

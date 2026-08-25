@@ -25,6 +25,7 @@ export default function RecordScreen() {
   const beach = beaches.find((b) => b.id === draft.beachId);
   const missCat = !draft.category;
   const missQty = !draft.quantity;
+  const photoUrl = draft.photo?.url ?? draft.existingPhotoUrl;
 
   function next() {
     if (missCat || missQty) {
@@ -45,9 +46,9 @@ export default function RecordScreen() {
           'radial-gradient(80% 50% at 30% 20%,rgba(255,255,255,.4),transparent 60%),linear-gradient(160deg,#BBB6AA 0%,#A19C90 45%,#87847B 75%,#6B6A62 100%)',
       }}
     >
-      {draft.photo ? (
+      {photoUrl ? (
         <img
-          src={draft.photo.url}
+          src={photoUrl}
           alt=""
           style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
         />

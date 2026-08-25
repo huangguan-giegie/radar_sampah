@@ -17,6 +17,7 @@ import { restoreId as apiRestoreId } from './api';
 // 「记录垃圾」这个流程分 3 步，中间填的东西先存在这里，提交成功后清空
 export type ReportDraft = {
   photo: UploadedPhoto | null;
+  existingPhotoUrl: string | null;
   beachId: string | null;
   locationSource: 'gps' | 'manual' | null;
   coords: { lat: number; lng: number } | null;
@@ -31,6 +32,7 @@ export type ReportDraft = {
 function emptyDraft(): ReportDraft {
   return {
     photo: null,
+    existingPhotoUrl: null,
     beachId: null,
     locationSource: null,
     coords: null,

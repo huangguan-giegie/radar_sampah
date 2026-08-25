@@ -73,23 +73,43 @@ async function request(path: string, method = 'GET', body?: unknown) {
 
 // ---------- 假数据用到的本地状态 ----------
 
-// mock 模式下把记录存在浏览器里，刷新页面不会丢
-function loadMockReports(): LitterReport[] {
-  const saved = localStorage.getItem('rs_mock_reports');
-  if (saved) {
-    try {
-      return JSON.parse(saved);
-    } catch {
-      // 存的东西坏了就用初始数据
-    }
+type MockAccounts = Record<string, LitterReport[]>;
+
+const MOCK_ACCOUNTS_KEY = 'rs_mock_accounts_v2';
+
+// mock 账号也按参与者编号隔离，1637 是演示数据账号。
+function loadMockAccounts(): MockAccounts {
+  const saved = localStorage.getItem(MOCK_ACCOUNTS_KEY);
+  if (!saved) return { [MOCK_USER.participantId]: SEED_REPORTS.map((report) => ({ ...report })) };
+
+  const parsed: unknown = JSON.parse(saved);
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+    throw new Error('Mock account data is invalid.');
   }
-  return SEED_REPORTS.slice();
+  return parsed as MockAccounts;
 }
 
-let mockReports = loadMockReports();
+let mockAccounts = loadMockAccounts();
 
-function saveMockReports() {
-  localStorage.setItem('rs_mock_reports', JSON.stringify(mockReports));
+function saveMockAccounts() {
+  localStorage.setItem(MOCK_ACCOUNTS_KEY, JSON.stringify(mockAccounts));
+}
+
+function currentMockParticipantId(): string {
+  const participantId = localStorage.getItem('rs_mock_participant');
+  if (!participantId || !mockAccounts[participantId]) {
+    throw new Error('No active mock participant.');
+  }
+  return participantId;
+}
+
+function currentMockReports(): LitterReport[] {
+  return mockAccounts[currentMockParticipantId()];
+}
+
+function replaceCurrentMockReports(reports: LitterReport[]) {
+  mockAccounts = { ...mockAccounts, [currentMockParticipantId()]: reports };
+  saveMockAccounts();
 }
 
 // 两点之间的距离（公里）
@@ -135,7 +155,13 @@ function toSummary(beach: BeachDetail): BeachSummary {
 export async function createAnonymousId(): Promise<AuthSession> {
   if (USE_MOCK) {
     await delay();
-    const participantId = String(1000 + Math.floor(Math.random() * 9000));
+    const availableIds = Array.from({ length: 9000 }, (_, index) => String(1000 + index)).filter(
+      (id) => !mockAccounts[id],
+    );
+    if (availableIds.length === 0) throw new Error('No participant IDs are available.');
+    const participantId = availableIds[Math.floor(Math.random() * availableIds.length)];
+    mockAccounts = { ...mockAccounts, [participantId]: [] };
+    saveMockAccounts();
     localStorage.setItem('rs_mock_participant', participantId);
     saveToken('mock-token');
     return {
@@ -154,6 +180,9 @@ export async function restoreId(participantId: string): Promise<AuthSession> {
   if (USE_MOCK) {
     await delay();
     const id = participantId.trim();
+    if (!/^\d{4}$/.test(id) || !mockAccounts[id]) {
+      throw new Error('Participant ID not found.');
+    }
     localStorage.setItem('rs_mock_participant', id);
     saveToken('mock-token');
     return {
@@ -171,6 +200,7 @@ export async function logout(): Promise<void> {
   if (USE_MOCK) {
     await delay(100);
     clearToken();
+    localStorage.removeItem('rs_mock_participant');
     return;
   }
   try {
@@ -186,7 +216,11 @@ export async function getMe(): Promise<User | null> {
   if (USE_MOCK) {
     await delay(80);
     if (!getToken()) return null;
-    const participantId = localStorage.getItem('rs_mock_participant') || MOCK_USER.participantId;
+    const participantId = localStorage.getItem('rs_mock_participant');
+    if (!participantId || !mockAccounts[participantId]) {
+      clearToken();
+      return null;
+    }
     return { id: 'u_anon_' + participantId, participantId, role: 'volunteer' };
   }
 
@@ -303,8 +337,7 @@ export async function createReport(input: CreateReportInput): Promise<LitterRepo
       createdAt: new Date().toISOString(),
       status: 'Counted',
     };
-    mockReports = [report, ...mockReports];
-    saveMockReports();
+    replaceCurrentMockReports([report, ...currentMockReports()]);
     return report;
   }
 
@@ -314,8 +347,9 @@ export async function createReport(input: CreateReportInput): Promise<LitterRepo
 export async function getMyReports(status?: ReportStatus): Promise<LitterReport[]> {
   if (USE_MOCK) {
     await delay(180);
-    if (!status) return mockReports;
-    return mockReports.filter((r) => r.status === status);
+    const reports = currentMockReports();
+    if (!status) return reports;
+    return reports.filter((r) => r.status === status);
   }
 
   return request('/reports/mine' + (status ? '?status=' + status : ''));
@@ -324,10 +358,11 @@ export async function getMyReports(status?: ReportStatus): Promise<LitterReport[
 export async function getMyReportCounts(): Promise<ReportCounts> {
   if (USE_MOCK) {
     await delay(80);
+    const reports = currentMockReports();
     return {
-      counted: mockReports.filter((r) => r.status === 'Counted').length,
-      duplicate: mockReports.filter((r) => r.status === 'Duplicate').length,
-      incomplete: mockReports.filter((r) => r.status === 'Incomplete').length,
+      counted: reports.filter((r) => r.status === 'Counted').length,
+      duplicate: reports.filter((r) => r.status === 'Duplicate').length,
+      incomplete: reports.filter((r) => r.status === 'Incomplete').length,
     };
   }
 
@@ -341,10 +376,11 @@ export async function updateReport(
 ): Promise<LitterReport> {
   if (USE_MOCK) {
     await delay(300);
-    const index = mockReports.findIndex((r) => r.id === id);
+    const reports = currentMockReports();
+    const index = reports.findIndex((r) => r.id === id);
     if (index < 0) throw new Error('找不到这条记录：' + id);
 
-    const old = mockReports[index];
+    const old = reports[index];
     const beach = changes.beachId ? BEACHES.find((b) => b.id === changes.beachId) : undefined;
     const updated: LitterReport = {
       ...old,
@@ -356,8 +392,9 @@ export async function updateReport(
       statusNote: undefined,
     };
 
-    mockReports[index] = updated;
-    saveMockReports();
+    const nextReports = reports.slice();
+    nextReports[index] = updated;
+    replaceCurrentMockReports(nextReports);
     return updated;
   }
 
@@ -367,8 +404,7 @@ export async function updateReport(
 export async function deleteReport(id: string): Promise<void> {
   if (USE_MOCK) {
     await delay(200);
-    mockReports = mockReports.filter((r) => r.id !== id);
-    saveMockReports();
+    replaceCurrentMockReports(currentMockReports().filter((r) => r.id !== id));
     return;
   }
 

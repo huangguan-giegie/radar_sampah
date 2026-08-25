@@ -6,6 +6,7 @@ import { BackButton, ErrorNote, PrimaryButton, StepBadge, TextButton } from '../
 import { C, MONO } from '../theme';
 import { useApp } from '../AppContext';
 import type { BeachSummary } from '../types';
+import { buildReportSubmission } from '../flowRules';
 
 export default function ReviewScreen() {
   const nav = useNavigate();
@@ -21,26 +22,28 @@ export default function ReviewScreen() {
   }, []);
 
   const beach = beaches.find((b) => b.id === draft.beachId);
+  const photoUrl = draft.photo?.url ?? draft.existingPhotoUrl;
 
   async function submit() {
-    if (!draft.beachId || !draft.category || !draft.quantity || !draft.photo) {
-      setError('This report is missing a required field. Go back and complete it.');
+    let submission: ReturnType<typeof buildReportSubmission>;
+    try {
+      submission = buildReportSubmission(draft);
+    } catch (validationError) {
+      setError(
+        validationError instanceof Error
+          ? validationError.message
+          : 'This report is missing a required field.',
+      );
       return;
     }
+
     setBusy(true);
     setError(null);
     try {
-      const payload = {
-        beachId: draft.beachId,
-        category: draft.category,
-        quantity: draft.quantity,
-        photoId: draft.photo.id,
-        locationSource: draft.locationSource ?? 'manual',
-        ...(draft.coords ? { coords: draft.coords } : {}),
-      };
-      const saved = draft.editingReportId
-        ? await updateReport(draft.editingReportId, payload)
-        : await createReport(payload);
+      const saved =
+        submission.kind === 'update'
+          ? await updateReport(submission.reportId, submission.changes)
+          : await createReport(submission.payload);
       setLastSavedReportId(saved.id);
       bumpReports();
       resetDraft();
@@ -99,20 +102,24 @@ export default function ReviewScreen() {
         </div>
 
         <div style={{ position: 'relative', height: 150, borderRadius: 24, overflow: 'hidden', background: '#A19C90' }}>
-          {draft.photo && (
-            <img src={draft.photo.url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+          {photoUrl && (
+            <img src={photoUrl} alt="Report evidence" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
           )}
-          <div style={{ position: 'absolute', left: 12, bottom: 12, display: 'flex', alignItems: 'center', gap: 6, fontFamily: MONO, fontSize: 8, letterSpacing: '.1em', color: C.cloud, background: 'rgba(11,33,97,.75)', backdropFilter: 'blur(6px)', padding: '5px 9px', borderRadius: 999 }}>
-            <Shield size={10} />
-            METADATA REMOVED
-          </div>
+          {(draft.photo?.metadataStripped || draft.existingPhotoUrl) && (
+            <div style={{ position: 'absolute', left: 12, bottom: 12, display: 'flex', alignItems: 'center', gap: 6, fontFamily: MONO, fontSize: 8, letterSpacing: '.1em', color: C.cloud, background: 'rgba(11,33,97,.75)', backdropFilter: 'blur(6px)', padding: '5px 9px', borderRadius: 999 }}>
+              <Shield size={10} />
+              {draft.photo?.metadataStripped ? 'METADATA REMOVED' : 'EXISTING PHOTO RETAINED'}
+            </div>
+          )}
         </div>
 
         <div style={{ background: C.white, border: `1px solid ${C.line}`, borderRadius: 24, overflow: 'hidden' }}>
           {row('Beach', beach?.name ?? 'Not selected', () => nav('/report/confirm'))}
           {row('Category', draft.category ?? 'Not selected', () => nav('/report/details'))}
           {row('Quantity', draft.quantity ?? 'Not selected', () => nav('/report/details'))}
-          {row('Location', 'Beach area confirmed', undefined, 'GPS PRIVATE')}
+          {draft.locationSource === 'gps'
+            ? row('Location', 'Beach area confirmed', undefined, 'GPS PRIVATE')
+            : row('Location', 'Selected manually', undefined, 'NO GPS STORED')}
         </div>
 
         {error && <ErrorNote title="Could not save" body={error} />}
