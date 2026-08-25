@@ -1869,3 +1869,29 @@ key card text/header values were re-read from the live board.
 - A group notification was sent for review at 13:55. No LeanKit cards were
   changed after this notification; updates will wait for team feedback.
 
+## Radar Sampah repository and ePortfolio update - 25 August 2026
+
+- The active GitHub repository is now `huangguan-giegie/radar_sampah` (private,
+  `main`). The local remote and active project links use the new slug.
+- The focused brand update was pushed as commit `a53b819`.
+- The active frontend source now displays Radar Sampah and keeps the old API
+  variable name only as a compatibility fallback. `render.yaml` defines the
+  target service names `radar-sampah-api` and `radar-sampah-frontend`.
+- Render dashboard access was not available in the current browser session.
+  The current stable services remain `team04-marine-observation-frontend.onrender.com`
+  and `team04-marine-observation-api.onrender.com`; both were checked after the
+  push. The new target hostnames returned 404, so they are not claimed as live.
+  The old services are kept as the rollback path until an owner can rename or
+  create the new Render services.
+- `TM04 Team Info &links.docx` was updated in place. It keeps the original file
+  ID and format, uses the new GitHub link, and points to the currently live
+  Render services. No password, API key or database credential was added.
+- The team04-FIT5120 ePortfolio About page was updated in place. It now has a
+  Radar Sampah overview, current project links, source boundary, Amirah persona,
+  overall journey, architecture/data boundary, iteration status, team roles,
+  governance links and a design/build evidence block. A screenshot is saved at
+  `backups/eportfolio-radar-sampah-2026-08-25.png`.
+- The attached Citacita examples were used only as layout inspiration. Their
+  text, images and data were not copied. Sample Project PGIE and HealthFirst
+  reference files were not modified.
+
