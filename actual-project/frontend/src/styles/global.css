@@ -1,0 +1,268 @@
+:root {
+  color-scheme: light;
+}
+
+* {
+  -webkit-tap-highlight-color: transparent;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  background: #ecf0f5;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', Segoe UI, Roboto,
+    sans-serif;
+  color: #1e2421;
+  -webkit-font-smoothing: antialiased;
+}
+
+#root {
+  height: 100%;
+}
+
+a {
+  color: #14317e;
+}
+a:hover {
+  color: #0b2161;
+}
+
+input,
+textarea,
+select,
+button {
+  font-family: inherit;
+}
+
+:where(a, button, input, textarea, select):focus-visible {
+  outline: 3px solid #14317e;
+  outline-offset: 3px;
+}
+
+button {
+  border: none;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  color: inherit;
+  text-align: left;
+}
+
+/* 隐藏滚动条，保留滚动 —— 与原型一致 */
+.scroll-y {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.scroll-x {
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.scroll-y::-webkit-scrollbar,
+.scroll-x::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
+/* ── 动画 ───────────────────────────────── */
+@keyframes ripple {
+  0% {
+    transform: scale(0.25);
+    opacity: 0.85;
+  }
+  100% {
+    transform: scale(1.12);
+    opacity: 0;
+  }
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes sheetUp {
+  from {
+    transform: translateY(70px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+@keyframes popIn {
+  0% {
+    transform: scale(0.55);
+    opacity: 0;
+  }
+  70% {
+    transform: scale(1.07);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+@keyframes pulseDot {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.55);
+    opacity: 0.5;
+  }
+}
+
+.anim-fade-up {
+  animation: fadeUp 0.3s ease;
+}
+.anim-sheet-up {
+  animation: sheetUp 0.4s cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+.anim-fade-in {
+  animation: fadeIn 0.25s ease;
+}
+.anim-pop-in {
+  animation: popIn 0.5s cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ── 交互态（设计稿的 style-hover 等价物）──────── */
+.press {
+  transition: transform 0.12s ease, background 0.15s ease, border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+.press:active {
+  transform: scale(0.985);
+}
+
+.btn-primary:hover {
+  background: #14317e !important;
+}
+.btn-ghost:hover {
+  border-color: #0b2161 !important;
+}
+.row-hover:hover {
+  background: #fafbfd;
+}
+.card-hover:hover {
+  border-color: rgba(11, 33, 97, 0.25) !important;
+}
+.lift:hover {
+  transform: translateY(-2px);
+}
+.chip-hover:hover {
+  border-color: #0b2161 !important;
+}
+.link-hover:hover {
+  color: #0b2161 !important;
+}
+.field:focus {
+  border-color: #0b2161 !important;
+}
+
+/* ── Leaflet ───────────────────────────── */
+.leaflet-container {
+  background: #d9e6ef;
+  font-family: -apple-system, 'Helvetica Neue', sans-serif;
+}
+.leaflet-tile {
+  filter: saturate(0.72) brightness(1.08) contrast(0.93);
+}
+.leaflet-div-icon {
+  background: transparent;
+  border: none;
+}
+.leaflet-control-attribution {
+  background: rgba(255, 255, 255, 0.72);
+  font-size: 8.5px;
+  line-height: 1.7;
+  color: #6c7688;
+  padding: 1px 6px;
+  border-radius: 6px 0 0 0;
+}
+.leaflet-control-attribution a {
+  color: #3e4f6e;
+}
+
+/* ── Web app 外壳尺寸 ─────────────────────── */
+.app-shell {
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --shell-w: 100%;
+  --shell-h: 100dvh;
+  --shell-r: 0px;
+  --shell-shadow: none;
+}
+
+/* 桌面：收成一台手机，保持设计稿构图 */
+@media (min-width: 900px) and (min-height: 720px) {
+  .app-shell {
+    --safe-top: 0px;
+    --safe-bottom: 0px;
+    --shell-w: 402px;
+    --shell-h: 874px;
+    --shell-r: 44px;
+    --shell-shadow: 0 40px 80px rgba(0, 0, 0, 0.18), 0 0 0 1px rgba(0, 0, 0, 0.1);
+  }
+}
+
+/* 平板 / 小桌面：限宽居中，仍然铺满高度 */
+@media (min-width: 620px) and (max-width: 899px) {
+  .app-shell {
+    --shell-w: 480px;
+    --shell-shadow: 0 0 0 1px rgba(0, 0, 0, 0.06);
+  }
+}
+
+.screen {
+  position: absolute;
+  inset: 0;
+  background: #f7f8fa;
+}
+
+/* 顶部留白 = 设计稿数值 - iOS 状态栏高度 + 实际安全区 */
+.app-shell {
+  --top-inset: calc(max(var(--safe-top), 14px) + 10px);
+  --bottom-inset: max(var(--safe-bottom), 12px);
+}
+.pt-page {
+  padding-top: calc(max(var(--safe-top), 16px) + 18px);
+}
+.pt-page-lg {
+  padding-top: calc(max(var(--safe-top), 16px) + 26px);
+}

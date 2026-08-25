@@ -1,0 +1,503 @@
+# Radar Sampah — 后端接口规范 v1（Iteration 1）
+
+> **这份文档是接口契约，不是需求讨论稿。** 前端已经完整实现并按这套契约跑通，
+> 后端照着实现即可。所有原先待定的点都已定稿，理由写在每节的「定稿理由」里 ——
+> 后端如果有实现上的困难要改，改之前先说，前端跟着调 `src/api.ts` 一处即可。
+>
+> 机器可读版本：[`openapi.yaml`](./openapi.yaml)（可直接导入 Swagger UI / 用来生成
+> 服务端骨架）。
+
+---
+
+## 0. 通用约定
+
+| 项 | 约定 |
+| --- | --- |
+| 协议 | HTTPS，JSON（除照片上传是 `multipart/form-data`） |
+| 编码 | UTF-8 |
+| 时间 | 一律 ISO 8601 带时区，例 `2026-08-25T09:41:00+08:00`。**业务上的「同一天」按 `Asia/Kuala_Lumpur` 判定** |
+| 鉴权 | `Authorization: Bearer <token>`，登录后由前端存 localStorage |
+| 分页 | Iteration 1 不做。四个海滩、单人记录量级很小，一次返回全量 |
+
+### 错误格式
+
+任何非 2xx 一律返回：
+
+```json
+{ "code": "PHOTO_TOO_LARGE", "message": "Photo exceeds the 10 MB limit." }
+```
+
+`message` 是**给用户看的英文成句**，前端直接展示，不做二次拼装。
+
+| HTTP | code | 触发场景 |
+| --- | --- | --- |
+| 400 | `VALIDATION_FAILED` | 必填字段缺失或值不在枚举内 |
+| 400 | `PHOTO_REQUIRED` | 提交记录时没带 `photoId` |
+| 400 | `PHOTO_TOO_LARGE` | 照片超过 10 MB |
+| 400 | `PHOTO_UNSUPPORTED_TYPE` | 不是 JPEG / PNG / HEIC |
+| 401 | `UNAUTHENTICATED` | token 缺失、过期或无效 |
+| 403 | `NOT_OWNER` | 改/删别人的记录 |
+| 404 | `NOT_FOUND` | 海滩或记录不存在 |
+| 404 | `UNKNOWN_PARTICIPANT` | 输入的编号不存在 |
+| 413 | `PAYLOAD_TOO_LARGE` | 上传体积超限（服务器层拦截） |
+| 429 | `RATE_LIMITED` | 见 §8 |
+| 500 | `INTERNAL_ERROR` | 兜底 |
+
+> ⚠️ **提交重复记录不是错误。** 返回 `201` + `status: "Duplicate"`，前端要正常
+> 显示「已保存但不计入」，而不是报错。详见 §6。
+
+---
+
+## 1. 认证 —— 匿名参与者编号
+
+**团队决议：Iteration 1 不收集任何真实个人数据。** 没有姓名、没有邮箱、没有密码。
+用户领一个 4 位编号（例如 `1637`），记录就挂在这个编号下面。
+
+| 方法 | 路径 | 鉴权 | 说明 |
+| --- | --- | --- | --- |
+| POST | `/auth/anonymous` | 否 | 发一个新编号 |
+| POST | `/auth/restore` | 否 | 用已有编号继续 |
+| POST | `/auth/logout` | 是 | 返回 204 |
+| GET | `/auth/me` | 是 | |
+
+**POST `/auth/anonymous`**（无请求体）
+
+```json
+// 201
+{
+  "token": "eyJhbGciOi...",
+  "user": { "id": "u_01H...", "participantId": "1637", "role": "volunteer" }
+}
+```
+
+**POST `/auth/restore`**
+
+```json
+// 请求
+{ "participantId": "1637" }
+// 200 —— 同上
+```
+
+**GET `/auth/me`** 返回 `user`；token 无效返回 401。
+
+- `participantId`：4 位数字，随机生成，不重复
+- `role`：Iteration 1 只用 `"volunteer"`，`"moderator"` 是给后面迭代留的
+- token 用 JWT 就行，有效期给长一点（30 天），不用做 refresh
+
+> **一句话提醒（不影响本次开发）**：编号本身就是凭证，所以任何人输入 `1637`
+> 都能看到 1637 的记录。这次是 MVP、数据是合成的，够用。
+> 如果以后要收真实投稿，这一层需要加密码 —— 到时候再说，现在不做。
+
+## 2. 海滩
+
+| 方法 | 路径 | 鉴权 | 说明 |
+| --- | --- | --- | --- |
+| GET | `/beaches` | 否 | 地图和列表用 |
+| GET | `/beaches/:id` | 否 | 详情 |
+
+**不需要登录** —— 设计稿里「Browsing needs no account」是明确承诺。
+
+### GET `/beaches` → `BeachSummary[]`
+
+```json
+[{
+  "id": "morib",
+  "name": "Pantai Morib",
+  "area": "Banting, Selangor",
+  "lat": 2.746,
+  "lng": 101.440,
+
+  "severity": "High",
+  "band": 3,
+  "insufficientData": false,
+  "validReports": 8,
+  "lastReportedAt": "2026-08-19T16:00:00+08:00",
+  "freshnessKind": "ok",
+
+  "habitat": "Intertidal mudflat & sandy shore",
+  "habitatTag": "MUDFLAT",
+  "sensitivity": "Migratory feeding ground",
+  "primarySpeciesGlyph": "turtle",
+
+  "coverImageUrl": "https://cdn.example.com/beaches/morib.jpg",
+  "scene": "linear-gradient(178deg,#8FD0E8 0%,#4E9EC9 36%,#2E6EA8 58%,#173E77 100%)"
+}]
+```
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| `severity` | `"Low"｜"Moderate"｜"High"｜"Severe"｜null` | **有效记录 < 3 条时必须是 `null`**，不要给 `"Low"` 兜底 |
+| `band` | `1｜2｜3｜4｜null` | 和 `severity` 一一对应，同时为 null。前端画那 4 根竖条用它 |
+| `insufficientData` | boolean | `severity === null` 时为 true |
+| `validReports` | int | **只数 `Counted` 的**，Duplicate / Incomplete 不算 |
+| `lastReportedAt` | string｜null | 最近一条 **Counted** 记录的时间。前端自己算「几天前」，后端不要给现成文案 |
+| `freshnessKind` | `"ok"｜"aging"｜"stale"` | < 30 天 / 30–90 天 / > 90 天或从无记录 |
+| `primarySpeciesGlyph` | `"turtle"｜"bird"｜"mangrove"｜"grass"｜"crab"｜"fish"` | 生物图层的地图标记图标 |
+| `coverImageUrl` | string｜null | 真实封面照片。**没配图就给 `null`**，前端会退回 `scene` 渐变 |
+| `scene` | string | 一段合法 CSS `background` 值，作为无图时的占位。种子数据里已有，原样存原样下发 |
+
+### GET `/beaches/:id` → `BeachDetail`
+
+在 `BeachSummary` 基础上多三个字段：
+
+```json
+{
+  "composition": [
+    { "category": "Plastic", "percent": 46 },
+    { "category": "Fishing gear", "percent": 22 }
+  ],
+  "species": [{
+    "name": "Green Sea Turtle",
+    "glyph": "turtle",
+    "text": "Occasional visitor along the Strait of Malacca. Floating plastic may be mistaken for food.",
+    "source": "DoF Malaysia · 2024"
+  }],
+  "ecologicalNote": "Plastic and abandoned fishing gear may affect turtles and shorebirds that feed in this coastal environment."
+}
+```
+
+- `composition`：按 `percent` **降序**，整数百分比，合计 100（四舍五入误差调最后一项）。
+  **`insufficientData === true` 时必须返回 `null`**，不要返回空数组 —— 前端靠 null 显示
+  「Not enough verified data」的虚线框。
+- `species`：静态科普数据，人工维护，不随记录变。0–5 条。
+- `ecologicalNote`：一句话，静态。
+
+**定稿理由：`severity` / `band` / `validReports` / `composition` 全部由后端算好下发，
+前端不碰计算。** 产品对用户的核心承诺是「同一套规则跑所有海滩」（评分说明页整页都在
+讲这件事），规则必须只有一个实现、在服务端、可审计。前端重算等于第二个实现。
+
+---
+
+## 2b. 生物出现概率（Epic 5 · Su）　— 字段待 Su 确认
+
+Iteration 1 会上线建模的物种出现概率。前端已经预留好槽位：`BeachDetail.species[]`
+里每一项可以带一个可选的 `likelihood`。
+
+```json
+{
+  "name": "Green Sea Turtle",
+  "glyph": "turtle",
+  "text": "Occasional visitor along the Strait of Malacca…",
+  "source": "DoF Malaysia · 2024",
+  "likelihood": {
+    "percent": 38,
+    "basis": "Habitat match + 2024 sighting records"
+  }
+}
+```
+
+- `likelihood` 省略或为 `null` → 前端退回纯科普展示，不显示任何百分比
+- `basis`：模型/数据依据的一句话，**界面上会显示出来**，不能留空
+
+### 三条硬约束（前端已经这样实现了）
+
+1. **绝不和垃圾严重度合并成一个数。** 两者是完全不同的东西，混在一起用户必然误读。
+2. **视觉上必须区分。** 前端刻意没用严重度那套四色，用的是蓝色虚线框 + `MODELLED · ESTIMATE` 标签。
+3. **文案必须说清是估算。** 有 `likelihood` 时，海滩页的免责声明会自动换成
+   「…an estimate of how likely a species is to occur here, never a confirmed sighting…」；
+   评分说明页也加了一句，把「No model, no judgement call」限定在**垃圾严重度**上。
+
+> 这三条不是洁癖 —— 产品对用户的核心承诺就是「数据可信、规则透明」。
+> 一个没标清楚的概率数字会把 Epic 4 辛苦建立的可信度一起赔进去。
+
+**Su 需要确认的**：`percent` 是 0–100 整数还是 0–1 小数？`basis` 要不要带模型版本号？
+有没有置信区间要展示？定了我这边跟着调，改动只在 `types.ts` 一处。
+
+## 3. 评分规则（US4.3）　— 这个接口是**可选的**
+
+| 方法 | 路径 | 鉴权 | 说明 |
+| --- | --- | --- | --- |
+| GET | `/scoring-method` | 否 | **可选**，不实现也不影响前端 |
+
+**团队决议：US4.3 为 non-blocking stretch，规则由前端交付。** 权重、阈值、窗口
+都写死在前端 `src/scoring.ts`，评分说明页直出，离线也能看，不依赖后端。
+
+```json
+{
+  "categoryWeights": [
+    { "category": "Fishing gear", "weight": 1.00 },
+    { "category": "Plastic",      "weight": 0.85 },
+    { "category": "Glass",        "weight": 0.70 },
+    { "category": "Metal",        "weight": 0.60 },
+    { "category": "Other",        "weight": 0.50 },
+    { "category": "Paper",        "weight": 0.35 }
+  ],
+  "quantityWeights": [
+    { "quantity": "Small",      "weight": 1 },
+    { "quantity": "Medium",     "weight": 2 },
+    { "quantity": "Large",      "weight": 3 },
+    { "quantity": "Very Large", "weight": 4 }
+  ],
+  "bands": [
+    { "band": "Low",      "range": "below 1.5",     "color": "#7CA98B" },
+    { "band": "Moderate", "range": "1.5 – 2.4",     "color": "#D9A24B" },
+    { "band": "High",     "range": "2.5 – 3.4",     "color": "#CE6B45" },
+    { "band": "Severe",   "range": "3.5 and above", "color": "#B84A3F" }
+  ],
+  "windowDays": 90,
+  "minReports": 3
+}
+```
+
+### ⚠️ 后端不实现这个接口也可以，但**必须用上面这组数字**
+
+严重度是后端算的（§7），公布的规则是前端展示的。两边用的数字必须一模一样 ——
+否则页面上写着「Plastic 0.85」，后端却按 0.9 在算，那 US4.3 的整个意义就没了。
+
+- 上面这组数字是**规范**，`src/scoring.ts` 是它的可执行副本
+- 后端如果实现了这个接口且返回值不同，前端会**以后端为准**（那才是真正在算的
+  规则），并在开发模式下 console 告警指出哪个数字对不上
+- 要改任何一个权重或阈值，两边同时改，并升 `RULE_VERSION`
+
+## 4. 定位 → 海滩
+
+| 方法 | 路径 | 鉴权 | 说明 |
+| --- | --- | --- | --- |
+| POST | `/geo/resolve-beach` | 是 | |
+
+```json
+// 请求
+{ "lat": 2.7461, "lng": 101.4402 }
+// 200 —— 命中，返回一个 BeachSummary
+// 200 —— 未命中，返回 null（不是 404）
+```
+
+规则：
+- 用半正矢距离找最近的海滩，**距离 ≤ 25 km 才算命中**，否则返回 `null`
+- **这个坐标一律不落库。** 只在这个请求里算一次，算完丢掉
+
+**定稿理由：25 km。** 四个海滩彼此最近的一对（Morib ↔ Kelanang）相距约 6 km，
+25 km 既能把它们区分开，又能容忍手机定位在海边的漂移。真的不在这四个海滩附近时
+返回 `null`，前端会转到手选。
+
+---
+
+## 5. 照片上传
+
+| 方法 | 路径 | 鉴权 | 说明 |
+| --- | --- | --- | --- |
+| POST | `/uploads/photos` | 是 | `multipart/form-data`，字段名 `photo` |
+
+```json
+// 201
+{
+  "id": "ph_01H...",
+  "url": "https://cdn.example.com/photos/ph_01H....jpg",
+  "metadataStripped": true
+}
+```
+
+后端**必须**做的三件事：
+
+1. **剥离 EXIF**，尤其 GPS 段。剥干净了才返回 `metadataStripped: true` ——
+   前端靠这个字段决定要不要显示「LOCATION METADATA REMOVED FOR PRIVACY」那条角标。
+   **剥不干净就返回 `false`，不要撒谎**，那是一句对用户的承诺。
+2. **限制**：≤ 10 MB；接受 `image/jpeg`、`image/png`、`image/heic`（iOS 直出是 HEIC，
+   必须收，服务端转成 JPEG）；长边压到 ≤ 2048 px。
+3. **清理孤儿**：上传后 24 小时内没被任何记录引用的照片，定时任务删掉。
+
+`url` 必须公开可读（不带签名或签名有效期 ≥ 1 年）—— 它会出现在「我的记录」列表里。
+
+---
+
+## 6. 记录 ★ 核心
+
+| 方法 | 路径 | 鉴权 | 说明 |
+| --- | --- | --- | --- |
+| POST | `/reports` | 是 | 提交 |
+| GET | `/reports/mine?status=` | 是 | 我的记录，按时间倒序 |
+| GET | `/reports/mine/counts` | 是 | 三个计数 |
+| PATCH | `/reports/:id` | 是 | 修正 |
+| DELETE | `/reports/:id` | 是 | 删除 |
+
+### POST `/reports`
+
+```json
+// 请求
+{
+  "beachId": "morib",
+  "category": "Plastic",
+  "quantity": "Medium",
+  "photoId": "ph_01H...",
+  "locationSource": "gps",
+  "coords": { "lat": 2.7461, "lng": 101.4402 }
+}
+```
+
+- `locationSource`：`"gps"`（由定位推断）或 `"manual"`（用户手选）
+- `coords`：**仅 `locationSource === "gps"` 时携带**。见下方隐私要求
+
+```json
+// 201
+{
+  "id": "r_01H...",
+  "beachId": "morib",
+  "beachName": "Pantai Morib",
+  "category": "Plastic",
+  "quantity": "Medium",
+  "createdAt": "2026-08-25T09:41:00+08:00",
+  "status": "Counted",
+  "photoUrl": "https://cdn.example.com/photos/ph_01H....jpg"
+}
+```
+
+被判重复时：
+
+```json
+{
+  "id": "r_01H...",
+  "status": "Duplicate",
+  "statusNote": "Matched an existing record for the same beach on the same day — excluded from the severity calculation.",
+  "...": "其余字段同上"
+}
+```
+
+### 状态判定 —— 同步，在 POST 的事务里完成
+
+**定稿理由：同步。** 设计稿里提交完直接进「Record saved」页，页面上就印着
+「VALID · NOT A DUPLICATE · COUNTED」这个结论。要做成异步审核，就得多一个 Pending
+状态和一整套通知，那是 Iteration 2 的审核流程（明确不在本次范围）。
+
+判定顺序，命中即停：
+
+| 顺序 | 条件 | 结果 |
+| --- | --- | --- |
+| 1 | `photoId` 缺失 / 指向不存在的照片 | 400 `PHOTO_REQUIRED`，不入库 |
+| 2 | `category` 或 `quantity` 不在枚举内 | 400 `VALIDATION_FAILED`，不入库 |
+| 3 | 同一 **reporter** + 同一 **beachId** + 同一 **自然日**（`Asia/Kuala_Lumpur`）已有 `Counted` 记录 | `Duplicate` |
+| 4 | 其余 | `Counted` |
+
+**`Duplicate` 的定义就是这一条，不要再加坐标距离判断。** 设计稿里那句提示
+（「Matched an existing record for the same beach on the same day」）就是这个规则的
+自然语言版，二者必须一致。同一天同一海滩多拍几张不同角度，本来也不该重复计分。
+
+**`Incomplete` 怎么产生的？** 不由 POST 产生 —— POST 阶段缺字段直接 400 挡回去了。
+`Incomplete` 是**事后**变成的，只有两个来源：
+
+- 照片处理管线事后判定不可读（全黑 / 全糊 / 解码失败），把已有记录改成 `Incomplete`
+- Iteration 2 的人工审核（本次不实现，先留状态值）
+
+所以 Iteration 1 里 `Incomplete` 只会出现在种子数据和照片管线里。前端已经支持：
+点这条记录会带着原值进「修正」流程，改完走 PATCH。
+
+### `statusNote`
+
+**由后端下发英文成句，前端原样显示，不做拼装。** 两句标准文案：
+
+- Duplicate → `Matched an existing record for the same beach on the same day — excluded from the severity calculation.`
+- Incomplete → `Photo unreadable — excluded until you correct and save the record.`
+
+`Counted` 时**不要**返回这个字段（或给 `null`）。
+
+### 隐私要求（硬要求）
+
+- `coords` 存在**独立的私有表** `report_coords`，只有查重和 `resolve-beach` 用得到
+- **任何对外接口都不得返回 `coords`**，包括记录详情、导出、管理后台
+- 公开数据的地理粒度只到 `beachId`
+
+界面上有两处白纸黑字的承诺撑着这条：确认页的「GPS USED ONCE · PRIVATE」，
+和地图卡片的「BROAD AREA SHOWN — EXACT GPS IS PRIVATE」。
+
+### GET `/reports/mine?status=`
+
+`status` 可选，取值 `Counted` / `Duplicate` / `Incomplete`；不传返回全部。
+**按 `createdAt` 倒序。** 只返回当前登录用户自己的记录。
+
+### GET `/reports/mine/counts`
+
+```json
+{ "counted": 3, "duplicate": 1, "incomplete": 1 }
+```
+
+### PATCH `/reports/:id`
+
+请求体是 POST 请求体的任意子集（`beachId` / `category` / `quantity` / `photoId`）。
+
+- 只能改自己的记录，否则 403 `NOT_OWNER`
+- **改完要重跑一遍状态判定**：一条 `Incomplete` 记录补好照片后应该变回 `Counted`
+- 返回更新后的完整 `LitterReport`
+
+### DELETE `/reports/:id`
+
+204。只能删自己的。软删即可（`deleted_at`），但删掉后**必须立刻从严重度计算里剔除**。
+
+---
+
+## 7. 严重度怎么算（后端实现细节）
+
+```
+对某个海滩：
+
+eligible = 该海滩所有 status = 'Counted' 且 created_at 在最近 90 天内的记录
+
+if count(eligible) < 3:
+    severity = null;  band = null;  insufficientData = true
+else:
+    record_score  = category_weight[category] × quantity_weight[quantity]
+    beach_score   = mean(record_score for eligible)
+    severity      = < 1.5 → Low | < 2.5 → Moderate | < 3.5 → High | else Severe
+    band          = Low=1, Moderate=2, High=3, Severe=4
+
+validReports    = count(eligible)
+lastReportedAt  = max(created_at) over 该海滩所有 Counted 记录（不限 90 天窗口）
+freshnessKind   = now - lastReportedAt: < 30d → 'ok' | ≤ 90d → 'aging' | else 'stale'
+
+composition = insufficientData ? null
+            : 按 category 分组，占 eligible 条数的百分比，降序，整数
+```
+
+注意 `lastReportedAt` **不受 90 天窗口限制** —— 「Not recently reported」这个提示
+本身就是要告诉用户「最近一条也已经很旧了」，窗口内没数据不等于从来没数据。
+
+实现方式随意：写时更新缓存列，或读时实时算（四个海滩的量级，实时算完全够）。
+
+**`category_weight` / `quantity_weight` / 阈值一律取 §3 那组数字**，不要另立一套。
+
+---
+
+## 8. 限流
+
+按用户：`POST /reports` 每小时 30 条，`POST /uploads/photos` 每小时 60 张。
+超了返回 429 `RATE_LIMITED`。
+
+---
+
+## 9. 数据表建议
+
+```
+users            id, participant_id(uniq), role, created_at
+                 ← 没有姓名、邮箱、手机号等任何个人数据字段
+beaches          id, name, area, lat, lng, habitat, habitat_tag, sensitivity,
+                 primary_species_glyph, cover_image_url, scene, created_at
+beach_species    id, beach_id, name, glyph, text, source, sort_order,
+                 likelihood_percent(nullable), likelihood_basis(nullable)   ← Epic 5
+reports          id, reporter_id, beach_id, category, quantity, photo_id,
+                 location_source, status, status_note, created_at, updated_at, deleted_at
+report_coords    report_id(PK), lat, lng          ← 私有表，绝不出现在任何响应里
+photos           id, url, mime, bytes, metadata_stripped, created_at, report_id(nullable)
+```
+
+`beaches` 和 `beach_species` 是**种子数据**，Iteration 1 固定四个海滩，
+没有增删改接口。种子内容照抄前端 `src/mockData.ts`，字段名一一对应。
+
+---
+
+## 10. 不在 Iteration 1 范围（不要实现）
+
+设计稿明确标了 out of scope，接口也就没留：AI 分类建议（US2.3）、同伴与管理员
+审核流程、Epic 1 活动、Epic 6 成果、Epic 7 周期性、Epic 8 荣誉体系、
+US5.3 测验、US5.4 物种卡片。
+
+---
+
+## 11. 后端做完怎么联调
+
+```bash
+cd radar-sampah-web
+cp .env.example .env
+# .env 里填 VITE_API_BASE_URL=https://your-api.example.com
+npm run dev
+```
+
+前端会自动从 mock 切到真实 HTTP，页面代码不用改。字段或路径对不上时，改动集中在
+`src/api.ts`。

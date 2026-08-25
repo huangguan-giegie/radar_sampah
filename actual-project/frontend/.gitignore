@@ -1,0 +1,28 @@
+# 依赖
+node_modules
+
+# 构建产物
+dist
+tsconfig.tsbuildinfo
+
+# 环境变量（.env.example 要提交，.env 不要）
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# 打包给别人的压缩包
+*.zip
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# 编辑器
+.vscode/*
+!.vscode/extensions.json
+.idea
+
+# 截图是自动生成的（tools/screenshots.mjs）。
+# 这次留在仓库里，因为课程报告要用；不想要的话把下面这行的注释去掉。
+# screenshots/
