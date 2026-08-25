@@ -8,7 +8,8 @@ import {
   validateLitterReport,
 } from "./workflow.js";
 
-const API_BASE = window.TIDETRACE_API_BASE || (location.hostname === "localhost" ? "http://localhost:5000" : "");
+// Radar Sampah 是现行配置名；保留旧变量以兼容已部署的 TideTrace 配置。
+const API_BASE = window.RADAR_SAMPAH_API_BASE || window.TIDETRACE_API_BASE || (location.hostname === "localhost" ? "http://localhost:5000" : "");
 const state = { step: "report", report: null, detection: null, saved: false };
 const form = document.querySelector("#litter-form");
 const panels = Object.fromEntries(["report", "detection", "context", "mission", "impact", "progress"].map((name) => [name, document.querySelector(`#${name}-step`)]));

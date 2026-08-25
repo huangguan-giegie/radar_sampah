@@ -1,5 +1,26 @@
 # Migration Manifest
 
+## Work allocation update — 21 August 2026
+
+The actual-project allocation is now split between requirements authorship and
+user acceptance review. Hnin Darli owns the User Acceptance Criteria review
+from Amirah's perspective; Keith Junn Chong keeps the Epics, User Stories and
+technical Given/When/Then baseline. Huang Guan coordinates the final
+cross-file check. Qian Jiang owns the Amirah persona, prototype and UX, LiHanXia owns tech and data
+feasibility, and Benshuai Su owns architecture and technical risk.
+
+Local source: `actual-project/docs/WORK_ALLOCATION_PLAN.md`.
+Drive copy: `Team Information/Radar Sampah Work Allocation Plan.md`
+(`1BErKy4-lGgD4hAULGh9ieHfNCiqIcMNR`). The previous Team Information Office
+file was backed up in Drive as `TM04 Team Info - before allocation 20260821.docx`
+(`1GntAcAnnO9QhbIFgNGJ0q_UDkTj52HLM`) before the updated role split was
+uploaded to the original file ID. The Sample Project PGIE and Future Features
+folder remain unchanged.
+
+## Radar Sampah Design Thinking sync — 19 August 2026
+
+The active Design Thinking tab was updated from the workshop decision set. It now records 19 stories (11 Must, 6 Should, 2 Could), GR1–GR9, the Report & Classify / Find & Understand / Connect & Prepare iteration split, GPS one-off area assistance, AI suggestion-only wording, deterministic illustrative scoring, moderator verification, collected reports, area sensitivity and the `102+` display. The historical requirements tab is marked superseded. The separate Radar Sampah deck remains a local, independently validated artifact until the team chooses a Drive destination.
+
 ## DiveSafe MY alignment — 15 August 2026
 
 The active documentation name is **DiveSafe MY**. This is a naming and
@@ -29,7 +50,7 @@ https://drive.google.com/drive/folders/18Px2njE27SCiZ4bs-40zgUgm_sRE70Kx
 
 New project spaces:
 
-- GitHub: https://github.com/huangguan-giegie/tidetrace-my-mvp
+- GitHub: https://github.com/huangguan-giegie/radar_sampah
 - Miro: https://miro.com/app/board/uXjVHySKbPY=/
 - Render: project and free API/frontend services created and verified
 - LeanKit: new board deferred by PM; old board unchanged
@@ -306,17 +327,21 @@ because the old native Slides file could not be replaced byte-for-byte. The old
 editable copy was renamed `Archive - Marine Observation editable (pre-DiveSafe)`;
 the raw PPTX file kept its existing Drive ID.
 
-## TideTrace MY documentation alignment - 15 August 2026
+## Radar Sampah documentation alignment - 15 August 2026
 
-The active student-demo name is now **TideTrace MY - Marine Litter Reporting
+The active student-demo name is now **Radar Sampah - Marine Litter Reporting
 and Cleanup Demo for Malaysia**. The active flow is `Report -> Recognize ->
 Heatmap -> Join mission -> Evidence -> Progress`. It uses five fixed litter
 categories, broad Malaysian area labels, source-labelled/synthetic context and
 anonymous demo counts.
 
-This is a scope and documentation alignment. The existing GitHub repository
-and Render service names retain their historical marine-observation identifiers
-because they are already connected deployment identifiers. TideTrace is not a
+This is a scope and documentation alignment. The active GitHub repository is
+`https://github.com/huangguan-giegie/radar_sampah`; the Render services are
+`radar-sampah-api` and `radar-sampah-frontend` at
+`https://radar-sampah-api.onrender.com` and
+`https://radar-sampah-frontend.onrender.com`. Former TideTrace and
+marine-observation identifiers remain compatibility/history aliases only. Radar
+Sampah is not a
 live reporting, emergency-dispatch, survey or enforcement system. No active
 endpoint accepts identity data or exact coordinates. Detection, priority,
 heatmap, mission, evidence and progress outputs are illustrative only.
@@ -333,7 +358,7 @@ features, current screenshots or product evidence. HealthFirst and Sample
 Project material remains reference-only and unchanged.
 
 The preserved DiveSafe rollback commit is `d75264e`. It remains available for
-recovery while TideTrace MY is the active documented scope.
+recovery while Radar Sampah is the active documented scope.
 
 The TideTrace code and documentation commit is `d19557e`. It includes the new
 litter report, demo recognition, area heatmap, cleanup mission, before/after
@@ -342,3 +367,148 @@ this `main` commit. The API smoke check used synthetic data only: health,
 options, recognition fallback, report creation, heatmap, mission join,
 before/after impact and read-back all returned the expected status. PostgreSQL
 was configured on Render and the recognition provider remained disabled.
+
+## Design Thinking requirements documents - 17 August 2026
+
+Four new TideTrace MY native Google Docs were created in the actual project's
+Design Thinking folder. They were based on the sample project's Epic, User
+Story and Acceptance Criteria structure, while using only current TideTrace
+facts:
+
+- 8 Epics
+- 16 User Stories
+- Given/When/Then Acceptance Criteria
+- Implemented, Demo, Future and TBD labels
+- Separate Security Plan with implemented controls, planned controls and
+  release blockers
+
+The local Markdown source copies are in `actual-project/docs/`. The protected
+Sample Project PGIE was not modified. The new documents contain no HealthFirst
+or DiveSafe product claims.
+
+## Design Thinking Tab 11 local sync — 18 August 2026
+
+The latest detailed Tab 11 source supersedes the earlier compact copy for local
+working documents. Local Markdown now records 8 Epics, 18 stories
+(US1.1–US8.2, including US3.3) and 98 acceptance criteria, grouped as I1 Report & Classify
+(E1–E2), I2 Find & Understand (E3–E5) and I3 Connect & Prepare (E6–E8).
+
+The active scope is Radar Sampah. Amirah and the Selangor central west example
+are used with broad-area/no-exact-coordinate wording. AI suggestions need
+confirmation; scores, heatmap and impact are illustrative; organiser safety
+text is not verified; no legal or enforcement claim is made. Unsupported stories
+are marked Future/TBD. Historical references and the HealthFirst example were
+not modified.
+
+## Final Design Thinking sync — 18 August 2026
+
+This section supersedes older scope notes above. The current detailed Design
+Thinking Tab 11 is the source: 8 Epics, 18 stories (US1.1–US8.2) and 98
+Given/When/Then criteria. Iterations are I1 Report & Classify (E1–E2), I2
+Find & Understand (E3–E5) and I3 Connect & Prepare (E6–E8). The older 16-story
+section and the single historical “Radar Sampah” name are not copied into the
+active documents.
+
+The following actual-project Drive files were updated in place, with local
+backups in `realwork/.backup_design_thinking_sync_20260818`: Epics
+(`1FHAREKsiwuJGBYBnM1a-92JhvSXfWQq5CwtmjFX4AAk`), User Stories
+(`19IYH4zz2faeTyS8yFB5lilzWXn693GJUILKK3JX3yp4`), Acceptance Criteria
+(`1oDHIvUh9r_DZd67obguPgpEaGR3X9YU_lmhEeW4Vedc`), Security Plan
+(`1VsL_ZxKCirMxQYiOV46MXb35rlBV7J6ud0hFpsIlijs`), Data Management Plan
+(`1YXWiFnHCLmaPlKB5uflM0fvMfqcgKNj77x46CMbb2mk`), Articles and Sources
+(`1MEG45YyJsjqDfLFyfOsREWh9yQq78LnJim4JBuRuLL0`), Persona
+(`1BjMHyyzrwB7jqSZrYm7EF_OEV5jIxoao`), Team Info
+(`1lpXD7Yw9fJQ7xt8A5QyQe6UsGQmUcTsi`), Social Contract
+(`122H3bxvLLXvAlW3ZI9sW5GZs0SE8hJ3e`) and the 19-slide deck
+(`1aU_HQoaEwIZ-__RMElYfMce7wdPLfnX4`).
+
+The six-category target, activity filters, reminders, recurrence monitoring,
+biodiversity learning and full preparation are Future/TBD where the deployed
+code does not support them. The Sample Project PGIE, historical materials and
+Future Features were not edited.
+
+## Design Thinking visual assets — 19 August 2026
+
+The active Design Thinking deck now has eight generated, text-free visuals. The
+Design Thinking source was checked for reusable images first; its visual
+references were not clean standalone assets, so synthetic illustrations were
+used instead. Prompts and dates are recorded in
+`realwork/.tmp_ppt_images/prompts.txt`. The visuals are illustrative only and
+do not show exact sensitive locations, real people, product screenshots or
+measured environmental evidence. The previous deck is backed up at
+`realwork/.tmp_ppt_image_edit/TideTrace_MY_Design_Thinking_before_visuals.pptx`.
+
+## Current project documentation alignment — 19 August 2026
+
+The active public copy is Radar Sampah; older TideTrace MY filenames stay for
+link stability. The plan has 19 stories: 11 Must, 6 Should and 2 Could. GR5 is
+Must. GR7 hides a reported private-person or private-property photo immediately.
+GR9 measures the AI-assisted path and keeps manual entry available.
+
+GPS is one-off area selection help only; exact coordinates are never stored.
+US5.3 requires moderator verification before a report can be marked collected.
+Severity is deterministic and versioned, with four bands, sensitivity factors
+1.0/1.25/1.5 and an open quantity display of `102+`. D1-D7 are in the active
+project docs. Current code gaps remain Future/TBD. Sample, reference, history
+and Future Features material was not changed.
+
+## Radar Sampah flow and lightweight deck — 19 August 2026
+
+The confirmed Radar Sampah flow was sent to Darli. The active Design Thinking
+baseline is 19 stories (11 Must, 6 Should, 2 Could), with GR5, GR7, GR9, US5.3
+and D1-D7 aligned. A separate 12-slide Swiss/IKB deck was created locally at
+`radar-sampah-design-thinking/`; the existing shared deck was not overwritten.
+
+The six local governance DOCX files were rebuilt after the naming sync. They
+were rendered with LibreOffice and checked page by page. Radar Sampah is the
+active audience-facing name; older TideTrace/DiveSafe files remain only as
+legacy or historical material where the filename is retained for link stability.
+
+## Latest Design Thinking and confirmed workflow sync — 20 August 2026
+
+The current detailed Design Thinking tab `t.omld9s7348k4` is now the working
+requirements source for the document copies: 25 stories (15 Must, 6 Should,
+4 Could), grouped as I1 E1–E2, I2 E3–E5 and I3 E6–E8. The practical MVP
+direction is I1–I2; unsupported organiser, moderator, cleanup follow-up,
+biodiversity learning, recurrence and recognition features remain Future/TBD.
+
+The separate `[Draft] Radar Sampah Confirmed Workflow` document is the flow
+source. It supports map-first or cleanup-first entry, one-time GPS assistance,
+user confirmation, pending visibility, moderator review, broad public areas,
+cleanup status and recurrence wording. Exact GPS, if later retained privately
+for quality control, must never be public or included in screenshots.
+
+Local copies of Epics, User Stories, Acceptance Criteria, DMP, Project Scope,
+Team Information and Integration Checklist were backed up in
+`realwork/.backup_sync_20260820` before the 25-story rewrite. The 9-slide IM
+Proposal is being aligned to the same map and MVP boundary. No Sample Project
+PGIE, history or Future Features file was changed.
+
+## Latest Darli requirements sync — 20 August 2026
+
+The active Design Thinking tab is `t.omld9s7348k4` in
+`1GuVQunTtGfwmbHVXSh1ybBSLHtDxwRirWvdV1Fnp9LQ`; the Confirmed Workflow is
+`1Nw_yOmg_YNBCfM6viIUeUrIWpktDRcjl8Z_CSyudr3Q`. The current baseline is 25
+stories (15 Must, 6 Should, 4 Could), with I1 E1–E2, I2 E3–E5 and I3 E6–E8.
+I1–I2 are the practical MVP direction; unsupported organiser, moderator,
+cleanup-outcome, recurrence, biodiversity-learning and recognition features
+remain Future/TBD.
+
+The three native requirements Docs were updated in place with revision guards.
+The 9-slide IM Proposal `1DBadsZJZ-GbkpK6Q_ki9PlJAp9vXTBXGMPJknbaEn1A` was
+updated in place to match the two-entry workflow, roles, pending review,
+broad-area privacy and current MVP boundary. Local source documents were
+backed up under `realwork/.backup_sync_20260820/`. The Drive draft DMP is
+listed by Drive search but returns 404 through the Docs API, and the Team Info
+DOCX cannot be edited by the native Docs batch API; these remain explicit
+follow-up items rather than silently claiming completion. Sample Project PGIE,
+history, archive and Future Features were not changed.
+
+The updated requirement document revisions are recorded in PM context; the
+deck head revision is `Vg0Gpsy9oYTYSw`.
+
+Verification: native Docs readback found 25 story references and no old
+19-story/11-Must baseline. The IM Proposal readback remains 9 slides and its
+fresh thumbnails for Slides 5–9 are stored under
+`realwork/.tmp_ppt_verify/`; PDF export completed successfully. No runtime or
+deployment change was made.

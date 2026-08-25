@@ -1,8 +1,8 @@
-# TideTrace MY API Contract
+# Radar Sampah API Contract
 
 Local base URL: `http://localhost:5000`. All request examples are synthetic
-or illustrative. This student demo never accepts exact coordinates or personal
-details.
+or illustrative. This student demo never stores exact coordinates or personal
+details. One-off GPS assistance may return only a broad area name.
 
 ## Active endpoints
 
@@ -21,7 +21,8 @@ details.
   `LITTER_RECOGNITION_ENABLED=true` and a private HTTPS endpoint is configured.
   Detection is a suggestion, not verified evidence.
 - `GET /api/litter-heatmap` returns broad, source-labelled area summaries with
-  an illustrative severity score and priority. It is not a live alert map.
+  an illustrative four-band severity score and priority. Area sensitivity is
+  applied as 1.0, 1.25 or 1.5. It is not a live alert map.
 - `GET /api/cleanup-missions` returns demo missions. `POST
   /api/cleanup-missions/<mission_id>/join` increments an anonymous demo join
   count. Neither route is dispatch, safety approval or a permit.
@@ -30,6 +31,13 @@ details.
   illustrative evidence only.
 - `GET /api/community-progress` returns simple demo report, mission, join and
   item counts. It does not prove litter removal, pollution reduction or impact.
+
+Reports are separate from collected reports. A collected result is shown only
+after moderator verification. Quantity totals use `102+` for an open upper
+range. The current Design Thinking plan has 25 stories: 15 Must, 6 Should and
+4 Could. The practical MVP direction is Iterations 1–2; later review,
+recurrence and recognition features stay Future/TBD when they are not in the
+current runtime.
 
 ## Typical flow
 
@@ -52,7 +60,7 @@ in report data.
 
 ## Legacy rollback routes
 
-DiveSafe routes (`/api/profile`, `/api/dive-sites`, `/api/species`,
+Earlier DiveSafe routes (`/api/profile`, `/api/dive-sites`, `/api/species`,
 `/api/briefing`, `/api/recognize`, `/api/sightings` and collection routes) and
 the earlier observation routes remain in the repository as legacy rollback
-paths. They are not part of TideTrace MY, its screenshots or its demo claim.
+paths. They are not part of Radar Sampah, its screenshots or its demo claim.

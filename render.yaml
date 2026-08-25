@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: team04-marine-observation-api
+    name: radar-sampah-api
     runtime: python
     rootDir: actual-project/backend
     buildCommand: pip install -r requirements.txt
@@ -9,7 +9,7 @@ services:
     plan: free
     envVars:
       - key: FRONTEND_ORIGINS
-        value: https://team04-marine-observation-frontend.onrender.com
+        value: https://radar-sampah-frontend.onrender.com
       # Enter the Render PostgreSQL connection string in the dashboard.
       # It is intentionally not stored in this repository.
       - key: DATABASE_URL
@@ -26,7 +26,7 @@ services:
         value: "4000"
 
   - type: web
-    name: team04-marine-observation-frontend
+    name: radar-sampah-frontend
     runtime: static
     rootDir: actual-project/frontend
     buildCommand: echo "Static site"

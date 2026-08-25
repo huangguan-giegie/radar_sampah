@@ -1,4 +1,4 @@
-# TideTrace MY - Analysis Notes
+# Radar Sampah - Analysis Notes
 
 - The active flow is report, confirm, heatmap, mission, evidence and progress.
 - Recognition uses a labelled local demo fallback unless the team explicitly

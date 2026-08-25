@@ -1,38 +1,51 @@
-# Project Scope - TideTrace MY
+# Project Scope - Radar Sampah
 
 ## Product focus
 
-TideTrace MY is a student marine-litter reporting and cleanup-planning demo
-for Malaysia. A user chooses a broad area and fixed litter type, sees a clear
-demo recognition result, reads a broad heatmap, joins a demo cleanup mission,
-adds illustrative evidence and views community progress.
+Radar Sampah is a student marine-litter reporting and cleanup-planning demo
+for Malaysia. The confirmed direction supports two entry points: explore a
+broad-area map first, or join/create a cleanup activity and then report litter.
+The active persona is Amirah, a regular volunteer in the Selangor pilot.
 
-## User journey
+## Confirmed journey
 
-1. Select a broad reporting area and one of five litter categories.
-2. Save a short synthetic/public demo report.
-3. Read a detection suggestion and confirm it is not verified.
-4. View broad area context in a map/list fallback.
-5. Join a demo cleanup mission anonymously and add item-count evidence.
-6. View illustrative community progress.
+1. Explore the map or open a cleanup activity.
+2. Join or create an activity where the organiser permission allows it.
+3. Start a report with photo, category, quantity and one-time GPS assistance.
+4. Correct the suggested beach/category/quantity and confirm the record.
+5. Keep the report pending until a moderator or controlled reviewer checks it.
+6. Show verified broad-area severity and source-labelled context.
+7. Record cleanup evidence and later follow-up wording when those features are
+   delivered.
+8. Add verified contribution points only after the relevant Future/TBD flow is
+   implemented.
 
 ## MVP boundary
 
-- Broad area labels only; precise locations are rejected.
-- Five fixed categories; no free-form scientific classification.
-- PostgreSQL on Render and SQLite locally.
-- Recognition is disabled by default; the local fallback is the standard demo.
-- No login, identity data, live dispatch, public upload storage or real cleanup
-  verification.
+- The Design Thinking direction is 25 stories: 15 Must, 6 Should and 4 Could.
+- I1 Prepare & Report covers Epics 1–2. I2 Find & Understand covers Epics 3–5.
+  These two iterations define the practical MVP direction.
+- I3 Connect & Prepare covers Epics 6–8 and remains Future/TBD unless the team
+  moves an item earlier with evidence.
+- Public views use broad areas only. GPS is one-time assistance; exact points
+  are never public. If private storage is added for review, it must stay
+  restricted and out of screenshots.
+- Recognition is disabled by default. AI suggestions require volunteer
+  confirmation and manual input remains available.
+- Moderator review, full organiser management, cleanup outcome, recurrence,
+  biodiversity learning, points, badges and leaderboard are not presented as
+  live unless the current runtime proves them.
+- PostgreSQL runs on Render and SQLite is the local fallback. No login,
+  identity data, emergency dispatch or public upload storage is included.
 
-The MVP does not prove a detection, pollution source, waste ownership, risk,
+The MVP does not prove detection, pollution source, waste ownership, risk,
 legal status, mission attendance, cleanup completion or ecological impact.
-DiveSafe routes and data remain only for rollback compatibility.
+Scores and maps are illustrative decision aids only.
 
 ## Iterations
 
 | Iteration | Outcome | Boundary |
 |---|---|---|
-| 1 | Report and Recognize | broad report, fixed category and demo fallback |
-| 2 | Map and Act | broad heatmap, mission join and evidence |
-| 3 | Learn and Connect | progress, reflection and future community roadmap |
+| 1 | Prepare & Report | activity entry, litter report, correction and suggestion |
+| 2 | Find & Understand | verification status, area severity and biodiversity context |
+| 3 | Connect & Prepare | cleanup outcome, recurrence and contribution recognition; Future/TBD |

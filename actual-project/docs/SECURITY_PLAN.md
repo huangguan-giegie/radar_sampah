@@ -1,8 +1,8 @@
-# Security Plan - TideTrace MY
+# Security Plan - Radar Sampah
 
 ## Demo controls
 
-- Accept a broad area ID, fixed litter type and short description only.
+- Accept a broad area ID, current catalogue litter type and short description only.
 - Reject personal details, secrets and exact coordinates.
 - Validate IDs, text length, confirmation state, team size, equipment choice
   and image URL scheme.
@@ -18,7 +18,8 @@
 This MVP has no production login, role model, public upload storage, formal
 retention process, PDPA compliance claim, incident-response service or
 emergency dispatch. Detection, hotspot context, priority, mission and impact
-are illustrative. They do not prove pollution source, waste ownership, safety
+are illustrative. Organiser-supplied preparation text is not a safety
+assessment. They do not prove pollution source, waste ownership, safety
 risk, legal duty, cleanup completion or environmental benefit.
 
 ## Before real use

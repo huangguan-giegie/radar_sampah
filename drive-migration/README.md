@@ -16,7 +16,7 @@ product.
    and what is out of scope.
 4. Use `04 Build` for the current frontend, backend and Render configuration.
    The GitHub repository is the source of truth for code:
-   https://github.com/huangguan-giegie/tidetrace-my-mvp
+   https://github.com/huangguan-giegie/radar_sampah
 5. Put screenshots, test notes, deployment evidence and PGP links in
    `05 Evidence`.
 6. Use `03 Design` for the adapted 19-slide onboarding deck and
@@ -57,8 +57,8 @@ Do not commit credentials, personal data or large generated files.
 
 Current demo services:
 
-- Frontend: https://team04-marine-observation-frontend.onrender.com
-- API: https://team04-marine-observation-api.onrender.com
+- Frontend: https://radar-sampah-frontend.onrender.com
+- API: https://radar-sampah-api.onrender.com
 
 ### `05 Evidence`
 

@@ -1,10 +1,10 @@
-# TideTrace MY - Team 04 Student MVP
+# Radar Sampah - Team 04 Student MVP
 
 ## Purpose
 
-TideTrace MY is a short student demo for marine-litter reporting and cleanup
-planning in Malaysia. It uses a broad area, one fixed litter category and a
-short note. Results, map context, mission activity and progress are
+Radar Sampah is a short student demo for marine-litter reporting and cleanup
+planning in Malaysia. It uses a broad area, the current fixed litter catalogue
+and a short note. Results, map context, mission activity and progress are
 illustrative. They are not survey evidence, a dispatch service or enforcement.
 
 The active demo flow is:
@@ -20,8 +20,8 @@ The active demo flow is:
 - Recognition is a labelled fallback by default. It is never verified proof.
 - Missions and evidence are demo planning/counting records, not real cleanup
   verification.
-- DiveSafe MY routes and data remain as legacy rollback material. Do not remove
-  them destructively or present them as TideTrace functionality.
+- Older routes and data remain as legacy rollback material. Do not remove them
+  destructively or present them as current Radar Sampah functionality.
 
 ## Run locally
 
@@ -58,3 +58,10 @@ allowed only with exactly `true` plus a private HTTPS
 After deployment, check `/health`, the options and heatmap, one synthetic
 report, the fallback detection, one mission join, one evidence record and
 community progress. Keep demo wording visible.
+
+## Current work allocation
+
+See `docs/WORK_ALLOCATION_PLAN.md`. Darli owns the User Acceptance Criteria
+review from Amirah's point of view. Keith keeps the Epics, User Stories and
+technical Given/When/Then baseline; Huang coordinates the final cross-file
+check.

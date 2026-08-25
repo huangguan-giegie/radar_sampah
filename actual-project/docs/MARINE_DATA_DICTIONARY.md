@@ -1,6 +1,6 @@
-# TideTrace MY - Data Dictionary
+# Radar Sampah - Data Dictionary
 
-This file lists the fields used by the TideTrace MY demo. The data is synthetic
+This file lists the fields used by the Radar Sampah demo. The data is synthetic
 or public and is not a survey, enforcement or scientific evidence record.
 
 | Field | Type | Meaning |
@@ -14,7 +14,10 @@ or public and is not a survey, enforcement or scientific evidence record.
 | `detection` | derived text | Reporter-selected or local demo fallback |
 | `priority` | derived object | Illustrative score and cleanup level |
 | `impact` | derived object | Illustrative before/after comparison |
+| `report_status` | fixed text | reported, moderator-verified or collected |
+| `sensitivity_factor` | decimal | Area factor 1.0, 1.25 or 1.5 used in severity |
+| `gps_assist` | boolean | One-off area selection help; no coordinate is stored |
 
 The service keeps reports, detections, priorities, missions and evidence in
 separate tables. Recognition is disabled by default. No exact coordinates are
-accepted or returned.
+accepted or returned. Collected status is not set before moderator review.

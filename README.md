@@ -1,16 +1,21 @@
 # Team 04 Real Project Migration
 
-This folder holds the active TideTrace MY student project and preserved reference/rollback material.
+This folder holds the active Radar Sampah student project and preserved reference/rollback material.
 
 ## Current project
 
-**TideTrace MY - Marine Litter Reporting and Cleanup Demo for Malaysia** is the active scope:
+**Radar Sampah - Marine Litter Reporting and Cleanup Demo for Malaysia** is the active scope:
 
-`Report -> Recognize -> Heatmap -> Join mission -> Evidence -> Progress`
+`I1 Report & Classify -> I2 Find & Understand -> I3 Connect & Prepare`
 
-The MVP uses five fixed litter categories, broad Malaysian area labels, synthetic/public examples and anonymous demo counts. It does not collect identity data, exact coordinates or secrets. It does not prove litter source, cleanup completion, environmental impact, legal status or enforcement action.
+The MVP uses five fixed litter categories, broad Malaysian area labels (including the Selangor central west example), synthetic/public examples and anonymous demo counts. AI suggestions need confirmation; scores, heatmap and impact are illustrative. It does not collect identity data, exact coordinates or secrets, and makes no pollution-proof, legal, enforcement, emergency-dispatch or verified safety claim.
 
 Recognition is a labelled demo fallback by default. A private provider is only allowed when `LITTER_RECOGNITION_ENABLED=true` and an HTTPS URL has been reviewed by the team.
+
+The frontend API base is configured with `window.RADAR_SAMPAH_API_BASE`; the
+older `window.TIDETRACE_API_BASE` name remains a compatibility alias. Current
+deployment links are `https://radar-sampah-frontend.onrender.com` and
+`https://radar-sampah-api.onrender.com`.
 
 ## Folder layout
 
@@ -21,7 +26,7 @@ Recognition is a labelled demo fallback by default. A private provider is only a
 
 ## Legacy and rollback boundary
 
-DiveSafe MY and the earlier marine-observation/litter paths are retained as rollback history. They are not the active TideTrace product flow. HealthFirst material is reference-only and must not be used as TideTrace evidence.
+DiveSafe MY and the earlier marine-observation/litter paths are retained as rollback history. They are not the active Radar Sampah product flow. HealthFirst material is reference-only and must not be used as Radar Sampah evidence.
 
 ## Deliverables
 

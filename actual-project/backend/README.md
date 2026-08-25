@@ -1,12 +1,12 @@
-# TideTrace MY API - Legacy Rollback Included
+# Radar Sampah API - Legacy Rollback Included
 
-This Flask API supports the TideTrace MY student demo: broad-area litter
+This Flask API supports the Radar Sampah student demo: broad-area litter
 reports, a clearly labelled recognition suggestion, broad heatmap summaries,
 anonymous cleanup-mission joins, illustrative evidence and community progress.
 It does not accept personal details or exact coordinates.
 
 DiveSafe and earlier marine-observation routes/tables remain as legacy rollback
-paths. They are retained for recovery, not presented as TideTrace behaviour.
+paths. They are retained for recovery, not presented as Radar Sampah behaviour.
 
 ## Local setup
 
@@ -23,7 +23,7 @@ The development server listens on `http://localhost:5000` by default.
 
 - `DATABASE_URL` selects PostgreSQL; absent means the local SQLite fallback.
 - Schema setup is idempotent and preserves legacy tables.
-- Active TideTrace tables cover litter reports, cleanup missions, anonymous
+- Active Radar Sampah tables cover litter reports, cleanup missions, anonymous
   joins and cleanup evidence. Recognition results may be stored separately as
   demo metadata.
 - No name, email, phone, account, password, API key, exact coordinate or raw

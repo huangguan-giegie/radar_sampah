@@ -1,8 +1,23 @@
 # Team 04 Decisions
 
-## 2026-08-15 - TideTrace MY direction
+## 2026-08-19 - Radar Sampah workshop sync
 
-- The active product is **TideTrace MY - Marine Litter Reporting and Cleanup
+- Public product copy is **Radar Sampah**. The current plan has 25 stories: 15
+  Must, 6 Should and 4 Could. I1–I2 are the practical MVP direction; I3 is
+  Future/TBD unless the team moves a story earlier. GR5 is Must.
+- AI is an optional assisted path. The volunteer must confirm the suggestion;
+  manual entry is still complete when AI is unavailable.
+- GPS can help once with area selection only. Exact coordinates are never kept.
+- Reports use separate reported, moderator-verified and collected states.
+  A collected report needs moderator verification before it appears as a
+  collected result.
+- Severity is deterministic and versioned: quantity-band midpoint × category
+  weight, with recency and area sensitivity (1.0, 1.25 or 1.5). The UI uses
+  four severity bands and displays an open total as `102+`.
+
+## 2026-08-15 - Radar Sampah direction
+
+- The active product is **Radar Sampah - Marine Litter Reporting and Cleanup
   Demo for Malaysia**.
 - The demo flow is Report -> Recognize -> Heatmap -> Join mission -> Evidence
   -> Community progress.
@@ -29,6 +44,6 @@
 - Render uses PostgreSQL through `DATABASE_URL`; local development uses SQLite
   when it is absent.
 - Active data is stored separately for reports, missions, anonymous joins and
-  cleanup evidence. Legacy DiveSafe and observation data is retained.
+  cleanup evidence. Legacy DiveSafe and observation data is retained; the active product is Radar Sampah.
 - Static source-labelled data is used for the demo. The flow does not depend
   on a live environmental feed or external AI service.
