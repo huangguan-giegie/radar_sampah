@@ -1,0 +1,159 @@
+{
+  "classes": [
+    "plastic",
+    "metal",
+    "glass",
+    "paper_cardboard",
+    "styrofoam",
+    "fishing_gear"
+  ],
+  "sea_class_id_map": {
+    "0": 2,
+    "1": 1,
+    "2": 5,
+    "3": 0,
+    "4": 5,
+    "5": 5,
+    "6": 0,
+    "7": 5,
+    "8": 4,
+    "9": 4,
+    "10": 4
+  },
+  "taco_category_map": {
+    "Aluminium foil": "metal",
+    "Battery": null,
+    "Aluminium blister pack": null,
+    "Carded blister pack": null,
+    "Other plastic bottle": "plastic",
+    "Clear plastic bottle": "plastic",
+    "Glass bottle": "glass",
+    "Plastic bottle cap": "plastic",
+    "Metal bottle cap": "metal",
+    "Broken glass": "glass",
+    "Food Can": "metal",
+    "Aerosol": "metal",
+    "Drink can": "metal",
+    "Toilet tube": "paper_cardboard",
+    "Other carton": "paper_cardboard",
+    "Egg carton": "paper_cardboard",
+    "Drink carton": "paper_cardboard",
+    "Corrugated carton": "paper_cardboard",
+    "Meal carton": "paper_cardboard",
+    "Pizza box": "paper_cardboard",
+    "Paper cup": "paper_cardboard",
+    "Disposable plastic cup": "plastic",
+    "Foam cup": "styrofoam",
+    "Glass cup": "glass",
+    "Other plastic cup": "plastic",
+    "Food waste": null,
+    "Glass jar": "glass",
+    "Plastic lid": "plastic",
+    "Metal lid": "metal",
+    "Other plastic": "plastic",
+    "Magazine paper": "paper_cardboard",
+    "Tissues": "paper_cardboard",
+    "Wrapping paper": "paper_cardboard",
+    "Normal paper": "paper_cardboard",
+    "Paper bag": "paper_cardboard",
+    "Plastified paper bag": "paper_cardboard",
+    "Plastic film": "plastic",
+    "Six pack rings": "plastic",
+    "Garbage bag": "plastic",
+    "Other plastic wrapper": "plastic",
+    "Single-use carrier bag": "plastic",
+    "Polypropylene bag": "plastic",
+    "Crisp packet": "plastic",
+    "Spread tub": "plastic",
+    "Tupperware": "plastic",
+    "Disposable food container": "plastic",
+    "Foam food container": "styrofoam",
+    "Other plastic container": "plastic",
+    "Plastic glooves": "plastic",
+    "Plastic utensils": "plastic",
+    "Pop tab": "metal",
+    "Rope & strings": "fishing_gear",
+    "Scrap metal": "metal",
+    "Shoe": null,
+    "Squeezable tube": "plastic",
+    "Plastic straw": "plastic",
+    "Paper straw": "paper_cardboard",
+    "Styrofoam piece": "styrofoam",
+    "Unlabeled litter": null,
+    "Cigarette": null
+  },
+  "seed": 20260825,
+  "stats": {
+    "train": {
+      "images": {
+        "sea": 6072,
+        "taco": 1200
+      },
+      "boxes": 32738,
+      "classes": {
+        "styrofoam": 4695,
+        "plastic": 15662,
+        "glass": 2257,
+        "fishing_gear": 4395,
+        "metal": 5358,
+        "paper_cardboard": 371
+      },
+      "sources": {
+        "sea": 29919,
+        "taco": 2819
+      }
+    },
+    "val": {
+      "images": {
+        "sea": 1735,
+        "taco": 150
+      },
+      "boxes": 9001,
+      "classes": {
+        "metal": 1376,
+        "plastic": 4423,
+        "styrofoam": 1379,
+        "fishing_gear": 1206,
+        "glass": 543,
+        "paper_cardboard": 74
+      },
+      "sources": {
+        "sea": 8651,
+        "taco": 350
+      }
+    },
+    "test": {
+      "images": {
+        "sea": 867,
+        "taco": 150
+      },
+      "boxes": 4629,
+      "classes": {
+        "plastic": 2195,
+        "metal": 786,
+        "glass": 376,
+        "fishing_gear": 621,
+        "styrofoam": 599,
+        "paper_cardboard": 52
+      },
+      "sources": {
+        "sea": 4222,
+        "taco": 407
+      }
+    },
+    "taco_dropped_categories": {
+      "Cigarette": 667,
+      "Food waste": 8,
+      "Shoe": 7,
+      "Unlabeled litter": 517,
+      "Aluminium blister pack": 6,
+      "Battery": 2,
+      "Carded blister pack": 1
+    },
+    "taco_image_dimensions": {
+      "exact": 534,
+      "same_aspect_resized": 814,
+      "exact_after_exif_orientation": 152
+    }
+  }
+}

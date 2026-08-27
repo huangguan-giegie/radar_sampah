@@ -20,6 +20,7 @@ deployment links are `https://radar-sampah-frontend.onrender.com` and
 ## Folder layout
 
 - `actual-project/` - active runtime, docs and deployment configuration.
+- `actual-project/ml-model/` - Sea + TACO YOLO11m litter detector, training metadata and best weights (available on the `Sea-TACO-Detection-Model` branch).
 - `deliverables/` - editable Markdown sources and Drive-ready documents.
 - `references/healthfirst-example/` - read-only historical examples.
 - `drive-migration/` - governance and migration record.
