@@ -8,3 +8,12 @@ test_*.db
 .DS_Store
 tmp/
 *.inspect.ndjson
+
+# Local ML training data and generated runs are intentionally not versioned.
+actual-project/ml-model/datasets/
+actual-project/ml-model/runs/
+actual-project/ml-model/.venv/
+actual-project/ml-model/models/epoch*.pt
+actual-project/ml-model/models/last.pt
+actual-project/ml-model/models/*.onnx
+actual-project/ml-model/models/*.engine

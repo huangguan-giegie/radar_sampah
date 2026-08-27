@@ -1,0 +1,13 @@
+model: yolo11m.pt
+epochs: 100
+imgsz: 640
+batch: 8
+device: 0
+workers: 4
+amp: true
+patience: 20
+save_period: 10
+seed: 20260827
+deterministic: true
+project: runs
+name: yolo11m_sea_taco_6class_100e
