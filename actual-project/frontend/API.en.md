@@ -253,6 +253,81 @@ source register.
 
 ---
 
+### Species storage: `dim_species` + `area_species` (decided)
+
+The species master and "which cards this area shows" are separated. The old `beach_species`
+is replaced by these two tables.
+
+```sql
+-- Species master, extracted from FishBase. DMP §4.1: upsert on scientific_name
+CREATE TABLE dim_threat (
+  threat_id     serial PRIMARY KEY,
+  threat_name   text NOT NULL UNIQUE          -- threat category dictionary
+);
+
+CREATE TABLE dim_species (
+  species_id      uuid PRIMARY KEY,
+  scientific_name text NOT NULL UNIQUE,       -- upsert key; rows without one are discarded
+  common_name     text,
+  threat_id       int  REFERENCES dim_threat(threat_id),
+  glyph           text NOT NULL,              -- one of the six icon values
+  picture_url     text,                       -- image rights are separate; check per image
+  created_at      timestamptz NOT NULL DEFAULT now()
+);
+
+-- "the biodiversity cards for this area". areas 1 ─ N area_species ─ N…1 dim_species
+CREATE TABLE area_species (
+  id                  uuid PRIMARY KEY,
+  area_id             text NOT NULL REFERENCES beaches(id) ON DELETE CASCADE,
+  species_id          uuid NULL REFERENCES dim_species(species_id),
+
+  kind                text NOT NULL CHECK (kind IN ('species','habitat','group')),
+  display_name        text NOT NULL,
+  text                text NOT NULL,
+  sort_order          int  NOT NULL DEFAULT 0,
+  origin              text NOT NULL DEFAULT 'curated'
+                           CHECK (origin IN ('curated','derived')),
+
+  source_dataset      text NOT NULL,
+  source_citation     text NOT NULL,
+  source_url          text,
+  source_accessed_at  date,
+
+  likelihood_percent  int  CHECK (likelihood_percent BETWEEN 0 AND 100),
+  likelihood_basis    text,
+
+  UNIQUE (area_id, species_id),
+  CHECK ((kind = 'species') = (species_id IS NOT NULL)),
+  CHECK ((likelihood_percent IS NULL) = (likelihood_basis IS NULL))
+);
+```
+
+**A nullable `species_id` is the crux.** Only 2 of the 11 cards are actual species (Green Sea
+Turtle, Horseshoe Crab). The other 9 are habitats (mangrove, seagrass) and groups (coastal birds,
+migratory shorebirds, marine fish). They have no scientific name, so under DMP §4.1 — *"Rows
+without a usable scientific name are discarded"* — they cannot enter `dim_species` at all. The
+nullable FK lets those 9 live on their own `area_species` row while `dim_species` stays purely
+FishBase-derived.
+
+**Why `text` sits on the junction, not on `dim_species`.** The same card reads differently per
+beach: `Coastal Birds` at Morib is *"Migratory shorebirds feed along this tide line…"*, at Kelanang
+it is *"Egrets and herons hunt along the shallow channels…"*. `likelihood_*` follows the same logic
+— it is inherently a (species × place) value.
+
+**The two CHECKs are guardrails.** `kind='species'` must carry a master row and nothing else may;
+the two likelihood columns must be set or null together.
+
+**The API response shape does not change.** The backend joins the two tables and flattens them into
+the existing `species[]` array — no frontend code changes.
+
+> **Two open items:**
+> ① The DDL says `area_id REFERENCES beaches(id)`. The DMP calls this concept `areas`, the contract
+>   calls it `beaches` — same thing, two names. Renaming is a separate step, not part of this change.
+> ② `origin` defaults to `curated`. Once OBIS is wired up, occurrences falling inside an area's
+>   bounding box can generate `derived` rows without a schema change.
+
+---
+
 ## 3. Scoring rule (US4.3) — this endpoint is optional
 
 | Method | Path | Auth | |
@@ -555,11 +630,15 @@ users            id, participant_id(uniq), role, created_at
 beaches          id, name, area, lat, lng, habitat, habitat_tag, sensitivity,
                  primary_species_glyph, cover_image_url, scene, created_at
 
-beach_species    id, beach_id, name, kind, scientific_name(nullable),
-                 threat_category(nullable), glyph, text, sort_order,
-                 source_dataset, source_citation, source_url(nullable),
-                 source_accessed_at(nullable), picture_url(nullable),
+dim_threat       threat_id(PK), threat_name(uniq)          ← DMP §6 dictionary
+dim_species      species_id(PK), scientific_name(uniq), common_name,
+                 threat_id(FK), glyph, picture_url, created_at
+                 ← real species only, upserted on scientific_name
+area_species     id(PK), area_id(FK→beaches), species_id(FK→dim_species, nullable),
+                 kind, display_name, text, sort_order, origin,
+                 source_dataset, source_citation, source_url, source_accessed_at,
                  likelihood_percent(nullable), likelihood_basis(nullable)
+                 ← area×species junction; habitats and groups have a null species_id
 
 reports          id, reporter_id, beach_id, category, quantity, photo_id,
                  location_source, lat(nullable), lng(nullable),

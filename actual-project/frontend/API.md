@@ -255,6 +255,79 @@ DMP 的来源登记表只认两个开放数据集，两个都是 **CC BY-NC —�
 要么改成不需要物种级出处的写法。**这件事 Su 和 Keith 要一起定**，
 因为它同时影响 Epic 5 的内容和 DMP §2 的来源登记表。
 
+### 物种存储：`dim_species` + `area_species`（已定）
+
+物种主记录和「这片区域展示哪些卡片」拆开。原来的 `beach_species` 被这两张表取代。
+
+```sql
+-- FishBase 抽取出来的物种主表。DMP §4.1：按 scientific_name upsert
+CREATE TABLE dim_threat (
+  threat_id     serial PRIMARY KEY,
+  threat_name   text NOT NULL UNIQUE          -- 受威胁等级字典
+);
+
+CREATE TABLE dim_species (
+  species_id      uuid PRIMARY KEY,
+  scientific_name text NOT NULL UNIQUE,       -- ← upsert 键。没有学名的行直接丢弃
+  common_name     text,
+  threat_id       int  REFERENCES dim_threat(threat_id),
+  glyph           text NOT NULL,              -- 六个图标枚举之一
+  picture_url     text,                       -- 图片版权独立，用前逐张确认
+  created_at      timestamptz NOT NULL DEFAULT now()
+);
+
+-- 「这片区域的生物多样性卡片」。areas 1 ─ N area_species ─ N…1 dim_species
+CREATE TABLE area_species (
+  id                  uuid PRIMARY KEY,
+  area_id             text NOT NULL REFERENCES beaches(id) ON DELETE CASCADE,
+  species_id          uuid NULL REFERENCES dim_species(species_id),
+
+  kind                text NOT NULL CHECK (kind IN ('species','habitat','group')),
+  display_name        text NOT NULL,
+  text                text NOT NULL,
+  sort_order          int  NOT NULL DEFAULT 0,
+  origin              text NOT NULL DEFAULT 'curated'
+                           CHECK (origin IN ('curated','derived')),
+
+  source_dataset      text NOT NULL,
+  source_citation     text NOT NULL,
+  source_url          text,
+  source_accessed_at  date,
+
+  likelihood_percent  int  CHECK (likelihood_percent BETWEEN 0 AND 100),
+  likelihood_basis    text,
+
+  UNIQUE (area_id, species_id),
+  CHECK ((kind = 'species') = (species_id IS NOT NULL)),
+  CHECK ((likelihood_percent IS NULL) = (likelihood_basis IS NULL))
+);
+```
+
+**`species_id` 可空是关键。** 11 张卡里只有 2 张是真物种（Green Sea Turtle、Horseshoe Crab），
+另外 9 张是生境（红树、海草）和统称（海岸鸟类、候鸟、海洋鱼类）——
+它们没有学名，按 DMP §4.1「Rows without a usable scientific name are discarded」
+根本进不了 `dim_species`。可空外键让这 9 张卡活在 `area_species` 自己的行上，
+`dim_species` 保持纯粹来自 FishBase。
+
+**为什么 `text` 在 junction 上而不在 `dim_species` 上。** 同名卡片在不同海滩的文案是不同的：
+`Coastal Birds` 在 Morib 是「Migratory shorebirds feed along this tide line…」，
+在 Kelanang 是「Egrets and herons hunt along the shallow channels…」。
+`likelihood_*` 同理 —— 它本来就是「物种 × 地点」的值。
+
+**两个 CHECK 是防呆的。** `kind='species'` 必须挂主记录、反之不许挂；
+likelihood 两列必须同生同死。
+
+**API 响应形状不变。** 后端把两张表 join 之后拍平成现在的 `species[]` 数组，
+前端一行代码都不用改。
+
+> **两处待办**：
+> ① 表里写的是 `area_id REFERENCES beaches(id)` —— DMP 管这个概念叫 `areas`，
+>   契约叫 `beaches`。同一个东西两个名字，改名是单独一步，不在这次改动里。
+> ② `origin` 默认 `curated`。接上 OBIS 之后，落在区域地理框内的 occurrence
+>   可以自动生成 `derived` 行，那时不用改表结构。
+
+---
+
 ## 3. 评分规则（US4.3）　— 这个接口是**可选的**
 
 | 方法 | 路径 | 鉴权 | 说明 |
@@ -555,11 +628,15 @@ users            id, participant_id(uniq), role, created_at
                  ← 没有姓名、邮箱、手机号等任何个人数据字段
 beaches          id, name, area, lat, lng, habitat, habitat_tag, sensitivity,
                  primary_species_glyph, cover_image_url, scene, created_at
-beach_species    id, beach_id, name, kind, scientific_name(nullable),
-                 threat_category(nullable), glyph, text, sort_order,
-                 source_dataset, source_citation, source_url(nullable),
-                 source_accessed_at(nullable), picture_url(nullable),
-                 likelihood_percent(nullable), likelihood_basis(nullable)   ← Epic 5
+dim_threat       threat_id(PK), threat_name(uniq)          ← DMP §6 字典表
+dim_species      species_id(PK), scientific_name(uniq), common_name,
+                 threat_id(FK), glyph, picture_url, created_at
+                 ← 只放有学名的真物种，按 scientific_name upsert
+area_species     id(PK), area_id(FK→beaches), species_id(FK→dim_species, nullable),
+                 kind, display_name, text, sort_order, origin,
+                 source_dataset, source_citation, source_url, source_accessed_at,
+                 likelihood_percent(nullable), likelihood_basis(nullable)
+                 ← 区域×物种的 junction；生境和统称的 species_id 为空
 reports          id, reporter_id, beach_id, category, quantity, photo_id,
                  location_source, lat(nullable), lng(nullable),
                  status, status_note, created_at, updated_at, deleted_at
