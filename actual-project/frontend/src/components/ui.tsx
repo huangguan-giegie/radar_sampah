@@ -163,7 +163,10 @@ export function StepBadge({ children, dark = false }: { children: ReactNode; dar
         background: dark ? 'rgba(12,24,52,.5)' : C.white,
         backdropFilter: dark ? 'blur(10px)' : undefined,
         border: dark ? 'none' : `1px solid ${C.line}`,
-        padding: dark ? '9px 13px' : '8px 13px',
+        minHeight: 28,
+        display: 'inline-flex',
+        alignItems: 'center',
+        padding: '0 13px',
         borderRadius: 999,
         whiteSpace: 'nowrap',
       }}

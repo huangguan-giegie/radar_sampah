@@ -3,8 +3,8 @@ import { useEffect, useState } from 'react';
 import { createReport, getBeaches, updateReport } from '../api';
 import { ArrowRight, Info, Shield } from '../components/Icon';
 import { BackButton, ErrorNote, PrimaryButton, StepBadge, TextButton } from '../components/ui';
-import { C, MONO } from '../theme';
-import { OverlayChip } from '../components/ds';
+import { C } from '../theme';
+import { OverlayChip, StatusBadge } from '../components/ds';
 import { useApp } from '../AppContext';
 import type { BeachSummary, LitterCategory, QuantityBand } from '../types';
 import { buildReportSubmission } from '../flowRules';
@@ -77,9 +77,9 @@ export default function ReviewScreen() {
       <span style={{ fontSize: 14, fontWeight: 640, flex: 1 }}>{value}</span>
       {action && <span style={{ fontSize: 11.5, fontWeight: 700, color: C.navy }}>Change</span>}
       {badge && (
-        <span style={{ marginLeft: 'auto', fontFamily: MONO, fontSize: 8, letterSpacing: '.08em', color: C.slate, background: 'rgba(11,33,97,.06)', padding: '4px 7px', borderRadius: 7 }}>
+        <StatusBadge status="duplicate" style={{ marginLeft: 'auto' }}>
           {badge}
-        </span>
+        </StatusBadge>
       )}
     </button>
   );

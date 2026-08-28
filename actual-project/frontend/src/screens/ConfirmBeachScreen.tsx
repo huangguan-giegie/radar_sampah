@@ -5,7 +5,7 @@ import { MiniMap } from '../components/MiniMap';
 import { Alert, Check, Pin, Search } from '../components/Icon';
 import { BackButton, ErrorNote, PrimaryButton, Skeleton, TextButton } from '../components/ui';
 import { C, MONO } from '../theme';
-import { SeverityBadge } from '../components/ds';
+import { OverlayChip, SeverityBadge } from '../components/ds';
 import { useApp } from '../AppContext';
 import type { BeachSummary } from '../types';
 
@@ -52,24 +52,12 @@ export default function ConfirmBeachScreen() {
         onClick={() => nav(-1)}
         style={{ position: 'absolute', top: 'var(--top-inset)', left: 18, zIndex: 820, background: 'rgba(255,255,255,.85)', backdropFilter: 'blur(10px)' }}
       />
-      <div
-        style={{
-          position: 'absolute',
-          top: 'var(--top-inset)',
-          right: 18,
-          fontFamily: MONO,
-          fontSize: 9,
-          letterSpacing: '.12em',
-          color: C.ink2,
-          background: 'rgba(255,255,255,.85)',
-          backdropFilter: 'blur(10px)',
-          padding: '10px 13px',
-          borderRadius: 999,
-          zIndex: 820,
-        }}
+      <OverlayChip
+        tone="light"
+        style={{ position: 'absolute', top: 'var(--top-inset)', left: '50%', transform: 'translateX(-50%)', zIndex: 820 }}
       >
         {manual ? 'MANUAL BEACH SELECTION' : 'GPS USED ONCE · PRIVATE'}
-      </div>
+      </OverlayChip>
 
       <div
         className="anim-sheet-up"
@@ -130,7 +118,7 @@ export default function ConfirmBeachScreen() {
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: 16.5, fontWeight: 650 }}>{suggested.name}</div>
-                  <div style={{ fontSize: 12, color: C.dim, marginTop: 2 }}>{suggested.area}</div>
+                  <div style={{ fontSize: 12, color: C.dim, marginTop: 3 }}>{suggested.area}</div>
                 </div>
                 <SeverityBadge band={suggested.severity} />
               </div>
@@ -197,7 +185,7 @@ export default function ConfirmBeachScreen() {
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontSize: 14.5, fontWeight: 640 }}>{b.name}</div>
-                      <div style={{ fontSize: 11.5, color: C.dim }}>{b.area}</div>
+                      <div style={{ fontSize: 11.5, color: C.dim, marginTop: 3 }}>{b.area}</div>
                     </div>
                     <SeverityBadge band={b.severity} />
                   </button>

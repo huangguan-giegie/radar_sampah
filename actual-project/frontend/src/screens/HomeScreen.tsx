@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { getBeaches, getMyReportCounts } from '../api';
 import { ArrowRight, BarChart, Camera, Check, Info, UserIcon } from '../components/Icon';
 import { ErrorNote, Label, Skeleton } from '../components/ui';
-import { SeverityBadge } from '../components/ds';
+import { OverlayChip, SeverityBadge, StatTile } from '../components/ds';
 import { C, MONO, NOISE, lastReportedLabel } from '../theme';
 import { useApp } from '../AppContext';
 import type { BeachSummary, ReportCounts } from '../types';
@@ -15,37 +15,6 @@ function greeting(d = new Date()) {
   return 'Good evening,';
 }
 
-function StatTile({
-  value,
-  label,
-  color,
-  onClick,
-}: {
-  value: number | undefined;
-  label: string;
-  color: string;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="card-hover press"
-      style={{
-        flex: 1,
-        background: C.white,
-        border: '1px solid rgba(11,33,97,.07)',
-        borderRadius: 20,
-        padding: '15px 14px',
-      }}
-    >
-      <div style={{ fontSize: 26, fontWeight: 660, letterSpacing: '-.5px', color }}>
-        {value ?? '—'}
-      </div>
-      <div style={{ fontSize: 11, color: C.dim, marginTop: 2, fontWeight: 600 }}>{label}</div>
-    </button>
-  );
-}
 
 function BeachRow({ b, last, onClick }: { b: BeachSummary; last: boolean; onClick: () => void }) {
   return (
@@ -80,11 +49,11 @@ function BeachRow({ b, last, onClick }: { b: BeachSummary; last: boolean; onClic
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontSize: 14, fontWeight: 620 }}>{b.name}</div>
-        <div style={{ fontSize: 11.5, color: C.dim, marginTop: 1 }}>
+        <div style={{ fontSize: 11.5, color: C.dim, marginTop: 3 }}>
           {b.validReports} valid reports · {lastReportedLabel(b.lastReportedAt).toLowerCase()}
         </div>
       </div>
-      <SeverityBadge band={b.severity} />
+      <SeverityBadge band={b.severity} block />
     </button>
   );
 }
@@ -196,23 +165,9 @@ export default function HomeScreen() {
           <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg,transparent 40%,rgba(221,227,236,.18) 46%,transparent 54%)' }} />
           <div style={{ position: 'absolute', inset: 0, opacity: 0.3, backgroundImage: NOISE }} />
           <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg,transparent 30%,rgba(9,22,48,.78) 100%)' }} />
-          <div
-            style={{
-              position: 'absolute',
-              top: 14,
-              left: 16,
-              fontFamily: MONO,
-              fontSize: 8.5,
-              letterSpacing: '.16em',
-              color: 'rgba(221,227,236,.8)',
-              background: 'rgba(9,24,52,.4)',
-              backdropFilter: 'blur(6px)',
-              padding: '5px 9px',
-              borderRadius: 8,
-            }}
-          >
+          <OverlayChip style={{ position: 'absolute', top: 14, left: 14 }}>
             MAP · {beaches.length || 4} BEACHES
-          </div>
+          </OverlayChip>
           <div style={{ position: 'absolute', left: 18, right: 18, bottom: 16, textAlign: 'left' }}>
             <div style={{ fontSize: 22, fontWeight: 650, letterSpacing: '-.4px', color: C.bg }}>
               Which beach needs you?
@@ -297,9 +252,9 @@ export default function HomeScreen() {
 
         <Label style={{ margin: '28px 0 12px' }}>WHAT YOU'VE ADDED</Label>
         <div style={{ display: 'flex', gap: 10 }}>
-          <StatTile value={counts?.counted} label="Counted" color={C.green} onClick={() => nav('/reports')} />
-          <StatTile value={counts?.duplicate} label="Duplicate" color={C.muted} onClick={() => nav('/reports?tab=Excluded')} />
-          <StatTile value={counts?.incomplete} label="Incomplete" color={C.red} onClick={() => nav('/reports?tab=Excluded')} />
+          <StatTile value={counts?.counted} caption="Counted" tone="counted" onClick={() => nav('/reports?tab=Counted')} />
+          <StatTile value={counts?.duplicate} caption="Duplicate" tone="duplicate" onClick={() => nav('/reports?tab=Excluded')} />
+          <StatTile value={counts?.incomplete} caption="Incomplete" tone="incomplete" onClick={() => nav('/reports?tab=Excluded')} />
         </div>
 
         <Label style={{ margin: '26px 0 12px' }}>

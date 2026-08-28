@@ -115,6 +115,9 @@ button.ds-surface:active { transform: scale(0.994); }
 }
 .ds-badge[data-indicator='true']::before { display: block; }
 .ds-badge[data-size='lg'] { min-height: 34px; padding: 7px 13px; font-size: 12px; }
+/* 一列徽章排下来要等宽，否则右对齐了左边缘还是参差的。
+   96px 装得下最长的 MODERATE。 */
+.ds-badge[data-block='true'] { min-width: 96px; }
 
 .ds-badge[data-status='low']      { --badge-color: var(--ds-success); --badge-bg: var(--ds-success-bg); }
 .ds-badge[data-status='counted']  { --badge-color: var(--ds-success); --badge-bg: var(--ds-success-bg); }
@@ -131,6 +134,25 @@ button.ds-surface:active { transform: scale(0.994); }
   --badge-bg: transparent;
   border-style: dashed;
   border-color: rgba(11, 33, 97, 0.22);
+}
+
+/* ---------- InfoChip：陈述事实，不是状态判断 ----------
+   和 StatusBadge 同高同圆角，但保持正常大小写和无衬线 ——
+   「8 valid reports」是一个数，不是一个等级，不该长得像等级。 */
+.ds-info {
+  --info-color: var(--ds-ink-soft);
+  --info-bg: var(--ds-surface-2);
+  display: inline-flex;
+  min-height: 26px;
+  align-items: center;
+  gap: 6px;
+  border-radius: var(--r-pill);
+  padding: 5px 11px;
+  color: var(--info-color);
+  background: var(--info-bg);
+  font-size: 11.5px;
+  font-weight: 600;
+  white-space: nowrap;
 }
 
 /* ---------- ListRow ---------- */
@@ -305,11 +327,11 @@ button.ds-chip { min-height: 44px; padding-inline: 14px; cursor: pointer; }
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  gap: 10px;
+  gap: 3px;
   border: 1px solid var(--ds-line);
   border-radius: var(--r-inner);
   background: var(--ds-surface);
-  padding: 14px;
+  padding: 15px 14px;
   text-align: left;
   cursor: pointer;
   transition: transform 160ms var(--ds-ease), border-color 160ms var(--ds-ease);

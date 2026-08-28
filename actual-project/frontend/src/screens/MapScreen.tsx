@@ -301,7 +301,7 @@ function SelectedCard({
             <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, paddingRight: 28 }}>
               <div style={{ flex: 1 }}>
                 <div style={{ fontSize: 18, fontWeight: 650, letterSpacing: '-.3px' }}>{beach.name}</div>
-                <div style={{ fontSize: 12, color: C.dim, marginTop: 2 }}>{beach.area}</div>
+                <div style={{ fontSize: 12, color: C.dim, marginTop: 3 }}>{beach.area}</div>
               </div>
               <SeverityBadge band={beach.severity} size="lg" />
             </div>

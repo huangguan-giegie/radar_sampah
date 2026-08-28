@@ -13,7 +13,7 @@ import {
   freshStyle,
   freshnessLabel,
 } from '../theme';
-import { BandMeter, GlassPanel } from '../components/ds';
+import { BandMeter, GlassPanel, InfoChip } from '../components/ds';
 import { useApp } from '../AppContext';
 import type { BeachDetail } from '../types';
 
@@ -119,14 +119,14 @@ export default function BeachScreen() {
             )}
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'flex-end' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 11px', borderRadius: 999, background: 'rgba(11,33,97,.06)', fontSize: 11.5, fontWeight: 600, color: C.ink2, whiteSpace: 'nowrap' }}>
+            <InfoChip>
               <Check size={11} color={C.slate} strokeWidth={2.2} />
               {b.validReports} valid reports
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 11px', borderRadius: 999, background: fs.bg, fontSize: 11.5, fontWeight: 600, color: fs.c, whiteSpace: 'nowrap' }}>
+            </InfoChip>
+            <InfoChip color={fs.c} background={fs.bg}>
               <i style={{ width: 6, height: 6, borderRadius: 3, background: fs.dot, display: 'block' }} />
               {freshnessLabel(b.freshnessKind, b.lastReportedAt)}
-            </div>
+            </InfoChip>
           </div>
         </div>
 
@@ -254,12 +254,12 @@ export default function BeachScreen() {
                 <div style={{ padding: '24px 14px 14px' }}>
                   <div style={{ fontSize: 14, fontWeight: 650, letterSpacing: '-.1px' }}>{sp.name}</div>
                   {sp.scientificName && (
-                    <div style={{ fontSize: 11, fontStyle: 'italic', color: C.dim, marginTop: 1 }}>
+                    <div style={{ fontSize: 11, fontStyle: 'italic', color: C.dim, marginTop: 3 }}>
                       {sp.scientificName}
                       {sp.threatCategory ? ` · ${sp.threatCategory}` : ''}
                     </div>
                   )}
-                  <div style={{ fontSize: 11.5, lineHeight: 1.5, color: C.muted, marginTop: 5 }}>{sp.text}</div>
+                  <div style={{ fontSize: 11.5, lineHeight: 1.5, color: C.muted, marginTop: 3 }}>{sp.text}</div>
 
                   {sp.likelihood && (
                     /* Epic 5 建模概率。刻意不用严重度那套配色，也不做成条形图 ——

@@ -339,10 +339,15 @@ export async function resolveBeach(lat: number, lng: number): Promise<BeachSumma
 export async function uploadPhoto(file: File): Promise<UploadedPhoto> {
   if (USE_MOCK) {
     await delay(700);
-    return {
-      url: URL.createObjectURL(file),
-      metadataStripped: true,
-    };
+    // 用 data: 不用 blob:。记录会写进 localStorage，
+    // blob: 地址刷新一次就失效，缩略图会变成裂图。
+    const url = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result));
+      reader.onerror = () => reject(new Error('Could not read that photo. Please try another one.'));
+      reader.readAsDataURL(file);
+    });
+    return { url, metadataStripped: true };
   }
 
   // 传文件要用 FormData，不能用 JSON
@@ -384,6 +389,7 @@ export async function createReport(input: CreateReportInput): Promise<LitterRepo
       beachName: beach.name,
       quantities: input.quantities,
       ...deriveCategoryQuantity(input.quantities),
+      photoUrl: input.photoUrl,
       createdAt: new Date().toISOString(),
       status: 'Counted',
     };
@@ -437,6 +443,7 @@ export async function updateReport(
       ...(changes.quantities
         ? { quantities: changes.quantities, ...deriveCategoryQuantity(changes.quantities) }
         : { quantities: old.quantities, category: old.category, quantity: old.quantity }),
+      photoUrl: changes.photoUrl ?? old.photoUrl,
       beachId: beach ? beach.id : old.beachId,
       beachName: beach ? beach.name : old.beachName,
       status: 'Counted',

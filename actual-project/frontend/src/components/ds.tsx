@@ -66,13 +66,15 @@ export function StatusBadge({
   size = 'md',
   indicator = false,
   style,
-}: Div & { status: BadgeStatus; size?: 'md' | 'lg'; indicator?: boolean }) {
+  block = false,
+}: Div & { status: BadgeStatus; size?: 'md' | 'lg'; indicator?: boolean; block?: boolean }) {
   return (
     <span
       className="ds-badge"
       data-status={status}
       data-size={size}
       data-indicator={indicator}
+      data-block={block || undefined}
       style={style}
     >
       {children}
@@ -85,22 +87,47 @@ export function SeverityBadge({
   band,
   size = 'md',
   label,
+  block = false,
 }: {
   band: SeverityBand | null;
   size?: 'md' | 'lg';
   label?: string;
+  /** 列表里用 —— 一列徽章等宽，左边缘才齐 */
+  block?: boolean;
 }) {
   if (!band) {
     return (
-      <StatusBadge status="none" size={size}>
+      <StatusBadge status="none" size={size} block={block}>
         {label ?? 'No data'}
       </StatusBadge>
     );
   }
   return (
-    <StatusBadge status={band.toLowerCase() as BadgeStatus} size={size} indicator>
+    <StatusBadge status={band.toLowerCase() as BadgeStatus} size={size} indicator block={block}>
       {label ?? band}
     </StatusBadge>
+  );
+}
+
+/* ---------- InfoChip ---------- */
+/** 陈述一个事实（数量、新鲜度），不是一个等级判断。 */
+export function InfoChip({
+  children,
+  color,
+  background,
+  style,
+}: Div & { color?: string; background?: string }) {
+  return (
+    <span
+      className="ds-info"
+      style={{
+        ...(color ? { ['--info-color' as string]: color } : null),
+        ...(background ? { ['--info-bg' as string]: background } : null),
+        ...style,
+      }}
+    >
+      {children}
+    </span>
   );
 }
 

@@ -141,7 +141,7 @@ export default function PhotoScreen() {
               </div>
               <div style={{ flex: 1 }}>
                 <div style={{ fontSize: 15, fontWeight: 640 }}>Upload Photo</div>
-                <div style={{ fontSize: 12, color: C.dim, marginTop: 2 }}>JPG, PNG or HEIC</div>
+                <div style={{ fontSize: 12, color: C.dim, marginTop: 3 }}>JPG, PNG or HEIC</div>
               </div>
               <ChevronRight size={14} />
             </button>

@@ -5,6 +5,7 @@ import { BarChart, ChevronRight, ShieldCheck, UserIcon } from '../components/Ico
 import { PrivacySheet } from '../components/PrivacySheet';
 import { GhostButton, Label } from '../components/ui';
 import { C, MONO } from '../theme';
+import { StatTile, StatusBadge } from '../components/ds';
 import { useApp } from '../AppContext';
 import type { ReportCounts } from '../types';
 
@@ -20,17 +21,6 @@ export default function AccountScreen() {
   }, [reportsVersion]);
   const [sheet, setSheet] = useState(false);
 
-  const tile = (value: number | undefined, label: string, color: string) => (
-    <button
-      type="button"
-      onClick={() => nav('/reports')}
-      className="card-hover press"
-      style={{ flex: 1, background: C.white, border: '1px solid rgba(11,33,97,.07)', borderRadius: 20, padding: '15px 14px' }}
-    >
-      <div style={{ fontSize: 26, fontWeight: 660, letterSpacing: '-.5px', color }}>{value ?? '—'}</div>
-      <div style={{ fontSize: 11, color: C.dim, marginTop: 2, fontWeight: 600 }}>{label}</div>
-    </button>
-  );
 
   const link = (
     title: string,
@@ -57,7 +47,7 @@ export default function AccountScreen() {
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontSize: 14, fontWeight: 620 }}>{title}</div>
-        <div style={{ fontSize: 11.5, color: C.dim, marginTop: 1 }}>{subtitle}</div>
+        <div style={{ fontSize: 11.5, color: C.dim, marginTop: 3 }}>{subtitle}</div>
       </div>
       <ChevronRight />
     </button>
@@ -105,27 +95,15 @@ export default function AccountScreen() {
                 {user?.participantId ?? '—'}
               </div>
             </div>
-            <div
-              style={{
-                fontFamily: MONO,
-                fontSize: 8,
-                letterSpacing: '.08em',
-                color: C.green,
-                background: C.greenBg,
-                padding: '5px 8px',
-                borderRadius: 8,
-              }}
-            >
-              ANONYMOUS
-            </div>
+            <StatusBadge status="counted">ANONYMOUS</StatusBadge>
           </div>
 
         </div>
 
-        <div style={{ display: 'flex', gap: 10 }}>
-          {tile(counts?.counted, 'Counted', C.green)}
-          {tile(counts?.duplicate, 'Duplicate', C.muted)}
-          {tile(counts?.incomplete, 'Incomplete', C.red)}
+        <div className="ds-stats">
+          <StatTile value={counts?.counted} caption="Counted" tone="counted" onClick={() => nav('/reports?tab=Counted')} />
+          <StatTile value={counts?.duplicate} caption="Duplicate" tone="duplicate" onClick={() => nav('/reports?tab=Excluded')} />
+          <StatTile value={counts?.incomplete} caption="Incomplete" tone="incomplete" onClick={() => nav('/reports?tab=Excluded')} />
         </div>
 
         <Label style={{ fontSize: 9.5 }}>PRIVACY &amp; RULES</Label>
@@ -165,7 +143,7 @@ export default function AccountScreen() {
           />
           <div style={{ flex: 1 }}>
             <div style={{ fontSize: 14, fontWeight: 620 }}>Simulate offline mode</div>
-            <div style={{ fontSize: 11.5, color: C.dim, marginTop: 1 }}>
+            <div style={{ fontSize: 11.5, color: C.dim, marginTop: 3 }}>
               Shows the map's offline banner
             </div>
           </div>
