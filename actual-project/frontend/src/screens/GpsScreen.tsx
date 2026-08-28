@@ -34,13 +34,15 @@ export default function GpsScreen() {
         try {
           const beach = await resolveBeach(coords.lat, coords.lng);
           if (beach) {
-            patchDraft({ locationSource: 'gps', coords, beachId: beach.id, gpsDenied: false });
+            patchDraft({ locationSource: 'gps', coords, beachId: beach.id, beachName: beach.name, gpsDenied: false });
           } else {
             showToast('No supported beach nearby — pick one manually');
             patchDraft({ locationSource: 'manual', coords: null, gpsDenied: false });
           }
         } catch {
-          patchDraft({ locationSource: 'manual', coords: null });
+          // 和上面「附近没有支持的海滩」是两回事，不能一样地悄悄过去
+          showToast("Couldn't check your location — pick a beach manually");
+          patchDraft({ locationSource: 'manual', coords: null, gpsDenied: false });
         } finally {
           setBusy(false);
           nav('/report/confirm');

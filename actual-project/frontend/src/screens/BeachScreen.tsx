@@ -195,10 +195,10 @@ export default function BeachScreen() {
           ) : (
             <div style={{ border: '1.5px dashed rgba(11,33,97,.18)', borderRadius: 24, padding: 22, textAlign: 'center' }}>
               <div style={{ fontSize: 13.5, fontWeight: 640, color: C.muted }}>
-                Not enough verified data
+                No verified report yet
               </div>
               <div style={{ fontSize: 12, color: C.dim, marginTop: 5, lineHeight: 1.5 }}>
-                Composition appears once at least three valid, non-duplicate records exist.
+                Be the first — this shows what the newest verified report found here.
               </div>
             </div>
           )}
@@ -294,16 +294,30 @@ export default function BeachScreen() {
                         marginTop: 10,
                         padding: '9px 10px',
                         borderRadius: 12,
-                        background: 'rgba(43,78,162,.06)',
-                        border: '1px dashed rgba(43,78,162,.25)',
+                        background: sp.likelihood.placeholder ? 'rgba(154,106,20,.07)' : 'rgba(43,78,162,.06)',
+                        border: `1px dashed ${sp.likelihood.placeholder ? 'rgba(154,106,20,.32)' : 'rgba(43,78,162,.25)'}`,
                       }}
                     >
                       <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
-                        <span style={{ fontFamily: MONO, fontSize: 15, fontWeight: 650, color: '#2B4EA2' }}>
+                        <span
+                          style={{
+                            fontFamily: MONO,
+                            fontSize: 15,
+                            fontWeight: 650,
+                            color: sp.likelihood.placeholder ? '#9A6A14' : '#2B4EA2',
+                          }}
+                        >
                           {sp.likelihood.percent}%
                         </span>
-                        <span style={{ fontFamily: MONO, fontSize: 7.5, letterSpacing: '.1em', color: '#2B4EA2' }}>
-                          MODELLED · ESTIMATE
+                        <span
+                          style={{
+                            fontFamily: MONO,
+                            fontSize: 7.5,
+                            letterSpacing: '.1em',
+                            color: sp.likelihood.placeholder ? '#9A6A14' : '#2B4EA2',
+                          }}
+                        >
+                          {sp.likelihood.placeholder ? 'PLACEHOLDER · NOT YET MODELLED' : 'MODELLED · ESTIMATE'}
                         </span>
                       </div>
                       <div style={{ fontSize: 10, lineHeight: 1.45, color: C.dim, marginTop: 3 }}>
@@ -352,9 +366,11 @@ export default function BeachScreen() {
               {b.ecologicalNote}
             </div>
             <div style={{ fontSize: 10.5, color: C.dim, marginTop: 8, lineHeight: 1.5 }}>
-              {b.species.some((sp) => sp.likelihood)
-                ? 'Percentages are modelled from habitat type and past survey records — an estimate of how likely a species is to occur here, never a confirmed sighting, and never a measure of litter severity or of ecological recovery.'
-                : 'Potential conservation relevance — context only, never proof of current presence or of ecological recovery.'}
+              {b.species.some((sp) => sp.likelihood?.placeholder)
+                ? 'Any percentage shown here is a placeholder while the occurrence model is being built — not yet a modelled figure, never a confirmed sighting, and never a measure of litter severity or of ecological recovery.'
+                : b.species.some((sp) => sp.likelihood)
+                  ? 'Percentages are modelled from habitat type and past survey records — an estimate of how likely a species is to occur here, never a confirmed sighting, and never a measure of litter severity or of ecological recovery.'
+                  : 'Potential conservation relevance — context only, never proof of current presence or of ecological recovery.'}
             </div>
           </div>
         </div>

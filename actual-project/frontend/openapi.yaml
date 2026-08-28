@@ -248,8 +248,13 @@ paths:
               type: object
               properties:
                 beachId: { type: string }
-                category: { $ref: "#/components/schemas/LitterCategory" }
-                quantity: { $ref: "#/components/schemas/QuantityBand" }
+                quantities:
+                  type: object
+                  minProperties: 1
+                  description: |
+                    整体替换，不是逐键合并 —— 少传一个类别就等于把那一列清空。
+                    所以改正流程必须先用响应里的 quantities 回填，再整体发回来。
+                  additionalProperties: { $ref: "#/components/schemas/QuantityBand" }
                 photoUrl: { type: string, format: uri }
       responses:
         "200":
@@ -397,18 +402,47 @@ components:
 
     Species:
       type: object
-      required: [name, glyph, text, source]
+      required: [name, kind, scientificName, threatCategory, glyph, text, source]
       properties:
         name: { type: string, example: Green Sea Turtle }
+        kind:
+          type: string
+          enum: [species, habitat, group]
+          description: 只有 species 才可能有学名和受威胁等级
+        scientificName:
+          type: string
+          nullable: true
+          example: Chelonia mydas
+        threatCategory:
+          type: string
+          nullable: true
+          description: IUCN 等级。没拉到就是 null，不要猜
+          example: Endangered
         glyph: { $ref: "#/components/schemas/SpeciesGlyph" }
+        pictureUrl: { type: string, format: uri, nullable: true }
         text: { type: string }
-        source: { type: string, example: "DoF Malaysia · 2024" }
+        source: { $ref: "#/components/schemas/SpeciesSource" }
         likelihood:
           nullable: true
           description: |
             Epic 5 建模出现概率。省略或 null 时前端退回纯科普展示。
             绝不与垃圾严重度合并成一个数；前端会用独立样式并标注 MODELLED · ESTIMATE。
           allOf: [{ $ref: "#/components/schemas/SpeciesLikelihood" }]
+
+    SpeciesSource:
+      type: object
+      required: [dataset, citation]
+      description: |
+        出处是数据的一部分，不是注释。FishBase / OBIS 都是 CC BY-NC：
+        引用必须展示，来源地址和访问日期必须留存。
+      properties:
+        dataset:
+          type: string
+          enum: [FishBase, OBIS, other, pending]
+          description: pending 时前端会打琥珀色 SOURCE PENDING 角标
+        citation: { type: string }
+        url: { type: string, format: uri, nullable: true }
+        accessedAt: { type: string, format: date, nullable: true }
 
     SpeciesLikelihood:
       type: object
@@ -422,22 +456,37 @@ components:
 
     CompositionSlice:
       type: object
-      required: [category, percent]
+      required: [category, quantity]
       properties:
         category: { $ref: "#/components/schemas/LitterCategory" }
-        percent: { type: integer, minimum: 0, maximum: 100 }
+        quantity: { $ref: "#/components/schemas/QuantityBand" }
+
+    CompositionSource:
+      type: object
+      required: [reportId, createdAt]
+      description: 成分取自哪一条记录。composition 非空时必填
+      properties:
+        reportId: { type: string }
+        createdAt: { type: string, format: date-time }
 
     BeachDetail:
       allOf:
         - $ref: "#/components/schemas/BeachSummary"
         - type: object
-          required: [composition, species, ecologicalNote]
+          required: [composition, compositionSource, species, ecologicalNote]
           properties:
             composition:
               type: array
               nullable: true
-              description: 按 percent 降序，合计 100；insufficientData 时必须为 null
+              description: |
+                该海滩最新一条 Counted 记录的非空类别，按类别权重降序。
+                不是聚合值，和 insufficientData 无关。
+                该海滩一条 Counted 记录都没有时为 null。
               items: { $ref: "#/components/schemas/CompositionSlice" }
+            compositionSource:
+              nullable: true
+              description: composition 为 null 时这里也是 null
+              allOf: [{ $ref: "#/components/schemas/CompositionSource" }]
             species:
               type: array
               maxItems: 5
@@ -478,7 +527,7 @@ components:
 
     UploadedPhoto:
       type: object
-      required: [id, url, metadataStripped]
+      required: [url, metadataStripped]
       properties:
         id: { type: string }
         url:
@@ -491,11 +540,18 @@ components:
 
     CreateReport:
       type: object
-      required: [beachId, category, quantity, photoUrl, locationSource]
+      required: [beachId, quantities, photoUrl, locationSource]
       properties:
         beachId: { type: string, example: morib }
-        category: { $ref: "#/components/schemas/LitterCategory" }
-        quantity: { $ref: "#/components/schemas/QuantityBand" }
+        quantities:
+          type: object
+          minProperties: 1
+          description: |
+            每个类别一个数量档。键是类别原文，值是四个档之一。
+            至少一项；没看到的类别直接不出现，不要传 null 或 0。
+            后端映射到 reports 的 qty_* 六列，并派生出 category / quantity。
+          additionalProperties: { $ref: "#/components/schemas/QuantityBand" }
+          example: { Plastic: Large, "Fishing gear": Medium }
         photoUrl: { type: string, format: uri }
         locationSource:
           type: string
@@ -514,13 +570,25 @@ components:
 
     LitterReport:
       type: object
-      required: [id, beachId, beachName, category, quantity, createdAt, status]
+      required: [id, beachId, beachName, quantities, category, quantity, createdAt, status]
       properties:
         id: { type: string }
         beachId: { type: string }
         beachName: { type: string }
-        category: { $ref: "#/components/schemas/LitterCategory" }
-        quantity: { $ref: "#/components/schemas/QuantityBand" }
+        quantities:
+          type: object
+          minProperties: 1
+          description: |
+            这条记录实际记了哪些类别。必须返回完整的一份 ——
+            前端的改正流程按它回填表单再整体 PATCH 回来，
+            只给下面那对派生值会导致其余类别被清空。
+          additionalProperties: { $ref: "#/components/schemas/QuantityBand" }
+        category:
+          description: 派生：quantities 里权重最高的那个类别
+          allOf: [{ $ref: "#/components/schemas/LitterCategory" }]
+        quantity:
+          description: 派生：该类别对应的档
+          allOf: [{ $ref: "#/components/schemas/QuantityBand" }]
         createdAt: { type: string, format: date-time }
         status: { $ref: "#/components/schemas/ReportStatus" }
         statusNote:

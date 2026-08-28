@@ -42,7 +42,7 @@ export const BEACHES: BeachDetail[] = [
         text: 'Occasional visitor along the Strait of Malacca. Floating plastic may be mistaken for food.',
         source: PENDING_SOURCE,
         // ⚠️ 占位数字，等 Su 的 Epic 5 模型接进来替换
-        likelihood: { percent: 38, basis: 'Habitat match + 2024 sighting records' },
+        likelihood: { percent: 38, basis: 'Placeholder — awaiting the Epic 5 model', placeholder: true },
       },
       {
         name: 'Mangrove Fringe',
@@ -61,7 +61,7 @@ export const BEACHES: BeachDetail[] = [
         glyph: 'bird',
         text: 'Migratory shorebirds feed along this tide line between September and April.',
         source: PENDING_SOURCE,
-        likelihood: { percent: 76, basis: 'Habitat match + seasonal census (Sep–Apr)' },
+        likelihood: { percent: 76, basis: 'Placeholder — awaiting the Epic 5 model', placeholder: true },
       },
     ],
     ecologicalNote:
@@ -146,7 +146,11 @@ export const BEACHES: BeachDetail[] = [
     coverImageUrl: null,
     scene:
       'radial-gradient(90% 55% at 70% 16%,rgba(156,174,168,.35),transparent 60%),linear-gradient(178deg,#2F6B7C 0%,#245A6B 44%,#1B4557 72%,#123244 100%)',
-    composition: null,
+    // 有 2 条 Counted 记录，所以成分是有的 —— 三条那个门槛只管 severity
+    composition: [
+      { category: 'Plastic', quantity: 'Medium' },
+      { category: 'Other', quantity: 'Small' },
+    ],
     species: [
       {
         name: 'Mangrove Habitat',
@@ -167,7 +171,7 @@ export const BEACHES: BeachDetail[] = [
         source: PENDING_SOURCE,
       },
     ],
-    compositionSource: null,
+    compositionSource: { reportId: 'r_seed_kelanang', createdAt: '2026-05-21T16:00:00+08:00' },
     ecologicalNote:
       'Litter caught in mangrove roots can persist for years and may break down into microplastics.',
   },
@@ -246,7 +250,8 @@ export const SEED_REPORTS: LitterReport[] = [
     id: 'r1',
     beachId: 'morib',
     beachName: 'Pantai Morib',
-    category: 'Plastic',
+    quantities: { Plastic: 'Medium', Glass: 'Small' },
+    category: 'Plastic',      // 派生：Plastic 0.85 > Glass 0.70
     quantity: 'Medium',
     createdAt: '2026-08-14T02:00:00Z',
     status: 'Counted',
@@ -255,6 +260,7 @@ export const SEED_REPORTS: LitterReport[] = [
     id: 'r2',
     beachId: 'morib',
     beachName: 'Pantai Morib',
+    quantities: { Plastic: 'Small' },
     category: 'Plastic',
     quantity: 'Small',
     createdAt: '2026-08-09T02:00:00Z',
@@ -266,7 +272,8 @@ export const SEED_REPORTS: LitterReport[] = [
     id: 'r3',
     beachId: 'remis',
     beachName: 'Pantai Remis',
-    category: 'Fishing gear',
+    quantities: { 'Fishing gear': 'Small', Plastic: 'Small' },
+    category: 'Fishing gear', // 派生：Fishing gear 1.00 最高
     quantity: 'Small',
     createdAt: '2026-07-20T02:00:00Z',
     status: 'Counted',
@@ -275,6 +282,7 @@ export const SEED_REPORTS: LitterReport[] = [
     id: 'r4',
     beachId: 'kelanang',
     beachName: 'Pantai Kelanang',
+    quantities: { Other: 'Small' },
     category: 'Other',
     quantity: 'Small',
     createdAt: '2026-07-02T02:00:00Z',

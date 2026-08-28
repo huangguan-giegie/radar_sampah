@@ -30,8 +30,8 @@ export default function IdentityScreen() {
     try {
       const id = await createId();
       setNewId(id);
-    } catch {
-      setError('Could not get an ID. Please try again.');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not get an ID. Please try again.');
     }
     setBusy(false);
   }
@@ -44,8 +44,9 @@ export default function IdentityScreen() {
     try {
       await restore(typedId.trim());
       nav(next, { replace: true });
-    } catch {
-      setError('Could not use that ID. Please check the number.');
+    } catch (err) {
+      // 500 或断网也走这里 —— 不能一律告诉用户是号码写错了
+      setError(err instanceof Error ? err.message : 'Could not use that ID. Please check the number.');
     }
     setBusy(false);
   }

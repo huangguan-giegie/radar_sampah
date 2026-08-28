@@ -344,7 +344,7 @@ function SelectedCard({
             </div>
 
             <div style={{ fontSize: 10.5, color: C.faint, marginTop: 10, fontFamily: MONO, letterSpacing: '.04em' }}>
-              LAST REPORTED {lastReportedLabel(beach.lastReportedAt)} · BROAD AREA SHOWN — EXACT GPS IS PRIVATE
+              {beach.lastReportedAt ? `LAST REPORTED ${lastReportedLabel(beach.lastReportedAt)}` : lastReportedLabel(null)} · BROAD AREA SHOWN — EXACT GPS IS PRIVATE
             </div>
           </>
         ) : (

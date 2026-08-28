@@ -6,10 +6,30 @@ import { BackButton, GhostButton, Label } from '../components/ui';
 import { C, MONO } from '../theme';
 import type { ScoringMethod } from '../types';
 
-const LIMITATIONS = [
+/**
+ * §3 说好的：后端那份规则和前端不一致时要提醒。
+ * 只在开发模式跑，仍然以后端为准 —— 只是别让它悄悄改掉。
+ */
+function warnIfRuleDiffers(remote: ScoringMethod) {
+  const local = SCORING_METHOD;
+  const diffs: string[] = [];
+  const cmp = (label: string, a: unknown, b: unknown) => {
+    if (JSON.stringify(a) !== JSON.stringify(b)) diffs.push(`${label}: local ${JSON.stringify(a)} vs backend ${JSON.stringify(b)}`);
+  };
+  cmp('windowDays', local.windowDays, remote.windowDays);
+  cmp('minReports', local.minReports, remote.minReports);
+  cmp('categoryWeights', local.categoryWeights, remote.categoryWeights);
+  cmp('quantityWeights', local.quantityWeights, remote.quantityWeights);
+  cmp('bands', local.bands, remote.bands);
+  if (diffs.length) {
+    console.warn('[scoring] 后端发下来的规则和 scoring.ts 不一致：\n  ' + diffs.join('\n  '));
+  }
+}
+
+const limitations = (m: ScoringMethod) => [
   'Volunteer coverage is uneven — a beach visited more often produces more records, not necessarily more litter.',
   'Quantity bands are estimates by eye, so scores are comparable in order of magnitude only.',
-  'Tides, monsoon season and cleanup events all move conditions faster than the 90-day window can show.',
+  `Tides, monsoon season and cleanup events all move conditions faster than the ${m.windowDays}-day window can show.`,
   'Bands describe reported litter at a beach — not water quality, ecological health, or safety.',
 ];
 
@@ -22,7 +42,11 @@ export default function MethodScreen() {
   useEffect(() => {
     let alive = true;
     getScoringMethod()
-      .then((remote) => alive && setM(remote))
+      .then((remote) => {
+        if (!alive) return;
+        if (import.meta.env.DEV) warnIfRuleDiffers(remote);
+        setM(remote);
+      })
       .catch(() => undefined);
     return () => {
       alive = false;
@@ -154,7 +178,7 @@ beach score
               {[
                 {
                   tag: `< ${m.minReports}`,
-                  text: 'Fewer than three eligible records — the band is withheld and the beach reads Insufficient data.',
+                  text: `Fewer than ${m.minReports} eligible records — the band is withheld and the beach reads Insufficient data.`,
                   danger: false,
                 },
                 {
@@ -226,7 +250,7 @@ beach score
         <div>
           <Label style={{ marginBottom: 11 }}>LIMITATIONS</Label>
           <div style={{ background: C.white, border: `1px solid ${C.line}`, borderRadius: 22, padding: 18, display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {LIMITATIONS.map((t) => (
+            {limitations(m).map((t) => (
               <div key={t} style={{ display: 'flex', gap: 9, alignItems: 'flex-start', fontSize: 12.5, lineHeight: 1.55, color: C.slate }}>
                 <i style={{ width: 5, height: 5, borderRadius: 3, background: C.faint, display: 'block', flex: 'none', marginTop: 6 }} />
                 {t}

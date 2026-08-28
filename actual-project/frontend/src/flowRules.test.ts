@@ -7,10 +7,10 @@ function draft(changes: Partial<ReportDraft> = {}): ReportDraft {
     photo: { url: 'blob:test', metadataStripped: true },
     existingPhotoUrl: null,
     beachId: 'morib',
+    beachName: 'Pantai Morib',
     locationSource: 'manual',
     coords: null,
-    category: 'Plastic',
-    quantity: 'Small',
+    quantities: { Plastic: 'Small' },
     gpsDenied: false,
     editingReportId: null,
     ...changes,
@@ -53,6 +53,49 @@ describe('buildReportSubmission', () => {
     }
   });
 
+  it('carries every picked category through to the payload', () => {
+    const result = buildReportSubmission(
+      draft({ quantities: { Plastic: 'Large', 'Fishing gear': 'Medium', Glass: 'Small' } }),
+    );
+    expect(result.kind).toBe('create');
+    if (result.kind === 'create') {
+      expect(result.payload.quantities).toEqual({
+        Plastic: 'Large',
+        'Fishing gear': 'Medium',
+        Glass: 'Small',
+      });
+    }
+  });
+
+  it('refuses a report with no category at all', () => {
+    expect(() => buildReportSubmission(draft({ quantities: {} }))).toThrow(/missing a required field/);
+  });
+
+  it('refuses a category that was picked but given no quantity band', () => {
+    expect(() =>
+      buildReportSubmission(draft({ quantities: { Plastic: 'Large', Glass: undefined } })),
+    ).toThrow(/Glass/);
+  });
+
+  it('keeps every category when only the photo is corrected', () => {
+    // 回归：改正是整体替换 PATCH，草稿必须带着原记录的全部类别，
+    // 否则只换一张照片就会把其他类别的列清空。
+    const result = buildReportSubmission(
+      draft({
+        editingReportId: 'report-1',
+        quantities: { Plastic: 'Large', 'Fishing gear': 'Medium', Glass: 'Small' },
+      }),
+    );
+    expect(result.kind).toBe('update');
+    if (result.kind === 'update') {
+      expect(result.changes.quantities).toEqual({
+        Plastic: 'Large',
+        'Fishing gear': 'Medium',
+        Glass: 'Small',
+      });
+    }
+  });
+
   it('allows an existing report to be corrected without a replacement photo', () => {
     const result = buildReportSubmission(
       draft({ editingReportId: 'report-1', photo: null, existingPhotoUrl: '/existing.jpg' }),
@@ -62,8 +105,7 @@ describe('buildReportSubmission', () => {
       reportId: 'report-1',
       changes: {
         beachId: 'morib',
-        category: 'Plastic',
-        quantity: 'Small',
+        quantities: { Plastic: 'Small' },
         locationSource: 'manual',
       },
     });

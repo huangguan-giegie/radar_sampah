@@ -144,9 +144,10 @@
 ```json
 {
   "composition": [
-    { "category": "Plastic", "percent": 46 },
-    { "category": "Fishing gear", "percent": 22 }
+    { "category": "Plastic", "quantity": "Large" },
+    { "category": "Fishing gear", "quantity": "Medium" }
   ],
+  "compositionSource": { "reportId": "r_01H...", "createdAt": "2026-08-19T16:00:00+08:00" },
   "species": [{
     "name": "Green Sea Turtle",
     "glyph": "turtle",
@@ -157,9 +158,10 @@
 }
 ```
 
-- `composition`：按 `percent` **降序**，整数百分比，合计 100（四舍五入误差调最后一项）。
-  **`insufficientData === true` 时必须返回 `null`**，不要返回空数组 —— 前端靠 null 显示
-  「Not enough verified data」的虚线框。
+- `composition`：该海滩**最新一条 `Counted` 记录**的非空类别列，按类别权重降序。
+  它**不是**聚合值，也和 `insufficientData` 无关，详见 §2b。
+  **该海滩一条 `Counted` 记录都没有时返回 `null`**，不要返回空数组。
+- `compositionSource`：成分取自哪一条记录。`composition` 非空时必填，界面上要印它的日期。
 - `species`：静态科普数据，人工维护，不随记录变。0–5 条。
 - `ecologicalNote`：一句话，静态。
 
@@ -201,7 +203,8 @@ Iteration 1 会上线建模的物种出现概率。前端已经预留好槽位�
 > 这三条不是洁癖 —— 产品对用户的核心承诺就是「数据可信、规则透明」。
 > 一个没标清楚的概率数字会把 Epic 4 辛苦建立的可信度一起赔进去。
 
-**Su 需要确认的**：`percent` 是 0–100 整数还是 0–1 小数？`basis` 要不要带模型版本号？
+**已定**：`percent` 是 0–100 的整数（§2c 的 `likelihood_percent int CHECK BETWEEN 0 AND 100`）。
+**Su 需要确认的**：`basis` 要不要带模型版本号？
 有没有置信区间要展示？定了我这边跟着调，改动只在 `types.ts` 一处。
 
 ## 2c. 生物数据的出处（DMP §2 / §9 强制）
@@ -284,6 +287,10 @@ CREATE TABLE area_species (
 
   kind                text NOT NULL CHECK (kind IN ('species','habitat','group')),
   display_name        text NOT NULL,
+  glyph               text NOT NULL,          -- 六个图标枚举之一。必须在这里：
+                                              -- 生境和统称没有 dim_species 行，
+                                              -- 图标也无法从 kind 推出来
+                                              -- （group 里既有 bird 又有 fish）
   text                text NOT NULL,
   sort_order          int  NOT NULL DEFAULT 0,
   origin              text NOT NULL DEFAULT 'curated'
@@ -548,14 +555,26 @@ ALTER TABLE reports
 // 请求
 {
   "beachId": "morib",
-  "category": "Plastic",
-  "quantity": "Medium",
+  "quantities": {
+    "Plastic": "Large",
+    "Fishing gear": "Medium",
+    "Glass": "Small"
+  },
   "photoUrl": "https://cdn.example.com/photos/8f3a....jpg",
   "locationSource": "gps",
-  "coords": { "lat": 2.7461, "lng": 101.4402 }
+  "coords": { "lat": 2.746, "lng": 101.440 }
 }
 ```
 
+- **`quantities` 是一个对象，不是数组**：键是类别原文（`Plastic` / `Fishing gear` /
+  `Glass` / `Metal` / `Paper` / `Other`），值是四个数量档之一。
+  **至少一项**，没看到的类别就不出现在对象里 —— 不要传 `null`，也不要传 0。
+  后端把它映射到 `reports` 的 `qty_*` 六列，没出现的列写 `NULL`。
+- **请求里不再有 `category` / `quantity`。** 这两个是派生值，由后端从 `quantities` 里
+  取权重最高的那个非空类别算出来（见 §2c），响应里照常返回。
+- **响应里必须同时带回完整的 `quantities`。** 只给派生的那一对是不够的：
+  前端的「改正记录」会拿响应回填表单，再整体 PATCH 回来。如果响应里只有一个类别，
+  用户只是换张照片，另外五列就会被清空 —— 这是个会真的丢数据的坑。
 - `locationSource`：`"gps"`（由定位推断）或 `"manual"`（用户手选）
 - `coords`：**仅 `locationSource === "gps"` 时携带**。见下方隐私要求
 
@@ -565,7 +584,12 @@ ALTER TABLE reports
   "id": "r_01H...",
   "beachId": "morib",
   "beachName": "Pantai Morib",
-  "category": "Plastic",
+  "quantities": {
+    "Plastic": "Large",
+    "Fishing gear": "Medium",
+    "Glass": "Small"
+  },
+  "category": "Fishing gear",
   "quantity": "Medium",
   "createdAt": "2026-08-25T09:41:00+08:00",
   "status": "Counted",
@@ -595,7 +619,7 @@ ALTER TABLE reports
 | 顺序 | 条件 | 结果 |
 | --- | --- | --- |
 | 1 | `photoUrl` 缺失 | 400 `PHOTO_REQUIRED`，不入库 |
-| 2 | `category` 或 `quantity` 不在枚举内 | 400 `VALIDATION_FAILED`，不入库 |
+| 2 | `quantities` 为空对象，或键/值不在枚举内 | 400 `VALIDATION_FAILED`，不入库 |
 | 3 | 同一 **reporter** + 同一 **beachId** + 同一 **自然日**（`Asia/Kuala_Lumpur`）已有 `Counted` 记录 | `Duplicate` |
 | 4 | 其余 | `Counted` |
 
@@ -656,7 +680,8 @@ ALTER TABLE reports
 
 ### PATCH `/reports/:id`
 
-请求体是 POST 请求体的任意子集（`beachId` / `category` / `quantity` / `photoUrl`）。
+请求体是 POST 请求体的任意子集（`beachId` / `quantities` / `photoUrl`）。
+**给了 `quantities` 就是整体替换**，不是逐键合并 —— 少传一个类别就等于把那一列清空。
 
 - 只能改自己的记录，否则 403 `NOT_OWNER`
 - **改完要重跑一遍状态判定**：一条 `Incomplete` 记录补好照片后应该变回 `Counted`
@@ -679,6 +704,7 @@ if count(eligible) < 3:
     severity = null;  band = null;  insufficientData = true
 else:
     record_score  = category_weight[category] × quantity_weight[quantity]
+                    ← 一条记录有多个类别时取哪一个：见下面的「待定」
     beach_score   = mean(record_score for eligible)
     severity      = < 1.5 → Low | < 2.5 → Moderate | < 3.5 → High | else Severe
     band          = Low=1, Moderate=2, High=3, Severe=4
@@ -687,8 +713,10 @@ validReports    = count(eligible)
 lastReportedAt  = max(created_at) over 该海滩所有 Counted 记录（不限 90 天窗口）
 freshnessKind   = now - lastReportedAt: < 30d → 'ok' | ≤ 90d → 'aging' | else 'stale'
 
-composition = insufficientData ? null
-            : 按 category 分组，占 eligible 条数的百分比，降序，整数
+composition       = 该海滩最新一条 Counted 记录的非空 qty_* 列，按类别权重降序
+compositionSource = 那条记录的 { reportId, createdAt }
+                    两者在该海滩一条 Counted 记录都没有时都是 null
+                    ← 注意：composition 不看 90 天窗口，也不受 insufficientData 影响
 ```
 
 注意 `lastReportedAt` **不受 90 天窗口限制** —— 「Not recently reported」这个提示
@@ -697,6 +725,16 @@ composition = insufficientData ? null
 实现方式随意：写时更新缓存列，或读时实时算（四个海滩的量级，实时算完全够）。
 
 **`category_weight` / `quantity_weight` / 阈值一律取 §3 那组数字**，不要另立一套。
+
+> ⚠️ **待定：一条记录有多个类别时，`record_score` 怎么算？**
+> 六列里可能有好几个非空，取最大值、求和还是求平均，直接改变地图上每个海滩的等级。
+> **这一条由 Hnin Darli 定。** 在定下来之前，按「取权重最高的那个非空类别及其数量档」
+> 计算 —— 这和改成六列之前的单类别行为完全一致，不会让现有数字跳变。
+>
+> `DECISIONS.md` 2026-08-19 那条写的是「quantity-band midpoint × category weight，
+> 再乘 recency 和 area sensitivity（1.0 / 1.25 / 1.5）」，和上面这个公式不是一回事。
+> 而且 area sensitivity 就是把生物敏感度并进垃圾严重度，§2b 明确说了不能这么做。
+> **两份文件必须有一份改。**
 
 ---
 
@@ -716,13 +754,14 @@ composition = insufficientData ? null
 users            id, participant_id(uniq), role, created_at
                  ← 没有姓名、邮箱、手机号等任何个人数据字段
 beaches          id, name, area, lat, lng, habitat, habitat_tag, sensitivity,
-                 primary_species_glyph, cover_image_url, scene, created_at
+                 primary_species_glyph, cover_image_url, scene,
+                 ecological_note, created_at
 dim_threat       threat_id(PK), threat_name(uniq)          ← DMP §6 字典表
 dim_species      species_id(PK), scientific_name(uniq), common_name,
                  threat_id(FK), glyph, picture_url, created_at
                  ← 只放有学名的真物种，按 scientific_name upsert
 area_species     id(PK), area_id(FK→beaches), species_id(FK→dim_species, nullable),
-                 kind, display_name, text, sort_order, origin,
+                 kind, display_name, glyph, text, sort_order, origin,
                  source_dataset, source_citation, source_url, source_accessed_at,
                  likelihood_percent(nullable), likelihood_basis(nullable)
                  ← 区域×物种的 junction；生境和统称的 species_id 为空

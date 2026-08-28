@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { getBeaches } from '../api';
 import { MiniMap } from '../components/MiniMap';
 import { Alert, Check, Pin, Search } from '../components/Icon';
-import { BackButton, PrimaryButton, Skeleton, TextButton } from '../components/ui';
+import { BackButton, ErrorNote, PrimaryButton, Skeleton, TextButton } from '../components/ui';
 import { C, MONO } from '../theme';
 import { useApp } from '../AppContext';
 import type { BeachSummary } from '../types';
@@ -13,13 +13,18 @@ export default function ConfirmBeachScreen() {
   const { draft, patchDraft } = useApp();
   const [beaches, setBeaches] = useState<BeachSummary[]>([]);
   const [loading, setLoading] = useState(true);
+  const [failed, setFailed] = useState(false);
 
-  useEffect(() => {
+  function loadBeaches() {
+    setLoading(true);
+    setFailed(false);
     getBeaches()
       .then((list) => setBeaches(list))
-      .catch(() => setBeaches([]))
+      .catch(() => setFailed(true))
       .finally(() => setLoading(false));
-  }, []);
+  }
+
+  useEffect(loadBeaches, []);
   const [query, setQuery] = useState('');
 
   const suggested = beaches.find((b) => b.id === draft.beachId) || null;
@@ -137,7 +142,7 @@ export default function ConfirmBeachScreen() {
                 </PrimaryButton>
                 <TextButton
                   onClick={() =>
-                    patchDraft({ locationSource: 'manual', coords: null, beachId: null })
+                    patchDraft({ locationSource: 'manual', coords: null, beachId: null, beachName: null })
                   }
                 >
                   Choose Another Beach
@@ -163,7 +168,7 @@ export default function ConfirmBeachScreen() {
                 <input
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  placeholder={`Search the ${beaches.length || 4} supported beaches`}
+                  placeholder={failed ? 'Beach list unavailable' : `Search the ${beaches.length || 4} supported beaches`}
                   style={{ flex: 1, border: 'none', background: 'transparent', fontSize: 13.5, color: C.ink }}
                 />
               </div>
@@ -174,7 +179,7 @@ export default function ConfirmBeachScreen() {
                     key={b.id}
                     type="button"
                     onClick={() => {
-                      patchDraft({ beachId: b.id, locationSource: 'manual', coords: null });
+                      patchDraft({ beachId: b.id, beachName: b.name, locationSource: 'manual', coords: null });
                       nav('/report/details');
                     }}
                     className="chip-hover"
@@ -200,9 +205,16 @@ export default function ConfirmBeachScreen() {
                     </div>
                   </button>
                 ))}
-                {!loading && filtered.length === 0 && (
+                {!loading && failed && (
+                  <ErrorNote
+                    title="Couldn't load the beach list"
+                    body="Your photo is safe — this is just the connection."
+                    onRetry={loadBeaches}
+                  />
+                )}
+                {!loading && !failed && filtered.length === 0 && (
                   <div style={{ fontSize: 12.5, color: C.dim, padding: '10px 4px' }}>
-                    No supported beach matches “{query}”.
+                    {q ? `No supported beach matches “${query}”.` : 'No beaches available right now.'}
                   </div>
                 )}
               </div>

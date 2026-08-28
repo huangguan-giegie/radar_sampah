@@ -2,7 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { getBeaches, getMyReportCounts } from '../api';
 import { ArrowRight, BarChart, Camera, Check, Info, UserIcon } from '../components/Icon';
-import { Label, Skeleton } from '../components/ui';
+import { ErrorNote, Label, Skeleton } from '../components/ui';
 import { C, MONO, NOISE, SEVERITY, lastReportedLabel } from '../theme';
 import { useApp } from '../AppContext';
 import type { BeachSummary, ReportCounts } from '../types';
@@ -124,22 +124,32 @@ export default function HomeScreen() {
   // 海滩列表
   const [beaches, setBeaches] = useState<BeachSummary[]>([]);
   const [loadingBeaches, setLoadingBeaches] = useState(true);
+  const [beachesFailed, setBeachesFailed] = useState(false);
 
-  useEffect(() => {
+  function loadBeaches() {
+    setLoadingBeaches(true);
+    setBeachesFailed(false);
     getBeaches()
       .then((list) => setBeaches(list))
-      .catch(() => setBeaches([]))
+      .catch(() => setBeachesFailed(true))
       .finally(() => setLoadingBeaches(false));
-  }, []);
+  }
+
+  useEffect(loadBeaches, []);
 
   // 我的记录计数。reportsVersion 变了（比如刚提交完一条）就重新拿一次。
   const [counts, setCounts] = useState<ReportCounts | null>(null);
 
   useEffect(() => {
+    // /home 不在 RequireAuth 里，没登录时这个接口必然 401，别去问
+    if (!user) {
+      setCounts(null);
+      return;
+    }
     getMyReportCounts()
       .then((c) => setCounts(c))
       .catch(() => setCounts(null));
-  }, [reportsVersion]);
+  }, [reportsVersion, user]);
 
   const startReport = () => {
     resetDraft();
@@ -322,8 +332,15 @@ export default function HomeScreen() {
         </div>
 
         <Label style={{ margin: '26px 0 12px' }}>
-          EVIDENCE STATUS · {beaches.length || 4} BEACHES
+          {beachesFailed ? 'EVIDENCE STATUS' : `EVIDENCE STATUS · ${beaches.length || 4} BEACHES`}
         </Label>
+        {beachesFailed ? (
+          <ErrorNote
+            title="Couldn't load the beaches"
+            body="The data is fine — this is just the connection."
+            onRetry={loadBeaches}
+          />
+        ) : (
         <div style={{ background: C.white, border: '1px solid rgba(11,33,97,.07)', borderRadius: 22, overflow: 'hidden' }}>
           {loadingBeaches && (
             <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -340,6 +357,7 @@ export default function HomeScreen() {
             />
           ))}
         </div>
+        )}
 
         <div
           style={{

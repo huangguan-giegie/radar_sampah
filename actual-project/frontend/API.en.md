@@ -144,17 +144,20 @@ A person receives a 4-digit number (e.g. `1637`) and their reports hang off it.
 ```json
 {
   "composition": [
-    { "category": "Plastic", "percent": 46 },
-    { "category": "Fishing gear", "percent": 22 }
+    { "category": "Plastic", "quantity": "Large" },
+    { "category": "Fishing gear", "quantity": "Medium" }
   ],
+  "compositionSource": { "reportId": "r_01H...", "createdAt": "2026-08-19T16:00:00+08:00" },
   "species": [ /* see §2c */ ],
   "ecologicalNote": "Plastic and abandoned fishing gear may affect turtles and shorebirds that feed in this coastal environment."
 }
 ```
 
-- `composition` — descending by `percent`, integers summing to 100 (fold rounding error into the
-  last entry). **Must be `null`, not `[]`, when `insufficientData` is true** — the frontend keys the
-  "Not enough verified data" panel off null.
+- `composition` — the non-null category columns of the beach's newest `Counted` report, ordered by
+  category weight. It is **not** an aggregate and does not depend on `insufficientData`; see §2b.
+  **`null`, not `[]`, when the beach has no `Counted` report at all.**
+- `compositionSource` — which report the composition came from. Required whenever `composition`
+  is non-null; the screen prints its date.
 - `species` — static reference content, 0–5 entries. See §2c for provenance.
 - `ecologicalNote` — one sentence, static.
 
@@ -191,7 +194,8 @@ ready: each entry in `species[]` may carry an optional `likelihood`.
 These are not fastidiousness. The product's whole proposition is that its numbers are trustworthy;
 an unlabelled probability would spend the credibility Epic 4 is built on.
 
-**For Su to confirm:** is `percent` a 0–100 integer or a 0–1 decimal? Should `basis` carry a model
+**Decided:** `percent` is a 0–100 integer (§2c: `likelihood_percent int CHECK BETWEEN 0 AND 100`).
+**For Su to confirm:** should `basis` carry a model
 version? Is there a confidence interval to display? Once decided, the frontend changes in one place.
 
 ---
@@ -283,6 +287,10 @@ CREATE TABLE area_species (
 
   kind                text NOT NULL CHECK (kind IN ('species','habitat','group')),
   display_name        text NOT NULL,
+  glyph               text NOT NULL,          -- 六个图标枚举之一。必须在这里：
+                                              -- 生境和统称没有 dim_species 行，
+                                              -- 图标也无法从 kind 推出来
+                                              -- （group 里既有 bird 又有 fish）
   text                text NOT NULL,
   sort_order          int  NOT NULL DEFAULT 0,
   origin              text NOT NULL DEFAULT 'curated'
@@ -550,13 +558,29 @@ these three are what make it defensible:
 ```json
 {
   "beachId": "morib",
-  "category": "Plastic",
-  "quantity": "Medium",
+  "quantities": {
+    "Plastic": "Large",
+    "Fishing gear": "Medium",
+    "Glass": "Small"
+  },
   "photoUrl": "https://cdn.example.com/photos/8f3a....jpg",
   "locationSource": "gps",
   "coords": { "lat": 2.746, "lng": 101.440 }
 }
 ```
+
+- **`quantities` is an object, not an array.** Keys are the category strings verbatim
+  (`Plastic` / `Fishing gear` / `Glass` / `Metal` / `Paper` / `Other`), values are one of the four
+  bands. **At least one entry.** A category that was not seen is simply absent — do not send
+  `null` and do not send 0. The backend maps this onto the six `qty_*` columns and leaves the
+  rest `NULL`.
+- **`category` and `quantity` are no longer in the request.** They are derived server-side from
+  `quantities` — the highest-weighted non-null category and its band (see §2c) — and still come
+  back in every response.
+- **The response must also carry the full `quantities` map.** The derived pair alone is not
+  enough: the app's "correct this record" flow reads the response back into the form and PATCHes
+  the whole set. If the response names only one category, a user replacing just the photo would
+  silently clear the other five columns — a real data-loss bug, not a cosmetic one.
 
 ```json
 // 201
@@ -564,7 +588,12 @@ these three are what make it defensible:
   "id": "r_01H...",
   "beachId": "morib",
   "beachName": "Pantai Morib",
-  "category": "Plastic",
+  "quantities": {
+    "Plastic": "Large",
+    "Fishing gear": "Medium",
+    "Glass": "Small"
+  },
+  "category": "Fishing gear",
   "quantity": "Medium",
   "createdAt": "2026-08-28T09:41:00+08:00",
   "status": "Counted",
@@ -592,7 +621,7 @@ Evaluated in order, first match wins:
 | # | Condition | Result |
 | --- | --- | --- |
 | 1 | `photoUrl` missing | 400 `PHOTO_REQUIRED`, nothing stored |
-| 2 | `category` or `quantity` outside its enum | 400 `VALIDATION_FAILED`, nothing stored |
+| 2 | `quantities` empty, or a key/value outside its enum | 400 `VALIDATION_FAILED`, nothing stored |
 | 3 | Same **reporter** + same **beachId** + same **calendar day** (`Asia/Kuala_Lumpur`) already has a `Counted` row | `Duplicate` |
 | 4 | Otherwise | `Counted` |
 
@@ -658,7 +687,8 @@ Optional `status` filter (`Counted` / `Duplicate` / `Incomplete`); omitted retur
 
 ### PATCH `/reports/:id`
 
-Body is any subset of the POST body (`beachId` / `category` / `quantity` / `photoUrl`).
+Body is any subset of the POST body (`beachId` / `quantities` / `photoUrl`).
+**Sending `quantities` replaces the whole set**, it is not a per-key merge — a category left out is a column cleared.
 
 - Own reports only, otherwise 403 `NOT_OWNER`.
 - **Re-run the status judgement.** An `Incomplete` record with a fixed photo must return to `Counted`.
@@ -683,6 +713,7 @@ if count(eligible) < 3:
     severity = null;  band = null;  insufficientData = true
 else:
     record_score  = category_weight[category] × quantity_weight[quantity]
+                    ← which category, when a report has several: see the open question below
     beach_score   = mean(record_score across eligible)
     severity      = < 1.5 → Low | < 2.5 → Moderate | < 3.5 → High | else Severe
     band          = Low=1, Moderate=2, High=3, Severe=4
@@ -691,8 +722,12 @@ validReports    = count(eligible)
 lastReportedAt  = max(created_at) across ALL that beach's Counted reports (window ignored)
 freshnessKind   = now - lastReportedAt: < 30d → 'ok' | ≤ 90d → 'aging' | else 'stale'
 
-composition = insufficientData ? null
-            : share of each category among eligible, descending, integers
+composition       = the non-null qty_* columns of that beach's newest Counted report,
+                    ordered by category weight, descending
+compositionSource = that report's { reportId, createdAt }
+                    both null when the beach has no Counted report at all
+                    ← composition ignores the 90-day window and does not depend
+                      on insufficientData
 ```
 
 Note `lastReportedAt` **deliberately ignores the 90-day window** — "nothing reported recently" is
@@ -722,14 +757,15 @@ users            id, participant_id(uniq), role, created_at
                  ← no name, email or phone columns of any kind
 
 beaches          id, name, area, lat, lng, habitat, habitat_tag, sensitivity,
-                 primary_species_glyph, cover_image_url, scene, created_at
+                 primary_species_glyph, cover_image_url, scene,
+                 ecological_note, created_at
 
 dim_threat       threat_id(PK), threat_name(uniq)          ← DMP §6 dictionary
 dim_species      species_id(PK), scientific_name(uniq), common_name,
                  threat_id(FK), glyph, picture_url, created_at
                  ← real species only, upserted on scientific_name
 area_species     id(PK), area_id(FK→beaches), species_id(FK→dim_species, nullable),
-                 kind, display_name, text, sort_order, origin,
+                 kind, display_name, glyph, text, sort_order, origin,
                  source_dataset, source_citation, source_url, source_accessed_at,
                  likelihood_percent(nullable), likelihood_basis(nullable)
                  ← area×species junction; habitats and groups have a null species_id

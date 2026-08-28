@@ -5,12 +5,12 @@ import { ArrowRight, Info, Shield } from '../components/Icon';
 import { BackButton, ErrorNote, PrimaryButton, StepBadge, TextButton } from '../components/ui';
 import { C, MONO } from '../theme';
 import { useApp } from '../AppContext';
-import type { BeachSummary } from '../types';
+import type { BeachSummary, LitterCategory, QuantityBand } from '../types';
 import { buildReportSubmission } from '../flowRules';
 
 export default function ReviewScreen() {
   const nav = useNavigate();
-  const { draft, resetDraft, setLastSavedReportId, bumpReports, showToast } = useApp();
+  const { draft, resetDraft, setLastSavedReport, bumpReports, showToast } = useApp();
   const [beaches, setBeaches] = useState<BeachSummary[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -44,7 +44,7 @@ export default function ReviewScreen() {
         submission.kind === 'update'
           ? await updateReport(submission.reportId, submission.changes)
           : await createReport(submission.payload);
-      setLastSavedReportId(saved.id);
+      setLastSavedReport(saved);
       bumpReports();
       resetDraft();
       nav('/report/saved', { replace: true });
@@ -114,9 +114,12 @@ export default function ReviewScreen() {
         </div>
 
         <div style={{ background: C.white, border: `1px solid ${C.line}`, borderRadius: 24, overflow: 'hidden' }}>
-          {row('Beach', beach?.name ?? 'Not selected', () => nav('/report/confirm'))}
-          {row('Category', draft.category ?? 'Not selected', () => nav('/report/details'))}
-          {row('Quantity', draft.quantity ?? 'Not selected', () => nav('/report/details'))}
+          {row('Beach', draft.beachName ?? beach?.name ?? 'Not selected', () => nav('/report/confirm'))}
+          {(Object.keys(draft.quantities) as LitterCategory[]).length === 0
+            ? row('Litter', 'Not selected', () => nav('/report/details'))
+            : (Object.entries(draft.quantities) as [LitterCategory, QuantityBand][]).map(([cat, q]) =>
+                row(cat, q ?? 'Not selected', () => nav('/report/details')),
+              )}
           {draft.locationSource === 'gps'
             ? row('Location', 'Beach area confirmed', undefined, 'GPS PRIVATE')
             : row('Location', 'Selected manually', undefined, 'NO GPS STORED')}

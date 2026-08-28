@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { getBeaches, getMyReports } from '../api';
 import { BeachCover } from '../components/BeachCover';
 import { Camera } from '../components/Icon';
-import { Skeleton } from '../components/ui';
+import { ErrorNote, Skeleton } from '../components/ui';
 import { C, MONO, formatDate, statusChip } from '../theme';
 import { useApp } from '../AppContext';
 import type { BeachSummary, LitterReport } from '../types';
@@ -21,13 +21,19 @@ export default function MyReportsScreen() {
   const [reports, setReports] = useState<LitterReport[]>([]);
   const [beaches, setBeaches] = useState<BeachSummary[]>([]);
   const [loading, setLoading] = useState(true);
+  const [failed, setFailed] = useState(false);
 
-  useEffect(() => {
+  // 写成函数是因为出错提示里的 Retry 也要用
+  function loadReports() {
+    setLoading(true);
+    setFailed(false);
     getMyReports()
       .then((list) => setReports(list))
-      .catch(() => setReports([]))
+      .catch(() => setFailed(true))
       .finally(() => setLoading(false));
-  }, [reportsVersion]);
+  }
+
+  useEffect(loadReports, [reportsVersion]);
 
   useEffect(() => {
     getBeaches()
@@ -89,7 +95,17 @@ export default function MyReportsScreen() {
           </div>
         )}
 
-        {!loading && rows.length === 0 && (
+        {!loading && failed && (
+          <div style={{ marginTop: 8 }}>
+            <ErrorNote
+              title="Couldn't load your records"
+              body="They're still saved — this is just the connection."
+              onRetry={loadReports}
+            />
+          </div>
+        )}
+
+        {!loading && !failed && rows.length === 0 && (
           <div style={{ border: '1.5px dashed rgba(11,33,97,.18)', borderRadius: 24, padding: '36px 24px', textAlign: 'center', marginTop: 8 }}>
             <div style={{ width: 52, height: 52, borderRadius: 26, background: 'rgba(11,33,97,.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto' }}>
               <Camera size={22} color={C.dim} strokeWidth={1.7} />
@@ -109,14 +125,16 @@ export default function MyReportsScreen() {
               <button
                 key={r.id}
                 type="button"
+                // Counted / Duplicate 那两行点了没反应，就不该是键盘焦点
+                disabled={!fixable}
                 onClick={() => {
                   if (!fixable) return;
                   resetDraft();
                   patchDraft({
                     editingReportId: r.id,
                     beachId: r.beachId,
-                    category: r.category,
-                    quantity: r.quantity,
+                    beachName: r.beachName,
+                    quantities: { ...r.quantities },
                     locationSource: 'manual',
                     coords: null,
                     existingPhotoUrl: r.photoUrl ?? null,

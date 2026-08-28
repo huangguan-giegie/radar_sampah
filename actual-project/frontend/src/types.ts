@@ -16,6 +16,8 @@ export type SpeciesGlyph = 'turtle' | 'bird' | 'mangrove' | 'grass' | 'crab' | '
  * 这是**估算值不是观测结果**，界面上必须标注清楚，且绝不能和垃圾严重度合并成一个数。
  */
 export interface SpeciesLikelihood {
+  /** true = 这个数字还不是模型算出来的，只是占位。界面上会标出来 */
+  placeholder?: boolean;
   /** 0-100 */
   percent: number;
   /** 模型或数据依据，界面上要显示出来，例如「Habitat match + 2024 survey」 */
@@ -126,20 +128,31 @@ export interface LitterReport {
   id: string;
   beachId: string;
   beachName: string;
+  /** 这条记录实际记了哪些类别。改正时按它回填，否则会把没动过的类别清空 */
+  quantities: QuantityByCategory;
+  /** 派生：quantities 里权重最高的那个类别 */
   category: LitterCategory;
+  /** 派生：该类别对应的档 */
   quantity: QuantityBand;
   /** 展示用日期字符串，后端给 ISO，前端格式化 */
   createdAt: string;
   status: ReportStatus;
   /** 被排除时的原因说明，后端下发，前端直出 */
-  statusNote?: string;
-  photoUrl?: string;
+  statusNote?: string | null;
+  photoUrl?: string | null;
 }
+
+/**
+ * 一次上报里「每个类别各一个数量档」。
+ * 键是 LitterCategory 原文，后端映射到 reports 的 qty_* 六列。
+ * 至少要有一项 —— 对应 DB 上的 reports_at_least_one_category。
+ */
+export type QuantityByCategory = Partial<Record<LitterCategory, QuantityBand>>;
 
 export interface CreateReportInput {
   beachId: string;
-  category: LitterCategory;
-  quantity: QuantityBand;
+  /** 至少一项。category / quantity 由后端从这里派生，前端不再发 */
+  quantities: QuantityByCategory;
   /** 上传接口返回的地址。没有 photos 表，所以带的是地址不是 id */
   photoUrl: string;
   /** 'gps' = 由定位推断，'manual' = 用户手选 */
