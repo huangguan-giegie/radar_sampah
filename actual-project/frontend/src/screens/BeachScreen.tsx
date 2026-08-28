@@ -9,6 +9,7 @@ import {
   MONO,
   NOISE,
   SEVERITY,
+  formatDate,
   freshStyle,
   freshnessLabel,
 } from '../theme';
@@ -60,7 +61,10 @@ export default function BeachScreen() {
 
   const sev = b.severity ? SEVERITY[b.severity] : null;
   const fs = freshStyle(b.freshnessKind);
-  const topShare = b.composition?.[0]?.percent ?? 1;
+  // 数量档只有四级，条形宽度按档位画，不再是占比
+  const BAND_WIDTH: Record<string, string> = {
+    Small: '25%', Medium: '50%', Large: '75%', 'Very Large': '100%',
+  };
 
   return (
     <div className="screen scroll-y" style={{ zIndex: 20 }}>
@@ -170,20 +174,22 @@ export default function BeachScreen() {
                   <div style={{ flex: 1, height: 14, borderRadius: 7, background: 'rgba(11,33,97,.05)', overflow: 'hidden' }}>
                     <div
                       style={{
-                        width: `${Math.round((c.percent / topShare) * 100)}%`,
+                        width: BAND_WIDTH[c.quantity] ?? '25%',
                         height: '100%',
                         borderRadius: 7,
                         background: COMP_COLORS[i % COMP_COLORS.length],
                       }}
                     />
                   </div>
-                  <span style={{ width: 34, flex: 'none', textAlign: 'right', fontFamily: MONO, fontSize: 10, color: C.muted }}>
-                    {c.percent}%
+                  <span style={{ width: 62, flex: 'none', textAlign: 'right', fontFamily: MONO, fontSize: 9.5, color: C.muted }}>
+                    {c.quantity}
                   </span>
                 </div>
               ))}
               <div style={{ fontFamily: MONO, fontSize: 8.5, letterSpacing: '.1em', color: C.faint, marginTop: 4 }}>
-                SHARE OF {b.validReports} VERIFIED REPORTS · BROAD CATEGORIES
+                {b.compositionSource
+                  ? `FROM THE REPORT ON ${formatDate(b.compositionSource.createdAt).toUpperCase()} · BROAD CATEGORIES`
+                  : 'BROAD CATEGORIES'}
               </div>
             </div>
           ) : (

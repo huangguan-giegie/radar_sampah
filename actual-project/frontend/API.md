@@ -328,6 +328,86 @@ likelihood 两列必须同生同死。
 
 ---
 
+
+### 一条记录记六个类别：`reports` 加六列（已定）
+
+原来一条记录只有一个 `category` + 一个 `quantity`。改成六个类别各一列，
+一次上报可以描述一堆混合垃圾。
+
+```sql
+ALTER TABLE reports
+  ADD COLUMN qty_plastic      text CHECK (qty_plastic      IN ('Small','Medium','Large','Very Large')),
+  ADD COLUMN qty_fishing_gear text CHECK (qty_fishing_gear IN ('Small','Medium','Large','Very Large')),
+  ADD COLUMN qty_glass        text CHECK (qty_glass        IN ('Small','Medium','Large','Very Large')),
+  ADD COLUMN qty_metal        text CHECK (qty_metal        IN ('Small','Medium','Large','Very Large')),
+  ADD COLUMN qty_paper        text CHECK (qty_paper        IN ('Small','Medium','Large','Very Large')),
+  ADD COLUMN qty_other        text CHECK (qty_other        IN ('Small','Medium','Large','Very Large')),
+
+  -- 至少要记一个类别，否则这条记录没有内容
+  ADD CONSTRAINT reports_at_least_one_category CHECK (
+    num_nonnulls(qty_plastic, qty_fishing_gear, qty_glass,
+                 qty_metal, qty_paper, qty_other) >= 1
+  );
+```
+
+**`NULL` = 这次没看到这个类别**，不是「看到了但数量为零」。这两件事在界面上要区分开：
+没勾的类别不画条，不是画一根长度为 0 的条。
+
+**老的 `category` / `quantity` 两列变成派生值**，保留是为了不破坏现有响应：
+
+```
+category  = 六列里权重最高的那个非空类别
+            （权重见 §3：Fishing gear 1.00 > Plastic 0.85 > Glass 0.70
+              > Metal 0.60 > Other 0.50 > Paper 0.35）
+quantity  = 该类别对应那列的值
+```
+
+等记录页改成多选、前端不再读这两列之后，可以整个删掉。
+
+### 「Learn More」显示最新一条记录的成分（已定）
+
+生物图层地图卡片上的 **Learn More** 和垃圾图层的 **View Beach** 去的是同一个地方 ——
+海滩详情页。那一页的「LITTER COMPOSITION」区块，语义改成：
+
+> **该海滩最新一条 `Counted` 记录的六列成分**，而不是 90 天窗口内的聚合。
+
+`GET /beaches/:id` 的 `composition` 相应改成：
+
+```json
+"composition": [
+  { "category": "Plastic",      "quantity": "Large"  },
+  { "category": "Fishing gear", "quantity": "Medium" },
+  { "category": "Glass",        "quantity": "Small"  }
+],
+"compositionSource": {
+  "reportId":  "r_01H...",
+  "createdAt": "2026-08-19T16:00:00+08:00"
+}
+```
+
+- 只列**非空**的类别，按权重降序
+- `compositionSource` 是必需的 —— 界面上原来那行
+  `SHARE OF 8 VERIFIED REPORTS · BROAD CATEGORIES` 现在是**假的**，
+  必须换成「来自 8 月 19 日那条记录」之类的说法，否则就是在骗用户
+- 该海滩一条 `Counted` 记录都没有时，`composition` 和 `compositionSource` 都返回 `null`
+
+> ⚠️ **这条改动让 `area_garbage` 失去意义。** 那张表是把「N 条记录按类别的占比」
+> 物化下来；现在成分只取最新一条记录，直接从 `reports` 那一行读就行，
+> 不需要聚合表。**建议不要建 `area_garbage`。**
+
+### 这个改动还牵动三处
+
+| 位置 | 现状 | 要改成 |
+| --- | --- | --- |
+| `RecordScreen.tsx` | 类别单选（`patchDraft({ category: cat })`） | 六个类别各自能选一个数量档，可多选 |
+| 严重度公式（§7） | `类别权重 × 数量档`，一条记录一个值 | 一条记录有多个类别，要定清楚是取最大值、求和还是求平均 |
+| `BeachScreen.tsx` 那行说明 | `SHARE OF n VERIFIED REPORTS` | 改成指向具体某条记录的日期 |
+
+**第二条必须由 Darli 定**，因为它直接改变地图上每个海滩的等级。在定下来之前，
+后端算严重度可以先按「取六列里权重最高的那个类别」跑，这和现在的单类别行为完全一致。
+
+---
+
 ## 3. 评分规则（US4.3）　— 这个接口是**可选的**
 
 | 方法 | 路径 | 鉴权 | 说明 |
@@ -637,8 +717,11 @@ area_species     id(PK), area_id(FK→beaches), species_id(FK→dim_species, nul
                  source_dataset, source_citation, source_url, source_accessed_at,
                  likelihood_percent(nullable), likelihood_basis(nullable)
                  ← 区域×物种的 junction；生境和统称的 species_id 为空
-reports          id, reporter_id, beach_id, category, quantity, photo_id,
-                 location_source, lat(nullable), lng(nullable),
+reports          id, reporter_id, beach_id, photo_id, location_source,
+                 qty_plastic, qty_fishing_gear, qty_glass,
+                 qty_metal, qty_paper, qty_other        ← 每列可空，至少一列非空
+                 category, quantity                     ← 派生：权重最高的非空类别
+                 lat(nullable), lng(nullable),
                  status, status_note, created_at, updated_at, deleted_at
                  ← lat/lng 只在 gps 来源时写入，存到小数点后 3 位，
                    绝不出现在任何响应里（序列化层显式排除）
@@ -647,8 +730,15 @@ photos           id, data(bytea), mime, bytes, metadata_stripped,
                  ← 图片字节直接存库；对外的 url 由 GET /photos/:id 提供
 ```
 
-`beaches` 和 `beach_species` 是**种子数据**，Iteration 1 固定四个海滩，
+`beaches` 和 `area_species` 是**种子数据**，Iteration 1 固定四个海滩，
 没有增删改接口。种子内容照抄前端 `src/mockData.ts`，字段名一一对应。
+
+
+### 契约 vs DMP：还差什么
+
+![契约与 DMP 的差异](./docs/erd-contract-vs-dmp.png)
+
+实线卡片 = 契约里已有；琥珀虚线 = DMP 要求但还不存在；灰色虚线 = DMP 的 Iteration 1 有但团队分工里搁置了；红色横条 = 两份文件对同一张表的说法不一致。
 
 ---
 

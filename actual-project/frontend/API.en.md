@@ -328,6 +328,88 @@ the existing `species[]` array — no frontend code changes.
 
 ---
 
+
+### One report, six categories: six new columns on `reports` (decided)
+
+A report used to carry one `category` and one `quantity`. With a column per category, a single
+report can describe a mixed pile of litter.
+
+```sql
+ALTER TABLE reports
+  ADD COLUMN qty_plastic      text CHECK (qty_plastic      IN ('Small','Medium','Large','Very Large')),
+  ADD COLUMN qty_fishing_gear text CHECK (qty_fishing_gear IN ('Small','Medium','Large','Very Large')),
+  ADD COLUMN qty_glass        text CHECK (qty_glass        IN ('Small','Medium','Large','Very Large')),
+  ADD COLUMN qty_metal        text CHECK (qty_metal        IN ('Small','Medium','Large','Very Large')),
+  ADD COLUMN qty_paper        text CHECK (qty_paper        IN ('Small','Medium','Large','Very Large')),
+  ADD COLUMN qty_other        text CHECK (qty_other        IN ('Small','Medium','Large','Very Large')),
+
+  -- a report with nothing recorded is not a report
+  ADD CONSTRAINT reports_at_least_one_category CHECK (
+    num_nonnulls(qty_plastic, qty_fishing_gear, qty_glass,
+                 qty_metal, qty_paper, qty_other) >= 1
+  );
+```
+
+**`NULL` means "this category was not seen"**, not "seen, amount zero". The interface has to keep
+those apart: an unrecorded category draws no bar, rather than a zero-length one.
+
+**The old `category` / `quantity` columns become derived**, kept so existing responses keep working:
+
+```
+category  = the highest-weighted non-null category among the six
+            (weights in §3: Fishing gear 1.00 > Plastic 0.85 > Glass 0.70
+             > Metal 0.60 > Other 0.50 > Paper 0.35)
+quantity  = the value in that category's column
+```
+
+Drop them once the record screen is multi-select and the frontend no longer reads them.
+
+### "Learn More" shows the latest report's composition (decided)
+
+**Learn More** on the biodiversity map card and **View Beach** on the litter card go to the same
+place — the beach detail page. That page's "LITTER COMPOSITION" block changes meaning:
+
+> **The six-column breakdown of that beach's most recent `Counted` report**, rather than an
+> aggregate over the 90-day window.
+
+`GET /beaches/:id` changes accordingly:
+
+```json
+"composition": [
+  { "category": "Plastic",      "quantity": "Large"  },
+  { "category": "Fishing gear", "quantity": "Medium" },
+  { "category": "Glass",        "quantity": "Small"  }
+],
+"compositionSource": {
+  "reportId":  "r_01H...",
+  "createdAt": "2026-08-19T16:00:00+08:00"
+}
+```
+
+- List only the **non-null** categories, ordered by weight, descending.
+- `compositionSource` is required — the current on-screen line
+  `SHARE OF 8 VERIFIED REPORTS · BROAD CATEGORIES` becomes **false** under this change and has to
+  say which report it came from instead. Leaving it would mislead the reader.
+- With no `Counted` report at all, both `composition` and `compositionSource` return `null`.
+
+> ⚠️ **This makes `area_garbage` pointless.** That table materialises "share of N reports by
+> category". If composition is just the latest report, you read it off that one row and no
+> aggregate is needed. **Recommend not creating `area_garbage`.**
+
+### Three things this change pulls with it
+
+| Where | Today | Has to become |
+| --- | --- | --- |
+| `RecordScreen.tsx` | Single-select category (`patchDraft({ category: cat })`) | A quantity band per category, several selectable |
+| Severity formula (§7) | `category weight × quantity band`, one value per record | A record now has several categories — decide max, sum or mean |
+| `BeachScreen.tsx` caption | `SHARE OF n VERIFIED REPORTS` | Point at the specific report and its date |
+
+**The second one is Darli's call**, because it changes every beach's band on the map. Until it is
+settled, severity can run on "the highest-weighted non-null category", which reproduces exactly
+today's single-category behaviour.
+
+---
+
 ## 3. Scoring rule (US4.3) — this endpoint is optional
 
 | Method | Path | Auth | |
@@ -640,8 +722,11 @@ area_species     id(PK), area_id(FK→beaches), species_id(FK→dim_species, nul
                  likelihood_percent(nullable), likelihood_basis(nullable)
                  ← area×species junction; habitats and groups have a null species_id
 
-reports          id, reporter_id, beach_id, category, quantity, photo_id,
-                 location_source, lat(nullable), lng(nullable),
+reports          id, reporter_id, beach_id, photo_id, location_source,
+                 qty_plastic, qty_fishing_gear, qty_glass,
+                 qty_metal, qty_paper, qty_other        ← 每列可空，至少一列非空
+                 category, quantity                     ← 派生：权重最高的非空类别
+                 lat(nullable), lng(nullable),
                  status, status_note, created_at, updated_at, deleted_at
                  ← lat/lng written only for gps, stored to 3 decimals,
                    never in any response (exclude explicitly when serialising)
@@ -655,8 +740,15 @@ Two indexes carry the whole application:
 `(beach_id, status, created_at)` for the severity window, and
 `(reporter_id, beach_id, created_at)` for the duplicate check.
 
-`beaches` and `beach_species` are **seed data** — four beaches fixed for Iteration 1, no CRUD
+`beaches` and `area_species` are **seed data** — four beaches fixed for Iteration 1, no CRUD
 endpoints. Copy the contents from the frontend's `src/mockData.ts`; the field names line up.
+
+
+### Contract vs DMP: what is still missing
+
+![Contract versus the Data Management Plan](./docs/erd-contract-vs-dmp.png)
+
+Solid cards exist in the contract. Amber dashed ones the DMP requires but nothing implements. Grey dashed ones are in the DMP's Iteration 1 but were parked by the team. A red strip means the two documents describe the same table differently.
 
 ---
 

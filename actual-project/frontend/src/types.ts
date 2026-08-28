@@ -60,10 +60,19 @@ export interface Species {
   likelihood?: SpeciesLikelihood | null;
 }
 
+/**
+ * 成分现在取「该海滩最新一条 Counted 记录」的六列，不是窗口内的聚合。
+ * 只列非空的类别，按类别权重降序。
+ */
 export interface CompositionSlice {
   category: LitterCategory;
-  /** 百分比，0-100，四舍五入到整数 */
-  percent: number;
+  quantity: QuantityBand;
+}
+
+/** 成分来自哪一条记录 —— 界面上要显示日期，不能再说「N 条记录的占比」 */
+export interface CompositionSource {
+  reportId: string;
+  createdAt: string;
 }
 
 /** 地图列表用的精简海滩对象 */
@@ -97,6 +106,8 @@ export interface BeachSummary {
 /** 海滩详情页用的完整对象 */
 export interface BeachDetail extends BeachSummary {
   composition: CompositionSlice[] | null;
+  /** composition 为 null 时这里也是 null */
+  compositionSource: CompositionSource | null;
   species: Species[];
   ecologicalNote: string;
 }
