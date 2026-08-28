@@ -63,6 +63,18 @@ PERSONAL_IDENTIFIER_FIELDS = {
 LOCAL_DATABASE_URL = "sqlite:///marine_observation.db"
 DIVE_SAFE_DATA_VERSION = "divesafe-my-2026-08-15-v1"
 PRECISE_LOCATION_FIELDS = {"latitude", "longitude", "coordinates", "gps", "exact_location"}
+LITTER_REPORT_STATUS_PENDING = "pending"
+LITTER_REPORT_STATUS_VERIFIED = "verified"
+LITTER_REPORT_STATUS_REJECTED = "rejected"
+LITTER_REPORT_STATUS_DUPLICATE = "duplicate"
+LITTER_REPORT_STATUS_REMOVED = "removed"
+LITTER_REPORT_STATUSES = {
+    LITTER_REPORT_STATUS_PENDING,
+    LITTER_REPORT_STATUS_VERIFIED,
+    LITTER_REPORT_STATUS_REJECTED,
+    LITTER_REPORT_STATUS_DUPLICATE,
+    LITTER_REPORT_STATUS_REMOVED,
+}
 
 
 metadata = MetaData()
@@ -200,6 +212,7 @@ litter_reports_table = Table(
     Column("priority", String(12), nullable=False),
     Column("image_url", String(500)),
     Column("note", Text),
+    Column("status", String(16), nullable=False, default=LITTER_REPORT_STATUS_PENDING),
     Column("created_at", DateTime(timezone=True), nullable=False),
 )
 litter_detections_table = Table(
@@ -613,8 +626,13 @@ def parse_litter_report_payload(payload: Any, area_ids: set[str]) -> tuple[dict[
     category = ALLOWED_CATEGORIES.get(str(payload.get("category") or "").strip().lower())
     if area_id not in area_ids or category is None:
         return None, "A known area_id and supported category are required"
+    raw_quantity = payload.get("quantity", 1)
+    if isinstance(raw_quantity, bool) or not isinstance(raw_quantity, (int, str)):
+        return None, "quantity must be a positive whole number"
+    if isinstance(raw_quantity, str) and not raw_quantity.strip().lstrip("-").isdigit():
+        return None, "quantity must be a positive whole number"
     try:
-        quantity = int(payload.get("quantity", 1))
+        quantity = int(raw_quantity)
     except (TypeError, ValueError):
         return None, "quantity must be a positive whole number"
     if quantity < 1 or quantity > 500:
@@ -637,7 +655,7 @@ def parse_litter_report_payload(payload: Any, area_ids: set[str]) -> tuple[dict[
 
 
 def litter_report_dict(row: Any) -> dict[str, Any]:
-    return {"id": row.id, "area_id": row.area_id, "category": row.category, "quantity": row.quantity, "observed_at": row.observed_at, "detection": row.detection, "priority": row.priority, "image_url": row.image_url, "note": row.note, "created_at": row.created_at.isoformat(), "location_precision": "area", "demo": True}
+    return {"id": row.id, "area_id": row.area_id, "category": row.category, "quantity": row.quantity, "observed_at": row.observed_at, "detection": row.detection, "priority": row.priority, "image_url": row.image_url, "note": row.note, "status": row.status, "created_at": row.created_at.isoformat(), "location_precision": "area", "demo": True}
 
 
 def litter_assessments(engine: Engine, report_id: int) -> tuple[dict[str, Any], dict[str, Any]]:

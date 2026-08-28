@@ -10,11 +10,17 @@ details. One-off GPS assistance may return only a broad area name.
 - `GET /api/litter-options` returns the five fixed litter types and broad
   Malaysian reporting areas. Areas are labels, not survey coordinates.
 - `POST /api/litter-reports` accepts `area_id`, `category`, optional positive
-  `quantity`, optional `observed_at`, a safe `image_url` and a short `note`.
-  It returns the saved demo report and a fixed-category,
-  illustrative priority. It rejects names, contacts, credentials and precise
-  locations.
-- `GET /api/litter-reports` returns saved demo reports without coordinates.
+  whole-number `quantity` (1-500), optional `observed_at`, a safe `image_url`
+  and a short `note`. It returns the saved demo report and a fixed-category,
+  illustrative priority. It rejects names, contacts, credentials, precise
+  locations, unsupported categories, unknown areas, non-integer or
+  out-of-range quantities, invalid dates, unsafe image URLs and overlong
+  notes. Every saved report starts with `status` set to `pending`; the field
+  is system-controlled and any client-supplied `status` is ignored.
+- `GET /api/litter-reports` returns saved demo reports without coordinates,
+  including their `status` (`pending`, `verified`, `rejected`, `duplicate` or
+  `removed`). Iteration 1 only defines the field and states; the moderator
+  review queue that moves a report out of `pending` is Future/TBD.
 - `POST /api/litter-recognize` accepts an approved HTTPS image URL or
   `/assets/` demo path and an optional `category_hint`. The normal result is a labelled demo
   fallback. A provider call is possible only when

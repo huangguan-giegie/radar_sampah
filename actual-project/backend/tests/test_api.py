@@ -400,6 +400,43 @@ def test_tidetrace_rejects_case_variant_personal_and_coordinate_keys(client):
         assert response.status_code == 400
 
 
+def test_litter_report_is_saved_with_pending_status_by_default(client):
+    """New reports must start pending and stay hidden from any future verified-only view."""
+    response = client.post(
+        "/api/litter-reports",
+        json={"area_id": "tioman-coast", "category": "plastic packaging", "quantity": 2},
+    )
+
+    assert response.status_code == 201
+    report = response.get_json()["report"]
+    assert report["status"] == "pending"
+
+    listed = client.get("/api/litter-reports").get_json()["reports"]
+    assert listed[0]["status"] == "pending"
+
+
+def test_litter_report_ignores_client_supplied_status(client):
+    """The review state is system-controlled; a client cannot self-verify a report."""
+    response = client.post(
+        "/api/litter-reports",
+        json={"area_id": "tioman-coast", "category": "plastic packaging", "status": "verified"},
+    )
+
+    assert response.status_code == 201
+    assert response.get_json()["report"]["status"] == "pending"
+
+
+@pytest.mark.parametrize("quantity", [2.5, "2.5", "many", "1e2", True])
+def test_litter_report_rejects_non_integer_quantity(client, quantity):
+    response = client.post(
+        "/api/litter-reports",
+        json={"area_id": "tioman-coast", "category": "plastic packaging", "quantity": quantity},
+    )
+
+    assert response.status_code == 400
+    assert response.get_json()["error"] == "quantity must be a positive whole number"
+
+
 def test_cleanup_evidence_compares_anonymous_before_and_after_reports(client):
     """Dropping report references or impact classification must fail this contract."""
     before = client.post("/api/litter-reports", json={"area_id": "tioman-coast", "category": "plastic packaging", "quantity": 8}).get_json()["report"]
