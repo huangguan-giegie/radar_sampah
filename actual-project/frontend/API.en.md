@@ -743,13 +743,6 @@ Two indexes carry the whole application:
 `beaches` and `area_species` are **seed data** — four beaches fixed for Iteration 1, no CRUD
 endpoints. Copy the contents from the frontend's `src/mockData.ts`; the field names line up.
 
-
-### Contract vs DMP: what is still missing
-
-![Contract versus the Data Management Plan](./docs/erd-contract-vs-dmp.png)
-
-Solid cards exist in the contract. Amber dashed ones the DMP requires but nothing implements. Grey dashed ones are in the DMP's Iteration 1 but were parked by the team. A red strip means the two documents describe the same table differently.
-
 ---
 
 ## 10. Out of scope for Iteration 1 (do not build)

@@ -733,13 +733,6 @@ photos           id, data(bytea), mime, bytes, metadata_stripped,
 `beaches` 和 `area_species` 是**种子数据**，Iteration 1 固定四个海滩，
 没有增删改接口。种子内容照抄前端 `src/mockData.ts`，字段名一一对应。
 
-
-### 契约 vs DMP：还差什么
-
-![契约与 DMP 的差异](./docs/erd-contract-vs-dmp.png)
-
-实线卡片 = 契约里已有；琥珀虚线 = DMP 要求但还不存在；灰色虚线 = DMP 的 Iteration 1 有但团队分工里搁置了；红色横条 = 两份文件对同一张表的说法不一致。
-
 ---
 
 ## 10. 不在 Iteration 1 范围（不要实现）
