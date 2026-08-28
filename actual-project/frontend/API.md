@@ -203,6 +203,57 @@ Iteration 1 会上线建模的物种出现概率。前端已经预留好槽位�
 **Su 需要确认的**：`percent` 是 0–100 整数还是 0–1 小数？`basis` 要不要带模型版本号？
 有没有置信区间要展示？定了我这边跟着调，改动只在 `types.ts` 一处。
 
+## 2c. 生物数据的出处（DMP §2 / §9 强制）
+
+DMP 的来源登记表只认两个开放数据集，两个都是 **CC BY-NC —— 仅限非商业使用**，
+并且**要求署名必须显示在界面上**、源 URL 和访问日期必须保留（DMP §9）。
+
+所以出处是**数据的一部分**，不是注释：
+
+```json
+{
+  "name": "Green Sea Turtle",
+  "kind": "species",
+  "scientificName": "Chelonia mydas",
+  "threatCategory": null,
+  "glyph": "turtle",
+  "text": "Occasional visitor along the Strait of Malacca…",
+  "pictureUrl": null,
+  "source": {
+    "dataset": "OBIS",
+    "citation": "OBIS — Ocean Biodiversity Information System. Intergovernmental Oceanographic Commission of UNESCO. www.obis.org — CC BY-NC",
+    "url": "https://api.obis.org/occurrence",
+    "accessedAt": "2026-08-28"
+  }
+}
+```
+
+- `kind`：`species` / `habitat` / `group`。**只有 `species` 才可能有学名和受威胁等级** ——
+  生境（红树、海草）和统称（候鸟、海洋鱼类）没有
+- `threatCategory`：来自 FishBase 抽取。**没拉到就是 `null`，不要猜**
+- `source.dataset`：`FishBase` / `OBIS` / `other` / `pending`
+- `pictureUrl`：FishBase 的 `picture_url`。**图片版权独立于数据集**，用前要逐张确认
+
+### ⚠️ 现在这 11 张卡片的出处全是占位
+
+前端 `src/mockData.ts` 里 11 条物种数据的 source 一律是 `PENDING_SOURCE`，
+界面上显示成琥珀色角标 `SOURCE PENDING · NOT YET FROM FISHBASE / OBIS`。
+这是故意的 —— **宁可露出来，也不能让一条编造的引用混进演示或报告里**。
+
+### ⚠️ 11 张里只有 1 张能真正来自 FishBase
+
+| 卡片类型 | 张数 | FishBase | OBIS |
+| --- | --- | --- | --- |
+| 鱼类统称（Marine Fish） | 1 | ✓ | ✓ |
+| 海龟、鲎 | 2 | ✗ 只收鱼 | ✓ |
+| 红树、海草（生境） | 5 | ✗ | ✗ |
+| 候鸟、海岸鸟类 | 3 | ✗ | ✗ |
+
+**7 张在这两个库里都不存在。** FishBase 只收鱼，OBIS 收海洋类群但不含陆生鸟类和
+植物生境。这几张要么换成别的有署名的来源（用 `dataset: "other"`），
+要么改成不需要物种级出处的写法。**这件事 Su 和 Keith 要一起定**，
+因为它同时影响 Epic 5 的内容和 DMP §2 的来源登记表。
+
 ## 3. 评分规则（US4.3）　— 这个接口是**可选的**
 
 | 方法 | 路径 | 鉴权 | 说明 |
@@ -296,7 +347,25 @@ Iteration 1 会上线建模的物种出现概率。前端已经预留好槽位�
    必须收，服务端转成 JPEG）；长边压到 ≤ 2048 px。
 3. **清理孤儿**：上传后 24 小时内没被任何记录引用的照片，定时任务删掉。
 
-`url` 必须公开可读（不带签名或签名有效期 ≥ 1 年）—— 它会出现在「我的记录」列表里。
+### 照片存在数据库里，公开可读（已定）
+
+**图片字节直接存进 `photos.data`（`bytea`），不用对象存储。**
+`url` 是后端自己的一个读取端点，公开可读、不需要鉴权：
+
+```
+GET /photos/:id      →  200，图片字节流
+                        Content-Type: image/jpeg | image/png
+                        Cache-Control: public, max-age=31536000, immutable
+```
+
+上传接口返回的 `url` 就填这个地址（绝对或相对都行），前端原样用。
+
+这一条**偏离 DMP §5**（原文要求 `outside public web root` + `Access controlled`），
+是团队决定。既然选了公开，下面三条就必须做到，否则这个偏离站不住：
+
+1. **文件名必须不可枚举** —— 用随机 id，不要自增数字、不要原始文件名
+2. **EXIF 必须真的剥干净** —— 公开 URL 意味着剥离是防止位置泄露的唯一一道防线
+3. **文件名里不能带任何个人信息**（参与者编号、海滩名、日期都不要）
 
 ---
 
@@ -389,11 +458,24 @@ Iteration 1 会上线建模的物种出现概率。前端已经预留好槽位�
 
 `Counted` 时**不要**返回这个字段（或给 `null`）。
 
+### 位置怎么存（已定）
+
+坐标**存在 `reports` 表自己的行上**（`lat` / `lng`，可空），不再单独开表。
+对齐 DMP §6 的 `litter_reports: photo ref, approx location, category, quantity, status…`。
+
+- 只在 `locationSource = 'gps'` 时写入；手选海滩时两列为空
+- 用途只有两个：匹配海滩、查重
+- **精度：小数点后 3 位（约 110 m）**。前端在 `GpsScreen` 采集处就取整，
+  精确值从头到尾没离开过设备 —— 这样 DMP 的 `no exact locations are stored`
+  和界面上的「EXACT GPS IS PRIVATE」才都成立
+
 ### 隐私要求（硬要求）
 
-- `coords` 存在**独立的私有表** `report_coords`，只有查重和 `resolve-beach` 用得到
-- **任何对外接口都不得返回 `coords`**，包括记录详情、导出、管理后台
+- **任何对外接口都不得返回 `lat` / `lng`**，包括记录详情、我的记录列表、CSV 导出、管理后台
 - 公开数据的地理粒度只到 `beachId`
+
+> ⚠️ **坐标现在和业务字段同表，`SELECT *` 会带出来。**
+> 请在 ORM/序列化层显式排除这两列，并在 code review 里当固定检查项。
 
 界面上有两处白纸黑字的承诺撑着这条：确认页的「GPS USED ONCE · PRIVATE」，
 和地图卡片的「BROAD AREA SHOWN — EXACT GPS IS PRIVATE」。
@@ -464,17 +546,27 @@ composition = insufficientData ? null
 
 ## 9. 数据表建议
 
+![ERD](./docs/erd.png)
+
+
 ```
 users            id, participant_id(uniq), role, created_at
                  ← 没有姓名、邮箱、手机号等任何个人数据字段
 beaches          id, name, area, lat, lng, habitat, habitat_tag, sensitivity,
                  primary_species_glyph, cover_image_url, scene, created_at
-beach_species    id, beach_id, name, glyph, text, source, sort_order,
+beach_species    id, beach_id, name, kind, scientific_name(nullable),
+                 threat_category(nullable), glyph, text, sort_order,
+                 source_dataset, source_citation, source_url(nullable),
+                 source_accessed_at(nullable), picture_url(nullable),
                  likelihood_percent(nullable), likelihood_basis(nullable)   ← Epic 5
 reports          id, reporter_id, beach_id, category, quantity, photo_id,
-                 location_source, status, status_note, created_at, updated_at, deleted_at
-report_coords    report_id(PK), lat, lng          ← 私有表，绝不出现在任何响应里
-photos           id, url, mime, bytes, metadata_stripped, created_at, report_id(nullable)
+                 location_source, lat(nullable), lng(nullable),
+                 status, status_note, created_at, updated_at, deleted_at
+                 ← lat/lng 只在 gps 来源时写入，存到小数点后 3 位，
+                   绝不出现在任何响应里（序列化层显式排除）
+photos           id, data(bytea), mime, bytes, metadata_stripped,
+                 created_at, report_id(nullable)
+                 ← 图片字节直接存库；对外的 url 由 GET /photos/:id 提供
 ```
 
 `beaches` 和 `beach_species` 是**种子数据**，Iteration 1 固定四个海滩，

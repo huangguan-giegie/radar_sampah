@@ -1,0 +1,607 @@
+# Radar Sampah — Backend API Specification v1 (Iteration 1)
+
+> **This is a contract, not a discussion draft.** The frontend is fully built against it and
+> passes end-to-end on mock data. Implement to this and the two sides meet.
+> If something here is impractical, say so before changing it — the frontend then adjusts
+> in one file, `src/api.ts`.
+>
+> Chinese version: [`API.md`](./API.md) · Machine-readable: [`openapi.yaml`](./openapi.yaml)
+> · Data governance: `RadarSampah_Data_Management_Plan_Iteration1_MVP.docx` (the DMP)
+
+---
+
+## 0. Conventions
+
+| Item | Convention |
+| --- | --- |
+| Transport | HTTPS, JSON (except photo upload, which is `multipart/form-data`) |
+| Encoding | UTF-8 |
+| Time | ISO 8601 with offset, e.g. `2026-08-28T09:41:00+08:00`. **"Same day" is always evaluated in `Asia/Kuala_Lumpur`** |
+| Auth | `Authorization: Bearer <token>`, stored by the frontend in localStorage |
+| Paging | Not in Iteration 1. Four beaches and one person's own reports — return the full set |
+
+### Error shape
+
+Every non-2xx returns:
+
+```json
+{ "code": "PHOTO_TOO_LARGE", "message": "Photo exceeds the 10 MB limit." }
+```
+
+`message` is a **finished English sentence shown directly to the user** — the frontend does not
+rewrite or template it.
+
+| HTTP | code | When |
+| --- | --- | --- |
+| 400 | `VALIDATION_FAILED` | A required field is missing or a value is outside its enum |
+| 400 | `PHOTO_REQUIRED` | A report was submitted without `photoId` |
+| 400 | `PHOTO_TOO_LARGE` | Photo over 10 MB |
+| 400 | `PHOTO_UNSUPPORTED_TYPE` | Not JPEG, PNG or HEIC |
+| 401 | `UNAUTHENTICATED` | Token missing, expired or invalid |
+| 403 | `NOT_OWNER` | Editing or deleting someone else's report |
+| 404 | `NOT_FOUND` | Unknown beach or report |
+| 404 | `UNKNOWN_PARTICIPANT` | The participant number does not exist |
+| 413 | `PAYLOAD_TOO_LARGE` | Upload rejected at the server layer |
+| 429 | `RATE_LIMITED` | See §8 |
+| 500 | `INTERNAL_ERROR` | Fallback |
+
+> ⚠️ **A duplicate report is not an error.** Return `201` with `status: "Duplicate"`. The
+> frontend shows it as saved-but-not-counted. See §6.
+
+---
+
+## 1. Auth — anonymous participant numbers
+
+**Team decision: Iteration 1 collects no personal data.** No name, no email, no password.
+A person receives a 4-digit number (e.g. `1637`) and their reports hang off it.
+
+| Method | Path | Auth | |
+| --- | --- | --- | --- |
+| POST | `/auth/anonymous` | no | Issue a new number |
+| POST | `/auth/restore` | no | Continue with an existing number |
+| POST | `/auth/logout` | yes | 204 |
+| GET | `/auth/me` | yes | |
+
+**POST `/auth/anonymous`** (no body)
+
+```json
+// 201
+{
+  "token": "eyJhbGciOi...",
+  "user": { "id": "u_01H...", "participantId": "1637", "role": "volunteer" }
+}
+```
+
+**POST `/auth/restore`** — body `{ "participantId": "1637" }`, responds as above.
+
+**GET `/auth/me`** — returns `user`; 401 if the token is invalid.
+
+- `participantId` — 4 digits, **randomly assigned, never sequential**. A sequence would leak how
+  many participants exist and who joined first.
+- `role` — `"volunteer" | "moderator"`. Iteration 1 only ever issues `volunteer`;
+  `moderator` is reserved for the later review flow. Create the value, leave it unused.
+- Token — JWT, 30-day expiry, no refresh flow.
+
+> **One thing to be aware of (does not block this iteration).** The number *is* the credential,
+> so anyone who types `1637` sees participant 1637's records. That is acceptable for an MVP
+> running on synthetic data. Before this holds real public submissions it needs a secret
+> alongside the number.
+
+---
+
+## 2. Beaches
+
+| Method | Path | Auth | |
+| --- | --- | --- | --- |
+| GET | `/beaches` | no | List, for the map and home screen |
+| GET | `/beaches/:id` | no | Detail |
+
+**No auth required** — "Browsing needs nothing at all" is a promise made on the welcome screen.
+
+### GET `/beaches` → `BeachSummary[]`
+
+```json
+[{
+  "id": "morib",
+  "name": "Pantai Morib",
+  "area": "Banting, Selangor",
+  "lat": 2.746,
+  "lng": 101.440,
+
+  "severity": "High",
+  "band": 3,
+  "insufficientData": false,
+  "validReports": 8,
+  "lastReportedAt": "2026-08-19T16:00:00+08:00",
+  "freshnessKind": "ok",
+
+  "habitat": "Intertidal mudflat & sandy shore",
+  "habitatTag": "MUDFLAT",
+  "sensitivity": "Migratory feeding ground",
+  "primarySpeciesGlyph": "turtle",
+
+  "coverImageUrl": "https://cdn.example.com/beaches/morib.jpg",
+  "scene": "linear-gradient(178deg,#8FD0E8 0%,#4E9EC9 36%,#2E6EA8 58%,#173E77 100%)"
+}]
+```
+
+| Field | Type | Notes |
+| --- | --- | --- |
+| `severity` | `"Low"｜"Moderate"｜"High"｜"Severe"｜null` | **Must be `null` when fewer than 3 valid reports qualify.** Never fall back to `"Low"` |
+| `band` | `1｜2｜3｜4｜null` | Paired with `severity`; null together. Drives the four-bar marker |
+| `insufficientData` | boolean | True exactly when `severity === null` |
+| `validReports` | int | **Counts `Counted` rows only.** Duplicate and Incomplete never counted |
+| `lastReportedAt` | string｜null | Newest **Counted** report. The frontend renders "6 days ago" itself — do not send prose |
+| `freshnessKind` | `"ok"｜"aging"｜"stale"` | Under 30 days / 30–90 / over 90 or never |
+| `primarySpeciesGlyph` | `"turtle"｜"bird"｜"mangrove"｜"grass"｜"crab"｜"fish"` | Icon for the biodiversity map marker |
+| `coverImageUrl` | string｜null | Real photo. **Send `null` when there is none** — the frontend falls back to `scene`, so a new beach never renders a blank header |
+| `scene` | string | A valid CSS `background` value used as the no-photo placeholder. Present in the seed data — store and return it verbatim |
+
+### GET `/beaches/:id` → `BeachDetail`
+
+`BeachSummary` plus three fields:
+
+```json
+{
+  "composition": [
+    { "category": "Plastic", "percent": 46 },
+    { "category": "Fishing gear", "percent": 22 }
+  ],
+  "species": [ /* see §2c */ ],
+  "ecologicalNote": "Plastic and abandoned fishing gear may affect turtles and shorebirds that feed in this coastal environment."
+}
+```
+
+- `composition` — descending by `percent`, integers summing to 100 (fold rounding error into the
+  last entry). **Must be `null`, not `[]`, when `insufficientData` is true** — the frontend keys the
+  "Not enough verified data" panel off null.
+- `species` — static reference content, 0–5 entries. See §2c for provenance.
+- `ecologicalNote` — one sentence, static.
+
+> **Why severity, band, validReports and composition are all computed server-side.** The product's
+> central claim to the user is that one identical rule runs on every beach — the scoring-method
+> screen is entirely about this. That rule must have exactly one implementation, on the server,
+> auditable. A second implementation in the client would be a second rule.
+
+---
+
+## 2b. Modelled species likelihood (Epic 5 · Su) — field shape pending
+
+Iteration 1 ships a modelled likelihood that a species occurs at a beach. The frontend slot is
+ready: each entry in `species[]` may carry an optional `likelihood`.
+
+```json
+"likelihood": { "percent": 38, "basis": "Habitat match + 2024 sighting records" }
+```
+
+- Omit it or send `null` → the card renders as pure reference content with no percentage at all.
+- `basis` — one line explaining what the number rests on. **Shown on screen; never leave it empty
+  while a percentage is set.**
+
+### Three hard constraints (already implemented this way in the frontend)
+
+1. **Never merged with litter severity into a single number.** They measure different things and a
+   combined figure would be misread.
+2. **Visually separate.** The frontend deliberately uses a blue dashed box, not the four severity
+   colours, and not a bar chart.
+3. **Labelled as an estimate.** When any species carries a likelihood, the beach page's disclaimer
+   switches to "…an estimate of how likely a species is to occur here, never a confirmed sighting",
+   and the scoring-method screen scopes its "No model, no judgement call" line to the litter band.
+
+These are not fastidiousness. The product's whole proposition is that its numbers are trustworthy;
+an unlabelled probability would spend the credibility Epic 4 is built on.
+
+**For Su to confirm:** is `percent` a 0–100 integer or a 0–1 decimal? Should `basis` carry a model
+version? Is there a confidence interval to display? Once decided, the frontend changes in one place.
+
+---
+
+## 2c. Where biodiversity data comes from (required by DMP §2 and §9)
+
+The DMP's source register recognises exactly two open datasets. Both are **CC BY-NC — non-commercial
+use only** — and both **require the attribution to be displayed**, with source URL and access date
+retained (DMP §9).
+
+Provenance is therefore **part of the data**, not a comment:
+
+```json
+{
+  "name": "Green Sea Turtle",
+  "kind": "species",
+  "scientificName": "Chelonia mydas",
+  "threatCategory": null,
+  "glyph": "turtle",
+  "text": "Occasional visitor along the Strait of Malacca…",
+  "pictureUrl": null,
+  "source": {
+    "dataset": "OBIS",
+    "citation": "OBIS — Ocean Biodiversity Information System. Intergovernmental Oceanographic Commission of UNESCO. www.obis.org — CC BY-NC",
+    "url": "https://api.obis.org/occurrence",
+    "accessedAt": "2026-08-28"
+  }
+}
+```
+
+- `kind` — `species` / `habitat` / `group`. **Only `species` can carry a scientific name or threat
+  category.** Habitats (mangrove, seagrass) and groups (migratory birds, marine fish) cannot.
+- `threatCategory` — from the FishBase extract. **Null when not retrieved. Do not guess.**
+- `source.dataset` — `FishBase` / `OBIS` / `other` / `pending`.
+- `pictureUrl` — FishBase `picture_url`. **Image rights are separate from the dataset licence** and
+  must be checked per image.
+
+### ⚠️ All 11 species cards are currently unsourced
+
+Every entry in `src/mockData.ts` uses `PENDING_SOURCE`, which the UI renders as an amber
+`SOURCE PENDING · NOT YET FROM FISHBASE / OBIS` badge. This is deliberate: **better a visible gap
+than a fabricated citation in a demo or a report.**
+
+### ⚠️ Only 1 of the 11 can actually come from FishBase
+
+| Card type | Count | FishBase | OBIS |
+| --- | --- | --- | --- |
+| Marine fish (group) | 1 | yes | yes |
+| Sea turtle, horseshoe crab | 2 | no — fish only | yes |
+| Mangrove, seagrass (habitats) | 5 | no | no |
+| Migratory and coastal birds | 3 | no | no |
+| | | | |
+
+**Seven exist in neither dataset.** FishBase covers fish; OBIS covers marine taxa but not
+terrestrial birds or plant habitats. Those seven need either a different cited source
+(`dataset: "other"`) or a rewrite that does not claim species-level provenance.
+**Su and Keith need to settle this together** — it affects both Epic 5's content and the DMP's
+source register.
+
+---
+
+## 3. Scoring rule (US4.3) — this endpoint is optional
+
+| Method | Path | Auth | |
+| --- | --- | --- | --- |
+| GET | `/scoring-method` | no | **Optional.** Not implementing it does not break the frontend |
+
+**Team decision: US4.3 is a non-blocking stretch, delivered by the frontend.** The weights,
+thresholds and window are constants in `src/scoring.ts`, so the scoring-method screen renders
+instantly, works offline, and does not wait on the backend.
+
+```json
+{
+  "categoryWeights": [
+    { "category": "Fishing gear", "weight": 1.00 },
+    { "category": "Plastic",      "weight": 0.85 },
+    { "category": "Glass",        "weight": 0.70 },
+    { "category": "Metal",        "weight": 0.60 },
+    { "category": "Other",        "weight": 0.50 },
+    { "category": "Paper",        "weight": 0.35 }
+  ],
+  "quantityWeights": [
+    { "quantity": "Small",      "weight": 1 },
+    { "quantity": "Medium",     "weight": 2 },
+    { "quantity": "Large",      "weight": 3 },
+    { "quantity": "Very Large", "weight": 4 }
+  ],
+  "bands": [
+    { "band": "Low",      "range": "below 1.5",     "color": "#7CA98B" },
+    { "band": "Moderate", "range": "1.5 – 2.4",     "color": "#D9A24B" },
+    { "band": "High",     "range": "2.5 – 3.4",     "color": "#CE6B45" },
+    { "band": "Severe",   "range": "3.5 and above", "color": "#B84A3F" }
+  ],
+  "windowDays": 90,
+  "minReports": 3
+}
+```
+
+### ⚠️ You may skip the endpoint, but you must use these numbers
+
+Severity is computed by the backend (§7); the published rule is rendered by the frontend. **If the
+two disagree, the screen explaining the rule is lying about the rule.**
+
+- The numbers above are the specification; `src/scoring.ts` is their executable copy.
+- If you do implement the endpoint and return different values, the frontend **uses yours** (that
+  is the rule actually in force) and logs a console warning in dev naming the mismatched field.
+- Changing any weight or threshold means changing both sides and bumping the rule version.
+
+> DMP §7.1 requires the rule set to be **fixed and versioned** so past scores stay explainable.
+> Add a `ruleVersion` string when you implement scoring, and store it on each computed score.
+
+---
+
+## 4. Location → beach
+
+| Method | Path | Auth | |
+| --- | --- | --- | --- |
+| POST | `/geo/resolve-beach` | yes | body `{ lat, lng }` → `BeachSummary` or `null` |
+
+After the user taps "Allow Once", the browser hands over one reading and the backend resolves the
+nearest supported beach. Out of range returns `null` (a 200 with a null body, not a 404) and the
+frontend switches to manual selection.
+
+- Haversine distance; **a hit requires ≤ 25 km**. The two closest beaches (Morib and Kelanang) are
+  about 6 km apart, so 25 km separates them while tolerating coastal GPS drift.
+- **These coordinates are not persisted by this endpoint.** They are used for the lookup and dropped.
+
+---
+
+## 5. Photo upload
+
+| Method | Path | Auth | |
+| --- | --- | --- | --- |
+| POST | `/uploads/photos` | yes | `multipart/form-data`, field name `photo` |
+
+```json
+// 201
+{ "id": "ph_01H...", "url": "https://cdn.example.com/photos/ph_01H....jpg", "metadataStripped": true }
+```
+
+Three things the backend must do:
+
+1. **Strip EXIF, especially the GPS block.** Only return `metadataStripped: true` once it has
+   actually happened — the UI shows a privacy badge based on this flag, so a hardcoded `true` makes
+   the interface lie.
+2. **Limits.** ≤ 10 MB; accept `image/jpeg`, `image/png`, `image/heic` (iPhones upload HEIC by
+   default — accept it and convert server-side); resize the long edge to ≤ 2048 px.
+3. **Clean up orphans.** Delete photos still unreferenced by any report after 24 hours.
+
+### Photos live in the database, and are publicly readable (team decision)
+
+**Image bytes go straight into `photos.data` (`bytea`) — no object storage.** `url` is a read
+endpoint the backend serves itself, public and unauthenticated:
+
+```
+GET /photos/:id      →  200, the image bytes
+                        Content-Type: image/jpeg | image/png
+                        Cache-Control: public, max-age=31536000, immutable
+```
+
+The upload response puts that address in `url` (absolute or relative), and the frontend uses it
+as-is.
+
+This **departs from DMP §5**, which asks for storage `outside public web root` with
+`Access controlled`. Having chosen public, these three become mandatory, or the departure does not
+hold up:
+
+1. **Filenames must be unguessable** — random ids, never sequential numbers or original filenames.
+2. **EXIF stripping must genuinely work** — with a public URL it is the only thing standing between
+   a photo and a location leak.
+3. **No personal information in the filename** — not the participant number, beach name or date.
+
+---
+
+## 6. Reports ★ core
+
+| Method | Path | Auth | |
+| --- | --- | --- | --- |
+| POST | `/reports` | yes | Submit |
+| GET | `/reports/mine?status=` | yes | Own reports, newest first |
+| GET | `/reports/mine/counts` | yes | `{ counted, duplicate, incomplete }` |
+| PATCH | `/reports/:id` | yes | Correct a report |
+| DELETE | `/reports/:id` | yes | Delete |
+
+### POST `/reports`
+
+```json
+{
+  "beachId": "morib",
+  "category": "Plastic",
+  "quantity": "Medium",
+  "photoId": "ph_01H...",
+  "locationSource": "gps",
+  "coords": { "lat": 2.746, "lng": 101.440 }
+}
+```
+
+```json
+// 201
+{
+  "id": "r_01H...",
+  "beachId": "morib",
+  "beachName": "Pantai Morib",
+  "category": "Plastic",
+  "quantity": "Medium",
+  "createdAt": "2026-08-28T09:41:00+08:00",
+  "status": "Counted",
+  "photoUrl": "https://cdn.example.com/photos/ph_01H....jpg"
+}
+```
+
+When judged a duplicate, the same 201 shape carries:
+
+```json
+{
+  "status": "Duplicate",
+  "statusNote": "Matched an existing record for the same beach on the same day — excluded from the severity calculation."
+}
+```
+
+### Status is decided synchronously, inside the POST transaction
+
+**Why synchronous.** The design takes the user straight to a "Record saved" screen that prints the
+conclusion — `VALID · NOT A DUPLICATE · COUNTED`. An asynchronous review would need a Pending state
+and a notification system, which is the Iteration 2 moderation flow and explicitly out of scope.
+
+Evaluated in order, first match wins:
+
+| # | Condition | Result |
+| --- | --- | --- |
+| 1 | `photoId` missing or pointing at nothing | 400 `PHOTO_REQUIRED`, nothing stored |
+| 2 | `category` or `quantity` outside its enum | 400 `VALIDATION_FAILED`, nothing stored |
+| 3 | Same **reporter** + same **beachId** + same **calendar day** (`Asia/Kuala_Lumpur`) already has a `Counted` row | `Duplicate` |
+| 4 | Otherwise | `Counted` |
+
+**Rule 3 is the entire duplicate definition — do not add a coordinate-distance test.** The sentence
+the app shows the user ("Matched an existing record for the same beach on the same day") is the
+natural-language form of exactly this rule, and the two must not drift. Several photos of different
+angles on one beach in one day should not score twice anyway.
+
+**Where does `Incomplete` come from?** Never from a POST — a missing field is rejected with a 400 and
+nothing is stored. `Incomplete` is set **afterwards**, from one of two places:
+
+- the photo pipeline finding the image unreadable (all black, hopelessly blurred, decode failure)
+- Iteration 2 human review (not implemented now; the value exists so the state machine is complete)
+
+So in Iteration 1, `Incomplete` appears only in seed data and from the photo pipeline. The frontend
+already handles it: tapping such a record opens the correction flow pre-filled, and a PATCH re-runs
+the judgement.
+
+### `statusNote`
+
+**The backend sends a finished English sentence; the frontend prints it verbatim.** Two standard
+strings:
+
+- Duplicate → `Matched an existing record for the same beach on the same day — excluded from the severity calculation.`
+- Incomplete → `Photo unreadable — excluded until you correct and save the record.`
+
+Omit the field (or send `null`) when `Counted`.
+
+### How location is stored (decided)
+
+Coordinates live **on the `reports` row itself** (`lat` / `lng`, nullable) rather than in a separate
+table, matching DMP §6's `litter_reports: photo ref, approx location, category, quantity, status…`.
+
+- Written only when `locationSource = 'gps'`; both columns null for a manual beach pick.
+- Used for exactly two things: matching the beach, and detecting duplicates.
+- **Precision: 3 decimal places (~110 m).** The frontend rounds at capture in `GpsScreen`, so the
+  full-precision reading never leaves the device. That is what makes both the DMP's
+  `no exact locations are stored` and the on-screen "EXACT GPS IS PRIVATE" true at the same time.
+
+### Privacy requirements (hard)
+
+- **No endpoint may ever return `lat` / `lng`** — not report detail, not the record list, not a CSV
+  export, not an admin screen.
+- Public geography stops at `beachId`.
+
+> ⚠️ **The coordinates now sit in the same table as business fields, so `SELECT *` will carry them
+> out.** Exclude the two columns explicitly in the ORM or serialisation layer — never assemble a
+> response straight from `SELECT *` — and make it a standing code-review check.
+
+Two on-screen promises depend on this: "GPS USED ONCE · PRIVATE" on the confirm screen, and
+"BROAD AREA SHOWN — EXACT GPS IS PRIVATE" on the map card.
+
+### GET `/reports/mine?status=`
+
+Optional `status` filter (`Counted` / `Duplicate` / `Incomplete`); omitted returns everything.
+**Newest first.** Only the authenticated user's own rows.
+
+### GET `/reports/mine/counts`
+
+```json
+{ "counted": 3, "duplicate": 1, "incomplete": 1 }
+```
+
+### PATCH `/reports/:id`
+
+Body is any subset of the POST body (`beachId` / `category` / `quantity` / `photoId`).
+
+- Own reports only, otherwise 403 `NOT_OWNER`.
+- **Re-run the status judgement.** An `Incomplete` record with a fixed photo must return to `Counted`.
+- Returns the full updated `LitterReport`.
+
+### DELETE `/reports/:id`
+
+204, own reports only. A soft delete (`deleted_at`) is fine, but the row must **drop out of the
+severity calculation immediately**, not at the next rebuild.
+
+---
+
+## 7. How severity is computed (backend detail)
+
+```
+For one beach:
+
+eligible = that beach's reports where status = 'Counted'
+           and created_at falls within the last 90 days
+
+if count(eligible) < 3:
+    severity = null;  band = null;  insufficientData = true
+else:
+    record_score  = category_weight[category] × quantity_weight[quantity]
+    beach_score   = mean(record_score across eligible)
+    severity      = < 1.5 → Low | < 2.5 → Moderate | < 3.5 → High | else Severe
+    band          = Low=1, Moderate=2, High=3, Severe=4
+
+validReports    = count(eligible)
+lastReportedAt  = max(created_at) across ALL that beach's Counted reports (window ignored)
+freshnessKind   = now - lastReportedAt: < 30d → 'ok' | ≤ 90d → 'aging' | else 'stale'
+
+composition = insufficientData ? null
+            : share of each category among eligible, descending, integers
+```
+
+Note `lastReportedAt` **deliberately ignores the 90-day window** — "nothing reported recently" is
+itself the finding being reported, so an empty window is not the same as no history.
+
+Use the weights and thresholds from §3 — do not introduce a second set.
+
+Implementation is free: a cached column updated on write, or computed at read time (four beaches
+makes live computation entirely viable).
+
+---
+
+## 8. Rate limits
+
+Per user: `POST /reports` 30/hour, `POST /uploads/photos` 60/hour.
+Over the limit returns 429 `RATE_LIMITED`.
+
+---
+
+## 9. Suggested tables
+
+![Entity relationship diagram](./docs/erd.png)
+
+
+```
+users            id, participant_id(uniq), role, created_at
+                 ← no name, email or phone columns of any kind
+
+beaches          id, name, area, lat, lng, habitat, habitat_tag, sensitivity,
+                 primary_species_glyph, cover_image_url, scene, created_at
+
+beach_species    id, beach_id, name, kind, scientific_name(nullable),
+                 threat_category(nullable), glyph, text, sort_order,
+                 source_dataset, source_citation, source_url(nullable),
+                 source_accessed_at(nullable), picture_url(nullable),
+                 likelihood_percent(nullable), likelihood_basis(nullable)
+
+reports          id, reporter_id, beach_id, category, quantity, photo_id,
+                 location_source, lat(nullable), lng(nullable),
+                 status, status_note, created_at, updated_at, deleted_at
+                 ← lat/lng written only for gps, stored to 3 decimals,
+                   never in any response (exclude explicitly when serialising)
+
+photos           id, data(bytea), mime, bytes, metadata_stripped,
+                 created_at, report_id(nullable)
+                 ← bytes stored in-row; the public url is served by GET /photos/:id
+```
+
+Two indexes carry the whole application:
+`(beach_id, status, created_at)` for the severity window, and
+`(reporter_id, beach_id, created_at)` for the duplicate check.
+
+`beaches` and `beach_species` are **seed data** — four beaches fixed for Iteration 1, no CRUD
+endpoints. Copy the contents from the frontend's `src/mockData.ts`; the field names line up.
+
+---
+
+## 10. Out of scope for Iteration 1 (do not build)
+
+Marked out of scope in the design and the team's MVP split: US2.3 AI category suggestions,
+peer and moderator review flows, Epic 1 cleanup activities, Epic 3 report reliability,
+Epic 6 outcomes, Epic 7 recurrence, Epic 8 recognition, US5.3 quizzes, US5.4 species cards.
+
+> ⚠️ **The DMP disagrees with this list.** Its Iteration 1 scope statement includes a
+> "basic verification workflow", "community cleanup missions" and "basic points" — Epics 3, 1 and 8.
+> The team's MVP split removed Epic 3 and parked the rest. **Both documents are signed and they
+> contradict each other.** Settle it before anyone builds from the DMP's scope line.
+
+---
+
+## 11. Connecting the frontend when the backend is ready
+
+```bash
+cd actual-project/frontend
+cp .env.example .env
+# set VITE_API_BASE_URL=https://your-api.example.com
+npm run dev
+```
+
+The frontend switches from mock data to real HTTP automatically; no page code changes. If field
+names or paths differ from this document, the edits are confined to `src/api.ts`.

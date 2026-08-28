@@ -26,7 +26,11 @@ export default function GpsScreen() {
     setBusy(true);
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
-        const coords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        // DMP §4.2 要求存的是 approx location，界面上也承诺精确坐标不离开这一屏。
+        // 所以在采集处就取到小数点后 3 位（约 110m）——
+        // 精确值从头到尾没离开过设备，25km 的海滩匹配半径也完全够用。
+        const round3 = (n: number) => Math.round(n * 1000) / 1000;
+        const coords = { lat: round3(pos.coords.latitude), lng: round3(pos.coords.longitude) };
         try {
           const beach = await resolveBeach(coords.lat, coords.lng);
           if (beach) {

@@ -22,11 +22,40 @@ export interface SpeciesLikelihood {
   basis: string;
 }
 
+/**
+ * 卡片讲的是一个物种、一个生境、还是一类动物的统称。
+ * 只有 'species' 才可能有学名和受威胁等级 —— 生境和统称没有。
+ */
+export type SpeciesKind = 'species' | 'habitat' | 'group';
+
+/** 数据来自哪个开放数据集。DMP §2 的来源登记表只认这两个。 */
+export type SourceDataset = 'FishBase' | 'OBIS' | 'other' | 'pending';
+
+/**
+ * 数据出处。CC BY-NC 要求署名必须显示出来，DMP §9 还要求保留源 URL 和访问日期。
+ * 所以这三样都是数据的一部分，不是注释。
+ */
+export interface SpeciesSource {
+  dataset: SourceDataset;
+  /** 界面上原样显示的完整署名 */
+  citation: string;
+  url: string | null;
+  /** ISO 日期。DMP §9：preserve source URLs, access dates, and transformation notes */
+  accessedAt: string | null;
+}
+
 export interface Species {
   name: string;
+  kind: SpeciesKind;
+  /** 学名。生境和统称为 null */
+  scientificName: string | null;
+  /** 受威胁等级，来自 FishBase 抽取。没拉到就是 null —— 不要猜 */
+  threatCategory: string | null;
   glyph: SpeciesGlyph;
   text: string;
-  source: string;
+  source: SpeciesSource;
+  /** FishBase 的 picture_url。图片版权独立于数据集，用前要单独确认 */
+  pictureUrl?: string | null;
   /** 没有建模结果时为 null / 省略 —— 前端会退回纯科普展示 */
   likelihood?: SpeciesLikelihood | null;
 }

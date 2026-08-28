@@ -1,4 +1,5 @@
 // 假数据。后端做好之后，把 src/api.ts 里的 USE_MOCK 关掉，这个文件就用不到了。
+import { PENDING_SOURCE } from './sources';
 import type { BeachDetail, LitterReport, User } from './types';
 
 /** 设计稿里的四个 MVP 海滩。后端接上后整份文件即可删除。 */
@@ -33,23 +34,32 @@ export const BEACHES: BeachDetail[] = [
     species: [
       {
         name: 'Green Sea Turtle',
+        kind: 'species',
+        scientificName: 'Chelonia mydas',
+        threatCategory: null, // OBIS 收海龟；FishBase 只收鱼，没有
         glyph: 'turtle',
         text: 'Occasional visitor along the Strait of Malacca. Floating plastic may be mistaken for food.',
-        source: 'DoF Malaysia · 2024',
+        source: PENDING_SOURCE,
         // ⚠️ 占位数字，等 Su 的 Epic 5 模型接进来替换
         likelihood: { percent: 38, basis: 'Habitat match + 2024 sighting records' },
       },
       {
         name: 'Mangrove Fringe',
+        kind: 'habitat',
+        scientificName: null,
+        threatCategory: null, // 生境，FishBase / OBIS 都没有
         glyph: 'mangrove',
         text: 'Young mangroves at the northern end shelter juvenile fish and crabs.',
-        source: 'Selangor Forestry · 2023',
+        source: PENDING_SOURCE,
       },
       {
         name: 'Coastal Birds',
+        kind: 'group',
+        scientificName: null,
+        threatCategory: null, // 鸟类不在 FishBase / OBIS
         glyph: 'bird',
         text: 'Migratory shorebirds feed along this tide line between September and April.',
-        source: 'MNS waterbird census · 2024',
+        source: PENDING_SOURCE,
         likelihood: { percent: 76, basis: 'Habitat match + seasonal census (Sep–Apr)' },
       },
     ],
@@ -86,21 +96,30 @@ export const BEACHES: BeachDetail[] = [
     species: [
       {
         name: 'Migratory Shorebirds',
+        kind: 'group',
+        scientificName: null,
+        threatCategory: null, // 鸟类不在 FishBase / OBIS
         glyph: 'bird',
         text: 'The Jeram mudflats are a stopover for migratory waders crossing the strait.',
-        source: 'MNS waterbird census · 2024',
+        source: PENDING_SOURCE,
       },
       {
         name: 'Marine Fish',
+        kind: 'group',
+        scientificName: null,
+        threatCategory: null, // FishBase + OBIS 都有，但这是统称不是单一物种
         glyph: 'fish',
         text: 'Shallow nursery waters for coastal fish species.',
-        source: 'DoF Malaysia · 2022',
+        source: PENDING_SOURCE,
       },
       {
         name: 'Mangrove Belt',
+        kind: 'habitat',
+        scientificName: null,
+        threatCategory: null, // 生境，FishBase / OBIS 都没有
         glyph: 'mangrove',
         text: 'A narrow mangrove belt lines the river mouth south of the beach.',
-        source: 'Selangor Forestry · 2023',
+        source: PENDING_SOURCE,
       },
     ],
     ecologicalNote:
@@ -129,15 +148,21 @@ export const BEACHES: BeachDetail[] = [
     species: [
       {
         name: 'Mangrove Habitat',
+        kind: 'habitat',
+        scientificName: null,
+        threatCategory: null, // 生境，FishBase / OBIS 都没有
         glyph: 'mangrove',
         text: 'Dense mangrove roots trap sediment and shelter juvenile marine life.',
-        source: 'Selangor Forestry · 2023',
+        source: PENDING_SOURCE,
       },
       {
         name: 'Coastal Birds',
+        kind: 'group',
+        scientificName: null,
+        threatCategory: null, // 鸟类不在 FishBase / OBIS
         glyph: 'bird',
         text: 'Egrets and herons hunt along the shallow channels at low tide.',
-        source: 'MNS waterbird census · 2024',
+        source: PENDING_SOURCE,
       },
     ],
     ecologicalNote:
@@ -173,21 +198,30 @@ export const BEACHES: BeachDetail[] = [
     species: [
       {
         name: 'Horseshoe Crab',
+        kind: 'species',
+        scientificName: 'Carcinoscorpius rotundicauda',
+        threatCategory: null, // OBIS 收鲎；FishBase 没有
         glyph: 'crab',
         text: 'One of the few Selangor shores where mangrove horseshoe crabs still come up to spawn.',
-        source: 'UPM coastal survey · 2023',
+        source: PENDING_SOURCE,
       },
       {
         name: 'Seagrass Patches',
+        kind: 'habitat',
+        scientificName: null,
+        threatCategory: null, // 生境，FishBase / OBIS 都没有
         glyph: 'grass',
         text: 'Seagrass in the shallows feeds and shelters small marine animals.',
-        source: 'DoF Malaysia · 2022',
+        source: PENDING_SOURCE,
       },
       {
         name: 'Mangrove Habitat',
+        kind: 'habitat',
+        scientificName: null,
+        threatCategory: null, // 生境，FishBase / OBIS 都没有
         glyph: 'mangrove',
         text: 'The Sepang river-mouth mangroves sit just south of this beach.',
-        source: 'Selangor Forestry · 2023',
+        source: PENDING_SOURCE,
       },
     ],
     ecologicalNote:

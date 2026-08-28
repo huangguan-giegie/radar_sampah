@@ -185,6 +185,27 @@ paths:
         "413":
           $ref: "#/components/responses/Error"
 
+  /photos/{photoId}:
+    get:
+      tags: [Uploads]
+      security: []
+      summary: 读取一张照片（公开，无需鉴权）
+      description: |
+        图片字节存在 photos.data (bytea) 里，由后端直接读出来返回。
+        Content-Type 按 photos.mime；建议 Cache-Control: public, max-age=31536000, immutable。
+      parameters:
+        - { name: photoId, in: path, required: true, schema: { type: string } }
+      responses:
+        "200":
+          description: 图片字节流
+          content:
+            image/jpeg:
+              schema: { type: string, format: binary }
+            image/png:
+              schema: { type: string, format: binary }
+        "404":
+          $ref: "#/components/responses/Error"
+
   /reports:
     post:
       tags: [Reports]
@@ -480,7 +501,10 @@ components:
       required: [id, url, metadataStripped]
       properties:
         id: { type: string }
-        url: { type: string, format: uri }
+        url:
+          type: string
+          format: uri
+          description: 指向 GET /photos/{photoId}，公开可读
         metadataStripped:
           type: boolean
           description: EXIF 定位信息确实剥干净了才给 true
@@ -499,7 +523,10 @@ components:
         coords:
           type: object
           nullable: true
-          description: 仅 locationSource=gps 时携带；只用于查重，绝不出现在任何响应里
+          description: |
+            仅 locationSource=gps 时携带。存到 reports 行上的 lat/lng 两列
+            （四舍五入到小数点后 3 位，约 110m），只用于匹配海滩和查重。
+            绝不出现在任何响应里 —— 序列化层必须显式排除这两列，不要 SELECT *。
           required: [lat, lng]
           properties:
             lat: { type: number, format: double }

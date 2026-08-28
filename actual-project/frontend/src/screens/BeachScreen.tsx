@@ -272,6 +272,12 @@ export default function BeachScreen() {
                 </BeachCover>
                 <div style={{ padding: '24px 14px 14px' }}>
                   <div style={{ fontSize: 14, fontWeight: 650, letterSpacing: '-.1px' }}>{sp.name}</div>
+                  {sp.scientificName && (
+                    <div style={{ fontSize: 11, fontStyle: 'italic', color: C.dim, marginTop: 1 }}>
+                      {sp.scientificName}
+                      {sp.threatCategory ? ` · ${sp.threatCategory}` : ''}
+                    </div>
+                  )}
                   <div style={{ fontSize: 11.5, lineHeight: 1.5, color: C.muted, marginTop: 5 }}>{sp.text}</div>
 
                   {sp.likelihood && (
@@ -300,9 +306,33 @@ export default function BeachScreen() {
                     </div>
                   )}
 
-                  <div style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '.08em', color: C.faint, marginTop: 9 }}>
-                    SOURCE · {sp.source}
-                  </div>
+                  {sp.source.dataset === 'pending' ? (
+                    /* 没有真实出处时露出来，绝不显示一条编造的引用 */
+                    <div
+                      style={{
+                        marginTop: 9,
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 5,
+                        background: 'rgba(217,162,75,.14)',
+                        border: '1px solid rgba(217,162,75,.35)',
+                        borderRadius: 6,
+                        padding: '4px 7px',
+                        fontFamily: MONO,
+                        fontSize: 7.5,
+                        letterSpacing: '.08em',
+                        color: '#8A6420',
+                      }}
+                    >
+                      <i style={{ width: 4, height: 4, borderRadius: 2, background: '#D9A24B', display: 'block' }} />
+                      SOURCE PENDING · NOT YET FROM FISHBASE / OBIS
+                    </div>
+                  ) : (
+                    <div style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '.08em', color: C.faint, marginTop: 9, lineHeight: 1.5 }}>
+                      SOURCE · {sp.source.citation}
+                      {sp.source.accessedAt ? ` · accessed ${sp.source.accessedAt}` : ''}
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
