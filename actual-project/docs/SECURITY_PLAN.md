@@ -20,9 +20,12 @@
 - Render uses PostgreSQL through a private `DATABASE_URL`; local development
   falls back to SQLite when it is absent. Schema setup only creates tables
   that do not exist yet; it never adds a column to a table that is already
-  there. An existing local SQLite file or Render database created before a
-  schema change (such as adding the `status` column) must be reset or
-  migrated manually — it will not pick up the change automatically.
+  there on its own, so start-up now runs a small explicit migration step that
+  adds the `litter_reports.status` column (defaulting existing rows to
+  `pending`) when it is missing. Any future column addition needs the same
+  kind of explicit migration — it does not happen automatically just by
+  changing the table definition in code. A regression test creates a
+  pre-migration table and checks the API still works after start-up.
 
 ## Not claimed
 

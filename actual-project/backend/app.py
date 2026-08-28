@@ -30,8 +30,10 @@ from sqlalchemy import (
     Text,
     create_engine,
     func,
+    inspect,
     insert,
     select,
+    text,
 )
 from sqlalchemy.engine import Engine
 
@@ -319,8 +321,31 @@ def create_engine_for_url(database_url: str) -> Engine:
     return create_engine(database_url, future=True, connect_args=connect_args)
 
 
+def migrate_litter_reports_status_column(engine: Engine) -> None:
+    """Add the `status` column to a `litter_reports` table created before it existed.
+
+    `metadata.create_all` only creates tables that are missing; it never adds a
+    column to a table that is already there, so an existing SQLite file or
+    Render Postgres database from before this change needs an explicit ALTER.
+    """
+    inspector = inspect(engine)
+    if "litter_reports" not in inspector.get_table_names():
+        return
+    existing_columns = {column["name"] for column in inspector.get_columns("litter_reports")}
+    if "status" in existing_columns:
+        return
+    with engine.begin() as connection:
+        connection.execute(
+            text(
+                f"ALTER TABLE litter_reports ADD COLUMN status VARCHAR(16) "
+                f"NOT NULL DEFAULT '{LITTER_REPORT_STATUS_PENDING}'"
+            )
+        )
+
+
 def initialise_database(engine: Engine) -> None:
     metadata.create_all(engine)
+    migrate_litter_reports_status_column(engine)
     samples = load_context_samples()
     sites, species_catalog, briefing_catalog = (
         load_data_file("dive_sites.json"),

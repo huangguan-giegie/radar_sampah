@@ -6,7 +6,15 @@ from datetime import datetime, timezone
 
 import pytest
 
-from app import context_table, create_app, litter_reports_table, normalise_database_url
+from sqlalchemy import text
+
+from app import (
+    context_table,
+    create_app,
+    create_engine_for_url,
+    litter_reports_table,
+    normalise_database_url,
+)
 
 
 @pytest.fixture
@@ -469,6 +477,61 @@ def test_litter_report_status_column_rejects_values_outside_the_enum_at_the_data
 def test_normalise_database_url_covers_render_postgres_and_local_sqlite(raw_url, expected):
     """Render supplies DATABASE_URL as postgres:// — SQLAlchemy 2.x requires the psycopg2 dialect prefix."""
     assert normalise_database_url(raw_url) == expected
+
+
+def test_existing_litter_reports_table_without_status_column_is_migrated_on_startup(tmp_path):
+    """A database created before the status column existed must not 500 on startup.
+
+    metadata.create_all only creates missing tables; it never adds a column to
+    a table that is already there, so app start-up must migrate it explicitly.
+    """
+    database_url = f"sqlite:///{tmp_path / 'legacy_schema.db'}"
+    legacy_engine = create_engine_for_url(normalise_database_url(database_url))
+    with legacy_engine.begin() as connection:
+        connection.execute(
+            text(
+                """
+                CREATE TABLE litter_reports (
+                    id INTEGER PRIMARY KEY,
+                    area_id VARCHAR(80) NOT NULL,
+                    category VARCHAR(64) NOT NULL,
+                    quantity INTEGER NOT NULL DEFAULT 1,
+                    observed_at VARCHAR(40) NOT NULL,
+                    detection VARCHAR(80) NOT NULL,
+                    priority VARCHAR(12) NOT NULL,
+                    image_url VARCHAR(500),
+                    note TEXT,
+                    created_at DATETIME NOT NULL
+                )
+                """
+            )
+        )
+        connection.execute(
+            text(
+                """
+                INSERT INTO litter_reports
+                    (area_id, category, quantity, observed_at, detection, priority, image_url, note, created_at)
+                VALUES
+                    ('tioman-coast', 'Plastic packaging', 1, '2026-08-15T10:00:00+00:00',
+                     'reporter_selected', 'medium', NULL, NULL, '2026-08-15T10:00:00+00:00')
+                """
+            )
+        )
+    legacy_engine.dispose()
+
+    application = create_app(database_url=database_url, testing=True)
+    client = application.test_client()
+
+    listed = client.get("/api/litter-reports")
+    assert listed.status_code == 200
+    assert listed.get_json()["reports"][0]["status"] == "pending"
+
+    created = client.post(
+        "/api/litter-reports",
+        json={"area_id": "tioman-coast", "category": "plastic packaging"},
+    )
+    assert created.status_code == 201
+    assert created.get_json()["report"]["status"] == "pending"
 
 
 def test_cleanup_evidence_compares_anonymous_before_and_after_reports(client):
