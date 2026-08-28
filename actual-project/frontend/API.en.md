@@ -1,5 +1,14 @@
 # Radar Sampah — Backend API Specification v1 (Iteration 1)
 
+> **This is the English version.** The same contract exists three times and they must stay in
+> step — change one, change all three:
+>
+> | File | Language | For |
+> | --- | --- | --- |
+> | [`API.en.md`](./API.en.md) ← you are here | English | LiHanXia (backend), Keith (database) |
+> | [`API.md`](./API.md) | 中文 | Qian Jiang (frontend) |
+> | [`openapi.yaml`](./openapi.yaml) | English | tooling — Swagger UI, server stubs |
+
 > **This is a contract, not a discussion draft.** The frontend is fully built against it and
 > passes end-to-end on mock data. Implement to this and the two sides meet.
 > If something here is impractical, say so before changing it — the frontend then adjusts
@@ -300,10 +309,11 @@ CREATE TABLE area_species (
 
   kind                text NOT NULL CHECK (kind IN ('species','habitat','group')),
   display_name        text NOT NULL,
-  glyph               text NOT NULL,          -- 六个图标枚举之一。必须在这里：
-                                              -- 生境和统称没有 dim_species 行，
-                                              -- 图标也无法从 kind 推出来
-                                              -- （group 里既有 bird 又有 fish）
+  glyph               text NOT NULL,          -- one of the six icon names. It has to live
+                                              -- here: habitats and group names have no
+                                              -- dim_species row, and the icon cannot be
+                                              -- inferred from kind either — 'group' covers
+                                              -- both bird and fish
   text                text NOT NULL,
   sort_order          int  NOT NULL DEFAULT 0,
   origin              text NOT NULL DEFAULT 'curated'
@@ -781,8 +791,8 @@ reports          id, reporter_id, beach_id, location_source,
                  photo_url, photo_stripped
                  ← no photos table and no bytes in the database; just an address
                  qty_plastic, qty_fishing_gear, qty_glass,
-                 qty_metal, qty_paper, qty_other        ← 每列可空，至少一列非空
-                 category, quantity                     ← 派生：权重最高的非空类别
+                 qty_metal, qty_paper, qty_other        ← each nullable, at least one set
+                 category, quantity                     ← derived: highest-weighted non-null
                  lat(nullable), lng(nullable),
                  status, status_note, created_at, updated_at, deleted_at
                  ← lat/lng written only for gps, stored to 3 decimals,
