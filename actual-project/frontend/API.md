@@ -6,6 +6,7 @@
 >
 > 机器可读版本：[`openapi.yaml`](./openapi.yaml)（可直接导入 Swagger UI / 用来生成
 > 服务端骨架）。
+> 数据治理依据：[Data Management Plan](../docs/DATA_MANAGEMENT_PLAN.md)（[.docx 原件](../docs/RadarSampah_Data_Management_Plan_Iteration1_MVP.docx)）。
 
 ---
 

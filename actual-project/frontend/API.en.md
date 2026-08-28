@@ -6,7 +6,7 @@
 > in one file, `src/api.ts`.
 >
 > Chinese version: [`API.md`](./API.md) · Machine-readable: [`openapi.yaml`](./openapi.yaml)
-> · Data governance: `RadarSampah_Data_Management_Plan_Iteration1_MVP.docx` (the DMP)
+> · Data governance: [the DMP](../docs/DATA_MANAGEMENT_PLAN.md) ([.docx](../docs/RadarSampah_Data_Management_Plan_Iteration1_MVP.docx))
 
 ---
 
