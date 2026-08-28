@@ -519,7 +519,6 @@ components:
       type: object
       required: [url, metadataStripped]
       properties:
-        id: { type: string }
         url:
           type: string
           format: uri

@@ -11,8 +11,15 @@
 > do not generate models from the YAML.
 **Schema:** [`DATABASE_TASKS.md`](DATABASE_TASKS.md) (Keith) — build order and constraints.
 
-14 endpoints. The frontend is already written against all of them and runs today on mock
+13 endpoints. The frontend is already written against all of them and runs today on mock
 data, so **the contract is not a proposal — it is what the app already calls.**
+
+> ⚠️ **This replaces the `/api/*` backend currently in the repo.** `backend/app.py` serves a
+> different, earlier shape — no auth, `area_id` instead of `beaches`, five categories with
+> `Plastic packaging` and no `Paper`, an integer quantity, and a three-level `priority` instead
+> of four severity bands. It also carries `/api/litter-recognize` and `/api/cleanup-missions`,
+> which §10 puts out of scope. Qian Jiang's decision: **this contract is authoritative and the
+> existing routes are legacy.** Nothing here has to preserve them.
 
 ---
 
