@@ -1,4 +1,4 @@
-"""API contract tests for the DiveSafe MY student MVP."""
+"""API contract tests for the Radar Sampah litter MVP."""
 
 from __future__ import annotations
 
@@ -160,94 +160,8 @@ def test_context_initialisation_removes_stale_static_records(tmp_path):
     assert all(item["id"] != "obsolete-demo-context" for item in context)
 
 
-def test_divesafe_catalogues_expose_safe_demo_profile_sites_species_and_briefing(client):
-    profile = client.get("/api/profile")
-    sites = client.get("/api/dive-sites")
-    species = client.get("/api/species")
-    briefing = client.get("/api/briefings/tioman-demo")
-
-    assert profile.status_code == 200
-    assert profile.get_json()["profile"]["mode"] == "demo"
-    assert "name" not in profile.get_json()["profile"]
-    assert sites.status_code == 200
-    assert sites.get_json()["dive_sites"][0]["location_precision"] == "coarse"
-    assert "latitude" not in sites.get_json()["dive_sites"][0]
-    assert species.status_code == 200
-    assert species.get_json()["species"][0]["id"]
-    assert briefing.status_code == 200
-    assert briefing.get_json()["briefing"]["site_id"] == "tioman-demo"
-
-
-def test_recognition_uses_safe_fallback_when_no_external_adapter_is_configured(client):
-    response = client.post(
-        "/api/recognize",
-        json={"image_url": "/assets/demo-reef-fish.jpg", "species_hint": "clownfish-demo"},
-    )
-
-    assert response.status_code == 200
-    body = response.get_json()
-    assert body["recognition"]["species_id"] == "clownfish-demo"
-    assert body["recognition"]["method"] == "local_demo_fallback"
-    assert body["recognition"]["demo"] is True
-    assert body["recognition"]["status"] == "demo_fallback"
-    assert body["recognition"]["needs_user_confirmation"] is True
-
-
-def test_profile_post_stores_only_synthetic_fields(client):
-    response = client.post(
-        "/api/profile",
-        json={"nickname": "Reef learner", "certification_level": "Open Water student", "interests": ["reef fish"]},
-    )
-
-    assert response.status_code == 201
-    profile = response.get_json()["profile"]
-    assert profile["label"] == "Reef learner"
-    assert "name" not in profile
-    duplicate = client.post("/api/profile", json={"nickname": "New demo diver"})
-    assert duplicate.status_code == 201
-
-
-def test_sightings_keep_only_site_level_location_and_update_collection(client):
-    created = client.post(
-        "/api/sightings",
-        json={
-            "site_id": "tioman-demo",
-            "species_id": "clownfish-demo",
-            "observed_at": "2026-08-15T09:00:00Z",
-            "note": "Demo reef sighting",
-        },
-    )
-
-    assert created.status_code == 201
-    sighting = created.get_json()["sighting"]
-    assert sighting["site_id"] == "tioman-demo"
-    assert "latitude" not in sighting
-    assert "longitude" not in sighting
-    assert created.get_json()["collection"]["species_count"] == 1
-
-    listed = client.get("/api/sightings")
-    assert listed.status_code == 200
-    assert listed.get_json()["sightings"] == [sighting]
-    collection = client.get("/api/collection")
-    assert collection.get_json()["collection"]["badges"][0]["id"] == "first-sighting"
-
-
-@pytest.mark.parametrize(
-    "payload",
-    [
-        {"site_id": "tioman-demo", "species_id": "clownfish-demo", "latitude": 2.8},
-        {"site_id": "tioman-demo", "species_id": "clownfish-demo", "name": "A diver"},
-    ],
-)
-def test_sightings_reject_precise_coordinates_and_personal_data(client, payload):
-    response = client.post("/api/sightings", json=payload)
-
-    assert response.status_code == 400
-    assert "not accepted" in response.get_json()["error"]
-
-
-def test_tidetrace_catalogue_recognition_and_report_flow_are_anonymous_and_region_level(client, monkeypatch):
-    """Removing the TideTrace routes or privacy validation must fail this contract."""
+def test_radar_catalogue_recognition_and_report_flow_are_anonymous_and_region_level(client, monkeypatch):
+    """The Radar Sampah routes keep the anonymous, region-level contract."""
     monkeypatch.setenv("LITTER_RECOGNITION_ENABLED", "false")
     monkeypatch.setenv("LITTER_RECOGNITION_API_URL", "https://recognition.example.test")
     monkeypatch.setattr("recognition_adapter.urlopen", lambda *args, **kwargs: pytest.fail("disabled recognition contacted a provider"))
@@ -300,7 +214,7 @@ def test_tidetrace_catalogue_recognition_and_report_flow_are_anonymous_and_regio
     assert heatmap.get_json()["areas"][0]["no_exact_location"] is True
 
 
-def test_tidetrace_cleanup_progress_flow_uses_anonymous_counters(client):
+def test_radar_cleanup_progress_flow_uses_anonymous_counters(client):
     """Removing missions, joining, evidence, or progress aggregation must fail."""
     missions = client.get("/api/cleanup-missions")
     assert missions.status_code == 200
@@ -324,7 +238,7 @@ def test_tidetrace_cleanup_progress_flow_uses_anonymous_counters(client):
     assert progress.get_json()["progress"]["verified_item_count"] == 4
 
 
-def test_tidetrace_report_returns_illustrative_detection_and_priority(client):
+def test_radar_report_returns_illustrative_detection_and_priority(client):
     payload = {
         "area_id": "tioman-coast",
         "category": "Fishing gear",
@@ -345,7 +259,7 @@ def test_tidetrace_report_returns_illustrative_detection_and_priority(client):
     assert "enforcement" in body["priority"]["disclaimer"].lower()
 
 
-def test_tidetrace_recognition_fallback_exposes_privacy_boundary(client):
+def test_radar_recognition_fallback_exposes_privacy_boundary(client):
     response = client.post(
         "/api/litter-recognize",
         json={"image_url": "/assets/demo-plastic.jpg", "category_hint": "Plastic packaging"},
@@ -357,7 +271,7 @@ def test_tidetrace_recognition_fallback_exposes_privacy_boundary(client):
     assert detection["illustrative"] is True
 
 
-def test_tidetrace_before_after_evidence_returns_illustrative_impact(client):
+def test_radar_before_after_evidence_returns_illustrative_impact(client):
     before = client.post(
         "/api/litter-reports",
         json={
@@ -390,7 +304,7 @@ def test_tidetrace_before_after_evidence_returns_illustrative_impact(client):
     assert impact["illustrative"] is True
 
 
-def test_tidetrace_rejects_case_variant_personal_and_coordinate_keys(client):
+def test_radar_rejects_case_variant_personal_and_coordinate_keys(client):
     """Changing key casing must not bypass the anonymous, region-level boundary."""
     for field, value in (("Email", "person@example.test"), ("Latitude", 2.8)):
         response = client.post(

@@ -1,4 +1,4 @@
-# Team 04 Social Contract - TideTrace MY
+# Team 04 Social Contract - Radar Sampah
 
 **Version 3.0 | 15 August 2026**
 
@@ -30,5 +30,5 @@ heatmap as verified evidence.
 ## Definition of done
 
 A change is done when it has evidence, the integrated demo still runs, docs
-match the active flow and the next owner knows the handover. DiveSafe material
-stays available as rollback history and is not deleted.
+match the active flow and the next owner knows the handover. Older sample
+material is kept outside the active build and can be restored from Git tags.

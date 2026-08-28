@@ -1,9 +1,8 @@
-# TideTrace MY Integration Checklist
+# Radar Sampah Integration Checklist
 
 ## Identity and configuration
 
-- [ ] Active pages and docs say **TideTrace MY**.
-- [ ] DiveSafe is described only as legacy rollback material.
+- [ ] Active pages and docs say **Radar Sampah**.
 - [ ] `DATABASE_URL` and `LITTER_RECOGNITION_API_KEY` are private and absent
   from Git.
 - [ ] `FRONTEND_ORIGINS` matches the frontend URL.

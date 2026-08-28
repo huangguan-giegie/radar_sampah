@@ -1,9 +1,8 @@
-"""Flask API for the Team 04 DiveSafe MY demonstration.
+"""Flask API for the Team 04 Radar Sampah demonstration.
 
-The service exposes source-visible dive sites, species and responsible-diving
-briefings. The older litter observation API remains as a legacy compatibility
-layer. The active DiveSafe flow uses synthetic/public data and never stores
-personal identifiers or exact sensitive-species locations.
+The service exposes broad-area marine litter reports, illustrative severity
+results and cleanup progress. It uses synthetic/public data and never stores
+personal identifiers or exact litter coordinates in the main flow.
 """
 
 from __future__ import annotations
@@ -34,7 +33,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.engine import Engine
 
-from recognition_adapter import recognise, recognise_litter
+from recognition_adapter import recognise_litter
 
 
 DATA_VERSION = "marine-observation-v1"
@@ -61,7 +60,6 @@ PERSONAL_IDENTIFIER_FIELDS = {
     "api_key",
 }
 LOCAL_DATABASE_URL = "sqlite:///marine_observation.db"
-DIVE_SAFE_DATA_VERSION = "divesafe-my-2026-08-15-v1"
 PRECISE_LOCATION_FIELDS = {"latitude", "longitude", "coordinates", "gps", "exact_location"}
 
 
@@ -112,81 +110,6 @@ context_table = Table(
     Column("longitude", Float, nullable=False),
     Column("taxon_or_context_label", String(240), nullable=False),
     Column("sensitivity", String(40), nullable=False),
-)
-sightings_table = Table(
-    "sightings",
-    metadata,
-    Column("id", Integer, primary_key=True),
-    Column("site_id", String(80), nullable=False),
-    Column("species_id", String(80), nullable=False),
-    Column("observed_at", String(40), nullable=False),
-    Column("note", Text),
-    Column("demo", Boolean, nullable=False, default=True),
-    Column("created_at", DateTime(timezone=True), nullable=False),
-)
-profiles_table = Table(
-    "demo_profiles",
-    metadata,
-    Column("id", String(80), primary_key=True),
-    Column("nickname", String(60), nullable=False),
-    Column("certification_level", String(80), nullable=False),
-    Column("interests", Text, nullable=False),
-    Column("created_at", DateTime(timezone=True), nullable=False),
-)
-recognition_results_table = Table(
-    "recognition_results",
-    metadata,
-    Column("id", Integer, primary_key=True),
-    Column("image_url", String(500), nullable=False),
-    Column("species_id", String(80)),
-    Column("method", String(80), nullable=False),
-    Column("status", String(40), nullable=False),
-    Column("created_at", DateTime(timezone=True), nullable=False),
-)
-site_catalog_table = Table(
-    "dive_sites",
-    metadata,
-    Column("id", String(80), primary_key=True),
-    Column("name", String(160), nullable=False),
-    Column("region", String(160), nullable=False),
-    Column("location_precision", String(40), nullable=False),
-)
-species_catalog_table = Table(
-    "species",
-    metadata,
-    Column("id", String(80), primary_key=True),
-    Column("common_name", String(160), nullable=False),
-    Column("scientific_name", String(160)),
-    Column("sensitivity", String(40), nullable=False),
-)
-site_species_table = Table(
-    "site_species",
-    metadata,
-    Column("site_id", ForeignKey("dive_sites.id"), primary_key=True),
-    Column("species_id", ForeignKey("species.id"), primary_key=True),
-)
-briefings_table = Table(
-    "briefings",
-    metadata,
-    Column("site_id", String(80), primary_key=True),
-    Column("title", String(160), nullable=False),
-    Column("checks", Text, nullable=False),
-)
-collections_table = Table(
-    "species_collections",
-    metadata,
-    Column("id", Integer, primary_key=True),
-    Column("profile_id", String(80), nullable=False),
-    Column("species_id", String(80), nullable=False),
-    Column("created_at", DateTime(timezone=True), nullable=False),
-)
-badges_table = Table(
-    "contributor_badges",
-    metadata,
-    Column("id", String(80), primary_key=True),
-    Column("profile_id", String(80), nullable=False),
-    Column("label", String(160), nullable=False),
-    Column("created_at", DateTime(timezone=True), nullable=False),
 )
 litter_reports_table = Table(
     "litter_reports",
@@ -304,11 +227,6 @@ def create_engine_for_url(database_url: str) -> Engine:
 def initialise_database(engine: Engine) -> None:
     metadata.create_all(engine)
     samples = load_context_samples()
-    sites, species_catalog, briefing_catalog = (
-        load_data_file("dive_sites.json"),
-        load_data_file("species_directory.json"),
-        load_data_file("responsible_diving_briefings.json"),
-    )
     tidetrace_catalog = load_data_file("tidetrace_catalog.json")
     sample_ids = {sample["id"] for sample in samples}
     with engine.begin() as connection:
@@ -333,47 +251,6 @@ def initialise_database(engine: Engine) -> None:
                         longitude=location["longitude"],
                         taxon_or_context_label=sample["taxon_or_context_label"],
                         sensitivity=sample["sensitivity"],
-                    )
-                )
-        for site in sites["dive_sites"]:
-            if connection.execute(select(site_catalog_table.c.id).where(site_catalog_table.c.id == site["id"])).first() is None:
-                connection.execute(
-                    insert(site_catalog_table).values(
-                        id=site["id"],
-                        name=site["name"],
-                        region=site["region"],
-                        location_precision=site["location_precision"],
-                    )
-                )
-        for item in species_catalog["species"]:
-            if connection.execute(select(species_catalog_table.c.id).where(species_catalog_table.c.id == item["id"])).first() is None:
-                connection.execute(
-                    insert(species_catalog_table).values(
-                        id=item["id"],
-                        common_name=item["common_name"],
-                        scientific_name=item.get("scientific_name"),
-                        sensitivity=item["sensitivity"],
-                    )
-                )
-        for site in sites["dive_sites"]:
-            for item in species_catalog["species"]:
-                relation = connection.execute(
-                    select(site_species_table.c.site_id).where(
-                        site_species_table.c.site_id == site["id"],
-                        site_species_table.c.species_id == item["id"],
-                    )
-                ).first()
-                if relation is None:
-                    connection.execute(
-                        insert(site_species_table).values(site_id=site["id"], species_id=item["id"])
-                    )
-        for briefing in briefing_catalog["briefings"]:
-            if connection.execute(select(briefings_table.c.site_id).where(briefings_table.c.site_id == briefing["site_id"])).first() is None:
-                connection.execute(
-                    insert(briefings_table).values(
-                        site_id=briefing["site_id"],
-                        title=briefing["title"],
-                        checks=json.dumps(briefing["checks"]),
                     )
                 )
         for mission in tidetrace_catalog["missions"]:
@@ -533,71 +410,6 @@ def result_for_observation(engine: Engine, observation_id: int) -> dict[str, Any
     }
 
 
-def dive_catalogue() -> tuple[dict[str, Any], dict[str, Any], dict[str, Any]]:
-    return (
-        load_data_file("dive_sites.json"),
-        load_data_file("species_directory.json"),
-        load_data_file("responsible_diving_briefings.json"),
-    )
-
-
-def safe_sighting_dict(row: Any) -> dict[str, Any]:
-    """Return a sighting without exact coordinates or any personal identifiers."""
-    return {
-        "id": row.id,
-        "site_id": row.site_id,
-        "species_id": row.species_id,
-        "observed_at": row.observed_at,
-        "note": row.note,
-        "demo": bool(row.demo),
-    }
-
-
-def collection_payload(engine: Engine) -> dict[str, Any]:
-    with engine.connect() as connection:
-        species_ids = connection.execute(select(sightings_table.c.species_id).distinct()).scalars().all()
-        sighting_count = connection.execute(select(func.count()).select_from(sightings_table)).scalar_one()
-    badges = []
-    if sighting_count:
-        badges.append({"id": "first-sighting", "label": "First responsible sighting", "earned": True})
-    if len(species_ids) >= 3:
-        badges.append({"id": "reef-observer", "label": "Reef observer", "earned": True})
-    return {
-        "collection": {
-            "sighting_count": sighting_count,
-            "species_count": len(species_ids),
-            "badges": badges,
-            "location_boundary": "Site-level records only; exact coordinates are never stored or returned.",
-        },
-        "demo": True,
-        "data_version": DIVE_SAFE_DATA_VERSION,
-    }
-
-
-def parse_sighting_payload(payload: Any, site_ids: set[str], species_ids: set[str]) -> tuple[dict[str, Any] | None, str | None]:
-    if not isinstance(payload, dict):
-        return None, "A JSON object is required"
-    if contains_personal_identifier(payload):
-        return None, "Personal identifier fields are not accepted"
-    if contains_precise_location(payload):
-        return None, "Exact coordinate fields are not accepted"
-    site_id = str(payload.get("site_id") or "").strip()
-    species_id = str(payload.get("species_id") or "").strip()
-    if site_id not in site_ids or species_id not in species_ids:
-        return None, "Unknown demo site or species"
-    timestamp = str(payload.get("observed_at") or datetime.now(timezone.utc).isoformat()).strip()
-    try:
-        observed_at = datetime.fromisoformat(timestamp.replace("Z", "+00:00"))
-    except ValueError:
-        return None, "observed_at must be a valid ISO 8601 timestamp"
-    if observed_at.tzinfo is None:
-        observed_at = observed_at.replace(tzinfo=timezone.utc)
-    note = str(payload.get("note") or "").strip() or None
-    if note and len(note) > 600:
-        return None, "note must be at most 600 characters"
-    return {"site_id": site_id, "species_id": species_id, "observed_at": observed_at.isoformat(), "note": note}, None
-
-
 def tidetrace_catalogue() -> dict[str, Any]:
     return load_data_file("tidetrace_catalog.json")
 
@@ -713,7 +525,7 @@ def create_app(database_url: str | None = None, testing: bool = False) -> Flask:
     def root():
         return jsonify(
             {
-                "project": "DiveSafe MY - Endangered Species Hotspot Guide",
+                "project": "Radar Sampah - Marine litter reporting",
                 "status": "ready",
                 "data_boundary": "synthetic/public demonstration data only",
             }
@@ -770,115 +582,6 @@ def create_app(database_url: str | None = None, testing: bool = False) -> Flask:
             connection.execute(insert(priorities_table).values(observation_id=observation_id, **priority))
 
         return jsonify(result_for_observation(engine, observation_id)), 201
-
-    @application.get("/api/profile")
-    def get_demo_profile():
-        return jsonify(
-            {
-                "profile": {
-                    "id": "divesafe-demo-diver",
-                    "mode": "demo",
-                    "label": "Demo diver",
-                    "privacy_note": "No name, contact information or account identifier is collected.",
-                },
-                "demo": True,
-                "data_version": DIVE_SAFE_DATA_VERSION,
-            }
-        )
-
-    @application.post("/api/profile")
-    def create_demo_profile():
-        payload = request.get_json(silent=True) or {}
-        if contains_personal_identifier(payload):
-            return jsonify({"error": "Personal identifier fields are not accepted"}), 400
-        nickname = str(payload.get("nickname") or "Demo diver").strip()
-        level = str(payload.get("certification_level") or "Open Water student").strip()
-        interests = payload.get("interests") or []
-        if len(nickname) > 60 or len(level) > 80 or not isinstance(interests, list):
-            return jsonify({"error": "Profile fields are not valid"}), 400
-        profile = {
-            "id": "divesafe-demo-diver",
-            "mode": "demo",
-            "label": nickname or "Demo diver",
-            "certification_level": level or "Open Water student",
-            "interests": [str(item)[:60] for item in interests[:8]],
-            "privacy_note": "No name, contact information or account identifier is collected.",
-        }
-        with engine.begin() as connection:
-            existing = connection.execute(
-                select(profiles_table.c.id).where(profiles_table.c.id == profile["id"])
-            ).first()
-            values = {
-                "id": profile["id"],
-                "nickname": profile["label"],
-                "certification_level": profile["certification_level"],
-                "interests": json.dumps(profile["interests"]),
-            }
-            if existing:
-                connection.execute(profiles_table.update().where(profiles_table.c.id == profile["id"]).values(**values))
-            else:
-                connection.execute(insert(profiles_table).values(**values, created_at=datetime.now(timezone.utc)))
-        return jsonify(
-            {
-                "profile": profile,
-                "demo": True,
-                "data_version": DIVE_SAFE_DATA_VERSION,
-            }
-        ), 201
-
-    @application.get("/api/dive-sites")
-    def get_dive_sites():
-        sites, _, _ = dive_catalogue()
-        return jsonify({"dive_sites": sites["dive_sites"], "demo": True, "data_version": DIVE_SAFE_DATA_VERSION})
-
-    @application.get("/api/species")
-    def get_species():
-        _, species, _ = dive_catalogue()
-        return jsonify({"species": species["species"], "demo": True, "data_version": DIVE_SAFE_DATA_VERSION})
-
-    @application.get("/api/species/<site_id>")
-    def get_species_for_site(site_id: str):
-        sites, species, _ = dive_catalogue()
-        if not any(item["id"] == site_id for item in sites["dive_sites"]):
-            return jsonify({"error": "Unknown demo dive site"}), 404
-        return jsonify({"site_id": site_id, "species": species["species"], "demo": True, "data_version": DIVE_SAFE_DATA_VERSION})
-
-    @application.get("/api/briefings/<site_id>")
-    def get_briefing(site_id: str):
-        _, _, briefings = dive_catalogue()
-        briefing = next((item for item in briefings["briefings"] if item["site_id"] == site_id), None)
-        if briefing is None:
-            return jsonify({"error": "Unknown demo dive site"}), 404
-        return jsonify({"briefing": briefing, "demo": True, "data_version": DIVE_SAFE_DATA_VERSION})
-
-    @application.get("/api/briefing/<site_id>")
-    def get_briefing_singular(site_id: str):
-        return get_briefing(site_id)
-
-    @application.post("/api/recognize")
-    def recognize_species():
-        payload = request.get_json(silent=True)
-        if not isinstance(payload, dict):
-            return jsonify({"error": "A JSON object is required"}), 400
-        if contains_personal_identifier(payload):
-            return jsonify({"error": "Personal identifier fields are not accepted"}), 400
-        image_url = str(payload.get("image_url") or "").strip()
-        if not image_url or not (image_url.startswith("/assets/") or image_url.startswith("https://")):
-            return jsonify({"error": "image_url must use HTTPS or a local /assets/ path"}), 400
-        _, species, _ = dive_catalogue()
-        species_ids = {item["id"] for item in species["species"]}
-        result = recognise(image_url, str(payload.get("species_hint") or "").strip() or None, species_ids)
-        with engine.begin() as connection:
-            connection.execute(
-                insert(recognition_results_table).values(
-                    image_url=image_url,
-                    species_id=result.get("species_id"),
-                    method=result.get("method", "demo"),
-                    status=result.get("status", "demo_fallback"),
-                    created_at=datetime.now(timezone.utc),
-                )
-            )
-        return jsonify({"recognition": {**result, "image_url": image_url, "demo": True}, "data_version": DIVE_SAFE_DATA_VERSION})
 
     @application.get("/api/litter-options")
     def get_litter_options():
@@ -987,60 +690,6 @@ def create_app(database_url: str | None = None, testing: bool = False) -> Flask:
             item_count = connection.execute(select(func.coalesce(func.sum(cleanup_evidence_table.c.item_count), 0))).scalar_one()
             mission_count = connection.execute(select(func.count()).select_from(cleanup_missions_table)).scalar_one()
         return jsonify({"progress": {"report_count": report_count, "mission_join_count": join_count, "verified_item_count": item_count, "mission_count": mission_count, "privacy_note": "Anonymous, region-level demonstration counters only."}, "demo": True, "data_version": tidetrace_catalogue()["version"]})
-
-    @application.get("/api/sightings")
-    def get_sightings():
-        with engine.connect() as connection:
-            rows = connection.execute(select(sightings_table).order_by(sightings_table.c.id)).all()
-        return jsonify({"sightings": [safe_sighting_dict(row) for row in rows], "demo": True, "data_version": DIVE_SAFE_DATA_VERSION})
-
-    @application.post("/api/sightings")
-    def create_sighting():
-        sites, species, _ = dive_catalogue()
-        data, error = parse_sighting_payload(
-            request.get_json(silent=True),
-            {item["id"] for item in sites["dive_sites"]},
-            {item["id"] for item in species["species"]},
-        )
-        if error:
-            return jsonify({"error": error}), 400
-        assert data is not None
-        with engine.begin() as connection:
-            inserted = connection.execute(insert(sightings_table).values(**data, demo=True, created_at=datetime.now(timezone.utc)))
-            sighting_id = inserted.inserted_primary_key[0]
-            row = connection.execute(select(sightings_table).where(sightings_table.c.id == sighting_id)).first()
-            collection_exists = connection.execute(
-                select(collections_table.c.id).where(
-                    collections_table.c.profile_id == "divesafe-demo-diver",
-                    collections_table.c.species_id == data["species_id"],
-                )
-            ).first()
-            if collection_exists is None:
-                connection.execute(
-                    insert(collections_table).values(
-                        profile_id="divesafe-demo-diver",
-                        species_id=data["species_id"],
-                        created_at=datetime.now(timezone.utc),
-                    )
-                )
-            badge_exists = connection.execute(
-                select(badges_table.c.id).where(badges_table.c.id == "first-sighting")
-            ).first()
-            if badge_exists is None:
-                connection.execute(
-                    insert(badges_table).values(
-                        id="first-sighting",
-                        profile_id="divesafe-demo-diver",
-                        label="First responsible sighting",
-                        created_at=datetime.now(timezone.utc),
-                    )
-                )
-        return jsonify({"sighting": safe_sighting_dict(row), **collection_payload(engine)}), 201
-
-    @application.get("/api/collection")
-    @application.get("/api/collection/<profile_id>")
-    def get_collection(profile_id: str | None = None):
-        return jsonify(collection_payload(engine))
 
     return application
 

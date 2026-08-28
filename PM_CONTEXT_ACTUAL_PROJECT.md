@@ -1916,3 +1916,64 @@ key card text/header values were re-read from the live board.
   re-read from the live page. All images are synthetic/project demonstration
   visuals and do not add real personal data or exact sensitive locations.
 
+## 2026-08-28 — GitHub legacy sample cleanup
+
+- Scope: GitHub repository `huangguan-giegie/radar_sampah` only. Drive,
+  ePortfolio, Sample Project PGIE, Render settings and Future Features were not
+  changed.
+- Pre-cleanup `main` was `6ea1190d7bcc7f352dbb72465402ee831a5a11da`.
+  A full archive and all-ref bundle are saved under
+  `realwork/backups/github-legacy-cleanup-20260828/`.
+- Rollback tags kept: `divesafe-last-stable` and
+  `radar-sampah-pre-legacy-cleanup-20260828`.
+- Cleanup commit on branch `codex/remove-legacy-sample-material` is
+  `47ca9c28b92f8b8462c8b4c8d040431313c20b89`.
+- Removed from the active tree: `references/healthfirst-example/**`,
+  `actual-project/backend/data/dive_sites.json`,
+  `species_directory.json` and `responsible_diving_briefings.json`.
+  The old sample files remain recoverable from the tags and Git history.
+- Removed the DiveSafe profile, species, briefing, recognition, sighting,
+  collection and badge tables, helpers and routes from the active Flask app.
+  The Radar Sampah litter tables, `/api/observations` compatibility route,
+  current litter routes, `tidetrace_catalog.json`, OBIS context and Sea-TACO
+  model files remain.
+- Active README, API, integration, team and deliverable documents now describe
+  Radar Sampah only. The migration record and this PM context retain the audit
+  history and rollback references.
+- Backend verification after cleanup: `19 passed`; Python compileall passed;
+  `git diff --check` passed. Frontend build/test still needs to be run before
+  merging to `main`.
+- Remote branches scheduled for deletion after the main-branch verification:
+  `agent/liquid-effects-more-visible` and `codex/radar-sampah-frontend`.
+  Kept: `main`, `Sea-TACO-Detection-Model` and
+  `feature/lihanxia-litter-report-status`.
+
+### Final verification — 2026-08-28 22:58 +09:00
+
+- The cleanup branch was merged into `main` with merge commit
+  `2df923e910f962f7eaa29a8159634f7d8843d3ff` and pushed to origin.
+- Remote `agent/liquid-effects-more-visible` and
+  `codex/radar-sampah-frontend` were deleted. The model, backend feature and
+  other team branches were left unchanged.
+- Backend: `python -m pytest -q` passed (19 tests); Python compileall and
+  whitespace checks passed. Frontend: 10 Vitest tests passed and
+  `npx vite build --outDir dist-clean-verify` completed successfully.
+- Local smoke check: `/health`, `/api/litter-options`,
+  `/api/litter-reports`, `/api/litter-heatmap`, `/api/cleanup-missions` and
+  `/api/community-progress` returned 200; a synthetic litter report returned
+  201, demo recognition returned 200, and mission join returned 201. Removed
+  DiveSafe endpoints returned 404 as intended.
+- Render check: the existing `team04-marine-observation-frontend` and
+  `team04-marine-observation-api` services returned 200 for their home/health
+  checks. The unconfigured `radar-sampah-frontend` and
+  `radar-sampah-api` hostnames returned 404; no Render settings were changed
+  in this cleanup.
+- A second live check of the existing API returned 200 for `/health`,
+  `/api/litter-options`, `/api/context`, `/api/litter-reports`,
+  `/api/litter-heatmap`, `/api/cleanup-missions` and
+  `/api/community-progress`; the API root identifies the project as Radar
+  Sampah.
+- Final active-tree grep found no old sample runtime routes, DiveSafe data
+  files or HealthFirst text outside the explicitly retained audit records and
+  historical plan files.
+

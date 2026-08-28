@@ -58,9 +58,8 @@ only when it is exactly `true` and `LITTER_RECOGNITION_API_URL` is HTTPS.
 `LITTER_RECOGNITION_TIMEOUT_MS` (default `4000`). No key is returned or stored
 in report data.
 
-## Legacy rollback routes
+## Rollback note
 
-Earlier DiveSafe routes (`/api/profile`, `/api/dive-sites`, `/api/species`,
-`/api/briefing`, `/api/recognize`, `/api/sightings` and collection routes) and
-the earlier observation routes remain in the repository as legacy rollback
-paths. They are not part of Radar Sampah, its screenshots or its demo claim.
+The active build exposes the Radar Sampah litter routes above. The previous
+sample runtime is kept only in Git rollback tags and is not part of this API
+contract.
