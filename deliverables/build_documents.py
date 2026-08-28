@@ -512,9 +512,9 @@ def parse_and_build(source):
                 title_text = line[2:].strip()
                 paragraph.add_run(title_text)
                 doc.core_properties.title = title_text
-                doc.core_properties.subject = "Team 04 DiveSafe MY student MVP"
+                doc.core_properties.subject = "Team 04 Radar Sampah MVP"
                 doc.core_properties.author = "Team 04"
-                doc.core_properties.keywords = "DiveSafe MY, synthetic data, public sources, non-enforcement"
+                doc.core_properties.keywords = "Radar Sampah, synthetic data, public sources, non-enforcement"
                 first_title = False
             else:
                 doc.add_heading(line[2:].strip(), level=1)

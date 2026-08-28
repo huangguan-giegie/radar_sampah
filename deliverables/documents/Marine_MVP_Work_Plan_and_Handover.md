@@ -1,4 +1,4 @@
-# TideTrace MY Work Plan and Handover
+# Radar Sampah Work Plan and Handover
 
 **Version 3.0 | 15 August 2026**
 
@@ -27,7 +27,7 @@ Deliver one simple marine-litter demo on Render:
 `/api/litter-recognize`, `/api/litter-heatmap`, `/api/cleanup-missions`,
 `/api/cleanup-evidence` and `/api/community-progress` are active.
 
-DiveSafe and earlier observation routes remain legacy rollback paths only.
+Earlier sample routes are available only through Git rollback tags.
 
 ## Integration steps
 

@@ -1,4 +1,4 @@
-# TideTrace MY QA and Deployment Checklist
+# Radar Sampah QA and Deployment Checklist
 
 **Version 3.0 | 15 August 2026**
 
@@ -46,5 +46,5 @@ and unsafe image URLs. Never show a provider key.
 - [ ] Render points at the intended `main` commit.
 - [ ] PostgreSQL/provider secrets are private in Render.
 - [ ] `LITTER_RECOGNITION_ENABLED=false` unless reviewed.
-- [ ] Docs use active TideTrace routes and preserve DiveSafe rollback wording.
+- [ ] Docs use only active Radar Sampah routes.
 - [ ] Evidence records time, commit, screenshots, response status and limits.
