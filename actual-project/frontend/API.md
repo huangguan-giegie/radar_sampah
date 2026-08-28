@@ -547,7 +547,6 @@ ALTER TABLE reports
 | GET | `/reports/mine?status=` | 是 | 我的记录，按时间倒序 |
 | GET | `/reports/mine/counts` | 是 | 三个计数 |
 | PATCH | `/reports/:id` | 是 | 修正 |
-| DELETE | `/reports/:id` | 是 | 删除 |
 
 ### POST `/reports`
 
@@ -686,10 +685,6 @@ ALTER TABLE reports
 - 只能改自己的记录，否则 403 `NOT_OWNER`
 - **改完要重跑一遍状态判定**：一条 `Incomplete` 记录补好照片后应该变回 `Counted`
 - 返回更新后的完整 `LitterReport`
-
-### DELETE `/reports/:id`
-
-204。只能删自己的。软删即可（`deleted_at`），但删掉后**必须立刻从严重度计算里剔除**。
 
 ---
 

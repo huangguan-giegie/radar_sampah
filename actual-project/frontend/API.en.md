@@ -551,7 +551,6 @@ these three are what make it defensible:
 | GET | `/reports/mine?status=` | yes | Own reports, newest first |
 | GET | `/reports/mine/counts` | yes | `{ counted, duplicate, incomplete }` |
 | PATCH | `/reports/:id` | yes | Correct a report |
-| DELETE | `/reports/:id` | yes | Delete |
 
 ### POST `/reports`
 
@@ -693,11 +692,6 @@ Body is any subset of the POST body (`beachId` / `quantities` / `photoUrl`).
 - Own reports only, otherwise 403 `NOT_OWNER`.
 - **Re-run the status judgement.** An `Incomplete` record with a fixed photo must return to `Counted`.
 - Returns the full updated `LitterReport`.
-
-### DELETE `/reports/:id`
-
-204, own reports only. A soft delete (`deleted_at`) is fine, but the row must **drop out of the
-severity calculation immediately**, not at the next rebuild.
 
 ---
 

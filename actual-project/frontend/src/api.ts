@@ -452,12 +452,3 @@ export async function updateReport(
   return request('/reports/' + id, 'PATCH', changes);
 }
 
-export async function deleteReport(id: string): Promise<void> {
-  if (USE_MOCK) {
-    await delay(200);
-    replaceCurrentMockReports(currentMockReports().filter((r) => r.id !== id));
-    return;
-  }
-
-  await request('/reports/' + id, 'DELETE');
-}

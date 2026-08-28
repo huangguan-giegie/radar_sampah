@@ -239,8 +239,6 @@ export default function BeachScreen() {
           </div>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, borderTop: '1px solid rgba(255,255,255,.1)', marginTop: 13, paddingTop: 11 }}>
             <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '.1em', color: '#8290A8', lineHeight: 1.7 }}>
-              SENSITIVITY ANALYSIS APPLIED
-              <br />
               SAME RULE FOR ALL BEACHES
             </span>
             <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 650, color: C.lime, whiteSpace: 'nowrap' }}>

@@ -266,16 +266,6 @@ paths:
           $ref: "#/components/responses/Error"
         "404":
           $ref: "#/components/responses/Error"
-    delete:
-      tags: [Reports]
-      summary: 删除记录
-      parameters:
-        - { name: reportId, in: path, required: true, schema: { type: string } }
-      responses:
-        "204": { description: 已删除 }
-        "403":
-          $ref: "#/components/responses/Error"
-
 components:
   securitySchemes:
     bearerAuth:
