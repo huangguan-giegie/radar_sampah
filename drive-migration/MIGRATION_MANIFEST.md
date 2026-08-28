@@ -559,6 +559,9 @@ changed.
 - Existing Render services still respond at their current team04 hostnames.
   The planned radar-sampah hostnames are not configured (404), so this GitHub
   cleanup does not claim a Render rename or redeployment.
+- A live API check returned 200 for `/health`, `/api/litter-options`,
+  `/api/context`, `/api/litter-reports`, `/api/litter-heatmap`,
+  `/api/cleanup-missions` and `/api/community-progress`.
 - Final active-tree search contains no old sample runtime routes or data files;
   historical names remain only in this manifest, PM context and retained plan
   history.

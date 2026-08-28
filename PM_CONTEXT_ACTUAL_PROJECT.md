@@ -1968,6 +1968,11 @@ key card text/header values were re-read from the live board.
   checks. The unconfigured `radar-sampah-frontend` and
   `radar-sampah-api` hostnames returned 404; no Render settings were changed
   in this cleanup.
+- A second live check of the existing API returned 200 for `/health`,
+  `/api/litter-options`, `/api/context`, `/api/litter-reports`,
+  `/api/litter-heatmap`, `/api/cleanup-missions` and
+  `/api/community-progress`; the API root identifies the project as Radar
+  Sampah.
 - Final active-tree grep found no old sample runtime routes, DiveSafe data
   files or HealthFirst text outside the explicitly retained audit records and
   historical plan files.
