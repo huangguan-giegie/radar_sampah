@@ -1948,3 +1948,27 @@ key card text/header values were re-read from the live board.
   Kept: `main`, `Sea-TACO-Detection-Model` and
   `feature/lihanxia-litter-report-status`.
 
+### Final verification — 2026-08-28 22:58 +09:00
+
+- The cleanup branch was merged into `main` with merge commit
+  `2df923e910f962f7eaa29a8159634f7d8843d3ff` and pushed to origin.
+- Remote `agent/liquid-effects-more-visible` and
+  `codex/radar-sampah-frontend` were deleted. The model, backend feature and
+  other team branches were left unchanged.
+- Backend: `python -m pytest -q` passed (19 tests); Python compileall and
+  whitespace checks passed. Frontend: 10 Vitest tests passed and
+  `npx vite build --outDir dist-clean-verify` completed successfully.
+- Local smoke check: `/health`, `/api/litter-options`,
+  `/api/litter-reports`, `/api/litter-heatmap`, `/api/cleanup-missions` and
+  `/api/community-progress` returned 200; a synthetic litter report returned
+  201, demo recognition returned 200, and mission join returned 201. Removed
+  DiveSafe endpoints returned 404 as intended.
+- Render check: the existing `team04-marine-observation-frontend` and
+  `team04-marine-observation-api` services returned 200 for their home/health
+  checks. The unconfigured `radar-sampah-frontend` and
+  `radar-sampah-api` hostnames returned 404; no Render settings were changed
+  in this cleanup.
+- Final active-tree grep found no old sample runtime routes, DiveSafe data
+  files or HealthFirst text outside the explicitly retained audit records and
+  historical plan files.
+

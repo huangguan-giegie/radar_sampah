@@ -543,3 +543,22 @@ changed.
 - Remote branch deletion is planned for `agent/liquid-effects-more-visible`
   and `codex/radar-sampah-frontend`; `main`,
   `Sea-TACO-Detection-Model` and `feature/lihanxia-litter-report-status` stay.
+
+### Final verification — 28 August 2026
+
+- `codex/remove-legacy-sample-material` was merged to `main` as
+  `2df923e910f962f7eaa29a8159634f7d8843d3ff`.
+- The two planned obsolete remote branches were deleted. The model and
+  backend feature branches were not changed; the recovery tags remain.
+- Backend tests: 19 passed with `python -m pytest -q`; compileall and
+  whitespace checks passed. Frontend tests: 10 passed; Vite production build
+  passed using a clean verification output directory.
+- Smoke checks passed for the active litter endpoints and synthetic report,
+  demo recognition and mission join. The removed DiveSafe endpoints return
+  404. No Drive, ePortfolio, Sample Project PGIE or Render settings changed.
+- Existing Render services still respond at their current team04 hostnames.
+  The planned radar-sampah hostnames are not configured (404), so this GitHub
+  cleanup does not claim a Render rename or redeployment.
+- Final active-tree search contains no old sample runtime routes or data files;
+  historical names remain only in this manifest, PM context and retained plan
+  history.
