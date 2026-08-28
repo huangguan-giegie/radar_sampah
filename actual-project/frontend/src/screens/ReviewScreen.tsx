@@ -4,6 +4,7 @@ import { createReport, getBeaches, updateReport } from '../api';
 import { ArrowRight, Info, Shield } from '../components/Icon';
 import { BackButton, ErrorNote, PrimaryButton, StepBadge, TextButton } from '../components/ui';
 import { C, MONO } from '../theme';
+import { OverlayChip } from '../components/ds';
 import { useApp } from '../AppContext';
 import type { BeachSummary, LitterCategory, QuantityBand } from '../types';
 import { buildReportSubmission } from '../flowRules';
@@ -50,7 +51,7 @@ export default function ReviewScreen() {
       nav('/report/saved', { replace: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not save this record.');
-      showToast('Save failed — please try again');
+      showToast('Save failed');
     } finally {
       setBusy(false);
     }
@@ -96,9 +97,6 @@ export default function ReviewScreen() {
 
         <div>
           <div style={{ fontSize: 29, fontWeight: 640, letterSpacing: '-.7px' }}>Almost there</div>
-          <div style={{ fontSize: 13.5, color: C.muted, marginTop: 6, lineHeight: 1.5 }}>
-            Have a quick look before it goes in. Anything here can still be changed.
-          </div>
         </div>
 
         <div style={{ position: 'relative', height: 150, borderRadius: 24, overflow: 'hidden', background: '#A19C90' }}>
@@ -106,10 +104,10 @@ export default function ReviewScreen() {
             <img src={photoUrl} alt="Report evidence" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
           )}
           {(draft.photo?.metadataStripped || draft.existingPhotoUrl) && (
-            <div style={{ position: 'absolute', left: 12, bottom: 12, display: 'flex', alignItems: 'center', gap: 6, fontFamily: MONO, fontSize: 8, letterSpacing: '.1em', color: C.cloud, background: 'rgba(11,33,97,.75)', backdropFilter: 'blur(6px)', padding: '5px 9px', borderRadius: 999 }}>
+            <OverlayChip style={{ position: 'absolute', left: 12, bottom: 12 }}>
               <Shield size={10} />
-              {draft.photo?.metadataStripped ? 'METADATA REMOVED' : 'EXISTING PHOTO RETAINED'}
-            </div>
+              {draft.photo ? 'LOCATION METADATA REMOVED' : 'EXISTING PHOTO RETAINED'}
+            </OverlayChip>
           )}
         </div>
 
@@ -130,8 +128,8 @@ export default function ReviewScreen() {
         <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start', background: C.tint, borderRadius: 16, padding: '13px 14px' }}>
           <Info style={{ flex: 'none', marginTop: 1 }} />
           <div style={{ fontSize: 12, lineHeight: 1.55, color: C.slate }}>
-            Saving stores a standardised record for this beach. Duplicate or incomplete records are
-            excluded from the severity calculation — the same rule for every beach.
+            Duplicate or incomplete records are excluded from the severity calculation — the same
+            rule for every beach.
           </div>
         </div>
 

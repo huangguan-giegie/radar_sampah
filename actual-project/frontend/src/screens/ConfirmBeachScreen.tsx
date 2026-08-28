@@ -5,6 +5,7 @@ import { MiniMap } from '../components/MiniMap';
 import { Alert, Check, Pin, Search } from '../components/Icon';
 import { BackButton, ErrorNote, PrimaryButton, Skeleton, TextButton } from '../components/ui';
 import { C, MONO } from '../theme';
+import { SeverityBadge } from '../components/ds';
 import { useApp } from '../AppContext';
 import type { BeachSummary } from '../types';
 
@@ -131,9 +132,7 @@ export default function ConfirmBeachScreen() {
                   <div style={{ fontSize: 16.5, fontWeight: 650 }}>{suggested.name}</div>
                   <div style={{ fontSize: 12, color: C.dim, marginTop: 2 }}>{suggested.area}</div>
                 </div>
-                <div style={{ fontFamily: MONO, fontSize: 8.5, letterSpacing: '.08em', color: C.muted, background: 'rgba(11,33,97,.06)', padding: '5px 8px', borderRadius: 8 }}>
-                  {suggested.severity?.toUpperCase() ?? 'NO DATA'}
-                </div>
+                <SeverityBadge band={suggested.severity} />
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 9, marginTop: 16 }}>
                 <PrimaryButton onClick={() => nav('/report/details')} height={54} style={{ borderRadius: 17, boxShadow: 'none' }}>
@@ -200,9 +199,7 @@ export default function ConfirmBeachScreen() {
                       <div style={{ fontSize: 14.5, fontWeight: 640 }}>{b.name}</div>
                       <div style={{ fontSize: 11.5, color: C.dim }}>{b.area}</div>
                     </div>
-                    <div style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '.08em', color: C.muted, background: 'rgba(11,33,97,.06)', padding: '4px 7px', borderRadius: 7 }}>
-                      {b.severity?.toUpperCase() ?? 'NO DATA'}
-                    </div>
+                    <SeverityBadge band={b.severity} />
                   </button>
                 ))}
                 {!loading && failed && (

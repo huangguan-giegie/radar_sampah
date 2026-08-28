@@ -138,7 +138,7 @@ export default function AccountScreen() {
           )}
           {link(
             'Severity scoring method',
-            'Documented rule, weights, thresholds and limits',
+            'Weights, thresholds and limits',
             <BarChart size={16} />,
             () => nav('/method'),
             true,
@@ -166,7 +166,7 @@ export default function AccountScreen() {
           <div style={{ flex: 1 }}>
             <div style={{ fontSize: 14, fontWeight: 620 }}>Simulate offline mode</div>
             <div style={{ fontSize: 11.5, color: C.dim, marginTop: 1 }}>
-              Shows the map's offline banner — for demos and testing
+              Shows the map's offline banner
             </div>
           </div>
         </label>
@@ -188,9 +188,7 @@ export default function AccountScreen() {
         <div style={{ fontFamily: MONO, fontSize: 9, lineHeight: 1.7, letterSpacing: '.06em', color: C.faint, textAlign: 'center' }}>
           ITERATION 1 · CORE MVP
           <br />
-          AI SUGGESTIONS, REVIEW WORKFLOWS, ACTIVITIES
-          <br />
-          AND RECOGNITION ARRIVE IN LATER ITERATIONS
+          AI, REVIEW AND RECOGNITION COME LATER
         </div>
       </div>
 

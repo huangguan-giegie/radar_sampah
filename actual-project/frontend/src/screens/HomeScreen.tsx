@@ -3,7 +3,8 @@ import { useEffect, useState } from 'react';
 import { getBeaches, getMyReportCounts } from '../api';
 import { ArrowRight, BarChart, Camera, Check, Info, UserIcon } from '../components/Icon';
 import { ErrorNote, Label, Skeleton } from '../components/ui';
-import { C, MONO, NOISE, SEVERITY, lastReportedLabel } from '../theme';
+import { SeverityBadge } from '../components/ds';
+import { C, MONO, NOISE, lastReportedLabel } from '../theme';
 import { useApp } from '../AppContext';
 import type { BeachSummary, ReportCounts } from '../types';
 
@@ -47,7 +48,6 @@ function StatTile({
 }
 
 function BeachRow({ b, last, onClick }: { b: BeachSummary; last: boolean; onClick: () => void }) {
-  const sev = b.severity ? SEVERITY[b.severity] : null;
   return (
     <button
       type="button"
@@ -84,36 +84,7 @@ function BeachRow({ b, last, onClick }: { b: BeachSummary; last: boolean; onClic
           {b.validReports} valid reports · {lastReportedLabel(b.lastReportedAt).toLowerCase()}
         </div>
       </div>
-      {sev ? (
-        <div
-          style={{
-            padding: '5px 10px',
-            borderRadius: 999,
-            background: sev.tint,
-            color: sev.text,
-            fontSize: 9.5,
-            fontWeight: 700,
-            letterSpacing: '.06em',
-          }}
-        >
-          {b.severity?.toUpperCase()}
-        </div>
-      ) : (
-        <div
-          style={{
-            padding: '5px 10px',
-            borderRadius: 999,
-            background: 'rgba(30,36,44,.07)',
-            border: '1px dashed rgba(30,36,44,.2)',
-            color: C.muted,
-            fontSize: 9,
-            fontWeight: 700,
-            letterSpacing: '.06em',
-          }}
-        >
-          NO DATA
-        </div>
-      )}
+      <SeverityBadge band={b.severity} />
     </button>
   );
 }
@@ -204,7 +175,7 @@ export default function HomeScreen() {
             textWrap: 'balance',
           }}
         >
-          Spot it. Snap it. Done.
+          
         </div>
 
         <button
@@ -240,14 +211,14 @@ export default function HomeScreen() {
               borderRadius: 8,
             }}
           >
-            MAP · {beaches.length || 4} BEACHES MONITORED
+            MAP · {beaches.length || 4} BEACHES
           </div>
           <div style={{ position: 'absolute', left: 18, right: 18, bottom: 16, textAlign: 'left' }}>
             <div style={{ fontSize: 22, fontWeight: 650, letterSpacing: '-.4px', color: C.bg }}>
               Which beach needs you?
             </div>
             <div style={{ fontSize: 12.5, lineHeight: 1.45, color: 'rgba(232,238,245,.8)', marginTop: 4, maxWidth: 250 }}>
-              See how each beach is doing right now — and who else lives there.
+              
             </div>
             <div
               style={{
@@ -318,7 +289,7 @@ export default function HomeScreen() {
             <div>
               <div style={{ fontSize: 16.5, fontWeight: 650, letterSpacing: '-.2px' }}>How It's Rated</div>
               <div style={{ fontSize: 11.5, color: C.dim, marginTop: 3, lineHeight: 1.4 }}>
-                The exact maths, nothing hidden
+                The exact maths
               </div>
             </div>
           </button>
