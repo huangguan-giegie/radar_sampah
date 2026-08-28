@@ -4,7 +4,7 @@ import { buildReportSubmission, reportOutcome, safeNextPath } from './flowRules'
 
 function draft(changes: Partial<ReportDraft> = {}): ReportDraft {
   return {
-    photo: { url: 'blob:test', metadataStripped: true },
+    photo: { photoKey: 'mock/test.jpg', previewUrl: 'blob:test', metadataStripped: true },
     existingPhotoUrl: null,
     beachId: 'morib',
     beachName: 'Pantai Morib',

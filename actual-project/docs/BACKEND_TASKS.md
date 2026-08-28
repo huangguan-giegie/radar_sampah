@@ -114,21 +114,43 @@ on write.
 
 ---
 
-## 4. Photos — bytes never touch the database
+## 4. Photos — private storage, signed on the way out
 
-`POST /uploads/photos` takes `multipart/form-data` with a field named `photo`, and returns
-`{ url, metadataStripped }`. There is no `photos` table and no `id` — the report carries the URL.
+`POST /uploads/photos` takes `multipart/form-data` with a field named `photo` and returns
+`{ photoKey, metadataStripped }`. There is no `photos` table and no bytes in the database — the
+report carries a **storage key**, not an address.
 
-Three things are not optional:
+**The bucket or directory is not publicly readable and sits outside the public web root.** That is
+what DMP §5 asks for, and it costs nothing here: a report photo is only ever shown to the person
+who took it. Check for yourself — `photoUrl` appears on `LitterReport` and nowhere else, and
+`LitterReport` is only returned by `/reports/mine` and `POST` / `PATCH /reports`. The beach page
+shows `beaches.cover_image_url`, which is the beach's own stock image, not anybody's report.
+
+So, when serialising a report:
+
+1. **Check the caller owns it** — `report.reporter_id` must equal the token's user.
+2. If they do, mint a **short-lived signed URL** from `photo_key` (15 minutes is plenty) and put
+   it in `photoUrl`.
+3. If they do not, **omit `photoUrl` entirely.** Do not return a key, do not return a path.
+
+An `<img>` tag cannot send an Authorization header, which is why this is a signed URL and not an
+authenticated endpoint. S3 presigned URLs and GCS signed URLs do exactly this; it is the standard
+mechanism, not a workaround.
+
+> ⚠️ **Stripping EXIF and using unguessable filenames is not access control.** They stop a photo
+> leaking a location and stop somebody guessing an address. Neither does anything once an address
+> has been forwarded. The control is the three together: private bucket, ownership check, short
+> expiry.
+
+Three more things are not optional:
 
 1. **Strip EXIF, above all the GPS block.** Only return `metadataStripped: true` once it is
-   really gone. The app renders a "LOCATION METADATA REMOVED FOR PRIVACY" badge from that field.
+   really gone. The app renders a "LOCATION METADATA REMOVED" badge from that field.
    **Return `false` rather than lying** — that badge is a promise to a user.
 2. **Limits:** ≤ 10 MB; accept `image/jpeg`, `image/png` and `image/heic` (an iPhone shoots HEIC,
    so it must be accepted and converted to JPEG); resize the long edge to ≤ 2048 px.
-3. **The URL must not be enumerable.** Random filename — never a sequence, never the original
-   filename, and never containing a participant number, beach name or date. The URL is public
-   and unauthenticated, so an enumerable name exposes every photo ever uploaded.
+3. **Keys must not be enumerable.** Random name — never a sequence, never the original filename,
+   and never containing a participant number, beach name or date.
 
 ### Two jobs no foreign key will do for you
 
@@ -137,7 +159,7 @@ The bytes live outside the database, so nothing cascades:
 - **Sweep orphans.** A file uploaded but referenced by no report within 24 hours gets deleted.
   Without this, every abandoned record flow leaks a file forever.
 - **Delete the file when the report goes.** And the reverse: a file deleted in storage leaves
-  `photo_url` pointing at nothing, with the database none the wiser.
+  `photo_key` pointing at nothing, with the database none the wiser.
 
 ---
 

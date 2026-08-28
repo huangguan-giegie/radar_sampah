@@ -52,7 +52,7 @@
 | HTTP | code | 触发场景 |
 | --- | --- | --- |
 | 400 | `VALIDATION_FAILED` | 必填字段缺失或值不在枚举内 |
-| 400 | `PHOTO_REQUIRED` | 提交记录时没带 `photoUrl` |
+| 400 | `PHOTO_REQUIRED` | 提交记录时没带 `photoKey` |
 | 400 | `PHOTO_TOO_LARGE` | 照片超过 10 MB |
 | 400 | `PHOTO_UNSUPPORTED_TYPE` | 不是 JPEG / PNG / HEIC |
 | 401 | `UNAUTHENTICATED` | token 缺失、过期或无效 |
@@ -506,7 +506,9 @@ quantity  = 该类别对应那列的值
 ## 5. 照片上传
 
 **照片不进数据库，也不建 `photos` 表。**
-字节放对象存储（或磁盘），`reports` 上只留一个地址。
+字节放对象存储（或磁盘），**存储位置在公开 Web 根目录之外**，`reports` 上只留一个存储键。
+对齐 DMP §5：`Object storage or server filesystem outside public web root; references in DB only.
+Access controlled.`
 
 | 方法 | 路径 | 鉴权 | 说明 |
 | --- | --- | --- | --- |
@@ -515,45 +517,58 @@ quantity  = 该类别对应那列的值
 ```json
 // 201
 {
-  "url": "https://cdn.example.com/photos/8f3a....jpg",
+  "photoKey": "2026/08/8f3a....jpg",
   "metadataStripped": true
 }
 ```
 
-记录上就两列：
+记录上就三列：
 
 ```sql
 ALTER TABLE reports
-  ADD COLUMN photo_url      text    NOT NULL,
-  ADD COLUMN photo_stripped boolean NOT NULL;
+  ADD COLUMN photo_key      text    NOT NULL,   -- 存储里的键，不是可访问地址
+  ADD COLUMN photo_stripped boolean NOT NULL,
+  ADD COLUMN photo_mime     text    NOT NULL CHECK (photo_mime IN ('image/jpeg','image/png'));
 ```
 
-`POST /reports` 带的是 `photoUrl`（上一步返回的那个），不是 id —— 没有 `photos` 表，
-也就没有 id 可以引用。
+`POST /reports` 带的是 `photoKey`（上一步返回的那个）。
+
+### 访问控制：只有拍照片的人能看到它
+
+**上报照片从来只给它自己的作者看。** 前端只有三处会渲染照片，全都是本人的记录：
+`ReviewScreen`（自己正在提交的草稿）、`RecordScreen`（同上）、`MyReportsScreen`（我的记录）。
+没有任何公开接口会下发别人的照片 —— 海滩详情页用的是 `beaches.cover_image_url`（海滩自己的
+封面图，种子数据），和上报照片是两回事。
+
+所以规则很简单：
+
+- 存储桶/目录**不可公开读**。没有任何一个长期有效的公开地址。
+- `GET /reports/mine` 和 `POST` / `PATCH /reports` 的响应里，`photoUrl` 是一个
+  **短时效签名地址**（建议 15 分钟），由后端在序列化时按 `photo_key` 现场签发。
+- **签发前先校验归属**：`report.reporter_id` 必须等于当前 token 的用户。不是本人就不签，
+  直接不返回 `photoUrl` 字段。
+- 签名地址过期后自然失效。前端不缓存它 —— 每次拿列表都会拿到新的。
+
+`<img>` 标签带不了 Authorization 头，所以这里用签名地址而不是「带 token 的接口」。
+这是对象存储的标准做法（S3 presigned URL / GCS signed URL），不是变通。
+
+> ⚠️ **EXIF 剥离和不可枚举的文件名不能替代访问控制。**
+> 它们防的是「照片泄露位置」和「有人猜地址」，防不了「地址被转发出去」。
+> 真正的控制是：桶不公开 + 归属校验 + 短时效。三者缺一不可。
 
 ### 后端必须做的三件事
 
 1. **剥离 EXIF**，尤其 GPS 段。剥干净了才返回 `metadataStripped: true`，
    并写进 `reports.photo_stripped` —— 前端靠它显示
-   「LOCATION METADATA REMOVED FOR PRIVACY」那条角标。
+   「LOCATION METADATA REMOVED」那条角标。
    **剥不干净就返回 `false`，不要撒谎**，那是一句对用户的承诺。
 2. **限制**：≤ 10 MB；收 `image/jpeg`、`image/png`、`image/heic`（iOS 直出是 HEIC，
    必须收，服务端转成 JPEG）；长边压到 ≤ 2048 px。
 3. **清理孤儿**：上传后 24 小时内没有任何记录引用的文件，定时任务删掉。
    字节在库外，所以这个清理必须自己做 —— 外键帮不上忙。
 
-### 地址是公开的（已定）
-
-`url` 公开可读、不需要鉴权。这一条**偏离 DMP §5**（原文要求
-`outside public web root` + `Access controlled`），是团队决定。
-既然选了公开，下面三条就必须做到，否则这个偏离站不住：
-
-1. **文件名必须不可枚举** —— 用随机 id，不要自增数字、不要原始文件名
-2. **EXIF 必须真的剥干净** —— 公开地址意味着剥离是防止位置泄露的唯一一道防线
-3. **文件名里不能带任何个人信息**（参与者编号、海滩名、日期都不要）
-
-> ⚠️ **库里存的只是一个地址，不是图。** 存储里的文件被删掉之后，
-> `photo_url` 会变成一条指向空处的链接，数据库这边不会有任何察觉。
+> ⚠️ **库里存的只是一个键，不是图。** 存储里的文件被删掉之后，
+> `photo_key` 会指向空处，数据库这边不会有任何察觉。
 > 删记录的时候要顺手删文件，反过来也一样。
 
 ---
@@ -578,7 +593,7 @@ ALTER TABLE reports
     "Fishing gear": "Medium",
     "Glass": "Small"
   },
-  "photoUrl": "https://cdn.example.com/photos/8f3a....jpg",
+  "photoKey": "2026/08/8f3a....jpg",
   "locationSource": "gps",
   "coords": { "lat": 2.746, "lng": 101.440 }
 }
@@ -636,7 +651,7 @@ ALTER TABLE reports
 
 | 顺序 | 条件 | 结果 |
 | --- | --- | --- |
-| 1 | `photoUrl` 缺失 | 400 `PHOTO_REQUIRED`，不入库 |
+| 1 | `photoKey` 缺失 | 400 `PHOTO_REQUIRED`，不入库 |
 | 2 | `quantities` 为空对象，或键/值不在枚举内 | 400 `VALIDATION_FAILED`，不入库 |
 | 3 | 同一 **reporter** + 同一 **beachId** + 同一 **自然日**（`Asia/Kuala_Lumpur`）已有 `Counted` 记录 | `Duplicate` |
 | 4 | 其余 | `Counted` |
@@ -698,7 +713,7 @@ ALTER TABLE reports
 
 ### PATCH `/reports/:id`
 
-请求体是 POST 请求体的任意子集（`beachId` / `quantities` / `photoUrl`）。
+请求体是 POST 请求体的任意子集（`beachId` / `quantities` / `photoKey`）。
 **给了 `quantities` 就是整体替换**，不是逐键合并 —— 少传一个类别就等于把那一列清空。
 
 - 只能改自己的记录，否则 403 `NOT_OWNER`
@@ -780,8 +795,9 @@ area_species     id(PK), area_id(FK→beaches), species_id(FK→dim_species, nul
                  likelihood_percent(nullable), likelihood_basis(nullable)
                  ← 区域×物种的 junction；生境和统称的 species_id 为空
 reports          id, reporter_id, beach_id, location_source,
-                 photo_url, photo_stripped
-                 ← 不建 photos 表，字节也不进库；这里只是一个地址
+                 photo_key, photo_mime, photo_stripped
+                 ← 不建 photos 表，字节也不进库。存的是存储键，不是可访问地址；
+                   响应里的 photoUrl 是按归属校验后现签的短时效地址（§5）
                  qty_plastic, qty_fishing_gear, qty_glass,
                  qty_metal, qty_paper, qty_other        ← 每列可空，至少一列非空
                  category, quantity                     ← 派生：权重最高的非空类别

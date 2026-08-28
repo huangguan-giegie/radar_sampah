@@ -151,7 +151,7 @@ export default function PhotoScreen() {
           <>
             <div style={{ position: 'relative', height: 280, borderRadius: 26, overflow: 'hidden', background: '#87847B' }}>
               <img
-                src={photo.url}
+                src={photo.previewUrl}
                 alt="Litter you photographed"
                 style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
               />

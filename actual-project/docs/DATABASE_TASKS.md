@@ -156,7 +156,7 @@ Two things to get right while seeding:
 
 | Table | Why not |
 | --- | --- |
-| `photos` | Decided: photos do not go in the database. Object storage holds the bytes; `reports.photo_url` holds the address. See API.md §5. |
+| `photos` | Decided: photos do not go in the database. Private object storage holds the bytes; `reports.photo_key` holds the key. The bucket is not publicly readable — see API.md §5. |
 | `area_garbage` | Decided: the beach page reads the latest `Counted` report directly, so the aggregate would only duplicate `reports` and drift from it. |
 | `communities`, `community_users` | Epic 1, parked by the team's MVP split. |
 | `verification_log` | Epic 3, removed from the MVP split. |

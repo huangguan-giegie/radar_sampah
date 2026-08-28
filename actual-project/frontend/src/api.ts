@@ -336,6 +336,12 @@ export async function resolveBeach(lat: number, lng: number): Promise<BeachSumma
 // 5. 照片上传
 // ============================================================
 
+/**
+ * mock 的「对象存储」：键 → data URL。
+ * 真后端是 photo_key → 短时效签名地址，形状一样，只是这里不签名。
+ */
+const mockPhotoStore = new Map<string, string>();
+
 export async function uploadPhoto(file: File): Promise<UploadedPhoto> {
   if (USE_MOCK) {
     await delay(700);
@@ -347,7 +353,9 @@ export async function uploadPhoto(file: File): Promise<UploadedPhoto> {
       reader.onerror = () => reject(new Error('Could not read that photo. Please try another one.'));
       reader.readAsDataURL(file);
     });
-    return { url, metadataStripped: true };
+    const photoKey = 'mock/' + Date.now() + '.jpg';
+    mockPhotoStore.set(photoKey, url);
+    return { photoKey, previewUrl: url, metadataStripped: true };
   }
 
   // 传文件要用 FormData，不能用 JSON
@@ -389,7 +397,7 @@ export async function createReport(input: CreateReportInput): Promise<LitterRepo
       beachName: beach.name,
       quantities: input.quantities,
       ...deriveCategoryQuantity(input.quantities),
-      photoUrl: input.photoUrl,
+      photoUrl: mockPhotoStore.get(input.photoKey) ?? null,
       createdAt: new Date().toISOString(),
       status: 'Counted',
     };
@@ -443,7 +451,7 @@ export async function updateReport(
       ...(changes.quantities
         ? { quantities: changes.quantities, ...deriveCategoryQuantity(changes.quantities) }
         : { quantities: old.quantities, category: old.category, quantity: old.quantity }),
-      photoUrl: changes.photoUrl ?? old.photoUrl,
+      photoUrl: changes.photoKey ? mockPhotoStore.get(changes.photoKey) ?? null : old.photoUrl,
       beachId: beach ? beach.id : old.beachId,
       beachName: beach ? beach.name : old.beachName,
       status: 'Counted',

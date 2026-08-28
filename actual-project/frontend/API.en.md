@@ -56,7 +56,7 @@ rewrite or template it.
 | HTTP | code | When |
 | --- | --- | --- |
 | 400 | `VALIDATION_FAILED` | A required field is missing or a value is outside its enum |
-| 400 | `PHOTO_REQUIRED` | A report was submitted without `photoUrl` |
+| 400 | `PHOTO_REQUIRED` | A report was submitted without `photoKey` |
 | 400 | `PHOTO_TOO_LARGE` | Photo over 10 MB |
 | 400 | `PHOTO_UNSUPPORTED_TYPE` | Not JPEG, PNG or HEIC |
 | 401 | `UNAUTHENTICATED` | Token missing, expired or invalid |
@@ -512,7 +512,9 @@ frontend switches to manual selection.
 ## 5. Photo upload
 
 **Photos do not go into the database, and there is no `photos` table.**
-The bytes live in object storage (or on disk); `reports` keeps only an address.
+The bytes live in object storage (or on disk) **outside the public web root**; `reports` keeps
+only a storage key. This follows DMP §5: `Object storage or server filesystem outside public web
+root; references in DB only. Access controlled.`
 
 | Method | Path | Auth | Notes |
 | --- | --- | --- | --- |
@@ -521,48 +523,63 @@ The bytes live in object storage (or on disk); `reports` keeps only an address.
 ```json
 // 201
 {
-  "url": "https://cdn.example.com/photos/8f3a....jpg",
+  "photoKey": "2026/08/8f3a....jpg",
   "metadataStripped": true
 }
 ```
 
-Two columns on the report:
+Three columns on the report:
 
 ```sql
 ALTER TABLE reports
-  ADD COLUMN photo_url      text    NOT NULL,
-  ADD COLUMN photo_stripped boolean NOT NULL;
+  ADD COLUMN photo_key      text    NOT NULL,   -- a storage key, not a reachable address
+  ADD COLUMN photo_stripped boolean NOT NULL,
+  ADD COLUMN photo_mime     text    NOT NULL CHECK (photo_mime IN ('image/jpeg','image/png'));
 ```
 
-`POST /reports` carries `photoUrl` — the address the upload returned — not an id. With no
-`photos` table there is no id to reference.
+`POST /reports` carries `photoKey` — the key the upload returned.
+
+### Access control: only the person who took the photo can see it
+
+**A report photo is only ever shown to its own author.** The frontend renders a photo in exactly
+three places, all of them the viewer's own record: `ReviewScreen` (the draft being submitted),
+`RecordScreen` (the same draft), and `MyReportsScreen` (my records). No public endpoint returns
+anybody else's photo — the beach page uses `beaches.cover_image_url`, the beach's own stock
+image, which is a different thing entirely.
+
+So the rule is simple:
+
+- The bucket or directory is **not publicly readable**. No long-lived public address exists.
+- In the responses of `GET /reports/mine` and `POST` / `PATCH /reports`, `photoUrl` is a
+  **short-lived signed URL** (15 minutes is plenty), minted from `photo_key` at serialisation time.
+- **Check ownership before minting**: `report.reporter_id` must equal the caller's user. If it
+  does not, do not sign — omit the `photoUrl` field entirely.
+- The signed URL expires on its own. The app does not cache it; every list fetch gets a fresh one.
+
+An `<img>` tag cannot carry an Authorization header, which is why this is a signed URL rather
+than an authenticated endpoint. That is the standard object-storage mechanism (S3 presigned URLs,
+GCS signed URLs), not a workaround.
+
+> ⚠️ **Stripping EXIF and using unguessable filenames is not access control.**
+> Those stop a photo leaking a location, and stop somebody guessing an address. They do nothing
+> once an address is forwarded. The control is the three things together: a private bucket, an
+> ownership check, and a short expiry.
 
 ### Three things the backend must do
 
 1. **Strip EXIF**, the GPS block above all. Only return `metadataStripped: true`, and only write
    `reports.photo_stripped = true`, once it is really gone — the app shows its
-   "LOCATION METADATA REMOVED FOR PRIVACY" badge from that field. **Return `false` rather than
-   lying**; the badge is a promise to the user.
+   "LOCATION METADATA REMOVED" badge from that field. **Return `false` rather than lying**; that
+   badge is a promise to the user.
 2. **Limits**: ≤ 10 MB; accept `image/jpeg`, `image/png` and `image/heic` (an iPhone shoots HEIC,
    so it must be accepted and converted to JPEG); resize the long edge to ≤ 2048 px.
 3. **Sweep orphans**: files uploaded but referenced by no report within 24 hours get deleted. The
    bytes are outside the database, so this sweep has to be written by hand — no foreign key will
    do it for you.
 
-### The address is public (decided)
-
-`url` is readable without auth. This **departs from DMP §5**, which asks for storage
-`outside public web root` with `Access controlled`. It is a team decision. Having chosen public,
-these three are what make it defensible:
-
-1. **Filenames must not be enumerable** — random ids, never a sequence, never the original filename
-2. **EXIF must actually be gone** — with a public address, stripping is the only thing standing
-   between a photo and a leaked location
-3. **No personal information in the filename** — no participant number, beach name or date
-
-> ⚠️ **The database holds an address, not an image.** Delete the file in storage and `photo_url`
-> becomes a link to nothing, with nothing on the database side noticing. Deleting a report has to
-> delete the file too, and vice versa.
+> ⚠️ **The database holds a key, not an image.** Delete the file in storage and `photo_key`
+> points at nothing, with nothing on the database side noticing. Deleting a report has to delete
+> the file too, and vice versa.
 
 ---
 
@@ -585,7 +602,7 @@ these three are what make it defensible:
     "Fishing gear": "Medium",
     "Glass": "Small"
   },
-  "photoUrl": "https://cdn.example.com/photos/8f3a....jpg",
+  "photoKey": "2026/08/8f3a....jpg",
   "locationSource": "gps",
   "coords": { "lat": 2.746, "lng": 101.440 }
 }
@@ -642,7 +659,7 @@ Evaluated in order, first match wins:
 
 | # | Condition | Result |
 | --- | --- | --- |
-| 1 | `photoUrl` missing | 400 `PHOTO_REQUIRED`, nothing stored |
+| 1 | `photoKey` missing | 400 `PHOTO_REQUIRED`, nothing stored |
 | 2 | `quantities` empty, or a key/value outside its enum | 400 `VALIDATION_FAILED`, nothing stored |
 | 3 | Same **reporter** + same **beachId** + same **calendar day** (`Asia/Kuala_Lumpur`) already has a `Counted` row | `Duplicate` |
 | 4 | Otherwise | `Counted` |
@@ -709,7 +726,7 @@ Optional `status` filter (`Counted` / `Duplicate` / `Incomplete`); omitted retur
 
 ### PATCH `/reports/:id`
 
-Body is any subset of the POST body (`beachId` / `quantities` / `photoUrl`).
+Body is any subset of the POST body (`beachId` / `quantities` / `photoKey`).
 **Sending `quantities` replaces the whole set**, it is not a per-key merge — a category left out is a column cleared.
 
 - Own reports only, otherwise 403 `NOT_OWNER`.
@@ -788,8 +805,10 @@ area_species     id(PK), area_id(FK→beaches), species_id(FK→dim_species, nul
                  ← area×species junction; habitats and groups have a null species_id
 
 reports          id, reporter_id, beach_id, location_source,
-                 photo_url, photo_stripped
-                 ← no photos table and no bytes in the database; just an address
+                 photo_key, photo_mime, photo_stripped
+                 ← no photos table and no bytes in the database. This is a storage
+                   key, not a reachable address; the photoUrl in a response is
+                   signed per request after an ownership check (§5)
                  qty_plastic, qty_fishing_gear, qty_glass,
                  qty_metal, qty_paper, qty_other        ← each nullable, at least one set
                  category, quantity                     ← derived: highest-weighted non-null

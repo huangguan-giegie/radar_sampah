@@ -23,7 +23,7 @@ export default function ReviewScreen() {
   }, []);
 
   const beach = beaches.find((b) => b.id === draft.beachId);
-  const photoUrl = draft.photo?.url ?? draft.existingPhotoUrl;
+  const photoUrl = draft.photo?.previewUrl ?? draft.existingPhotoUrl;
 
   async function submit() {
     let submission: ReturnType<typeof buildReportSubmission>;

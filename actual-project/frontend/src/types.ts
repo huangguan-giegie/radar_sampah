@@ -139,6 +139,7 @@ export interface LitterReport {
   status: ReportStatus;
   /** 被排除时的原因说明，后端下发，前端直出 */
   statusNote?: string | null;
+  /** 短时效签名地址，只有记录本人才拿得到。别缓存，过期就失效 */
   photoUrl?: string | null;
 }
 
@@ -153,8 +154,8 @@ export interface CreateReportInput {
   beachId: string;
   /** 至少一项。category / quantity 由后端从这里派生，前端不再发 */
   quantities: QuantityByCategory;
-  /** 上传接口返回的地址。没有 photos 表，所以带的是地址不是 id */
-  photoUrl: string;
+  /** 上传接口返回的存储键 */
+  photoKey: string;
   /** 'gps' = 由定位推断，'manual' = 用户手选 */
   locationSource: 'gps' | 'manual';
   /** 仅在 locationSource === 'gps' 时携带；后端只用于匹配海滩和查重，绝不公开 */
@@ -175,8 +176,13 @@ export interface AuthSession {
 
 
 export interface UploadedPhoto {
-  /** 对象存储里的地址。没有 photos 表，也就没有 id */
-  url: string;
+  /**
+   * 存储键，不是可访问地址 —— 桶在公开 Web 根目录之外且不可公开读（API.md §5）。
+   * 提交记录时原样发回去。
+   */
+  photoKey: string;
+  /** 本地预览用。上传后由前端自己用 URL.createObjectURL 生成，不来自后端 */
+  previewUrl: string;
   /** 后端已剥离 EXIF 定位信息 —— 界面上那句「LOCATION METADATA REMOVED」靠它 */
   metadataStripped: boolean;
 }

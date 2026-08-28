@@ -266,7 +266,7 @@ paths:
                     a column cleared, so a correction must first read the response's quantities
                     back into the form and send the complete set.
                   additionalProperties: { $ref: "#/components/schemas/QuantityBand" }
-                photoUrl: { type: string, format: uri }
+                photoKey: { type: string, description: 上传接口返回的存储键 }
       responses:
         "200":
           description: the updated report
@@ -529,19 +529,20 @@ components:
 
     UploadedPhoto:
       type: object
-      required: [url, metadataStripped]
+      required: [photoKey, metadataStripped]
       properties:
-        url:
+        photoKey:
           type: string
-          format: uri
-          description: the address in object storage, publicly readable; no bytes in the database
+          description: |
+            存储键，不是可访问地址。桶/目录在公开 Web 根目录之外且不可公开读。
+            提交记录时把它原样放进 POST /reports 的 photoKey。
         metadataStripped:
           type: boolean
           description: true only once the EXIF location data is really gone
 
     CreateReport:
       type: object
-      required: [beachId, quantities, photoUrl, locationSource]
+      required: [beachId, quantities, photoKey, locationSource]
       properties:
         beachId: { type: string, example: morib }
         quantities:
@@ -554,7 +555,7 @@ components:
             and derives category / quantity from it.
           additionalProperties: { $ref: "#/components/schemas/QuantityBand" }
           example: { Plastic: Large, "Fishing gear": Medium }
-        photoUrl: { type: string, format: uri }
+        photoKey: { type: string, description: 上传接口返回的存储键 }
         locationSource:
           type: string
           enum: [gps, manual]
@@ -598,7 +599,14 @@ components:
           type: string
           nullable: true
           description: why it was excluded, a full English sentence shown verbatim; absent for Counted
-        photoUrl: { type: string, format: uri, nullable: true }
+        photoUrl:
+          type: string
+          format: uri
+          nullable: true
+          description: |
+            短时效签名地址（≈15 分钟），按 photo_key 现签。
+            只有记录本人才会拿到；不是本人就不返回这个字段。
+            桶本身不可公开读 —— 见 API.md §5。
 
     ReportCounts:
       type: object

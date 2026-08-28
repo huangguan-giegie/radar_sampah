@@ -27,7 +27,7 @@ export default function RecordScreen() {
   const missCat = picked.length === 0;
   // 选了类别但还没选数量档的
   const noBand = picked.filter((c) => !draft.quantities[c]);
-  const photoUrl = draft.photo?.url ?? draft.existingPhotoUrl;
+  const photoUrl = draft.photo?.previewUrl ?? draft.existingPhotoUrl;
 
   function toggleCategory(cat: LitterCategory) {
     const next = { ...draft.quantities };

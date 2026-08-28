@@ -40,7 +40,7 @@ export function buildReportSubmission(draft: ReportDraft): ReportSubmission {
       reportId: draft.editingReportId,
       changes: {
         ...common,
-        ...(draft.photo ? { photoUrl: draft.photo.url } : {}),
+        ...(draft.photo ? { photoKey: draft.photo.photoKey } : {}),
       },
     };
   }
@@ -54,7 +54,7 @@ export function buildReportSubmission(draft: ReportDraft): ReportSubmission {
 
   return {
     kind: 'create',
-    payload: { ...common, photoUrl: draft.photo.url },
+    payload: { ...common, photoKey: draft.photo.photoKey },
   };
 }
 
