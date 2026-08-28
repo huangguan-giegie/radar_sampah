@@ -1,10 +1,10 @@
-# Team 04 Miro Reflection Speaking Notes - TideTrace MY
+# Team 04 Miro Reflection Speaking Notes - Radar Sampah
 
 **Version 3.0 | 15 August 2026**
 
 ## Team reflection (about five minutes)
 
-Hi everyone. I will lead our short reflection on the TideTrace MY demo. I will
+Hi everyone. I will lead our short reflection on the Radar Sampah demo. I will
 read one point from each Miro column, then invite each teammate to add one
 short comment. The aim is to learn, not blame.
 
@@ -28,7 +28,7 @@ using synthetic/public data, accessible list fallbacks and simple limits.
 ## Huang Guan - personal reflection (about two minutes)
 
 As PM, I helped the team move from an earlier marine idea to a working
-TideTrace flow. I coordinated branches, Render, documents, evidence and the
+Radar Sampah flow. I coordinated branches, Render, documents, evidence and the
 safety boundary. The hard part was keeping the product story and implementation
 aligned while the scope changed.
 

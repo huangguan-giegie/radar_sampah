@@ -1,6 +1,6 @@
 # Team 04 Real Project Migration
 
-This folder holds the active Radar Sampah student project and preserved reference/rollback material.
+This folder holds the active Radar Sampah project and its migration audit record.
 
 ## Current project
 
@@ -22,12 +22,16 @@ deployment links are `https://radar-sampah-frontend.onrender.com` and
 - `actual-project/` - active runtime, docs and deployment configuration.
 - `actual-project/ml-model/` - Sea + TACO YOLO11m litter detector, training metadata and best weights (available on the `Sea-TACO-Detection-Model` branch).
 - `deliverables/` - editable Markdown sources and Drive-ready documents.
-- `references/healthfirst-example/` - read-only historical examples.
+- `references/` - reserved for reviewed reference material; old sample files are
+  available through the rollback tag, not in the active build.
 - `drive-migration/` - governance and migration record.
 
 ## Legacy and rollback boundary
 
-DiveSafe MY and the earlier marine-observation/litter paths are retained as rollback history. They are not the active Radar Sampah product flow. HealthFirst material is reference-only and must not be used as Radar Sampah evidence.
+The old sample runtime and reference files are not part of the active build.
+They remain recoverable from the `divesafe-last-stable` and
+`radar-sampah-pre-legacy-cleanup-20260828` tags and Git history. They must not
+be used as current Radar Sampah evidence.
 
 ## Deliverables
 

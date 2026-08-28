@@ -23,8 +23,8 @@
   -> Community progress.
 - It uses one broad Malaysian-area catalogue, five fixed litter categories and
   anonymous demo counts.
-- DiveSafe MY remains in the repository as a legacy rollback record. It is not
-  the current user journey, deck story or evidence claim.
+- Earlier sample runtime work is kept only in Git rollback tags. It is not the
+  current user journey, deck story or evidence claim.
 
 ## 2026-08-15 - Safety and AI boundary
 
@@ -44,6 +44,6 @@
 - Render uses PostgreSQL through `DATABASE_URL`; local development uses SQLite
   when it is absent.
 - Active data is stored separately for reports, missions, anonymous joins and
-  cleanup evidence. Legacy DiveSafe and observation data is retained; the active product is Radar Sampah.
+  cleanup evidence. The active product is Radar Sampah.
 - Static source-labelled data is used for the demo. The flow does not depend
   on a live environmental feed or external AI service.

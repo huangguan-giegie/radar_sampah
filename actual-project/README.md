@@ -1,4 +1,4 @@
-# Radar Sampah - Team 04 Student MVP
+# Radar Sampah - Team 04 MVP
 
 ## Purpose
 
@@ -20,8 +20,8 @@ The active demo flow is:
 - Recognition is a labelled fallback by default. It is never verified proof.
 - Missions and evidence are demo planning/counting records, not real cleanup
   verification.
-- Older routes and data remain as legacy rollback material. Do not remove them
-  destructively or present them as current Radar Sampah functionality.
+- The active build contains only Radar Sampah litter routes and data. Previous
+  sample runtime material is recoverable from the repository rollback tags.
 
 ## Run locally
 

@@ -1,12 +1,12 @@
-# Radar Sampah API - Legacy Rollback Included
+# Radar Sampah API
 
 This Flask API supports the Radar Sampah student demo: broad-area litter
 reports, a clearly labelled recognition suggestion, broad heatmap summaries,
 anonymous cleanup-mission joins, illustrative evidence and community progress.
 It does not accept personal details or exact coordinates.
 
-DiveSafe and earlier marine-observation routes/tables remain as legacy rollback
-paths. They are retained for recovery, not presented as Radar Sampah behaviour.
+The active API does not expose the earlier sample routes. The old runtime can
+still be recovered from the repository rollback tags when needed.
 
 ## Local setup
 
@@ -22,7 +22,7 @@ The development server listens on `http://localhost:5000` by default.
 ## Storage
 
 - `DATABASE_URL` selects PostgreSQL; absent means the local SQLite fallback.
-- Schema setup is idempotent and preserves legacy tables.
+- Schema setup is idempotent and keeps the current Radar Sampah tables.
 - Active Radar Sampah tables cover litter reports, cleanup missions, anonymous
   joins and cleanup evidence. Recognition results may be stored separately as
   demo metadata.
@@ -57,4 +57,4 @@ cleanup instruction or enforcement evidence.
 - `POST /api/cleanup-evidence`
 - `GET /api/community-progress`
 
-Read `../docs/API.md` for the full demo contract and legacy boundary.
+Read `../docs/API.md` for the full demo contract and privacy boundary.

@@ -33,12 +33,12 @@ activity discovery, recurrence monitoring, biodiversity learning and full
 preparation flow remain Future/TBD where the current code does not support
 them. No identity data, credentials or exact coordinates are stored.
 
-The old DiveSafe, earlier marine-litter and HealthFirst files remain as
-legacy/rollback or reference material. They are not current Radar Sampah evidence.
-The Sample Project PGIE was not changed.
+Previous sample material is kept outside the active deliverables and is
+recoverable from the repository rollback tags. It is not current Radar
+Sampah evidence. The Sample Project PGIE was not changed.
 
-Commit `d75264e` is the preserved DiveSafe rollback point. Keep it available
-for recovery; do not use it as Radar Sampah demo evidence.
+The `divesafe-last-stable` tag and the pre-cleanup tag are preserved for
+recovery; do not use their sample content as Radar Sampah demo evidence.
 
 ## Project links
 

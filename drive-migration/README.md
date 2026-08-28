@@ -1,9 +1,8 @@
 # Team 04 Real Project Drive Guide
 
 This Drive is the working Project Governance Portfolio for the new Team 04
-marine-observation project. The earlier HealthFirst project is kept in the
-recoverable `Archive - Removed Sample Files` area and is not the current
-product.
+marine-observation project. Earlier sample material is kept in the recoverable
+`Archive - Removed Sample Files` area and is not the current product.
 
 ## Start here
 
@@ -73,7 +72,7 @@ synthetic/public-data boundary as the code in `04 Build`.
 ### Adapted marine deliverables
 
 The new project copies the useful structure of the old onboarding artefacts
-without copying HealthFirst medical content:
+without copying the sample product content:
 
 - project information and social contract;
 - work-plan handover and QA/deployment checklist;
@@ -92,7 +91,7 @@ deck, QA notes, team information and course references can show format or
 process, but they must not be copied as marine requirements, data claims,
 testing evidence or product screenshots.
 
-The archived reference area mirrors the old HealthFirst folder structure with these
+The archived reference area mirrors the old sample folder structure with these
 subfolders: `Retrospective`, `Team Formation`, `System Architecture`,
 `Iteration Build`, `Data Governance`, `Others`, `Feedbacks` and
 `Design Artefacts`. The selected files already migrated remain visible at the
@@ -102,7 +101,7 @@ old Drive space and are recorded in the migration manifest.
 ## Working rules
 
 - Keep the actual scope and safety limits visible.
-- Use synthetic or public data; never upload private health or personal data.
+- Use synthetic or public data; never upload private or personal data.
 - Treat AI/CV output as illustrative assistance, not verified species identity,
   pollution-source proof or an environmental enforcement decision.
 - Keep GitHub, Drive, Miro and Render links aligned after important changes.
