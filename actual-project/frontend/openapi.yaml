@@ -185,26 +185,6 @@ paths:
         "413":
           $ref: "#/components/responses/Error"
 
-  /photos/{photoId}:
-    get:
-      tags: [Uploads]
-      security: []
-      summary: 读取一张照片（公开，无需鉴权）
-      description: |
-        图片字节存在 photos.data (bytea) 里，由后端直接读出来返回。
-        Content-Type 按 photos.mime；建议 Cache-Control: public, max-age=31536000, immutable。
-      parameters:
-        - { name: photoId, in: path, required: true, schema: { type: string } }
-      responses:
-        "200":
-          description: 图片字节流
-          content:
-            image/jpeg:
-              schema: { type: string, format: binary }
-            image/png:
-              schema: { type: string, format: binary }
-        "404":
-          $ref: "#/components/responses/Error"
 
   /reports:
     post:
@@ -270,7 +250,7 @@ paths:
                 beachId: { type: string }
                 category: { $ref: "#/components/schemas/LitterCategory" }
                 quantity: { $ref: "#/components/schemas/QuantityBand" }
-                photoId: { type: string }
+                photoUrl: { type: string, format: uri }
       responses:
         "200":
           description: 更新后的记录
@@ -504,19 +484,19 @@ components:
         url:
           type: string
           format: uri
-          description: 指向 GET /photos/{photoId}，公开可读
+          description: 对象存储里的地址，公开可读；库里不存字节
         metadataStripped:
           type: boolean
           description: EXIF 定位信息确实剥干净了才给 true
 
     CreateReport:
       type: object
-      required: [beachId, category, quantity, photoId, locationSource]
+      required: [beachId, category, quantity, photoUrl, locationSource]
       properties:
         beachId: { type: string, example: morib }
         category: { $ref: "#/components/schemas/LitterCategory" }
         quantity: { $ref: "#/components/schemas/QuantityBand" }
-        photoId: { type: string }
+        photoUrl: { type: string, format: uri }
         locationSource:
           type: string
           enum: [gps, manual]

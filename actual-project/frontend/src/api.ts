@@ -301,7 +301,6 @@ export async function uploadPhoto(file: File): Promise<UploadedPhoto> {
   if (USE_MOCK) {
     await delay(700);
     return {
-      id: 'photo_' + Date.now(),
       url: URL.createObjectURL(file),
       metadataStripped: true,
     };

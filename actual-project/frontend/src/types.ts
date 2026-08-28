@@ -140,8 +140,8 @@ export interface CreateReportInput {
   beachId: string;
   category: LitterCategory;
   quantity: QuantityBand;
-  /** 上传接口返回的 id */
-  photoId: string;
+  /** 上传接口返回的地址。没有 photos 表，所以带的是地址不是 id */
+  photoUrl: string;
   /** 'gps' = 由定位推断，'manual' = 用户手选 */
   locationSource: 'gps' | 'manual';
   /** 仅在 locationSource === 'gps' 时携带；后端只用于匹配海滩和查重，绝不公开 */
@@ -162,7 +162,7 @@ export interface AuthSession {
 
 
 export interface UploadedPhoto {
-  id: string;
+  /** 对象存储里的地址。没有 photos 表，也就没有 id */
   url: string;
   /** 后端已剥离 EXIF 定位信息 —— 界面上那句「LOCATION METADATA REMOVED」靠它 */
   metadataStripped: boolean;

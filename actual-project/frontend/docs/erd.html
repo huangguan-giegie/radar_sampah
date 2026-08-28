@@ -1,374 +1,893 @@
 <title>Radar Sampah ERD</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
 <style>
 :root{
   --ground:#EDEFF3; --panel:#FFFFFF; --panel2:#F5F7FA; --sunk:#E4E8EE;
   --ink:#131922; --ink2:#39424F; --ink3:#6D7684;
-  --line:#D4DAE3; --hair:#E7EBF1;
-  --navy:#0B2161;
+  --line:#C9D1DC; --hair:#E7EBF1; --navy:#0B2161;
   --pk:#6F42A5; --fk:#166C8E; --enum:#8A5A16; --private:#A5322A; --derived:#3F7550;
   --pk-bg:#F1ECF8; --fk-bg:#E7F1F6; --enum-bg:#F8F1E4; --private-bg:#F9EAE8; --derived-bg:#E9F2EB;
-}
-@media (prefers-color-scheme:dark){
-  :root:not([data-theme="light"]){
-    --ground:#0F141B; --panel:#171E27; --panel2:#1C242F; --sunk:#131A22;
-    --ink:#E9EDF3; --ink2:#B3BCC9; --ink3:#7F8895;
-    --line:#2B333F; --hair:#232B36;
-    --navy:#A6BDF7;
-    --pk:#C4A6EC; --fk:#7FC0DE; --enum:#DDB273; --private:#EE9086; --derived:#8CC79C;
-    --pk-bg:#241C33; --fk-bg:#14262F; --enum-bg:#2C2418; --private-bg:#2E1B18; --derived-bg:#17281C;
-  }
-}
+  --grpbg:#FBF6EC; --photobg:#EEF5F9;}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){
+  --ground:#0F141B; --panel:#171E27; --panel2:#1C242F; --sunk:#131A22;
+  --ink:#E9EDF3; --ink2:#B3BCC9; --ink3:#7F8895;
+  --line:#333C49; --hair:#232B36; --navy:#A6BDF7;
+  --pk:#C4A6EC; --fk:#7FC0DE; --enum:#DDB273; --private:#EE9086; --derived:#8CC79C;
+  --pk-bg:#241C33; --fk-bg:#14262F; --enum-bg:#2C2418; --private-bg:#2E1B18; --derived-bg:#17281C;
+  --grpbg:#221D14; --photobg:#14212A;} }
 :root[data-theme="dark"]{
   --ground:#0F141B; --panel:#171E27; --panel2:#1C242F; --sunk:#131A22;
   --ink:#E9EDF3; --ink2:#B3BCC9; --ink3:#7F8895;
-  --line:#2B333F; --hair:#232B36;
-  --navy:#A6BDF7;
+  --line:#333C49; --hair:#232B36; --navy:#A6BDF7;
   --pk:#C4A6EC; --fk:#7FC0DE; --enum:#DDB273; --private:#EE9086; --derived:#8CC79C;
   --pk-bg:#241C33; --fk-bg:#14262F; --enum-bg:#2C2418; --private-bg:#2E1B18; --derived-bg:#17281C;
-}
+  --grpbg:#221D14; --photobg:#14212A;}
 *{box-sizing:border-box}
-body{
-*{box-sizing:border-box}
-body{
-  margin:0; background:var(--ground); color:var(--ink);
+body{margin:0; background:var(--ground); color:var(--ink);
   font-family:"IBM Plex Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
-  font-size:15px; line-height:1.62; -webkit-font-smoothing:antialiased;
-}
-.wrap{max-width:1000px; margin:0 auto; padding:58px 24px 100px; display:flex; flex-direction:column; gap:46px}
-code,.mono{font-family:"IBM Plex Mono",ui-monospace,Menlo,monospace}
-
-.top{display:flex; flex-direction:column; gap:13px; padding-bottom:26px; border-bottom:2px solid var(--ink)}
+  font-size:15px; line-height:1.62; -webkit-font-smoothing:antialiased}
+.wrap{max-width:1420px; margin:0 auto; padding:52px 28px 76px; display:flex; flex-direction:column; gap:34px}
+.top{display:flex; flex-direction:column; gap:12px; padding-bottom:24px; border-bottom:2px solid var(--ink)}
 .eyebrow{font-family:"IBM Plex Mono",monospace; font-size:11px; letter-spacing:.17em; color:var(--ink3); text-transform:uppercase}
-h1{font-family:"Bricolage Grotesque",system-ui,sans-serif; font-weight:700; font-size:clamp(30px,4.6vw,44px); line-height:1.05; margin:0; letter-spacing:-.02em; text-wrap:balance}
-.lede{font-size:16px; color:var(--ink2); max-width:66ch; margin:0}
+h1{font-family:"Bricolage Grotesque",system-ui,sans-serif; font-weight:700; font-size:clamp(30px,4.4vw,42px);
+  line-height:1.05; margin:0; letter-spacing:-.02em; text-wrap:balance}
+.lede{font-size:16px; color:var(--ink2); max-width:70ch; margin:0}
 
-h2{font-family:"Bricolage Grotesque",system-ui,sans-serif; font-weight:700; font-size:22px; margin:0; letter-spacing:-.01em}
-.hint{font-size:13.5px; color:var(--ink3); margin:0}
+.canvas{background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:8px; overflow-x:auto}
+.canvas svg{display:block; min-width:1180px; width:100%; height:auto}
 
-/* legend */
-.legend{display:flex; flex-wrap:wrap; gap:8px}
-.tag{font-family:"IBM Plex Mono",monospace; font-size:10.5px; font-weight:600; letter-spacing:.05em; padding:4px 9px; border-radius:5px; white-space:nowrap}
-.t-pk{background:var(--pk-bg); color:var(--pk)}
-.t-fk{background:var(--fk-bg); color:var(--fk)}
-.t-enum{background:var(--enum-bg); color:var(--enum)}
-.t-null{background:var(--sunk); color:var(--ink3)}
-.t-private{background:var(--private-bg); color:var(--private)}
-.t-derived{background:var(--derived-bg); color:var(--derived)}
+svg text{font-family:"IBM Plex Mono",ui-monospace,Menlo,monospace; stroke:none}
+svg .tn{font-size:14.5px; font-weight:600; fill:var(--navy); letter-spacing:-.01em}
+svg .tp{font-size:9.6px; font-weight:400; fill:var(--ink3); font-family:"IBM Plex Sans",sans-serif}
+svg .chip{font-size:8.4px; font-weight:600; letter-spacing:.12em; fill:var(--ink3)}
+svg .chip.core{fill:var(--navy)}
+svg .cn{font-size:11.4px; font-weight:500}
+svg .ct{font-size:9.8px; fill:var(--ink3)}
+svg .ct.en{fill:var(--enum)} svg .ct.dv{fill:var(--derived)} svg .ct.pv{fill:var(--private); font-weight:600}
+svg .mk{font-size:10px; font-weight:600}
+svg .tn.gh{fill:var(--derived); font-size:12.5px}
+svg .mk.fn{fill:var(--derived)}
+svg .mk.k{fill:var(--fk)} svg .mk.req{fill:var(--ink3); opacity:.55} svg .mk.opt{fill:var(--ink3); opacity:.55}
+svg .src{font-size:8.6px; fill:var(--ink3); opacity:.8}
+svg .gl{font-size:9px; fill:var(--enum); font-weight:500}
+svg .gl.gc{font-weight:600}
+svg .rel{fill:none; stroke:var(--ink3); stroke-width:1.25; opacity:.85}
+svg .notation{fill:none; stroke:var(--ink3); stroke-width:1.25; opacity:.95}
+svg .notation circle{stroke:var(--ink3)}
+svg .tether{fill:none; stroke:var(--derived); stroke-width:1.2; stroke-dasharray:3 3; opacity:.65}
+svg .th{font-size:8.6px; fill:var(--derived); stroke:none; opacity:.9}
+svg .derv{fill:none; stroke:var(--derived); stroke-width:1.4; stroke-dasharray:5 4}
 
-/* map */
-.mapbox{background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:22px; overflow-x:auto}
-.mapbox svg{display:block; min-width:660px; width:100%; height:auto}
-.maplegend{display:flex; flex-wrap:wrap; gap:20px; margin-top:16px; padding-top:14px; border-top:1px solid var(--hair);
-  font-size:12.5px; color:var(--ink2)}
-.maplegend span{display:flex; align-items:center; gap:8px}
-.maplegend i{display:block; width:26px; height:0; flex:none; border-top:1.6px solid var(--ink3)}
-.maplegend i.sw-dv{border-top-style:dashed; border-top-color:var(--derived)}
-.maplegend code{font-family:"IBM Plex Mono",monospace; font-size:11.5px; background:var(--sunk); padding:1px 5px; border-radius:4px}
+.key{display:grid; grid-template-columns:repeat(auto-fit,minmax(215px,1fr)); gap:11px}
+.kc{background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:12px 14px;
+  display:flex; flex-direction:column; gap:5px}
+.kc h4{margin:0; font-size:11px; letter-spacing:.13em; text-transform:uppercase; color:var(--ink3);
+  font-family:"IBM Plex Mono",monospace; font-weight:600}
+.kc ul{margin:0; padding:0; list-style:none; display:flex; flex-direction:column; gap:4px}
+.kc li{font-size:12.8px; color:var(--ink2); display:flex; gap:9px; align-items:baseline; line-height:1.45}
+.kc b{font-family:"IBM Plex Mono",monospace; font-size:12px; font-weight:600; flex:none;
+  min-width:22px; text-align:center}
+.kc svg{flex:none; width:44px; height:14px; overflow:visible}
+.kc .lbl{flex:none; min-width:44px}
 
-/* table cards */
-.tbl{background:var(--panel); border:1px solid var(--line); border-radius:12px; overflow:hidden}
-.thead{padding:17px 20px; border-bottom:1px solid var(--line); background:var(--panel2); display:flex; flex-direction:column; gap:4px}
-.tname{font-family:"IBM Plex Mono",monospace; font-size:16px; font-weight:600; color:var(--navy); letter-spacing:-.01em}
-.tpurpose{font-size:13.5px; color:var(--ink2)}
-.cols{display:flex; flex-direction:column}
-.col{display:grid; grid-template-columns:minmax(170px,1.1fr) minmax(120px,.75fr) 2.4fr; gap:14px; padding:12px 20px; border-bottom:1px solid var(--hair); align-items:baseline}
-.col:last-child{border-bottom:none}
-.cname{font-family:"IBM Plex Mono",monospace; font-size:13px; font-weight:600; color:var(--ink); display:flex; flex-wrap:wrap; gap:6px; align-items:baseline}
-.ctype{font-family:"IBM Plex Mono",monospace; font-size:12px; color:var(--ink3)}
-.cdesc{font-size:13.5px; color:var(--ink2); line-height:1.55}
-.cdesc b{color:var(--ink); font-weight:600}
-
-.note{margin:0; padding:14px 20px; background:var(--sunk); border-top:1px solid var(--line); font-size:13.5px; line-height:1.6; color:var(--ink2)}
-.note b{color:var(--ink); font-weight:600}
-.note + .note{border-top:1px solid var(--hair)}
-.note.warn{background:var(--private-bg); color:var(--private)}
-.note.warn b{color:var(--private)}
-
-.sec{display:flex; flex-direction:column; gap:14px}
-.pair{display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:14px}
-.mini{background:var(--panel); border:1px solid var(--line); border-radius:11px; padding:16px 18px; display:flex; flex-direction:column; gap:6px}
-.mini h4{margin:0; font-size:14px; font-weight:600}
-.mini p{margin:0; font-size:13px; color:var(--ink2); line-height:1.55}
-.mini code{font-size:12px; background:var(--sunk); padding:1px 5px; border-radius:4px}
-
-footer{border-top:1px solid var(--line); padding-top:20px; font-size:13px; color:var(--ink3)}
+.hint{font-size:13.5px; color:var(--ink3); margin:0; max-width:74ch}
+.m{font-family:"IBM Plex Mono",monospace; font-size:12px; background:var(--sunk); padding:1px 5px; border-radius:4px}
+.enums{display:flex; flex-direction:column; gap:8px}
+.ev{background:var(--panel); border:1px solid var(--line); border-radius:9px; padding:10px 14px;
+  display:grid; grid-template-columns:minmax(200px,1.05fr) 2fr; gap:14px; align-items:baseline}
+.ev.gapped{border-left:3px solid var(--enum)}
+.evc{display:flex; flex-wrap:wrap; gap:5px}
+.evc code{font-family:"IBM Plex Mono",monospace; font-size:11.4px; color:var(--ink2); background:var(--sunk);
+  padding:1px 5px; border-radius:4px}
+.evv{display:flex; flex-wrap:wrap; gap:6px}
+.evv span{font-family:"IBM Plex Mono",monospace; font-size:11.6px; font-weight:600; color:var(--enum);
+  background:var(--enum-bg); padding:2px 8px; border-radius:5px}
+@media (max-width:700px){ .ev{grid-template-columns:1fr; gap:7px} }
+.notes{display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:12px}
+.n{background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:14px 16px;
+  display:flex; flex-direction:column; gap:6px}
+.n h4{margin:0; font-size:14px; font-weight:600}
+.n p{margin:0; font-size:13px; color:var(--ink2); line-height:1.56}
+.n code{font-family:"IBM Plex Mono",monospace; font-size:11.6px; background:var(--sunk); padding:1px 5px; border-radius:4px}
+.n.warn{background:var(--private-bg); border-color:var(--private)}
+.n.warn h4,.n.warn p{color:var(--private)}
+.n.warn code{background:rgba(0,0,0,.06)}
+h2{font-family:"Bricolage Grotesque",system-ui,sans-serif; font-weight:700; font-size:21px; margin:0; letter-spacing:-.01em}
+.sec{display:flex; flex-direction:column; gap:13px}
+footer{border-top:1px solid var(--line); padding-top:18px; font-size:12.6px; color:var(--ink3)}
+footer code{font-family:"IBM Plex Mono",monospace; font-size:11.6px}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
-@media (max-width:620px){ .col{grid-template-columns:1fr; gap:4px} }
 </style>
 
 <div class="wrap">
-
 <header class="top">
-  <div class="eyebrow">Radar Sampah · Iteration 1 · seven tables</div>
-  <h1>Database schema</h1>
-  <p class="lede">Everything the backend needs to create. The column names tell you half the story —
-  the constraints, the derived columns and the two privacy guarantees are the other half, and they
-  are written next to the table they govern.</p>
-  <div class="legend">
-    <span class="tag t-pk">PK primary key</span>
-    <span class="tag t-fk">FK foreign key</span>
-    <span class="tag t-enum">ENUM fixed values</span>
-    <span class="tag t-null">NULL nullable</span>
-    <span class="tag t-private">PRIVATE never in a response</span>
-    <span class="tag t-derived">DERIVED computed from other columns</span>
-  </div>
+  <div class="eyebrow">Radar Sampah · Iteration 1 · 7 tables · 66 columns</div>
+  <h1>Entity relationship diagram</h1>
+  <p class="lede">Every table the backend must create, every column it holds, and how they join.
+  Generated from <code style="font-family:'IBM Plex Mono',monospace;font-size:14px">API.md</code> —
+  the contract is the source, this picture follows it.</p>
 </header>
 
+<div class="canvas">
+<svg viewBox="0 0 1366 773" role="img"
+  aria-label="Full entity relationship diagram: seven tables with every column, keys and cardinality">
+  <g class="rel">
+    <path d="M132 312.5 H46 V117.5 H132"/>
+    <path d="M476 332.5 H494 V147.5 H538"/>
+    <path d="M944 110 H900 V147.5 H882"/>
+    <path d="M1288 130 H1304 V465 H1288"/>
+    <path d="M1288 525 H1321 V700 H1288"/>
+  </g>
+  <g class="notation">
+    <path d="M119 312.5 L132 307.5 M119 312.5 L132 312.5 M119 312.5 L132 317.5"/><path d="M123 112 L123 123"/>
+    <path d="M489 332.5 L476 327.5 M489 332.5 L476 332.5 M489 332.5 L476 337.5"/><path d="M529 142 L529 153"/>
+    <path d="M931 110 L944 105 M931 110 L944 110 M931 110 L944 115"/><path d="M891 142 L891 153"/>
+    <path d="M1301 130 L1288 125 M1301 130 L1288 130 M1301 130 L1288 135"/><path d="M1297 459.5 L1297 470.5"/><circle cx="1308" cy="130" r="3.6" fill="var(--panel)"/>
+    <path d="M1301 525 L1288 520 M1301 525 L1288 525 M1301 525 L1288 530"/><path d="M1297 694.5 L1297 705.5"/><circle cx="1308" cy="525" r="3.6" fill="var(--panel)"/>
+  </g>
+  <g class="derv">
+    <path d="M476 412.5 H511 V602.5 H538"/>
+  </g>
+  <g class="tbox">
+<rect x="132" y="61.5" width="344" height="135" rx="10"
+    fill="var(--panel)" stroke="var(--line)"
+    stroke-width="1" />
+<path d="M132 106.5 H476" stroke="var(--line)"
+    stroke-width="1" />
+<rect x="133" y="62.5" width="342" height="44" rx="9"
+    fill="var(--panel2)" stroke="none"/>
+<rect x="133" y="95.5" width="342" height="11" fill="var(--panel2)"/>
+<text x="146" y="82.5" class="tn ">users</text>
+<text x="146" y="97.5" class="tp">One participant. Deliberately holds no personal data.</text>
+<text x="147" y="121.1" class="mk k">#</text>
+<text x="162" y="121.1" class="mk req">*</text>
+<text x="177" y="121.1" class="cn" fill="var(--pk)"
+      text-decoration="underline">id</text>
+<text x="462" y="121.1" text-anchor="end"
+      class="ct ">text  u_…</text>
+<path d="M142 127.5 H466" stroke="var(--hair)" stroke-width="1"/>
+<text x="147" y="141.1" class="mk k"></text>
+<text x="162" y="141.1" class="mk req">*</text>
+<text x="177" y="141.1" class="cn" fill="var(--ink)"
+      >participant_id</text>
+<text x="462" y="141.1" text-anchor="end"
+      class="ct ">text uniq</text>
+<path d="M142 147.5 H466" stroke="var(--hair)" stroke-width="1"/>
+<text x="147" y="161.1" class="mk k"></text>
+<text x="162" y="161.1" class="mk req">*</text>
+<text x="177" y="161.1" class="cn" fill="var(--ink)"
+      >role</text>
+<text x="462" y="161.1" text-anchor="end"
+      class="ct en">text · 2</text>
+<path d="M142 167.5 H466" stroke="var(--hair)" stroke-width="1"/>
+<text x="147" y="181.1" class="mk k"></text>
+<text x="162" y="181.1" class="mk req">*</text>
+<text x="177" y="181.1" class="cn" fill="var(--ink)"
+      >created_at</text>
+<text x="462" y="181.1" text-anchor="end"
+      class="ct ">timestamptz</text>
+<text x="462" y="211.5" text-anchor="end" class="src">§1 · §9</text>
+</g>
+<g class="tbox">
+<rect x="132" y="236.5" width="344" height="475" rx="10"
+    fill="var(--panel)" stroke="var(--navy)"
+    stroke-width="1.8" />
+<path d="M132 281.5 H476" stroke="var(--line)"
+    stroke-width="1" />
+<rect x="133" y="237.5" width="342" height="44" rx="9"
+    fill="var(--panel2)" stroke="none"/>
+<rect x="133" y="270.5" width="342" height="11" fill="var(--panel2)"/>
+<text x="146" y="257.5" class="tn ">reports</text>
+<text x="462" y="256.5" class="chip core" text-anchor="end">CORE</text>
+<text x="146" y="272.5" class="tp">The core table. One submitted observation.</text>
+<text x="147" y="296.1" class="mk k">#</text>
+<text x="162" y="296.1" class="mk req">*</text>
+<text x="177" y="296.1" class="cn" fill="var(--pk)"
+      text-decoration="underline">id</text>
+<text x="462" y="296.1" text-anchor="end"
+      class="ct ">text  r_…</text>
+<path d="M142 302.5 H466" stroke="var(--hair)" stroke-width="1"/>
+<text x="147" y="316.1" class="mk k">→</text>
+<text x="162" y="316.1" class="mk req">*</text>
+<text x="177" y="316.1" class="cn" fill="var(--fk)"
+      >reporter_id</text>
+<text x="462" y="316.1" text-anchor="end"
+      class="ct ">text</text>
+<path d="M142 322.5 H466" stroke="var(--hair)" stroke-width="1"/>
+<text x="147" y="336.1" class="mk k">→</text>
+<text x="162" y="336.1" class="mk req">*</text>
+<text x="177" y="336.1" class="cn" fill="var(--fk)"
+      >beach_id</text>
+<text x="462" y="336.1" text-anchor="end"
+      class="ct ">text</text>
+<rect x="133" y="342.5" width="342" height="20" fill="var(--photobg)"/>
+<path d="M142 342.5 H466" stroke="var(--hair)" stroke-width="1"/>
+<text x="147" y="356.1" class="mk k"></text>
+<text x="162" y="356.1" class="mk req">*</text>
+<text x="177" y="356.1" class="cn" fill="var(--ink)"
+      >photo_url</text>
+<text x="462" y="356.1" text-anchor="end"
+      class="ct ">text</text>
+<rect x="133" y="362.5" width="342" height="20" fill="var(--photobg)"/>
+<path d="M142 362.5 H466" stroke="var(--hair)" stroke-width="1"/>
+<text x="147" y="376.1" class="mk k"></text>
+<text x="162" y="376.1" class="mk req">*</text>
+<text x="177" y="376.1" class="cn" fill="var(--ink)"
+      >photo_stripped</text>
+<text x="462" y="376.1" text-anchor="end"
+      class="ct ">boolean</text>
+<path d="M142 382.5 H466" stroke="var(--hair)" stroke-width="1"/>
+<text x="147" y="396.1" class="mk k"></text>
+<text x="162" y="396.1" class="mk req">*</text>
+<text x="177" y="396.1" class="cn" fill="var(--ink)"
+      >location_source</text>
+<text x="462" y="396.1" text-anchor="end"
+      class="ct en">text · 2</text>
+<rect x="133" y="402.5" width="342" height="20" fill="var(--grpbg)"/>
+<path d="M142 402.5 H466" stroke="var(--hair)" stroke-width="1"/>
+<text x="147" y="416.1" class="mk k"></text>
+<text x="162" y="416.1" class="mk opt">○</text>
+<text x="177" y="416.1" class="cn" fill="var(--ink)"
+      >qty_plastic</text>
+<text x="462" y="416.1" text-anchor="end"
+      class="ct en">text · 4 bands</text>
+<rect x="133" y="422.5" width="342" height="20" fill="var(--grpbg)"/>
+<path d="M142 422.5 H466" stroke="var(--hair)" stroke-width="1"/>
+<text x="147" y="436.1" class="mk k"></text>
+<text x="162" y="436.1" class="mk opt">○</text>
+<text x="177" y="436.1" class="cn" fill="var(--ink)"
+      >qty_fishing_gear</text>
+<text x="462" y="436.1" text-anchor="end"
+      class="ct en">text · 4 bands</text>
+<rect x="133" y="442.5" width="342" height="20" fill="var(--grpbg)"/>
+<path d="M142 442.5 H466" stroke="var(--hair)" stroke-width="1"/>
+<text x="147" y="456.1" class="mk k"></text>
+<text x="162" y="456.1" class="mk opt">○</text>
+<text x="177" y="456.1" class="cn" fill="var(--ink)"
+      >qty_glass</text>
+<text x="462" y="456.1" text-anchor="end"
+      class="ct en">text · 4 bands</text>
+<rect x="133" y="462.5" width="342" height="20" fill="var(--grpbg)"/>
+<path d="M142 462.5 H466" stroke="var(--hair)" stroke-width="1"/>
+<text x="147" y="476.1" class="mk k"></text>
+<text x="162" y="476.1" class="mk opt">○</text>
+<text x="177" y="476.1" class="cn" fill="var(--ink)"
+      >qty_metal</text>
+<text x="462" y="476.1" text-anchor="end"
+      class="ct en">text · 4 bands</text>
+<rect x="133" y="482.5" width="342" height="20" fill="var(--grpbg)"/>
+<path d="M142 482.5 H466" stroke="var(--hair)" stroke-width="1"/>
+<text x="147" y="496.1" class="mk k"></text>
+<text x="162" y="496.1" class="mk opt">○</text>
+<text x="177" y="496.1" class="cn" fill="var(--ink)"
+      >qty_paper</text>
+<text x="462" y="496.1" text-anchor="end"
+      class="ct en">text · 4 bands</text>
+<rect x="133" y="502.5" width="342" height="20" fill="var(--grpbg)"/>
+<path d="M142 502.5 H466" stroke="var(--hair)" stroke-width="1"/>
+<text x="147" y="516.1" class="mk k"></text>
+<text x="162" y="516.1" class="mk opt">○</text>
+<text x="177" y="516.1" class="cn" fill="var(--ink)"
+      >qty_other</text>
+<text x="462" y="516.1" text-anchor="end"
+      class="ct en">text · 4 bands</text>
+<path d="M142 522.5 H466" stroke="var(--hair)" stroke-width="1"/>
+<text x="147" y="536.1" class="mk k"></text>
+<text x="162" y="536.1" class="mk req">*</text>
+<text x="177" y="536.1" class="cn" fill="var(--derived)"
+      >category</text>
+<text x="462" y="536.1" text-anchor="end"
+      class="ct dv">text · 6</text>
+<path d="M142 542.5 H466" stroke="var(--hair)" stroke-width="1"/>
+<text x="147" y="556.1" class="mk k"></text>
+<text x="162" y="556.1" class="mk req">*</text>
+<text x="177" y="556.1" class="cn" fill="var(--derived)"
+      >quantity</text>
+<text x="462" y="556.1" text-anchor="end"
+      class="ct dv">text · 4</text>
+<path d="M142 562.5 H466" stroke="var(--hair)" stroke-width="1"/>
+<text x="147" y="576.1" class="mk k"></text>
+<text x="162" y="576.1" class="mk opt">○</text>
+<text x="177" y="576.1" class="cn" fill="var(--private)"
+      >lat</text>
+<text x="462" y="576.1" text-anchor="end"
+      class="ct pv">numeric(9,3)</text>
+<path d="M142 582.5 H466" stroke="var(--hair)" stroke-width="1"/>
+<text x="147" y="596.1" class="mk k"></text>
+<text x="162" y="596.1" class="mk opt">○</text>
+<text x="177" y="596.1" class="cn" fill="var(--private)"
+      >lng</text>
+<text x="462" y="596.1" text-anchor="end"
+      class="ct pv">numeric(9,3)</text>
+<path d="M142 602.5 H466" stroke="var(--hair)" stroke-width="1"/>
+<text x="147" y="616.1" class="mk k"></text>
+<text x="162" y="616.1" class="mk req">*</text>
+<text x="177" y="616.1" class="cn" fill="var(--ink)"
+      >status</text>
+<text x="462" y="616.1" text-anchor="end"
+      class="ct en">text · 3</text>
+<path d="M142 622.5 H466" stroke="var(--hair)" stroke-width="1"/>
+<text x="147" y="636.1" class="mk k"></text>
+<text x="162" y="636.1" class="mk opt">○</text>
+<text x="177" y="636.1" class="cn" fill="var(--ink)"
+      >status_note</text>
+<text x="462" y="636.1" text-anchor="end"
+      class="ct ">text</text>
+<path d="M142 642.5 H466" stroke="var(--hair)" stroke-width="1"/>
+<text x="147" y="656.1" class="mk k"></text>
+<text x="162" y="656.1" class="mk req">*</text>
+<text x="177" y="656.1" class="cn" fill="var(--ink)"
+      >created_at</text>
+<text x="462" y="656.1" text-anchor="end"
+      class="ct ">timestamptz</text>
+<path d="M142 662.5 H466" stroke="var(--hair)" stroke-width="1"/>
+<text x="147" y="676.1" class="mk k"></text>
+<text x="162" y="676.1" class="mk req">*</text>
+<text x="177" y="676.1" class="cn" fill="var(--ink)"
+      >updated_at</text>
+<text x="462" y="676.1" text-anchor="end"
+      class="ct ">timestamptz</text>
+<path d="M142 682.5 H466" stroke="var(--hair)" stroke-width="1"/>
+<text x="147" y="696.1" class="mk k"></text>
+<text x="162" y="696.1" class="mk opt">○</text>
+<text x="177" y="696.1" class="cn" fill="var(--ink)"
+      >deleted_at</text>
+<text x="462" y="696.1" text-anchor="end"
+      class="ct ">timestamptz</text>
+<text x="462" y="726.5" text-anchor="end" class="src">§6 · §9</text>
+</g>
+<g class="tbox">
+<rect x="538" y="91.5" width="344" height="295" rx="10"
+    fill="var(--panel)" stroke="var(--line)"
+    stroke-width="1" />
+<path d="M538 136.5 H882" stroke="var(--line)"
+    stroke-width="1" />
+<rect x="539" y="92.5" width="342" height="44" rx="9"
+    fill="var(--panel2)" stroke="none"/>
+<rect x="539" y="125.5" width="342" height="11" fill="var(--panel2)"/>
+<text x="552" y="112.5" class="tn ">beaches</text>
+<text x="868" y="111.5" class="chip" text-anchor="end">SEED</text>
+<text x="552" y="127.5" class="tp">The four monitored beaches. Seed data — no write endpoints.</text>
+<text x="553" y="151.1" class="mk k">#</text>
+<text x="568" y="151.1" class="mk req">*</text>
+<text x="583" y="151.1" class="cn" fill="var(--pk)"
+      text-decoration="underline">id</text>
+<text x="868" y="151.1" text-anchor="end"
+      class="ct ">text slug</text>
+<path d="M548 157.5 H872" stroke="var(--hair)" stroke-width="1"/>
+<text x="553" y="171.1" class="mk k"></text>
+<text x="568" y="171.1" class="mk req">*</text>
+<text x="583" y="171.1" class="cn" fill="var(--ink)"
+      >name</text>
+<text x="868" y="171.1" text-anchor="end"
+      class="ct ">text</text>
+<path d="M548 177.5 H872" stroke="var(--hair)" stroke-width="1"/>
+<text x="553" y="191.1" class="mk k"></text>
+<text x="568" y="191.1" class="mk req">*</text>
+<text x="583" y="191.1" class="cn" fill="var(--ink)"
+      >area</text>
+<text x="868" y="191.1" text-anchor="end"
+      class="ct ">text</text>
+<path d="M548 197.5 H872" stroke="var(--hair)" stroke-width="1"/>
+<text x="553" y="211.1" class="mk k"></text>
+<text x="568" y="211.1" class="mk req">*</text>
+<text x="583" y="211.1" class="cn" fill="var(--ink)"
+      >lat</text>
+<text x="868" y="211.1" text-anchor="end"
+      class="ct ">double</text>
+<path d="M548 217.5 H872" stroke="var(--hair)" stroke-width="1"/>
+<text x="553" y="231.1" class="mk k"></text>
+<text x="568" y="231.1" class="mk req">*</text>
+<text x="583" y="231.1" class="cn" fill="var(--ink)"
+      >lng</text>
+<text x="868" y="231.1" text-anchor="end"
+      class="ct ">double</text>
+<path d="M548 237.5 H872" stroke="var(--hair)" stroke-width="1"/>
+<text x="553" y="251.1" class="mk k"></text>
+<text x="568" y="251.1" class="mk req">*</text>
+<text x="583" y="251.1" class="cn" fill="var(--ink)"
+      >habitat</text>
+<text x="868" y="251.1" text-anchor="end"
+      class="ct ">text</text>
+<path d="M548 257.5 H872" stroke="var(--hair)" stroke-width="1"/>
+<text x="553" y="271.1" class="mk k"></text>
+<text x="568" y="271.1" class="mk req">*</text>
+<text x="583" y="271.1" class="cn" fill="var(--ink)"
+      >habitat_tag</text>
+<text x="868" y="271.1" text-anchor="end"
+      class="ct ">text</text>
+<path d="M548 277.5 H872" stroke="var(--hair)" stroke-width="1"/>
+<text x="553" y="291.1" class="mk k"></text>
+<text x="568" y="291.1" class="mk req">*</text>
+<text x="583" y="291.1" class="cn" fill="var(--ink)"
+      >sensitivity</text>
+<text x="868" y="291.1" text-anchor="end"
+      class="ct ">text</text>
+<path d="M548 297.5 H872" stroke="var(--hair)" stroke-width="1"/>
+<text x="553" y="311.1" class="mk k"></text>
+<text x="568" y="311.1" class="mk req">*</text>
+<text x="583" y="311.1" class="cn" fill="var(--ink)"
+      >primary_species_glyph</text>
+<text x="868" y="311.1" text-anchor="end"
+      class="ct en">text · 6</text>
+<path d="M548 317.5 H872" stroke="var(--hair)" stroke-width="1"/>
+<text x="553" y="331.1" class="mk k"></text>
+<text x="568" y="331.1" class="mk opt">○</text>
+<text x="583" y="331.1" class="cn" fill="var(--ink)"
+      >cover_image_url</text>
+<text x="868" y="331.1" text-anchor="end"
+      class="ct ">text</text>
+<path d="M548 337.5 H872" stroke="var(--hair)" stroke-width="1"/>
+<text x="553" y="351.1" class="mk k"></text>
+<text x="568" y="351.1" class="mk req">*</text>
+<text x="583" y="351.1" class="cn" fill="var(--ink)"
+      >scene</text>
+<text x="868" y="351.1" text-anchor="end"
+      class="ct ">text (CSS)</text>
+<path d="M548 357.5 H872" stroke="var(--hair)" stroke-width="1"/>
+<text x="553" y="371.1" class="mk k"></text>
+<text x="568" y="371.1" class="mk req">*</text>
+<text x="583" y="371.1" class="cn" fill="var(--ink)"
+      >created_at</text>
+<text x="868" y="371.1" text-anchor="end"
+      class="ct ">timestamptz</text>
+<text x="868" y="401.5" text-anchor="end" class="src">§2 · §9</text>
+</g>
+<g class="tbox">
+<rect x="538" y="426.5" width="344" height="255" rx="10"
+    fill="var(--panel)" stroke="var(--derived)"
+    stroke-width="1" stroke-dasharray="6 4"/>
+<path d="M538 471.5 H882" stroke="var(--derived)"
+    stroke-width="1" stroke-dasharray="6 4" opacity=".6"/>
+<rect x="539" y="427.5" width="342" height="44" rx="9"
+    fill="var(--derived-bg)" stroke="none"/>
+<rect x="539" y="460.5" width="342" height="11" fill="var(--derived-bg)"/>
+<text x="552" y="447.5" class="tn gh">computed per request</text>
+<text x="552" y="462.5" class="tp">In the JSON, not in the table. Recomputed per request.</text>
+<text x="553" y="486.1" class="mk k"></text>
+<text x="560" y="486.1" class="mk fn">ƒ</text>
+<text x="583" y="486.1" class="cn" fill="var(--derived)"
+      >severity</text>
+<text x="868" y="486.1" text-anchor="end"
+      class="ct dv">text · 4 | null</text>
+<path d="M548 492.5 H872" stroke="var(--hair)" stroke-width="1"/>
+<text x="553" y="506.1" class="mk k"></text>
+<text x="560" y="506.1" class="mk fn">ƒ</text>
+<text x="583" y="506.1" class="cn" fill="var(--derived)"
+      >band</text>
+<text x="868" y="506.1" text-anchor="end"
+      class="ct dv">int 1-4 | null</text>
+<path d="M548 512.5 H872" stroke="var(--hair)" stroke-width="1"/>
+<text x="553" y="526.1" class="mk k"></text>
+<text x="560" y="526.1" class="mk fn">ƒ</text>
+<text x="583" y="526.1" class="cn" fill="var(--derived)"
+      >insufficientData</text>
+<text x="868" y="526.1" text-anchor="end"
+      class="ct dv">boolean</text>
+<path d="M548 532.5 H872" stroke="var(--hair)" stroke-width="1"/>
+<text x="553" y="546.1" class="mk k"></text>
+<text x="560" y="546.1" class="mk fn">ƒ</text>
+<text x="583" y="546.1" class="cn" fill="var(--derived)"
+      >validReports</text>
+<text x="868" y="546.1" text-anchor="end"
+      class="ct dv">int</text>
+<path d="M548 552.5 H872" stroke="var(--hair)" stroke-width="1"/>
+<text x="553" y="566.1" class="mk k"></text>
+<text x="560" y="566.1" class="mk fn">ƒ</text>
+<text x="583" y="566.1" class="cn" fill="var(--derived)"
+      >lastReportedAt</text>
+<text x="868" y="566.1" text-anchor="end"
+      class="ct dv">timestamptz|null</text>
+<path d="M548 572.5 H872" stroke="var(--hair)" stroke-width="1"/>
+<text x="553" y="586.1" class="mk k"></text>
+<text x="560" y="586.1" class="mk fn">ƒ</text>
+<text x="583" y="586.1" class="cn" fill="var(--derived)"
+      >freshnessKind</text>
+<text x="868" y="586.1" text-anchor="end"
+      class="ct dv">text · 3</text>
+<path d="M548 592.5 H872" stroke="var(--hair)" stroke-width="1"/>
+<text x="553" y="606.1" class="mk k"></text>
+<text x="560" y="606.1" class="mk fn">ƒ</text>
+<text x="583" y="606.1" class="cn" fill="var(--derived)"
+      >composition</text>
+<text x="868" y="606.1" text-anchor="end"
+      class="ct dv">slice[] | null</text>
+<path d="M548 612.5 H872" stroke="var(--hair)" stroke-width="1"/>
+<text x="553" y="626.1" class="mk k"></text>
+<text x="560" y="626.1" class="mk fn">ƒ</text>
+<text x="583" y="626.1" class="cn" fill="var(--derived)"
+      >compositionSource</text>
+<text x="868" y="626.1" text-anchor="end"
+      class="ct dv">object | null</text>
+<path d="M548 632.5 H872" stroke="var(--hair)" stroke-width="1"/>
+<text x="553" y="646.1" class="mk k"></text>
+<text x="560" y="646.1" class="mk fn">ƒ</text>
+<text x="583" y="646.1" class="cn" fill="var(--derived)"
+      >species</text>
+<text x="868" y="646.1" text-anchor="end"
+      class="ct dv">card[] · 0-5</text>
+<path d="M548 652.5 H872" stroke="var(--hair)" stroke-width="1"/>
+<text x="553" y="666.1" class="mk k"></text>
+<text x="560" y="666.1" class="mk fn">ƒ</text>
+<text x="583" y="666.1" class="cn" fill="var(--derived)"
+      >ecologicalNote</text>
+<text x="868" y="666.1" text-anchor="end"
+      class="ct dv">text</text>
+<circle cx="876" cy="658.5" r="2.6" fill="var(--enum)"/>
+<text x="868" y="696.5" text-anchor="end" class="src">§2 · §2c</text>
+</g>
+<g class="tbox">
+<rect x="944" y="34" width="344" height="335" rx="10"
+    fill="var(--panel)" stroke="var(--line)"
+    stroke-width="1" />
+<path d="M944 79 H1288" stroke="var(--line)"
+    stroke-width="1" />
+<rect x="945" y="35" width="342" height="44" rx="9"
+    fill="var(--panel2)" stroke="none"/>
+<rect x="945" y="68" width="342" height="11" fill="var(--panel2)"/>
+<text x="958" y="55" class="tn ">area_species</text>
+<text x="958" y="70" class="tp">Which biodiversity cards a beach shows, in order.</text>
+<text x="959" y="93.6" class="mk k">#</text>
+<text x="974" y="93.6" class="mk req">*</text>
+<text x="989" y="93.6" class="cn" fill="var(--pk)"
+      text-decoration="underline">id</text>
+<text x="1274" y="93.6" text-anchor="end"
+      class="ct ">uuid</text>
+<path d="M954 100 H1278" stroke="var(--hair)" stroke-width="1"/>
+<text x="959" y="113.6" class="mk k">→</text>
+<text x="974" y="113.6" class="mk req">*</text>
+<text x="989" y="113.6" class="cn" fill="var(--fk)"
+      >area_id</text>
+<text x="1274" y="113.6" text-anchor="end"
+      class="ct ">text</text>
+<path d="M954 120 H1278" stroke="var(--hair)" stroke-width="1"/>
+<text x="959" y="133.6" class="mk k">→</text>
+<text x="974" y="133.6" class="mk opt">○</text>
+<text x="989" y="133.6" class="cn" fill="var(--fk)"
+      >species_id</text>
+<text x="1274" y="133.6" text-anchor="end"
+      class="ct ">uuid</text>
+<path d="M954 140 H1278" stroke="var(--hair)" stroke-width="1"/>
+<text x="959" y="153.6" class="mk k"></text>
+<text x="974" y="153.6" class="mk req">*</text>
+<text x="989" y="153.6" class="cn" fill="var(--ink)"
+      >kind</text>
+<text x="1274" y="153.6" text-anchor="end"
+      class="ct en">text · 3</text>
+<path d="M954 160 H1278" stroke="var(--hair)" stroke-width="1"/>
+<text x="959" y="173.6" class="mk k"></text>
+<text x="974" y="173.6" class="mk req">*</text>
+<text x="989" y="173.6" class="cn" fill="var(--ink)"
+      >display_name</text>
+<text x="1274" y="173.6" text-anchor="end"
+      class="ct ">text</text>
+<path d="M954 180 H1278" stroke="var(--hair)" stroke-width="1"/>
+<text x="959" y="193.6" class="mk k"></text>
+<text x="974" y="193.6" class="mk req">*</text>
+<text x="989" y="193.6" class="cn" fill="var(--ink)"
+      >text</text>
+<text x="1274" y="193.6" text-anchor="end"
+      class="ct ">text</text>
+<path d="M954 200 H1278" stroke="var(--hair)" stroke-width="1"/>
+<text x="959" y="213.6" class="mk k"></text>
+<text x="974" y="213.6" class="mk req">*</text>
+<text x="989" y="213.6" class="cn" fill="var(--ink)"
+      >sort_order</text>
+<text x="1274" y="213.6" text-anchor="end"
+      class="ct ">int</text>
+<path d="M954 220 H1278" stroke="var(--hair)" stroke-width="1"/>
+<text x="959" y="233.6" class="mk k"></text>
+<text x="974" y="233.6" class="mk req">*</text>
+<text x="989" y="233.6" class="cn" fill="var(--ink)"
+      >origin</text>
+<text x="1274" y="233.6" text-anchor="end"
+      class="ct en">text · 2</text>
+<path d="M954 240 H1278" stroke="var(--hair)" stroke-width="1"/>
+<text x="959" y="253.6" class="mk k"></text>
+<text x="974" y="253.6" class="mk req">*</text>
+<text x="989" y="253.6" class="cn" fill="var(--ink)"
+      >source_dataset</text>
+<text x="1274" y="253.6" text-anchor="end"
+      class="ct en">text · 4</text>
+<circle cx="1282" cy="246" r="2.6" fill="var(--enum)"/>
+<path d="M954 260 H1278" stroke="var(--hair)" stroke-width="1"/>
+<text x="959" y="273.6" class="mk k"></text>
+<text x="974" y="273.6" class="mk req">*</text>
+<text x="989" y="273.6" class="cn" fill="var(--ink)"
+      >source_citation</text>
+<text x="1274" y="273.6" text-anchor="end"
+      class="ct ">text</text>
+<path d="M954 280 H1278" stroke="var(--hair)" stroke-width="1"/>
+<text x="959" y="293.6" class="mk k"></text>
+<text x="974" y="293.6" class="mk opt">○</text>
+<text x="989" y="293.6" class="cn" fill="var(--ink)"
+      >source_url</text>
+<text x="1274" y="293.6" text-anchor="end"
+      class="ct ">text</text>
+<path d="M954 300 H1278" stroke="var(--hair)" stroke-width="1"/>
+<text x="959" y="313.6" class="mk k"></text>
+<text x="974" y="313.6" class="mk opt">○</text>
+<text x="989" y="313.6" class="cn" fill="var(--ink)"
+      >source_accessed_at</text>
+<text x="1274" y="313.6" text-anchor="end"
+      class="ct ">date</text>
+<path d="M954 320 H1278" stroke="var(--hair)" stroke-width="1"/>
+<text x="959" y="333.6" class="mk k"></text>
+<text x="974" y="333.6" class="mk opt">○</text>
+<text x="989" y="333.6" class="cn" fill="var(--ink)"
+      >likelihood_percent</text>
+<text x="1274" y="333.6" text-anchor="end"
+      class="ct ">int 0-100</text>
+<path d="M954 340 H1278" stroke="var(--hair)" stroke-width="1"/>
+<text x="959" y="353.6" class="mk k"></text>
+<text x="974" y="353.6" class="mk opt">○</text>
+<text x="989" y="353.6" class="cn" fill="var(--ink)"
+      >likelihood_basis</text>
+<text x="1274" y="353.6" text-anchor="end"
+      class="ct ">text</text>
+<text x="1274" y="384" text-anchor="end" class="src">§2c</text>
+</g>
+<g class="tbox">
+<rect x="944" y="409" width="344" height="195" rx="10"
+    fill="var(--panel)" stroke="var(--line)"
+    stroke-width="1" />
+<path d="M944 454 H1288" stroke="var(--line)"
+    stroke-width="1" />
+<rect x="945" y="410" width="342" height="44" rx="9"
+    fill="var(--panel2)" stroke="none"/>
+<rect x="945" y="443" width="342" height="11" fill="var(--panel2)"/>
+<text x="958" y="430" class="tn ">dim_species</text>
+<text x="958" y="445" class="tp">One real species. No scientific name, no row.</text>
+<text x="959" y="468.6" class="mk k">#</text>
+<text x="974" y="468.6" class="mk req">*</text>
+<text x="989" y="468.6" class="cn" fill="var(--pk)"
+      text-decoration="underline">species_id</text>
+<text x="1274" y="468.6" text-anchor="end"
+      class="ct ">uuid</text>
+<path d="M954 475 H1278" stroke="var(--hair)" stroke-width="1"/>
+<text x="959" y="488.6" class="mk k"></text>
+<text x="974" y="488.6" class="mk req">*</text>
+<text x="989" y="488.6" class="cn" fill="var(--ink)"
+      >scientific_name</text>
+<text x="1274" y="488.6" text-anchor="end"
+      class="ct ">text uniq</text>
+<path d="M954 495 H1278" stroke="var(--hair)" stroke-width="1"/>
+<text x="959" y="508.6" class="mk k"></text>
+<text x="974" y="508.6" class="mk opt">○</text>
+<text x="989" y="508.6" class="cn" fill="var(--ink)"
+      >common_name</text>
+<text x="1274" y="508.6" text-anchor="end"
+      class="ct ">text</text>
+<path d="M954 515 H1278" stroke="var(--hair)" stroke-width="1"/>
+<text x="959" y="528.6" class="mk k">→</text>
+<text x="974" y="528.6" class="mk opt">○</text>
+<text x="989" y="528.6" class="cn" fill="var(--fk)"
+      >threat_id</text>
+<text x="1274" y="528.6" text-anchor="end"
+      class="ct ">int</text>
+<path d="M954 535 H1278" stroke="var(--hair)" stroke-width="1"/>
+<text x="959" y="548.6" class="mk k"></text>
+<text x="974" y="548.6" class="mk req">*</text>
+<text x="989" y="548.6" class="cn" fill="var(--ink)"
+      >glyph</text>
+<text x="1274" y="548.6" text-anchor="end"
+      class="ct en">text · 6</text>
+<path d="M954 555 H1278" stroke="var(--hair)" stroke-width="1"/>
+<text x="959" y="568.6" class="mk k"></text>
+<text x="974" y="568.6" class="mk opt">○</text>
+<text x="989" y="568.6" class="cn" fill="var(--ink)"
+      >picture_url</text>
+<text x="1274" y="568.6" text-anchor="end"
+      class="ct ">text</text>
+<path d="M954 575 H1278" stroke="var(--hair)" stroke-width="1"/>
+<text x="959" y="588.6" class="mk k"></text>
+<text x="974" y="588.6" class="mk req">*</text>
+<text x="989" y="588.6" class="cn" fill="var(--ink)"
+      >created_at</text>
+<text x="1274" y="588.6" text-anchor="end"
+      class="ct ">timestamptz</text>
+<text x="1274" y="619" text-anchor="end" class="src">§2c</text>
+</g>
+<g class="tbox">
+<rect x="944" y="644" width="344" height="95" rx="10"
+    fill="var(--panel)" stroke="var(--line)"
+    stroke-width="1" />
+<path d="M944 689 H1288" stroke="var(--line)"
+    stroke-width="1" />
+<rect x="945" y="645" width="342" height="44" rx="9"
+    fill="var(--panel2)" stroke="none"/>
+<rect x="945" y="678" width="342" height="11" fill="var(--panel2)"/>
+<text x="958" y="665" class="tn ">dim_threat</text>
+<text x="958" y="680" class="tp">IUCN conservation categories. Dictionary table (DMP §6).</text>
+<text x="959" y="703.6" class="mk k">#</text>
+<text x="974" y="703.6" class="mk req">*</text>
+<text x="989" y="703.6" class="cn" fill="var(--pk)"
+      text-decoration="underline">threat_id</text>
+<text x="1274" y="703.6" text-anchor="end"
+      class="ct ">serial</text>
+<path d="M954 710 H1278" stroke="var(--hair)" stroke-width="1"/>
+<text x="959" y="723.6" class="mk k"></text>
+<text x="974" y="723.6" class="mk req">*</text>
+<text x="989" y="723.6" class="cn" fill="var(--ink)"
+      >threat_name</text>
+<text x="1274" y="723.6" text-anchor="end"
+      class="ct ">text uniq</text>
+<text x="1274" y="754" text-anchor="end" class="src">§2c</text>
+</g>
+  <g class="tether">
+    <path d="M710 386.5 V426.5"/>
+      <text x="701" y="409.5" text-anchor="end" class="th">same response</text>
+  </g>
+  <g class="grpnote">
+    
+<path d="M122 405.5 h-7 V519.5 h7" fill="none" stroke="var(--enum)" stroke-width="1.2"/>
+        <text transform="translate(107 462.5) rotate(-90)" text-anchor="middle" class="gl" fill="var(--enum)">a band per category</text>
+        <text transform="translate(95 462.5) rotate(-90)" text-anchor="middle" class="gl gc" fill="var(--enum)">≥ 1 non-null</text>
+  </g>
+</svg>
+</div>
+
 <section class="sec">
-  <h2>How they connect</h2>
-  <p class="hint">Solid arrows are foreign keys. The one dashed arrow is a <em>read</em>, not a key:
-  a beach's litter composition is taken from its most recent <code>Counted</code> report, so nothing
-  aggregates and nothing is stored twice.</p>
-  <div class="mapbox">
-    <svg viewBox="0 0 700 400" role="img" aria-label="Entity relationship map of the seven tables">
-      <defs>
-        <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
-          <path d="M0 0 L10 5 L0 10 z" fill="currentColor"/>
-        </marker>
-        <marker id="ard" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
-          <path d="M0 0 L10 5 L0 10 z" fill="var(--derived)"/>
-        </marker>
-      </defs>
-
-      <!-- foreign keys -->
-      <g stroke="currentColor" color="var(--ink3)" stroke-width="1.3" fill="none" marker-end="url(#ar)" opacity=".75">
-        <path d="M99 68 V237 H174"/>
-        <path d="M300 68 V204"/>
-        <path d="M380 68 V180 H540 V204"/>
-        <path d="M585 68 V112"/>
-        <path d="M585 160 V204"/>
-        <path d="M285 264 V320"/>
-      </g>
-
-      <!-- derived read: latest Counted report -> beach composition -->
-      <g stroke="currentColor" color="var(--derived)" stroke-width="1.4" fill="none"
-         marker-end="url(#ard)" stroke-dasharray="5 4">
-        <path d="M200 210 V47 H244"/>
-      </g>
-
-      <g font-family="IBM Plex Mono, monospace" font-size="12.5" font-weight="600">
-        <g>
-          <rect x="24" y="26" width="150" height="42" rx="8" fill="var(--panel2)" stroke="var(--line)"/>
-          <text x="99" y="52" text-anchor="middle" fill="var(--navy)">users</text>
-        </g>
-        <g>
-          <rect x="250" y="26" width="150" height="42" rx="8" fill="var(--panel2)" stroke="var(--line)"/>
-          <text x="325" y="52" text-anchor="middle" fill="var(--navy)">beaches</text>
-        </g>
-        <g>
-          <rect x="500" y="26" width="170" height="42" rx="8" fill="var(--panel2)" stroke="var(--line)"/>
-          <text x="585" y="52" text-anchor="middle" fill="var(--navy)">dim_threat</text>
-        </g>
-        <g>
-          <rect x="500" y="118" width="170" height="42" rx="8" fill="var(--panel2)" stroke="var(--line)"/>
-          <text x="585" y="144" text-anchor="middle" fill="var(--navy)">dim_species</text>
-        </g>
-        <g>
-          <rect x="470" y="210" width="200" height="54" rx="8" fill="var(--panel2)" stroke="var(--line)"/>
-          <text x="570" y="235" text-anchor="middle" fill="var(--navy)">area_species</text>
-          <text x="570" y="253" text-anchor="middle" font-size="10" font-weight="400" fill="var(--ink3)">junction · beach × species</text>
-        </g>
-        <g>
-          <rect x="180" y="210" width="210" height="54" rx="8" fill="var(--panel)" stroke="var(--navy)" stroke-width="1.6"/>
-          <text x="285" y="235" text-anchor="middle" fill="var(--navy)">reports</text>
-          <text x="285" y="253" text-anchor="middle" font-size="10" font-weight="400" fill="var(--ink3)">the core table</text>
-        </g>
-        <g>
-          <rect x="180" y="326" width="210" height="42" rx="8" fill="var(--panel2)" stroke="var(--line)"/>
-          <text x="285" y="352" text-anchor="middle" fill="var(--navy)">photos</text>
-        </g>
-      </g>
-    </svg>
-    <div class="maplegend">
-      <span><i class="sw-fk"></i>foreign key</span>
-      <span><i class="sw-dv"></i>derived read — the latest <code>Counted</code> report becomes the beach's composition</span>
+  <h2>Reading it</h2>
+  <div class="key">
+    <div class="kc">
+      <h4>Column markers</h4>
+      <ul>
+        <li><b style="color:var(--fk)">#</b><span>primary key — also underlined</span></li>
+        <li><b style="color:var(--fk)">→</b><span>foreign key</span></li>
+        <li><b>*</b><span>required · <code style="font-family:'IBM Plex Mono',monospace">NOT NULL</code></span></li>
+        <li><b>○</b><span>optional · nullable</span></li>
+      </ul>
+    </div>
+    <div class="kc">
+      <h4>Column colour</h4>
+      <ul>
+        <li><b style="color:var(--pk)">▮</b><span>primary key</span></li>
+        <li><b style="color:var(--fk)">▮</b><span>foreign key</span></li>
+        <li><b style="color:var(--derived)">▮</b><span>derived — computed from other columns</span></li>
+        <li><b style="color:var(--private)">▮</b><span>private — never in any response</span></li>
+        <li><b style="color:var(--enum)">▮</b><span>type in amber = fixed set of values</span></li>
+      </ul>
+    </div>
+    <div class="kc">
+      <h4>Cardinality</h4>
+      <ul>
+        <li><svg viewBox="0 0 44 14"><g fill="none" stroke="var(--ink3)" stroke-width="1.25">
+          <path d="M0 7 H44"/><path d="M13 7 L0 2 M13 7 L0 7 M13 7 L0 12"/><path d="M35 1.5 V12.5"/>
+          </g></svg><span>many → exactly one</span></li>
+        <li><svg viewBox="0 0 44 14"><g fill="none" stroke="var(--ink3)" stroke-width="1.25">
+          <path d="M0 7 H44"/><path d="M13 7 L0 2 M13 7 L0 7 M13 7 L0 12"/>
+          <circle cx="20" cy="7" r="3.6" fill="var(--panel)"/><path d="M35 1.5 V12.5"/>
+          </g></svg><span>many → zero or one <em style="font-style:normal;color:var(--ink3)">(nullable FK)</em></span></li>
+        <li><svg viewBox="0 0 44 14"><g fill="none" stroke="var(--derived)" stroke-width="1.4" stroke-dasharray="5 4">
+          <path d="M0 7 H44"/></g></svg><span>derived read, not a key</span></li>
+      </ul>
     </div>
   </div>
-</section>
-
-<!-- users -->
-<section class="tbl">
-  <div class="thead">
-    <div class="tname">users</div>
-    <div class="tpurpose">One row per participant. Deliberately holds no personal data.</div>
-  </div>
-  <div class="cols">
-    <div class="col"><div class="cname">id <span class="tag t-pk">PK</span></div><div class="ctype">uuid / ulid</div><div class="cdesc">Internal identifier. Never shown to anyone.</div></div>
-    <div class="col"><div class="cname">participant_id</div><div class="ctype">text, unique</div><div class="cdesc">The 4-digit number the app shows, e.g. <b>1637</b>. Assign it <b>randomly</b>, not from a sequence — a sequence leaks how many participants exist and who joined first.</div></div>
-    <div class="col"><div class="cname">role <span class="tag t-enum">ENUM</span></div><div class="ctype">volunteer · moderator</div><div class="cdesc">Iteration 1 only ever issues <code>volunteer</code>. <code>moderator</code> is reserved for the later review flow — create the value, leave it unused.</div></div>
-    <div class="col"><div class="cname">created_at</div><div class="ctype">timestamptz</div><div class="cdesc">When the number was issued.</div></div>
-  </div>
-  <p class="note"><b>No name, no email, no phone, no password column — by decision, not oversight.</b>
-  A report is attributed to a number and nothing else, so there is no personal data to protect, export or delete.</p>
-  <p class="note warn"><b>The number is the credential.</b> Anyone who types 1637 sees participant 1637's
-  records. That is acceptable for an MVP running on synthetic data. Before this ever holds real
-  public submissions it needs a secret alongside the number.</p>
-</section>
-
-<!-- beaches -->
-<section class="tbl">
-  <div class="thead">
-    <div class="tname">beaches</div>
-    <div class="tpurpose">The four monitored beaches. Seed data — no create, update or delete endpoints in Iteration 1.</div>
-  </div>
-  <div class="cols">
-    <div class="col"><div class="cname">id <span class="tag t-pk">PK</span></div><div class="ctype">text slug</div><div class="cdesc"><code>morib</code>, <code>remis</code>, <code>kelanang</code>, <code>bagan</code>. Slugs, not numbers — they appear in URLs.</div></div>
-    <div class="col"><div class="cname">name</div><div class="ctype">text</div><div class="cdesc">Display name, e.g. <b>Pantai Morib</b>.</div></div>
-    <div class="col"><div class="cname">area</div><div class="ctype">text</div><div class="cdesc">District line under the name, e.g. <b>Banting, Selangor</b>.</div></div>
-    <div class="col"><div class="cname">lat, lng</div><div class="ctype">double</div><div class="cdesc">Where the map marker sits. <b>This is the beach's own position and is public</b> — do not confuse it with the reporter's coordinates on <code>reports</code>, which are not.</div></div>
-    <div class="col"><div class="cname">habitat</div><div class="ctype">text</div><div class="cdesc">Full phrase for the biodiversity section, e.g. <b>Intertidal mudflat &amp; sandy shore</b>.</div></div>
-    <div class="col"><div class="cname">habitat_tag</div><div class="ctype">text, short</div><div class="cdesc">Uppercase label printed on the map marker: <code>MUDFLAT</code>, <code>MANGROVE</code>, <code>SEAGRASS</code>. Keep it under ~10 characters or it overflows the pill.</div></div>
-    <div class="col"><div class="cname">sensitivity</div><div class="ctype">text</div><div class="cdesc">Why this stretch matters ecologically, e.g. <b>Horseshoe crab spawning shore</b>.</div></div>
-    <div class="col"><div class="cname">primary_species_glyph <span class="tag t-enum">ENUM</span></div><div class="ctype">6 icon names</div><div class="cdesc">Which icon the biodiversity map marker draws. It is the glyph of this beach's first card — store it, or derive it from <code>area_species</code> ordered by <code>sort_order</code>.</div></div>
-    <div class="col"><div class="cname">cover_image_url <span class="tag t-null">NULL</span></div><div class="ctype">text</div><div class="cdesc">Real photograph for the beach header. <b>Send null when there is no photo</b> — the app falls back to the gradient below, so a new beach never leaves a blank header.</div></div>
-    <div class="col"><div class="cname">scene</div><div class="ctype">text (CSS)</div><div class="cdesc">A CSS <code>background</code> value used as the no-photo placeholder. Already written in the seed data — store and return it verbatim.</div></div>
-    <div class="col"><div class="cname">created_at</div><div class="ctype">timestamptz</div><div class="cdesc">Bookkeeping.</div></div>
-  </div>
-  <p class="note"><b>No composition column.</b> <code>GET /beaches/:id</code> builds the litter breakdown
-  at read time from the beach's latest <code>Counted</code> report — see <code>reports</code> below.</p>
-</section>
-
-<!-- dim_threat -->
-<section class="tbl">
-  <div class="thead">
-    <div class="tname">dim_threat</div>
-    <div class="tpurpose">IUCN conservation categories. A dictionary table, required by DMP §6.</div>
-  </div>
-  <div class="cols">
-    <div class="col"><div class="cname">threat_id <span class="tag t-pk">PK</span></div><div class="ctype">smallint</div><div class="cdesc">Small fixed set — nine rows, seeded once.</div></div>
-    <div class="col"><div class="cname">threat_name</div><div class="ctype">text, unique</div><div class="cdesc"><code>Critically Endangered</code>, <code>Endangered</code>, <code>Vulnerable</code>, <code>Near Threatened</code>, <code>Least Concern</code>, <code>Data Deficient</code>, <code>Not Evaluated</code>, and the two extinct categories.</div></div>
-  </div>
-  <p class="note">Kept as its own table rather than a text column so the category can never be
-  misspelled and so a species can be re-graded in one place.</p>
-</section>
-
-<!-- dim_species -->
-<section class="tbl">
-  <div class="thead">
-    <div class="tname">dim_species</div>
-    <div class="tpurpose">One row per real species. Only rows that have a scientific name belong here.</div>
-  </div>
-  <div class="cols">
-    <div class="col"><div class="cname">species_id <span class="tag t-pk">PK</span></div><div class="ctype">bigint</div><div class="cdesc">Surrogate key.</div></div>
-    <div class="col"><div class="cname">scientific_name</div><div class="ctype">text, unique</div><div class="cdesc">The natural key — <b>upsert on this column</b>, so importing the same dataset twice does not duplicate rows.</div></div>
-    <div class="col"><div class="cname">common_name <span class="tag t-null">NULL</span></div><div class="ctype">text</div><div class="cdesc">English name shown on the card when there is one.</div></div>
-    <div class="col"><div class="cname">threat_id <span class="tag t-fk">FK</span> <span class="tag t-null">NULL</span></div><div class="ctype">→ dim_threat</div><div class="cdesc">Null means not yet graded. Do not substitute <code>Least Concern</code> for unknown.</div></div>
-    <div class="col"><div class="cname">glyph <span class="tag t-enum">ENUM</span></div><div class="ctype">turtle · bird · mangrove<br>grass · crab · fish</div><div class="cdesc">Which of the six built-in icons the app draws. The app has exactly these six shapes and no image fallback, so a value outside the list renders nothing.</div></div>
-    <div class="col"><div class="cname">picture_url <span class="tag t-null">NULL</span></div><div class="ctype">text</div><div class="cdesc">Optional real photograph. The glyph is always drawn as the fallback.</div></div>
-    <div class="col"><div class="cname">created_at</div><div class="ctype">timestamptz</div><div class="cdesc">Bookkeeping.</div></div>
-  </div>
-  <p class="note"><b>Habitats and group names do not go here.</b> "Mangrove forest" and "Coastal birds"
-  have no scientific name, so they live on <code>area_species</code> with a null <code>species_id</code>.</p>
-</section>
-
-<!-- area_species -->
-<section class="tbl">
-  <div class="thead">
-    <div class="tname">area_species</div>
-    <div class="tpurpose">Which cards a beach's biodiversity section shows, in order. One beach has many rows; one species can appear at many beaches.</div>
-  </div>
-  <div class="cols">
-    <div class="col"><div class="cname">id <span class="tag t-pk">PK</span></div><div class="ctype">bigint</div><div class="cdesc">Surrogate key.</div></div>
-    <div class="col"><div class="cname">area_id <span class="tag t-fk">FK</span></div><div class="ctype">→ beaches.id</div><div class="cdesc">The beach this card belongs to. <b>Unique together with <code>display_name</code></b> so the same card cannot be seeded twice.</div></div>
-    <div class="col"><div class="cname">species_id <span class="tag t-fk">FK</span> <span class="tag t-null">NULL</span></div><div class="ctype">→ dim_species</div><div class="cdesc"><b>Null for habitats and group names.</b> Set only when the card is one real species.</div></div>
-    <div class="col"><div class="cname">kind <span class="tag t-enum">ENUM</span></div><div class="ctype">species · habitat · group</div><div class="cdesc">Must agree with <code>species_id</code>: <code>species</code> requires it, the other two require it to be null.</div></div>
-    <div class="col"><div class="cname">display_name</div><div class="ctype">text</div><div class="cdesc">The card heading, e.g. <b>Green sea turtle</b> or <b>Mangrove forest</b>.</div></div>
-    <div class="col"><div class="cname">text</div><div class="ctype">text</div><div class="cdesc">The one-sentence description under the heading.</div></div>
-    <div class="col"><div class="cname">sort_order</div><div class="ctype">smallint</div><div class="cdesc">Display order within the beach. Also decides <code>primary_species_glyph</code>.</div></div>
-    <div class="col"><div class="cname">origin <span class="tag t-enum">ENUM</span></div><div class="ctype">seed · import</div><div class="cdesc">Whether a person wrote the row or a dataset import created it.</div></div>
-    <div class="col"><div class="cname">source_dataset <span class="tag t-enum">ENUM</span></div><div class="ctype">FishBase · OBIS<br>other · pending</div><div class="cdesc"><b>Where this claim comes from.</b> The app prints an amber <code>SOURCE PENDING</code> badge on any card whose value is <code>pending</code> — so an unsourced card is visibly unsourced rather than quietly wrong.</div></div>
-    <div class="col"><div class="cname">source_citation</div><div class="ctype">text</div><div class="cdesc">The attribution line. FishBase and OBIS are <b>CC BY-NC</b>: the citation must be shown, and the data must not be used commercially.</div></div>
-    <div class="col"><div class="cname">source_url <span class="tag t-null">NULL</span></div><div class="ctype">text</div><div class="cdesc">Link to the record.</div></div>
-    <div class="col"><div class="cname">source_accessed_at <span class="tag t-null">NULL</span></div><div class="ctype">date</div><div class="cdesc">When the dataset was read. Required by the licences.</div></div>
-    <div class="col"><div class="cname">likelihood_percent <span class="tag t-null">NULL</span></div><div class="ctype">smallint 0–100</div><div class="cdesc">Epic 5's probability figure. Null hides the bar entirely.</div></div>
-    <div class="col"><div class="cname">likelihood_basis <span class="tag t-null">NULL</span></div><div class="ctype">text</div><div class="cdesc">Plain-language reason for the number. <b>Required whenever the percentage is set</b> — a bare percentage with no stated basis reads as measured fact.</div></div>
-  </div>
-  <p class="note warn"><b>Never merge likelihood into the litter severity score.</b> They answer different
-  questions and are computed from unrelated inputs; a single blended number would be defensible as neither.</p>
-</section>
-
-<!-- reports -->
-<section class="tbl">
-  <div class="thead">
-    <div class="tname">reports</div>
-    <div class="tpurpose">The core table. One row per submitted observation.</div>
-  </div>
-  <div class="cols">
-    <div class="col"><div class="cname">id <span class="tag t-pk">PK</span></div><div class="ctype">uuid / ulid</div><div class="cdesc">Returned to the app and used in every later edit or delete.</div></div>
-    <div class="col"><div class="cname">reporter_id <span class="tag t-fk">FK</span></div><div class="ctype">→ users.id</div><div class="cdesc">Who submitted it. A number, never a name.</div></div>
-    <div class="col"><div class="cname">beach_id <span class="tag t-fk">FK</span></div><div class="ctype">→ beaches.id</div><div class="cdesc">Which beach it belongs to.</div></div>
-    <div class="col"><div class="cname">photo_id <span class="tag t-fk">FK</span> <span class="tag t-null">NULL</span></div><div class="ctype">→ photos.id</div><div class="cdesc">The evidence photo. Null only for a report saved before its upload finished.</div></div>
-    <div class="col"><div class="cname">location_source <span class="tag t-enum">ENUM</span></div><div class="ctype">gps · manual</div><div class="cdesc">Whether the beach was resolved from the phone's position or picked from the list.</div></div>
-
-    <div class="col"><div class="cname">qty_plastic <span class="tag t-enum">ENUM</span> <span class="tag t-null">NULL</span></div><div class="ctype rowspan">Small · Medium<br>Large · Very Large</div><div class="cdesc">How much plastic was seen. <b>Null means "not seen", not "zero"</b> — the reporter never counted an absence, so a null must never be rendered as 0.</div></div>
-    <div class="col"><div class="cname">qty_fishing_gear <span class="tag t-enum">ENUM</span> <span class="tag t-null">NULL</span></div><div class="ctype">same four bands</div><div class="cdesc">Nets, lines, traps. The heaviest-weighted category in the severity rule.</div></div>
-    <div class="col"><div class="cname">qty_glass <span class="tag t-enum">ENUM</span> <span class="tag t-null">NULL</span></div><div class="ctype">same four bands</div><div class="cdesc">Bottles and fragments.</div></div>
-    <div class="col"><div class="cname">qty_metal <span class="tag t-enum">ENUM</span> <span class="tag t-null">NULL</span></div><div class="ctype">same four bands</div><div class="cdesc">Cans, scrap.</div></div>
-    <div class="col"><div class="cname">qty_paper <span class="tag t-enum">ENUM</span> <span class="tag t-null">NULL</span></div><div class="ctype">same four bands</div><div class="cdesc">Cardboard, packaging.</div></div>
-    <div class="col"><div class="cname">qty_other <span class="tag t-enum">ENUM</span> <span class="tag t-null">NULL</span></div><div class="ctype">same four bands</div><div class="cdesc">Anything that fits none of the five above.</div></div>
-
-    <div class="col"><div class="cname">category <span class="tag t-derived">DERIVED</span></div><div class="ctype">6 categories</div><div class="cdesc">The highest-weighted non-null <code>qty_*</code> column. Kept so existing list views and the severity rule keep working unchanged.</div></div>
-    <div class="col"><div class="cname">quantity <span class="tag t-derived">DERIVED</span></div><div class="ctype">4 bands</div><div class="cdesc">That column's own value.</div></div>
-
-    <div class="col"><div class="cname">lat, lng <span class="tag t-private">PRIVATE</span> <span class="tag t-null">NULL</span></div><div class="ctype">numeric(9,3)</div><div class="cdesc">Written <b>only</b> when <code>location_source = gps</code>, and rounded to 3 decimals (~110 m) by the app before it is ever sent. <b>Exclude these two columns explicitly in the serialiser</b> — not by remembering to omit them per endpoint.</div></div>
-    <div class="col"><div class="cname">status <span class="tag t-enum">ENUM</span></div><div class="ctype">Counted · Duplicate<br>Incomplete</div><div class="cdesc">Only <code>Counted</code> rows feed the severity score and the composition read.</div></div>
-    <div class="col"><div class="cname">status_note <span class="tag t-null">NULL</span></div><div class="ctype">text</div><div class="cdesc">One sentence explaining a non-<code>Counted</code> status, shown to the reporter.</div></div>
-    <div class="col"><div class="cname">created_at, updated_at</div><div class="ctype">timestamptz</div><div class="cdesc">Bookkeeping.</div></div>
-    <div class="col"><div class="cname">deleted_at <span class="tag t-null">NULL</span></div><div class="ctype">timestamptz</div><div class="cdesc">Soft delete. A deleted report leaves the counts and stops appearing.</div></div>
-  </div>
-  <p class="note"><b>At least one category column must be non-null.</b>
-  <code>CHECK (num_nonnulls(qty_plastic, qty_fishing_gear, qty_glass, qty_metal, qty_paper, qty_other) &gt;= 1)</code>
-  — a report that records nothing is not a report.</p>
-  <p class="note"><b>The beach's litter composition is read from here.</b>
-  <code>GET /beaches/:id</code> takes the beach's most recent <code>Counted</code> report, lists its
-  non-null categories ordered by weight, and returns them with a <code>compositionSource</code> naming
-  that report and its date. Both fields are <code>null</code> when the beach has no <code>Counted</code>
-  report yet. Nothing is averaged and nothing is cached.</p>
-  <p class="note warn"><b>Open decision — severity with more than one category.</b> The published rule in
-  §3 takes one category and one quantity. Until the multi-category formula is agreed (max, sum or mean),
-  severity runs on the derived <code>category</code> / <code>quantity</code> pair, which reproduces
-  today's single-category behaviour exactly.</p>
-</section>
-
-<!-- photos -->
-<section class="tbl">
-  <div class="thead">
-    <div class="tname">photos</div>
-    <div class="tpurpose">Evidence images. The bytes live in the database, not on disk.</div>
-  </div>
-  <div class="cols">
-    <div class="col"><div class="cname">id <span class="tag t-pk">PK</span></div><div class="ctype">uuid / ulid</div><div class="cdesc">Also the public path: <code>GET /photos/:id</code> streams the bytes back.</div></div>
-    <div class="col"><div class="cname">data</div><div class="ctype">bytea</div><div class="cdesc">The image itself. Storing it in the database keeps backup and deletion to one system — the DMP's retention rule applies to one place, not two.</div></div>
-    <div class="col"><div class="cname">mime <span class="tag t-enum">ENUM</span></div><div class="ctype">image/jpeg · image/png</div><div class="cdesc">Validate on upload; do not trust the filename.</div></div>
-    <div class="col"><div class="cname">bytes</div><div class="ctype">integer</div><div class="cdesc">Size after processing. Reject over 8 MB before writing.</div></div>
-    <div class="col"><div class="cname">metadata_stripped</div><div class="ctype">boolean</div><div class="cdesc"><b>EXIF must be removed on the server</b>, including the GPS block a phone camera writes. Record that it happened; a photo with this false should never be served.</div></div>
-    <div class="col"><div class="cname">report_id <span class="tag t-fk">FK</span> <span class="tag t-null">NULL</span></div><div class="ctype">→ reports.id</div><div class="cdesc">Back-link, filled when the report is created. Null rows are uploads that were never submitted — sweep them.</div></div>
-    <div class="col"><div class="cname">created_at</div><div class="ctype">timestamptz</div><div class="cdesc">Bookkeeping.</div></div>
-  </div>
-  <p class="note"><b>Photos are public.</b> Anyone with the id can fetch the image, by decision.
-  That is exactly why the EXIF strip is mandatory rather than advisory.</p>
 </section>
 
 <section class="sec">
-  <h2>Two things that are not tables</h2>
-  <div class="pair">
-    <div class="mini">
-      <h4>Severity bands</h4>
-      <p>The four bands and the category weights are published by <code>GET /scoring-method</code> and
-      currently live in the frontend's <code>scoring.ts</code>. If the backend needs to compute
-      severity too, move them into a table so there is one copy, not two that can drift.</p>
+  <h2>Every fixed value, spelled out</h2>
+  <p class="hint">The diagram writes <code class="m">text · 4</code> where a column accepts a fixed
+  set. Here is each set in full — an amber dot on a row means the contract uses the value as an
+  enum but its <code class="m">CREATE TABLE</code> has no <code class="m">CHECK</code> to enforce it.</p>
+  <div class="enums">
+    <div class="ev">
+      <div class="evc"><code class="m">users.role</code></div>
+      <div class="evv"><span>volunteer</span><span>moderator</span></div>
     </div>
-    <div class="mini">
-      <h4>Composition</h4>
-      <p>Not stored anywhere. It is a read over the latest <code>Counted</code> report, which is why
-      changing a report changes what the biodiversity page shows immediately.</p>
+    <div class="ev">
+      <div class="evc"><code class="m">reports.location_source</code></div>
+      <div class="evv"><span>gps</span><span>manual</span></div>
+    </div>
+    <div class="ev">
+      <div class="evc"><code class="m">reports.qty_plastic</code> <code class="m">reports.qty_fishing_gear</code> <code class="m">reports.qty_glass</code> <code class="m">reports.qty_metal</code> <code class="m">reports.qty_paper</code> <code class="m">reports.qty_other</code> <code class="m">reports.quantity</code></div>
+      <div class="evv"><span>Small</span><span>Medium</span><span>Large</span><span>Very Large</span></div>
+    </div>
+    <div class="ev">
+      <div class="evc"><code class="m">reports.category</code></div>
+      <div class="evv"><span>Fishing gear</span><span>Plastic</span><span>Glass</span><span>Metal</span><span>Other</span><span>Paper</span></div>
+    </div>
+    <div class="ev">
+      <div class="evc"><code class="m">reports.status</code></div>
+      <div class="evv"><span>Counted</span><span>Duplicate</span><span>Incomplete</span></div>
+    </div>
+    <div class="ev">
+      <div class="evc"><code class="m">beaches.primary_species_glyph</code> <code class="m">dim_species.glyph</code></div>
+      <div class="evv"><span>turtle</span><span>bird</span><span>mangrove</span><span>grass</span><span>crab</span><span>fish</span></div>
+    </div>
+    <div class="ev">
+      <div class="evc"><code class="m">area_species.kind</code></div>
+      <div class="evv"><span>species</span><span>habitat</span><span>group</span></div>
+    </div>
+    <div class="ev">
+      <div class="evc"><code class="m">area_species.origin</code></div>
+      <div class="evv"><span>curated</span><span>derived</span></div>
+    </div>
+    <div class="ev gapped">
+      <div class="evc"><code class="m">area_species.source_dataset</code></div>
+      <div class="evv"><span>FishBase</span><span>OBIS</span><span>other</span><span>pending</span></div>
+    </div>
+    <div class="ev">
+      <div class="evc"><code class="m">beaches_computed.severity</code></div>
+      <div class="evv"><span>Low</span><span>Moderate</span><span>High</span><span>Severe</span><span>null</span></div>
+    </div>
+    <div class="ev">
+      <div class="evc"><code class="m">beaches_computed.freshnessKind</code></div>
+      <div class="evv"><span>ok</span><span>aging</span><span>stale</span></div>
     </div>
   </div>
 </section>
 
-<footer>Radar Sampah · Iteration 1 database contract · generated from <code>API.md</code> §9</footer>
+<section class="sec">
+  <h2>What the picture cannot show</h2>
+  <div class="notes">
+    <div class="n">
+      <h4>Six columns, one report</h4>
+      <p>Every <code>qty_*</code> column is nullable and <b>null means "not seen", never "zero"</b> —
+      nobody counted an absence. A named constraint keeps a report from being empty:
+      <code>CHECK (num_nonnulls(qty_plastic, …, qty_other) &gt;= 1)</code>.</p>
+    </div>
+    <div class="n">
+      <h4>The blue rows hold an address, not an image</h4>
+      <p>There is no <code>photos</code> table and <b>no image bytes in the database</b>.
+      <code>POST /uploads/photos</code> writes the file to object storage, strips its EXIF, and
+      returns a URL; <code>photo_url</code> keeps that address and <code>photo_stripped</code>
+      records that the location tag really came off. Two consequences: a file deleted in storage
+      leaves a link to nothing and the database never notices, and orphaned uploads have to be
+      swept by hand — no foreign key will do it.</p>
+    </div>
+    <div class="n">
+      <h4>Why <code>category</code> and <code>quantity</code> survive</h4>
+      <p>They are now derived — the highest-weighted non-null <code>qty_*</code> column and its
+      value — kept so the published severity rule and the existing list views keep working while
+      the six columns are introduced. They can be dropped once the record screen is multi-select.</p>
+    </div>
+    <div class="n">
+      <h4>The dashed line is a read</h4>
+      <p>A beach's litter composition is not stored. <code>GET /beaches/:id</code> takes that beach's
+      most recent <code>Counted</code> report, lists its non-null categories by weight, and returns a
+      <code>compositionSource</code> naming that report and its date. Both are <code>null</code>
+      until the beach has a <code>Counted</code> report.</p>
+    </div>
+    <div class="n">
+      <h4>Not columns on <code>beaches</code></h4>
+      <p><code>severity</code> <code>band</code> <code>insufficientData</code> <code>validReports</code> <code>lastReportedAt</code> <code>freshnessKind</code> <code>composition</code> <code>compositionSource</code> <code>species</code> <code>ecologicalNote</code> all appear in the JSON but none
+      are stored — the backend computes each one per request.</p>
+    </div>
+    <div class="n">
+      <h4><code>species_id</code> is nullable on purpose</h4>
+      <p>Only real species with a scientific name reach <code>dim_species</code>. Habitats
+      ("Mangrove forest") and group names ("Coastal birds") have none, so they live on
+      <code>area_species</code> alone. A <code>CHECK</code> ties this to <code>kind</code>:
+      <code>(kind = 'species') = (species_id IS NOT NULL)</code>.</p>
+    </div>
+    <div class="n">
+      <h4>Indexes the contract requires</h4>
+      <p><code>reports (beach_id, status, created_at)</code> for the severity window, and
+      <code>reports (reporter_id, beach_id, created_at)</code> for the duplicate check. A third,
+      <code>photos (created_at) WHERE report_id IS NULL</code>, finds uploads no report ever claimed —
+      they are swept after 24 hours.</p>
+    </div>
+    <div class="n warn">
+      <h4>Two id conventions in one schema</h4>
+      <p>Every id the contract shows by example is a prefixed string —
+      <code>u_01H…</code>, <code>r_01H…</code>, <code>ph_01H…</code> — so those columns must be
+      <code>text</code>. But the two tables that ship real DDL declare <code>uuid</code> primary keys.
+      <b>Both cannot be right.</b> Pick one before writing the migration; a <code>uuid</code> column
+      will not accept <code>u_01H…</code>.</p>
+    </div>
+    <div class="n warn">
+      <h4>Coordinates share a table with everything else</h4>
+      <p><code>reports.lat</code> / <code>lng</code> are written only for a GPS capture, rounded to
+      3 decimals on the device. <b>A <code>SELECT *</code> will carry them out.</b> Exclude both
+      columns in the serialiser, not per endpoint.</p>
+    </div>
+  </div>
+</section>
 
+<footer>Radar Sampah · Iteration 1 database contract · regenerate with
+<code>node erdgen/page.mjs</code> after editing <code>erdgen/schema.mjs</code></footer>
 </div>

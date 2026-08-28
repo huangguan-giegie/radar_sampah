@@ -33,7 +33,7 @@
 | HTTP | code | 触发场景 |
 | --- | --- | --- |
 | 400 | `VALIDATION_FAILED` | 必填字段缺失或值不在枚举内 |
-| 400 | `PHOTO_REQUIRED` | 提交记录时没带 `photoId` |
+| 400 | `PHOTO_REQUIRED` | 提交记录时没带 `photoUrl` |
 | 400 | `PHOTO_TOO_LARGE` | 照片超过 10 MB |
 | 400 | `PHOTO_UNSUPPORTED_TYPE` | 不是 JPEG / PNG / HEIC |
 | 401 | `UNAUTHENTICATED` | token 缺失、过期或无效 |
@@ -393,7 +393,7 @@ quantity  = 该类别对应那列的值
 
 > ⚠️ **这条改动让 `area_garbage` 失去意义。** 那张表是把「N 条记录按类别的占比」
 > 物化下来；现在成分只取最新一条记录，直接从 `reports` 那一行读就行，
-> 不需要聚合表。**建议不要建 `area_garbage`。**
+> 不需要聚合表。**不建 `area_garbage`（已定）。**
 
 ### 这个改动还牵动三处
 
@@ -479,6 +479,9 @@ quantity  = 该类别对应那列的值
 
 ## 5. 照片上传
 
+**照片不进数据库，也不建 `photos` 表。**
+字节放对象存储（或磁盘），`reports` 上只留一个地址。
+
 | 方法 | 路径 | 鉴权 | 说明 |
 | --- | --- | --- | --- |
 | POST | `/uploads/photos` | 是 | `multipart/form-data`，字段名 `photo` |
@@ -486,40 +489,46 @@ quantity  = 该类别对应那列的值
 ```json
 // 201
 {
-  "id": "ph_01H...",
-  "url": "https://cdn.example.com/photos/ph_01H....jpg",
+  "url": "https://cdn.example.com/photos/8f3a....jpg",
   "metadataStripped": true
 }
 ```
 
-后端**必须**做的三件事：
+记录上就两列：
 
-1. **剥离 EXIF**，尤其 GPS 段。剥干净了才返回 `metadataStripped: true` ——
-   前端靠这个字段决定要不要显示「LOCATION METADATA REMOVED FOR PRIVACY」那条角标。
+```sql
+ALTER TABLE reports
+  ADD COLUMN photo_url      text    NOT NULL,
+  ADD COLUMN photo_stripped boolean NOT NULL;
+```
+
+`POST /reports` 带的是 `photoUrl`（上一步返回的那个），不是 id —— 没有 `photos` 表，
+也就没有 id 可以引用。
+
+### 后端必须做的三件事
+
+1. **剥离 EXIF**，尤其 GPS 段。剥干净了才返回 `metadataStripped: true`，
+   并写进 `reports.photo_stripped` —— 前端靠它显示
+   「LOCATION METADATA REMOVED FOR PRIVACY」那条角标。
    **剥不干净就返回 `false`，不要撒谎**，那是一句对用户的承诺。
-2. **限制**：≤ 10 MB；接受 `image/jpeg`、`image/png`、`image/heic`（iOS 直出是 HEIC，
+2. **限制**：≤ 10 MB；收 `image/jpeg`、`image/png`、`image/heic`（iOS 直出是 HEIC，
    必须收，服务端转成 JPEG）；长边压到 ≤ 2048 px。
-3. **清理孤儿**：上传后 24 小时内没被任何记录引用的照片，定时任务删掉。
+3. **清理孤儿**：上传后 24 小时内没有任何记录引用的文件，定时任务删掉。
+   字节在库外，所以这个清理必须自己做 —— 外键帮不上忙。
 
-### 照片存在数据库里，公开可读（已定）
+### 地址是公开的（已定）
 
-**图片字节直接存进 `photos.data`（`bytea`），不用对象存储。**
-`url` 是后端自己的一个读取端点，公开可读、不需要鉴权：
-
-```
-GET /photos/:id      →  200，图片字节流
-                        Content-Type: image/jpeg | image/png
-                        Cache-Control: public, max-age=31536000, immutable
-```
-
-上传接口返回的 `url` 就填这个地址（绝对或相对都行），前端原样用。
-
-这一条**偏离 DMP §5**（原文要求 `outside public web root` + `Access controlled`），
-是团队决定。既然选了公开，下面三条就必须做到，否则这个偏离站不住：
+`url` 公开可读、不需要鉴权。这一条**偏离 DMP §5**（原文要求
+`outside public web root` + `Access controlled`），是团队决定。
+既然选了公开，下面三条就必须做到，否则这个偏离站不住：
 
 1. **文件名必须不可枚举** —— 用随机 id，不要自增数字、不要原始文件名
-2. **EXIF 必须真的剥干净** —— 公开 URL 意味着剥离是防止位置泄露的唯一一道防线
+2. **EXIF 必须真的剥干净** —— 公开地址意味着剥离是防止位置泄露的唯一一道防线
 3. **文件名里不能带任何个人信息**（参与者编号、海滩名、日期都不要）
+
+> ⚠️ **库里存的只是一个地址，不是图。** 存储里的文件被删掉之后，
+> `photo_url` 会变成一条指向空处的链接，数据库这边不会有任何察觉。
+> 删记录的时候要顺手删文件，反过来也一样。
 
 ---
 
@@ -541,7 +550,7 @@ GET /photos/:id      →  200，图片字节流
   "beachId": "morib",
   "category": "Plastic",
   "quantity": "Medium",
-  "photoId": "ph_01H...",
+  "photoUrl": "https://cdn.example.com/photos/8f3a....jpg",
   "locationSource": "gps",
   "coords": { "lat": 2.7461, "lng": 101.4402 }
 }
@@ -585,7 +594,7 @@ GET /photos/:id      →  200，图片字节流
 
 | 顺序 | 条件 | 结果 |
 | --- | --- | --- |
-| 1 | `photoId` 缺失 / 指向不存在的照片 | 400 `PHOTO_REQUIRED`，不入库 |
+| 1 | `photoUrl` 缺失 | 400 `PHOTO_REQUIRED`，不入库 |
 | 2 | `category` 或 `quantity` 不在枚举内 | 400 `VALIDATION_FAILED`，不入库 |
 | 3 | 同一 **reporter** + 同一 **beachId** + 同一 **自然日**（`Asia/Kuala_Lumpur`）已有 `Counted` 记录 | `Duplicate` |
 | 4 | 其余 | `Counted` |
@@ -647,7 +656,7 @@ GET /photos/:id      →  200，图片字节流
 
 ### PATCH `/reports/:id`
 
-请求体是 POST 请求体的任意子集（`beachId` / `category` / `quantity` / `photoId`）。
+请求体是 POST 请求体的任意子集（`beachId` / `category` / `quantity` / `photoUrl`）。
 
 - 只能改自己的记录，否则 403 `NOT_OWNER`
 - **改完要重跑一遍状态判定**：一条 `Incomplete` 记录补好照片后应该变回 `Counted`
@@ -717,7 +726,9 @@ area_species     id(PK), area_id(FK→beaches), species_id(FK→dim_species, nul
                  source_dataset, source_citation, source_url, source_accessed_at,
                  likelihood_percent(nullable), likelihood_basis(nullable)
                  ← 区域×物种的 junction；生境和统称的 species_id 为空
-reports          id, reporter_id, beach_id, photo_id, location_source,
+reports          id, reporter_id, beach_id, location_source,
+                 photo_url, photo_stripped
+                 ← 不建 photos 表，字节也不进库；这里只是一个地址
                  qty_plastic, qty_fishing_gear, qty_glass,
                  qty_metal, qty_paper, qty_other        ← 每列可空，至少一列非空
                  category, quantity                     ← 派生：权重最高的非空类别
@@ -725,9 +736,6 @@ reports          id, reporter_id, beach_id, photo_id, location_source,
                  status, status_note, created_at, updated_at, deleted_at
                  ← lat/lng 只在 gps 来源时写入，存到小数点后 3 位，
                    绝不出现在任何响应里（序列化层显式排除）
-photos           id, data(bytea), mime, bytes, metadata_stripped,
-                 created_at, report_id(nullable)
-                 ← 图片字节直接存库；对外的 url 由 GET /photos/:id 提供
 ```
 
 `beaches` 和 `area_species` 是**种子数据**，Iteration 1 固定四个海滩，
