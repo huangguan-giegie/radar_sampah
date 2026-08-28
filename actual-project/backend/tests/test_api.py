@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 
 import pytest
 
-from app import context_table, create_app
+from app import context_table, create_app, litter_reports_table, normalise_database_url
 
 
 @pytest.fixture
@@ -435,6 +435,40 @@ def test_litter_report_rejects_non_integer_quantity(client, quantity):
 
     assert response.status_code == 400
     assert response.get_json()["error"] == "quantity must be a positive whole number"
+
+
+def test_litter_report_status_column_rejects_values_outside_the_enum_at_the_database_level(client):
+    """A CHECK constraint must stop an invalid status even if application code is bypassed."""
+    engine = client.application.extensions["marine_engine"]
+    with pytest.raises(Exception):
+        with engine.begin() as connection:
+            connection.execute(
+                litter_reports_table.insert().values(
+                    area_id="tioman-coast",
+                    category="Plastic packaging",
+                    quantity=1,
+                    observed_at="2026-08-15T10:00:00+00:00",
+                    detection="reporter_selected",
+                    priority="medium",
+                    status="approved-by-someone",
+                    created_at=datetime(2026, 8, 15, 10, 0, tzinfo=timezone.utc),
+                )
+            )
+
+
+@pytest.mark.parametrize(
+    ("raw_url", "expected"),
+    [
+        (None, "sqlite:///marine_observation.db"),
+        ("postgres://user:pass@host:5432/db", "postgresql+psycopg2://user:pass@host:5432/db"),
+        ("postgresql://user:pass@host:5432/db", "postgresql+psycopg2://user:pass@host:5432/db"),
+        ("postgresql+psycopg2://user:pass@host:5432/db", "postgresql+psycopg2://user:pass@host:5432/db"),
+        ("sqlite:///local.db", "sqlite:///local.db"),
+    ],
+)
+def test_normalise_database_url_covers_render_postgres_and_local_sqlite(raw_url, expected):
+    """Render supplies DATABASE_URL as postgres:// — SQLAlchemy 2.x requires the psycopg2 dialect prefix."""
+    assert normalise_database_url(raw_url) == expected
 
 
 def test_cleanup_evidence_compares_anonymous_before_and_after_reports(client):

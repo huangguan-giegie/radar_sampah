@@ -18,6 +18,7 @@ from flask import Flask, jsonify, request
 from flask_cors import CORS
 from sqlalchemy import (
     Boolean,
+    CheckConstraint,
     Column,
     DateTime,
     Float,
@@ -214,6 +215,10 @@ litter_reports_table = Table(
     Column("note", Text),
     Column("status", String(16), nullable=False, default=LITTER_REPORT_STATUS_PENDING),
     Column("created_at", DateTime(timezone=True), nullable=False),
+    CheckConstraint(
+        "status IN (" + ", ".join(f"'{value}'" for value in sorted(LITTER_REPORT_STATUSES)) + ")",
+        name="litter_reports_status_valid",
+    ),
 )
 litter_detections_table = Table(
     "litter_detections",
