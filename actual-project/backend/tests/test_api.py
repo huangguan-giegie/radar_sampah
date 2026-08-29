@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from datetime import datetime, timezone
 
 import pytest
@@ -324,3 +325,84 @@ def test_cleanup_evidence_compares_anonymous_before_and_after_reports(client):
     assert response.status_code == 201
     assert response.get_json()["evidence"]["before_report_id"] == before["id"]
     assert response.get_json()["evidence"]["impact"] == "improved"
+
+
+def test_anonymous_signup_issues_a_token_and_a_random_4_digit_participant_id(client):
+    response = client.post("/auth/anonymous")
+
+    assert response.status_code == 201
+    body = response.get_json()
+    assert body["token"]
+    user = body["user"]
+    assert user["id"].startswith("u_")
+    assert re.fullmatch(r"\d{4}", user["participantId"])
+    assert user["role"] == "volunteer"
+    assert "name" not in user and "email" not in user and "password" not in user
+
+
+def test_two_anonymous_signups_get_different_participant_ids(client):
+    first = client.post("/auth/anonymous").get_json()["user"]["participantId"]
+    second = client.post("/auth/anonymous").get_json()["user"]["participantId"]
+
+    assert first != second
+
+
+def test_restore_with_a_known_participant_id_returns_a_working_token(client):
+    created = client.post("/auth/anonymous").get_json()["user"]
+
+    restored = client.post("/auth/restore", json={"participantId": created["participantId"]})
+
+    assert restored.status_code == 200
+    body = restored.get_json()
+    assert body["user"]["id"] == created["id"]
+    assert body["token"]
+
+
+def test_restore_with_an_unknown_participant_id_is_404_not_401(client):
+    """The app shows a different message for 'never existed' than for 'not signed in'."""
+    response = client.post("/auth/restore", json={"participantId": "9999"})
+
+    assert response.status_code == 404
+    assert response.get_json()["code"] == "UNKNOWN_PARTICIPANT"
+
+
+@pytest.mark.parametrize("bad_participant_id", ["163", "16377", "abcd", "", None])
+def test_restore_rejects_anything_that_is_not_exactly_4_digits(client, bad_participant_id):
+    response = client.post("/auth/restore", json={"participantId": bad_participant_id})
+
+    assert response.status_code == 404
+    assert response.get_json()["code"] == "UNKNOWN_PARTICIPANT"
+
+
+def test_me_without_a_token_is_401_unauthenticated(client):
+    response = client.get("/auth/me")
+
+    assert response.status_code == 401
+    assert response.get_json()["code"] == "UNAUTHENTICATED"
+
+
+def test_me_with_an_invalid_token_is_401_unauthenticated(client):
+    response = client.get("/auth/me", headers={"Authorization": "Bearer not-a-real-token"})
+
+    assert response.status_code == 401
+    assert response.get_json()["code"] == "UNAUTHENTICATED"
+
+
+def test_me_with_a_valid_token_returns_the_signed_up_user(client):
+    created = client.post("/auth/anonymous").get_json()
+    token = created["token"]
+
+    response = client.get("/auth/me", headers={"Authorization": f"Bearer {token}"})
+
+    assert response.status_code == 200
+    assert response.get_json() == created["user"]
+
+
+def test_logout_without_a_token_is_401_and_with_one_is_204(client):
+    unauthenticated = client.post("/auth/logout")
+    assert unauthenticated.status_code == 401
+
+    token = client.post("/auth/anonymous").get_json()["token"]
+    response = client.post("/auth/logout", headers={"Authorization": f"Bearer {token}"})
+    assert response.status_code == 204
+    assert response.get_data() == b""
