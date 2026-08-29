@@ -230,7 +230,9 @@ export default function BeachScreen() {
           <div className="scroll-x" style={{ display: 'flex', gap: 12, paddingBottom: 6, margin: '0 -16px', paddingLeft: 16, paddingRight: 16 }}>
             {b.species.map((sp) => (
               <div key={sp.name} style={{ width: 196, flex: 'none', background: C.white, border: `1px solid ${C.line}`, borderRadius: 22, overflow: 'hidden' }}>
-                <BeachCover coverImageUrl={b.coverImageUrl} scene={b.scene} style={{ height: 88 }}>
+                {/* 物种自己的照片。没有就只留渐变 ——
+                    以前这里放的是海滩封面，每张卡都一样，看着像"这就是那个物种"。 */}
+                <BeachCover coverImageUrl={sp.pictureUrl ?? null} scene={b.scene} style={{ height: 88 }}>
                   <div style={{ position: 'absolute', inset: 0, background: 'rgba(12,24,52,.25)' }} />
                   <div
                     style={{

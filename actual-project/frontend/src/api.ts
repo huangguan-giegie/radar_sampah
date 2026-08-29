@@ -179,6 +179,8 @@ function toSummary(beach: BeachDetail): BeachSummary {
     habitatTag: beach.habitatTag,
     sensitivity: beach.sensitivity,
     primarySpeciesGlyph: beach.primarySpeciesGlyph,
+    // 从完整卡片里取名字，种子数据不用维护两份
+    speciesNames: beach.species.map((sp) => sp.name),
     coverImageUrl: beach.coverImageUrl,
     scene: beach.scene,
   };

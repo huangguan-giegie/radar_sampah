@@ -8,6 +8,20 @@ import { C, MONO } from '../theme';
 import { OverlayChip, SeverityBadge } from '../components/ds';
 import { useApp } from '../AppContext';
 import type { BeachSummary } from '../types';
+import type { ReportDraft } from '../AppContext';
+
+/**
+ * 定位没成时说什么。
+ * 之前六种情况共用一句「权限被拒绝」—— 用户会去翻一个他根本没关过的开关。
+ */
+const GPS_MESSAGE: Record<NonNullable<ReportDraft['gpsIssue']>, string> = {
+  denied: 'Location permission was declined — choose your beach below.',
+  unavailable: "Your device couldn't provide a location — choose your beach below.",
+  timeout: 'Locating took too long — choose your beach below.',
+  inaccurate: 'The location was too rough to pick a beach from — choose it below.',
+  noBeach: 'No supported beach within 25 km — choose the closest one below.',
+  failed: "Couldn't check your location just now — choose your beach below.",
+};
 
 export default function ConfirmBeachScreen() {
   const nav = useNavigate();
@@ -63,7 +77,7 @@ export default function ConfirmBeachScreen() {
         className="anim-sheet-up"
         style={{ position: 'absolute', left: 16, right: 16, bottom: 'calc(var(--safe-bottom) + 28px)', zIndex: 820 }}
       >
-        {draft.gpsDenied && (
+        {draft.gpsIssue && (
           <div
             style={{
               display: 'flex',
@@ -78,7 +92,7 @@ export default function ConfirmBeachScreen() {
           >
             <Alert size={15} color="#4A3208" strokeWidth={2} />
             <div style={{ fontSize: 12.5, fontWeight: 640, color: '#3D2A08', lineHeight: 1.4 }}>
-              Location permission denied — choose your beach manually below.
+              {GPS_MESSAGE[draft.gpsIssue]}
             </div>
           </div>
         )}
