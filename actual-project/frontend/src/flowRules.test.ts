@@ -11,7 +11,7 @@ function draft(changes: Partial<ReportDraft> = {}): ReportDraft {
     locationSource: 'manual',
     coords: null,
     quantities: { Plastic: 'Small' },
-    gpsDenied: false,
+    gpsIssue: null,
     editingReportId: null,
     ...changes,
   };

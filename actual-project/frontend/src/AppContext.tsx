@@ -24,7 +24,12 @@ export type ReportDraft = {
   locationSource: 'gps' | 'manual' | null;
   coords: { lat: number; lng: number } | null;
   quantities: QuantityByCategory;
-  gpsDenied: boolean; // 用户拒绝了定位，确认页要显示黄色提示
+  /**
+   * 定位为什么没成 —— 确认页要按原因说不同的话。
+   * 一个布尔位说不清：「拒绝了」和「设备定不到」「超时了」「定得太糙」
+   * 是四件事，都说成「权限被拒绝」等于告诉用户去改一个他没改过的设置。
+   */
+  gpsIssue: 'denied' | 'unavailable' | 'timeout' | 'inaccurate' | 'noBeach' | 'failed' | null;
   editingReportId: string | null; // 正在修正已有记录时存它的 id
 };
 
@@ -39,7 +44,7 @@ function emptyDraft(): ReportDraft {
     locationSource: null,
     coords: null,
     quantities: {},
-    gpsDenied: false,
+    gpsIssue: null,
     editingReportId: null,
   };
 }

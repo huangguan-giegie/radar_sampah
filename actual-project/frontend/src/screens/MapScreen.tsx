@@ -340,6 +340,25 @@ function SelectedCard({
               {metaRow('HABITAT', beach.habitat, C.ink2, 600)}
               {metaRow('RELEVANCE', beach.sensitivity, '#2B4EA2', 600)}
             </div>
+            {beach.speciesNames.length > 0 && (
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 11 }}>
+                {beach.speciesNames.map((n) => (
+                  <span
+                    key={n}
+                    style={{
+                      fontSize: 11.5,
+                      fontWeight: 600,
+                      color: C.ink2,
+                      background: 'rgba(11,33,97,.06)',
+                      borderRadius: 999,
+                      padding: '5px 10px',
+                    }}
+                  >
+                    {n}
+                  </span>
+                ))}
+              </div>
+            )}
           </>
         )}
 

@@ -112,6 +112,12 @@ export interface BeachSummary {
   sensitivity: string;
   /** 生物图层标记里显示的代表性物种图标 */
   primarySpeciesGlyph: SpeciesGlyph;
+  /**
+   * 这片海滩生物卡片的名字，按 sort_order。地图的生物图层直接显示它们 ——
+   * 不然图层上只有生境，看不到任何一个物种，得点进详情页才知道。
+   * 只要名字，完整卡片仍然在 BeachDetail.species 里。
+   */
+  speciesNames: string[];
   /** 真实封面照片；后端没有图时返回 null，前端退回 scene 渐变 */
   coverImageUrl: string | null;
   /** 无封面照片时的 CSS 渐变占位，后端原样下发 */
@@ -119,7 +125,11 @@ export interface BeachSummary {
 }
 
 /** 海滩详情页用的完整对象 */
-export interface BeachDetail extends BeachSummary {
+/**
+ * 详情不带 speciesNames —— 它有完整的 species[]，名字从那里取就行。
+ * 同一份数据不在两个字段里各存一遍。
+ */
+export interface BeachDetail extends Omit<BeachSummary, 'speciesNames'> {
   composition: CompositionSlice[] | null;
   /** composition 为 null 时这里也是 null */
   compositionSource: CompositionSource | null;

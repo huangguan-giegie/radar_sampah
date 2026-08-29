@@ -138,6 +138,7 @@
   "habitatTag": "MUDFLAT",
   "sensitivity": "Migratory feeding ground",
   "primarySpeciesGlyph": "turtle",
+  "speciesNames": ["Green Sea Turtle", "Mangrove Fringe", "Coastal Birds"],
 
   "coverImageUrl": "https://cdn.example.com/beaches/morib.jpg",
   "scene": "linear-gradient(178deg,#8FD0E8 0%,#4E9EC9 36%,#2E6EA8 58%,#173E77 100%)"
@@ -153,6 +154,7 @@
 | `lastReportedAt` | string｜null | 最近一条 **Counted** 记录的时间。前端自己算「几天前」，后端不要给现成文案 |
 | `freshnessKind` | `"ok"｜"aging"｜"stale"` | < 30 天 / 30–90 天 / > 90 天或从无记录 |
 | `primarySpeciesGlyph` | `"turtle"｜"bird"｜"mangrove"｜"grass"｜"crab"｜"fish"` | 生物图层的地图标记图标 |
+| `speciesNames` | string[] | 这片海滩生物卡片的名字，按 `sort_order`。地图的生物图层直接显示它们 —— 不然图层上只有生境，看不到任何一个物种。只要名字，完整卡片仍在 `BeachDetail.species` |
 | `coverImageUrl` | string｜null | 真实封面照片。**没配图就给 `null`**，前端会退回 `scene` 渐变 |
 | `scene` | string | 一段合法 CSS `background` 值，作为无图时的占位。种子数据里已有，原样存原样下发 |
 

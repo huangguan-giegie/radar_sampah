@@ -13,13 +13,13 @@ const FALLBACK: [number, number] = [2.95, 101.42];
 
 export default function GpsScreen() {
   const nav = useNavigate();
-  const { draft, patchDraft, showToast } = useApp();
+  const { draft, patchDraft } = useApp();
   const [sheet, setSheet] = useState(false);
   const [busy, setBusy] = useState(false);
 
   async function allowOnce() {
     if (!('geolocation' in navigator)) {
-      patchDraft({ locationSource: 'manual', gpsDenied: true });
+      patchDraft({ locationSource: 'manual', gpsIssue: 'unavailable' });
       nav('/report/confirm');
       return;
     }
@@ -31,26 +31,38 @@ export default function GpsScreen() {
         // 精确值从头到尾没离开过设备，25km 的海滩匹配半径也完全够用。
         const round3 = (n: number) => Math.round(n * 1000) / 1000;
         const coords = { lat: round3(pos.coords.latitude), lng: round3(pos.coords.longitude) };
+
+        // 定位太糙就别猜海滩。海滩之间最近约 10km，
+        // 误差超过 2km 的定位挑出来的海滩不比手选可靠。
+        if (pos.coords.accuracy > 2000) {
+          setBusy(false);
+          patchDraft({ locationSource: 'manual', coords: null, gpsIssue: 'inaccurate' });
+          nav('/report/confirm');
+          return;
+        }
+
         try {
           const beach = await resolveBeach(coords.lat, coords.lng);
           if (beach) {
-            patchDraft({ locationSource: 'gps', coords, beachId: beach.id, beachName: beach.name, gpsDenied: false });
+            patchDraft({ locationSource: 'gps', coords, beachId: beach.id, beachName: beach.name, gpsIssue: null });
           } else {
-            showToast('No supported beach nearby — pick one manually');
-            patchDraft({ locationSource: 'manual', coords: null, gpsDenied: false });
+            patchDraft({ locationSource: 'manual', coords: null, gpsIssue: 'noBeach' });
           }
         } catch {
-          // 和上面「附近没有支持的海滩」是两回事，不能一样地悄悄过去
-          showToast("Couldn't check your location — pick a beach manually");
-          patchDraft({ locationSource: 'manual', coords: null, gpsDenied: false });
+          patchDraft({ locationSource: 'manual', coords: null, gpsIssue: 'failed' });
         } finally {
           setBusy(false);
           nav('/report/confirm');
         }
       },
-      () => {
+      (err) => {
         setBusy(false);
-        patchDraft({ locationSource: 'manual', gpsDenied: true, coords: null });
+        // 拒绝 / 定不到 / 超时是三件事，不能都说成「权限被拒绝」
+        const issue =
+          err.code === err.PERMISSION_DENIED ? 'denied'
+          : err.code === err.TIMEOUT ? 'timeout'
+          : 'unavailable';
+        patchDraft({ locationSource: 'manual', gpsIssue: issue, coords: null });
         nav('/report/confirm');
       },
       { enableHighAccuracy: true, timeout: 10_000 },
@@ -58,7 +70,7 @@ export default function GpsScreen() {
   }
 
   function chooseManually() {
-    patchDraft({ locationSource: 'manual', gpsDenied: false, coords: null });
+    patchDraft({ locationSource: 'manual', gpsIssue: null, coords: null });
     nav('/report/confirm');
   }
 
