@@ -72,7 +72,7 @@ export default function ReviewScreen() {
   const backToDetails = () => {
     const idx = (window.history.state as { idx?: number } | null)?.idx ?? 0;
     if (idx > 0) nav(-1);
-    else backToDetails();
+    else nav('/report/details', { replace: true });
   };
 
   // label 当 key：这几行是被 map 出来的，一份记录里同一个类别只会出现一次。
