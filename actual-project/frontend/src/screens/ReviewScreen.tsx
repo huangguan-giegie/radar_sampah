@@ -59,6 +59,22 @@ export default function ReviewScreen() {
     }
   }
 
+  /*
+   * 从复核页回详情页：弹掉复核页这一条，别再压一条。
+   *
+   * 压一条历史会变成 […, details, details]，详情页左上角的返回箭头按下去
+   * 停在原地；用 replace 是同样的结果。弹一条之后历史回到 […, confirm, details]，
+   * 页内返回和浏览器后退指同一个方向。
+   *
+   * idx 是 react-router 写在 history state 里的位置。刷新后重开的标签页
+   * 可能直接落在复核页上（草稿现在能活过刷新），那时候没有上一条可弹。
+   */
+  const backToDetails = () => {
+    const idx = (window.history.state as { idx?: number } | null)?.idx ?? 0;
+    if (idx > 0) nav(-1);
+    else backToDetails();
+  };
+
   // label 当 key：这几行是被 map 出来的，一份记录里同一个类别只会出现一次。
   const row = (label: string, value: string, action?: () => void, badge?: string) => (
     <button
@@ -95,7 +111,7 @@ export default function ReviewScreen() {
         style={{ paddingInline: 20, paddingBottom: 'calc(var(--safe-bottom) + 32px)', display: 'flex', flexDirection: 'column', gap: 16 }}
       >
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <BackButton onClick={() => nav('/report/details', { replace: true })} />
+          <BackButton onClick={() => backToDetails()} />
           <StepBadge>STEP 3 OF 3 · REVIEW</StepBadge>
         </div>
 
@@ -118,9 +134,9 @@ export default function ReviewScreen() {
         <div style={{ background: C.white, border: `1px solid ${C.line}`, borderRadius: 24, overflow: 'hidden' }}>
           {row('Beach', draft.beachName ?? beach?.name ?? 'Not selected', () => nav('/report/confirm', { replace: true }))}
           {(Object.keys(draft.quantities) as LitterCategory[]).length === 0
-            ? row('Litter', 'Not selected', () => nav('/report/details', { replace: true }))
+            ? row('Litter', 'Not selected', () => backToDetails())
             : (Object.entries(draft.quantities) as [LitterCategory, QuantityBand][]).map(([cat, q]) =>
-                row(cat, q ?? 'Not selected', () => nav('/report/details', { replace: true })),
+                row(cat, q ?? 'Not selected', () => backToDetails()),
               )}
           {draft.locationSource === 'gps'
             ? row('Location', 'Beach area confirmed', undefined, 'GPS PRIVATE')
@@ -142,7 +158,7 @@ export default function ReviewScreen() {
             {busy ? 'Saving…' : 'Submit Report'}
             {!busy && <ArrowRight />}
           </PrimaryButton>
-          <TextButton onClick={() => nav('/report/details', { replace: true })}>Back to details</TextButton>
+          <TextButton onClick={() => backToDetails()}>Back to details</TextButton>
         </div>
       </div>
     </div>

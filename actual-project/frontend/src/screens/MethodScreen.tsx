@@ -31,7 +31,7 @@ const limitations = (m: ScoringMethod) => [
   'Bands are estimates by eye — comparable in order of magnitude only.',
   `Conditions move faster than a ${m.windowDays}-day window can show.`,
   'This is reported litter, not water quality, ecology or safety.',
-  'Biodiversity percentages are a separate estimate and never enter this.',
+  'Biodiversity context sits beside this score and never feeds into it.',
 ];
 
 export default function MethodScreen() {

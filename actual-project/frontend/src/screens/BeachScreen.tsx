@@ -146,8 +146,12 @@ export default function BeachScreen() {
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: 9, marginTop: 14, padding: '11px 13px', borderRadius: 16, background: 'rgba(30,36,44,.05)', border: '1px solid rgba(30,36,44,.12)' }}>
             <Clock style={{ flex: 'none', marginTop: 1 }} />
             <div style={{ flex: 1, fontSize: 12, lineHeight: 1.5, color: C.muted }}>
-              The most recent verified report is older than 90&nbsp;days. Conditions may have changed
-              in either direction.
+              {/* stale 同时覆盖「超过 90 天」和「从来没人报过」两种情况（API.md §4）。
+                  不分开的话，一片从没被上报过的海滩会被告知「最近那条记录」有多旧 ——
+                  那条记录不存在。 */}
+              {b.lastReportedAt
+                ? 'The most recent verified report is older than 90\u00a0days. Conditions may have changed in either direction.'
+                : 'No verified report has ever been filed for this beach. That is missing evidence, not a finding.'}
             </div>
           </div>
         )}

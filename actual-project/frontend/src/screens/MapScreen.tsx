@@ -340,7 +340,8 @@ function SelectedCard({
               {metaRow('HABITAT', beach.habitat, C.ink2, 600)}
               {metaRow('RELEVANCE', beach.sensitivity, '#2B4EA2', 600)}
             </div>
-            {beach.speciesNames.length > 0 && (
+            {/* ?. 是防真后端：契约里这个字段现在是必填，但少一个字段不该让整张卡崩掉 */}
+            {beach.speciesNames?.length > 0 && (
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 11 }}>
                 {beach.speciesNames.map((n) => (
                   <span
@@ -357,6 +358,13 @@ function SelectedCard({
                     {n}
                   </span>
                 ))}
+              </div>
+            )}
+            {/* 海滩页把这句话当成物种卡的必备项。地图上是同一批名字，
+                不能因为空间小就把限定条件省掉。 */}
+            {beach.speciesNames?.length > 0 && (
+              <div style={{ fontFamily: MONO, fontSize: 8.5, letterSpacing: '.1em', color: C.dim, marginTop: 10, lineHeight: 1.5 }}>
+                CONTEXT ONLY · NOT PROOF OF CURRENT PRESENCE
               </div>
             )}
           </>

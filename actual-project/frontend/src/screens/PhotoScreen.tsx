@@ -7,6 +7,10 @@ import { C, MONO } from '../theme';
 import { OverlayChip } from '../components/ds';
 import { useApp } from '../AppContext';
 
+// 和 API.md §5 一致：≤ 10 MB，只收这三种。HEIC 有些浏览器不给 MIME，所以也认后缀。
+const ACCEPTED_TYPES = ['image/jpeg', 'image/png', 'image/heic'];
+const MAX_PHOTO_BYTES = 10 * 1024 * 1024;
+
 export default function PhotoScreen() {
   const nav = useNavigate();
   const { draft, patchDraft } = useApp();
@@ -17,6 +21,20 @@ export default function PhotoScreen() {
 
   async function handleFile(file: File | undefined) {
     if (!file) return;
+
+    // accept 属性只是文件选择框的提示，切到「所有文件」就绕过去了。
+    // 契约里格式和大小由后端把关（API.md §5），但现在跑的是假数据，
+    // 那道防线还不存在 —— 先在这里挡一次，报错走的是同一个红条。
+    if (!ACCEPTED_TYPES.includes(file.type) && !/\.heic$/i.test(file.name)) {
+      setUploadError('That file is not a photo we can read. Use JPG, PNG or HEIC.');
+      return;
+    }
+    if (file.size > MAX_PHOTO_BYTES) {
+      const mb = (file.size / 1024 / 1024).toFixed(1);
+      setUploadError(`That photo is ${mb} MB. The limit is 10 MB — try a smaller one.`);
+      return;
+    }
+
     setUploading(true);
     setUploadError(null);
     try {

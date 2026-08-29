@@ -358,7 +358,7 @@ components:
       required:
         [id, name, area, lat, lng, severity, band, insufficientData, validReports,
          lastReportedAt, freshnessKind, habitat, habitatTag, sensitivity,
-         primarySpeciesGlyph, coverImageUrl, scene]
+         primarySpeciesGlyph, speciesNames, coverImageUrl, scene]
       properties:
         id: { type: string, example: morib }
         name: { type: string, example: Pantai Morib }
