@@ -95,7 +95,7 @@ export default function GpsScreen() {
       />
 
       <div
-        className="anim-sheet-up"
+        className="anim-sheet-up measure"
         style={{
           position: 'absolute',
           left: 16,

@@ -59,7 +59,7 @@ export default function MyReportsScreen() {
   return (
     <div className="screen scroll-y" style={{ zIndex: 24 }}>
       <div
-        className="anim-fade-up pt-page-lg"
+        className="anim-fade-up pt-page-lg measure"
         style={{ paddingInline: 20, paddingBottom: 132, display: 'flex', flexDirection: 'column', gap: 16 }}
       >
         <div style={{ fontSize: 26, fontWeight: 650, letterSpacing: '-.6px' }}>My Reports</div>

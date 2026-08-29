@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { uploadPhoto } from '../api';
+import { photoPreviewUrl, uploadPhoto } from '../api';
 import { ArrowRight, Camera, ChevronRight, Shield, Upload } from '../components/Icon';
 import { BackButton, ErrorNote, PrimaryButton, StepBadge } from '../components/ui';
 import { C, MONO } from '../theme';
@@ -55,7 +55,7 @@ export default function PhotoScreen() {
       />
 
       <div
-        className="anim-fade-up pt-page"
+        className="anim-fade-up pt-page measure"
         style={{ paddingInline: 20, paddingBottom: 'calc(var(--safe-bottom) + 32px)', display: 'flex', flexDirection: 'column', gap: 18 }}
       >
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -151,7 +151,7 @@ export default function PhotoScreen() {
           <>
             <div style={{ position: 'relative', height: 280, borderRadius: 26, overflow: 'hidden', background: '#87847B' }}>
               <img
-                src={photo.previewUrl}
+                src={photo.previewUrl || photoPreviewUrl(photo.photoKey) || undefined}
                 alt="Litter you photographed"
                 style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
               />

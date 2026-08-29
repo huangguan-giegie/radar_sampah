@@ -49,6 +49,48 @@ function emptyDraft(): ReportDraft {
   };
 }
 
+/*
+ * 草稿要活过一次刷新。
+ *
+ * 这是网页和手机 app 的区别：上报要走 6 步，中途按 F5、下拉刷新、或者相机
+ * 权限弹窗把页面顶掉，草稿就没了 —— 照片、海滩、类别全清空，从头再来。
+ * 手机 app 切后台回来状态还在，网页不会。
+ *
+ * 用 sessionStorage 不用 localStorage：上面三种情况都发生在同一个标签页里，
+ * sessionStorage 全都能撑过去，同时天然避开「两个标签页各走到不同步骤、
+ * 互相覆盖同一份草稿」。api.ts 里用 localStorage 存的是 token 和账本，
+ * 那些本来就该跨标签页共享；一份没填完的表单不是。
+ */
+const DRAFT_KEY = 'rs_report_draft_v1';
+const DRAFT_MAX_AGE_MS = 24 * 60 * 60 * 1000;
+
+type StoredDraft = { v: 1; savedAt: number; draft: ReportDraft };
+
+function loadDraft(): ReportDraft {
+  try {
+    const raw = sessionStorage.getItem(DRAFT_KEY);
+    if (!raw) return emptyDraft();
+    const rec = JSON.parse(raw) as StoredDraft;
+    if (rec.v !== 1 || Date.now() - rec.savedAt > DRAFT_MAX_AGE_MS) return emptyDraft();
+    // 铺在 emptyDraft 上面：以前存的草稿少几个字段也不会变成 undefined
+    return { ...emptyDraft(), ...rec.draft };
+  } catch {
+    return emptyDraft(); // 无痕模式、存储被禁、JSON 坏了 —— 都当作没有草稿
+  }
+}
+
+function saveDraft(d: ReportDraft) {
+  try {
+    // previewUrl 是整张照片的 base64，几 MB。不往磁盘上写：
+    // 配额撑不住，而且在公用电脑上留下一张原图和这个 app 的隐私说法冲突。
+    // 刷新后由 api.ts 的 photoPreviewUrl(photoKey) 重新取。
+    const lean: ReportDraft = d.photo ? { ...d, photo: { ...d.photo, previewUrl: '' } } : d;
+    sessionStorage.setItem(DRAFT_KEY, JSON.stringify({ v: 1, savedAt: Date.now(), draft: lean }));
+  } catch {
+    // 配额满或存储被禁 —— 存不下就算了，流程本身不能因此走不通
+  }
+}
+
 type AppState = {
   user: User | null;
   authReady: boolean; // 还没问完「我是谁」之前不要急着跳转
@@ -79,11 +121,25 @@ const AppContext = createContext<AppState | null>(null);
 export function AppProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [authReady, setAuthReady] = useState(false);
-  const [draft, setDraft] = useState<ReportDraft>(emptyDraft());
+  const [draft, setDraft] = useState<ReportDraft>(loadDraft);
   const [lastSavedReport, setLastSavedReport] = useState<LitterReport | null>(null);
   const [reportsVersion, setReportsVersion] = useState(0);
   const [offline, setOffline] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+
+  // 草稿每变一次就写回本标签页的存储
+  useEffect(() => {
+    saveDraft(draft);
+  }, [draft]);
+
+  const clearDraft = () => {
+    try {
+      sessionStorage.removeItem(DRAFT_KEY);
+    } catch {
+      // 存储被禁，本来也没写进去
+    }
+    setDraft(emptyDraft());
+  };
 
   // 打开网页时问一次「我是谁」
   useEffect(() => {
@@ -91,6 +147,34 @@ export function AppProvider({ children }: { children: ReactNode }) {
       .then((me) => setUser(me))
       .catch(() => setUser(null))
       .finally(() => setAuthReady(true));
+  }, []);
+
+  /*
+   * 别的标签页改了登录状态，这一页要跟上。
+   *
+   * 同样是网页才有的事：用户可以同时开好几个标签页。在标签页 B 退出登录后，
+   * 标签页 A 的 user 还在 state 里，RequireAuth 照样放行，一直到提交那一刻
+   * 才炸出一句内部错误。领了新编号也一样 —— A 显示的还是旧编号，写进去的
+   * 却是新编号的账本。
+   *
+   * storage 事件只在「别的」标签页触发，不会自己叫自己。
+   */
+  useEffect(() => {
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === 'rs_token' && e.newValue === null) {
+        setUser(null);
+        clearDraft();
+        return;
+      }
+      if (e.key === 'rs_token' || e.key === 'rs_mock_participant') {
+        getMe()
+          .then(setUser)
+          .catch(() => setUser(null));
+      }
+      if (e.key === 'rs_mock_accounts_v2') setReportsVersion((n) => n + 1);
+    };
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
   }, []);
 
   const value: AppState = {
@@ -113,7 +197,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     async signOut() {
       await logout();
       setUser(null);
-      setDraft(emptyDraft());
+      clearDraft();
     },
 
     draft,
@@ -121,7 +205,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setDraft((old) => ({ ...old, ...changes }));
     },
     resetDraft() {
-      setDraft(emptyDraft());
+      clearDraft();
     },
 
     lastSavedReport,

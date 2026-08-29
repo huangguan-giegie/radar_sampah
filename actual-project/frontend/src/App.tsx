@@ -5,6 +5,7 @@ import { DeviceFrame } from './components/DeviceFrame';
 import { TabBar } from './components/TabBar';
 import { Toast } from './components/Toast';
 import { useApp } from './AppContext';
+import { guardStep, type ReportStep } from './flowRules';
 
 import SplashScreen from './screens/SplashScreen';
 import WelcomeScreen from './screens/WelcomeScreen';
@@ -36,6 +37,17 @@ function RequireAuth({ children }: { children: JSX.Element }) {
   return children;
 }
 
+/**
+ * 流程守卫。直接输网址跳到流程中间时，把人送回他真正能待的那一步。
+ * 套在 RequireAuth 里面 —— 没登录的深链接先绕一趟 /identity?next= 回到同一个网址，
+ * 再由这里判断走到哪。
+ */
+function RequireStep({ step, children }: { step: ReportStep; children: JSX.Element }) {
+  const { draft } = useApp();
+  const to = guardStep(step, draft);
+  return to ? <Navigate to={to} replace /> : children;
+}
+
 export default function App() {
   const { pathname } = useLocation();
   const { toast } = useApp();
@@ -52,11 +64,21 @@ export default function App() {
         <Route path="/beach/:beachId" element={<BeachScreen />} />
         <Route path="/method" element={<MethodScreen />} />
 
-        <Route path="/report/photo" element={<RequireAuth><PhotoScreen /></RequireAuth>} />
-        <Route path="/report/location" element={<RequireAuth><GpsScreen /></RequireAuth>} />
-        <Route path="/report/confirm" element={<RequireAuth><ConfirmBeachScreen /></RequireAuth>} />
-        <Route path="/report/details" element={<RequireAuth><RecordScreen /></RequireAuth>} />
-        <Route path="/report/review" element={<RequireAuth><ReviewScreen /></RequireAuth>} />
+        <Route path="/report/photo" element={
+          <RequireAuth><RequireStep step="photo"><PhotoScreen /></RequireStep></RequireAuth>
+        } />
+        <Route path="/report/location" element={
+          <RequireAuth><RequireStep step="location"><GpsScreen /></RequireStep></RequireAuth>
+        } />
+        <Route path="/report/confirm" element={
+          <RequireAuth><RequireStep step="confirm"><ConfirmBeachScreen /></RequireStep></RequireAuth>
+        } />
+        <Route path="/report/details" element={
+          <RequireAuth><RequireStep step="details"><RecordScreen /></RequireStep></RequireAuth>
+        } />
+        <Route path="/report/review" element={
+          <RequireAuth><RequireStep step="review"><ReviewScreen /></RequireStep></RequireAuth>
+        } />
         <Route path="/report/saved" element={<RequireAuth><SubmittedScreen /></RequireAuth>} />
 
         <Route path="/reports" element={<RequireAuth><MyReportsScreen /></RequireAuth>} />

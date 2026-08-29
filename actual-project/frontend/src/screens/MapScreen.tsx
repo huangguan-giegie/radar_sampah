@@ -175,7 +175,7 @@ export default function MapScreen() {
 
       {(offline || failed) && (
         <div
-          className="anim-fade-up"
+          className="anim-fade-up measure"
           style={{
             position: 'absolute',
             top: 'calc(var(--top-inset) + 106px)',
@@ -272,7 +272,7 @@ function SelectedCard({
 
   return (
     <div
-      className="anim-sheet-up"
+      className="anim-sheet-up measure"
       style={{ position: 'absolute', left: 12, right: 12, bottom: 'calc(var(--bottom-inset) + 84px)', zIndex: 880 }}
     >
       <GlassPanel style={{ position: 'relative', padding: 18 }}>

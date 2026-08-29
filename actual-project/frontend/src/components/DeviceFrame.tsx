@@ -1,12 +1,18 @@
 import type { ReactNode } from 'react';
+import { useLocation } from 'react-router-dom';
 import { C } from '../theme';
 
 /**
  * Web app 外壳。
- * 手机上铺满视口；桌面上收成一台 402×874 的手机，保持设计稿的构图。
- * 所有屏幕都是 position:absolute 覆盖在这个容器里，滚动交给各自的 .scroll-y。
+ * 每个宽度都铺满窗口；页面自己用 .measure 限宽，见 global.css。
+ *
+ * 网址上加 ?frame=phone 会把它收成一台 402×874 的手机 —— 给 slide 截图用，
+ * 任意页面都能加。除此之外没有任何地方按宽度分叉。
  */
 export function DeviceFrame({ children }: { children: ReactNode }) {
+  const { search } = useLocation();
+  const phoneFrame = new URLSearchParams(search).get('frame') === 'phone';
+
   return (
     <div
       style={{
@@ -20,6 +26,7 @@ export function DeviceFrame({ children }: { children: ReactNode }) {
     >
       <div
         className="app-shell"
+        data-frame={phoneFrame ? 'phone' : undefined}
         style={{
           position: 'relative',
           width: '100%',

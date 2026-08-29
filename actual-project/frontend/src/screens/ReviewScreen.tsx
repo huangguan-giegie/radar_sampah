@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import { createReport, getBeaches, updateReport } from '../api';
+import { createReport, getBeaches, photoPreviewUrl, updateReport } from '../api';
 import { ArrowRight, Info, Shield } from '../components/Icon';
 import { BackButton, ErrorNote, PrimaryButton, StepBadge, TextButton } from '../components/ui';
 import { C } from '../theme';
@@ -23,7 +23,9 @@ export default function ReviewScreen() {
   }, []);
 
   const beach = beaches.find((b) => b.id === draft.beachId);
-  const photoUrl = draft.photo?.previewUrl ?? draft.existingPhotoUrl;
+  // 刷新过一次的话 previewUrl 是空的，用存储键把图找回来
+  const photoUrl =
+    draft.photo?.previewUrl || photoPreviewUrl(draft.photo?.photoKey) || draft.existingPhotoUrl;
 
   async function submit() {
     let submission: ReturnType<typeof buildReportSubmission>;
@@ -57,8 +59,10 @@ export default function ReviewScreen() {
     }
   }
 
+  // label 当 key：这几行是被 map 出来的，一份记录里同一个类别只会出现一次。
   const row = (label: string, value: string, action?: () => void, badge?: string) => (
     <button
+      key={label}
       type="button"
       onClick={action}
       className={action ? 'row-hover' : undefined}
@@ -87,11 +91,11 @@ export default function ReviewScreen() {
   return (
     <div className="screen scroll-y" style={{ zIndex: 26 }}>
       <div
-        className="anim-fade-up pt-page"
+        className="anim-fade-up pt-page measure"
         style={{ paddingInline: 20, paddingBottom: 'calc(var(--safe-bottom) + 32px)', display: 'flex', flexDirection: 'column', gap: 16 }}
       >
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <BackButton onClick={() => nav('/report/details')} />
+          <BackButton onClick={() => nav('/report/details', { replace: true })} />
           <StepBadge>STEP 3 OF 3 · REVIEW</StepBadge>
         </div>
 
@@ -112,11 +116,11 @@ export default function ReviewScreen() {
         </div>
 
         <div style={{ background: C.white, border: `1px solid ${C.line}`, borderRadius: 24, overflow: 'hidden' }}>
-          {row('Beach', draft.beachName ?? beach?.name ?? 'Not selected', () => nav('/report/confirm'))}
+          {row('Beach', draft.beachName ?? beach?.name ?? 'Not selected', () => nav('/report/confirm', { replace: true }))}
           {(Object.keys(draft.quantities) as LitterCategory[]).length === 0
-            ? row('Litter', 'Not selected', () => nav('/report/details'))
+            ? row('Litter', 'Not selected', () => nav('/report/details', { replace: true }))
             : (Object.entries(draft.quantities) as [LitterCategory, QuantityBand][]).map(([cat, q]) =>
-                row(cat, q ?? 'Not selected', () => nav('/report/details')),
+                row(cat, q ?? 'Not selected', () => nav('/report/details', { replace: true })),
               )}
           {draft.locationSource === 'gps'
             ? row('Location', 'Beach area confirmed', undefined, 'GPS PRIVATE')
@@ -138,7 +142,7 @@ export default function ReviewScreen() {
             {busy ? 'Saving…' : 'Submit Report'}
             {!busy && <ArrowRight />}
           </PrimaryButton>
-          <TextButton onClick={() => nav('/report/details')}>Back to details</TextButton>
+          <TextButton onClick={() => nav('/report/details', { replace: true })}>Back to details</TextButton>
         </div>
       </div>
     </div>

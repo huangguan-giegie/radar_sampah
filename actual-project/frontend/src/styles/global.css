@@ -220,6 +220,14 @@ button {
 }
 
 /* ── Web app 外壳尺寸 ─────────────────────── */
+/*
+ * 外壳在每个宽度上都铺满窗口。以前这里在 ≥900px 时把它夹成一台
+ * 402×874 的手机放在灰底中间 —— 在笔记本上打开，整个产品是屏幕中间
+ * 一张手机图片，地图只用了 27% 的宽度。
+ *
+ * 页面不跟着窗口一起拉宽，靠的是下面的 .measure：外壳负责铺满，
+ * 内容列负责限宽。两件事分开，就不用为桌面写第二套页面。
+ */
 .app-shell {
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
@@ -229,24 +237,28 @@ button {
   --shell-shadow: none;
 }
 
-/* 桌面：收成一台手机，保持设计稿构图 */
-@media (min-width: 900px) and (min-height: 720px) {
-  .app-shell {
-    --safe-top: 0px;
-    --safe-bottom: 0px;
-    --shell-w: 402px;
-    --shell-h: 874px;
-    --shell-r: 44px;
-    --shell-shadow: 0 40px 80px rgba(0, 0, 0, 0.18), 0 0 0 1px rgba(0, 0, 0, 0.1);
-  }
+/*
+ * 手机外框。给 slide 截图用 —— 打开任意页面加上 ?frame=phone 就能拿到
+ * 和真机一样构图的图。因为 .measure 在 362px 内容宽上永远不生效，
+ * 这个框里的样子和手机上跑的一模一样。
+ */
+.app-shell[data-frame='phone'] {
+  --safe-top: 0px;
+  --safe-bottom: 0px;
+  --shell-w: 402px;
+  --shell-h: 874px;
+  --shell-r: 44px;
+  --shell-shadow: 0 40px 80px rgba(0, 0, 0, 0.18), 0 0 0 1px rgba(0, 0, 0, 0.1);
 }
 
-/* 平板 / 小桌面：限宽居中，仍然铺满高度 */
-@media (min-width: 620px) and (max-width: 899px) {
-  .app-shell {
-    --shell-w: 480px;
-    --shell-shadow: 0 0 0 1px rgba(0, 0, 0, 0.06);
-  }
+/*
+ * 内容列的最大宽度。同一个类用在滚动列和绝对定位的浮层上：
+ * 左右都设了值再加 margin-inline:auto，浏览器会把多出来的宽度
+ * 平分给两边，也就是居中。
+ */
+.measure {
+  max-width: var(--measure);
+  margin-inline: auto;
 }
 
 .screen {

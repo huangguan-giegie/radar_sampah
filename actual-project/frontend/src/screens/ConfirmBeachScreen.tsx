@@ -74,7 +74,7 @@ export default function ConfirmBeachScreen() {
       </OverlayChip>
 
       <div
-        className="anim-sheet-up"
+        className="anim-sheet-up measure"
         style={{ position: 'absolute', left: 16, right: 16, bottom: 'calc(var(--safe-bottom) + 28px)', zIndex: 820 }}
       >
         {draft.gpsIssue && (

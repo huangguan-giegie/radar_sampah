@@ -8,6 +8,53 @@ export function safeNextPath(value: string | null): string {
   return value;
 }
 
+/*
+ * 上报流程的守卫。
+ *
+ * /report/review 这些是真网址：登录了就能直接输进地址栏、或者从书签打开。
+ * RequireAuth 只查有没有登录，不查流程走到哪一步，所以直接跳进去开出来的是
+ * 一页 "Not selected"，提交按钮点不动，也退不出去。手机 app 没有地址栏，
+ * 不会有这个问题。
+ *
+ * 规则是从草稿本身推出来的，不记「访问过哪几页」的标记。这样刷新之后
+ * 恢复出来的草稿一样能继续往下走 —— 草稿持久化和这个守卫互相配合，
+ * 而不是互相打架。
+ */
+export type ReportStep = 'photo' | 'location' | 'confirm' | 'details' | 'review';
+
+const STEP_ORDER: ReportStep[] = ['photo', 'location', 'confirm', 'details', 'review'];
+
+const STEP_PATH: Record<ReportStep, string> = {
+  photo: '/report/photo',
+  location: '/report/location',
+  confirm: '/report/confirm',
+  details: '/report/details',
+  review: '/report/review',
+};
+
+/** 这份草稿最远能走到哪一步 */
+export function reachableStep(draft: ReportDraft): ReportStep {
+  // 修正已有记录时可以不换新照片 —— 和 buildReportSubmission 的 update 分支一致
+  const hasPhoto = !!draft.photo || !!draft.existingPhotoUrl || !!draft.editingReportId;
+  if (!hasPhoto) return 'photo';
+  // 注意这里判的是照片不是海滩：确认页上有个「换一片海滩」会把 beachId 清空，
+  // 如果这一步要求有海滩，那个按钮会把用户从选海滩的页面上赶出去。
+  if (!draft.beachId) return 'confirm';
+  const picked = Object.keys(draft.quantities) as LitterCategory[];
+  if (picked.length === 0 || picked.some((c) => !draft.quantities[c])) return 'details';
+  return 'review';
+}
+
+/**
+ * 该不该拦。返回 null 表示放行，返回字符串是要跳去的网址。
+ * 只往回赶，不往前推 —— 「修正记录」那条路径带着一份填满的草稿从第 1 步进来，
+ * 往前推会让他没法换照片。
+ */
+export function guardStep(target: ReportStep, draft: ReportDraft): string | null {
+  const furthest = reachableStep(draft);
+  return STEP_ORDER.indexOf(target) <= STEP_ORDER.indexOf(furthest) ? null : STEP_PATH[furthest];
+}
+
 export type ReportSubmission =
   | { kind: 'create'; payload: CreateReportInput }
   | { kind: 'update'; reportId: string; changes: Partial<CreateReportInput> };
