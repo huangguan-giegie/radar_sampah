@@ -7,7 +7,7 @@ import { C } from '../theme';
 import { OverlayChip, StatusBadge } from '../components/ds';
 import { useApp } from '../AppContext';
 import type { BeachSummary, LitterCategory, QuantityBand } from '../types';
-import { buildReportSubmission } from '../flowRules';
+import { backFromReview, buildReportSubmission } from '../flowRules';
 
 export default function ReviewScreen() {
   const nav = useNavigate();
@@ -70,9 +70,10 @@ export default function ReviewScreen() {
    * 可能直接落在复核页上（草稿现在能活过刷新），那时候没有上一条可弹。
    */
   const backToDetails = () => {
-    const idx = (window.history.state as { idx?: number } | null)?.idx ?? 0;
-    if (idx > 0) nav(-1);
-    else nav('/report/details', { replace: true });
+    const idx = (window.history.state as { idx?: number } | null)?.idx;
+    const action = backFromReview(idx);
+    if (action.pop) nav(-1);
+    else nav(action.to, { replace: true });
   };
 
   // label 当 key：这几行是被 map 出来的，一份记录里同一个类别只会出现一次。

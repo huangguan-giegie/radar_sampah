@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { ReportDraft } from './AppContext';
 import {
+  backFromReview,
   buildReportSubmission,
   guardStep,
   reachableStep,
@@ -174,5 +175,30 @@ describe('流程守卫（直接输网址跳进上报流程中间）', () => {
   it('修正记录时沿用原来的照片，也算这一步过了', () => {
     const d = draft({ photo: null, existingPhotoUrl: 'data:image/png;base64,x' });
     expect(reachableStep(d)).toBe('review');
+  });
+});
+
+describe('从复核页返回详情页（idx 为 0 那个分支）', () => {
+  // 这个分支曾经写成对自身的调用，idx 为 0 时无限递归、堆栈溢出，
+  // 复核页上每个 Change、返回箭头和「Back to details」全都点不动。
+  it('idx 为 0 时给出明确的回退地址，不弹栈', () => {
+    expect(backFromReview(0)).toEqual({ pop: false, to: '/report/details' });
+  });
+
+  it('history.state 里没有 idx 时同样有明确出路', () => {
+    expect(backFromReview(undefined)).toEqual({ pop: false, to: '/report/details' });
+    expect(backFromReview(null)).toEqual({ pop: false, to: '/report/details' });
+  });
+
+  it('idx 大于 0 才弹栈 —— 正常走流程时上一条就是详情页', () => {
+    expect(backFromReview(1)).toEqual({ pop: true });
+    expect(backFromReview(7)).toEqual({ pop: true });
+  });
+
+  it('返回值永远是这两种之一，不会绕回自己', () => {
+    for (const idx of [-1, 0, 1, 2, undefined, null]) {
+      const r = backFromReview(idx);
+      expect(r.pop === true || (r.pop === false && r.to === '/report/details')).toBe(true);
+    }
   });
 });

@@ -139,3 +139,20 @@ export function reportOutcome(status: ReportStatus): ReportOutcome {
     tone: 'warning',
   };
 }
+
+/*
+ * 从复核页回详情页时该弹栈还是该替换。
+ *
+ * 抽成纯函数是为了能测：这个判断原来写在 ReviewScreen 里，某次改动把它的
+ * 兜底分支换成了对自己的调用，于是 idx 为 0 时无限递归、堆栈溢出，页面上
+ * 每个「Change」和返回键都点不动。组件内的分支没有测试能盖到它。
+ *
+ * idx 是 react-router 写在 history.state 里的位置。为 0 意味着复核页就是
+ * 这个标签页历史里的第一条 —— 草稿现在能活过刷新，所以在地址栏直接输
+ * /report/review 或从书签打开就会落到这个分支，不是罕见情况。
+ */
+export type BackFromReview = { pop: true } | { pop: false; to: string };
+
+export function backFromReview(historyIdx: number | null | undefined): BackFromReview {
+  return (historyIdx ?? 0) > 0 ? { pop: true } : { pop: false, to: '/report/details' };
+}
