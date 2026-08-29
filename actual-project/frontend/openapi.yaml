@@ -426,9 +426,9 @@ components:
         likelihood:
           nullable: true
           description: |
-            Epic 5's modelled occurrence likelihood. Omit it or send null and the card renders
-            as pure reference content. It must NEVER be folded into the litter severity score;
-            the app styles it separately and labels it MODELLED · ESTIMATE.
+            Epic 5's occurrence model. Omit it or send null and the card renders as pure
+            reference content. It must NEVER be folded into the litter severity score; the app
+            styles it separately in amber and never calls it a probability.
           allOf: [{ $ref: "#/components/schemas/SpeciesLikelihood" }]
 
     SpeciesSource:
@@ -448,13 +448,33 @@ components:
 
     SpeciesLikelihood:
       type: object
-      required: [percent, basis]
+      required: [state, basis]
+      description: |
+        Epic 5's occurrence model output. NOT a probability — the model uses only OBIS occurrence
+        records, generated background points and coordinates, and its output is an uncalibrated
+        RELATIVE score. Never render it with a percent sign.
+        Covers four species: green sea turtle, clown anemonefish, Irrawaddy dolphin and sicklefin
+        Moorish idol. Any other card has no score and will not get one this iteration.
       properties:
-        percent: { type: integer, minimum: 0, maximum: 100, example: 38 }
+        state:
+          type: string
+          enum: [ready, pending, unavailable]
+          description: |
+            ready       connected, score is set
+            pending     this species is covered but the backend is not connected yet
+            unavailable this species is not one of the four
+            pending and unavailable must stay apart on screen: one means not built yet,
+            the other means it cannot be built.
+        score:
+          type: integer
+          minimum: 0
+          maximum: 100
+          example: 38
+          description: relative occurrence score, NOT a probability. Sent only when state=ready
         basis:
           type: string
-          example: Habitat match + 2024 sighting records
-          description: what the number is based on. It is shown on screen and cannot be empty
+          example: Coordinate model over OBIS occurrence records and background samples.
+          description: what the number is based on. Shown verbatim on screen and never empty
 
     CompositionSlice:
       type: object

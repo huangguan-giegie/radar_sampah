@@ -190,37 +190,67 @@ A person receives a 4-digit number (e.g. `1637`) and their reports hang off it.
 
 ---
 
-## 2b. Modelled species likelihood (Epic 5 · Su) — field shape pending
+## 2b. Species occurrence score (Epic 5 · Su)
 
-Iteration 1 ships a modelled likelihood that a species occurs at a beach. The frontend slot is
-ready: each entry in `species[]` may carry an optional `likelihood`.
+> ⚠️ **This is not a probability of occurrence.** Su confirmed it: the Iteration 1 model uses only
+> OBIS occurrence records, generated background points and coordinates, and what it outputs is a
+> **relative occurrence score** that has not been calibrated. So it must not be rendered with a
+> percent sign, and the copy must not say how likely a species is to be present. The two
+> percentages that used to sit on the cards (green sea turtle 38%, coastal birds 76%) are gone.
+
+The model currently covers four species: **green sea turtle, clown anemonefish, Irrawaddy dolphin
+and sicklefin Moorish idol**. A card outside those four — a group name like "Coastal Birds" —
+**has no score**, and will not get one this iteration.
 
 ```json
-"likelihood": { "percent": 38, "basis": "Habitat match + 2024 sighting records" }
+{
+  "name": "Green Sea Turtle",
+  "kind": "species",
+  "scientificName": "Chelonia mydas",
+  "glyph": "turtle",
+  "text": "Occasional visitor along the Strait of Malacca…",
+  "source": { "dataset": "OBIS", "citation": "…", "url": "…", "accessedAt": "2026-08-20" },
+  "likelihood": {
+    "state": "ready",
+    "score": 38,
+    "basis": "Coordinate model over OBIS occurrence records and background samples."
+  }
+}
 ```
 
-- Omit it or send `null` → the card renders as pure reference content with no percentage at all.
-- `basis` — one line explaining what the number rests on. **Shown on screen; never leave it empty
-  while a percentage is set.**
+### `state` has three values and the screen says three different things
 
-### Three hard constraints (already implemented this way in the frontend)
+| state | Meaning | On screen |
+| --- | --- | --- |
+| `ready` | connected, `score` is set | the score plus `RELATIVE OCCURRENCE SCORE · NOT A PROBABILITY` |
+| `pending` | the species is covered, the backend is not connected yet | `OCCURRENCE MODEL · RESULT PENDING` |
+| `unavailable` | the species is not one of the four | `OCCURRENCE MODEL · NO DATA FOR THIS CARD` |
 
-1. **Never merged with litter severity into a single number.** They measure different things and a
-   combined figure would be misread.
-2. **Visually separate.** The frontend deliberately uses a blue dashed box, not the four severity
-   colours, and not a bar chart.
-3. **Labelled as an estimate.** When any species carries a likelihood, the beach page's disclaimer
-   switches to "…an estimate of how likely a species is to occur here, never a confirmed sighting",
-   and the scoring-method screen scopes its "No model, no judgement call" line to the litter band.
+**`pending` and `unavailable` must stay apart**: one means not built yet, the other means it
+cannot be built. Collapsed into one sentence, a reader waits for something that is never coming.
 
-These are not fastidiousness. The product's whole proposition is that its numbers are trustworthy;
-an unlabelled probability would spend the credibility Epic 4 is built on.
+- `score` — a 0–100 integer, **a relative score and not a probability**. Sent only when
+  `state = 'ready'`.
+- `basis` — one sentence saying where the number comes from, **displayed verbatim**. Never empty.
+- Omit `likelihood` entirely and the card renders as pure reference content.
 
-**Decided:** `percent` is a 0–100 integer (§2c: `likelihood_percent int CHECK BETWEEN 0 AND 100`).
-**For Su to confirm:** should `basis` carry a model
-version? Is there a confidence interval to display? Once decided, the frontend changes in one place.
+### Three hard constraints (already implemented on the frontend)
 
----
+1. **Never merge it into the litter severity score.** They answer different questions; combined,
+   a reader will misread both.
+2. **It must look different.** The frontend deliberately avoids the four severity colours and uses
+   an amber dashed block.
+3. **The copy must not call it a probability.** The beach page now reads: "…reports a relative
+   occurrence score, built from OBIS records and background samples at coordinate level. It is not
+   a calibrated probability of presence…" On the method page, "No model, no judgement call" is
+   scoped to the **litter severity** band only.
+
+> These are not fastidiousness. The product's promise is that its data is trustworthy and its rules
+> are visible. A relative score presented as a probability spends the credibility Epic 4 was built
+> to earn.
+
+**For Su to confirm:** should `basis` carry a model version? Is there a confidence interval to
+show? Once decided the frontend follows in one file, `types.ts`.
 
 ## 2c. Where biodiversity data comes from (required by DMP §2 and §9)
 
@@ -324,12 +354,16 @@ CREATE TABLE area_species (
   source_url          text,
   source_accessed_at  date,
 
-  likelihood_percent  int  CHECK (likelihood_percent BETWEEN 0 AND 100),
-  likelihood_basis    text,
+  occurrence_state    text NOT NULL DEFAULT 'unavailable'
+                           CHECK (occurrence_state IN ('ready','pending','unavailable')),
+  occurrence_score    int  CHECK (occurrence_score BETWEEN 0 AND 100),
+                           -- a relative score, NOT a probability. Set only when state='ready'
+  occurrence_basis    text,
 
   UNIQUE (area_id, species_id),
   CHECK ((kind = 'species') = (species_id IS NOT NULL)),
-  CHECK ((likelihood_percent IS NULL) = (likelihood_basis IS NULL))
+  CHECK ((occurrence_score IS NULL) = (occurrence_state <> 'ready')),
+  CHECK ((occurrence_score IS NULL) OR (occurrence_basis IS NOT NULL))
 );
 ```
 
@@ -801,7 +835,9 @@ dim_species      species_id(PK), scientific_name(uniq), common_name,
 area_species     id(PK), area_id(FK→beaches), species_id(FK→dim_species, nullable),
                  kind, display_name, glyph, text, sort_order, origin,
                  source_dataset, source_citation, source_url, source_accessed_at,
-                 likelihood_percent(nullable), likelihood_basis(nullable)
+                 occurrence_state, occurrence_score(nullable), occurrence_basis(nullable)
+                 ← a relative score, not a probability; state separates
+                   "not connected yet" from "no data for this card"
                  ← area×species junction; habitats and groups have a null species_id
 
 reports          id, reporter_id, beach_id, location_source,

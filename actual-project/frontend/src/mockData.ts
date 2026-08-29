@@ -42,7 +42,11 @@ export const BEACHES: BeachDetail[] = [
         text: 'Occasional visitor along the Strait of Malacca. Floating plastic may be mistaken for food.',
         source: PENDING_SOURCE,
         // ⚠️ 占位数字，等 Su 的 Epic 5 模型接进来替换
-        likelihood: { percent: 38, basis: 'Placeholder — awaiting the Epic 5 model', placeholder: true },
+        // OBIS 数据已清洗建模，但输出是相对出现分数不是概率，后端还没接上
+        likelihood: {
+          state: 'pending',
+          basis: 'Green sea turtle is one of the four modelled species. Backend not connected yet.',
+        },
       },
       {
         name: 'Mangrove Fringe',
@@ -61,7 +65,11 @@ export const BEACHES: BeachDetail[] = [
         glyph: 'bird',
         text: 'Migratory shorebirds feed along this tide line between September and April.',
         source: PENDING_SOURCE,
-        likelihood: { percent: 76, basis: 'Placeholder — awaiting the Epic 5 model', placeholder: true },
+        // 不在已训练的四个物种里（绿海龟、公子小丑鱼、伊洛瓦底海豚、镰鳍角蝶鱼）
+        likelihood: {
+          state: 'unavailable',
+          basis: 'Not one of the four modelled species, so no occurrence score exists for this card.',
+        },
       },
     ],
     ecologicalNote:
