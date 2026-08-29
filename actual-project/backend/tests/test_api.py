@@ -327,6 +327,8 @@ def test_cleanup_evidence_compares_anonymous_before_and_after_reports(client):
     assert response.get_json()["evidence"]["impact"] == "improved"
 
 
+# hx：注册一个匿名参与者，检查返回的 token 和 user 格式对不对，
+# 编号是 4 位数字，角色是 volunteer，而且不带任何个人信息字段
 def test_anonymous_signup_issues_a_token_and_a_random_4_digit_participant_id(client):
     response = client.post("/auth/anonymous")
 
@@ -340,6 +342,7 @@ def test_anonymous_signup_issues_a_token_and_a_random_4_digit_participant_id(cli
     assert "name" not in user and "email" not in user and "password" not in user
 
 
+# hx：连续注册两次，编号不能撞号
 def test_two_anonymous_signups_get_different_participant_ids(client):
     first = client.post("/auth/anonymous").get_json()["user"]["participantId"]
     second = client.post("/auth/anonymous").get_json()["user"]["participantId"]
@@ -347,6 +350,7 @@ def test_two_anonymous_signups_get_different_participant_ids(client):
     assert first != second
 
 
+# hx：用已有编号找回账号，应该拿到同一个用户和一个新 token
 def test_restore_with_a_known_participant_id_returns_a_working_token(client):
     created = client.post("/auth/anonymous").get_json()["user"]
 
@@ -358,6 +362,8 @@ def test_restore_with_a_known_participant_id_returns_a_working_token(client):
     assert body["token"]
 
 
+# hx：编号不存在时要返回 404 UNKNOWN_PARTICIPANT，不能返回 401
+# （401 意味着"你没登录"，404 意味着"这个编号根本没人用过"，两者含义不同）
 def test_restore_with_an_unknown_participant_id_is_404_not_401(client):
     """The app shows a different message for 'never existed' than for 'not signed in'."""
     response = client.post("/auth/restore", json={"participantId": "9999"})
@@ -366,6 +372,7 @@ def test_restore_with_an_unknown_participant_id_is_404_not_401(client):
     assert response.get_json()["code"] == "UNKNOWN_PARTICIPANT"
 
 
+# hx：格式不对（不是刚好 4 位数字）的编号，同样按"查无此人"处理
 @pytest.mark.parametrize("bad_participant_id", ["163", "16377", "abcd", "", None])
 def test_restore_rejects_anything_that_is_not_exactly_4_digits(client, bad_participant_id):
     response = client.post("/auth/restore", json={"participantId": bad_participant_id})
@@ -374,6 +381,7 @@ def test_restore_rejects_anything_that_is_not_exactly_4_digits(client, bad_parti
     assert response.get_json()["code"] == "UNKNOWN_PARTICIPANT"
 
 
+# hx：没带 token 访问 /auth/me 要 401
 def test_me_without_a_token_is_401_unauthenticated(client):
     response = client.get("/auth/me")
 
@@ -381,6 +389,7 @@ def test_me_without_a_token_is_401_unauthenticated(client):
     assert response.get_json()["code"] == "UNAUTHENTICATED"
 
 
+# hx：带一个乱写的假 token 也要 401，不能被随便糊弄过去
 def test_me_with_an_invalid_token_is_401_unauthenticated(client):
     response = client.get("/auth/me", headers={"Authorization": "Bearer not-a-real-token"})
 
@@ -388,6 +397,7 @@ def test_me_with_an_invalid_token_is_401_unauthenticated(client):
     assert response.get_json()["code"] == "UNAUTHENTICATED"
 
 
+# hx：带着注册时拿到的合法 token，应该能查到刚刚注册的那个用户
 def test_me_with_a_valid_token_returns_the_signed_up_user(client):
     created = client.post("/auth/anonymous").get_json()
     token = created["token"]
@@ -398,6 +408,7 @@ def test_me_with_a_valid_token_returns_the_signed_up_user(client):
     assert response.get_json() == created["user"]
 
 
+# hx：没登录时登出要 401；登录状态下登出要 204，而且响应体必须是空的
 def test_logout_without_a_token_is_401_and_with_one_is_204(client):
     unauthenticated = client.post("/auth/logout")
     assert unauthenticated.status_code == 401
