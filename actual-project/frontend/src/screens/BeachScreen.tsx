@@ -262,39 +262,31 @@ export default function BeachScreen() {
                   <div style={{ fontSize: 11.5, lineHeight: 1.5, color: C.muted, marginTop: 3 }}>{sp.text}</div>
 
                   {sp.likelihood && (
-                    /* Epic 5 建模概率。刻意不用严重度那套配色，也不做成条形图 ——
-                       它和垃圾严重度是两回事，绝不能被读成同一个指标。 */
+                    /* Epic 5 的模型输出。刻意不用严重度那套配色，也不做成条形图 ——
+                       它和垃圾严重度是两回事，绝不能被读成同一个指标。
+                       而且它是相对分数不是概率，所以没有百分号。 */
                     <div
                       style={{
                         marginTop: 10,
                         padding: '9px 10px',
                         borderRadius: 12,
-                        background: sp.likelihood.placeholder ? 'rgba(154,106,20,.07)' : 'rgba(43,78,162,.06)',
-                        border: `1px dashed ${sp.likelihood.placeholder ? 'rgba(154,106,20,.32)' : 'rgba(43,78,162,.25)'}`,
+                        background: 'rgba(154,106,20,.07)',
+                        border: '1px dashed rgba(154,106,20,.32)',
                       }}
                     >
-                      <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
-                        <span
-                          style={{
-                            fontFamily: MONO,
-                            fontSize: 15,
-                            fontWeight: 650,
-                            color: sp.likelihood.placeholder ? '#9A6A14' : '#2B4EA2',
-                          }}
-                        >
-                          {sp.likelihood.percent}%
-                        </span>
-                        <span
-                          style={{
-                            fontFamily: MONO,
-                            fontSize: 7.5,
-                            letterSpacing: '.1em',
-                            color: sp.likelihood.placeholder ? '#9A6A14' : '#2B4EA2',
-                          }}
-                        >
-                          {sp.likelihood.placeholder ? 'PLACEHOLDER · NOT YET MODELLED' : 'MODELLED · ESTIMATE'}
-                        </span>
+                      <div style={{ fontFamily: MONO, fontSize: 7.5, letterSpacing: '.1em', color: '#9A6A14' }}>
+                        {sp.likelihood.state === 'ready'
+                          ? 'RELATIVE OCCURRENCE SCORE · NOT A PROBABILITY'
+                          : sp.likelihood.state === 'pending'
+                            ? 'OCCURRENCE MODEL · RESULT PENDING'
+                            : 'OCCURRENCE MODEL · NO DATA FOR THIS CARD'}
                       </div>
+                      {sp.likelihood.state === 'ready' && sp.likelihood.score !== undefined && (
+                        <div style={{ fontFamily: MONO, fontSize: 15, fontWeight: 650, color: '#9A6A14', marginTop: 3 }}>
+                          {sp.likelihood.score}
+                          <span style={{ fontSize: 9, marginLeft: 4, letterSpacing: '.08em' }}>/ 100</span>
+                        </div>
+                      )}
                       <div style={{ fontSize: 10, lineHeight: 1.45, color: C.dim, marginTop: 3 }}>
                         {sp.likelihood.basis}
                       </div>
@@ -341,11 +333,9 @@ export default function BeachScreen() {
               {b.ecologicalNote}
             </div>
             <div style={{ fontSize: 10.5, color: C.dim, marginTop: 8, lineHeight: 1.5 }}>
-              {b.species.some((sp) => sp.likelihood?.placeholder)
-                ? 'Percentages here are placeholders, not modelled figures — never a confirmed sighting, and never a measure of litter severity or of ecological recovery.'
-                : b.species.some((sp) => sp.likelihood)
-                  ? 'Percentages are modelled from habitat type and past survey records — an estimate of likely occurrence, never a confirmed sighting, and never a measure of litter severity or of ecological recovery.'
-                  : 'Context only — never proof of current presence or of ecological recovery.'}
+              {b.species.some((sp) => sp.likelihood)
+                ? 'When the occurrence model is connected it reports a relative occurrence score, built from OBIS records and background samples at coordinate level. It is not a calibrated probability of presence, never a confirmed sighting, and never a measure of litter severity or of ecological recovery.'
+                : 'Context only — never proof of current presence or of ecological recovery.'}
             </div>
           </div>
         </div>

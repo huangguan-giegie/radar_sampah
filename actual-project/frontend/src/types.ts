@@ -15,12 +15,25 @@ export type SpeciesGlyph = 'turtle' | 'bird' | 'mangrove' | 'grass' | 'crab' | '
  * Epic 5 的建模出现概率（Su 负责，Iteration 1 上线）。
  * 这是**估算值不是观测结果**，界面上必须标注清楚，且绝不能和垃圾严重度合并成一个数。
  */
+/**
+ * Epic 5 的模型输出。
+ *
+ * ⚠️ 这**不是**出现概率。模型只用了 OBIS 的出现记录、生成的背景点和经纬度，
+ * 输出的是「相对出现分数」，没有经过校准。界面上绝不能显示成百分号。
+ * 覆盖的四个物种：绿海龟、公子小丑鱼、伊洛瓦底海豚、镰鳍角蝶鱼。
+ */
 export interface SpeciesLikelihood {
-  /** true = 这个数字还不是模型算出来的，只是占位。界面上会标出来 */
-  placeholder?: boolean;
-  /** 0-100 */
-  percent: number;
-  /** 模型或数据依据，界面上要显示出来，例如「Habitat match + 2024 survey」 */
+  /**
+   * ready       模型接进来了，score 有值
+   * pending     这个物种在覆盖范围内，但后端还没接上
+   * unavailable 这个物种不在那四个里 —— 这一版不会有数字
+   *
+   * pending 和 unavailable 要分开说：一个是「还没做」，一个是「做不了」。
+   */
+  state: 'ready' | 'pending' | 'unavailable';
+  /** 相对出现分数 0-100，**不是概率**。只在 state = 'ready' 时有。 */
+  score?: number;
+  /** 这个数怎么来的，界面上原样显示，不能留空。 */
   basis: string;
 }
 

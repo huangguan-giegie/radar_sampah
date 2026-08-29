@@ -190,41 +190,61 @@
 
 ---
 
-## 2b. 生物出现概率（Epic 5 · Su）　— 字段待 Su 确认
+## 2b. 生物出现分数（Epic 5 · Su）
 
-Iteration 1 会上线建模的物种出现概率。前端已经预留好槽位：`BeachDetail.species[]`
-里每一项可以带一个可选的 `likelihood`。
+> ⚠️ **这不是「出现概率」。** Su 确认过：Iteration 1 的模型只用了 OBIS 的出现记录、
+> 生成的背景点和经纬度，输出的是**相对出现分数**，没有经过校准。
+> 所以界面上不能显示成百分号，文案里也不能说「有多大可能出现在这里」。
+> 原来卡片上那两个百分比（绿海龟 38%、海岸鸟类 76%）已经全部撤掉。
+
+模型目前覆盖四个物种：**绿海龟、公子小丑鱼、伊洛瓦底海豚、镰鳍角蝶鱼**。
+不在这四个里的卡片（比如「海岸鸟类」这种统称）**不会有分数**，这一版也不会有。
 
 ```json
 {
   "name": "Green Sea Turtle",
+  "kind": "species",
+  "scientificName": "Chelonia mydas",
   "glyph": "turtle",
   "text": "Occasional visitor along the Strait of Malacca…",
-  "source": "DoF Malaysia · 2024",
+  "source": { "dataset": "OBIS", "citation": "…", "url": "…", "accessedAt": "2026-08-20" },
   "likelihood": {
-    "percent": 38,
-    "basis": "Habitat match + 2024 sighting records"
+    "state": "ready",
+    "score": 38,
+    "basis": "Coordinate model over OBIS occurrence records and background samples."
   }
 }
 ```
 
-- `likelihood` 省略或为 `null` → 前端退回纯科普展示，不显示任何百分比
-- `basis`：模型/数据依据的一句话，**界面上会显示出来**，不能留空
+### `state` 有三个值，界面上分三种说法
+
+| state | 什么意思 | 界面显示 |
+| --- | --- | --- |
+| `ready` | 模型接上了，`score` 有值 | 分数 + `RELATIVE OCCURRENCE SCORE · NOT A PROBABILITY` |
+| `pending` | 这个物种在覆盖范围内，但后端还没接上 | `OCCURRENCE MODEL · RESULT PENDING` |
+| `unavailable` | 这个物种不在那四个里 | `OCCURRENCE MODEL · NO DATA FOR THIS CARD` |
+
+**`pending` 和 `unavailable` 必须分开**：一个是「还没做」，一个是「做不了」。
+混成一句话，用户会以为再等等就有了。
+
+- `score`：0–100 的整数，**相对分数不是概率**。只在 `state = 'ready'` 时给。
+- `basis`：这个数怎么来的，一句话，**界面上原样显示**，不能留空。
+- `likelihood` 整个省略 → 前端退回纯科普展示，什么都不显示。
 
 ### 三条硬约束（前端已经这样实现了）
 
 1. **绝不和垃圾严重度合并成一个数。** 两者是完全不同的东西，混在一起用户必然误读。
-2. **视觉上必须区分。** 前端刻意没用严重度那套四色，用的是蓝色虚线框 + `MODELLED · ESTIMATE` 标签。
-3. **文案必须说清是估算。** 有 `likelihood` 时，海滩页的免责声明会自动换成
-   「…an estimate of how likely a species is to occur here, never a confirmed sighting…」；
-   评分说明页也加了一句，把「No model, no judgement call」限定在**垃圾严重度**上。
+2. **视觉上必须区分。** 前端刻意没用严重度那套四色，用的是琥珀色虚线框。
+3. **文案不能说成概率。** 海滩页的免责声明现在是：
+   「…reports a relative occurrence score, built from OBIS records and background samples at
+   coordinate level. It is not a calibrated probability of presence…」
+   评分说明页那句「No model, no judgement call」只限定在**垃圾严重度**上。
 
 > 这三条不是洁癖 —— 产品对用户的核心承诺就是「数据可信、规则透明」。
-> 一个没标清楚的概率数字会把 Epic 4 辛苦建立的可信度一起赔进去。
+> 一个说成概率的相对分数，会把 Epic 4 辛苦建立的可信度一起赔进去。
 
-**已定**：`percent` 是 0–100 的整数（§2c 的 `likelihood_percent int CHECK BETWEEN 0 AND 100`）。
-**Su 需要确认的**：`basis` 要不要带模型版本号？
-有没有置信区间要展示？定了我这边跟着调，改动只在 `types.ts` 一处。
+**待 Su 确认**：`basis` 要不要带模型版本号？有没有置信区间要展示？
+定了前端跟着调，改动只在 `types.ts` 一处。
 
 ## 2c. 生物数据的出处（DMP §2 / §9 强制）
 
@@ -320,12 +340,16 @@ CREATE TABLE area_species (
   source_url          text,
   source_accessed_at  date,
 
-  likelihood_percent  int  CHECK (likelihood_percent BETWEEN 0 AND 100),
-  likelihood_basis    text,
+  occurrence_state    text NOT NULL DEFAULT 'unavailable'
+                           CHECK (occurrence_state IN ('ready','pending','unavailable')),
+  occurrence_score    int  CHECK (occurrence_score BETWEEN 0 AND 100),
+                           -- 相对出现分数，不是概率。只有 state='ready' 时有值
+  occurrence_basis    text,
 
   UNIQUE (area_id, species_id),
   CHECK ((kind = 'species') = (species_id IS NOT NULL)),
-  CHECK ((likelihood_percent IS NULL) = (likelihood_basis IS NULL))
+  CHECK ((occurrence_score IS NULL) = (occurrence_state <> 'ready')),
+  CHECK ((occurrence_score IS NULL) OR (occurrence_basis IS NOT NULL))
 );
 ```
 
@@ -792,7 +816,8 @@ dim_species      species_id(PK), scientific_name(uniq), common_name,
 area_species     id(PK), area_id(FK→beaches), species_id(FK→dim_species, nullable),
                  kind, display_name, glyph, text, sort_order, origin,
                  source_dataset, source_citation, source_url, source_accessed_at,
-                 likelihood_percent(nullable), likelihood_basis(nullable)
+                 occurrence_state, occurrence_score(nullable), occurrence_basis(nullable)
+                 ← 分数是相对值不是概率；state 区分「还没接」和「没有数据」
                  ← 区域×物种的 junction；生境和统称的 species_id 为空
 reports          id, reporter_id, beach_id, location_source,
                  photo_key, photo_mime, photo_stripped
