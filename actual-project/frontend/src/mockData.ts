@@ -1,4 +1,5 @@
 // 假数据。后端做好之后，把 src/api.ts 里的 USE_MOCK 关掉，这个文件就用不到了。
+import { PENDING_SOURCE } from './sources';
 import type { BeachDetail, LitterReport, User } from './types';
 
 /** 设计稿里的四个 MVP 海滩。后端接上后整份文件即可删除。 */
@@ -23,34 +24,44 @@ export const BEACHES: BeachDetail[] = [
     scene:
       'linear-gradient(180deg,transparent 42%,rgba(221,227,236,.2) 47%,transparent 55%),radial-gradient(110% 55% at 72% 18%,rgba(221,227,236,.35),transparent 58%),linear-gradient(178deg,#8FD0E8 0%,#4E9EC9 36%,#2E6EA8 58%,#173E77 100%)',
     composition: [
-      { category: 'Plastic', percent: 46 },
-      { category: 'Fishing gear', percent: 22 },
-      { category: 'Glass', percent: 12 },
-      { category: 'Metal', percent: 9 },
-      { category: 'Paper', percent: 6 },
-      { category: 'Other', percent: 5 },
+      { category: 'Plastic', quantity: 'Very Large' },
+      { category: 'Fishing gear', quantity: 'Large' },
+      { category: 'Glass', quantity: 'Medium' },
+      { category: 'Metal', quantity: 'Small' },
+      { category: 'Paper', quantity: 'Small' },
+      { category: 'Other', quantity: 'Small' },
     ],
+    compositionSource: { reportId: 'r_seed_morib', createdAt: '2026-08-19T16:00:00+08:00' },
     species: [
       {
         name: 'Green Sea Turtle',
+        kind: 'species',
+        scientificName: 'Chelonia mydas',
+        threatCategory: null, // OBIS 收海龟；FishBase 只收鱼，没有
         glyph: 'turtle',
         text: 'Occasional visitor along the Strait of Malacca. Floating plastic may be mistaken for food.',
-        source: 'DoF Malaysia · 2024',
+        source: PENDING_SOURCE,
         // ⚠️ 占位数字，等 Su 的 Epic 5 模型接进来替换
-        likelihood: { percent: 38, basis: 'Habitat match + 2024 sighting records' },
+        likelihood: { percent: 38, basis: 'Placeholder — awaiting the Epic 5 model', placeholder: true },
       },
       {
         name: 'Mangrove Fringe',
+        kind: 'habitat',
+        scientificName: null,
+        threatCategory: null, // 生境，FishBase / OBIS 都没有
         glyph: 'mangrove',
         text: 'Young mangroves at the northern end shelter juvenile fish and crabs.',
-        source: 'Selangor Forestry · 2023',
+        source: PENDING_SOURCE,
       },
       {
         name: 'Coastal Birds',
+        kind: 'group',
+        scientificName: null,
+        threatCategory: null, // 鸟类不在 FishBase / OBIS
         glyph: 'bird',
         text: 'Migratory shorebirds feed along this tide line between September and April.',
-        source: 'MNS waterbird census · 2024',
-        likelihood: { percent: 76, basis: 'Habitat match + seasonal census (Sep–Apr)' },
+        source: PENDING_SOURCE,
+        likelihood: { percent: 76, basis: 'Placeholder — awaiting the Epic 5 model', placeholder: true },
       },
     ],
     ecologicalNote:
@@ -76,31 +87,41 @@ export const BEACHES: BeachDetail[] = [
     scene:
       'radial-gradient(100% 60% at 30% 14%,rgba(255,255,255,.4),transparent 55%),linear-gradient(180deg,#D8ECF4 0%,#8FC6DC 38%,#5FA3C4 52%,#CFC9BA 78%,#B5AF9E 100%)',
     composition: [
-      { category: 'Plastic', percent: 52 },
-      { category: 'Fishing gear', percent: 18 },
-      { category: 'Paper', percent: 12 },
-      { category: 'Glass', percent: 8 },
-      { category: 'Metal', percent: 6 },
-      { category: 'Other', percent: 4 },
+      { category: 'Plastic', quantity: 'Very Large' },
+      { category: 'Fishing gear', quantity: 'Medium' },
+      { category: 'Paper', quantity: 'Medium' },
+      { category: 'Glass', quantity: 'Small' },
+      { category: 'Metal', quantity: 'Small' },
+      { category: 'Other', quantity: 'Small' },
     ],
+    compositionSource: { reportId: 'r_seed_remis', createdAt: '2026-07-25T16:00:00+08:00' },
     species: [
       {
         name: 'Migratory Shorebirds',
+        kind: 'group',
+        scientificName: null,
+        threatCategory: null, // 鸟类不在 FishBase / OBIS
         glyph: 'bird',
         text: 'The Jeram mudflats are a stopover for migratory waders crossing the strait.',
-        source: 'MNS waterbird census · 2024',
+        source: PENDING_SOURCE,
       },
       {
         name: 'Marine Fish',
+        kind: 'group',
+        scientificName: null,
+        threatCategory: null, // FishBase + OBIS 都有，但这是统称不是单一物种
         glyph: 'fish',
         text: 'Shallow nursery waters for coastal fish species.',
-        source: 'DoF Malaysia · 2022',
+        source: PENDING_SOURCE,
       },
       {
         name: 'Mangrove Belt',
+        kind: 'habitat',
+        scientificName: null,
+        threatCategory: null, // 生境，FishBase / OBIS 都没有
         glyph: 'mangrove',
         text: 'A narrow mangrove belt lines the river mouth south of the beach.',
-        source: 'Selangor Forestry · 2023',
+        source: PENDING_SOURCE,
       },
     ],
     ecologicalNote:
@@ -125,21 +146,32 @@ export const BEACHES: BeachDetail[] = [
     coverImageUrl: null,
     scene:
       'radial-gradient(90% 55% at 70% 16%,rgba(156,174,168,.35),transparent 60%),linear-gradient(178deg,#2F6B7C 0%,#245A6B 44%,#1B4557 72%,#123244 100%)',
-    composition: null,
+    // 有 2 条 Counted 记录，所以成分是有的 —— 三条那个门槛只管 severity
+    composition: [
+      { category: 'Plastic', quantity: 'Medium' },
+      { category: 'Other', quantity: 'Small' },
+    ],
     species: [
       {
         name: 'Mangrove Habitat',
+        kind: 'habitat',
+        scientificName: null,
+        threatCategory: null, // 生境，FishBase / OBIS 都没有
         glyph: 'mangrove',
         text: 'Dense mangrove roots trap sediment and shelter juvenile marine life.',
-        source: 'Selangor Forestry · 2023',
+        source: PENDING_SOURCE,
       },
       {
         name: 'Coastal Birds',
+        kind: 'group',
+        scientificName: null,
+        threatCategory: null, // 鸟类不在 FishBase / OBIS
         glyph: 'bird',
         text: 'Egrets and herons hunt along the shallow channels at low tide.',
-        source: 'MNS waterbird census · 2024',
+        source: PENDING_SOURCE,
       },
     ],
+    compositionSource: { reportId: 'r_seed_kelanang', createdAt: '2026-05-21T16:00:00+08:00' },
     ecologicalNote:
       'Litter caught in mangrove roots can persist for years and may break down into microplastics.',
   },
@@ -163,33 +195,43 @@ export const BEACHES: BeachDetail[] = [
     scene:
       'radial-gradient(110% 60% at 60% 12%,rgba(255,255,255,.45),transparent 58%),linear-gradient(178deg,#E4EEF3 0%,#9CCAD8 34%,#5FA3C4 52%,#D6CFBE 76%,#BFB8A6 100%)',
     composition: [
-      { category: 'Plastic', percent: 41 },
-      { category: 'Fishing gear', percent: 26 },
-      { category: 'Glass', percent: 10 },
-      { category: 'Metal', percent: 9 },
-      { category: 'Paper', percent: 8 },
-      { category: 'Other', percent: 6 },
+      { category: 'Plastic', quantity: 'Very Large' },
+      { category: 'Fishing gear', quantity: 'Large' },
+      { category: 'Glass', quantity: 'Medium' },
+      { category: 'Metal', quantity: 'Small' },
+      { category: 'Paper', quantity: 'Small' },
+      { category: 'Other', quantity: 'Small' },
     ],
     species: [
       {
         name: 'Horseshoe Crab',
+        kind: 'species',
+        scientificName: 'Carcinoscorpius rotundicauda',
+        threatCategory: null, // OBIS 收鲎；FishBase 没有
         glyph: 'crab',
         text: 'One of the few Selangor shores where mangrove horseshoe crabs still come up to spawn.',
-        source: 'UPM coastal survey · 2023',
+        source: PENDING_SOURCE,
       },
       {
         name: 'Seagrass Patches',
+        kind: 'habitat',
+        scientificName: null,
+        threatCategory: null, // 生境，FishBase / OBIS 都没有
         glyph: 'grass',
         text: 'Seagrass in the shallows feeds and shelters small marine animals.',
-        source: 'DoF Malaysia · 2022',
+        source: PENDING_SOURCE,
       },
       {
         name: 'Mangrove Habitat',
+        kind: 'habitat',
+        scientificName: null,
+        threatCategory: null, // 生境，FishBase / OBIS 都没有
         glyph: 'mangrove',
         text: 'The Sepang river-mouth mangroves sit just south of this beach.',
-        source: 'Selangor Forestry · 2023',
+        source: PENDING_SOURCE,
       },
     ],
+    compositionSource: { reportId: 'r_seed_bagan', createdAt: '2026-07-24T16:00:00+08:00' },
     ecologicalNote:
       'Ghost nets and plastic sheeting may trap horseshoe crabs that come ashore to spawn.',
   },
@@ -208,7 +250,8 @@ export const SEED_REPORTS: LitterReport[] = [
     id: 'r1',
     beachId: 'morib',
     beachName: 'Pantai Morib',
-    category: 'Plastic',
+    quantities: { Plastic: 'Medium', Glass: 'Small' },
+    category: 'Plastic',      // 派生：Plastic 0.85 > Glass 0.70
     quantity: 'Medium',
     createdAt: '2026-08-14T02:00:00Z',
     status: 'Counted',
@@ -217,6 +260,7 @@ export const SEED_REPORTS: LitterReport[] = [
     id: 'r2',
     beachId: 'morib',
     beachName: 'Pantai Morib',
+    quantities: { Plastic: 'Small' },
     category: 'Plastic',
     quantity: 'Small',
     createdAt: '2026-08-09T02:00:00Z',
@@ -228,7 +272,8 @@ export const SEED_REPORTS: LitterReport[] = [
     id: 'r3',
     beachId: 'remis',
     beachName: 'Pantai Remis',
-    category: 'Fishing gear',
+    quantities: { 'Fishing gear': 'Small', Plastic: 'Small' },
+    category: 'Fishing gear', // 派生：Fishing gear 1.00 最高
     quantity: 'Small',
     createdAt: '2026-07-20T02:00:00Z',
     status: 'Counted',
@@ -237,6 +282,7 @@ export const SEED_REPORTS: LitterReport[] = [
     id: 'r4',
     beachId: 'kelanang',
     beachName: 'Pantai Kelanang',
+    quantities: { Other: 'Small' },
     category: 'Other',
     quantity: 'Small',
     createdAt: '2026-07-02T02:00:00Z',

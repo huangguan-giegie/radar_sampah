@@ -5,7 +5,8 @@ import { getBeaches } from '../api';
 import { markerHtml } from '../components/BeachMarker';
 import { useLeafletMap } from '../components/useLeafletMap';
 import { ArrowRight, Check, Close, WifiOff } from '../components/Icon';
-import { C, MONO, SEVERITY, freshStyle, freshnessLabel, lastReportedLabel } from '../theme';
+import { C, MONO, freshStyle, freshnessLabel, lastReportedLabel } from '../theme';
+import { GlassPanel, SeverityBadge } from '../components/ds';
 import { useApp } from '../AppContext';
 import type { BeachSummary, MapLayer } from '../types';
 
@@ -258,7 +259,6 @@ function SelectedCard({
   onClose: () => void;
   onOpen: () => void;
 }) {
-  const sev = beach.severity ? SEVERITY[beach.severity] : null;
   const fs = freshStyle(beach.freshnessKind);
 
   const metaRow = (k: string, v: string, color: string = C.ink2, weight = 400) => (
@@ -275,18 +275,7 @@ function SelectedCard({
       className="anim-sheet-up"
       style={{ position: 'absolute', left: 12, right: 12, bottom: 'calc(var(--bottom-inset) + 84px)', zIndex: 880 }}
     >
-      <div
-        style={{
-          position: 'relative',
-          background: 'rgba(255,255,255,.9)',
-          backdropFilter: 'blur(20px) saturate(160%)',
-          WebkitBackdropFilter: 'blur(20px) saturate(160%)',
-          border: '1px solid rgba(255,255,255,.7)',
-          borderRadius: 24,
-          padding: 18,
-          boxShadow: '0 24px 50px -16px rgba(14,30,64,.4)',
-        }}
-      >
+      <GlassPanel style={{ position: 'relative', padding: 18 }}>
         <button
           type="button"
           onClick={onClose}
@@ -312,17 +301,9 @@ function SelectedCard({
             <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, paddingRight: 28 }}>
               <div style={{ flex: 1 }}>
                 <div style={{ fontSize: 18, fontWeight: 650, letterSpacing: '-.3px' }}>{beach.name}</div>
-                <div style={{ fontSize: 12, color: C.dim, marginTop: 2 }}>{beach.area}</div>
+                <div style={{ fontSize: 12, color: C.dim, marginTop: 3 }}>{beach.area}</div>
               </div>
-              {sev ? (
-                <div style={{ padding: '7px 12px', borderRadius: 12, background: sev.tint, color: sev.text, fontSize: 12, fontWeight: 750, letterSpacing: '.1em' }}>
-                  {beach.severity?.toUpperCase()}
-                </div>
-              ) : (
-                <div style={{ padding: '7px 12px', borderRadius: 12, background: 'rgba(30,36,44,.06)', border: '1px dashed rgba(30,36,44,.2)', color: C.muted, fontSize: 11, fontWeight: 700, letterSpacing: '.08em' }}>
-                  INSUFFICIENT DATA
-                </div>
-              )}
+              <SeverityBadge band={beach.severity} size="lg" />
             </div>
 
             {beach.insufficientData && (
@@ -344,7 +325,7 @@ function SelectedCard({
             </div>
 
             <div style={{ fontSize: 10.5, color: C.faint, marginTop: 10, fontFamily: MONO, letterSpacing: '.04em' }}>
-              LAST REPORTED {lastReportedLabel(beach.lastReportedAt)} · BROAD AREA SHOWN — EXACT GPS IS PRIVATE
+              {beach.lastReportedAt ? `LAST REPORTED ${lastReportedLabel(beach.lastReportedAt)}` : lastReportedLabel(null)} · BROAD AREA SHOWN — EXACT GPS IS PRIVATE
             </div>
           </>
         ) : (
@@ -384,7 +365,7 @@ function SelectedCard({
           <span>{layer === 'litter' ? 'View Beach' : 'Learn More'}</span>
           <ArrowRight size={14} />
         </button>
-      </div>
+      </GlassPanel>
     </div>
   );
 }

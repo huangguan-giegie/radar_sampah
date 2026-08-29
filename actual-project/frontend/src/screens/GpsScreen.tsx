@@ -26,17 +26,23 @@ export default function GpsScreen() {
     setBusy(true);
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
-        const coords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        // DMP §4.2 要求存的是 approx location，界面上也承诺精确坐标不离开这一屏。
+        // 所以在采集处就取到小数点后 3 位（约 110m）——
+        // 精确值从头到尾没离开过设备，25km 的海滩匹配半径也完全够用。
+        const round3 = (n: number) => Math.round(n * 1000) / 1000;
+        const coords = { lat: round3(pos.coords.latitude), lng: round3(pos.coords.longitude) };
         try {
           const beach = await resolveBeach(coords.lat, coords.lng);
           if (beach) {
-            patchDraft({ locationSource: 'gps', coords, beachId: beach.id, gpsDenied: false });
+            patchDraft({ locationSource: 'gps', coords, beachId: beach.id, beachName: beach.name, gpsDenied: false });
           } else {
             showToast('No supported beach nearby — pick one manually');
             patchDraft({ locationSource: 'manual', coords: null, gpsDenied: false });
           }
         } catch {
-          patchDraft({ locationSource: 'manual', coords: null });
+          // 和上面「附近没有支持的海滩」是两回事，不能一样地悄悄过去
+          showToast("Couldn't check your location — pick a beach manually");
+          patchDraft({ locationSource: 'manual', coords: null, gpsDenied: false });
         } finally {
           setBusy(false);
           nav('/report/confirm');

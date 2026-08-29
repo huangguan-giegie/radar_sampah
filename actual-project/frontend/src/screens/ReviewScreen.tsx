@@ -3,14 +3,15 @@ import { useEffect, useState } from 'react';
 import { createReport, getBeaches, updateReport } from '../api';
 import { ArrowRight, Info, Shield } from '../components/Icon';
 import { BackButton, ErrorNote, PrimaryButton, StepBadge, TextButton } from '../components/ui';
-import { C, MONO } from '../theme';
+import { C } from '../theme';
+import { OverlayChip, StatusBadge } from '../components/ds';
 import { useApp } from '../AppContext';
-import type { BeachSummary } from '../types';
+import type { BeachSummary, LitterCategory, QuantityBand } from '../types';
 import { buildReportSubmission } from '../flowRules';
 
 export default function ReviewScreen() {
   const nav = useNavigate();
-  const { draft, resetDraft, setLastSavedReportId, bumpReports, showToast } = useApp();
+  const { draft, resetDraft, setLastSavedReport, bumpReports, showToast } = useApp();
   const [beaches, setBeaches] = useState<BeachSummary[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -22,7 +23,7 @@ export default function ReviewScreen() {
   }, []);
 
   const beach = beaches.find((b) => b.id === draft.beachId);
-  const photoUrl = draft.photo?.url ?? draft.existingPhotoUrl;
+  const photoUrl = draft.photo?.previewUrl ?? draft.existingPhotoUrl;
 
   async function submit() {
     let submission: ReturnType<typeof buildReportSubmission>;
@@ -44,13 +45,13 @@ export default function ReviewScreen() {
         submission.kind === 'update'
           ? await updateReport(submission.reportId, submission.changes)
           : await createReport(submission.payload);
-      setLastSavedReportId(saved.id);
+      setLastSavedReport(saved);
       bumpReports();
       resetDraft();
       nav('/report/saved', { replace: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not save this record.');
-      showToast('Save failed — please try again');
+      showToast('Save failed');
     } finally {
       setBusy(false);
     }
@@ -76,9 +77,9 @@ export default function ReviewScreen() {
       <span style={{ fontSize: 14, fontWeight: 640, flex: 1 }}>{value}</span>
       {action && <span style={{ fontSize: 11.5, fontWeight: 700, color: C.navy }}>Change</span>}
       {badge && (
-        <span style={{ marginLeft: 'auto', fontFamily: MONO, fontSize: 8, letterSpacing: '.08em', color: C.slate, background: 'rgba(11,33,97,.06)', padding: '4px 7px', borderRadius: 7 }}>
+        <StatusBadge status="duplicate" style={{ marginLeft: 'auto' }}>
           {badge}
-        </span>
+        </StatusBadge>
       )}
     </button>
   );
@@ -96,9 +97,6 @@ export default function ReviewScreen() {
 
         <div>
           <div style={{ fontSize: 29, fontWeight: 640, letterSpacing: '-.7px' }}>Almost there</div>
-          <div style={{ fontSize: 13.5, color: C.muted, marginTop: 6, lineHeight: 1.5 }}>
-            Have a quick look before it goes in. Anything here can still be changed.
-          </div>
         </div>
 
         <div style={{ position: 'relative', height: 150, borderRadius: 24, overflow: 'hidden', background: '#A19C90' }}>
@@ -106,17 +104,20 @@ export default function ReviewScreen() {
             <img src={photoUrl} alt="Report evidence" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
           )}
           {(draft.photo?.metadataStripped || draft.existingPhotoUrl) && (
-            <div style={{ position: 'absolute', left: 12, bottom: 12, display: 'flex', alignItems: 'center', gap: 6, fontFamily: MONO, fontSize: 8, letterSpacing: '.1em', color: C.cloud, background: 'rgba(11,33,97,.75)', backdropFilter: 'blur(6px)', padding: '5px 9px', borderRadius: 999 }}>
+            <OverlayChip style={{ position: 'absolute', left: 12, bottom: 12 }}>
               <Shield size={10} />
-              {draft.photo?.metadataStripped ? 'METADATA REMOVED' : 'EXISTING PHOTO RETAINED'}
-            </div>
+              {draft.photo ? 'LOCATION METADATA REMOVED' : 'EXISTING PHOTO RETAINED'}
+            </OverlayChip>
           )}
         </div>
 
         <div style={{ background: C.white, border: `1px solid ${C.line}`, borderRadius: 24, overflow: 'hidden' }}>
-          {row('Beach', beach?.name ?? 'Not selected', () => nav('/report/confirm'))}
-          {row('Category', draft.category ?? 'Not selected', () => nav('/report/details'))}
-          {row('Quantity', draft.quantity ?? 'Not selected', () => nav('/report/details'))}
+          {row('Beach', draft.beachName ?? beach?.name ?? 'Not selected', () => nav('/report/confirm'))}
+          {(Object.keys(draft.quantities) as LitterCategory[]).length === 0
+            ? row('Litter', 'Not selected', () => nav('/report/details'))
+            : (Object.entries(draft.quantities) as [LitterCategory, QuantityBand][]).map(([cat, q]) =>
+                row(cat, q ?? 'Not selected', () => nav('/report/details')),
+              )}
           {draft.locationSource === 'gps'
             ? row('Location', 'Beach area confirmed', undefined, 'GPS PRIVATE')
             : row('Location', 'Selected manually', undefined, 'NO GPS STORED')}
@@ -127,8 +128,8 @@ export default function ReviewScreen() {
         <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start', background: C.tint, borderRadius: 16, padding: '13px 14px' }}>
           <Info style={{ flex: 'none', marginTop: 1 }} />
           <div style={{ fontSize: 12, lineHeight: 1.55, color: C.slate }}>
-            Saving stores a standardised record for this beach. Duplicate or incomplete records are
-            excluded from the severity calculation — the same rule for every beach.
+            Duplicate or incomplete records are excluded from the severity calculation — the same
+            rule for every beach.
           </div>
         </div>
 

@@ -1,5 +1,5 @@
 import type { ReportDraft } from './AppContext';
-import type { CreateReportInput, ReportStatus } from './types';
+import type { CreateReportInput, LitterCategory, ReportStatus } from './types';
 
 export function safeNextPath(value: string | null): string {
   if (!value || !value.startsWith('/') || value.startsWith('//') || value.includes('\\')) {
@@ -13,15 +13,20 @@ export type ReportSubmission =
   | { kind: 'update'; reportId: string; changes: Partial<CreateReportInput> };
 
 export function buildReportSubmission(draft: ReportDraft): ReportSubmission {
-  if (!draft.beachId || !draft.category || !draft.quantity) {
+  const picked = Object.keys(draft.quantities) as LitterCategory[];
+  if (!draft.beachId || picked.length === 0) {
     throw new Error('This report is missing a required field. Go back and complete it.');
+  }
+  // 选了类别却没选数量档的，不能放过去
+  const noBand = picked.filter((c) => !draft.quantities[c]);
+  if (noBand.length > 0) {
+    throw new Error(`Pick how much for: ${noBand.join(', ')}.`);
   }
 
   const usesGps = draft.locationSource === 'gps' && draft.coords !== null;
   const common = {
     beachId: draft.beachId,
-    category: draft.category,
-    quantity: draft.quantity,
+    quantities: draft.quantities,
     locationSource: usesGps ? ('gps' as const) : ('manual' as const),
     ...(usesGps ? { coords: draft.coords! } : {}),
   };
@@ -35,7 +40,7 @@ export function buildReportSubmission(draft: ReportDraft): ReportSubmission {
       reportId: draft.editingReportId,
       changes: {
         ...common,
-        ...(draft.photo ? { photoId: draft.photo.id } : {}),
+        ...(draft.photo ? { photoKey: draft.photo.photoKey } : {}),
       },
     };
   }
@@ -49,7 +54,7 @@ export function buildReportSubmission(draft: ReportDraft): ReportSubmission {
 
   return {
     kind: 'create',
-    payload: { ...common, photoId: draft.photo.id },
+    payload: { ...common, photoKey: draft.photo.photoKey },
   };
 }
 

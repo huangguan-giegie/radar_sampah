@@ -19,7 +19,10 @@ import type {
   BeachDetail,
   BeachSummary,
   CreateReportInput,
+  LitterCategory,
   LitterReport,
+  QuantityBand,
+  QuantityByCategory,
   ReportCounts,
   ReportStatus,
   ScoringMethod,
@@ -50,23 +53,57 @@ function clearToken() {
 }
 
 // 发一个请求。出错就抛异常，页面用 try/catch 接住。
+/** 请求失败时带上状态码，调用方要靠它区分「没登录」和「连不上」 */
+export class ApiError extends Error {
+  status: number;
+  code?: string;
+  constructor(message: string, status: number, code?: string) {
+    super(message);
+    this.status = status;
+    this.code = code;
+  }
+}
+
+/**
+ * 带超时的 fetch。后端接受了连接却一直不回时，
+ * promise 会永远挂着，按钮就卡在「Saving…」出不来。
+ */
+async function fetchWithTimeout(url: string, init: RequestInit, ms: number) {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), ms);
+  try {
+    return await fetch(url, { ...init, signal: ctrl.signal });
+  } catch (err) {
+    if (err instanceof DOMException && err.name === 'AbortError') {
+      throw new Error('The server did not respond. Check your connection and try again.');
+    }
+    throw new Error('Could not reach the server. Check your connection and try again.');
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 async function request(path: string, method = 'GET', body?: unknown) {
   const headers: Record<string, string> = { Accept: 'application/json' };
   const token = getToken();
   if (token) headers.Authorization = 'Bearer ' + token;
   if (body) headers['Content-Type'] = 'application/json';
 
-  const res = await fetch(BASE_URL + path, {
-    method,
-    headers,
-    body: body ? JSON.stringify(body) : undefined,
-  });
+  const res = await fetchWithTimeout(
+    BASE_URL + path,
+    { method, headers, body: body ? JSON.stringify(body) : undefined },
+    15_000,
+  );
 
   if (res.status === 204) return null;
 
   const data = await res.json().catch(() => null);
   if (!res.ok) {
-    throw new Error(data?.message || '请求失败（' + res.status + '）');
+    throw new ApiError(
+      data?.message || `Something went wrong (${res.status}). Please try again.`,
+      res.status,
+      data?.code,
+    );
   }
   return data;
 }
@@ -227,8 +264,10 @@ export async function getMe(): Promise<User | null> {
   if (!getToken()) return null;
   try {
     return await request('/auth/me');
-  } catch {
-    return null;
+  } catch (err) {
+    // 401 = 真的没登录；其他都是连不上，不能把用户当成登出
+    if (err instanceof ApiError && err.status === 401) return null;
+    throw err;
   }
 }
 
@@ -248,7 +287,7 @@ export async function getBeach(id: string): Promise<BeachDetail> {
   if (USE_MOCK) {
     await delay();
     const beach = BEACHES.find((b) => b.id === id);
-    if (!beach) throw new Error('找不到这个海滩：' + id);
+    if (!beach) throw new Error('That beach could not be found.');
     return beach;
   }
   return request('/beaches/' + id);
@@ -297,32 +336,56 @@ export async function resolveBeach(lat: number, lng: number): Promise<BeachSumma
 // 5. 照片上传
 // ============================================================
 
+/**
+ * mock 的「对象存储」：键 → data URL。
+ * 真后端是 photo_key → 短时效签名地址，形状一样，只是这里不签名。
+ */
+const mockPhotoStore = new Map<string, string>();
+
 export async function uploadPhoto(file: File): Promise<UploadedPhoto> {
   if (USE_MOCK) {
     await delay(700);
-    return {
-      id: 'photo_' + Date.now(),
-      url: URL.createObjectURL(file),
-      metadataStripped: true,
-    };
+    // 用 data: 不用 blob:。记录会写进 localStorage，
+    // blob: 地址刷新一次就失效，缩略图会变成裂图。
+    const url = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result));
+      reader.onerror = () => reject(new Error('Could not read that photo. Please try another one.'));
+      reader.readAsDataURL(file);
+    });
+    const photoKey = 'mock/' + Date.now() + '.jpg';
+    mockPhotoStore.set(photoKey, url);
+    return { photoKey, previewUrl: url, metadataStripped: true };
   }
 
   // 传文件要用 FormData，不能用 JSON
   const form = new FormData();
   form.append('photo', file);
-  const res = await fetch(BASE_URL + '/uploads/photos', {
-    method: 'POST',
-    headers: { Authorization: 'Bearer ' + getToken() },
-    body: form,
-  });
+  // 照片可以到 10 MB，弱网上传比 JSON 请求慢得多，所以给 60 秒
+  const res = await fetchWithTimeout(
+    BASE_URL + '/uploads/photos',
+    { method: 'POST', headers: { Authorization: 'Bearer ' + getToken() }, body: form },
+    60_000,
+  );
   const data = await res.json().catch(() => null);
-  if (!res.ok) throw new Error(data?.message || '照片上传失败');
+  if (!res.ok) throw new Error(data?.message || 'Photo upload failed. Please try again.');
   return data;
 }
 
 // ============================================================
 // 6. 记录
 // ============================================================
+
+/**
+ * 后端会做的那件事，mock 这边照做一遍：
+ * category = 六列里权重最高的那个非空类别，quantity = 该列的值（API.md §2c）。
+ */
+function deriveCategoryQuantity(q: QuantityByCategory): { category: LitterCategory; quantity: QuantityBand } {
+  const order = SCORING_METHOD.categoryWeights;
+  const top = order.find((w) => q[w.category] !== undefined);
+  if (!top) throw new Error('A report needs at least one category.');
+  return { category: top.category, quantity: q[top.category]! };
+}
 
 export async function createReport(input: CreateReportInput): Promise<LitterReport> {
   if (USE_MOCK) {
@@ -332,8 +395,9 @@ export async function createReport(input: CreateReportInput): Promise<LitterRepo
       id: 'r_' + Date.now(),
       beachId: beach.id,
       beachName: beach.name,
-      category: input.category,
-      quantity: input.quantity,
+      quantities: input.quantities,
+      ...deriveCategoryQuantity(input.quantities),
+      photoUrl: mockPhotoStore.get(input.photoKey) ?? null,
       createdAt: new Date().toISOString(),
       status: 'Counted',
     };
@@ -378,14 +442,16 @@ export async function updateReport(
     await delay(300);
     const reports = currentMockReports();
     const index = reports.findIndex((r) => r.id === id);
-    if (index < 0) throw new Error('找不到这条记录：' + id);
+    if (index < 0) throw new Error('That record could not be found.');
 
     const old = reports[index];
     const beach = changes.beachId ? BEACHES.find((b) => b.id === changes.beachId) : undefined;
     const updated: LitterReport = {
       ...old,
-      category: changes.category || old.category,
-      quantity: changes.quantity || old.quantity,
+      ...(changes.quantities
+        ? { quantities: changes.quantities, ...deriveCategoryQuantity(changes.quantities) }
+        : { quantities: old.quantities, category: old.category, quantity: old.quantity }),
+      photoUrl: changes.photoKey ? mockPhotoStore.get(changes.photoKey) ?? null : old.photoUrl,
       beachId: beach ? beach.id : old.beachId,
       beachName: beach ? beach.name : old.beachName,
       status: 'Counted',
@@ -401,12 +467,3 @@ export async function updateReport(
   return request('/reports/' + id, 'PATCH', changes);
 }
 
-export async function deleteReport(id: string): Promise<void> {
-  if (USE_MOCK) {
-    await delay(200);
-    replaceCurrentMockReports(currentMockReports().filter((r) => r.id !== id));
-    return;
-  }
-
-  await request('/reports/' + id, 'DELETE');
-}

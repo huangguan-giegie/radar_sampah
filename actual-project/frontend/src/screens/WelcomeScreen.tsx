@@ -54,8 +54,7 @@ export default function WelcomeScreen() {
           can count for something.
         </div>
         <div style={{ fontSize: 14.5, lineHeight: 1.55, color: 'rgba(232,238,245,.82)', maxWidth: 310 }}>
-          Four Selangor beaches, mapped by volunteers like you. Every photo adds a piece to the
-          picture — and the marine life next door is right there in the app too.
+          Four Selangor beaches, mapped by volunteers like you. Marine life next door, on the same map.
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 8 }}>
           <button
@@ -100,7 +99,7 @@ export default function WelcomeScreen() {
             Count Me In
           </button>
           <div style={{ textAlign: 'center', fontSize: 12, color: 'rgba(221,227,236,.7)', lineHeight: 1.5 }}>
-            Look around all you like. You'll only need an ID when you want to add something.
+            You'll only need an ID when you add something.
           </div>
         </div>
       </div>

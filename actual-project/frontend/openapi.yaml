@@ -3,19 +3,28 @@ info:
   title: Radar Sampah API
   version: "1.0.0"
   description: |
-    Iteration 1 (Core MVP) 的后端接口。文字版说明和定稿理由见 API.md。
+    The Iteration 1 (Core MVP) backend.
 
-    要点：
-    - 有效记录 < 3 条时 severity/band/composition 必须为 null，不要兜底成 Low
-    - 重复记录返回 201 + status=Duplicate，不是错误
-    - GPS 精确坐标只用于查重和海滩匹配，任何响应都不得返回
-    - 照片必须剥离 EXIF 定位信息
-    - /scoring-method 是可选接口（US4.3 由前端交付），但 §7 的计算必须用同一组数字
-    - 认证是匿名参与者编号：不收集姓名、邮箱、密码
+    This is one of three copies of the same contract — change one, change all three:
+      openapi.yaml (this file, English)  for tooling
+      API.en.md    (English)             for LiHanXia and Keith, with the reasoning
+      API.md       (Chinese)             for Qian Jiang
+
+    NOTE: the backend currently in the repo (backend/app.py, /api/*) does NOT implement this.
+    This document is the target. Leave VITE_API_BASE_URL empty until it exists.
+
+    The points that get missed:
+    - Under 3 eligible reports, severity and band MUST be null — never fall back to Low
+    - A duplicate returns 201 with status=Duplicate. It is a result, not an error
+    - Coordinates are used only to match a beach. No response may ever return them
+    - EXIF location data must actually be stripped from every photo
+    - /scoring-method is optional (US4.3 ships from the frontend), but §7's calculation must
+      use the same numbers
+    - Auth is an anonymous participant number: no name, no email, no password
 
 servers:
   - url: https://api.example.com
-    description: 替换成真实地址
+    description: replace with the real host
 
 tags:
   - name: Auth
@@ -33,11 +42,11 @@ paths:
     post:
       tags: [Auth]
       security: []
-      summary: 领一个匿名参与者编号
-      description: 不收集姓名、邮箱、密码。返回一个 4 位编号。
+      summary: Issue an anonymous participant number
+      description: No name, email or password is collected. Returns a random 4-digit number.
       responses:
         "201":
-          description: 新参与者
+          description: the new participant
           content:
             application/json:
               schema: { $ref: "#/components/schemas/AuthSession" }
@@ -46,7 +55,7 @@ paths:
     post:
       tags: [Auth]
       security: []
-      summary: 换设备时用已有编号继续
+      summary: Continue on another device with an existing number
       requestBody:
         required: true
         content:
@@ -58,7 +67,7 @@ paths:
                 participantId: { type: string, example: "1637" }
       responses:
         "200":
-          description: 会话
+          description: session
           content:
             application/json:
               schema: { $ref: "#/components/schemas/AuthSession" }
@@ -68,17 +77,17 @@ paths:
   /auth/logout:
     post:
       tags: [Auth]
-      summary: 登出
+      summary: Sign out
       responses:
-        "204": { description: 已登出 }
+        "204": { description: signed out }
 
   /auth/me:
     get:
       tags: [Auth]
-      summary: 当前用户
+      summary: The signed-in participant
       responses:
         "200":
-          description: 用户
+          description: participant
           content:
             application/json:
               schema: { $ref: "#/components/schemas/User" }
@@ -89,10 +98,10 @@ paths:
     get:
       tags: [Beaches]
       security: []
-      summary: 海滩列表（地图与首页用）
+      summary: Every beach, for the map and the home list
       responses:
         "200":
-          description: 全部支持的海滩
+          description: all supported beaches
           content:
             application/json:
               schema:
@@ -103,12 +112,12 @@ paths:
     get:
       tags: [Beaches]
       security: []
-      summary: 海滩详情
+      summary: One beach in detail
       parameters:
         - { name: beachId, in: path, required: true, schema: { type: string }, example: morib }
       responses:
         "200":
-          description: 详情
+          description: detail
           content:
             application/json:
               schema: { $ref: "#/components/schemas/BeachDetail" }
@@ -119,17 +128,18 @@ paths:
     get:
       tags: [Scoring]
       security: []
-      summary: "【可选】公布的评分规则（权重、阈值、窗口）"
+      summary: "[Optional] The published scoring rule — weights, thresholds, window"
       description: |
-        US4.3 为 non-blocking stretch，规则由前端交付（src/scoring.ts），
-        这个接口不实现也不影响前端。
+        US4.3 is a non-blocking stretch and the rule ships from the frontend
+        (src/scoring.ts), so leaving this endpoint unimplemented breaks nothing.
 
-        但后端算严重度时**必须使用 API.md §3 那组权重和阈值** ——
-        公布的规则和实际计算的规则不一致，US4.3 就失去意义了。
-        实现了且返回值与前端不同时，前端以后端为准并在 dev 模式告警。
+        But severity MUST be computed with the weights and thresholds in §3. A published rule
+        that differs from the one actually applied defeats the point of US4.3. If this endpoint
+        is implemented and disagrees with the frontend, the backend wins and the frontend warns
+        in development.
       responses:
         "200":
-          description: 规则
+          description: the rule
           content:
             application/json:
               schema: { $ref: "#/components/schemas/ScoringMethod" }
@@ -137,7 +147,7 @@ paths:
   /geo/resolve-beach:
     post:
       tags: [Geo]
-      summary: 一次性坐标反查支持的海滩（坐标不落库）
+      summary: Resolve one set of coordinates to a beach (the coordinates are not stored here)
       requestBody:
         required: true
         content:
@@ -150,7 +160,7 @@ paths:
                 lng: { type: number, format: double, example: 101.4402 }
       responses:
         "200":
-          description: 命中返回海滩；25km 内没有支持的海滩时返回 null
+          description: the beach, or null when no supported beach lies within 25 km
           content:
             application/json:
               schema:
@@ -161,7 +171,7 @@ paths:
   /uploads/photos:
     post:
       tags: [Uploads]
-      summary: 上传照片（后端必须剥离 EXIF 定位信息）
+      summary: Upload a photo (the server must strip its EXIF location data)
       requestBody:
         required: true
         content:
@@ -176,7 +186,7 @@ paths:
                   description: JPEG / PNG / HEIC，≤ 10 MB
       responses:
         "201":
-          description: 上传成功
+          description: uploaded
           content:
             application/json:
               schema: { $ref: "#/components/schemas/UploadedPhoto" }
@@ -185,10 +195,11 @@ paths:
         "413":
           $ref: "#/components/responses/Error"
 
+
   /reports:
     post:
       tags: [Reports]
-      summary: 提交一条记录（状态在本次请求内同步判定）
+      summary: Submit a report (its status is decided inside this request)
       requestBody:
         required: true
         content:
@@ -197,7 +208,7 @@ paths:
       responses:
         "201":
           description: |
-            已保存。注意 status 可能是 Duplicate —— 那是正常结果，不是错误。
+            Saved. Note that status may be Duplicate — that is a normal outcome, not an error.
           content:
             application/json:
               schema: { $ref: "#/components/schemas/LitterReport" }
@@ -207,7 +218,7 @@ paths:
   /reports/mine:
     get:
       tags: [Reports]
-      summary: 我的记录，按创建时间倒序
+      summary: My reports, newest first
       parameters:
         - name: status
           in: query
@@ -215,7 +226,7 @@ paths:
           schema: { $ref: "#/components/schemas/ReportStatus" }
       responses:
         "200":
-          description: 记录列表
+          description: the list
           content:
             application/json:
               schema:
@@ -225,10 +236,10 @@ paths:
   /reports/mine/counts:
     get:
       tags: [Reports]
-      summary: 我的记录三态计数
+      summary: Counts for the three statuses
       responses:
         "200":
-          description: 计数
+          description: counts
           content:
             application/json:
               schema: { $ref: "#/components/schemas/ReportCounts" }
@@ -236,7 +247,7 @@ paths:
   /reports/{reportId}:
     patch:
       tags: [Reports]
-      summary: 修正记录（改完要重跑状态判定）
+      summary: Correct a report (re-run the status rules afterwards)
       parameters:
         - { name: reportId, in: path, required: true, schema: { type: string } }
       requestBody:
@@ -247,12 +258,18 @@ paths:
               type: object
               properties:
                 beachId: { type: string }
-                category: { $ref: "#/components/schemas/LitterCategory" }
-                quantity: { $ref: "#/components/schemas/QuantityBand" }
-                photoId: { type: string }
+                quantities:
+                  type: object
+                  minProperties: 1
+                  description: |
+                    Replaces the whole set; it is not a per-key merge. A category left out is
+                    a column cleared, so a correction must first read the response's quantities
+                    back into the form and send the complete set.
+                  additionalProperties: { $ref: "#/components/schemas/QuantityBand" }
+                photoKey: { type: string, description: 上传接口返回的存储键 }
       responses:
         "200":
-          description: 更新后的记录
+          description: the updated report
           content:
             application/json:
               schema: { $ref: "#/components/schemas/LitterReport" }
@@ -260,16 +277,6 @@ paths:
           $ref: "#/components/responses/Error"
         "404":
           $ref: "#/components/responses/Error"
-    delete:
-      tags: [Reports]
-      summary: 删除记录
-      parameters:
-        - { name: reportId, in: path, required: true, schema: { type: string } }
-      responses:
-        "204": { description: 已删除 }
-        "403":
-          $ref: "#/components/responses/Error"
-
 components:
   securitySchemes:
     bearerAuth:
@@ -279,7 +286,7 @@ components:
 
   responses:
     Error:
-      description: 错误
+      description: error
       content:
         application/json:
           schema: { $ref: "#/components/schemas/Error" }
@@ -291,7 +298,7 @@ components:
       properties:
         code:
           type: string
-          description: 机器可读错误码
+          description: machine-readable error code
           enum:
             - VALIDATION_FAILED
             - PHOTO_REQUIRED
@@ -306,7 +313,7 @@ components:
             - INTERNAL_ERROR
         message:
           type: string
-          description: 给用户看的英文成句，前端原样展示
+          description: a full English sentence shown to the user verbatim
 
     User:
       type: object
@@ -316,14 +323,14 @@ components:
         participantId:
           type: string
           example: "1637"
-          description: 4 位匿名编号，随机生成，不重复。
+          description: the 4-digit anonymous number — random, never sequential, unique
         role: { type: string, enum: [volunteer, moderator] }
 
     AuthSession:
       type: object
       required: [token, user]
       properties:
-        token: { type: string, description: "JWT，有效期 30 天" }
+        token: { type: string, description: "JWT, valid for 30 days" }
         user: { $ref: "#/components/schemas/User" }
 
     SeverityBand:
@@ -361,26 +368,26 @@ components:
         severity:
           allOf: [{ $ref: "#/components/schemas/SeverityBand" }]
           nullable: true
-          description: 有效记录 < 3 条时必须为 null
+          description: must be null when there are fewer than 3 eligible reports
         band:
           type: integer
           nullable: true
           minimum: 1
           maximum: 4
-          description: 与 severity 一一对应，同时为 null
+          description: matches severity one for one, and is null whenever severity is
         insufficientData: { type: boolean }
         validReports:
           type: integer
-          description: 只数 Counted 的记录
+          description: counts Counted reports only
         lastReportedAt:
           type: string
           format: date-time
           nullable: true
-          description: 最近一条 Counted 记录的时间，不受 90 天窗口限制
+          description: the newest Counted report's time, ignoring the 90-day window
         freshnessKind:
           type: string
           enum: [ok, aging, stale]
-          description: "< 30 天 / 30-90 天 / > 90 天或从无记录"
+          description: "under 30 days / 30-90 days / over 90 days or never reported"
         habitat: { type: string, example: "Intertidal mudflat & sandy shore" }
         habitatTag: { type: string, example: MUDFLAT }
         sensitivity: { type: string, example: Migratory feeding ground }
@@ -389,25 +396,55 @@ components:
           type: string
           format: uri
           nullable: true
-          description: 没配图就给 null，前端退回 scene 渐变
+          description: null when there is no photo — the app falls back to the scene gradient
         scene:
           type: string
-          description: 无图时的 CSS background 占位，种子数据里已有
+          description: a CSS background used when there is no photo; already in the seed data
 
     Species:
       type: object
-      required: [name, glyph, text, source]
+      required: [name, kind, scientificName, threatCategory, glyph, text, source]
       properties:
         name: { type: string, example: Green Sea Turtle }
+        kind:
+          type: string
+          enum: [species, habitat, group]
+          description: only kind=species can carry a scientific name or a threat category
+        scientificName:
+          type: string
+          nullable: true
+          example: Chelonia mydas
+        threatCategory:
+          type: string
+          nullable: true
+          description: IUCN category. null when it could not be sourced — do not guess
+          example: Endangered
         glyph: { $ref: "#/components/schemas/SpeciesGlyph" }
+        pictureUrl: { type: string, format: uri, nullable: true }
         text: { type: string }
-        source: { type: string, example: "DoF Malaysia · 2024" }
+        source: { $ref: "#/components/schemas/SpeciesSource" }
         likelihood:
           nullable: true
           description: |
-            Epic 5 建模出现概率。省略或 null 时前端退回纯科普展示。
-            绝不与垃圾严重度合并成一个数；前端会用独立样式并标注 MODELLED · ESTIMATE。
+            Epic 5's modelled occurrence likelihood. Omit it or send null and the card renders
+            as pure reference content. It must NEVER be folded into the litter severity score;
+            the app styles it separately and labels it MODELLED · ESTIMATE.
           allOf: [{ $ref: "#/components/schemas/SpeciesLikelihood" }]
+
+    SpeciesSource:
+      type: object
+      required: [dataset, citation]
+      description: |
+        Provenance is part of the data, not a footnote. FishBase and OBIS are both CC BY-NC:
+        the citation has to be displayed, and the source URL and access date preserved.
+      properties:
+        dataset:
+          type: string
+          enum: [FishBase, OBIS, other, pending]
+          description: on 'pending' the app prints an amber SOURCE PENDING badge
+        citation: { type: string }
+        url: { type: string, format: uri, nullable: true }
+        accessedAt: { type: string, format: date, nullable: true }
 
     SpeciesLikelihood:
       type: object
@@ -417,26 +454,41 @@ components:
         basis:
           type: string
           example: Habitat match + 2024 sighting records
-          description: 模型或数据依据，界面上会显示，不能留空
+          description: what the number is based on. It is shown on screen and cannot be empty
 
     CompositionSlice:
       type: object
-      required: [category, percent]
+      required: [category, quantity]
       properties:
         category: { $ref: "#/components/schemas/LitterCategory" }
-        percent: { type: integer, minimum: 0, maximum: 100 }
+        quantity: { $ref: "#/components/schemas/QuantityBand" }
+
+    CompositionSource:
+      type: object
+      required: [reportId, createdAt]
+      description: which report the composition came from. Required whenever composition is non-null
+      properties:
+        reportId: { type: string }
+        createdAt: { type: string, format: date-time }
 
     BeachDetail:
       allOf:
         - $ref: "#/components/schemas/BeachSummary"
         - type: object
-          required: [composition, species, ecologicalNote]
+          required: [composition, compositionSource, species, ecologicalNote]
           properties:
             composition:
               type: array
               nullable: true
-              description: 按 percent 降序，合计 100；insufficientData 时必须为 null
+              description: |
+                The non-null categories of that beach's newest Counted report, ordered by
+                category weight. Not an aggregate, and unrelated to insufficientData.
+                Null when the beach has no Counted report at all.
               items: { $ref: "#/components/schemas/CompositionSlice" }
+            compositionSource:
+              nullable: true
+              description: null exactly when composition is null
+              allOf: [{ $ref: "#/components/schemas/CompositionSource" }]
             species:
               type: array
               maxItems: 5
@@ -477,29 +529,44 @@ components:
 
     UploadedPhoto:
       type: object
-      required: [id, url, metadataStripped]
+      required: [photoKey, metadataStripped]
       properties:
-        id: { type: string }
-        url: { type: string, format: uri }
+        photoKey:
+          type: string
+          description: |
+            存储键，不是可访问地址。桶/目录在公开 Web 根目录之外且不可公开读。
+            提交记录时把它原样放进 POST /reports 的 photoKey。
         metadataStripped:
           type: boolean
-          description: EXIF 定位信息确实剥干净了才给 true
+          description: true only once the EXIF location data is really gone
 
     CreateReport:
       type: object
-      required: [beachId, category, quantity, photoId, locationSource]
+      required: [beachId, quantities, photoKey, locationSource]
       properties:
         beachId: { type: string, example: morib }
-        category: { $ref: "#/components/schemas/LitterCategory" }
-        quantity: { $ref: "#/components/schemas/QuantityBand" }
-        photoId: { type: string }
+        quantities:
+          type: object
+          minProperties: 1
+          description: |
+            One band per category. Keys are the category strings verbatim, values are one of
+            the four bands. At least one entry; a category that was not seen is simply absent —
+            do not send null and do not send 0. The backend maps this onto the six qty_* columns
+            and derives category / quantity from it.
+          additionalProperties: { $ref: "#/components/schemas/QuantityBand" }
+          example: { Plastic: Large, "Fishing gear": Medium }
+        photoKey: { type: string, description: 上传接口返回的存储键 }
         locationSource:
           type: string
           enum: [gps, manual]
         coords:
           type: object
           nullable: true
-          description: 仅 locationSource=gps 时携带；只用于查重，绝不出现在任何响应里
+          description: |
+            Sent only when locationSource=gps. Stored on the report's own lat/lng columns,
+            already rounded to 3 decimals (~110 m), and used only to match a beach.
+            Never returned in any response — exclude both columns explicitly in the
+            serialiser rather than relying on remembering; a SELECT * will carry them out.
           required: [lat, lng]
           properties:
             lat: { type: number, format: double }
@@ -507,20 +574,39 @@ components:
 
     LitterReport:
       type: object
-      required: [id, beachId, beachName, category, quantity, createdAt, status]
+      required: [id, beachId, beachName, quantities, category, quantity, createdAt, status]
       properties:
         id: { type: string }
         beachId: { type: string }
         beachName: { type: string }
-        category: { $ref: "#/components/schemas/LitterCategory" }
-        quantity: { $ref: "#/components/schemas/QuantityBand" }
+        quantities:
+          type: object
+          minProperties: 1
+          description: |
+            Which categories this report actually recorded. The full map must be returned:
+            the correction flow reads it back into the form and PATCHes the whole set, so
+            sending only the derived pair below would clear every other category.
+          additionalProperties: { $ref: "#/components/schemas/QuantityBand" }
+        category:
+          description: derived — the highest-weighted category present in quantities
+          allOf: [{ $ref: "#/components/schemas/LitterCategory" }]
+        quantity:
+          description: derived — that category's band
+          allOf: [{ $ref: "#/components/schemas/QuantityBand" }]
         createdAt: { type: string, format: date-time }
         status: { $ref: "#/components/schemas/ReportStatus" }
         statusNote:
           type: string
           nullable: true
-          description: 被排除的原因，英文成句，前端原样展示；Counted 时不返回
-        photoUrl: { type: string, format: uri, nullable: true }
+          description: why it was excluded, a full English sentence shown verbatim; absent for Counted
+        photoUrl:
+          type: string
+          format: uri
+          nullable: true
+          description: |
+            短时效签名地址（≈15 分钟），按 photo_key 现签。
+            只有记录本人才会拿到；不是本人就不返回这个字段。
+            桶本身不可公开读 —— 见 API.md §5。
 
     ReportCounts:
       type: object

@@ -9,9 +9,11 @@ import {
   MONO,
   NOISE,
   SEVERITY,
+  formatDate,
   freshStyle,
   freshnessLabel,
 } from '../theme';
+import { BandMeter, GlassPanel, InfoChip } from '../components/ds';
 import { useApp } from '../AppContext';
 import type { BeachDetail } from '../types';
 
@@ -60,7 +62,10 @@ export default function BeachScreen() {
 
   const sev = b.severity ? SEVERITY[b.severity] : null;
   const fs = freshStyle(b.freshnessKind);
-  const topShare = b.composition?.[0]?.percent ?? 1;
+  // 数量档只有四级，条形宽度按档位画，不再是占比
+  const BAND_WIDTH: Record<string, string> = {
+    Small: '25%', Medium: '50%', Large: '75%', 'Very Large': '100%',
+  };
 
   return (
     <div className="screen scroll-y" style={{ zIndex: 20 }}>
@@ -73,7 +78,7 @@ export default function BeachScreen() {
         <BackButton dark onClick={() => nav(-1)} style={{ position: 'absolute', top: 'var(--top-inset)', left: 18, zIndex: 5 }} />
         <div style={{ position: 'absolute', left: 20, right: 20, bottom: 52 }}>
           <div style={{ fontFamily: MONO, fontSize: 8.5, letterSpacing: '.2em', color: 'rgba(9,26,64,.8)', marginBottom: 8 }}>
-            STRAIT OF MALACCA · WEST COAST · {b.habitatTag}
+            WEST COAST · {b.habitatTag}
           </div>
           <div style={{ fontSize: 33, fontWeight: 650, letterSpacing: '-.8px', color: C.bg, lineHeight: 1.05 }}>
             {b.name}
@@ -85,18 +90,7 @@ export default function BeachScreen() {
       </BeachCover>
 
       {/* 严重度概览卡 */}
-      <div
-        style={{
-          margin: '-40px 16px 0',
-          position: 'relative',
-          background: 'rgba(255,255,255,.92)',
-          backdropFilter: 'blur(18px) saturate(150%)',
-          border: '1px solid rgba(255,255,255,.8)',
-          borderRadius: 24,
-          padding: 18,
-          boxShadow: '0 22px 46px -18px rgba(14,30,64,.35)',
-        }}
-      >
+      <GlassPanel style={{ margin: '-40px 16px 0', position: 'relative', padding: 18 }}>
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
           <div>
             <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '.16em', color: C.dim }}>
@@ -107,20 +101,11 @@ export default function BeachScreen() {
                 <div style={{ fontSize: 29, fontWeight: 750, letterSpacing: '.02em', color: sev.text }}>
                   {b.severity?.toUpperCase()}
                 </div>
-                <span style={{ display: 'flex', gap: 3, alignItems: 'flex-end', paddingBottom: 5 }}>
-                  {[0, 1, 2, 3].map((i) => (
-                    <i
-                      key={i}
-                      style={{
-                        display: 'block',
-                        width: 5,
-                        height: 9 + i * 4,
-                        borderRadius: 3,
-                        background: b.band !== null && i < b.band ? sev.col : 'rgba(30,36,44,.14)',
-                      }}
-                    />
-                  ))}
-                </span>
+                <BandMeter
+                  level={(b.band ?? 0) as 0 | 1 | 2 | 3 | 4}
+                  tone={b.severity?.toLowerCase() as 'low' | 'moderate' | 'high' | 'severe' | undefined}
+                  style={{ paddingBottom: 4 }}
+                />
               </div>
             ) : (
               <>
@@ -128,20 +113,20 @@ export default function BeachScreen() {
                   Insufficient data
                 </div>
                 <div style={{ fontSize: 12, lineHeight: 1.5, color: C.dim, marginTop: 5, maxWidth: 210 }}>
-                  Fewer than three valid reports. This is not a sign that the beach is clean.
+                  Fewer than three valid reports. Not a sign the beach is clean.
                 </div>
               </>
             )}
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'flex-end' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 11px', borderRadius: 999, background: 'rgba(11,33,97,.06)', fontSize: 11.5, fontWeight: 600, color: C.ink2, whiteSpace: 'nowrap' }}>
+            <InfoChip>
               <Check size={11} color={C.slate} strokeWidth={2.2} />
               {b.validReports} valid reports
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 11px', borderRadius: 999, background: fs.bg, fontSize: 11.5, fontWeight: 600, color: fs.c, whiteSpace: 'nowrap' }}>
+            </InfoChip>
+            <InfoChip color={fs.c} background={fs.bg}>
               <i style={{ width: 6, height: 6, borderRadius: 3, background: fs.dot, display: 'block' }} />
               {freshnessLabel(b.freshnessKind, b.lastReportedAt)}
-            </div>
+            </InfoChip>
           </div>
         </div>
 
@@ -154,7 +139,7 @@ export default function BeachScreen() {
             </div>
           </div>
         )}
-      </div>
+      </GlassPanel>
 
       <div style={{ padding: '20px 16px calc(var(--safe-bottom) + 36px)', display: 'flex', flexDirection: 'column', gap: 22 }}>
         {/* 成分 */}
@@ -170,30 +155,30 @@ export default function BeachScreen() {
                   <div style={{ flex: 1, height: 14, borderRadius: 7, background: 'rgba(11,33,97,.05)', overflow: 'hidden' }}>
                     <div
                       style={{
-                        width: `${Math.round((c.percent / topShare) * 100)}%`,
+                        width: BAND_WIDTH[c.quantity] ?? '25%',
                         height: '100%',
                         borderRadius: 7,
                         background: COMP_COLORS[i % COMP_COLORS.length],
                       }}
                     />
                   </div>
-                  <span style={{ width: 34, flex: 'none', textAlign: 'right', fontFamily: MONO, fontSize: 10, color: C.muted }}>
-                    {c.percent}%
+                  <span style={{ width: 62, flex: 'none', textAlign: 'right', fontFamily: MONO, fontSize: 9.5, color: C.muted }}>
+                    {c.quantity}
                   </span>
                 </div>
               ))}
               <div style={{ fontFamily: MONO, fontSize: 8.5, letterSpacing: '.1em', color: C.faint, marginTop: 4 }}>
-                SHARE OF {b.validReports} VERIFIED REPORTS · BROAD CATEGORIES
+                {b.compositionSource
+                  ? `REPORT ${formatDate(b.compositionSource.createdAt).toUpperCase()} · BROAD CATEGORIES`
+                  : 'BROAD CATEGORIES'}
               </div>
             </div>
           ) : (
             <div style={{ border: '1.5px dashed rgba(11,33,97,.18)', borderRadius: 24, padding: 22, textAlign: 'center' }}>
               <div style={{ fontSize: 13.5, fontWeight: 640, color: C.muted }}>
-                Not enough verified data
+                No verified report yet
               </div>
-              <div style={{ fontSize: 12, color: C.dim, marginTop: 5, lineHeight: 1.5 }}>
-                Composition appears once at least three valid, non-duplicate records exist.
-              </div>
+
             </div>
           )}
         </div>
@@ -221,7 +206,7 @@ export default function BeachScreen() {
           <div style={{ fontSize: 15.5, fontWeight: 650, marginTop: 9 }}>Same rule for every beach</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 7, marginTop: 11 }}>
             {[
-              'Only valid, non-duplicate records count — duplicates and incomplete records are excluded.',
+              'Duplicates and incomplete records are excluded.',
               'Category weight × quantity band, averaged across the reporting window.',
               'Four fixed bands: Low · Moderate · High · Severe.',
             ].map((t) => (
@@ -232,11 +217,7 @@ export default function BeachScreen() {
             ))}
           </div>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, borderTop: '1px solid rgba(255,255,255,.1)', marginTop: 13, paddingTop: 11 }}>
-            <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '.1em', color: '#8290A8', lineHeight: 1.7 }}>
-              SENSITIVITY ANALYSIS APPLIED
-              <br />
-              SAME RULE FOR ALL BEACHES
-            </span>
+
             <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 650, color: C.lime, whiteSpace: 'nowrap' }}>
               Full method <ChevronRight size={12} color={C.lime} strokeWidth={2.4} />
             </span>
@@ -272,7 +253,13 @@ export default function BeachScreen() {
                 </BeachCover>
                 <div style={{ padding: '24px 14px 14px' }}>
                   <div style={{ fontSize: 14, fontWeight: 650, letterSpacing: '-.1px' }}>{sp.name}</div>
-                  <div style={{ fontSize: 11.5, lineHeight: 1.5, color: C.muted, marginTop: 5 }}>{sp.text}</div>
+                  {sp.scientificName && (
+                    <div style={{ fontSize: 11, fontStyle: 'italic', color: C.dim, marginTop: 3 }}>
+                      {sp.scientificName}
+                      {sp.threatCategory ? ` · ${sp.threatCategory}` : ''}
+                    </div>
+                  )}
+                  <div style={{ fontSize: 11.5, lineHeight: 1.5, color: C.muted, marginTop: 3 }}>{sp.text}</div>
 
                   {sp.likelihood && (
                     /* Epic 5 建模概率。刻意不用严重度那套配色，也不做成条形图 ——
@@ -282,16 +269,30 @@ export default function BeachScreen() {
                         marginTop: 10,
                         padding: '9px 10px',
                         borderRadius: 12,
-                        background: 'rgba(43,78,162,.06)',
-                        border: '1px dashed rgba(43,78,162,.25)',
+                        background: sp.likelihood.placeholder ? 'rgba(154,106,20,.07)' : 'rgba(43,78,162,.06)',
+                        border: `1px dashed ${sp.likelihood.placeholder ? 'rgba(154,106,20,.32)' : 'rgba(43,78,162,.25)'}`,
                       }}
                     >
                       <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
-                        <span style={{ fontFamily: MONO, fontSize: 15, fontWeight: 650, color: '#2B4EA2' }}>
+                        <span
+                          style={{
+                            fontFamily: MONO,
+                            fontSize: 15,
+                            fontWeight: 650,
+                            color: sp.likelihood.placeholder ? '#9A6A14' : '#2B4EA2',
+                          }}
+                        >
                           {sp.likelihood.percent}%
                         </span>
-                        <span style={{ fontFamily: MONO, fontSize: 7.5, letterSpacing: '.1em', color: '#2B4EA2' }}>
-                          MODELLED · ESTIMATE
+                        <span
+                          style={{
+                            fontFamily: MONO,
+                            fontSize: 7.5,
+                            letterSpacing: '.1em',
+                            color: sp.likelihood.placeholder ? '#9A6A14' : '#2B4EA2',
+                          }}
+                        >
+                          {sp.likelihood.placeholder ? 'PLACEHOLDER · NOT YET MODELLED' : 'MODELLED · ESTIMATE'}
                         </span>
                       </div>
                       <div style={{ fontSize: 10, lineHeight: 1.45, color: C.dim, marginTop: 3 }}>
@@ -300,9 +301,33 @@ export default function BeachScreen() {
                     </div>
                   )}
 
-                  <div style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '.08em', color: C.faint, marginTop: 9 }}>
-                    SOURCE · {sp.source}
-                  </div>
+                  {sp.source.dataset === 'pending' ? (
+                    /* 没有真实出处时露出来，绝不显示一条编造的引用 */
+                    <div
+                      style={{
+                        marginTop: 9,
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 5,
+                        background: 'rgba(217,162,75,.14)',
+                        border: '1px solid rgba(217,162,75,.35)',
+                        borderRadius: 6,
+                        padding: '4px 7px',
+                        fontFamily: MONO,
+                        fontSize: 7.5,
+                        letterSpacing: '.08em',
+                        color: '#8A6420',
+                      }}
+                    >
+                      <i style={{ width: 4, height: 4, borderRadius: 2, background: '#D9A24B', display: 'block' }} />
+                      SOURCE PENDING · NOT YET FROM FISHBASE / OBIS
+                    </div>
+                  ) : (
+                    <div style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '.08em', color: C.faint, marginTop: 9, lineHeight: 1.5 }}>
+                      SOURCE · {sp.source.citation}
+                      {sp.source.accessedAt ? ` · accessed ${sp.source.accessedAt}` : ''}
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
@@ -316,9 +341,11 @@ export default function BeachScreen() {
               {b.ecologicalNote}
             </div>
             <div style={{ fontSize: 10.5, color: C.dim, marginTop: 8, lineHeight: 1.5 }}>
-              {b.species.some((sp) => sp.likelihood)
-                ? 'Percentages are modelled from habitat type and past survey records — an estimate of how likely a species is to occur here, never a confirmed sighting, and never a measure of litter severity or of ecological recovery.'
-                : 'Potential conservation relevance — context only, never proof of current presence or of ecological recovery.'}
+              {b.species.some((sp) => sp.likelihood?.placeholder)
+                ? 'Percentages here are placeholders, not modelled figures — never a confirmed sighting, and never a measure of litter severity or of ecological recovery.'
+                : b.species.some((sp) => sp.likelihood)
+                  ? 'Percentages are modelled from habitat type and past survey records — an estimate of likely occurrence, never a confirmed sighting, and never a measure of litter severity or of ecological recovery.'
+                  : 'Context only — never proof of current presence or of ecological recovery.'}
             </div>
           </div>
         </div>

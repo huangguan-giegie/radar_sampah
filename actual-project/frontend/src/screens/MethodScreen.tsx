@@ -6,11 +6,32 @@ import { BackButton, GhostButton, Label } from '../components/ui';
 import { C, MONO } from '../theme';
 import type { ScoringMethod } from '../types';
 
-const LIMITATIONS = [
-  'Volunteer coverage is uneven — a beach visited more often produces more records, not necessarily more litter.',
-  'Quantity bands are estimates by eye, so scores are comparable in order of magnitude only.',
-  'Tides, monsoon season and cleanup events all move conditions faster than the 90-day window can show.',
-  'Bands describe reported litter at a beach — not water quality, ecological health, or safety.',
+/**
+ * §3 说好的：后端那份规则和前端不一致时要提醒。
+ * 只在开发模式跑，仍然以后端为准 —— 只是别让它悄悄改掉。
+ */
+function warnIfRuleDiffers(remote: ScoringMethod) {
+  const local = SCORING_METHOD;
+  const diffs: string[] = [];
+  const cmp = (label: string, a: unknown, b: unknown) => {
+    if (JSON.stringify(a) !== JSON.stringify(b)) diffs.push(`${label}: local ${JSON.stringify(a)} vs backend ${JSON.stringify(b)}`);
+  };
+  cmp('windowDays', local.windowDays, remote.windowDays);
+  cmp('minReports', local.minReports, remote.minReports);
+  cmp('categoryWeights', local.categoryWeights, remote.categoryWeights);
+  cmp('quantityWeights', local.quantityWeights, remote.quantityWeights);
+  cmp('bands', local.bands, remote.bands);
+  if (diffs.length) {
+    console.warn('[scoring] 后端发下来的规则和 scoring.ts 不一致：\n  ' + diffs.join('\n  '));
+  }
+}
+
+const limitations = (m: ScoringMethod) => [
+  'More visits means more records, not more litter.',
+  'Bands are estimates by eye — comparable in order of magnitude only.',
+  `Conditions move faster than a ${m.windowDays}-day window can show.`,
+  'This is reported litter, not water quality, ecology or safety.',
+  'Biodiversity percentages are a separate estimate and never enter this.',
 ];
 
 export default function MethodScreen() {
@@ -22,7 +43,11 @@ export default function MethodScreen() {
   useEffect(() => {
     let alive = true;
     getScoringMethod()
-      .then((remote) => alive && setM(remote))
+      .then((remote) => {
+        if (!alive) return;
+        if (import.meta.env.DEV) warnIfRuleDiffers(remote);
+        setM(remote);
+      })
       .catch(() => undefined);
     return () => {
       alive = false;
@@ -44,180 +69,98 @@ export default function MethodScreen() {
         <div style={{ fontSize: 29, fontWeight: 640, letterSpacing: '-.7px', marginTop: 8, lineHeight: 1.1 }}>
           How the severity band is decided
         </div>
-        <div style={{ fontSize: 13, lineHeight: 1.55, color: C.mist, marginTop: 9 }}>
-          No model, no judgement call in the litter severity band. The same arithmetic runs on
-          every eligible record, for all MVP beaches.
-        </div>
-        <div
-          style={{
-            fontSize: 11.5,
-            lineHeight: 1.55,
-            color: '#8290A8',
-            marginTop: 10,
-            paddingTop: 10,
-            borderTop: '1px solid rgba(255,255,255,.1)',
-          }}
-        >
-          The biodiversity likelihood percentages on a beach page are a separate, modelled estimate.
-          They never feed into the severity band and are never combined with it.
+        <div style={{ fontSize: 14.5, lineHeight: 1.65, color: C.cloud, marginTop: 10 }}>
+          No model and no judgement call — the same arithmetic runs on every eligible record.
         </div>
       </div>
 
       <div style={{ padding: '20px 16px calc(var(--safe-bottom) + 36px)', display: 'flex', flexDirection: 'column', gap: 20 }}>
-        {/* Step 1 — 规则 */}
+        {/* 规则 + 权重，并成一张 */}
         <div style={{ background: C.white, border: `1px solid ${C.line}`, borderRadius: 24, padding: 20 }}>
-          <div style={{ fontFamily: MONO, fontSize: 9.5, letterSpacing: '.16em', color: C.dim }}>
-            STEP 1 · THE RULE
+          <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: '.16em', color: C.muted, fontWeight: 600 }}>
+            THE RULE
           </div>
-          <div
-            style={{
-              fontFamily: MONO,
-              fontSize: 12.5,
-              lineHeight: 1.9,
-              color: C.ink3,
-              background: C.tint,
-              borderRadius: 16,
-              padding: '14px 15px',
-              marginTop: 11,
-              whiteSpace: 'pre-line',
-            }}
-          >
-            {`record score
-= category weight × quantity band
-
-beach score
-= mean of eligible record scores
-  in the last ${m.windowDays} days`}
-          </div>
-          <div style={{ fontSize: 12, lineHeight: 1.6, color: C.muted, marginTop: 11 }}>
-            Every record carries equal influence — no weighting by reporter, recency within the
-            window, or report volume.
-          </div>
-        </div>
-
-        {/* Step 2 — 权重 */}
-        <div>
-          <Label style={{ marginBottom: 11 }}>STEP 2 · WEIGHTS</Label>
-          <div style={{ display: 'flex', gap: 11 }}>
-            <div style={{ flex: 1, background: C.white, border: `1px solid ${C.line}`, borderRadius: 22, padding: '16px 15px' }}>
-              <div style={{ fontSize: 12, fontWeight: 700, color: C.ink2 }}>Category</div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 7, marginTop: 10 }}>
-                {m.categoryWeights.map((w) => (
-                  <div key={w.category} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-                    <span style={{ fontSize: 12, color: C.muted }}>{w.category}</span>
-                    <span style={{ fontFamily: MONO, fontSize: 11, fontWeight: 650, color: C.ink3 }}>
-                      {w.weight.toFixed(2)}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div style={{ flex: 1, background: C.white, border: `1px solid ${C.line}`, borderRadius: 22, padding: '16px 15px' }}>
-              <div style={{ fontSize: 12, fontWeight: 700, color: C.ink2 }}>Quantity band</div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 7, marginTop: 10 }}>
-                {m.quantityWeights.map((w) => (
-                  <div key={w.quantity} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-                    <span style={{ fontSize: 12, color: C.muted }}>{w.quantity}</span>
-                    <span style={{ fontFamily: MONO, fontSize: 11, fontWeight: 650, color: C.ink3 }}>{w.weight}</span>
-                  </div>
-                ))}
-              </div>
-              <div style={{ fontSize: 10.5, lineHeight: 1.5, color: C.faint, marginTop: 12 }}>
-                Bands, not counts — volunteers estimate volume, never weigh it.
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Step 3 — 阈值 */}
-        <div>
-          <Label style={{ marginBottom: 11 }}>STEP 3 · THRESHOLDS</Label>
-          <div style={{ background: C.white, border: `1px solid ${C.line}`, borderRadius: 22, overflow: 'hidden' }}>
-            {m.bands.map((b) => (
-              <div key={b.band} style={{ display: 'flex', alignItems: 'center', gap: 11, padding: '13px 16px', borderBottom: '1px solid rgba(11,33,97,.05)' }}>
-                <i style={{ width: 9, height: 9, borderRadius: 5, background: b.color, display: 'block', flex: 'none' }} />
-                <span style={{ fontSize: 13.5, fontWeight: 640, flex: 1 }}>{b.band}</span>
-                <span style={{ fontFamily: MONO, fontSize: 11, color: C.muted }}>{b.range}</span>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 9, marginTop: 12 }}>
+            {[
+              { of: 'ONE RECORD', is: 'category weight × quantity band' },
+              { of: 'ONE BEACH', is: `mean of its eligible records, last ${m.windowDays} days` },
+            ].map((f) => (
+              <div key={f.of} style={{ background: C.tint, borderRadius: 14, padding: '11px 14px' }}>
+                <div style={{ fontFamily: MONO, fontSize: 8.5, letterSpacing: '.14em', color: C.dim }}>{f.of}</div>
+                <div style={{ fontSize: 13.5, fontWeight: 600, color: C.ink3, marginTop: 4, lineHeight: 1.4 }}>
+                  {f.is}
+                </div>
               </div>
             ))}
-            <div style={{ padding: '12px 16px', fontFamily: MONO, fontSize: 8.5, letterSpacing: '.1em', color: C.faint }}>
-              FIXED CUT-OFFS · NEVER TUNED PER BEACH
-            </div>
           </div>
-        </div>
 
-        {/* Step 4 — 缺数据 */}
-        <div>
-          <Label style={{ marginBottom: 11 }}>STEP 4 · MISSING DATA</Label>
-          <div style={{ background: C.white, border: `1px solid ${C.line}`, borderRadius: 22, padding: 18 }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {[
-                {
-                  tag: `< ${m.minReports}`,
-                  text: 'Fewer than three eligible records — the band is withheld and the beach reads Insufficient data.',
-                  danger: false,
-                },
-                {
-                  tag: `${m.windowDays}d`,
-                  text: `Nothing eligible in ${m.windowDays} days — the beach reads Not recently reported, shown separately from severity.`,
-                  danger: false,
-                },
-                {
-                  tag: 'OUT',
-                  text: 'Duplicate and incomplete records never enter the calculation, the record count, or the map.',
-                  danger: true,
-                },
-              ].map(({ tag, text, danger }) => (
-                <div key={tag} style={{ display: 'flex', gap: 11, alignItems: 'flex-start' }}>
-                  <span
-                    style={{
-                      fontFamily: MONO,
-                      fontSize: 9,
-                      letterSpacing: '.08em',
-                      color: danger ? C.red : C.muted,
-                      background: danger ? 'rgba(196,87,74,.1)' : 'rgba(30,36,44,.06)',
-                      padding: '4px 7px',
-                      borderRadius: 7,
-                      flex: 'none',
-                      marginTop: 1,
-                    }}
-                  >
-                    {tag}
+          <div style={{ display: 'flex', gap: 22, marginTop: 18 }}>
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 7 }}>
+              <div style={{ fontFamily: MONO, fontSize: 8.5, letterSpacing: '.14em', color: C.dim, marginBottom: 2 }}>
+                CATEGORY
+              </div>
+              {m.categoryWeights.map((w) => (
+                <div key={w.category} style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
+                  <span style={{ fontSize: 13, color: C.ink2 }}>{w.category}</span>
+                  <span style={{ fontFamily: MONO, fontSize: 12.5, fontWeight: 700, color: C.ink3 }}>
+                    {w.weight.toFixed(2)}
                   </span>
-                  <div style={{ flex: 1, fontSize: 12.5, lineHeight: 1.55, color: C.ink2 }}>{text}</div>
                 </div>
               ))}
             </div>
-            <div style={{ marginTop: 14, padding: '12px 13px', borderRadius: 14, background: 'rgba(124,169,139,.12)', fontSize: 12, lineHeight: 1.55, color: '#3E6B52', fontWeight: 600 }}>
-              A withheld band is never presented as a clean beach — absence of evidence is reported
-              as absence of evidence.
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 7 }}>
+              <div style={{ fontFamily: MONO, fontSize: 8.5, letterSpacing: '.14em', color: C.dim, marginBottom: 2 }}>
+                QUANTITY
+              </div>
+              {m.quantityWeights.map((w) => (
+                <div key={w.quantity} style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
+                  <span style={{ fontSize: 13, color: C.ink2 }}>{w.quantity}</span>
+                  <span style={{ fontFamily: MONO, fontSize: 12.5, fontWeight: 700, color: C.ink3 }}>{w.weight}</span>
+                </div>
+              ))}
             </div>
           </div>
         </div>
 
-        {/* 敏感性分析 */}
-        <div style={{ background: C.deep, borderRadius: 24, padding: 20, color: C.bg }}>
-          <div style={{ fontFamily: MONO, fontSize: 9.5, letterSpacing: '.16em', color: C.dim }}>
-            SENSITIVITY ANALYSIS
-          </div>
-          <div style={{ fontSize: 15.5, fontWeight: 650, marginTop: 9 }}>Thresholds were stress-tested</div>
-          <div style={{ fontSize: 12.5, lineHeight: 1.6, color: C.mist, marginTop: 8 }}>
-            Band cut-offs and category weights were varied ±20% across the current MVP dataset.
-            Beaches that changed band under any variation are documented, and the published rule is
-            the one that kept ordering stable.
-          </div>
-          <div style={{ display: 'flex', gap: 10, marginTop: 14 }}>
-            <div style={{ flex: 1, background: 'rgba(255,255,255,.06)', borderRadius: 14, padding: '12px 13px' }}>
-              <div style={{ fontFamily: MONO, fontSize: 19, fontWeight: 650, color: C.lime }}>±20%</div>
-              <div style={{ fontSize: 10.5, color: '#8290A8', marginTop: 3, lineHeight: 1.4 }}>
-                weight and threshold variation tested
+        {/* 阈值 */}
+        <div>
+          <Label style={{ marginBottom: 11 }}>BANDS</Label>
+          <div style={{ background: C.white, border: `1px solid ${C.line}`, borderRadius: 22, overflow: 'hidden' }}>
+            {m.bands.map((b, i) => (
+              <div
+                key={b.band}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 11,
+                  padding: '12px 16px',
+                  borderBottom: i === m.bands.length - 1 ? 'none' : '1px solid rgba(11,33,97,.05)',
+                }}
+              >
+                <i style={{ width: 9, height: 9, borderRadius: 5, background: b.color, display: 'block', flex: 'none' }} />
+                <span style={{ fontSize: 14.5, fontWeight: 660, flex: 1 }}>{b.band}</span>
+                <span style={{ fontFamily: MONO, fontSize: 12.5, fontWeight: 600, color: C.ink2 }}>{b.range}</span>
               </div>
-            </div>
-            <div style={{ flex: 1, background: 'rgba(255,255,255,.06)', borderRadius: 14, padding: '12px 13px' }}>
-              <div style={{ fontFamily: MONO, fontSize: 19, fontWeight: 650, color: C.lime }}>4 / 4</div>
-              <div style={{ fontSize: 10.5, color: '#8290A8', marginTop: 3, lineHeight: 1.4 }}>
-                beaches scored by the identical rule
+            ))}
+          </div>
+        </div>
+
+        {/* 什么时候不给等级 */}
+        <div>
+          <Label style={{ marginBottom: 11 }}>WHEN NO BAND IS SHOWN</Label>
+          <div style={{ background: C.white, border: `1px solid ${C.line}`, borderRadius: 22, padding: 18, display: 'flex', flexDirection: 'column', gap: 9 }}>
+            {[
+              [`Under ${m.minReports} records`, 'Insufficient data'],
+              [`Nothing in ${m.windowDays} days`, 'Not recently reported'],
+              ['Duplicate or incomplete', 'Never counted at all'],
+            ].map(([when, then]) => (
+              <div key={when} style={{ display: 'flex', justifyContent: 'space-between', gap: 12, fontSize: 13.5 }}>
+                <span style={{ color: C.muted }}>{when}</span>
+                <span style={{ fontWeight: 640, color: C.ink2, textAlign: 'right' }}>{then}</span>
               </div>
+            ))}
+            <div style={{ marginTop: 5, padding: '11px 13px', borderRadius: 14, background: 'rgba(124,169,139,.12)', fontSize: 13, lineHeight: 1.55, color: '#3E6B52', fontWeight: 600 }}>
+              No band is never the same as a clean beach.
             </div>
           </div>
         </div>
@@ -226,8 +169,8 @@ beach score
         <div>
           <Label style={{ marginBottom: 11 }}>LIMITATIONS</Label>
           <div style={{ background: C.white, border: `1px solid ${C.line}`, borderRadius: 22, padding: 18, display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {LIMITATIONS.map((t) => (
-              <div key={t} style={{ display: 'flex', gap: 9, alignItems: 'flex-start', fontSize: 12.5, lineHeight: 1.55, color: C.slate }}>
+            {limitations(m).map((t) => (
+              <div key={t} style={{ display: 'flex', gap: 9, alignItems: 'flex-start', fontSize: 13.5, lineHeight: 1.6, color: C.slate }}>
                 <i style={{ width: 5, height: 5, borderRadius: 3, background: C.faint, display: 'block', flex: 'none', marginTop: 6 }} />
                 {t}
               </div>

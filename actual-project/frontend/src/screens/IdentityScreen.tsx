@@ -30,8 +30,8 @@ export default function IdentityScreen() {
     try {
       const id = await createId();
       setNewId(id);
-    } catch {
-      setError('Could not get an ID. Please try again.');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not get an ID. Please try again.');
     }
     setBusy(false);
   }
@@ -44,8 +44,9 @@ export default function IdentityScreen() {
     try {
       await restore(typedId.trim());
       nav(next, { replace: true });
-    } catch {
-      setError('Could not use that ID. Please check the number.');
+    } catch (err) {
+      // 500 或断网也走这里 —— 不能一律告诉用户是号码写错了
+      setError(err instanceof Error ? err.message : 'Could not use that ID. Please check the number.');
     }
     setBusy(false);
   }
@@ -69,8 +70,7 @@ export default function IdentityScreen() {
             Join in — no name needed
           </div>
           <div style={{ fontSize: 14, color: C.muted, marginTop: 8, lineHeight: 1.5 }}>
-            You just need a number to tag your reports with. No name, no email, no phone —
-             ever.
+            No name, no email, no phone — ever.
           </div>
         </div>
 
@@ -103,7 +103,7 @@ export default function IdentityScreen() {
                 {newId}
               </div>
               <div style={{ fontSize: 12.5, lineHeight: 1.55, color: C.mist, marginTop: 12 }}>
-                Jot it down somewhere — you'll need it to find your reports on another device.
+                Write it down — you'll need it on another device.
               </div>
             </div>
 
@@ -176,8 +176,8 @@ export default function IdentityScreen() {
                   }}
                 >
                   {[
-                    'Takes one tap — nothing to fill in',
-                    'A number like 1637 is all that gets stored with your report',
+                    
+                    
                     'Your reports stay linked to it, so you can fix them later',
                   ].map((line) => (
                     <div
@@ -208,7 +208,7 @@ export default function IdentityScreen() {
                 </div>
 
                 <PrimaryButton onClick={getNewId} disabled={busy}>
-                  {busy ? 'Getting your number…' : "Get My Number — Let's Go"}
+                  {busy ? 'Getting your number…' : 'Get My Number'}
                 </PrimaryButton>
               </>
             ) : (
@@ -241,8 +241,7 @@ export default function IdentityScreen() {
                 </PrimaryButton>
 
                 <div style={{ fontSize: 12, lineHeight: 1.55, color: C.dim, textAlign: 'center' }}>
-                  Forgot your number? Just get a new ID — your old reports still count toward their
-                  beach, you simply can't open them any more.
+                  Forgot it? Get a new ID — your old reports still count toward their beach, but you can't open them again.
                 </div>
               </form>
             )}
@@ -259,8 +258,7 @@ export default function IdentityScreen() {
             >
               <ShieldCheck style={{ flex: 'none', marginTop: 1 }} />
               <div style={{ fontSize: 12, lineHeight: 1.55, color: C.slate }}>
-                Nothing here identifies you. A report carries only your participant number, the
-                beach, and what you recorded — never your exact location.
+                A report carries only your participant number, the beach, and what you recorded — never your exact location.
               </div>
             </div>
 

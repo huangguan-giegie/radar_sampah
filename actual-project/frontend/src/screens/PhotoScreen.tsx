@@ -4,6 +4,7 @@ import { uploadPhoto } from '../api';
 import { ArrowRight, Camera, ChevronRight, Shield, Upload } from '../components/Icon';
 import { BackButton, ErrorNote, PrimaryButton, StepBadge } from '../components/ui';
 import { C, MONO } from '../theme';
+import { OverlayChip } from '../components/ds';
 import { useApp } from '../AppContext';
 
 export default function PhotoScreen() {
@@ -25,7 +26,7 @@ export default function PhotoScreen() {
       }
       patchDraft({ photo });
     } catch (error) {
-      setUploadError(error instanceof Error ? error.message : 'Photo upload failed. Please try again.');
+      setUploadError(error instanceof Error ? error.message : 'Please try again.');
       patchDraft({ photo: null });
     } finally {
       setUploading(false);
@@ -65,8 +66,7 @@ export default function PhotoScreen() {
         <div>
           <div style={{ fontSize: 30, fontWeight: 640, letterSpacing: '-.8px' }}>Show us what you found</div>
           <div style={{ fontSize: 14, color: C.muted, marginTop: 7, lineHeight: 1.5 }}>
-            One photo is all it takes to get started. You'll pick what it is yourself — no AI
-            guessing on your behalf.
+            You'll pick what it is yourself — no AI guessing on your behalf.
           </div>
         </div>
 
@@ -117,9 +117,7 @@ export default function PhotoScreen() {
               <div style={{ color: C.bg, fontSize: 16, fontWeight: 650 }}>
                 {uploading ? 'Uploading…' : 'Take Photo'}
               </div>
-              <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '.12em', color: C.dim }}>
-                CAMERA OPENS HERE
-              </div>
+
             </button>
 
             <button
@@ -143,25 +141,22 @@ export default function PhotoScreen() {
               </div>
               <div style={{ flex: 1 }}>
                 <div style={{ fontSize: 15, fontWeight: 640 }}>Upload Photo</div>
-                <div style={{ fontSize: 12, color: C.dim, marginTop: 2 }}>JPG, PNG or HEIC · from your library</div>
+                <div style={{ fontSize: 12, color: C.dim, marginTop: 3 }}>JPG, PNG or HEIC</div>
               </div>
               <ChevronRight size={14} />
             </button>
 
-            <div style={{ textAlign: 'center', fontSize: 12, color: C.faint }}>
-              A photo is what turns your report into evidence — so it's the one thing we need.
-            </div>
           </>
         ) : (
           <>
             <div style={{ position: 'relative', height: 280, borderRadius: 26, overflow: 'hidden', background: '#87847B' }}>
               <img
-                src={photo.url}
+                src={photo.previewUrl}
                 alt="Litter you photographed"
                 style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
               />
               <div style={{ position: 'absolute', top: 14, left: 14, fontFamily: MONO, fontSize: 8.5, letterSpacing: '.14em', color: 'rgba(255,255,255,.9)', background: 'rgba(30,36,44,.45)', backdropFilter: 'blur(6px)', padding: '5px 9px', borderRadius: 8 }}>
-                PHOTO · SHORELINE DEBRIS
+                PHOTO
               </div>
               <button
                 type="button"
@@ -174,10 +169,10 @@ export default function PhotoScreen() {
                 Retake
               </button>
               {photo.metadataStripped && (
-                <div style={{ position: 'absolute', left: 14, bottom: 14, display: 'flex', alignItems: 'center', gap: 6, fontFamily: MONO, fontSize: 8.5, letterSpacing: '.1em', color: C.cloud, background: 'rgba(11,33,97,.75)', backdropFilter: 'blur(6px)', padding: '6px 10px', borderRadius: 999 }}>
+                <OverlayChip style={{ position: 'absolute', left: 14, bottom: 14 }}>
                   <Shield size={11} />
-                  LOCATION METADATA REMOVED FOR PRIVACY
-                </div>
+                  LOCATION METADATA REMOVED
+                </OverlayChip>
               )}
             </div>
 

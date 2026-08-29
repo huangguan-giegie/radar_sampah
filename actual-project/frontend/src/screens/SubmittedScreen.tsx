@@ -1,42 +1,16 @@
 import { Navigate, useNavigate } from 'react-router-dom';
-import { useEffect, useState } from 'react';
-import { getMyReports } from '../api';
 import { ArrowRight, Check, ChevronRight } from '../components/Icon';
-import { GhostButton, PrimaryButton, Skeleton } from '../components/ui';
+import { GhostButton, PrimaryButton } from '../components/ui';
 import { C, MONO } from '../theme';
 import { useApp } from '../AppContext';
-import type { LitterReport } from '../types';
 import { reportOutcome } from '../flowRules';
 
 export default function SubmittedScreen() {
   const nav = useNavigate();
-  const { lastSavedReportId, patchDraft, resetDraft, reportsVersion } = useApp();
-  const [reports, setReports] = useState<LitterReport[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { lastSavedReport: saved, patchDraft, resetDraft } = useApp();
 
-  useEffect(() => {
-    getMyReports()
-      .then((list) => setReports(list))
-      .catch(() => setReports([]))
-      .finally(() => setLoading(false));
-  }, [reportsVersion]);
-
-  const saved = reports.find((r) => r.id === lastSavedReportId);
-
-  if (!lastSavedReportId) return <Navigate to="/reports" replace />;
-
-  if (loading) {
-    return (
-      <div className="screen scroll-y" style={{ zIndex: 26 }}>
-        <div className="pt-page-lg" style={{ paddingInline: 20, display: 'flex', flexDirection: 'column', gap: 14 }}>
-          <Skeleton h={80} r={40} />
-          <Skeleton h={28} />
-          <Skeleton h={180} r={22} />
-        </div>
-      </div>
-    );
-  }
-
+  // 记录就是 POST 刚返回的那条，不用再去列表里捞 ——
+  // 那个二次请求一旦慢一点或失败，用户就会被弹走，看不到确认页。
   if (!saved) return <Navigate to="/reports" replace />;
 
   const outcome = reportOutcome(saved.status);
@@ -111,7 +85,7 @@ export default function SubmittedScreen() {
             {outcome.badge}
           </div>
           <div style={{ fontSize: 13, color: C.muted, marginTop: 10, lineHeight: 1.5, maxWidth: 296 }}>
-            {outcome.message}
+            {saved.statusNote || outcome.message}
           </div>
         </div>
 
@@ -154,8 +128,8 @@ export default function SubmittedScreen() {
                 patchDraft({
                   editingReportId: saved.id,
                   beachId: saved.beachId,
-                  category: saved.category,
-                  quantity: saved.quantity,
+                    beachName: saved.beachName,
+                  quantities: { ...saved.quantities },
                   existingPhotoUrl: saved.photoUrl ?? null,
                   locationSource: 'manual',
                   coords: null,

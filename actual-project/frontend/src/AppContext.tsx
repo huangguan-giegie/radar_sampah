@@ -11,7 +11,7 @@ import {
   type ReactNode,
 } from 'react';
 import { createAnonymousId, getMe, logout } from './api';
-import type { LitterCategory, QuantityBand, UploadedPhoto, User } from './types';
+import type { LitterReport, QuantityByCategory, UploadedPhoto, User } from './types';
 import { restoreId as apiRestoreId } from './api';
 
 // 「记录垃圾」这个流程分 3 步，中间填的东西先存在这里，提交成功后清空
@@ -19,10 +19,11 @@ export type ReportDraft = {
   photo: UploadedPhoto | null;
   existingPhotoUrl: string | null;
   beachId: string | null;
+  /** 和 beachId 一起写。Review 页不用等 /beaches 回来才能显示名字 */
+  beachName: string | null;
   locationSource: 'gps' | 'manual' | null;
   coords: { lat: number; lng: number } | null;
-  category: LitterCategory | null;
-  quantity: QuantityBand | null;
+  quantities: QuantityByCategory;
   gpsDenied: boolean; // 用户拒绝了定位，确认页要显示黄色提示
   editingReportId: string | null; // 正在修正已有记录时存它的 id
 };
@@ -34,10 +35,10 @@ function emptyDraft(): ReportDraft {
     photo: null,
     existingPhotoUrl: null,
     beachId: null,
+    beachName: null,
     locationSource: null,
     coords: null,
-    category: null,
-    quantity: null,
+    quantities: {},
     gpsDenied: false,
     editingReportId: null,
   };
@@ -54,8 +55,9 @@ type AppState = {
   patchDraft: (changes: Partial<ReportDraft>) => void;
   resetDraft: () => void;
 
-  lastSavedReportId: string | null;
-  setLastSavedReportId: (id: string | null) => void;
+  /** POST/PATCH 直接返回的那条记录。确认页不该再去列表里捞一遍 */
+  lastSavedReport: LitterReport | null;
+  setLastSavedReport: (r: LitterReport | null) => void;
 
   reportsVersion: number; // 加 1 就能让列表和计数重新去拿数据
   bumpReports: () => void;
@@ -73,7 +75,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [authReady, setAuthReady] = useState(false);
   const [draft, setDraft] = useState<ReportDraft>(emptyDraft());
-  const [lastSavedReportId, setLastSavedReportId] = useState<string | null>(null);
+  const [lastSavedReport, setLastSavedReport] = useState<LitterReport | null>(null);
   const [reportsVersion, setReportsVersion] = useState(0);
   const [offline, setOffline] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
@@ -117,8 +119,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setDraft(emptyDraft());
     },
 
-    lastSavedReportId,
-    setLastSavedReportId,
+    lastSavedReport,
+    setLastSavedReport,
 
     reportsVersion,
     bumpReports() {

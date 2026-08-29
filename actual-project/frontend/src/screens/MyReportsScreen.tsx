@@ -3,8 +3,9 @@ import { useEffect, useState } from 'react';
 import { getBeaches, getMyReports } from '../api';
 import { BeachCover } from '../components/BeachCover';
 import { Camera } from '../components/Icon';
-import { Skeleton } from '../components/ui';
-import { C, MONO, formatDate, statusChip } from '../theme';
+import { ErrorNote, Skeleton } from '../components/ui';
+import { C, MONO, formatDate } from '../theme';
+import { StatusBadge, type BadgeStatus } from '../components/ds';
 import { useApp } from '../AppContext';
 import type { BeachSummary, LitterReport } from '../types';
 
@@ -21,13 +22,19 @@ export default function MyReportsScreen() {
   const [reports, setReports] = useState<LitterReport[]>([]);
   const [beaches, setBeaches] = useState<BeachSummary[]>([]);
   const [loading, setLoading] = useState(true);
+  const [failed, setFailed] = useState(false);
 
-  useEffect(() => {
+  // 写成函数是因为出错提示里的 Retry 也要用
+  function loadReports() {
+    setLoading(true);
+    setFailed(false);
     getMyReports()
       .then((list) => setReports(list))
-      .catch(() => setReports([]))
+      .catch(() => setFailed(true))
       .finally(() => setLoading(false));
-  }, [reportsVersion]);
+  }
+
+  useEffect(loadReports, [reportsVersion]);
 
   useEffect(() => {
     getBeaches()
@@ -89,34 +96,45 @@ export default function MyReportsScreen() {
           </div>
         )}
 
-        {!loading && rows.length === 0 && (
+        {!loading && failed && (
+          <div style={{ marginTop: 8 }}>
+            <ErrorNote
+              title="Couldn't load your records"
+              body="They're still saved — this is just the connection."
+              onRetry={loadReports}
+            />
+          </div>
+        )}
+
+        {!loading && !failed && rows.length === 0 && (
           <div style={{ border: '1.5px dashed rgba(11,33,97,.18)', borderRadius: 24, padding: '36px 24px', textAlign: 'center', marginTop: 8 }}>
             <div style={{ width: 52, height: 52, borderRadius: 26, background: 'rgba(11,33,97,.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto' }}>
               <Camera size={22} color={C.dim} strokeWidth={1.7} />
             </div>
             <div style={{ fontSize: 15, fontWeight: 650, marginTop: 12, color: C.ink2 }}>Your first one's waiting</div>
             <div style={{ fontSize: 12, color: C.dim, marginTop: 5, lineHeight: 1.5 }}>
-              Next time you're at the coast, snap what you see — it'll show up right here.
+              Next time you're at the coast, snap what you see.
             </div>
           </div>
         )}
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {rows.map((r) => {
-            const chip = statusChip(r.status);
             const fixable = r.status === 'Incomplete';
             return (
               <button
                 key={r.id}
                 type="button"
+                // Counted / Duplicate 那两行点了没反应，就不该是键盘焦点
+                disabled={!fixable}
                 onClick={() => {
                   if (!fixable) return;
                   resetDraft();
                   patchDraft({
                     editingReportId: r.id,
                     beachId: r.beachId,
-                    category: r.category,
-                    quantity: r.quantity,
+                    beachName: r.beachName,
+                    quantities: { ...r.quantities },
                     locationSource: 'manual',
                     coords: null,
                     existingPhotoUrl: r.photoUrl ?? null,
@@ -145,9 +163,7 @@ export default function MyReportsScreen() {
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'space-between' }}>
                     <span style={{ fontSize: 14.5, fontWeight: 650 }}>{r.beachName}</span>
-                    <span style={{ padding: '4px 9px', borderRadius: 999, background: chip.bg, color: chip.c, fontSize: 8.5, fontWeight: 750, letterSpacing: '.06em', whiteSpace: 'nowrap' }}>
-                      {r.status.toUpperCase()}
-                    </span>
+                    <StatusBadge status={r.status.toLowerCase() as BadgeStatus} indicator>{r.status}</StatusBadge>
                   </div>
                   <div style={{ fontSize: 12, color: C.muted, marginTop: 3 }}>
                     {r.category} · {r.quantity}
@@ -168,11 +184,16 @@ export default function MyReportsScreen() {
 
         <div style={{ marginTop: 4, padding: '13px 15px', borderRadius: 16, background: 'rgba(11,33,97,.03)', border: '1px solid rgba(11,33,97,.07)' }}>
           <div style={{ fontFamily: MONO, fontSize: 8.5, letterSpacing: '.14em', color: C.dim }}>STATUS GUIDE</div>
-          <div style={{ fontSize: 11, lineHeight: 1.65, color: C.muted, marginTop: 6 }}>
-            <b style={{ color: C.green }}>Counted</b> — valid and non-duplicate; included in the
-            severity calculation. <b style={{ color: C.muted }}>Duplicate</b> — matched an existing
-            record for the same beach and day; excluded. <b style={{ color: C.red }}>Incomplete</b> —
-            a required field or the photo is unusable; excluded until corrected.
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: 11.5, lineHeight: 1.55, color: C.muted, marginTop: 7 }}>
+            {[
+              { s: 'Counted', c: C.green, t: 'counts toward the beach rating' },
+              { s: 'Duplicate', c: C.muted, t: 'same beach and day as an existing record' },
+              { s: 'Incomplete', c: C.red, t: 'missing field or unusable photo — fixable' },
+            ].map((r) => (
+              <div key={r.s}>
+                <b style={{ color: r.c }}>{r.s}</b> — {r.t}
+              </div>
+            ))}
           </div>
         </div>
       </div>

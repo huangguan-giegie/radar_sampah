@@ -16,25 +16,65 @@ export type SpeciesGlyph = 'turtle' | 'bird' | 'mangrove' | 'grass' | 'crab' | '
  * 这是**估算值不是观测结果**，界面上必须标注清楚，且绝不能和垃圾严重度合并成一个数。
  */
 export interface SpeciesLikelihood {
+  /** true = 这个数字还不是模型算出来的，只是占位。界面上会标出来 */
+  placeholder?: boolean;
   /** 0-100 */
   percent: number;
   /** 模型或数据依据，界面上要显示出来，例如「Habitat match + 2024 survey」 */
   basis: string;
 }
 
+/**
+ * 卡片讲的是一个物种、一个生境、还是一类动物的统称。
+ * 只有 'species' 才可能有学名和受威胁等级 —— 生境和统称没有。
+ */
+export type SpeciesKind = 'species' | 'habitat' | 'group';
+
+/** 数据来自哪个开放数据集。DMP §2 的来源登记表只认这两个。 */
+export type SourceDataset = 'FishBase' | 'OBIS' | 'other' | 'pending';
+
+/**
+ * 数据出处。CC BY-NC 要求署名必须显示出来，DMP §9 还要求保留源 URL 和访问日期。
+ * 所以这三样都是数据的一部分，不是注释。
+ */
+export interface SpeciesSource {
+  dataset: SourceDataset;
+  /** 界面上原样显示的完整署名 */
+  citation: string;
+  url: string | null;
+  /** ISO 日期。DMP §9：preserve source URLs, access dates, and transformation notes */
+  accessedAt: string | null;
+}
+
 export interface Species {
   name: string;
+  kind: SpeciesKind;
+  /** 学名。生境和统称为 null */
+  scientificName: string | null;
+  /** 受威胁等级，来自 FishBase 抽取。没拉到就是 null —— 不要猜 */
+  threatCategory: string | null;
   glyph: SpeciesGlyph;
   text: string;
-  source: string;
+  source: SpeciesSource;
+  /** FishBase 的 picture_url。图片版权独立于数据集，用前要单独确认 */
+  pictureUrl?: string | null;
   /** 没有建模结果时为 null / 省略 —— 前端会退回纯科普展示 */
   likelihood?: SpeciesLikelihood | null;
 }
 
+/**
+ * 成分现在取「该海滩最新一条 Counted 记录」的六列，不是窗口内的聚合。
+ * 只列非空的类别，按类别权重降序。
+ */
 export interface CompositionSlice {
   category: LitterCategory;
-  /** 百分比，0-100，四舍五入到整数 */
-  percent: number;
+  quantity: QuantityBand;
+}
+
+/** 成分来自哪一条记录 —— 界面上要显示日期，不能再说「N 条记录的占比」 */
+export interface CompositionSource {
+  reportId: string;
+  createdAt: string;
 }
 
 /** 地图列表用的精简海滩对象 */
@@ -68,6 +108,8 @@ export interface BeachSummary {
 /** 海滩详情页用的完整对象 */
 export interface BeachDetail extends BeachSummary {
   composition: CompositionSlice[] | null;
+  /** composition 为 null 时这里也是 null */
+  compositionSource: CompositionSource | null;
   species: Species[];
   ecologicalNote: string;
 }
@@ -86,22 +128,34 @@ export interface LitterReport {
   id: string;
   beachId: string;
   beachName: string;
+  /** 这条记录实际记了哪些类别。改正时按它回填，否则会把没动过的类别清空 */
+  quantities: QuantityByCategory;
+  /** 派生：quantities 里权重最高的那个类别 */
   category: LitterCategory;
+  /** 派生：该类别对应的档 */
   quantity: QuantityBand;
   /** 展示用日期字符串，后端给 ISO，前端格式化 */
   createdAt: string;
   status: ReportStatus;
   /** 被排除时的原因说明，后端下发，前端直出 */
-  statusNote?: string;
-  photoUrl?: string;
+  statusNote?: string | null;
+  /** 短时效签名地址，只有记录本人才拿得到。别缓存，过期就失效 */
+  photoUrl?: string | null;
 }
+
+/**
+ * 一次上报里「每个类别各一个数量档」。
+ * 键是 LitterCategory 原文，后端映射到 reports 的 qty_* 六列。
+ * 至少要有一项 —— 对应 DB 上的 reports_at_least_one_category。
+ */
+export type QuantityByCategory = Partial<Record<LitterCategory, QuantityBand>>;
 
 export interface CreateReportInput {
   beachId: string;
-  category: LitterCategory;
-  quantity: QuantityBand;
-  /** 上传接口返回的 id */
-  photoId: string;
+  /** 至少一项。category / quantity 由后端从这里派生，前端不再发 */
+  quantities: QuantityByCategory;
+  /** 上传接口返回的存储键 */
+  photoKey: string;
   /** 'gps' = 由定位推断，'manual' = 用户手选 */
   locationSource: 'gps' | 'manual';
   /** 仅在 locationSource === 'gps' 时携带；后端只用于匹配海滩和查重，绝不公开 */
@@ -122,8 +176,13 @@ export interface AuthSession {
 
 
 export interface UploadedPhoto {
-  id: string;
-  url: string;
+  /**
+   * 存储键，不是可访问地址 —— 桶在公开 Web 根目录之外且不可公开读（API.md §5）。
+   * 提交记录时原样发回去。
+   */
+  photoKey: string;
+  /** 本地预览用。上传后由前端自己用 URL.createObjectURL 生成，不来自后端 */
+  previewUrl: string;
   /** 后端已剥离 EXIF 定位信息 —— 界面上那句「LOCATION METADATA REMOVED」靠它 */
   metadataStripped: boolean;
 }

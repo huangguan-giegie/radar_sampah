@@ -2,8 +2,9 @@ import { useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { getBeaches, getMyReportCounts } from '../api';
 import { ArrowRight, BarChart, Camera, Check, Info, UserIcon } from '../components/Icon';
-import { Label, Skeleton } from '../components/ui';
-import { C, MONO, NOISE, SEVERITY, lastReportedLabel } from '../theme';
+import { ErrorNote, Label, Skeleton } from '../components/ui';
+import { OverlayChip, SeverityBadge, StatTile } from '../components/ds';
+import { C, MONO, NOISE, lastReportedLabel } from '../theme';
 import { useApp } from '../AppContext';
 import type { BeachSummary, ReportCounts } from '../types';
 
@@ -14,40 +15,8 @@ function greeting(d = new Date()) {
   return 'Good evening,';
 }
 
-function StatTile({
-  value,
-  label,
-  color,
-  onClick,
-}: {
-  value: number | undefined;
-  label: string;
-  color: string;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="card-hover press"
-      style={{
-        flex: 1,
-        background: C.white,
-        border: '1px solid rgba(11,33,97,.07)',
-        borderRadius: 20,
-        padding: '15px 14px',
-      }}
-    >
-      <div style={{ fontSize: 26, fontWeight: 660, letterSpacing: '-.5px', color }}>
-        {value ?? '—'}
-      </div>
-      <div style={{ fontSize: 11, color: C.dim, marginTop: 2, fontWeight: 600 }}>{label}</div>
-    </button>
-  );
-}
 
 function BeachRow({ b, last, onClick }: { b: BeachSummary; last: boolean; onClick: () => void }) {
-  const sev = b.severity ? SEVERITY[b.severity] : null;
   return (
     <button
       type="button"
@@ -80,40 +49,11 @@ function BeachRow({ b, last, onClick }: { b: BeachSummary; last: boolean; onClic
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontSize: 14, fontWeight: 620 }}>{b.name}</div>
-        <div style={{ fontSize: 11.5, color: C.dim, marginTop: 1 }}>
+        <div style={{ fontSize: 11.5, color: C.dim, marginTop: 3 }}>
           {b.validReports} valid reports · {lastReportedLabel(b.lastReportedAt).toLowerCase()}
         </div>
       </div>
-      {sev ? (
-        <div
-          style={{
-            padding: '5px 10px',
-            borderRadius: 999,
-            background: sev.tint,
-            color: sev.text,
-            fontSize: 9.5,
-            fontWeight: 700,
-            letterSpacing: '.06em',
-          }}
-        >
-          {b.severity?.toUpperCase()}
-        </div>
-      ) : (
-        <div
-          style={{
-            padding: '5px 10px',
-            borderRadius: 999,
-            background: 'rgba(30,36,44,.07)',
-            border: '1px dashed rgba(30,36,44,.2)',
-            color: C.muted,
-            fontSize: 9,
-            fontWeight: 700,
-            letterSpacing: '.06em',
-          }}
-        >
-          NO DATA
-        </div>
-      )}
+      <SeverityBadge band={b.severity} block />
     </button>
   );
 }
@@ -124,22 +64,32 @@ export default function HomeScreen() {
   // 海滩列表
   const [beaches, setBeaches] = useState<BeachSummary[]>([]);
   const [loadingBeaches, setLoadingBeaches] = useState(true);
+  const [beachesFailed, setBeachesFailed] = useState(false);
 
-  useEffect(() => {
+  function loadBeaches() {
+    setLoadingBeaches(true);
+    setBeachesFailed(false);
     getBeaches()
       .then((list) => setBeaches(list))
-      .catch(() => setBeaches([]))
+      .catch(() => setBeachesFailed(true))
       .finally(() => setLoadingBeaches(false));
-  }, []);
+  }
+
+  useEffect(loadBeaches, []);
 
   // 我的记录计数。reportsVersion 变了（比如刚提交完一条）就重新拿一次。
   const [counts, setCounts] = useState<ReportCounts | null>(null);
 
   useEffect(() => {
+    // /home 不在 RequireAuth 里，没登录时这个接口必然 401，别去问
+    if (!user) {
+      setCounts(null);
+      return;
+    }
     getMyReportCounts()
       .then((c) => setCounts(c))
       .catch(() => setCounts(null));
-  }, [reportsVersion]);
+  }, [reportsVersion, user]);
 
   const startReport = () => {
     resetDraft();
@@ -194,7 +144,7 @@ export default function HomeScreen() {
             textWrap: 'balance',
           }}
         >
-          Spot it. Snap it. Done.
+          
         </div>
 
         <button
@@ -215,29 +165,15 @@ export default function HomeScreen() {
           <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg,transparent 40%,rgba(221,227,236,.18) 46%,transparent 54%)' }} />
           <div style={{ position: 'absolute', inset: 0, opacity: 0.3, backgroundImage: NOISE }} />
           <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg,transparent 30%,rgba(9,22,48,.78) 100%)' }} />
-          <div
-            style={{
-              position: 'absolute',
-              top: 14,
-              left: 16,
-              fontFamily: MONO,
-              fontSize: 8.5,
-              letterSpacing: '.16em',
-              color: 'rgba(221,227,236,.8)',
-              background: 'rgba(9,24,52,.4)',
-              backdropFilter: 'blur(6px)',
-              padding: '5px 9px',
-              borderRadius: 8,
-            }}
-          >
-            MAP · {beaches.length || 4} BEACHES MONITORED
-          </div>
+          <OverlayChip style={{ position: 'absolute', top: 14, left: 14 }}>
+            MAP · {beaches.length || 4} BEACHES
+          </OverlayChip>
           <div style={{ position: 'absolute', left: 18, right: 18, bottom: 16, textAlign: 'left' }}>
             <div style={{ fontSize: 22, fontWeight: 650, letterSpacing: '-.4px', color: C.bg }}>
               Which beach needs you?
             </div>
             <div style={{ fontSize: 12.5, lineHeight: 1.45, color: 'rgba(232,238,245,.8)', marginTop: 4, maxWidth: 250 }}>
-              See how each beach is doing right now — and who else lives there.
+              
             </div>
             <div
               style={{
@@ -308,7 +244,7 @@ export default function HomeScreen() {
             <div>
               <div style={{ fontSize: 16.5, fontWeight: 650, letterSpacing: '-.2px' }}>How It's Rated</div>
               <div style={{ fontSize: 11.5, color: C.dim, marginTop: 3, lineHeight: 1.4 }}>
-                The exact maths, nothing hidden
+                The exact maths
               </div>
             </div>
           </button>
@@ -316,14 +252,21 @@ export default function HomeScreen() {
 
         <Label style={{ margin: '28px 0 12px' }}>WHAT YOU'VE ADDED</Label>
         <div style={{ display: 'flex', gap: 10 }}>
-          <StatTile value={counts?.counted} label="Counted" color={C.green} onClick={() => nav('/reports')} />
-          <StatTile value={counts?.duplicate} label="Duplicate" color={C.muted} onClick={() => nav('/reports?tab=Excluded')} />
-          <StatTile value={counts?.incomplete} label="Incomplete" color={C.red} onClick={() => nav('/reports?tab=Excluded')} />
+          <StatTile value={counts?.counted} caption="Counted" tone="counted" onClick={() => nav('/reports?tab=Counted')} />
+          <StatTile value={counts?.duplicate} caption="Duplicate" tone="duplicate" onClick={() => nav('/reports?tab=Excluded')} />
+          <StatTile value={counts?.incomplete} caption="Incomplete" tone="incomplete" onClick={() => nav('/reports?tab=Excluded')} />
         </div>
 
         <Label style={{ margin: '26px 0 12px' }}>
-          EVIDENCE STATUS · {beaches.length || 4} BEACHES
+          {beachesFailed ? 'EVIDENCE STATUS' : `EVIDENCE STATUS · ${beaches.length || 4} BEACHES`}
         </Label>
+        {beachesFailed ? (
+          <ErrorNote
+            title="Couldn't load the beaches"
+            body="The data is fine — this is just the connection."
+            onRetry={loadBeaches}
+          />
+        ) : (
         <div style={{ background: C.white, border: '1px solid rgba(11,33,97,.07)', borderRadius: 22, overflow: 'hidden' }}>
           {loadingBeaches && (
             <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -340,6 +283,7 @@ export default function HomeScreen() {
             />
           ))}
         </div>
+        )}
 
         <div
           style={{
