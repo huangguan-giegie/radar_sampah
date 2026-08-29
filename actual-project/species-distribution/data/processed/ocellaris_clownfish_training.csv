@@ -1,0 +1,157 @@
+cell_id,latitude,longitude,scientific_name,species_slug,label,label_source,observation_count,source_dataset_count,example_occurrence_id,example_dataset_name,example_event_date
+921:2841,2.15,104.15,Amphiprion ocellaris,ocellaris_clownfish,1,OBIS_presence_grid,1,1,https://www.inaturalist.org/observations/205621743,iNaturalist research-grade observations,2024-04-05T14:37:59+08:00
+926:2841,2.65,104.15,Amphiprion ocellaris,ocellaris_clownfish,1,OBIS_presence_grid,2,1,https://www.inaturalist.org/observations/153799099,iNaturalist research-grade observations,2023-03-25T10:31:40+08:00
+927:2842,2.75,104.25,Amphiprion ocellaris,ocellaris_clownfish,1,OBIS_presence_grid,3,1,https://www.inaturalist.org/observations/84506508,iNaturalist research-grade observations,2016-05-22T15:47:00-07:00
+928:2841,2.85,104.15,Amphiprion ocellaris,ocellaris_clownfish,1,OBIS_presence_grid,18,2,https://www.inaturalist.org/observations/167487796,iNaturalist research-grade observations,2023-05-31T15:19:00+08:00
+928:2842,2.85,104.25,Amphiprion ocellaris,ocellaris_clownfish,1,OBIS_presence_grid,3,1,https://www.inaturalist.org/observations/166989935,iNaturalist research-grade observations,2023-05-31T11:23:00+08:00
+929:2841,2.95,104.15,Amphiprion ocellaris,ocellaris_clownfish,1,OBIS_presence_grid,7,1,https://www.inaturalist.org/observations/352032943,iNaturalist research-grade observations,2026-04-20T10:52:00+08:00
+941:2986,4.15,118.65,Amphiprion ocellaris,ocellaris_clownfish,1,OBIS_presence_grid,9,1,https://www.inaturalist.org/observations/152525801,iNaturalist research-grade observations,2006-01-12T02:48:00+08:00
+942:2986,4.25,118.65,Amphiprion ocellaris,ocellaris_clownfish,1,OBIS_presence_grid,11,1,https://www.inaturalist.org/observations/222785486,iNaturalist research-grade observations,2024-06-06T11:37:00+08:00
+942:2988,4.25,118.85,Amphiprion ocellaris,ocellaris_clownfish,1,OBIS_presence_grid,1,1,https://www.inaturalist.org/observations/196414010,iNaturalist research-grade observations,2013-02-04T17:07:00+08:00
+943:2939,4.35,113.95,Amphiprion ocellaris,ocellaris_clownfish,1,OBIS_presence_grid,1,1,https://www.inaturalist.org/observations/27150158,iNaturalist research-grade observations,2019-06-17T09:28:00+08:00
+944:2987,4.45,118.75,Amphiprion ocellaris,ocellaris_clownfish,1,OBIS_presence_grid,2,1,https://www.inaturalist.org/observations/310978631,iNaturalist research-grade observations,2025-09-02T15:50:16+08:00
+945:2987,4.55,118.75,Amphiprion ocellaris,ocellaris_clownfish,1,OBIS_presence_grid,1,1,https://www.inaturalist.org/observations/246447603,iNaturalist research-grade observations,2018-02-02T01:31:18+08:00
+945:2988,4.55,118.85,Amphiprion ocellaris,ocellaris_clownfish,1,OBIS_presence_grid,3,1,https://www.inaturalist.org/observations/68799311,iNaturalist research-grade observations,2018-12-18T18:04:00+11:00
+945:2989,4.55,118.95,Amphiprion ocellaris,ocellaris_clownfish,1,OBIS_presence_grid,7,1,https://www.inaturalist.org/observations/245535953,iNaturalist research-grade observations,2024-10-04T15:04:03+08:00
+946:2987,4.65,118.75,Amphiprion ocellaris,ocellaris_clownfish,1,OBIS_presence_grid,1,1,https://www.inaturalist.org/observations/263393677,iNaturalist research-grade observations,2013-05-09T03:49:00+08:00
+946:2988,4.65,118.85,Amphiprion ocellaris,ocellaris_clownfish,1,OBIS_presence_grid,3,1,https://www.inaturalist.org/observations/317221383,iNaturalist research-grade observations,2025-09-10T10:04:00+08:00
+947:2836,4.75,103.65,Amphiprion ocellaris,ocellaris_clownfish,1,OBIS_presence_grid,1,1,https://www.inaturalist.org/observations/347152366,iNaturalist research-grade observations,2026-04-02T09:32:00+08:00
+948:2836,4.85,103.65,Amphiprion ocellaris,ocellaris_clownfish,1,OBIS_presence_grid,5,1,https://www.inaturalist.org/observations/379321786,iNaturalist research-grade observations,2026-07-05T13:00:00+08:00
+956:2789,5.65,98.95,Amphiprion ocellaris,ocellaris_clownfish,1,OBIS_presence_grid,1,1,urn:catalog:S9-5:Asia-Pacific:Yu07.0063,Asia-Pacific Dataset,2004-05/2006-01
+956:2830,5.65,103.05,Amphiprion ocellaris,ocellaris_clownfish,1,OBIS_presence_grid,2,1,https://www.inaturalist.org/observations/307988661,iNaturalist research-grade observations,2025-08-19T11:41:19+08:00
+957:2828,5.75,102.85,Amphiprion ocellaris,ocellaris_clownfish,1,OBIS_presence_grid,1,1,https://www.inaturalist.org/observations/86708093,iNaturalist research-grade observations,2020-08-18
+957:2829,5.75,102.95,Amphiprion ocellaris,ocellaris_clownfish,1,OBIS_presence_grid,1,1,https://www.inaturalist.org/observations/309422392,iNaturalist research-grade observations,2024-08-30T22:47:19+08:00
+957:2830,5.75,103.05,Amphiprion ocellaris,ocellaris_clownfish,1,OBIS_presence_grid,10,2,https://www.inaturalist.org/observations/94200567,iNaturalist research-grade observations,2001-04-15
+957:2956,5.75,115.65,Amphiprion ocellaris,ocellaris_clownfish,1,OBIS_presence_grid,1,1,https://www.inaturalist.org/observations/37954100,iNaturalist research-grade observations,2012-02-17T13:22:00-05:00
+958:2802,5.85,100.25,Amphiprion ocellaris,ocellaris_clownfish,1,OBIS_presence_grid,2,1,https://www.inaturalist.org/observations/53049637,iNaturalist research-grade observations,2020-07-12
+958:2827,5.85,102.75,Amphiprion ocellaris,ocellaris_clownfish,1,OBIS_presence_grid,10,1,https://www.inaturalist.org/observations/111755543,iNaturalist research-grade observations,2006-08-25T08:11:00+02:00
+959:2826,5.95,102.65,Amphiprion ocellaris,ocellaris_clownfish,1,OBIS_presence_grid,3,1,https://www.inaturalist.org/observations/207919544,iNaturalist research-grade observations,2024-04-15T12:00:00+08:00
+959:2827,5.95,102.75,Amphiprion ocellaris,ocellaris_clownfish,1,OBIS_presence_grid,23,1,https://www.inaturalist.org/observations/305952777,iNaturalist research-grade observations,2025-07-02T11:48:25+08:00
+959:2959,5.95,115.95,Amphiprion ocellaris,ocellaris_clownfish,1,OBIS_presence_grid,3,1,https://www.inaturalist.org/observations/263176887,iNaturalist research-grade observations,2013-04-11T11:37:00+08:00
+960:2800,6.05,100.05,Amphiprion ocellaris,ocellaris_clownfish,1,OBIS_presence_grid,1,1,https://www.inaturalist.org/observations/71781799,iNaturalist research-grade observations,2016-07-22T16:09:00+10:00
+960:2959,6.05,115.95,Amphiprion ocellaris,ocellaris_clownfish,1,OBIS_presence_grid,5,1,https://www.inaturalist.org/observations/315795155,iNaturalist research-grade observations,2009-03-09T11:21:00+08:00
+960:2960,6.05,116.05,Amphiprion ocellaris,ocellaris_clownfish,1,OBIS_presence_grid,40,1,https://www.inaturalist.org/observations/275425222,iNaturalist research-grade observations,2015-07-24T11:37:00+08:00
+961:2797,6.15,99.75,Amphiprion ocellaris,ocellaris_clownfish,1,OBIS_presence_grid,1,1,https://www.inaturalist.org/observations/331864163,iNaturalist research-grade observations,2025-12-22T12:04:04+08:00
+962:2797,6.25,99.75,Amphiprion ocellaris,ocellaris_clownfish,1,OBIS_presence_grid,1,1,https://www.inaturalist.org/observations/196848416,iNaturalist research-grade observations,2022-03-09T11:12:00+08:00
+964:2796,6.45,99.65,Amphiprion ocellaris,ocellaris_clownfish,1,OBIS_presence_grid,1,1,https://www.inaturalist.org/observations/290677534,iNaturalist research-grade observations,2025-06-16T11:17:00+08:00
+964:2963,6.45,116.35,Amphiprion ocellaris,ocellaris_clownfish,1,OBIS_presence_grid,1,1,https://www.inaturalist.org/observations/271109101,iNaturalist research-grade observations,2025-03-23T03:48:40+08:00
+965:2979,6.55,117.95,Amphiprion ocellaris,ocellaris_clownfish,1,OBIS_presence_grid,3,1,https://www.inaturalist.org/observations/133911916,iNaturalist research-grade observations,2022-07-25T15:46:00+08:00
+966:2963,6.65,116.35,Amphiprion ocellaris,ocellaris_clownfish,1,OBIS_presence_grid,1,1,https://www.inaturalist.org/observations/206443435,iNaturalist research-grade observations,2010-10-26T15:49:00+08:00
+967:2963,6.75,116.35,Amphiprion ocellaris,ocellaris_clownfish,1,OBIS_presence_grid,1,1,https://www.inaturalist.org/observations/10132051,iNaturalist research-grade observations,2013-12-25T17:28:00+02:00
+918:2901,1.85,110.15,Amphiprion ocellaris,ocellaris_clownfish,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+920:2845,2.05,104.55,Amphiprion ocellaris,ocellaris_clownfish,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+924:2842,2.45,104.25,Amphiprion ocellaris,ocellaris_clownfish,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+926:2847,2.65,104.75,Amphiprion ocellaris,ocellaris_clownfish,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+929:2906,2.95,110.65,Amphiprion ocellaris,ocellaris_clownfish,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+932:2907,3.25,110.75,Amphiprion ocellaris,ocellaris_clownfish,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+932:2924,3.25,112.45,Amphiprion ocellaris,ocellaris_clownfish,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+932:2927,3.25,112.75,Amphiprion ocellaris,ocellaris_clownfish,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+933:2806,3.35,100.65,Amphiprion ocellaris,ocellaris_clownfish,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+933:2840,3.35,104.05,Amphiprion ocellaris,ocellaris_clownfish,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+934:2913,3.45,111.35,Amphiprion ocellaris,ocellaris_clownfish,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+934:2918,3.45,111.85,Amphiprion ocellaris,ocellaris_clownfish,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+934:2930,3.45,113.05,Amphiprion ocellaris,ocellaris_clownfish,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+935:2802,3.55,100.25,Amphiprion ocellaris,ocellaris_clownfish,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+936:2840,3.65,104.05,Amphiprion ocellaris,ocellaris_clownfish,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+937:2989,3.75,118.95,Amphiprion ocellaris,ocellaris_clownfish,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+938:2806,3.85,100.65,Amphiprion ocellaris,ocellaris_clownfish,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+938:2840,3.85,104.05,Amphiprion ocellaris,ocellaris_clownfish,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+938:2907,3.85,110.75,Amphiprion ocellaris,ocellaris_clownfish,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+939:2802,3.95,100.25,Amphiprion ocellaris,ocellaris_clownfish,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+940:2839,4.05,103.95,Amphiprion ocellaris,ocellaris_clownfish,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+940:2906,4.05,110.65,Amphiprion ocellaris,ocellaris_clownfish,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+940:2919,4.05,111.95,Amphiprion ocellaris,ocellaris_clownfish,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+941:2845,4.15,104.55,Amphiprion ocellaris,ocellaris_clownfish,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+941:2924,4.15,112.45,Amphiprion ocellaris,ocellaris_clownfish,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+942:2843,4.25,104.35,Amphiprion ocellaris,ocellaris_clownfish,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+942:2985,4.25,118.55,Amphiprion ocellaris,ocellaris_clownfish,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+943:2798,4.35,99.85,Amphiprion ocellaris,ocellaris_clownfish,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+943:2799,4.35,99.95,Amphiprion ocellaris,ocellaris_clownfish,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+943:2906,4.35,110.65,Amphiprion ocellaris,ocellaris_clownfish,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+943:2910,4.35,111.05,Amphiprion ocellaris,ocellaris_clownfish,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+943:2917,4.35,111.75,Amphiprion ocellaris,ocellaris_clownfish,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+944:2798,4.45,99.85,Amphiprion ocellaris,ocellaris_clownfish,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+944:2836,4.45,103.65,Amphiprion ocellaris,ocellaris_clownfish,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+944:2841,4.45,104.15,Amphiprion ocellaris,ocellaris_clownfish,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+944:2910,4.45,111.05,Amphiprion ocellaris,ocellaris_clownfish,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+944:2927,4.45,112.75,Amphiprion ocellaris,ocellaris_clownfish,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+945:2836,4.55,103.65,Amphiprion ocellaris,ocellaris_clownfish,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+945:2837,4.55,103.75,Amphiprion ocellaris,ocellaris_clownfish,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+945:2851,4.55,105.15,Amphiprion ocellaris,ocellaris_clownfish,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+945:2913,4.55,111.35,Amphiprion ocellaris,ocellaris_clownfish,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+945:2916,4.55,111.65,Amphiprion ocellaris,ocellaris_clownfish,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+946:2790,4.65,99.05,Amphiprion ocellaris,ocellaris_clownfish,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+946:2903,4.65,110.35,Amphiprion ocellaris,ocellaris_clownfish,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+946:2934,4.65,113.45,Amphiprion ocellaris,ocellaris_clownfish,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+947:2800,4.75,100.05,Amphiprion ocellaris,ocellaris_clownfish,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+947:2839,4.75,103.95,Amphiprion ocellaris,ocellaris_clownfish,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+947:2846,4.75,104.65,Amphiprion ocellaris,ocellaris_clownfish,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+948:2846,4.85,104.65,Amphiprion ocellaris,ocellaris_clownfish,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+948:2932,4.85,113.25,Amphiprion ocellaris,ocellaris_clownfish,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+949:2915,4.95,111.55,Amphiprion ocellaris,ocellaris_clownfish,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+949:2917,4.95,111.75,Amphiprion ocellaris,ocellaris_clownfish,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+950:2910,5.05,111.05,Amphiprion ocellaris,ocellaris_clownfish,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+950:2930,5.05,113.05,Amphiprion ocellaris,ocellaris_clownfish,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+952:2905,5.25,110.55,Amphiprion ocellaris,ocellaris_clownfish,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+952:2915,5.25,111.55,Amphiprion ocellaris,ocellaris_clownfish,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+952:2934,5.25,113.45,Amphiprion ocellaris,ocellaris_clownfish,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+952:2952,5.25,115.25,Amphiprion ocellaris,ocellaris_clownfish,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+952:2994,5.25,119.45,Amphiprion ocellaris,ocellaris_clownfish,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+953:2798,5.35,99.85,Amphiprion ocellaris,ocellaris_clownfish,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+953:2800,5.35,100.05,Amphiprion ocellaris,ocellaris_clownfish,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+954:2922,5.45,112.25,Amphiprion ocellaris,ocellaris_clownfish,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+955:2784,5.55,98.45,Amphiprion ocellaris,ocellaris_clownfish,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+955:2850,5.55,105.05,Amphiprion ocellaris,ocellaris_clownfish,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+956:2786,5.65,98.65,Amphiprion ocellaris,ocellaris_clownfish,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+956:2833,5.65,103.35,Amphiprion ocellaris,ocellaris_clownfish,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+956:2908,5.65,110.85,Amphiprion ocellaris,ocellaris_clownfish,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+956:2925,5.65,112.55,Amphiprion ocellaris,ocellaris_clownfish,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+957:2782,5.75,98.25,Amphiprion ocellaris,ocellaris_clownfish,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+957:2944,5.75,114.45,Amphiprion ocellaris,ocellaris_clownfish,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+957:2947,5.75,114.75,Amphiprion ocellaris,ocellaris_clownfish,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+957:2979,5.75,117.95,Amphiprion ocellaris,ocellaris_clownfish,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+958:2788,5.85,98.85,Amphiprion ocellaris,ocellaris_clownfish,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+958:2790,5.85,99.05,Amphiprion ocellaris,ocellaris_clownfish,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+958:2909,5.85,110.95,Amphiprion ocellaris,ocellaris_clownfish,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+958:2953,5.85,115.35,Amphiprion ocellaris,ocellaris_clownfish,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+959:2923,5.95,112.35,Amphiprion ocellaris,ocellaris_clownfish,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+960:2941,6.05,114.15,Amphiprion ocellaris,ocellaris_clownfish,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+961:2908,6.15,110.85,Amphiprion ocellaris,ocellaris_clownfish,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+961:2910,6.15,111.05,Amphiprion ocellaris,ocellaris_clownfish,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+962:2794,6.25,99.45,Amphiprion ocellaris,ocellaris_clownfish,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+962:2845,6.25,104.55,Amphiprion ocellaris,ocellaris_clownfish,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+963:2796,6.35,99.65,Amphiprion ocellaris,ocellaris_clownfish,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+964:2848,6.45,104.85,Amphiprion ocellaris,ocellaris_clownfish,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+964:2949,6.45,114.95,Amphiprion ocellaris,ocellaris_clownfish,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+965:2918,6.55,111.85,Amphiprion ocellaris,ocellaris_clownfish,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+965:2920,6.55,112.05,Amphiprion ocellaris,ocellaris_clownfish,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+965:2955,6.55,115.55,Amphiprion ocellaris,ocellaris_clownfish,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+965:2960,6.55,116.05,Amphiprion ocellaris,ocellaris_clownfish,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+965:2977,6.55,117.75,Amphiprion ocellaris,ocellaris_clownfish,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+966:2959,6.65,115.95,Amphiprion ocellaris,ocellaris_clownfish,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+967:2833,6.75,103.35,Amphiprion ocellaris,ocellaris_clownfish,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+967:2836,6.75,103.65,Amphiprion ocellaris,ocellaris_clownfish,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+967:2965,6.75,116.55,Amphiprion ocellaris,ocellaris_clownfish,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+968:2839,6.85,103.95,Amphiprion ocellaris,ocellaris_clownfish,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+969:2947,6.95,114.75,Amphiprion ocellaris,ocellaris_clownfish,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+969:2970,6.95,117.05,Amphiprion ocellaris,ocellaris_clownfish,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+971:2965,7.15,116.55,Amphiprion ocellaris,ocellaris_clownfish,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+972:2950,7.25,115.05,Amphiprion ocellaris,ocellaris_clownfish,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+972:2959,7.25,115.95,Amphiprion ocellaris,ocellaris_clownfish,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+973:2831,7.35,103.15,Amphiprion ocellaris,ocellaris_clownfish,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+973:2944,7.35,114.45,Amphiprion ocellaris,ocellaris_clownfish,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+973:2948,7.35,114.85,Amphiprion ocellaris,ocellaris_clownfish,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+974:2971,7.45,117.15,Amphiprion ocellaris,ocellaris_clownfish,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+975:2930,7.55,113.05,Amphiprion ocellaris,ocellaris_clownfish,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+975:2931,7.55,113.15,Amphiprion ocellaris,ocellaris_clownfish,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+975:2948,7.55,114.85,Amphiprion ocellaris,ocellaris_clownfish,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+975:2959,7.55,115.95,Amphiprion ocellaris,ocellaris_clownfish,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+976:2936,7.65,113.65,Amphiprion ocellaris,ocellaris_clownfish,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+977:2937,7.75,113.75,Amphiprion ocellaris,ocellaris_clownfish,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+978:2939,7.85,113.95,Amphiprion ocellaris,ocellaris_clownfish,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+978:2955,7.85,115.55,Amphiprion ocellaris,ocellaris_clownfish,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+979:2937,7.95,113.75,Amphiprion ocellaris,ocellaris_clownfish,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+981:2928,8.15,112.85,Amphiprion ocellaris,ocellaris_clownfish,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+983:2936,8.35,113.65,Amphiprion ocellaris,ocellaris_clownfish,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+985:2932,8.55,113.25,Amphiprion ocellaris,ocellaris_clownfish,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+987:2934,8.75,113.45,Amphiprion ocellaris,ocellaris_clownfish,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,

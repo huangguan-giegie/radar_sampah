@@ -1,0 +1,36 @@
+{
+  "project": "TideTrace MY species distribution model - Iteration 1",
+  "obis_area_id": 140,
+  "marine_regions_mrgid": 8483,
+  "grid_size_degrees": 0.1,
+  "background_ratio": 3,
+  "spatial_cv_block_degrees": 1.0,
+  "random_seed": 20260829,
+  "max_coordinate_uncertainty_metres": 25000,
+  "species": [
+    {
+      "slug": "green_sea_turtle",
+      "scientific_name": "Chelonia mydas",
+      "common_name_en": "Green sea turtle",
+      "common_name_zh": "绿海龟"
+    },
+    {
+      "slug": "ocellaris_clownfish",
+      "scientific_name": "Amphiprion ocellaris",
+      "common_name_en": "Ocellaris clownfish",
+      "common_name_zh": "公子小丑鱼"
+    },
+    {
+      "slug": "irrawaddy_dolphin",
+      "scientific_name": "Orcaella brevirostris",
+      "common_name_en": "Irrawaddy dolphin",
+      "common_name_zh": "伊洛瓦底海豚"
+    },
+    {
+      "slug": "moorish_idol",
+      "scientific_name": "Zanclus cornutus",
+      "common_name_en": "Moorish idol",
+      "common_name_zh": "镰鳍角蝶鱼"
+    }
+  ]
+}

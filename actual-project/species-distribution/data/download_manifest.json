@@ -1,0 +1,59 @@
+{
+  "generated_at_utc": "2026-08-29T09:27:15.458126+00:00",
+  "obis_area_id": 140,
+  "marine_regions_mrgid": 8483,
+  "marine_regions_query_url": "https://geo.vliz.be/geoserver/MarineRegions/wfs?service=WFS&version=1.0.0&request=GetFeature&typeName=eez&cql_filter=mrgid%3D8483&outputFormat=application%2Fjson",
+  "grid_size_degrees": 0.1,
+  "marine_grid_cells": 4227,
+  "species_downloads": [
+    {
+      "scientific_name": "Chelonia mydas",
+      "obis_reported_total": 667,
+      "downloaded_rows": 667,
+      "query_url": "https://api.obis.org/v3/occurrence?scientificname=Chelonia+mydas&areaid=140&size=1000&absence=exclude&dropped=false",
+      "licences_in_rows": [
+        "http://creativecommons.org/licenses/by-nc/4.0/",
+        "http://creativecommons.org/licenses/by/4.0/",
+        "https://creativecommons.org/licenses/by-nc/4.0/",
+        "https://creativecommons.org/licenses/by/4.0/",
+        "https://creativecommons.org/publicdomain/zero/1.0/"
+      ]
+    },
+    {
+      "scientific_name": "Amphiprion ocellaris",
+      "obis_reported_total": 405,
+      "downloaded_rows": 405,
+      "query_url": "https://api.obis.org/v3/occurrence?scientificname=Amphiprion+ocellaris&areaid=140&size=1000&absence=exclude&dropped=false",
+      "licences_in_rows": [
+        "http://creativecommons.org/licenses/by/4.0/legalcode",
+        "https://creativecommons.org/licenses/by-nc/4.0/",
+        "https://creativecommons.org/licenses/by/4.0/",
+        "https://creativecommons.org/publicdomain/zero/1.0/"
+      ]
+    },
+    {
+      "scientific_name": "Orcaella brevirostris",
+      "obis_reported_total": 146,
+      "downloaded_rows": 146,
+      "query_url": "https://api.obis.org/v3/occurrence?scientificname=Orcaella+brevirostris&areaid=140&size=1000&absence=exclude&dropped=false",
+      "licences_in_rows": [
+        "http://creativecommons.org/licenses/by-nc/4.0/",
+        "https://creativecommons.org/licenses/by-nc/4.0/",
+        "https://creativecommons.org/licenses/by/4.0/"
+      ]
+    },
+    {
+      "scientific_name": "Zanclus cornutus",
+      "obis_reported_total": 112,
+      "downloaded_rows": 112,
+      "query_url": "https://api.obis.org/v3/occurrence?scientificname=Zanclus+cornutus&areaid=140&size=1000&absence=exclude&dropped=false",
+      "licences_in_rows": [
+        "(CC-BY NC) 4.0",
+        "https://creativecommons.org/licenses/by-nc/4.0/",
+        "https://creativecommons.org/licenses/by/4.0/",
+        "https://creativecommons.org/publicdomain/zero/1.0/"
+      ]
+    }
+  ],
+  "important_note": "OBIS records are presence observations. Background cells are generated model contrasts, not verified absences."
+}

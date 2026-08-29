@@ -1,0 +1,12 @@
+cell_id,latitude,longitude,scientific_name,species_slug,label,label_source,observation_count,source_dataset_count,example_occurrence_id,example_dataset_name,example_event_date
+915:2907,1.55,110.75,Orcaella brevirostris,irrawaddy_dolphin,1,OBIS_presence_grid,2,1,744_82,"Distribution of small cetaceans in the nearshore waters of Sarawak, East Malaysia",2009-05-21T13:52
+916:2902,1.65,110.25,Orcaella brevirostris,irrawaddy_dolphin,1,OBIS_presence_grid,9,1,744_20,"Distribution of small cetaceans in the nearshore waters of Sarawak, East Malaysia",2008-07-15T07:45
+916:2905,1.65,110.55,Orcaella brevirostris,irrawaddy_dolphin,1,OBIS_presence_grid,1,1,744_79,"Distribution of small cetaceans in the nearshore waters of Sarawak, East Malaysia",2009-05-20T07:56
+917:2901,1.75,110.15,Orcaella brevirostris,irrawaddy_dolphin,1,OBIS_presence_grid,1,1,744_67,"Distribution of small cetaceans in the nearshore waters of Sarawak, East Malaysia",2009-03-06T12:31
+917:2902,1.75,110.25,Orcaella brevirostris,irrawaddy_dolphin,1,OBIS_presence_grid,13,1,744_31,"Distribution of small cetaceans in the nearshore waters of Sarawak, East Malaysia",2008-09-16T10:47
+917:2904,1.75,110.45,Orcaella brevirostris,irrawaddy_dolphin,1,OBIS_presence_grid,4,1,744_104,"Distribution of small cetaceans in the nearshore waters of Sarawak, East Malaysia",2009-09-08T09:26
+933:2930,3.35,113.05,Orcaella brevirostris,irrawaddy_dolphin,1,OBIS_presence_grid,1,1,744_12,"Distribution of small cetaceans in the nearshore waters of Sarawak, East Malaysia",2008-06-12T15:16
+933:2931,3.35,113.15,Orcaella brevirostris,irrawaddy_dolphin,1,OBIS_presence_grid,7,1,744_17,"Distribution of small cetaceans in the nearshore waters of Sarawak, East Malaysia",2008-06-13T15:41
+935:2932,3.55,113.25,Orcaella brevirostris,irrawaddy_dolphin,1,OBIS_presence_grid,2,1,744_61,"Distribution of small cetaceans in the nearshore waters of Sarawak, East Malaysia",2009-02-20T12:02
+936:2933,3.65,113.35,Orcaella brevirostris,irrawaddy_dolphin,1,OBIS_presence_grid,2,1,744_18,"Distribution of small cetaceans in the nearshore waters of Sarawak, East Malaysia",2008-06-13T10:00
+943:2937,4.35,113.75,Orcaella brevirostris,irrawaddy_dolphin,1,OBIS_presence_grid,1,1,744_111,"Distribution of small cetaceans in the nearshore waters of Sarawak, East Malaysia",2009-09-15T13:52

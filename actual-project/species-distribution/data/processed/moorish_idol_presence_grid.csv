@@ -1,0 +1,18 @@
+cell_id,latitude,longitude,scientific_name,species_slug,label,label_source,observation_count,source_dataset_count,example_occurrence_id,example_dataset_name,example_event_date
+928:2841,2.85,104.15,Zanclus cornutus,moorish_idol,1,OBIS_presence_grid,1,1,https://www.inaturalist.org/observations/37069725,iNaturalist research-grade observations,2007-07-05
+941:2986,4.15,118.65,Zanclus cornutus,moorish_idol,1,OBIS_presence_grid,12,1,https://www.inaturalist.org/observations/144430527,iNaturalist research-grade observations,2012-03-20
+941:2987,4.15,118.75,Zanclus cornutus,moorish_idol,1,OBIS_presence_grid,1,1,https://www.inaturalist.org/observations/238728896,iNaturalist research-grade observations,2019-12-28T17:19:00+08:00
+942:2986,4.25,118.65,Zanclus cornutus,moorish_idol,1,OBIS_presence_grid,15,1,https://www.inaturalist.org/observations/372870191,iNaturalist research-grade observations,2026-06-09T08:30:00+08:00
+943:2986,4.35,118.65,Zanclus cornutus,moorish_idol,1,OBIS_presence_grid,1,1,https://www.inaturalist.org/observations/72249141,iNaturalist research-grade observations,2018-12-26T09:17:10+01:00
+945:2988,4.55,118.85,Zanclus cornutus,moorish_idol,1,OBIS_presence_grid,3,1,https://www.inaturalist.org/observations/242228950,iNaturalist research-grade observations,2024-09-17T10:31:22+08:00
+945:2989,4.55,118.95,Zanclus cornutus,moorish_idol,1,OBIS_presence_grid,8,1,https://www.inaturalist.org/observations/263397060,iNaturalist research-grade observations,2013-05-10T05:24:00+08:00
+957:2830,5.75,103.05,Zanclus cornutus,moorish_idol,1,OBIS_presence_grid,1,1,https://www.inaturalist.org/observations/84053839,iNaturalist research-grade observations,2017-07-03T12:43:00+03:00
+959:2959,5.95,115.95,Zanclus cornutus,moorish_idol,1,OBIS_presence_grid,2,1,https://www.inaturalist.org/observations/159162477,iNaturalist research-grade observations,2020-01-03
+960:2800,6.05,100.05,Zanclus cornutus,moorish_idol,1,OBIS_presence_grid,1,1,http://www.inaturalist.org/observations/641350,iNaturalist research-grade observations,2010-10-17
+960:2959,6.05,115.95,Zanclus cornutus,moorish_idol,1,OBIS_presence_grid,1,1,https://www.inaturalist.org/observations/262558975,iNaturalist research-grade observations,2012-08-02T06:44:00+08:00
+960:2960,6.05,116.05,Zanclus cornutus,moorish_idol,1,OBIS_presence_grid,6,1,https://www.inaturalist.org/observations/322686235,iNaturalist research-grade observations,2025-09-16T09:56:00+08:00
+961:2799,6.15,99.95,Zanclus cornutus,moorish_idol,1,OBIS_presence_grid,1,1,https://www.inaturalist.org/observations/84332437,iNaturalist research-grade observations,2017-06-02T09:57:00+03:00
+961:2981,6.15,118.15,Zanclus cornutus,moorish_idol,1,OBIS_presence_grid,1,1,FN2[31389976]:FMNH-35[220083:51910],FMNH,
+965:2979,6.55,117.95,Zanclus cornutus,moorish_idol,1,OBIS_presence_grid,3,1,https://www.inaturalist.org/observations/348878793,iNaturalist research-grade observations,2023-06-16T06:55:42+08:00
+966:2963,6.65,116.35,Zanclus cornutus,moorish_idol,1,OBIS_presence_grid,1,1,https://www.inaturalist.org/observations/206444118,iNaturalist research-grade observations,2010-10-26T16:08:00+08:00
+967:2963,6.75,116.35,Zanclus cornutus,moorish_idol,1,OBIS_presence_grid,5,1,https://www.inaturalist.org/observations/35271556,iNaturalist research-grade observations,2019-10-23T11:36:45+11:00

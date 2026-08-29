@@ -1,0 +1,13 @@
+species_slug,scientific_name,model,evaluation,cv_folds,spatial_block_degrees,rows,presence_rows,background_rows,roc_auc,pr_auc,brier_score,balanced_accuracy_at_0_5
+green_sea_turtle,Chelonia mydas,random_forest,stratified spatial-block cross-validation,5,1.0,452,113,339,0.7519121831519044,0.441303950896233,0.1714354513165605,0.6106194690265487
+green_sea_turtle,Chelonia mydas,quadratic_logistic_regression,stratified spatial-block cross-validation,5,1.0,452,113,339,0.6823557052235885,0.33698830757846143,0.21825946459361464,0.6814159292035398
+green_sea_turtle,Chelonia mydas,logistic_regression,stratified spatial-block cross-validation,5,1.0,452,113,339,0.6301198214425562,0.3096404606476163,0.2300803813769183,0.7109144542772861
+irrawaddy_dolphin,Orcaella brevirostris,logistic_regression,stratified spatial-block cross-validation,3,1.0,44,11,33,0.7548209366391184,0.4289268391541119,0.21562091405698525,0.7121212121212122
+irrawaddy_dolphin,Orcaella brevirostris,quadratic_logistic_regression,stratified spatial-block cross-validation,3,1.0,44,11,33,0.7493112947658402,0.3901724139762417,0.21260775915343658,0.7272727272727273
+irrawaddy_dolphin,Orcaella brevirostris,random_forest,stratified spatial-block cross-validation,3,1.0,44,11,33,0.5068870523415978,0.2839385647390903,0.24287123504883049,0.3939393939393939
+moorish_idol,Zanclus cornutus,random_forest,stratified spatial-block cross-validation,5,1.0,68,17,51,0.8010380622837369,0.5167570382012876,0.1607451256141259,0.6274509803921569
+moorish_idol,Zanclus cornutus,logistic_regression,stratified spatial-block cross-validation,5,1.0,68,17,51,0.4901960784313726,0.2756613296229337,0.26522980549376896,0.46078431372549017
+moorish_idol,Zanclus cornutus,quadratic_logistic_regression,stratified spatial-block cross-validation,5,1.0,68,17,51,0.4682814302191465,0.2737624811651156,0.26825538428763335,0.49019607843137253
+ocellaris_clownfish,Amphiprion ocellaris,random_forest,stratified spatial-block cross-validation,5,1.0,156,39,117,0.6857330703484549,0.42008922229722606,0.1804241320610236,0.6111111111111112
+ocellaris_clownfish,Amphiprion ocellaris,logistic_regression,stratified spatial-block cross-validation,5,1.0,156,39,117,0.3214990138067061,0.18373496763264802,0.26100355246379,0.4017094017094017
+ocellaris_clownfish,Amphiprion ocellaris,quadratic_logistic_regression,stratified spatial-block cross-validation,5,1.0,156,39,117,0.2901599824676747,0.1751904912841099,0.26419485917309954,0.32905982905982906

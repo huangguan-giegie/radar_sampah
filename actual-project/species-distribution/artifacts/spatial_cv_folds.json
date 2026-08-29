@@ -1,0 +1,458 @@
+{
+  "green_sea_turtle:logistic_regression": [
+    {
+      "fold": 1,
+      "train_rows": 362,
+      "test_rows": 90,
+      "train_presence": 89,
+      "test_presence": 24,
+      "test_spatial_blocks": 17
+    },
+    {
+      "fold": 2,
+      "train_rows": 351,
+      "test_rows": 101,
+      "train_presence": 86,
+      "test_presence": 27,
+      "test_spatial_blocks": 18
+    },
+    {
+      "fold": 3,
+      "train_rows": 365,
+      "test_rows": 87,
+      "train_presence": 92,
+      "test_presence": 21,
+      "test_spatial_blocks": 14
+    },
+    {
+      "fold": 4,
+      "train_rows": 366,
+      "test_rows": 86,
+      "train_presence": 94,
+      "test_presence": 19,
+      "test_spatial_blocks": 13
+    },
+    {
+      "fold": 5,
+      "train_rows": 364,
+      "test_rows": 88,
+      "train_presence": 91,
+      "test_presence": 22,
+      "test_spatial_blocks": 14
+    }
+  ],
+  "green_sea_turtle:quadratic_logistic_regression": [
+    {
+      "fold": 1,
+      "train_rows": 362,
+      "test_rows": 90,
+      "train_presence": 89,
+      "test_presence": 24,
+      "test_spatial_blocks": 17
+    },
+    {
+      "fold": 2,
+      "train_rows": 351,
+      "test_rows": 101,
+      "train_presence": 86,
+      "test_presence": 27,
+      "test_spatial_blocks": 18
+    },
+    {
+      "fold": 3,
+      "train_rows": 365,
+      "test_rows": 87,
+      "train_presence": 92,
+      "test_presence": 21,
+      "test_spatial_blocks": 14
+    },
+    {
+      "fold": 4,
+      "train_rows": 366,
+      "test_rows": 86,
+      "train_presence": 94,
+      "test_presence": 19,
+      "test_spatial_blocks": 13
+    },
+    {
+      "fold": 5,
+      "train_rows": 364,
+      "test_rows": 88,
+      "train_presence": 91,
+      "test_presence": 22,
+      "test_spatial_blocks": 14
+    }
+  ],
+  "green_sea_turtle:random_forest": [
+    {
+      "fold": 1,
+      "train_rows": 362,
+      "test_rows": 90,
+      "train_presence": 89,
+      "test_presence": 24,
+      "test_spatial_blocks": 17
+    },
+    {
+      "fold": 2,
+      "train_rows": 351,
+      "test_rows": 101,
+      "train_presence": 86,
+      "test_presence": 27,
+      "test_spatial_blocks": 18
+    },
+    {
+      "fold": 3,
+      "train_rows": 365,
+      "test_rows": 87,
+      "train_presence": 92,
+      "test_presence": 21,
+      "test_spatial_blocks": 14
+    },
+    {
+      "fold": 4,
+      "train_rows": 366,
+      "test_rows": 86,
+      "train_presence": 94,
+      "test_presence": 19,
+      "test_spatial_blocks": 13
+    },
+    {
+      "fold": 5,
+      "train_rows": 364,
+      "test_rows": 88,
+      "train_presence": 91,
+      "test_presence": 22,
+      "test_spatial_blocks": 14
+    }
+  ],
+  "ocellaris_clownfish:logistic_regression": [
+    {
+      "fold": 1,
+      "train_rows": 125,
+      "test_rows": 31,
+      "train_presence": 30,
+      "test_presence": 9,
+      "test_spatial_blocks": 11
+    },
+    {
+      "fold": 2,
+      "train_rows": 122,
+      "test_rows": 34,
+      "train_presence": 30,
+      "test_presence": 9,
+      "test_spatial_blocks": 10
+    },
+    {
+      "fold": 3,
+      "train_rows": 126,
+      "test_rows": 30,
+      "train_presence": 32,
+      "test_presence": 7,
+      "test_spatial_blocks": 10
+    },
+    {
+      "fold": 4,
+      "train_rows": 125,
+      "test_rows": 31,
+      "train_presence": 32,
+      "test_presence": 7,
+      "test_spatial_blocks": 10
+    },
+    {
+      "fold": 5,
+      "train_rows": 126,
+      "test_rows": 30,
+      "train_presence": 32,
+      "test_presence": 7,
+      "test_spatial_blocks": 12
+    }
+  ],
+  "ocellaris_clownfish:quadratic_logistic_regression": [
+    {
+      "fold": 1,
+      "train_rows": 125,
+      "test_rows": 31,
+      "train_presence": 30,
+      "test_presence": 9,
+      "test_spatial_blocks": 11
+    },
+    {
+      "fold": 2,
+      "train_rows": 122,
+      "test_rows": 34,
+      "train_presence": 30,
+      "test_presence": 9,
+      "test_spatial_blocks": 10
+    },
+    {
+      "fold": 3,
+      "train_rows": 126,
+      "test_rows": 30,
+      "train_presence": 32,
+      "test_presence": 7,
+      "test_spatial_blocks": 10
+    },
+    {
+      "fold": 4,
+      "train_rows": 125,
+      "test_rows": 31,
+      "train_presence": 32,
+      "test_presence": 7,
+      "test_spatial_blocks": 10
+    },
+    {
+      "fold": 5,
+      "train_rows": 126,
+      "test_rows": 30,
+      "train_presence": 32,
+      "test_presence": 7,
+      "test_spatial_blocks": 12
+    }
+  ],
+  "ocellaris_clownfish:random_forest": [
+    {
+      "fold": 1,
+      "train_rows": 125,
+      "test_rows": 31,
+      "train_presence": 30,
+      "test_presence": 9,
+      "test_spatial_blocks": 11
+    },
+    {
+      "fold": 2,
+      "train_rows": 122,
+      "test_rows": 34,
+      "train_presence": 30,
+      "test_presence": 9,
+      "test_spatial_blocks": 10
+    },
+    {
+      "fold": 3,
+      "train_rows": 126,
+      "test_rows": 30,
+      "train_presence": 32,
+      "test_presence": 7,
+      "test_spatial_blocks": 10
+    },
+    {
+      "fold": 4,
+      "train_rows": 125,
+      "test_rows": 31,
+      "train_presence": 32,
+      "test_presence": 7,
+      "test_spatial_blocks": 10
+    },
+    {
+      "fold": 5,
+      "train_rows": 126,
+      "test_rows": 30,
+      "train_presence": 32,
+      "test_presence": 7,
+      "test_spatial_blocks": 12
+    }
+  ],
+  "irrawaddy_dolphin:logistic_regression": [
+    {
+      "fold": 1,
+      "train_rows": 28,
+      "test_rows": 16,
+      "train_presence": 5,
+      "test_presence": 6,
+      "test_spatial_blocks": 9
+    },
+    {
+      "fold": 2,
+      "train_rows": 29,
+      "test_rows": 15,
+      "train_presence": 7,
+      "test_presence": 4,
+      "test_spatial_blocks": 10
+    },
+    {
+      "fold": 3,
+      "train_rows": 31,
+      "test_rows": 13,
+      "train_presence": 10,
+      "test_presence": 1,
+      "test_spatial_blocks": 9
+    }
+  ],
+  "irrawaddy_dolphin:quadratic_logistic_regression": [
+    {
+      "fold": 1,
+      "train_rows": 28,
+      "test_rows": 16,
+      "train_presence": 5,
+      "test_presence": 6,
+      "test_spatial_blocks": 9
+    },
+    {
+      "fold": 2,
+      "train_rows": 29,
+      "test_rows": 15,
+      "train_presence": 7,
+      "test_presence": 4,
+      "test_spatial_blocks": 10
+    },
+    {
+      "fold": 3,
+      "train_rows": 31,
+      "test_rows": 13,
+      "train_presence": 10,
+      "test_presence": 1,
+      "test_spatial_blocks": 9
+    }
+  ],
+  "irrawaddy_dolphin:random_forest": [
+    {
+      "fold": 1,
+      "train_rows": 28,
+      "test_rows": 16,
+      "train_presence": 5,
+      "test_presence": 6,
+      "test_spatial_blocks": 9
+    },
+    {
+      "fold": 2,
+      "train_rows": 29,
+      "test_rows": 15,
+      "train_presence": 7,
+      "test_presence": 4,
+      "test_spatial_blocks": 10
+    },
+    {
+      "fold": 3,
+      "train_rows": 31,
+      "test_rows": 13,
+      "train_presence": 10,
+      "test_presence": 1,
+      "test_spatial_blocks": 9
+    }
+  ],
+  "moorish_idol:logistic_regression": [
+    {
+      "fold": 1,
+      "train_rows": 53,
+      "test_rows": 15,
+      "train_presence": 11,
+      "test_presence": 6,
+      "test_spatial_blocks": 7
+    },
+    {
+      "fold": 2,
+      "train_rows": 56,
+      "test_rows": 12,
+      "train_presence": 14,
+      "test_presence": 3,
+      "test_spatial_blocks": 7
+    },
+    {
+      "fold": 3,
+      "train_rows": 55,
+      "test_rows": 13,
+      "train_presence": 15,
+      "test_presence": 2,
+      "test_spatial_blocks": 9
+    },
+    {
+      "fold": 4,
+      "train_rows": 54,
+      "test_rows": 14,
+      "train_presence": 14,
+      "test_presence": 3,
+      "test_spatial_blocks": 11
+    },
+    {
+      "fold": 5,
+      "train_rows": 54,
+      "test_rows": 14,
+      "train_presence": 14,
+      "test_presence": 3,
+      "test_spatial_blocks": 8
+    }
+  ],
+  "moorish_idol:quadratic_logistic_regression": [
+    {
+      "fold": 1,
+      "train_rows": 53,
+      "test_rows": 15,
+      "train_presence": 11,
+      "test_presence": 6,
+      "test_spatial_blocks": 7
+    },
+    {
+      "fold": 2,
+      "train_rows": 56,
+      "test_rows": 12,
+      "train_presence": 14,
+      "test_presence": 3,
+      "test_spatial_blocks": 7
+    },
+    {
+      "fold": 3,
+      "train_rows": 55,
+      "test_rows": 13,
+      "train_presence": 15,
+      "test_presence": 2,
+      "test_spatial_blocks": 9
+    },
+    {
+      "fold": 4,
+      "train_rows": 54,
+      "test_rows": 14,
+      "train_presence": 14,
+      "test_presence": 3,
+      "test_spatial_blocks": 11
+    },
+    {
+      "fold": 5,
+      "train_rows": 54,
+      "test_rows": 14,
+      "train_presence": 14,
+      "test_presence": 3,
+      "test_spatial_blocks": 8
+    }
+  ],
+  "moorish_idol:random_forest": [
+    {
+      "fold": 1,
+      "train_rows": 53,
+      "test_rows": 15,
+      "train_presence": 11,
+      "test_presence": 6,
+      "test_spatial_blocks": 7
+    },
+    {
+      "fold": 2,
+      "train_rows": 56,
+      "test_rows": 12,
+      "train_presence": 14,
+      "test_presence": 3,
+      "test_spatial_blocks": 7
+    },
+    {
+      "fold": 3,
+      "train_rows": 55,
+      "test_rows": 13,
+      "train_presence": 15,
+      "test_presence": 2,
+      "test_spatial_blocks": 9
+    },
+    {
+      "fold": 4,
+      "train_rows": 54,
+      "test_rows": 14,
+      "train_presence": 14,
+      "test_presence": 3,
+      "test_spatial_blocks": 11
+    },
+    {
+      "fold": 5,
+      "train_rows": 54,
+      "test_rows": 14,
+      "train_presence": 14,
+      "test_presence": 3,
+      "test_spatial_blocks": 8
+    }
+  ]
+}

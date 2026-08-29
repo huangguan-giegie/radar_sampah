@@ -1,0 +1,69 @@
+cell_id,latitude,longitude,scientific_name,species_slug,label,label_source,observation_count,source_dataset_count,example_occurrence_id,example_dataset_name,example_event_date
+928:2841,2.85,104.15,Zanclus cornutus,moorish_idol,1,OBIS_presence_grid,1,1,https://www.inaturalist.org/observations/37069725,iNaturalist research-grade observations,2007-07-05
+941:2986,4.15,118.65,Zanclus cornutus,moorish_idol,1,OBIS_presence_grid,12,1,https://www.inaturalist.org/observations/144430527,iNaturalist research-grade observations,2012-03-20
+941:2987,4.15,118.75,Zanclus cornutus,moorish_idol,1,OBIS_presence_grid,1,1,https://www.inaturalist.org/observations/238728896,iNaturalist research-grade observations,2019-12-28T17:19:00+08:00
+942:2986,4.25,118.65,Zanclus cornutus,moorish_idol,1,OBIS_presence_grid,15,1,https://www.inaturalist.org/observations/372870191,iNaturalist research-grade observations,2026-06-09T08:30:00+08:00
+943:2986,4.35,118.65,Zanclus cornutus,moorish_idol,1,OBIS_presence_grid,1,1,https://www.inaturalist.org/observations/72249141,iNaturalist research-grade observations,2018-12-26T09:17:10+01:00
+945:2988,4.55,118.85,Zanclus cornutus,moorish_idol,1,OBIS_presence_grid,3,1,https://www.inaturalist.org/observations/242228950,iNaturalist research-grade observations,2024-09-17T10:31:22+08:00
+945:2989,4.55,118.95,Zanclus cornutus,moorish_idol,1,OBIS_presence_grid,8,1,https://www.inaturalist.org/observations/263397060,iNaturalist research-grade observations,2013-05-10T05:24:00+08:00
+957:2830,5.75,103.05,Zanclus cornutus,moorish_idol,1,OBIS_presence_grid,1,1,https://www.inaturalist.org/observations/84053839,iNaturalist research-grade observations,2017-07-03T12:43:00+03:00
+959:2959,5.95,115.95,Zanclus cornutus,moorish_idol,1,OBIS_presence_grid,2,1,https://www.inaturalist.org/observations/159162477,iNaturalist research-grade observations,2020-01-03
+960:2800,6.05,100.05,Zanclus cornutus,moorish_idol,1,OBIS_presence_grid,1,1,http://www.inaturalist.org/observations/641350,iNaturalist research-grade observations,2010-10-17
+960:2959,6.05,115.95,Zanclus cornutus,moorish_idol,1,OBIS_presence_grid,1,1,https://www.inaturalist.org/observations/262558975,iNaturalist research-grade observations,2012-08-02T06:44:00+08:00
+960:2960,6.05,116.05,Zanclus cornutus,moorish_idol,1,OBIS_presence_grid,6,1,https://www.inaturalist.org/observations/322686235,iNaturalist research-grade observations,2025-09-16T09:56:00+08:00
+961:2799,6.15,99.95,Zanclus cornutus,moorish_idol,1,OBIS_presence_grid,1,1,https://www.inaturalist.org/observations/84332437,iNaturalist research-grade observations,2017-06-02T09:57:00+03:00
+961:2981,6.15,118.15,Zanclus cornutus,moorish_idol,1,OBIS_presence_grid,1,1,FN2[31389976]:FMNH-35[220083:51910],FMNH,
+965:2979,6.55,117.95,Zanclus cornutus,moorish_idol,1,OBIS_presence_grid,3,1,https://www.inaturalist.org/observations/348878793,iNaturalist research-grade observations,2023-06-16T06:55:42+08:00
+966:2963,6.65,116.35,Zanclus cornutus,moorish_idol,1,OBIS_presence_grid,1,1,https://www.inaturalist.org/observations/206444118,iNaturalist research-grade observations,2010-10-26T16:08:00+08:00
+967:2963,6.75,116.35,Zanclus cornutus,moorish_idol,1,OBIS_presence_grid,5,1,https://www.inaturalist.org/observations/35271556,iNaturalist research-grade observations,2019-10-23T11:36:45+11:00
+913:2833,1.35,103.35,Zanclus cornutus,moorish_idol,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+915:2909,1.55,110.95,Zanclus cornutus,moorish_idol,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+917:2899,1.75,109.95,Zanclus cornutus,moorish_idol,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+919:2825,1.95,102.55,Zanclus cornutus,moorish_idol,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+919:2908,1.95,110.85,Zanclus cornutus,moorish_idol,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+923:2840,2.35,104.05,Zanclus cornutus,moorish_idol,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+925:2842,2.55,104.25,Zanclus cornutus,moorish_idol,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+925:2901,2.55,110.15,Zanclus cornutus,moorish_idol,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+929:2905,2.95,110.55,Zanclus cornutus,moorish_idol,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+932:2913,3.25,111.35,Zanclus cornutus,moorish_idol,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+933:2834,3.35,103.45,Zanclus cornutus,moorish_idol,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+935:2924,3.55,112.45,Zanclus cornutus,moorish_idol,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+936:2841,3.65,104.15,Zanclus cornutus,moorish_idol,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+937:2802,3.75,100.25,Zanclus cornutus,moorish_idol,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+937:2933,3.75,113.35,Zanclus cornutus,moorish_idol,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+938:2909,3.85,110.95,Zanclus cornutus,moorish_idol,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+943:2930,4.35,113.05,Zanclus cornutus,moorish_idol,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+944:2915,4.45,111.55,Zanclus cornutus,moorish_idol,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+944:2987,4.45,118.75,Zanclus cornutus,moorish_idol,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+946:2847,4.65,104.75,Zanclus cornutus,moorish_idol,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+946:2927,4.65,112.75,Zanclus cornutus,moorish_idol,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+947:2805,4.75,100.55,Zanclus cornutus,moorish_idol,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+947:2935,4.75,113.55,Zanclus cornutus,moorish_idol,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+948:2839,4.85,103.95,Zanclus cornutus,moorish_idol,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+949:2953,4.95,115.35,Zanclus cornutus,moorish_idol,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+950:2844,5.05,104.45,Zanclus cornutus,moorish_idol,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+952:2837,5.25,103.75,Zanclus cornutus,moorish_idol,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+954:2785,5.45,98.55,Zanclus cornutus,moorish_idol,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+955:2908,5.55,110.85,Zanclus cornutus,moorish_idol,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+956:2789,5.65,98.95,Zanclus cornutus,moorish_idol,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+956:2792,5.65,99.25,Zanclus cornutus,moorish_idol,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+956:2856,5.65,105.65,Zanclus cornutus,moorish_idol,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+957:2788,5.75,98.85,Zanclus cornutus,moorish_idol,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+957:2945,5.75,114.55,Zanclus cornutus,moorish_idol,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+957:2958,5.75,115.85,Zanclus cornutus,moorish_idol,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+958:2845,5.85,104.55,Zanclus cornutus,moorish_idol,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+958:2983,5.85,118.35,Zanclus cornutus,moorish_idol,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+959:2985,5.95,118.55,Zanclus cornutus,moorish_idol,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+960:2950,6.05,115.05,Zanclus cornutus,moorish_idol,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+964:2943,6.45,114.35,Zanclus cornutus,moorish_idol,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+965:2949,6.55,114.95,Zanclus cornutus,moorish_idol,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+965:2951,6.55,115.15,Zanclus cornutus,moorish_idol,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+966:2965,6.65,116.55,Zanclus cornutus,moorish_idol,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+968:2947,6.85,114.75,Zanclus cornutus,moorish_idol,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+968:2959,6.85,115.95,Zanclus cornutus,moorish_idol,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+974:2972,7.45,117.25,Zanclus cornutus,moorish_idol,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+975:2965,7.55,116.55,Zanclus cornutus,moorish_idol,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+976:2929,7.65,112.95,Zanclus cornutus,moorish_idol,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+976:2957,7.65,115.75,Zanclus cornutus,moorish_idol,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+978:2945,7.85,114.55,Zanclus cornutus,moorish_idol,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+979:2949,7.95,114.95,Zanclus cornutus,moorish_idol,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,

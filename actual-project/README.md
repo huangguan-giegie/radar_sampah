@@ -65,3 +65,11 @@ See `docs/WORK_ALLOCATION_PLAN.md`. Darli owns the User Acceptance Criteria
 review from Amirah's point of view. Keith keeps the Epics, User Stories and
 technical Given/When/Then baseline; Huang coordinates the final cross-file
 check.
+
+## Experimental OBIS species model
+
+The `obis-species-model` branch adds a self-contained Iteration 1 coordinate-only
+species distribution module under [`species-distribution/`](species-distribution/README.md).
+It includes source-traceable OBIS data, presence/background training tables,
+spatial cross-validation, trained model artifacts, heatmap grids, inference and
+deployment guidance. It is not yet wired into the current Flask API.

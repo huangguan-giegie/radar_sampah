@@ -1,0 +1,453 @@
+cell_id,latitude,longitude,scientific_name,species_slug,label,label_source,observation_count,source_dataset_count,example_occurrence_id,example_dataset_name,example_event_date
+917:2842,1.75,104.25,Chelonia mydas,green_sea_turtle,1,OBIS_presence_grid,1,1,975_257,Satellite tracked green turtles in the South China Sea 1993-1994,1994-09-25T07:23
+921:2840,2.15,104.05,Chelonia mydas,green_sea_turtle,1,OBIS_presence_grid,1,1,975_256,Satellite tracked green turtles in the South China Sea 1993-1994,1994-09-24T06:58
+923:2839,2.35,103.95,Chelonia mydas,green_sea_turtle,1,OBIS_presence_grid,1,1,975_255,Satellite tracked green turtles in the South China Sea 1993-1994,1994-09-23T20:40
+924:2838,2.45,103.85,Chelonia mydas,green_sea_turtle,1,OBIS_presence_grid,1,1,975_253,Satellite tracked green turtles in the South China Sea 1993-1994,1994-09-23T08:06
+924:2839,2.45,103.95,Chelonia mydas,green_sea_turtle,1,OBIS_presence_grid,1,1,975_254,Satellite tracked green turtles in the South China Sea 1993-1994,1994-09-23T09:46
+925:2838,2.55,103.85,Chelonia mydas,green_sea_turtle,1,OBIS_presence_grid,1,1,975_252,Satellite tracked green turtles in the South China Sea 1993-1994,1994-09-23T05:32
+926:2838,2.65,103.85,Chelonia mydas,green_sea_turtle,1,OBIS_presence_grid,2,1,975_251,Satellite tracked green turtles in the South China Sea 1993-1994,1994-09-22T18:23
+930:2835,3.05,103.55,Chelonia mydas,green_sea_turtle,1,OBIS_presence_grid,1,1,975_249,Satellite tracked green turtles in the South China Sea 1993-1994,1994-09-21T08:47
+932:2836,3.25,103.65,Chelonia mydas,green_sea_turtle,1,OBIS_presence_grid,1,1,975_248,Satellite tracked green turtles in the South China Sea 1993-1994,1994-09-20T18:52
+934:2835,3.45,103.55,Chelonia mydas,green_sea_turtle,1,OBIS_presence_grid,1,1,975_247,Satellite tracked green turtles in the South China Sea 1993-1994,1994-09-19T17:22
+935:2835,3.55,103.55,Chelonia mydas,green_sea_turtle,1,OBIS_presence_grid,1,1,975_245,Satellite tracked green turtles in the South China Sea 1993-1994,1994-09-19T06:15
+936:2834,3.65,103.45,Chelonia mydas,green_sea_turtle,1,OBIS_presence_grid,1,1,975_244,Satellite tracked green turtles in the South China Sea 1993-1994,1994-09-18T20:53
+936:2835,3.65,103.55,Chelonia mydas,green_sea_turtle,1,OBIS_presence_grid,1,1,975_246,Satellite tracked green turtles in the South China Sea 1993-1994,1994-09-19T07:50
+937:2834,3.75,103.45,Chelonia mydas,green_sea_turtle,1,OBIS_presence_grid,1,1,975_243,Satellite tracked green turtles in the South China Sea 1993-1994,1994-09-18T09:50
+938:2847,3.85,104.75,Chelonia mydas,green_sea_turtle,1,OBIS_presence_grid,1,1,975_207,Satellite tracked green turtles in the South China Sea 1993-1994,1994-10-08T07:36
+939:2835,3.95,103.55,Chelonia mydas,green_sea_turtle,1,OBIS_presence_grid,1,1,975_242,Satellite tracked green turtles in the South China Sea 1993-1994,1994-09-17T17:51
+940:2834,4.05,103.45,Chelonia mydas,green_sea_turtle,1,OBIS_presence_grid,1,1,975_241,Satellite tracked green turtles in the South China Sea 1993-1994,1994-09-17T08:33
+940:2846,4.05,104.65,Chelonia mydas,green_sea_turtle,1,OBIS_presence_grid,1,1,975_205,Satellite tracked green turtles in the South China Sea 1993-1994,1994-10-07T18:41
+940:2847,4.05,104.75,Chelonia mydas,green_sea_turtle,1,OBIS_presence_grid,1,1,975_206,Satellite tracked green turtles in the South China Sea 1993-1994,1994-10-07T20:45
+941:2834,4.15,103.45,Chelonia mydas,green_sea_turtle,1,OBIS_presence_grid,1,1,975_240,Satellite tracked green turtles in the South China Sea 1993-1994,1994-09-17T06:44
+941:2845,4.15,104.55,Chelonia mydas,green_sea_turtle,1,OBIS_presence_grid,1,1,975_203,Satellite tracked green turtles in the South China Sea 1993-1994,1994-10-07T09:04
+941:2846,4.15,104.65,Chelonia mydas,green_sea_turtle,1,OBIS_presence_grid,1,1,975_204,Satellite tracked green turtles in the South China Sea 1993-1994,1994-10-07T17:03
+942:2842,4.25,104.25,Chelonia mydas,green_sea_turtle,1,OBIS_presence_grid,1,1,975_200,Satellite tracked green turtles in the South China Sea 1993-1994,1994-10-06T18:52
+943:2843,4.35,104.35,Chelonia mydas,green_sea_turtle,1,OBIS_presence_grid,2,1,975_201,Satellite tracked green turtles in the South China Sea 1993-1994,1994-10-06T19:27
+943:2844,4.35,104.45,Chelonia mydas,green_sea_turtle,1,OBIS_presence_grid,1,1,975_199,Satellite tracked green turtles in the South China Sea 1993-1994,1994-10-06T17:16
+945:2842,4.55,104.25,Chelonia mydas,green_sea_turtle,1,OBIS_presence_grid,2,1,975_198,Satellite tracked green turtles in the South China Sea 1993-1994,1994-10-06T10:04
+946:2834,4.65,103.45,Chelonia mydas,green_sea_turtle,1,OBIS_presence_grid,2,1,975_234,Satellite tracked green turtles in the South China Sea 1993-1994,1994-09-15T07:06
+946:2940,4.65,114.05,Chelonia mydas,green_sea_turtle,1,OBIS_presence_grid,1,1,975_137,Satellite tracked green turtles in the South China Sea 1993-1994,1994-10-04T07:25
+947:2938,4.75,113.85,Chelonia mydas,green_sea_turtle,1,OBIS_presence_grid,1,1,975_134,Satellite tracked green turtles in the South China Sea 1993-1994,1994-10-03T16:11
+947:2939,4.75,113.95,Chelonia mydas,green_sea_turtle,1,OBIS_presence_grid,2,1,975_136,Satellite tracked green turtles in the South China Sea 1993-1994,1994-10-04T04:54
+948:2834,4.85,103.45,Chelonia mydas,green_sea_turtle,1,OBIS_presence_grid,1,1,975_233,Satellite tracked green turtles in the South China Sea 1993-1994,1994-09-14T20:41
+948:2839,4.85,103.95,Chelonia mydas,green_sea_turtle,1,OBIS_presence_grid,1,1,975_196,Satellite tracked green turtles in the South China Sea 1993-1994,1994-10-05T08:47
+948:2936,4.85,113.65,Chelonia mydas,green_sea_turtle,1,OBIS_presence_grid,1,1,975_133,Satellite tracked green turtles in the South China Sea 1993-1994,1994-10-03T06:44
+949:2834,4.95,103.45,Chelonia mydas,green_sea_turtle,1,OBIS_presence_grid,1,1,975_231,Satellite tracked green turtles in the South China Sea 1993-1994,1994-09-14T09:38
+949:2838,4.95,103.85,Chelonia mydas,green_sea_turtle,1,OBIS_presence_grid,1,1,975_193,Satellite tracked green turtles in the South China Sea 1993-1994,1994-10-04T09:01
+949:2839,4.95,103.95,Chelonia mydas,green_sea_turtle,1,OBIS_presence_grid,1,1,975_195,Satellite tracked green turtles in the South China Sea 1993-1994,1994-10-05T07:04
+950:2833,5.05,103.35,Chelonia mydas,green_sea_turtle,1,OBIS_presence_grid,1,1,975_230,Satellite tracked green turtles in the South China Sea 1993-1994,1994-09-14T07:20
+950:2837,5.05,103.75,Chelonia mydas,green_sea_turtle,1,OBIS_presence_grid,4,1,975_191,Satellite tracked green turtles in the South China Sea 1993-1994,1994-10-04T06:34
+950:2838,5.05,103.85,Chelonia mydas,green_sea_turtle,1,OBIS_presence_grid,1,1,975_194,Satellite tracked green turtles in the South China Sea 1993-1994,1994-10-04T17:44
+950:2934,5.05,113.45,Chelonia mydas,green_sea_turtle,1,OBIS_presence_grid,1,1,975_132,Satellite tracked green turtles in the South China Sea 1993-1994,1994-10-02T18:06
+951:2833,5.15,103.35,Chelonia mydas,green_sea_turtle,1,OBIS_presence_grid,1,1,975_229,Satellite tracked green turtles in the South China Sea 1993-1994,1994-09-14T05:37
+951:2835,5.15,103.55,Chelonia mydas,green_sea_turtle,1,OBIS_presence_grid,1,1,975_185,Satellite tracked green turtles in the South China Sea 1993-1994,1994-10-02T18:08
+951:2836,5.15,103.65,Chelonia mydas,green_sea_turtle,1,OBIS_presence_grid,5,1,975_186,Satellite tracked green turtles in the South China Sea 1993-1994,1994-10-02T20:47
+951:2837,5.15,103.75,Chelonia mydas,green_sea_turtle,1,OBIS_presence_grid,1,1,975_187,Satellite tracked green turtles in the South China Sea 1993-1994,1994-10-03T06:44
+951:2932,5.15,113.25,Chelonia mydas,green_sea_turtle,1,OBIS_presence_grid,2,1,975_130,Satellite tracked green turtles in the South China Sea 1993-1994,1994-10-02T06:31
+952:2832,5.25,103.25,Chelonia mydas,green_sea_turtle,1,OBIS_presence_grid,1,1,975_227,Satellite tracked green turtles in the South China Sea 1993-1994,1994-09-13T10:00
+953:2831,5.35,103.15,Chelonia mydas,green_sea_turtle,1,OBIS_presence_grid,1,1,975_226,Satellite tracked green turtles in the South China Sea 1993-1994,1994-09-12T21:25
+953:2834,5.35,103.45,Chelonia mydas,green_sea_turtle,1,OBIS_presence_grid,1,1,975_179,Satellite tracked green turtles in the South China Sea 1993-1994,1994-10-01T07:09
+953:2835,5.35,103.55,Chelonia mydas,green_sea_turtle,1,OBIS_presence_grid,2,1,975_181,Satellite tracked green turtles in the South China Sea 1993-1994,1994-10-01T18:14
+953:2853,5.35,105.35,Chelonia mydas,green_sea_turtle,1,OBIS_presence_grid,1,1,975_17,Satellite tracked green turtles in the South China Sea 1993-1994,1993-09-28T12:01
+953:2922,5.35,112.25,Chelonia mydas,green_sea_turtle,1,OBIS_presence_grid,1,1,975_121,Satellite tracked green turtles in the South China Sea 1993-1994,1994-09-30T07:13
+953:2923,5.35,112.35,Chelonia mydas,green_sea_turtle,1,OBIS_presence_grid,1,1,975_122,Satellite tracked green turtles in the South China Sea 1993-1994,1994-09-30T08:54
+953:2925,5.35,112.55,Chelonia mydas,green_sea_turtle,1,OBIS_presence_grid,1,1,975_123,Satellite tracked green turtles in the South China Sea 1993-1994,1994-09-30T16:48
+953:2927,5.35,112.75,Chelonia mydas,green_sea_turtle,1,OBIS_presence_grid,1,1,975_124,Satellite tracked green turtles in the South China Sea 1993-1994,1994-10-01T05:29
+953:2928,5.35,112.85,Chelonia mydas,green_sea_turtle,1,OBIS_presence_grid,2,1,975_126,Satellite tracked green turtles in the South China Sea 1993-1994,1994-10-01T08:30
+953:2930,5.35,113.05,Chelonia mydas,green_sea_turtle,1,OBIS_presence_grid,2,1,975_127,Satellite tracked green turtles in the South China Sea 1993-1994,1994-10-01T16:36
+953:2931,5.35,113.15,Chelonia mydas,green_sea_turtle,1,OBIS_presence_grid,1,1,975_129,Satellite tracked green turtles in the South China Sea 1993-1994,1994-10-01T19:32
+953:2951,5.35,115.15,Chelonia mydas,green_sea_turtle,1,OBIS_presence_grid,2,2,975_147,Satellite tracked green turtles in the South China Sea 1993-1994,1994-10-08T18:45
+954:2831,5.45,103.15,Chelonia mydas,green_sea_turtle,1,OBIS_presence_grid,3,1,975_319,Satellite tracked green turtles in the South China Sea 1993-1994,1994-09-19T20:32
+954:2833,5.45,103.35,Chelonia mydas,green_sea_turtle,1,OBIS_presence_grid,1,1,975_174,Satellite tracked green turtles in the South China Sea 1993-1994,1994-09-30T08:56
+954:2834,5.45,103.45,Chelonia mydas,green_sea_turtle,1,OBIS_presence_grid,2,1,975_175,Satellite tracked green turtles in the South China Sea 1993-1994,1994-09-30T16:51
+955:2829,5.55,102.95,Chelonia mydas,green_sea_turtle,1,OBIS_presence_grid,1,1,975_320,Satellite tracked green turtles in the South China Sea 1993-1994,1994-09-21T08:49
+955:2830,5.55,103.05,Chelonia mydas,green_sea_turtle,1,OBIS_presence_grid,3,1,975_317,Satellite tracked green turtles in the South China Sea 1993-1994,1994-09-19T07:55
+955:2831,5.55,103.15,Chelonia mydas,green_sea_turtle,1,OBIS_presence_grid,1,1,975_161,Satellite tracked green turtles in the South China Sea 1993-1994,1994-09-24T06:51
+955:2833,5.55,103.35,Chelonia mydas,green_sea_turtle,1,OBIS_presence_grid,1,1,975_173,Satellite tracked green turtles in the South China Sea 1993-1994,1994-09-30T07:13
+955:2835,5.55,103.55,Chelonia mydas,green_sea_turtle,1,OBIS_presence_grid,1,1,975_178,Satellite tracked green turtles in the South China Sea 1993-1994,1994-09-30T21:31
+955:2921,5.55,112.15,Chelonia mydas,green_sea_turtle,1,OBIS_presence_grid,2,1,975_120,Satellite tracked green turtles in the South China Sea 1993-1994,1994-09-29T20:18
+955:2954,5.55,115.45,Chelonia mydas,green_sea_turtle,1,OBIS_presence_grid,1,1,975_148,Satellite tracked green turtles in the South China Sea 1993-1994,1994-10-09T16:38
+956:2828,5.65,102.85,Chelonia mydas,green_sea_turtle,1,OBIS_presence_grid,1,1,975_164,Satellite tracked green turtles in the South China Sea 1993-1994,1994-09-26T19:46
+956:2831,5.65,103.15,Chelonia mydas,green_sea_turtle,1,OBIS_presence_grid,3,1,975_170,Satellite tracked green turtles in the South China Sea 1993-1994,1994-09-29T07:34
+956:2919,5.65,111.95,Chelonia mydas,green_sea_turtle,1,OBIS_presence_grid,1,1,975_117,Satellite tracked green turtles in the South China Sea 1993-1994,1994-09-28T09:12
+956:2920,5.65,112.05,Chelonia mydas,green_sea_turtle,1,OBIS_presence_grid,1,1,975_118,Satellite tracked green turtles in the South China Sea 1993-1994,1994-09-29T17:03
+956:2955,5.65,115.55,Chelonia mydas,green_sea_turtle,1,OBIS_presence_grid,1,1,975_156,Satellite tracked green turtles in the South China Sea 1993-1994,1994-10-13T07:30
+957:2831,5.75,103.15,Chelonia mydas,green_sea_turtle,1,OBIS_presence_grid,1,1,975_171,Satellite tracked green turtles in the South China Sea 1993-1994,1994-09-29T07:35
+957:2833,5.75,103.35,Chelonia mydas,green_sea_turtle,1,OBIS_presence_grid,1,1,975_172,Satellite tracked green turtles in the South China Sea 1993-1994,1994-09-29T18:36
+957:2835,5.75,103.55,Chelonia mydas,green_sea_turtle,1,OBIS_presence_grid,1,1,975_3,Satellite tracked green turtles in the South China Sea 1993-1994,1993-09-25T04:46
+957:2855,5.75,105.55,Chelonia mydas,green_sea_turtle,1,OBIS_presence_grid,2,1,975_14,Satellite tracked green turtles in the South China Sea 1993-1994,1993-09-28T23:25
+957:2918,5.75,111.85,Chelonia mydas,green_sea_turtle,1,OBIS_presence_grid,1,1,975_116,Satellite tracked green turtles in the South China Sea 1993-1994,1994-09-29T05:54
+957:2955,5.75,115.55,Chelonia mydas,green_sea_turtle,1,OBIS_presence_grid,2,1,975_155,Satellite tracked green turtles in the South China Sea 1993-1994,1994-10-12T16:04
+957:2956,5.75,115.65,Chelonia mydas,green_sea_turtle,1,OBIS_presence_grid,2,1,975_149,Satellite tracked green turtles in the South China Sea 1993-1994,1994-10-10T16:22
+958:2829,5.85,102.95,Chelonia mydas,green_sea_turtle,1,OBIS_presence_grid,1,1,975_166,Satellite tracked green turtles in the South China Sea 1993-1994,1994-09-27T19:24
+958:2830,5.85,103.05,Chelonia mydas,green_sea_turtle,1,OBIS_presence_grid,7,1,975_163,Satellite tracked green turtles in the South China Sea 1993-1994,1994-09-25T17:49
+958:2835,5.85,103.55,Chelonia mydas,green_sea_turtle,1,OBIS_presence_grid,1,1,975_176,Satellite tracked green turtles in the South China Sea 1993-1994,1994-09-30T18:22
+958:2853,5.85,105.35,Chelonia mydas,green_sea_turtle,1,OBIS_presence_grid,2,1,975_12,Satellite tracked green turtles in the South China Sea 1993-1994,1993-09-28T14:37
+958:2855,5.85,105.55,Chelonia mydas,green_sea_turtle,1,OBIS_presence_grid,1,1,975_16,Satellite tracked green turtles in the South China Sea 1993-1994,1993-09-29T03:14
+958:2915,5.85,111.55,Chelonia mydas,green_sea_turtle,1,OBIS_presence_grid,1,1,975_114,Satellite tracked green turtles in the South China Sea 1993-1994,1994-09-28T17:12
+958:2916,5.85,111.65,Chelonia mydas,green_sea_turtle,1,OBIS_presence_grid,1,1,975_115,Satellite tracked green turtles in the South China Sea 1993-1994,1994-09-28T20:40
+958:2955,5.85,115.55,Chelonia mydas,green_sea_turtle,1,OBIS_presence_grid,1,1,975_150,Satellite tracked green turtles in the South China Sea 1993-1994,1994-10-10T18:03
+960:2826,6.05,102.65,Chelonia mydas,green_sea_turtle,1,OBIS_presence_grid,1,1,975_323,Satellite tracked green turtles in the South China Sea 1993-1994,1994-09-22T08:20
+960:2830,6.05,103.05,Chelonia mydas,green_sea_turtle,1,OBIS_presence_grid,2,1,975_160,Satellite tracked green turtles in the South China Sea 1993-1994,1994-09-22T08:31
+960:2832,6.05,103.25,Chelonia mydas,green_sea_turtle,1,OBIS_presence_grid,1,1,975_321,Satellite tracked green turtles in the South China Sea 1993-1994,1994-09-21T19:49
+960:2833,6.05,103.35,Chelonia mydas,green_sea_turtle,1,OBIS_presence_grid,1,1,975_322,Satellite tracked green turtles in the South China Sea 1993-1994,1994-09-21T21:27
+960:2849,6.05,104.95,Chelonia mydas,green_sea_turtle,1,OBIS_presence_grid,1,1,975_10,Satellite tracked green turtles in the South China Sea 1993-1994,1993-09-27T23:39
+960:2850,6.05,105.05,Chelonia mydas,green_sea_turtle,1,OBIS_presence_grid,1,1,975_11,Satellite tracked green turtles in the South China Sea 1993-1994,1993-09-28T01:19
+961:2833,6.15,103.35,Chelonia mydas,green_sea_turtle,1,OBIS_presence_grid,1,1,975_324,Satellite tracked green turtles in the South China Sea 1993-1994,1994-09-22T10:07
+961:2847,6.15,104.75,Chelonia mydas,green_sea_turtle,1,OBIS_presence_grid,2,1,975_8,Satellite tracked green turtles in the South China Sea 1993-1994,1993-09-27T14:58
+962:2832,6.25,103.25,Chelonia mydas,green_sea_turtle,1,OBIS_presence_grid,2,1,975_58,Satellite tracked green turtles in the South China Sea 1993-1994,1994-09-10T17:35
+962:2835,6.25,103.55,Chelonia mydas,green_sea_turtle,1,OBIS_presence_grid,1,1,975_325,Satellite tracked green turtles in the South China Sea 1993-1994,1994-09-22T18:27
+962:2838,6.25,103.85,Chelonia mydas,green_sea_turtle,1,OBIS_presence_grid,1,1,975_327,Satellite tracked green turtles in the South China Sea 1993-1994,1994-09-23T06:02
+962:2843,6.25,104.35,Chelonia mydas,green_sea_turtle,1,OBIS_presence_grid,2,1,975_5,Satellite tracked green turtles in the South China Sea 1993-1994,1993-09-27T01:32
+962:2844,6.25,104.45,Chelonia mydas,green_sea_turtle,1,OBIS_presence_grid,2,1,975_7,Satellite tracked green turtles in the South China Sea 1993-1994,1993-09-27T11:27
+963:2834,6.35,103.45,Chelonia mydas,green_sea_turtle,1,OBIS_presence_grid,1,1,975_60,Satellite tracked green turtles in the South China Sea 1993-1994,1994-09-11T08:01
+963:2836,6.35,103.65,Chelonia mydas,green_sea_turtle,1,OBIS_presence_grid,1,1,975_61,Satellite tracked green turtles in the South China Sea 1993-1994,1994-09-11T16:20
+963:2837,6.35,103.75,Chelonia mydas,green_sea_turtle,1,OBIS_presence_grid,1,1,975_326,Satellite tracked green turtles in the South China Sea 1993-1994,1994-09-23T04:28
+963:2838,6.35,103.85,Chelonia mydas,green_sea_turtle,1,OBIS_presence_grid,1,1,975_328,Satellite tracked green turtles in the South China Sea 1993-1994,1994-09-23T08:44
+964:2839,6.45,103.95,Chelonia mydas,green_sea_turtle,1,OBIS_presence_grid,1,1,975_62,Satellite tracked green turtles in the South China Sea 1993-1994,1994-09-12T06:01
+964:2840,6.45,104.05,Chelonia mydas,green_sea_turtle,1,OBIS_presence_grid,2,1,975_329,Satellite tracked green turtles in the South China Sea 1993-1994,1994-09-23T17:16
+965:2839,6.55,103.95,Chelonia mydas,green_sea_turtle,1,OBIS_presence_grid,1,1,975_63,Satellite tracked green turtles in the South China Sea 1993-1994,1994-09-12T07:42
+965:2843,6.55,104.35,Chelonia mydas,green_sea_turtle,1,OBIS_presence_grid,2,1,975_331,Satellite tracked green turtles in the South China Sea 1993-1994,1994-09-24T06:42
+966:2842,6.65,104.25,Chelonia mydas,green_sea_turtle,1,OBIS_presence_grid,1,1,975_64,Satellite tracked green turtles in the South China Sea 1993-1994,1994-09-12T20:28
+966:2845,6.65,104.55,Chelonia mydas,green_sea_turtle,1,OBIS_presence_grid,1,1,975_65,Satellite tracked green turtles in the South China Sea 1993-1994,1994-09-13T06:28
+970:2949,7.05,114.95,Chelonia mydas,green_sea_turtle,1,OBIS_presence_grid,1,1,975_377,Satellite tracked green turtles in the South China Sea 1993-1994,1994-10-13T04:43
+973:2968,7.35,116.85,Chelonia mydas,green_sea_turtle,1,OBIS_presence_grid,1,1,975_378,Satellite tracked green turtles in the South China Sea 1993-1994,1994-10-16T20:46
+915:2828,1.55,102.85,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+916:2844,1.65,104.45,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+916:2905,1.65,110.55,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+917:2843,1.75,104.35,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+917:2907,1.75,110.75,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+917:2910,1.75,111.05,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+918:2906,1.85,110.65,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+918:2908,1.85,110.85,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+919:2822,1.95,102.25,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+919:2849,1.95,104.95,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+919:2906,1.95,110.65,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+920:2843,2.05,104.35,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+920:2850,2.05,105.05,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+921:2819,2.15,101.95,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+921:2842,2.15,104.25,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+921:2910,2.15,111.05,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+922:2847,2.25,104.75,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+922:2905,2.25,110.55,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+922:2911,2.25,111.15,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+923:2841,2.35,104.15,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+923:2845,2.35,104.55,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+923:2913,2.35,111.35,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+924:2906,2.45,110.65,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+924:2911,2.45,111.15,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+925:2843,2.55,104.35,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+925:2903,2.55,110.35,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+925:2904,2.55,110.45,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+926:2844,2.65,104.45,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+926:2899,2.65,109.95,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+927:2837,2.75,103.75,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+927:2900,2.75,110.05,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+927:2901,2.75,110.15,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+928:2847,2.85,104.75,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+928:2902,2.85,110.25,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+928:2911,2.85,111.15,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+928:2913,2.85,111.35,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+929:2842,2.95,104.25,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+929:2913,2.95,111.35,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+929:2916,2.95,111.65,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+929:2919,2.95,111.95,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+930:2808,3.05,100.85,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+930:2900,3.05,110.05,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+930:2910,3.05,111.05,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+930:2925,3.05,112.55,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+931:2811,3.15,101.15,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+931:2899,3.15,109.95,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+931:2908,3.15,110.85,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+932:2810,3.25,101.05,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+932:2842,3.25,104.25,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+932:2844,3.25,104.45,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+932:2903,3.25,110.35,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+932:2920,3.25,112.05,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+932:2921,3.25,112.15,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+934:2838,3.45,103.85,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+934:2846,3.45,104.65,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+934:2913,3.45,111.35,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+934:2914,3.45,111.45,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+934:2923,3.45,112.35,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+934:2929,3.45,112.95,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+935:2838,3.55,103.85,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+935:2906,3.55,110.65,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+935:2914,3.55,111.45,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+935:2916,3.55,111.65,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+935:2918,3.55,111.85,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+935:2927,3.55,112.75,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+936:2802,3.65,100.25,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+936:2809,3.65,100.95,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+936:2846,3.65,104.65,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+936:2900,3.65,110.05,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+936:2902,3.65,110.25,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+936:2909,3.65,110.95,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+936:2914,3.65,111.45,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+936:2927,3.65,112.75,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+936:2928,3.65,112.85,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+936:2993,3.65,119.35,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+937:2803,3.75,100.35,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+937:2842,3.75,104.25,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+937:2912,3.75,111.25,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+937:2932,3.75,113.25,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+938:2803,3.85,100.35,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+939:2801,3.95,100.15,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+939:2904,3.95,110.45,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+939:2921,3.95,112.15,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+939:2984,3.95,118.45,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+939:2992,3.95,119.25,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+940:2798,4.05,99.85,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+940:2805,4.05,100.55,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+940:2835,4.05,103.55,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+940:2844,4.05,104.45,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+940:2917,4.05,111.75,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+940:2924,4.05,112.45,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+940:2928,4.05,112.85,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+940:2989,4.05,118.95,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+941:2796,4.15,99.65,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+941:2836,4.15,103.65,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+941:2916,4.15,111.65,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+941:2934,4.15,113.45,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+941:2937,4.15,113.75,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+941:2991,4.15,119.15,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+942:2910,4.25,111.05,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+942:2916,4.25,111.65,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+942:2917,4.25,111.75,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+942:2921,4.25,112.15,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+942:2922,4.25,112.25,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+942:2929,4.25,112.95,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+943:2795,4.35,99.55,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+943:2799,4.35,99.95,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+943:2903,4.35,110.35,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+943:2921,4.35,112.15,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+943:2933,4.35,113.35,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+944:2798,4.45,99.85,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+944:2850,4.45,105.05,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+944:2910,4.45,111.05,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+944:2933,4.45,113.35,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+945:2799,4.55,99.95,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+945:2837,4.55,103.75,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+945:2921,4.55,112.15,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+945:2986,4.55,118.65,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+946:2838,4.65,103.85,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+946:2841,4.65,104.15,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+946:2847,4.65,104.75,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+946:2905,4.65,110.55,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+946:2907,4.65,110.75,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+947:2834,4.75,103.45,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+947:2844,4.75,104.45,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+947:2902,4.75,110.25,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+947:2906,4.75,110.65,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+947:2930,4.75,113.05,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+947:2934,4.75,113.45,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+947:2935,4.75,113.55,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+948:2836,4.85,103.65,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+948:2988,4.85,118.85,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+949:2790,4.95,99.05,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+949:2791,4.95,99.15,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+949:2802,4.95,100.25,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+949:2803,4.95,100.35,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+949:2835,4.95,103.55,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+949:2840,4.95,104.05,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+949:2906,4.95,110.65,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+949:2928,4.95,112.85,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+949:2952,4.95,115.25,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+950:2791,5.05,99.15,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+950:2793,5.05,99.35,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+950:2797,5.05,99.75,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+950:2835,5.05,103.55,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+950:2851,5.05,105.15,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+950:2901,5.05,110.15,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+950:2905,5.05,110.55,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+951:2786,5.15,98.65,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+951:2790,5.15,99.05,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+951:2792,5.15,99.25,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+951:2800,5.15,100.05,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+951:2846,5.15,104.65,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+951:2901,5.15,110.15,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+951:2904,5.15,110.45,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+951:2920,5.15,112.05,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+951:2933,5.15,113.35,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+952:2784,5.25,98.45,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+952:2840,5.25,104.05,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+952:2842,5.25,104.25,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+952:2909,5.25,110.95,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+952:2912,5.25,111.25,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+953:2801,5.35,100.15,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+953:2842,5.35,104.25,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+953:2849,5.35,104.95,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+953:2913,5.35,111.35,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+954:2803,5.45,100.35,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+954:2836,5.45,103.65,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+954:2838,5.45,103.85,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+954:2844,5.45,104.45,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+954:2856,5.45,105.65,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+954:2947,5.45,114.75,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+954:2948,5.45,114.85,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+954:2949,5.45,114.95,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+954:2990,5.45,119.05,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+955:2796,5.55,99.65,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+955:2846,5.55,104.65,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+955:2905,5.55,110.55,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+955:2907,5.55,110.75,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+955:2947,5.55,114.75,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+955:2953,5.55,115.35,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+955:2956,5.55,115.65,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+955:2993,5.55,119.35,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+956:2789,5.65,98.95,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+956:2838,5.65,103.85,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+956:2901,5.65,110.15,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+956:2911,5.65,111.15,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+956:2918,5.65,111.85,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+956:2924,5.65,112.45,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+956:2950,5.65,115.05,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+956:2951,5.65,115.15,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+956:2956,5.65,115.65,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+956:2992,5.65,119.25,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+957:2785,5.75,98.55,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+957:2800,5.75,100.05,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+957:2841,5.75,104.15,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+957:2900,5.75,110.05,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+957:2905,5.75,110.55,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+957:2912,5.75,111.25,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+957:2957,5.75,115.75,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+958:2797,5.85,99.75,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+958:2825,5.85,102.55,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+958:2838,5.85,103.85,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+958:2840,5.85,104.05,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+958:2903,5.85,110.35,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+958:2956,5.85,115.65,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+959:2803,5.95,100.35,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+959:2839,5.95,103.95,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+959:2840,5.95,104.05,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+959:2898,5.95,109.85,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+959:2905,5.95,110.55,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+959:2917,5.95,111.75,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+959:2919,5.95,111.95,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+959:2925,5.95,112.55,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+959:2942,5.95,114.25,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+959:2950,5.95,115.05,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+959:2955,5.95,115.55,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+960:2784,6.05,98.45,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+960:2787,6.05,98.75,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+960:2790,6.05,99.05,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+960:2836,6.05,103.65,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+960:2902,6.05,110.25,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+960:2922,6.05,112.25,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+960:2923,6.05,112.35,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+960:2924,6.05,112.45,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+960:2925,6.05,112.55,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+960:2948,6.05,114.85,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+960:2980,6.05,118.05,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+961:2824,6.15,102.45,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+961:2834,6.15,103.45,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+961:2835,6.15,103.55,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+961:2901,6.15,110.15,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+961:2904,6.15,110.45,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+961:2919,6.15,111.95,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+961:2925,6.15,112.55,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+961:2948,6.15,114.85,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+961:2960,6.15,116.05,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+962:2917,6.25,111.75,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+962:2950,6.25,115.05,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+962:2951,6.25,115.15,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+962:2954,6.25,115.45,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+962:2958,6.25,115.85,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+963:2827,6.35,102.75,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+963:2833,6.35,103.35,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+963:2835,6.35,103.55,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+963:2915,6.35,111.55,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+964:2830,6.45,103.05,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+964:2833,6.45,103.35,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+964:2845,6.45,104.55,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+964:2914,6.45,111.45,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+964:2922,6.45,112.25,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+964:2944,6.45,114.45,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+965:2936,6.55,113.65,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+965:2943,6.55,114.35,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+965:2945,6.55,114.55,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+965:2946,6.55,114.65,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+965:2950,6.55,115.05,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+965:2959,6.55,115.95,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+965:2960,6.55,116.05,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+965:2964,6.55,116.45,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+966:2829,6.65,102.95,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+966:2938,6.65,113.85,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+966:2944,6.65,114.45,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+966:2959,6.65,115.95,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+966:2962,6.65,116.25,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+966:2964,6.65,116.45,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+967:2837,6.75,103.75,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+967:2935,6.75,113.55,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+967:2941,6.75,114.15,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+967:2946,6.75,114.65,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+967:2957,6.75,115.75,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+967:2968,6.75,116.85,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+967:2969,6.75,116.95,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+968:2949,6.85,114.95,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+968:2952,6.85,115.25,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+968:2961,6.85,116.15,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+968:2962,6.85,116.25,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+969:2831,6.95,103.15,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+969:2835,6.95,103.55,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+969:2840,6.95,104.05,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+969:2936,6.95,113.65,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+969:2942,6.95,114.25,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+970:2827,7.05,102.75,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+970:2932,7.05,113.25,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+970:2946,7.05,114.65,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+970:2952,7.05,115.25,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+970:2959,7.05,115.95,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+970:2966,7.05,116.65,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+971:2836,7.15,103.65,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+971:2947,7.15,114.75,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+971:2948,7.15,114.85,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+971:2950,7.15,115.05,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+971:2956,7.15,115.65,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+971:2959,7.15,115.95,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+972:2828,7.25,102.85,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+972:2933,7.25,113.35,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+972:2935,7.25,113.55,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+972:2961,7.25,116.15,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+972:2973,7.25,117.35,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+973:2830,7.35,103.05,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+973:2832,7.35,103.25,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+973:2950,7.35,115.05,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+973:2957,7.35,115.75,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+974:2933,7.45,113.35,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+975:2829,7.55,102.95,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+975:2960,7.55,116.05,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+976:2929,7.65,112.95,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+977:2926,7.75,112.65,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+977:2942,7.75,114.25,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+977:2943,7.75,114.35,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+977:2950,7.75,115.05,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+977:2952,7.75,115.25,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+978:2931,7.85,113.15,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+978:2932,7.85,113.25,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+978:2934,7.85,113.45,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+978:2935,7.85,113.55,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+978:2937,7.85,113.75,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+978:2939,7.85,113.95,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+978:2940,7.85,114.05,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+978:2943,7.85,114.35,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+978:2954,7.85,115.45,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+979:2941,7.95,114.15,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+979:2943,7.95,114.35,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+979:2944,7.95,114.45,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+980:2952,8.05,115.25,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+981:2928,8.15,112.85,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+981:2930,8.15,113.05,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+981:2935,8.15,113.55,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+981:2936,8.15,113.65,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+981:2948,8.15,114.85,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+981:2950,8.15,115.05,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+982:2945,8.25,114.55,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+983:2934,8.35,113.45,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+983:2943,8.35,114.35,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+984:2941,8.45,114.15,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+984:2943,8.45,114.35,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+985:2935,8.55,113.55,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+986:2934,8.65,113.45,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
+989:2936,8.95,113.65,Chelonia mydas,green_sea_turtle,0,sampled_EEZ_background_not_confirmed_absence,0,0,,,
