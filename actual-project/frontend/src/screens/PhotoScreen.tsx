@@ -1,11 +1,15 @@
 import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { uploadPhoto } from '../api';
+import { photoPreviewUrl, uploadPhoto } from '../api';
 import { ArrowRight, Camera, ChevronRight, Shield, Upload } from '../components/Icon';
 import { BackButton, ErrorNote, PrimaryButton, StepBadge } from '../components/ui';
 import { C, MONO } from '../theme';
 import { OverlayChip } from '../components/ds';
 import { useApp } from '../AppContext';
+
+// 和 API.md §5 一致：≤ 10 MB，只收这三种。HEIC 有些浏览器不给 MIME，所以也认后缀。
+const ACCEPTED_TYPES = ['image/jpeg', 'image/png', 'image/heic'];
+const MAX_PHOTO_BYTES = 10 * 1024 * 1024;
 
 export default function PhotoScreen() {
   const nav = useNavigate();
@@ -17,6 +21,20 @@ export default function PhotoScreen() {
 
   async function handleFile(file: File | undefined) {
     if (!file) return;
+
+    // accept 属性只是文件选择框的提示，切到「所有文件」就绕过去了。
+    // 契约里格式和大小由后端把关（API.md §5），但现在跑的是假数据，
+    // 那道防线还不存在 —— 先在这里挡一次，报错走的是同一个红条。
+    if (!ACCEPTED_TYPES.includes(file.type) && !/\.heic$/i.test(file.name)) {
+      setUploadError('That file is not a photo we can read. Use JPG, PNG or HEIC.');
+      return;
+    }
+    if (file.size > MAX_PHOTO_BYTES) {
+      const mb = (file.size / 1024 / 1024).toFixed(1);
+      setUploadError(`That photo is ${mb} MB. The limit is 10 MB — try a smaller one.`);
+      return;
+    }
+
     setUploading(true);
     setUploadError(null);
     try {
@@ -55,7 +73,7 @@ export default function PhotoScreen() {
       />
 
       <div
-        className="anim-fade-up pt-page"
+        className="anim-fade-up pt-page measure"
         style={{ paddingInline: 20, paddingBottom: 'calc(var(--safe-bottom) + 32px)', display: 'flex', flexDirection: 'column', gap: 18 }}
       >
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -151,7 +169,7 @@ export default function PhotoScreen() {
           <>
             <div style={{ position: 'relative', height: 280, borderRadius: 26, overflow: 'hidden', background: '#87847B' }}>
               <img
-                src={photo.previewUrl}
+                src={photo.previewUrl || photoPreviewUrl(photo.photoKey) || undefined}
                 alt="Litter you photographed"
                 style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
               />

@@ -44,7 +44,7 @@ export default function BeachScreen() {
   if (loading || !b) {
     return (
       <div className="screen scroll-y" style={{ zIndex: 20 }}>
-        <div className="pt-page" style={{ paddingInline: 20, display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <div className="pt-page measure" style={{ paddingInline: 20, display: 'flex', flexDirection: 'column', gap: 14 }}>
           <BackButton onClick={() => nav(-1)} />
           {failed ? (
             <div style={{ color: C.red, fontSize: 14 }}>Could not load this beach.</div>
@@ -76,7 +76,9 @@ export default function BeachScreen() {
         )}
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg,rgba(9,24,52,.35) 0%,transparent 30%,transparent 52%,rgba(9,22,48,.72) 100%)' }} />
         <BackButton dark onClick={() => nav(-1)} style={{ position: 'absolute', top: 'var(--top-inset)', left: 18, zIndex: 5 }} />
-        <div style={{ position: 'absolute', left: 20, right: 20, bottom: 52 }}>
+        {/* 跟着正文列走。不然在宽窗口上标题贴着左边缘，
+            而它介绍的那一列在屏幕中间，中间隔着几百像素的空白。 */}
+        <div className="measure" style={{ position: 'absolute', left: 20, right: 20, bottom: 52 }}>
           <div style={{ fontFamily: MONO, fontSize: 8.5, letterSpacing: '.2em', color: 'rgba(9,26,64,.8)', marginBottom: 8 }}>
             WEST COAST · {b.habitatTag}
           </div>
@@ -90,7 +92,17 @@ export default function BeachScreen() {
       </BeachCover>
 
       {/* 严重度概览卡 */}
-      <GlassPanel style={{ margin: '-40px 16px 0', position: 'relative', padding: 18 }}>
+      {/* width 用 calc 而不是靠 .measure：这张卡的左右留白是内联写死的 16px，
+          内联样式赢过样式表。手机上 calc(100% - 32px) 正好等于原来的宽度。 */}
+      <GlassPanel
+        style={{
+          margin: '-40px auto 0',
+          width: 'calc(100% - 32px)',
+          maxWidth: 'var(--measure)',
+          position: 'relative',
+          padding: 18,
+        }}
+      >
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
           <div>
             <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '.16em', color: C.dim }}>
@@ -134,14 +146,18 @@ export default function BeachScreen() {
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: 9, marginTop: 14, padding: '11px 13px', borderRadius: 16, background: 'rgba(30,36,44,.05)', border: '1px solid rgba(30,36,44,.12)' }}>
             <Clock style={{ flex: 'none', marginTop: 1 }} />
             <div style={{ flex: 1, fontSize: 12, lineHeight: 1.5, color: C.muted }}>
-              The most recent verified report is older than 90&nbsp;days. Conditions may have changed
-              in either direction.
+              {/* stale 同时覆盖「超过 90 天」和「从来没人报过」两种情况（API.md §4）。
+                  不分开的话，一片从没被上报过的海滩会被告知「最近那条记录」有多旧 ——
+                  那条记录不存在。 */}
+              {b.lastReportedAt
+                ? 'The most recent verified report is older than 90\u00a0days. Conditions may have changed in either direction.'
+                : 'No verified report has ever been filed for this beach. That is missing evidence, not a finding.'}
             </div>
           </div>
         )}
       </GlassPanel>
 
-      <div style={{ padding: '20px 16px calc(var(--safe-bottom) + 36px)', display: 'flex', flexDirection: 'column', gap: 22 }}>
+      <div className="measure" style={{ padding: '20px 16px calc(var(--safe-bottom) + 36px)', display: 'flex', flexDirection: 'column', gap: 22 }}>
         {/* 成分 */}
         <div>
           <Label style={{ marginBottom: 12 }}>LITTER COMPOSITION</Label>

@@ -28,7 +28,7 @@ export function PrivacySheet({ onClose }: { onClose: () => void }) {
         }}
       />
       <div
-        className="anim-sheet-up"
+        className="anim-sheet-up measure"
         style={{
           position: 'absolute',
           left: 0,

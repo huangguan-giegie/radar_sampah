@@ -54,7 +54,7 @@ export default function IdentityScreen() {
   return (
     <div className="screen scroll-y" style={{ zIndex: 50 }}>
       <div
-        className="anim-fade-up pt-page-lg"
+        className="anim-fade-up pt-page-lg measure"
         style={{
           paddingInline: 24,
           paddingBottom: 'calc(var(--safe-bottom) + 32px)',

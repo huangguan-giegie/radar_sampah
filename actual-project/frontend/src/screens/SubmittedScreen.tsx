@@ -45,7 +45,7 @@ export default function SubmittedScreen() {
   return (
     <div className="screen scroll-y" style={{ zIndex: 26 }}>
       <div
-        className="anim-fade-up pt-page-lg"
+        className="anim-fade-up pt-page-lg measure"
         style={{ paddingInline: 20, paddingBottom: 'calc(var(--safe-bottom) + 32px)', display: 'flex', flexDirection: 'column', gap: 16 }}
       >
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', padding: '6px 0 2px' }}>
@@ -134,7 +134,9 @@ export default function SubmittedScreen() {
                   locationSource: 'manual',
                   coords: null,
                 });
-                nav('/report/details');
+                // replace：确认页被这次修正吃掉。留着的话按后退会回到一个
+                // 还挂着「Correct Record」的确认页，再点一次就把改到一半的草稿清了。
+                nav('/report/details', { replace: true });
               }}
             >
               Correct Record

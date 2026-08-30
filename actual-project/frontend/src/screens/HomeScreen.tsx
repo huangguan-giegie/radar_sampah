@@ -101,7 +101,7 @@ export default function HomeScreen() {
   return (
     <div className="screen scroll-y" style={{ zIndex: 10 }}>
       <div
-        className="anim-fade-up pt-page-lg"
+        className="anim-fade-up pt-page-lg measure"
         style={{ paddingInline: 20, paddingBottom: 132, display: 'flex', flexDirection: 'column' }}
       >
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>

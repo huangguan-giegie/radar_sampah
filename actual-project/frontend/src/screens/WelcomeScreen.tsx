@@ -37,6 +37,7 @@ export default function WelcomeScreen() {
       </div>
 
       <div
+        className="measure"
         style={{
           position: 'absolute',
           left: 0,

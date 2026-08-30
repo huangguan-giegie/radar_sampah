@@ -341,8 +341,41 @@ export async function resolveBeach(lat: number, lng: number): Promise<BeachSumma
 /**
  * mock 的「对象存储」：键 → data URL。
  * 真后端是 photo_key → 短时效签名地址，形状一样，只是这里不签名。
+ *
+ * 落盘到 localStorage，和 mock 账本（MOCK_ACCOUNTS_KEY）一个道理：
+ * 这个 Map 原来只活在内存里，刷新一次桶就空了，草稿里的 photoKey
+ * 就指向一个不存在的东西 —— 提交出去的记录永远没有缩略图。
  */
-const mockPhotoStore = new Map<string, string>();
+const MOCK_PHOTOS_KEY = 'rs_mock_photos_v1';
+
+function loadMockPhotos(): Map<string, string> {
+  try {
+    return new Map(Object.entries(JSON.parse(localStorage.getItem(MOCK_PHOTOS_KEY) || '{}')));
+  } catch {
+    return new Map();
+  }
+}
+
+const mockPhotoStore = loadMockPhotos();
+
+function saveMockPhotos() {
+  try {
+    localStorage.setItem(MOCK_PHOTOS_KEY, JSON.stringify(Object.fromEntries(mockPhotoStore)));
+  } catch {
+    // 配额满 —— 照片是 base64，几张就能撑爆。存不下不影响本次提交
+  }
+}
+
+/**
+ * 用存储键换一个能显示的地址。
+ * 刷新之后草稿里的 previewUrl 是空的（那是几 MB 的 base64，不写进磁盘），
+ * 页面靠这个函数把预览找回来。真后端模式返回 null —— 契约里没有预览地址，
+ * 页面退回占位图，这是诚实的答案。
+ */
+export function photoPreviewUrl(photoKey: string | null | undefined): string | null {
+  if (!photoKey || !USE_MOCK) return null;
+  return mockPhotoStore.get(photoKey) ?? null;
+}
 
 export async function uploadPhoto(file: File): Promise<UploadedPhoto> {
   if (USE_MOCK) {
@@ -357,6 +390,7 @@ export async function uploadPhoto(file: File): Promise<UploadedPhoto> {
     });
     const photoKey = 'mock/' + Date.now() + '.jpg';
     mockPhotoStore.set(photoKey, url);
+    saveMockPhotos();
     return { photoKey, previewUrl: url, metadataStripped: true };
   }
 

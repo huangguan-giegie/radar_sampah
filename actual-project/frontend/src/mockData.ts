@@ -144,7 +144,10 @@ export const BEACHES: BeachDetail[] = [
     severity: null,
     band: null,
     insufficientData: true,
-    validReports: 2,
+    // 0 而不是 2：validReports 数的是 90 天窗口内的 Counted 记录（API.md §7）。
+    // 最近一条在 101 天前，窗口内一条都没有。写 2 会让页面同时显示
+    // 「2 valid reports」和「Not recently reported」—— 契约下这两句不可能都真。
+    validReports: 0,
     lastReportedAt: '2026-05-21T08:00:00Z',
     freshnessKind: 'stale',
     habitat: 'Mangrove-lined estuary shore',

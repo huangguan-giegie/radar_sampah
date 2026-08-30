@@ -31,7 +31,7 @@ const limitations = (m: ScoringMethod) => [
   'Bands are estimates by eye — comparable in order of magnitude only.',
   `Conditions move faster than a ${m.windowDays}-day window can show.`,
   'This is reported litter, not water quality, ecology or safety.',
-  'Biodiversity percentages are a separate estimate and never enter this.',
+  'Biodiversity context sits beside this score and never feeds into it.',
 ];
 
 export default function MethodScreen() {
@@ -58,23 +58,26 @@ export default function MethodScreen() {
     <div className="screen scroll-y" style={{ zIndex: 28 }}>
       <div className="pt-page" style={{ position: 'relative', paddingInline: 20, paddingBottom: 22, background: C.deep, color: C.bg, overflow: 'hidden' }}>
         <div style={{ position: 'absolute', top: -40, right: -30, width: 170, height: 170, borderRadius: '50%', border: '1px solid rgba(184,255,54,.14)' }} />
-        <BackButton
-          onClick={() => nav(-1)}
-          dark
-          style={{ background: 'rgba(255,255,255,.1)', border: '1px solid rgba(255,255,255,.2)' }}
-        />
-        <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '.18em', color: '#8290A8', marginTop: 20 }}>
-          DETERMINISTIC · PUBLISHED · SAME FOR ALL BEACHES
-        </div>
-        <div style={{ fontSize: 29, fontWeight: 640, letterSpacing: '-.7px', marginTop: 8, lineHeight: 1.1 }}>
-          How the severity band is decided
-        </div>
-        <div style={{ fontSize: 14.5, lineHeight: 1.65, color: C.cloud, marginTop: 10 }}>
-          No model and no judgement call — the same arithmetic runs on every eligible record.
+        {/* 深色底通栏，文字限宽 —— 所以要多包一层。装饰圆环留在外面，跟着通栏走。 */}
+        <div className="measure">
+          <BackButton
+            onClick={() => nav(-1)}
+            dark
+            style={{ background: 'rgba(255,255,255,.1)', border: '1px solid rgba(255,255,255,.2)' }}
+          />
+          <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '.18em', color: '#8290A8', marginTop: 20 }}>
+            DETERMINISTIC · PUBLISHED · SAME FOR ALL BEACHES
+          </div>
+          <div style={{ fontSize: 29, fontWeight: 640, letterSpacing: '-.7px', marginTop: 8, lineHeight: 1.1 }}>
+            How the severity band is decided
+          </div>
+          <div style={{ fontSize: 14.5, lineHeight: 1.65, color: C.cloud, marginTop: 10 }}>
+            No model and no judgement call — the same arithmetic runs on every eligible record.
+          </div>
         </div>
       </div>
 
-      <div style={{ padding: '20px 16px calc(var(--safe-bottom) + 36px)', display: 'flex', flexDirection: 'column', gap: 20 }}>
+      <div className="measure" style={{ padding: '20px 16px calc(var(--safe-bottom) + 36px)', display: 'flex', flexDirection: 'column', gap: 20 }}>
         {/* 规则 + 权重，并成一张 */}
         <div style={{ background: C.white, border: `1px solid ${C.line}`, borderRadius: 24, padding: 20 }}>
           <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: '.16em', color: C.muted, fontWeight: 600 }}>
