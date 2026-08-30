@@ -1,5 +1,5 @@
-// 地图上那些小标记的样子。
-// Leaflet 的 divIcon 只收 HTML 字符串，不能塞 React 组件，所以这里是手写拼字符串。
+
+
 import type { BeachSummary, MapLayer, SpeciesGlyph } from '../types';
 import { SEVERITY } from '../theme';
 
@@ -23,10 +23,7 @@ function glyphSvg(g: SpeciesGlyph, color: string, size: number) {
   }</svg>`;
 }
 
-/**
- * 地图标记的 HTML。Leaflet 的 divIcon 只接受字符串，所以这里手写而不是 React 组件。
- * 数据全部来自 BeachSummary，没有再取本地常量。
- */
+
 export function markerHtml(
   b: BeachSummary,
   selected: boolean,
@@ -84,6 +81,6 @@ export function markerHtml(
   );
 }
 
-/** 记录流程里那两张小地图上的定位点 */
+
 export const MINI_PIN_HTML =
   '<div style="transform:translate(-50%,-50%);position:absolute"><div style="width:34px;height:34px;border-radius:50%;background:rgba(184,255,54,.25);display:flex;align-items:center;justify-content:center"><div style="width:14px;height:14px;border-radius:50%;background:#0B2161;border:2.5px solid #B8FF36;box-shadow:0 4px 10px rgba(14,30,64,.5)"></div></div></div>';

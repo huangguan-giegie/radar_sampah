@@ -2,13 +2,7 @@ import type { ReactNode } from 'react';
 import { useLocation } from 'react-router-dom';
 import { C } from '../theme';
 
-/**
- * Web app 外壳。
- * 每个宽度都铺满窗口；页面自己用 .measure 限宽，见 global.css。
- *
- * 网址上加 ?frame=phone 会把它收成一台 402×874 的手机 —— 给 slide 截图用，
- * 任意页面都能加。除此之外没有任何地方按宽度分叉。
- */
+
 export function DeviceFrame({ children }: { children: ReactNode }) {
   const { search } = useLocation();
   const phoneFrame = new URLSearchParams(search).get('frame') === 'phone';

@@ -1,5 +1,5 @@
-// 路由表：哪个网址显示哪个页面。
-// 需要登录的页面用 <RequireAuth> 包一层。
+
+
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { DeviceFrame } from './components/DeviceFrame';
 import { TabBar } from './components/TabBar';
@@ -23,10 +23,10 @@ import SubmittedScreen from './screens/SubmittedScreen';
 import MyReportsScreen from './screens/MyReportsScreen';
 import AccountScreen from './screens/AccountScreen';
 
-// 这四个页面底部才显示 tab 栏，记录流程里不显示
+
 const TAB_ROUTES = ['/home', '/map', '/reports', '/account'];
 
-/** 未登录时跳到登录页，并记住回跳目标 */
+
 function RequireAuth({ children }: { children: JSX.Element }) {
   const { user, authReady } = useApp();
   const { pathname, search } = useLocation();
@@ -37,11 +37,7 @@ function RequireAuth({ children }: { children: JSX.Element }) {
   return children;
 }
 
-/**
- * 流程守卫。直接输网址跳到流程中间时，把人送回他真正能待的那一步。
- * 套在 RequireAuth 里面 —— 没登录的深链接先绕一趟 /identity?next= 回到同一个网址，
- * 再由这里判断走到哪。
- */
+
 function RequireStep({ step, children }: { step: ReportStep; children: JSX.Element }) {
   const { draft } = useApp();
   const to = guardStep(step, draft);

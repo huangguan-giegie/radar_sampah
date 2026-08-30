@@ -25,9 +25,9 @@ export default function RecordScreen() {
   const beach = beaches.find((b) => b.id === draft.beachId);
   const picked = CATEGORIES.filter((c) => c in draft.quantities);
   const missCat = picked.length === 0;
-  // 选了类别但还没选数量档的
+
   const noBand = picked.filter((c) => !draft.quantities[c]);
-  // 刷新过一次的话 previewUrl 是空的，用存储键把图找回来
+
   const photoUrl =
     draft.photo?.previewUrl || photoPreviewUrl(draft.photo?.photoKey) || draft.existingPhotoUrl;
 
@@ -40,7 +40,7 @@ export default function RecordScreen() {
   }
 
   function setBand(cat: LitterCategory, q: QuantityBand) {
-    // 再点一次同一档 = 取消这个类别
+
     const next = { ...draft.quantities };
     if (next[cat] === q) delete next[cat];
     else next[cat] = q;

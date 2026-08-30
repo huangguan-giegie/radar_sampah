@@ -9,8 +9,8 @@ export default function SubmittedScreen() {
   const nav = useNavigate();
   const { lastSavedReport: saved, patchDraft, resetDraft } = useApp();
 
-  // 记录就是 POST 刚返回的那条，不用再去列表里捞 ——
-  // 那个二次请求一旦慢一点或失败，用户就会被弹走，看不到确认页。
+
+
   if (!saved) return <Navigate to="/reports" replace />;
 
   const outcome = reportOutcome(saved.status);
@@ -134,8 +134,8 @@ export default function SubmittedScreen() {
                   locationSource: 'manual',
                   coords: null,
                 });
-                // replace：确认页被这次修正吃掉。留着的话按后退会回到一个
-                // 还挂着「Correct Record」的确认页，再点一次就把改到一半的草稿清了。
+
+
                 nav('/report/details', { replace: true });
               }}
             >

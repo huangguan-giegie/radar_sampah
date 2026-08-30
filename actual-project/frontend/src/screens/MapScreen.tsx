@@ -10,14 +10,14 @@ import { GlassPanel, SeverityBadge } from '../components/ds';
 import { useApp } from '../AppContext';
 import type { BeachSummary, MapLayer } from '../types';
 
-// 地图初始视角：雪兰莪海岸
+
 const CENTER: [number, number] = [2.92, 101.45];
 const ZOOM = 9;
 
-// 两个图层：垃圾严重度 / 生物多样性
+
 const LAYERS: MapLayer[] = ['litter', 'bio'];
 
-// 图例上的四个色块
+
 const LEGEND = [
   { label: 'LOW', color: '#7CA98B' },
   { label: 'MOD', color: '#D9A24B' },
@@ -35,7 +35,7 @@ export default function MapScreen() {
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
 
-  // 去拿海滩列表。写成函数是因为「离线」提示条上的 Retry 也要用。
+
   function loadBeaches() {
     setLoading(true);
     setFailed(false);
@@ -51,7 +51,7 @@ export default function MapScreen() {
 
   const selected = beaches.find((b) => b.id === selectedId) || null;
 
-  // 图层、选中项或数据变化时整体重画标记
+
   useEffect(() => {
     const map = mapRef.current;
     if (!ready || !map) return;
@@ -79,7 +79,7 @@ export default function MapScreen() {
     <div className="screen" style={{ zIndex: 1, background: '#D9E6EF' }}>
       <div ref={elRef} style={{ position: 'absolute', inset: 0 }} />
 
-      {/* 图层切换 */}
+
       <div
         style={{
           position: 'absolute',
@@ -126,7 +126,7 @@ export default function MapScreen() {
         </div>
       </div>
 
-      {/* 图例 */}
+
       <div
         style={{
           position: 'absolute',
@@ -340,7 +340,7 @@ function SelectedCard({
               {metaRow('HABITAT', beach.habitat, C.ink2, 600)}
               {metaRow('RELEVANCE', beach.sensitivity, '#2B4EA2', 600)}
             </div>
-            {/* ?. 是防真后端：契约里这个字段现在是必填，但少一个字段不该让整张卡崩掉 */}
+
             {beach.speciesNames?.length > 0 && (
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 11 }}>
                 {beach.speciesNames.map((n) => (
@@ -360,8 +360,7 @@ function SelectedCard({
                 ))}
               </div>
             )}
-            {/* 海滩页把这句话当成物种卡的必备项。地图上是同一批名字，
-                不能因为空间小就把限定条件省掉。 */}
+
             {beach.speciesNames?.length > 0 && (
               <div style={{ fontFamily: MONO, fontSize: 8.5, letterSpacing: '.1em', color: C.dim, marginTop: 10, lineHeight: 1.5 }}>
                 CONTEXT ONLY · NOT PROOF OF CURRENT PRESENCE

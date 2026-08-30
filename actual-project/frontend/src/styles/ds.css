@@ -1,19 +1,11 @@
-/* ============================================================
-   设计系统 —— 一处规格，全站共用。
-   值取自组件系统稿；颜色沿用 theme.ts 里那一套，两边本来就是同一组。
 
-   改这里就能全站生效。不要再在页面里手写这些样式了 ——
-   之前同一个徽章被写成五种大小，就是因为没有这个文件。
-   ============================================================ */
 
 :root {
-  /* 圆角只有三档，别再自己定 20 / 26 这种中间值 */
+
   --r-inner: 14px;
   --r-surface: 22px;
   --r-pill: 999px;
 
-  /* 一行正文最宽多少。手机上永远够不着这个数（内容宽 362px），
-     所以它只在桌面窗口上起作用 —— 页面不会跟着窗口拉到 1400px 宽。 */
   --measure: 640px;
 
   --shadow-sm: 0 8px 22px rgba(8, 23, 57, 0.08);
@@ -29,7 +21,6 @@
   --ds-faint: #7a879b;
   --ds-navy: #0b2161;
 
-  /* 语义色：含义靠颜色 + 文字一起表达，颜色从不单独承担意思 */
   --ds-success: #177a3e;    --ds-success-bg: #e9f6ee;
   --ds-caution: #8a6420;    --ds-caution-bg: #fff5dc;
   --ds-high: #9c4237;       --ds-high-bg: #f7e9e6;
@@ -42,7 +33,7 @@
   --ds-mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
 }
 
-/* ---------- Surface：所有白卡片 ---------- */
+
 .ds-surface {
   position: relative;
   border: 1px solid var(--ds-line);
@@ -61,7 +52,7 @@ button.ds-surface {
 button.ds-surface:hover { border-color: rgba(11, 33, 97, 0.2); }
 button.ds-surface:active { transform: scale(0.994); }
 
-/* 卡片里再嵌一层用小圆角，层级才看得出来 */
+
 .ds-nested {
   border: 1px solid var(--ds-line);
   border-radius: var(--r-inner);
@@ -69,7 +60,7 @@ button.ds-surface:active { transform: scale(0.994); }
   padding: 16px;
 }
 
-/* ---------- SectionLabel：全站的小标题 ---------- */
+
 .ds-label {
   display: inline-flex;
   align-items: center;
@@ -87,7 +78,7 @@ button.ds-surface:active { transform: scale(0.994); }
 .ds-label[data-tone='alert'] { color: var(--ds-high); }
 .ds-label[data-tone='strong']{ color: var(--ds-muted); }
 
-/* ---------- StatusBadge：严重度 / 记录状态 / 没有结论 ---------- */
+
 .ds-badge {
   --badge-color: var(--ds-muted);
   --badge-bg: var(--ds-surface-2);
@@ -119,8 +110,7 @@ button.ds-surface:active { transform: scale(0.994); }
 }
 .ds-badge[data-indicator='true']::before { display: block; }
 .ds-badge[data-size='lg'] { min-height: 34px; padding: 7px 13px; font-size: 12px; }
-/* 一列徽章排下来要等宽，否则右对齐了左边缘还是参差的。
-   96px 装得下最长的 MODERATE。 */
+
 .ds-badge[data-block='true'] { min-width: 96px; }
 
 .ds-badge[data-status='low']      { --badge-color: var(--ds-success); --badge-bg: var(--ds-success-bg); }
@@ -131,8 +121,7 @@ button.ds-surface:active { transform: scale(0.994); }
 .ds-badge[data-status='severe']   { --badge-color: var(--ds-critical);--badge-bg: var(--ds-critical-bg); }
 .ds-badge[data-status='duplicate']{ --badge-color: var(--ds-muted);   --badge-bg: var(--ds-surface-2); }
 
-/* 「还没有结论」—— 虚线边是它专属的语言，
-   全站只有这一种画法，因为它是这个产品最不能被读错的一句话 */
+
 .ds-badge[data-status='none'] {
   --badge-color: var(--ds-muted);
   --badge-bg: transparent;
@@ -140,9 +129,7 @@ button.ds-surface:active { transform: scale(0.994); }
   border-color: rgba(11, 33, 97, 0.22);
 }
 
-/* ---------- InfoChip：陈述事实，不是状态判断 ----------
-   和 StatusBadge 同高同圆角，但保持正常大小写和无衬线 ——
-   「8 valid reports」是一个数，不是一个等级，不该长得像等级。 */
+
 .ds-info {
   --info-color: var(--ds-ink-soft);
   --info-bg: var(--ds-surface-2);
@@ -179,7 +166,7 @@ button.ds-surface:active { transform: scale(0.994); }
 .ds-row-sub { margin-top: 2px; color: var(--ds-muted); font-size: 13px; line-height: 1.35; }
 .ds-row-tile { flex: none; width: 38px; height: 38px; border-radius: var(--r-inner); overflow: hidden; }
 
-/* ---------- OverlayChip：压在照片和地图上的小胶囊 ---------- */
+
 .ds-chip {
   min-height: 28px;
   display: inline-flex;
@@ -215,7 +202,7 @@ button.ds-chip { min-height: 44px; padding-inline: 14px; cursor: pointer; }
   backdrop-filter: blur(18px) saturate(150%);
   -webkit-backdrop-filter: blur(18px) saturate(150%);
 }
-/* 不支持毛玻璃就给实底 —— 这些面压在照片和地图上，糊了就没法读 */
+
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
   .ds-glass { background: #f7f8fa; }
 }
@@ -251,7 +238,7 @@ button.ds-chip { min-height: 44px; padding-inline: 14px; cursor: pointer; }
 }
 .ds-seg[data-tone='glass'] { background: rgba(255, 255, 255, 0.82); border-color: rgba(255, 255, 255, 0.6); }
 
-/* ---------- BandMeter：四格刻度，全站同一个 ---------- */
+
 .ds-meter {
   --meter-color: var(--ds-high);
   --meter-empty: rgba(11, 33, 97, 0.14);
@@ -344,7 +331,7 @@ button.ds-chip { min-height: 44px; padding-inline: 14px; cursor: pointer; }
 .ds-stat:active { transform: scale(0.985); }
 .ds-stat-number { color: var(--ds-navy); font-size: 26px; font-weight: 780; letter-spacing: -0.04em; line-height: 1; }
 .ds-stat-caption { color: var(--ds-muted); font-size: 12px; font-weight: 650; line-height: 1.35; }
-/* 数据缺失有它自己的样子，不能只剩一个破折号 */
+
 .ds-stat[data-empty='true'] .ds-stat-number { color: var(--ds-faint); }
 
 /* ---------- BulletList ---------- */

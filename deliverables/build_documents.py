@@ -13,7 +13,7 @@ from docx.shared import Inches, Pt, RGBColor
 ROOT = Path(__file__).resolve().parent
 SOURCE_DIR = ROOT / "documents"
 VERSION = "VERSION 2.0 | 15 AUGUST 2026"
-BRAND = "TEAM 04 | DIVESAFE MY"
+BRAND = "TEAM 04 | RADAR SAMPAH"
 FOOTER_LABEL = f"{VERSION} | SYNTHETIC/PUBLIC DATA | NON-ENFORCEMENT DEMO"
 
 TEAL = "0F6F73"
