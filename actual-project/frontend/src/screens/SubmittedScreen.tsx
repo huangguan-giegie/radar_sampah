@@ -1,4 +1,5 @@
 import { Navigate, useNavigate } from 'react-router-dom';
+import { useEffect } from 'react';
 import { ArrowRight, Check, ChevronRight } from '../components/Icon';
 import { GhostButton, PrimaryButton } from '../components/ui';
 import { C, MONO } from '../theme';
@@ -9,6 +10,9 @@ export default function SubmittedScreen() {
   const nav = useNavigate();
   const { lastSavedReport: saved, patchDraft, resetDraft } = useApp();
 
+  useEffect(() => {
+    if (saved) resetDraft();
+  }, []);
 
 
   if (!saved) return <Navigate to="/reports" replace />;

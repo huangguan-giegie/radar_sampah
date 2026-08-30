@@ -3,6 +3,7 @@ import type { ReportDraft } from './AppContext';
 import {
   backFromReview,
   buildReportSubmission,
+  finishReportSubmission,
   guardStep,
   reachableStep,
   reportOutcome,
@@ -200,5 +201,16 @@ describe('Returning from review to details when the history index is zero', () =
       const r = backFromReview(idx);
       expect(r.pop === true || (r.pop === false && r.to === '/report/details')).toBe(true);
     }
+  });
+});
+
+describe('Completing a report submission', () => {
+  it('navigates to the saved screen before clearing the review draft', () => {
+    const events: string[] = [];
+    finishReportSubmission(
+      (to, options) => events.push(`navigate:${to}:${options.replace}:${options.flushSync}`),
+    );
+
+    expect(events).toEqual(['navigate:/report/saved:true:true']);
   });
 });

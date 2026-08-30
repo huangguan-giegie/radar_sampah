@@ -7,11 +7,11 @@ import { C } from '../theme';
 import { OverlayChip, StatusBadge } from '../components/ds';
 import { useApp } from '../AppContext';
 import type { BeachSummary, LitterCategory, QuantityBand } from '../types';
-import { backFromReview, buildReportSubmission } from '../flowRules';
+import { backFromReview, buildReportSubmission, finishReportSubmission } from '../flowRules';
 
 export default function ReviewScreen() {
   const nav = useNavigate();
-  const { draft, resetDraft, setLastSavedReport, bumpReports, showToast } = useApp();
+  const { draft, setLastSavedReport, bumpReports, showToast } = useApp();
   const [beaches, setBeaches] = useState<BeachSummary[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -49,8 +49,7 @@ export default function ReviewScreen() {
           : await createReport(submission.payload);
       setLastSavedReport(saved);
       bumpReports();
-      resetDraft();
-      nav('/report/saved', { replace: true });
+      finishReportSubmission(nav);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not save this record.');
       showToast('Save failed');
