@@ -231,7 +231,7 @@ def initialise_database(engine: Engine) -> None:
     sample_ids = {sample["id"] for sample in samples}
     with engine.begin() as connection:
         existing_ids = set(connection.execute(select(context_table.c.id)).scalars().all())
-        # 仅同步静态 context 表，清理旧占位记录；观察记录和派生结果不受影响。
+        # Sync static context rows without changing observations or derived results.
         for stale_id in existing_ids - sample_ids:
             connection.execute(context_table.delete().where(context_table.c.id == stale_id))
         for sample in samples:

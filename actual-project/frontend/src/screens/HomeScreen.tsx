@@ -61,7 +61,7 @@ function BeachRow({ b, last, onClick }: { b: BeachSummary; last: boolean; onClic
 export default function HomeScreen() {
   const nav = useNavigate();
   const { user, resetDraft, reportsVersion } = useApp();
-  // 海滩列表
+
   const [beaches, setBeaches] = useState<BeachSummary[]>([]);
   const [loadingBeaches, setLoadingBeaches] = useState(true);
   const [beachesFailed, setBeachesFailed] = useState(false);
@@ -77,11 +77,11 @@ export default function HomeScreen() {
 
   useEffect(loadBeaches, []);
 
-  // 我的记录计数。reportsVersion 变了（比如刚提交完一条）就重新拿一次。
+
   const [counts, setCounts] = useState<ReportCounts | null>(null);
 
   useEffect(() => {
-    // /home 不在 RequireAuth 里，没登录时这个接口必然 401，别去问
+
     if (!user) {
       setCounts(null);
       return;
@@ -144,7 +144,7 @@ export default function HomeScreen() {
             textWrap: 'balance',
           }}
         >
-          
+
         </div>
 
         <button
@@ -173,7 +173,7 @@ export default function HomeScreen() {
               Which beach needs you?
             </div>
             <div style={{ fontSize: 12.5, lineHeight: 1.45, color: 'rgba(232,238,245,.8)', marginTop: 4, maxWidth: 250 }}>
-              
+
             </div>
             <div
               style={{

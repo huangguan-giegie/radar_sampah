@@ -2,7 +2,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { C } from '../theme';
 import { BookmarkIcon, HomeIcon, Pin, UserIcon } from './Icon';
 
-// 底部四个 tab
+
 const TABS = [
   { to: '/home', label: 'Home', Icon: HomeIcon },
   { to: '/map', label: 'Map', Icon: Pin },
@@ -20,8 +20,8 @@ export function TabBar() {
         position: 'absolute',
         left: 14,
         right: 14,
-        // 不跟着窗口拉宽：左右都设了值再加 auto 外边距 = 居中，宽度和内容列对齐。
-        // 不然在 1440px 的屏幕上这是一条横跨整屏、四个图标各据一方的玻璃带。
+
+
         maxWidth: 'var(--measure)',
         marginInline: 'auto',
         bottom: 'var(--bottom-inset)',

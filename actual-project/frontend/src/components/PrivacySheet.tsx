@@ -8,11 +8,10 @@ const POINTS = [
   'Detect duplicate records',
 ];
 
-/** 「Why do we need this?」底部弹层 —— 说明精确 GPS 的用途与边界 */
+
 export function PrivacySheet({ onClose }: { onClose: () => void }) {
   return (
-    /* z-index 要压过 Leaflet（地图内部图层在 400–700）——
-       这个弹层会在带地图的页面上打开，低了会被地图盖住 */
+
     <div style={{ position: 'absolute', inset: 0, zIndex: 900 }}>
       <button
         type="button"

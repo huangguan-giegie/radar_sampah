@@ -23,7 +23,7 @@ export default function ReviewScreen() {
   }, []);
 
   const beach = beaches.find((b) => b.id === draft.beachId);
-  // 刷新过一次的话 previewUrl 是空的，用存储键把图找回来
+
   const photoUrl =
     draft.photo?.previewUrl || photoPreviewUrl(draft.photo?.photoKey) || draft.existingPhotoUrl;
 
@@ -59,16 +59,7 @@ export default function ReviewScreen() {
     }
   }
 
-  /*
-   * 从复核页回详情页：弹掉复核页这一条，别再压一条。
-   *
-   * 压一条历史会变成 […, details, details]，详情页左上角的返回箭头按下去
-   * 停在原地；用 replace 是同样的结果。弹一条之后历史回到 […, confirm, details]，
-   * 页内返回和浏览器后退指同一个方向。
-   *
-   * idx 是 react-router 写在 history state 里的位置。刷新后重开的标签页
-   * 可能直接落在复核页上（草稿现在能活过刷新），那时候没有上一条可弹。
-   */
+
   const backToDetails = () => {
     const idx = (window.history.state as { idx?: number } | null)?.idx;
     const action = backFromReview(idx);
@@ -76,7 +67,7 @@ export default function ReviewScreen() {
     else nav(action.to, { replace: true });
   };
 
-  // label 当 key：这几行是被 map 出来的，一份记录里同一个类别只会出现一次。
+
   const row = (label: string, value: string, action?: () => void, badge?: string) => (
     <button
       key={label}

@@ -8,7 +8,7 @@ import { PrivacySheet } from '../components/PrivacySheet';
 import { C } from '../theme';
 import { useApp } from '../AppContext';
 
-/** 地图默认落在雪兰莪海岸；用户授权后再按真实坐标平移 */
+
 const FALLBACK: [number, number] = [2.95, 101.42];
 
 export default function GpsScreen() {
@@ -26,14 +26,13 @@ export default function GpsScreen() {
     setBusy(true);
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
-        // DMP §4.2 要求存的是 approx location，界面上也承诺精确坐标不离开这一屏。
-        // 所以在采集处就取到小数点后 3 位（约 110m）——
-        // 精确值从头到尾没离开过设备，25km 的海滩匹配半径也完全够用。
+
+
         const round3 = (n: number) => Math.round(n * 1000) / 1000;
         const coords = { lat: round3(pos.coords.latitude), lng: round3(pos.coords.longitude) };
 
-        // 定位太糙就别猜海滩。海滩之间最近约 10km，
-        // 误差超过 2km 的定位挑出来的海滩不比手选可靠。
+
+
         if (pos.coords.accuracy > 2000) {
           setBusy(false);
           patchDraft({ locationSource: 'manual', coords: null, gpsIssue: 'inaccurate' });
@@ -57,7 +56,7 @@ export default function GpsScreen() {
       },
       (err) => {
         setBusy(false);
-        // 拒绝 / 定不到 / 超时是三件事，不能都说成「权限被拒绝」
+
         const issue =
           err.code === err.PERMISSION_DENIED ? 'denied'
           : err.code === err.TIMEOUT ? 'timeout'
@@ -79,7 +78,7 @@ export default function GpsScreen() {
   return (
     <div className="screen" style={{ zIndex: 26, background: C.cloud, overflow: 'hidden' }}>
       <MiniMap lat={center.lat} lng={center.lng} zoom={9} />
-      {/* z-index 要压过 Leaflet：地图内部的图层在 400–700，普通元素会被盖住 */}
+
       <div style={{ position: 'absolute', inset: 0, zIndex: 800, pointerEvents: 'none', backdropFilter: 'blur(4px)', background: 'linear-gradient(180deg,rgba(221,227,236,.55) 0%,rgba(221,227,236,.25) 40%,rgba(14,30,64,.45) 100%)' }} />
 
       <BackButton
