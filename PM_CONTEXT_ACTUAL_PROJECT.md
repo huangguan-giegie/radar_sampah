@@ -13,6 +13,16 @@ TideTrace, DiveSafe and HealthFirst references remain only in migration/audit
 records, rollback material or compatibility identifiers. No code, deployment,
 Drive file or unmerged branch was changed.
 
+Verification for this cleanup: the backend suite passed 34 tests; the frontend
+passed 25 tests, TypeScript typecheck and production build. The renamed
+19-slide onboarding deck passed `slides_test.py` with no overflow and was
+rendered with the bundled presentation renderer. The five DOCX files were
+checked structurally (including tables, links and visible text) and contain no
+old product names; local DOCX-to-PDF rendering was unavailable because this
+environment does not provide LibreOffice/soffice. Rollback tag
+`radar-sampah-pre-legacy-cleanup` points to the pre-cleanup `main` commit
+`9af4bef`.
+
 ## Current product - 19 August 2026
 
 The active product is **Radar Sampah - Marine Litter Reporting and Cleanup Demo for Malaysia**. Use short, natural student English in code, documents, slides and team messages. Older TideTrace MY filenames and environment variables stay only for compatibility.
