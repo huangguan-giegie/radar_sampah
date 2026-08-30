@@ -8,6 +8,38 @@ export function safeNextPath(value: string | null): string {
   return value;
 }
 
+
+export type ReportStep = 'photo' | 'location' | 'confirm' | 'details' | 'review';
+
+const STEP_ORDER: ReportStep[] = ['photo', 'location', 'confirm', 'details', 'review'];
+
+const STEP_PATH: Record<ReportStep, string> = {
+  photo: '/report/photo',
+  location: '/report/location',
+  confirm: '/report/confirm',
+  details: '/report/details',
+  review: '/report/review',
+};
+
+
+export function reachableStep(draft: ReportDraft): ReportStep {
+
+  const hasPhoto = !!draft.photo || !!draft.existingPhotoUrl || !!draft.editingReportId;
+  if (!hasPhoto) return 'photo';
+
+
+  if (!draft.beachId) return 'confirm';
+  const picked = Object.keys(draft.quantities) as LitterCategory[];
+  if (picked.length === 0 || picked.some((c) => !draft.quantities[c])) return 'details';
+  return 'review';
+}
+
+
+export function guardStep(target: ReportStep, draft: ReportDraft): string | null {
+  const furthest = reachableStep(draft);
+  return STEP_ORDER.indexOf(target) <= STEP_ORDER.indexOf(furthest) ? null : STEP_PATH[furthest];
+}
+
 export type ReportSubmission =
   | { kind: 'create'; payload: CreateReportInput }
   | { kind: 'update'; reportId: string; changes: Partial<CreateReportInput> };
@@ -17,7 +49,7 @@ export function buildReportSubmission(draft: ReportDraft): ReportSubmission {
   if (!draft.beachId || picked.length === 0) {
     throw new Error('This report is missing a required field. Go back and complete it.');
   }
-  // 选了类别却没选数量档的，不能放过去
+
   const noBand = picked.filter((c) => !draft.quantities[c]);
   if (noBand.length > 0) {
     throw new Error(`Pick how much for: ${noBand.join(', ')}.`);
@@ -91,4 +123,11 @@ export function reportOutcome(status: ReportStatus): ReportOutcome {
       'This report is saved in your records but is excluded from the beach rating until the missing or unusable information is corrected.',
     tone: 'warning',
   };
+}
+
+
+export type BackFromReview = { pop: true } | { pop: false; to: string };
+
+export function backFromReview(historyIdx: number | null | undefined): BackFromReview {
+  return (historyIdx ?? 0) > 0 ? { pop: true } : { pop: false, to: '/report/details' };
 }

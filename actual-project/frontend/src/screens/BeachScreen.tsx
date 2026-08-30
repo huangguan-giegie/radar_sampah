@@ -44,7 +44,7 @@ export default function BeachScreen() {
   if (loading || !b) {
     return (
       <div className="screen scroll-y" style={{ zIndex: 20 }}>
-        <div className="pt-page" style={{ paddingInline: 20, display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <div className="pt-page measure" style={{ paddingInline: 20, display: 'flex', flexDirection: 'column', gap: 14 }}>
           <BackButton onClick={() => nav(-1)} />
           {failed ? (
             <div style={{ color: C.red, fontSize: 14 }}>Could not load this beach.</div>
@@ -62,21 +62,22 @@ export default function BeachScreen() {
 
   const sev = b.severity ? SEVERITY[b.severity] : null;
   const fs = freshStyle(b.freshnessKind);
-  // 数量档只有四级，条形宽度按档位画，不再是占比
+
   const BAND_WIDTH: Record<string, string> = {
     Small: '25%', Medium: '50%', Large: '75%', 'Very Large': '100%',
   };
 
   return (
     <div className="screen scroll-y" style={{ zIndex: 20 }}>
-      {/* 头图 */}
+
       <BeachCover coverImageUrl={b.coverImageUrl} scene={b.scene} alt={b.name} style={{ height: 300 }}>
         {!b.coverImageUrl && (
           <div style={{ position: 'absolute', inset: 0, opacity: 0.32, backgroundImage: NOISE }} />
         )}
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg,rgba(9,24,52,.35) 0%,transparent 30%,transparent 52%,rgba(9,22,48,.72) 100%)' }} />
         <BackButton dark onClick={() => nav(-1)} style={{ position: 'absolute', top: 'var(--top-inset)', left: 18, zIndex: 5 }} />
-        <div style={{ position: 'absolute', left: 20, right: 20, bottom: 52 }}>
+
+        <div className="measure" style={{ position: 'absolute', left: 20, right: 20, bottom: 52 }}>
           <div style={{ fontFamily: MONO, fontSize: 8.5, letterSpacing: '.2em', color: 'rgba(9,26,64,.8)', marginBottom: 8 }}>
             WEST COAST · {b.habitatTag}
           </div>
@@ -89,8 +90,17 @@ export default function BeachScreen() {
         </div>
       </BeachCover>
 
-      {/* 严重度概览卡 */}
-      <GlassPanel style={{ margin: '-40px 16px 0', position: 'relative', padding: 18 }}>
+
+
+      <GlassPanel
+        style={{
+          margin: '-40px auto 0',
+          width: 'calc(100% - 32px)',
+          maxWidth: 'var(--measure)',
+          position: 'relative',
+          padding: 18,
+        }}
+      >
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
           <div>
             <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '.16em', color: C.dim }}>
@@ -134,15 +144,17 @@ export default function BeachScreen() {
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: 9, marginTop: 14, padding: '11px 13px', borderRadius: 16, background: 'rgba(30,36,44,.05)', border: '1px solid rgba(30,36,44,.12)' }}>
             <Clock style={{ flex: 'none', marginTop: 1 }} />
             <div style={{ flex: 1, fontSize: 12, lineHeight: 1.5, color: C.muted }}>
-              The most recent verified report is older than 90&nbsp;days. Conditions may have changed
-              in either direction.
+
+              {b.lastReportedAt
+                ? 'The most recent verified report is older than 90\u00a0days. Conditions may have changed in either direction.'
+                : 'No verified report has ever been filed for this beach. That is missing evidence, not a finding.'}
             </div>
           </div>
         )}
       </GlassPanel>
 
-      <div style={{ padding: '20px 16px calc(var(--safe-bottom) + 36px)', display: 'flex', flexDirection: 'column', gap: 22 }}>
-        {/* 成分 */}
+      <div className="measure" style={{ padding: '20px 16px calc(var(--safe-bottom) + 36px)', display: 'flex', flexDirection: 'column', gap: 22 }}>
+
         <div>
           <Label style={{ marginBottom: 12 }}>LITTER COMPOSITION</Label>
           {b.composition ? (
@@ -183,7 +195,7 @@ export default function BeachScreen() {
           )}
         </div>
 
-        {/* 计分方法入口 */}
+
         <button
           type="button"
           onClick={() => nav('/method')}
@@ -224,13 +236,14 @@ export default function BeachScreen() {
           </div>
         </button>
 
-        {/* 生物多样性 */}
+
         <div>
           <Label style={{ marginBottom: 12 }}>BIODIVERSITY NEARBY · {b.habitat}</Label>
           <div className="scroll-x" style={{ display: 'flex', gap: 12, paddingBottom: 6, margin: '0 -16px', paddingLeft: 16, paddingRight: 16 }}>
             {b.species.map((sp) => (
               <div key={sp.name} style={{ width: 196, flex: 'none', background: C.white, border: `1px solid ${C.line}`, borderRadius: 22, overflow: 'hidden' }}>
-                <BeachCover coverImageUrl={b.coverImageUrl} scene={b.scene} style={{ height: 88 }}>
+
+                <BeachCover coverImageUrl={sp.pictureUrl ?? null} scene={b.scene} style={{ height: 88 }}>
                   <div style={{ position: 'absolute', inset: 0, background: 'rgba(12,24,52,.25)' }} />
                   <div
                     style={{
@@ -262,9 +275,7 @@ export default function BeachScreen() {
                   <div style={{ fontSize: 11.5, lineHeight: 1.5, color: C.muted, marginTop: 3 }}>{sp.text}</div>
 
                   {sp.likelihood && (
-                    /* Epic 5 的模型输出。刻意不用严重度那套配色，也不做成条形图 ——
-                       它和垃圾严重度是两回事，绝不能被读成同一个指标。
-                       而且它是相对分数不是概率，所以没有百分号。 */
+
                     <div
                       style={{
                         marginTop: 10,
@@ -294,7 +305,7 @@ export default function BeachScreen() {
                   )}
 
                   {sp.source.dataset === 'pending' ? (
-                    /* 没有真实出处时露出来，绝不显示一条编造的引用 */
+
                     <div
                       style={{
                         marginTop: 9,

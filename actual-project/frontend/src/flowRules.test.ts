@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import type { ReportDraft } from './AppContext';
-import { buildReportSubmission, reportOutcome, safeNextPath } from './flowRules';
+import {
+  backFromReview,
+  buildReportSubmission,
+  guardStep,
+  reachableStep,
+  reportOutcome,
+  safeNextPath,
+} from './flowRules';
 
 function draft(changes: Partial<ReportDraft> = {}): ReportDraft {
   return {
@@ -11,7 +18,7 @@ function draft(changes: Partial<ReportDraft> = {}): ReportDraft {
     locationSource: 'manual',
     coords: null,
     quantities: { Plastic: 'Small' },
-    gpsDenied: false,
+    gpsIssue: null,
     editingReportId: null,
     ...changes,
   };
@@ -78,8 +85,8 @@ describe('buildReportSubmission', () => {
   });
 
   it('keeps every category when only the photo is corrected', () => {
-    // 回归：改正是整体替换 PATCH，草稿必须带着原记录的全部类别，
-    // 否则只换一张照片就会把其他类别的列清空。
+
+
     const result = buildReportSubmission(
       draft({
         editingReportId: 'report-1',
@@ -117,5 +124,81 @@ describe('reportOutcome', () => {
     expect(reportOutcome('Counted').badge).toContain('COUNTED');
     expect(reportOutcome('Duplicate').badge).toContain('DUPLICATE');
     expect(reportOutcome('Incomplete').badge).toContain('INCOMPLETE');
+  });
+});
+
+describe('Flow guards for direct URLs into the reporting flow', () => {
+  const blank = draft({ photo: null, beachId: null, beachName: null, quantities: {} });
+
+  it('keeps an empty draft on the first step', () => {
+    expect(reachableStep(blank)).toBe('photo');
+    expect(guardStep('review', blank)).toBe('/report/photo');
+    expect(guardStep('details', blank)).toBe('/report/photo');
+    expect(guardStep('photo', blank)).toBeNull();
+  });
+
+  it('stops at beach confirmation when a photo has no beach', () => {
+    const d = draft({ beachId: null, beachName: null, quantities: {} });
+    expect(guardStep('details', d)).toBe('/report/confirm');
+    expect(guardStep('confirm', d)).toBeNull();
+
+
+    expect(guardStep('location', d)).toBeNull();
+  });
+
+  it('stops at details when a photo and beach have no category', () => {
+    const d = draft({ quantities: {} });
+    expect(guardStep('review', d)).toBe('/report/details');
+    expect(guardStep('details', d)).toBeNull();
+  });
+
+  it('treats a category without a quantity band as incomplete', () => {
+    const d = draft({ quantities: { Plastic: undefined } });
+    expect(guardStep('review', d)).toBe('/report/details');
+  });
+
+  it('allows a complete draft to access every step after refresh', () => {
+    const d = draft();
+    for (const step of ['photo', 'location', 'confirm', 'details', 'review'] as const) {
+      expect(guardStep(step, d)).toBeNull();
+    }
+  });
+
+  it('allows editing to re-enter the photo step without a new photo', () => {
+
+
+    const d = draft({ photo: null, editingReportId: 'r3' });
+    expect(reachableStep(d)).toBe('review');
+    expect(guardStep('photo', d)).toBeNull();
+  });
+
+  it('accepts the existing photo while editing a record', () => {
+    const d = draft({ photo: null, existingPhotoUrl: 'data:image/png;base64,x' });
+    expect(reachableStep(d)).toBe('review');
+  });
+});
+
+describe('Returning from review to details when the history index is zero', () => {
+
+
+  it('returns a fallback path without popping at index zero', () => {
+    expect(backFromReview(0)).toEqual({ pop: false, to: '/report/details' });
+  });
+
+  it('returns a fallback when the history index is missing', () => {
+    expect(backFromReview(undefined)).toEqual({ pop: false, to: '/report/details' });
+    expect(backFromReview(null)).toEqual({ pop: false, to: '/report/details' });
+  });
+
+  it('pops the stack only when the history index is positive', () => {
+    expect(backFromReview(1)).toEqual({ pop: true });
+    expect(backFromReview(7)).toEqual({ pop: true });
+  });
+
+  it('returns either back or replace and never loops to itself', () => {
+    for (const idx of [-1, 0, 1, 2, undefined, null]) {
+      const r = backFromReview(idx);
+      expect(r.pop === true || (r.pop === false && r.to === '/report/details')).toBe(true);
+    }
   });
 });

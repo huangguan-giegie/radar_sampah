@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import { getBeaches } from '../api';
+import { getBeaches, photoPreviewUrl } from '../api';
 import { ArrowRight, Alert } from '../components/Icon';
 import { BackButton, PrimaryButton, StepBadge } from '../components/ui';
 import { C, MONO, NOISE, QUANTITY_DESC } from '../theme';
@@ -25,9 +25,11 @@ export default function RecordScreen() {
   const beach = beaches.find((b) => b.id === draft.beachId);
   const picked = CATEGORIES.filter((c) => c in draft.quantities);
   const missCat = picked.length === 0;
-  // 选了类别但还没选数量档的
+
   const noBand = picked.filter((c) => !draft.quantities[c]);
-  const photoUrl = draft.photo?.previewUrl ?? draft.existingPhotoUrl;
+
+  const photoUrl =
+    draft.photo?.previewUrl || photoPreviewUrl(draft.photo?.photoKey) || draft.existingPhotoUrl;
 
   function toggleCategory(cat: LitterCategory) {
     const next = { ...draft.quantities };
@@ -38,7 +40,7 @@ export default function RecordScreen() {
   }
 
   function setBand(cat: LitterCategory, q: QuantityBand) {
-    // 再点一次同一档 = 取消这个类别
+
     const next = { ...draft.quantities };
     if (next[cat] === q) delete next[cat];
     else next[cat] = q;
@@ -102,7 +104,7 @@ export default function RecordScreen() {
       )}
 
       <div
-        className="scroll-y"
+        className="scroll-y measure"
         style={{
           position: 'absolute',
           left: 0,

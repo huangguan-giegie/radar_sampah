@@ -1,8 +1,8 @@
-// 全站共用的颜色、字体和小工具函数。
-// 颜色都取自设计稿，改这里就能全站换色。
+
+
 import type { FreshnessKind, ReportStatus, SeverityBand } from './types';
 
-// C = Colors。写成 C.navy 比每次写 '#0B2161' 好读也好改。
+
 export const C = {
   ink: '#1E2421',
   ink2: '#26303F',
@@ -32,7 +32,7 @@ export const FONT =
   "-apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',Segoe UI,Roboto,sans-serif";
 export const MONO = "ui-monospace,'SF Mono',Menlo,Consolas,monospace";
 
-// 四个严重度等级各自的配色
+
 export const SEVERITY: Record<SeverityBand, { col: string; text: string; tint: string }> = {
   Low: { col: '#7CA98B', text: '#3E6B52', tint: 'rgba(124,169,139,.18)' },
   Moderate: { col: '#D9A24B', text: '#8A6420', tint: 'rgba(217,162,75,.18)' },
@@ -40,21 +40,21 @@ export const SEVERITY: Record<SeverityBand, { col: string; text: string; tint: s
   Severe: { col: '#B84A3F', text: '#7E2E24', tint: 'rgba(184,74,63,.16)' },
 };
 
-// 数据新鲜度徽章的配色：绿=最近有人报过，黄=有点旧了，灰=很久没人报
+
 export function freshStyle(k: FreshnessKind) {
   if (k === 'ok') return { bg: 'rgba(124,169,139,.16)', c: '#3E6B52', dot: '#7CA98B' };
   if (k === 'aging') return { bg: 'rgba(217,162,75,.14)', c: '#8A6420', dot: '#D9A24B' };
   return { bg: 'rgba(30,36,44,.07)', c: C.muted, dot: C.faint };
 }
 
-// 记录状态徽章的配色
+
 export function statusChip(s: ReportStatus) {
   if (s === 'Counted') return { bg: C.greenBg, c: C.green };
   if (s === 'Incomplete') return { bg: 'rgba(196,87,74,.13)', c: C.red };
   return { bg: 'rgba(30,36,44,.08)', c: C.muted };
 }
 
-/** 设计稿里的胶片颗粒噪点叠层 */
+
 export const NOISE =
   "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.32'/%3E%3C/svg%3E\")";
 
@@ -64,7 +64,7 @@ export function daysAgo(iso: string | null): number | null {
   return Math.max(0, Math.floor(ms / 86_400_000));
 }
 
-/** 「6 DAYS AGO」这类角标文案 */
+
 export function lastReportedLabel(iso: string | null): string {
   const d = daysAgo(iso);
   if (d === null) return 'NEVER REPORTED';
@@ -73,7 +73,7 @@ export function lastReportedLabel(iso: string | null): string {
   return `${d} DAYS AGO`;
 }
 
-/** 卡片上的新鲜度描述 */
+
 export function freshnessLabel(kind: FreshnessKind, iso: string | null): string {
   const d = daysAgo(iso);
   if (kind === 'ok') return 'Recently reported';

@@ -1,10 +1,4 @@
-/**
- * 设计系统组件。样式全在 src/styles/ds.css，这里只做一层薄封装。
- *
- * 规矩：页面里不要再手写这些东西的样式。
- * 需要一个现在没有的变体，就加在这里和 ds.css 里，别在页面里另起炉灶 ——
- * 之前同一个徽章被写成五种大小、"没有数据"被写成三种说法，就是这么来的。
- */
+
 import type { CSSProperties, ReactNode } from 'react';
 import type { ReportStatus, SeverityBand } from '../types';
 
@@ -33,7 +27,7 @@ export function Surface({
   );
 }
 
-/** 卡片里再嵌一层。小圆角，浅底。 */
+
 export function Nested({ children, style }: Div) {
   return (
     <div className="ds-nested" style={style}>
@@ -57,7 +51,7 @@ export function SectionLabel({
 }
 
 /* ---------- StatusBadge ---------- */
-/** none = 还没有结论。它有自己的虚线样式，全站只此一种画法。 */
+
 export type BadgeStatus = Lowercase<SeverityBand> | Lowercase<ReportStatus> | 'none';
 
 export function StatusBadge({
@@ -82,7 +76,7 @@ export function StatusBadge({
   );
 }
 
-/** 严重度徽章。band 为 null 就是「还没有结论」—— 绝不能画成 Low。 */
+
 export function SeverityBadge({
   band,
   size = 'md',
@@ -92,7 +86,7 @@ export function SeverityBadge({
   band: SeverityBand | null;
   size?: 'md' | 'lg';
   label?: string;
-  /** 列表里用 —— 一列徽章等宽，左边缘才齐 */
+
   block?: boolean;
 }) {
   if (!band) {
@@ -110,7 +104,7 @@ export function SeverityBadge({
 }
 
 /* ---------- InfoChip ---------- */
-/** 陈述一个事实（数量、新鲜度），不是一个等级判断。 */
+
 export function InfoChip({
   children,
   color,
@@ -132,7 +126,7 @@ export function InfoChip({
 }
 
 /* ---------- BandMeter ---------- */
-/** 四格刻度。level 0 = 一格不亮（没有结论）。 */
+
 export function BandMeter({
   level,
   tone,
@@ -179,7 +173,7 @@ export function ListRow({
       {trailing ?? <span />}
     </>
   );
-  // 点了没反应的行不该是键盘焦点
+
   if (!onClick || disabled) {
     return (
       <div className="ds-row" aria-disabled={disabled || undefined} style={style}>
@@ -194,7 +188,7 @@ export function ListRow({
   );
 }
 
-/** 键值行：Review 和 Submitted 都要的那种。标签列宽度全站一致。 */
+
 export function KeyRow({
   label,
   value,
@@ -328,7 +322,7 @@ export function Callout({
 }
 
 /* ---------- Alert ---------- */
-/** 一个问题，一个恢复动作。没有动作就不给按钮。 */
+
 export function Alert({
   title,
   children,
@@ -404,7 +398,7 @@ export function BulletList({ items, tone }: { items: ReactNode[]; tone?: 'dark' 
 }
 
 /* ---------- EmptyState ---------- */
-/** 「这里还没有东西」—— 而且要说清楚这不等于失败，也不等于海滩很干净。 */
+
 export function EmptyState({
   icon,
   title,

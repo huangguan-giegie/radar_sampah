@@ -358,7 +358,7 @@ components:
       required:
         [id, name, area, lat, lng, severity, band, insufficientData, validReports,
          lastReportedAt, freshnessKind, habitat, habitatTag, sensitivity,
-         primarySpeciesGlyph, coverImageUrl, scene]
+         primarySpeciesGlyph, speciesNames, coverImageUrl, scene]
       properties:
         id: { type: string, example: morib }
         name: { type: string, example: Pantai Morib }
@@ -392,6 +392,13 @@ components:
         habitatTag: { type: string, example: MUDFLAT }
         sensitivity: { type: string, example: Migratory feeding ground }
         primarySpeciesGlyph: { $ref: "#/components/schemas/SpeciesGlyph" }
+        speciesNames:
+          type: array
+          items: { type: string }
+          description: |
+            Names of this beach's biodiversity cards, in sort_order. The map's biodiversity
+            layer renders them directly; without it the layer carries habitat only and names
+            no species. Names only — full cards stay in BeachDetail.species.
         coverImageUrl:
           type: string
           format: uri

@@ -2,7 +2,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { C } from '../theme';
 import { BookmarkIcon, HomeIcon, Pin, UserIcon } from './Icon';
 
-// 底部四个 tab
+
 const TABS = [
   { to: '/home', label: 'Home', Icon: HomeIcon },
   { to: '/map', label: 'Map', Icon: Pin },
@@ -20,6 +20,10 @@ export function TabBar() {
         position: 'absolute',
         left: 14,
         right: 14,
+
+
+        maxWidth: 'var(--measure)',
+        marginInline: 'auto',
         bottom: 'var(--bottom-inset)',
         zIndex: 45,
         borderRadius: 26,

@@ -1,13 +1,13 @@
 import { useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import { createReport, getBeaches, updateReport } from '../api';
+import { createReport, getBeaches, photoPreviewUrl, updateReport } from '../api';
 import { ArrowRight, Info, Shield } from '../components/Icon';
 import { BackButton, ErrorNote, PrimaryButton, StepBadge, TextButton } from '../components/ui';
 import { C } from '../theme';
 import { OverlayChip, StatusBadge } from '../components/ds';
 import { useApp } from '../AppContext';
 import type { BeachSummary, LitterCategory, QuantityBand } from '../types';
-import { buildReportSubmission } from '../flowRules';
+import { backFromReview, buildReportSubmission } from '../flowRules';
 
 export default function ReviewScreen() {
   const nav = useNavigate();
@@ -23,7 +23,9 @@ export default function ReviewScreen() {
   }, []);
 
   const beach = beaches.find((b) => b.id === draft.beachId);
-  const photoUrl = draft.photo?.previewUrl ?? draft.existingPhotoUrl;
+
+  const photoUrl =
+    draft.photo?.previewUrl || photoPreviewUrl(draft.photo?.photoKey) || draft.existingPhotoUrl;
 
   async function submit() {
     let submission: ReturnType<typeof buildReportSubmission>;
@@ -57,8 +59,18 @@ export default function ReviewScreen() {
     }
   }
 
+
+  const backToDetails = () => {
+    const idx = (window.history.state as { idx?: number } | null)?.idx;
+    const action = backFromReview(idx);
+    if (action.pop) nav(-1);
+    else nav(action.to, { replace: true });
+  };
+
+
   const row = (label: string, value: string, action?: () => void, badge?: string) => (
     <button
+      key={label}
       type="button"
       onClick={action}
       className={action ? 'row-hover' : undefined}
@@ -87,11 +99,11 @@ export default function ReviewScreen() {
   return (
     <div className="screen scroll-y" style={{ zIndex: 26 }}>
       <div
-        className="anim-fade-up pt-page"
+        className="anim-fade-up pt-page measure"
         style={{ paddingInline: 20, paddingBottom: 'calc(var(--safe-bottom) + 32px)', display: 'flex', flexDirection: 'column', gap: 16 }}
       >
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <BackButton onClick={() => nav('/report/details')} />
+          <BackButton onClick={() => backToDetails()} />
           <StepBadge>STEP 3 OF 3 · REVIEW</StepBadge>
         </div>
 
@@ -112,11 +124,11 @@ export default function ReviewScreen() {
         </div>
 
         <div style={{ background: C.white, border: `1px solid ${C.line}`, borderRadius: 24, overflow: 'hidden' }}>
-          {row('Beach', draft.beachName ?? beach?.name ?? 'Not selected', () => nav('/report/confirm'))}
+          {row('Beach', draft.beachName ?? beach?.name ?? 'Not selected', () => nav('/report/confirm', { replace: true }))}
           {(Object.keys(draft.quantities) as LitterCategory[]).length === 0
-            ? row('Litter', 'Not selected', () => nav('/report/details'))
+            ? row('Litter', 'Not selected', () => backToDetails())
             : (Object.entries(draft.quantities) as [LitterCategory, QuantityBand][]).map(([cat, q]) =>
-                row(cat, q ?? 'Not selected', () => nav('/report/details')),
+                row(cat, q ?? 'Not selected', () => backToDetails()),
               )}
           {draft.locationSource === 'gps'
             ? row('Location', 'Beach area confirmed', undefined, 'GPS PRIVATE')
@@ -138,7 +150,7 @@ export default function ReviewScreen() {
             {busy ? 'Saving…' : 'Submit Report'}
             {!busy && <ArrowRight />}
           </PrimaryButton>
-          <TextButton onClick={() => nav('/report/details')}>Back to details</TextButton>
+          <TextButton onClick={() => backToDetails()}>Back to details</TextButton>
         </div>
       </div>
     </div>

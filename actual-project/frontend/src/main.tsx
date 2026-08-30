@@ -1,4 +1,4 @@
-// 程序入口。把 App 挂到 index.html 的 <div id="root"> 上。
+
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';

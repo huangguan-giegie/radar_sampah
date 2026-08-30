@@ -141,6 +141,7 @@ A person receives a 4-digit number (e.g. `1637`) and their reports hang off it.
   "habitatTag": "MUDFLAT",
   "sensitivity": "Migratory feeding ground",
   "primarySpeciesGlyph": "turtle",
+  "speciesNames": ["Green Sea Turtle", "Mangrove Fringe", "Coastal Birds"],
 
   "coverImageUrl": "https://cdn.example.com/beaches/morib.jpg",
   "scene": "linear-gradient(178deg,#8FD0E8 0%,#4E9EC9 36%,#2E6EA8 58%,#173E77 100%)"
@@ -156,6 +157,7 @@ A person receives a 4-digit number (e.g. `1637`) and their reports hang off it.
 | `lastReportedAt` | string｜null | Newest **Counted** report. The frontend renders "6 days ago" itself — do not send prose |
 | `freshnessKind` | `"ok"｜"aging"｜"stale"` | Under 30 days / 30–90 / over 90 or never |
 | `primarySpeciesGlyph` | `"turtle"｜"bird"｜"mangrove"｜"grass"｜"crab"｜"fish"` | Icon for the biodiversity map marker |
+| `speciesNames` | string[] | The names of this beach's biodiversity cards, in `sort_order`. The map's biodiversity layer renders them directly — without it that layer carries habitat only and names no species at all. Names only; the full cards stay in `BeachDetail.species` |
 | `coverImageUrl` | string｜null | Real photo. **Send `null` when there is none** — the frontend falls back to `scene`, so a new beach never renders a blank header |
 | `scene` | string | A valid CSS `background` value used as the no-photo placeholder. Present in the seed data — store and return it verbatim |
 

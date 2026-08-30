@@ -7,10 +7,7 @@ type Options = {
   interactive?: boolean;
 };
 
-/**
- * 在给定的 div 上挂一张 Leaflet 地图，组件卸载时销毁。
- * 换后端不影响这里 —— 底图是 OpenStreetMap 公共瓦片。
- */
+
 export function useLeafletMap({ center, zoom, interactive = true }: Options) {
   const elRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<L.Map | null>(null);
@@ -40,19 +37,29 @@ export function useLeafletMap({ center, zoom, interactive = true }: Options) {
     mapRef.current = map;
     setReady(true);
 
-    // 容器在动画/布局稳定后尺寸才正确，补一次刷新
+
     const t = window.setTimeout(() => {
       map.invalidateSize(true);
       map.setView(center, zoom);
     }, 300);
 
+
+    let frame = 0;
+    const ro = new ResizeObserver(() => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => map.invalidateSize({ pan: false }));
+    });
+    ro.observe(el);
+
     return () => {
       window.clearTimeout(t);
+      cancelAnimationFrame(frame);
+      ro.disconnect();
       map.remove();
       mapRef.current = null;
       setReady(false);
     };
-    // center/zoom 只作为初始视图，后续变化由调用方自行 setView
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

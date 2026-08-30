@@ -56,7 +56,7 @@ export default function AccountScreen() {
   return (
     <div className="screen scroll-y" style={{ zIndex: 10 }}>
       <div
-        className="anim-fade-up pt-page-lg"
+        className="anim-fade-up pt-page-lg measure"
         style={{ paddingInline: 20, paddingBottom: 132, display: 'flex', flexDirection: 'column', gap: 18 }}
       >
         <div style={{ fontSize: 26, fontWeight: 650, letterSpacing: '-.6px' }}>Account</div>

@@ -24,7 +24,7 @@ export default function MyReportsScreen() {
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
 
-  // 写成函数是因为出错提示里的 Retry 也要用
+
   function loadReports() {
     setLoading(true);
     setFailed(false);
@@ -42,7 +42,7 @@ export default function MyReportsScreen() {
       .catch(() => setBeaches([]));
   }, []);
 
-  // 缩略图：优先用记录自己的照片，其次海滩封面，最后渐变占位
+
   function coverOf(beachId: string) {
     const beach = beaches.find((b) => b.id === beachId);
     return {
@@ -51,7 +51,7 @@ export default function MyReportsScreen() {
     };
   }
 
-  // 按当前 tab 过滤
+
   let rows = reports;
   if (tab === 'Counted') rows = reports.filter((r) => r.status === 'Counted');
   if (tab === 'Excluded') rows = reports.filter((r) => r.status !== 'Counted');
@@ -59,7 +59,7 @@ export default function MyReportsScreen() {
   return (
     <div className="screen scroll-y" style={{ zIndex: 24 }}>
       <div
-        className="anim-fade-up pt-page-lg"
+        className="anim-fade-up pt-page-lg measure"
         style={{ paddingInline: 20, paddingBottom: 132, display: 'flex', flexDirection: 'column', gap: 16 }}
       >
         <div style={{ fontSize: 26, fontWeight: 650, letterSpacing: '-.6px' }}>My Reports</div>
@@ -125,7 +125,7 @@ export default function MyReportsScreen() {
               <button
                 key={r.id}
                 type="button"
-                // Counted / Duplicate 那两行点了没反应，就不该是键盘焦点
+
                 disabled={!fixable}
                 onClick={() => {
                   if (!fixable) return;

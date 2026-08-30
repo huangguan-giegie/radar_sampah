@@ -8,6 +8,17 @@ import { C, MONO } from '../theme';
 import { OverlayChip, SeverityBadge } from '../components/ds';
 import { useApp } from '../AppContext';
 import type { BeachSummary } from '../types';
+import type { ReportDraft } from '../AppContext';
+
+
+const GPS_MESSAGE: Record<NonNullable<ReportDraft['gpsIssue']>, string> = {
+  denied: 'Location permission was declined — choose your beach below.',
+  unavailable: "Your device couldn't provide a location — choose your beach below.",
+  timeout: 'Locating took too long — choose your beach below.',
+  inaccurate: 'The location was too rough to pick a beach from — choose it below.',
+  noBeach: 'No supported beach within 25 km — choose the closest one below.',
+  failed: "Couldn't check your location just now — choose your beach below.",
+};
 
 export default function ConfirmBeachScreen() {
   const nav = useNavigate();
@@ -32,7 +43,7 @@ export default function ConfirmBeachScreen() {
 
   const manual = draft.locationSource !== 'gps' || !suggested;
 
-  // 搜索框：按名字或地区过滤
+
   const q = query.trim().toLowerCase();
   const filtered = q
     ? beaches.filter(
@@ -45,7 +56,7 @@ export default function ConfirmBeachScreen() {
   return (
     <div className="screen" style={{ zIndex: 26, background: C.cloud, overflow: 'hidden' }}>
       <MiniMap lat={center.lat} lng={center.lng} zoom={manual ? 9 : 12} />
-      {/* z-index 要压过 Leaflet：地图内部的图层在 400–700，普通元素会被盖住 */}
+
       <div style={{ position: 'absolute', inset: 0, zIndex: 800, background: 'linear-gradient(180deg,rgba(221,227,236,.3) 0%,transparent 30%,rgba(12,28,58,.4) 100%)', pointerEvents: 'none' }} />
 
       <BackButton
@@ -60,10 +71,10 @@ export default function ConfirmBeachScreen() {
       </OverlayChip>
 
       <div
-        className="anim-sheet-up"
+        className="anim-sheet-up measure"
         style={{ position: 'absolute', left: 16, right: 16, bottom: 'calc(var(--safe-bottom) + 28px)', zIndex: 820 }}
       >
-        {draft.gpsDenied && (
+        {draft.gpsIssue && (
           <div
             style={{
               display: 'flex',
@@ -78,7 +89,7 @@ export default function ConfirmBeachScreen() {
           >
             <Alert size={15} color="#4A3208" strokeWidth={2} />
             <div style={{ fontSize: 12.5, fontWeight: 640, color: '#3D2A08', lineHeight: 1.4 }}>
-              Location permission denied — choose your beach manually below.
+              {GPS_MESSAGE[draft.gpsIssue]}
             </div>
           </div>
         )}

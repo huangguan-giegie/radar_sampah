@@ -1,7 +1,7 @@
-// 匿名参与者编号。
+
 //
-// 不收集姓名、邮箱、密码 —— 用户只拿到一个 4 位编号（比如 1637），
-// 记录就挂在这个编号下面。换设备时把编号输回去就行。
+
+
 
 import { useState, type FormEvent } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -21,9 +21,9 @@ export default function IdentityScreen() {
   const [typedId, setTypedId] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [newId, setNewId] = useState<string | null>(null); // 刚领到的编号
+  const [newId, setNewId] = useState<string | null>(null);
 
-  // 领一个新编号
+
   async function getNewId() {
     setBusy(true);
     setError(null);
@@ -36,7 +36,7 @@ export default function IdentityScreen() {
     setBusy(false);
   }
 
-  // 用已有编号继续
+
   async function useExistingId(e: FormEvent) {
     e.preventDefault();
     setBusy(true);
@@ -45,7 +45,7 @@ export default function IdentityScreen() {
       await restore(typedId.trim());
       nav(next, { replace: true });
     } catch (err) {
-      // 500 或断网也走这里 —— 不能一律告诉用户是号码写错了
+
       setError(err instanceof Error ? err.message : 'Could not use that ID. Please check the number.');
     }
     setBusy(false);
@@ -54,7 +54,7 @@ export default function IdentityScreen() {
   return (
     <div className="screen scroll-y" style={{ zIndex: 50 }}>
       <div
-        className="anim-fade-up pt-page-lg"
+        className="anim-fade-up pt-page-lg measure"
         style={{
           paddingInline: 24,
           paddingBottom: 'calc(var(--safe-bottom) + 32px)',
@@ -75,7 +75,7 @@ export default function IdentityScreen() {
         </div>
 
         {newId ? (
-          // 领到编号之后：把号显示出来，让用户记一下
+
           <>
             <div
               style={{
@@ -115,7 +115,7 @@ export default function IdentityScreen() {
           </>
         ) : (
           <>
-            {/* 两个选项：领新号 / 用旧号 */}
+
             <div
               style={{
                 display: 'flex',
@@ -176,8 +176,8 @@ export default function IdentityScreen() {
                   }}
                 >
                   {[
-                    
-                    
+
+
                     'Your reports stay linked to it, so you can fix them later',
                   ].map((line) => (
                     <div

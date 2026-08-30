@@ -1,11 +1,15 @@
 import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { uploadPhoto } from '../api';
+import { photoPreviewUrl, uploadPhoto } from '../api';
 import { ArrowRight, Camera, ChevronRight, Shield, Upload } from '../components/Icon';
 import { BackButton, ErrorNote, PrimaryButton, StepBadge } from '../components/ui';
 import { C, MONO } from '../theme';
 import { OverlayChip } from '../components/ds';
 import { useApp } from '../AppContext';
+
+
+const ACCEPTED_TYPES = ['image/jpeg', 'image/png', 'image/heic'];
+const MAX_PHOTO_BYTES = 10 * 1024 * 1024;
 
 export default function PhotoScreen() {
   const nav = useNavigate();
@@ -17,6 +21,19 @@ export default function PhotoScreen() {
 
   async function handleFile(file: File | undefined) {
     if (!file) return;
+
+
+
+    if (!ACCEPTED_TYPES.includes(file.type) && !/\.heic$/i.test(file.name)) {
+      setUploadError('That file is not a photo we can read. Use JPG, PNG or HEIC.');
+      return;
+    }
+    if (file.size > MAX_PHOTO_BYTES) {
+      const mb = (file.size / 1024 / 1024).toFixed(1);
+      setUploadError(`That photo is ${mb} MB. The limit is 10 MB — try a smaller one.`);
+      return;
+    }
+
     setUploading(true);
     setUploadError(null);
     try {
@@ -37,7 +54,7 @@ export default function PhotoScreen() {
 
   return (
     <div className="screen scroll-y" style={{ zIndex: 26 }}>
-      {/* 相机在移动端直出，桌面端退化为文件选择 */}
+
       <input
         ref={cameraRef}
         type="file"
@@ -55,7 +72,7 @@ export default function PhotoScreen() {
       />
 
       <div
-        className="anim-fade-up pt-page"
+        className="anim-fade-up pt-page measure"
         style={{ paddingInline: 20, paddingBottom: 'calc(var(--safe-bottom) + 32px)', display: 'flex', flexDirection: 'column', gap: 18 }}
       >
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -151,7 +168,7 @@ export default function PhotoScreen() {
           <>
             <div style={{ position: 'relative', height: 280, borderRadius: 26, overflow: 'hidden', background: '#87847B' }}>
               <img
-                src={photo.previewUrl}
+                src={photo.previewUrl || photoPreviewUrl(photo.photoKey) || undefined}
                 alt="Litter you photographed"
                 style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
               />

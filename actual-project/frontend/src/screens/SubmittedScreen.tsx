@@ -9,8 +9,8 @@ export default function SubmittedScreen() {
   const nav = useNavigate();
   const { lastSavedReport: saved, patchDraft, resetDraft } = useApp();
 
-  // 记录就是 POST 刚返回的那条，不用再去列表里捞 ——
-  // 那个二次请求一旦慢一点或失败，用户就会被弹走，看不到确认页。
+
+
   if (!saved) return <Navigate to="/reports" replace />;
 
   const outcome = reportOutcome(saved.status);
@@ -45,7 +45,7 @@ export default function SubmittedScreen() {
   return (
     <div className="screen scroll-y" style={{ zIndex: 26 }}>
       <div
-        className="anim-fade-up pt-page-lg"
+        className="anim-fade-up pt-page-lg measure"
         style={{ paddingInline: 20, paddingBottom: 'calc(var(--safe-bottom) + 32px)', display: 'flex', flexDirection: 'column', gap: 16 }}
       >
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', padding: '6px 0 2px' }}>
@@ -134,7 +134,9 @@ export default function SubmittedScreen() {
                   locationSource: 'manual',
                   coords: null,
                 });
-                nav('/report/details');
+
+
+                nav('/report/details', { replace: true });
               }}
             >
               Correct Record
