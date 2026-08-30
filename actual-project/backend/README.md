@@ -17,7 +17,8 @@ pip install -r requirements.txt
 python app.py
 ```
 
-The development server listens on `http://localhost:5000` by default.
+The development server listens on `http://localhost:5001` by default. Set
+`PORT` to override it when needed.
 
 ## Storage
 

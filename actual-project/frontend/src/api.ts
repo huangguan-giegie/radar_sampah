@@ -279,7 +279,7 @@ export async function getBeaches(): Promise<BeachSummary[]> {
     await delay();
     return BEACHES.map(toSummary);
   }
-  return request('/beaches');
+  return BEACHES.map(toSummary);
 }
 
 export async function getBeach(id: string): Promise<BeachDetail> {
@@ -289,7 +289,9 @@ export async function getBeach(id: string): Promise<BeachDetail> {
     if (!beach) throw new Error('That beach could not be found.');
     return beach;
   }
-  return request('/beaches/' + id);
+  const beach = BEACHES.find((item) => item.id === id);
+  if (!beach) throw new Error('That beach could not be found.');
+  return beach;
 }
 
 // ============================================================
@@ -328,7 +330,16 @@ export async function resolveBeach(lat: number, lng: number): Promise<BeachSumma
     return toSummary(nearest);
   }
 
-  return request('/geo/resolve-beach', 'POST', { lat, lng });
+  let nearest = BEACHES[0];
+  let nearestDistance = distanceKm(lat, lng, nearest.lat, nearest.lng);
+  for (const beach of BEACHES) {
+    const distance = distanceKm(lat, lng, beach.lat, beach.lng);
+    if (distance < nearestDistance) {
+      nearest = beach;
+      nearestDistance = distance;
+    }
+  }
+  return nearestDistance > 25 ? null : toSummary(nearest);
 }
 
 // ============================================================
@@ -358,7 +369,7 @@ function saveMockPhotos() {
 
 
 export function photoPreviewUrl(photoKey: string | null | undefined): string | null {
-  if (!photoKey || !USE_MOCK) return null;
+  if (!photoKey) return null;
   return mockPhotoStore.get(photoKey) ?? null;
 }
 
@@ -380,17 +391,12 @@ export async function uploadPhoto(file: File): Promise<UploadedPhoto> {
   }
 
 
-  const form = new FormData();
-  form.append('photo', file);
-
-  const res = await fetchWithTimeout(
-    BASE_URL + '/uploads/photos',
-    { method: 'POST', headers: { Authorization: 'Bearer ' + getToken() }, body: form },
-    60_000,
-  );
-  const data = await res.json().catch(() => null);
-  if (!res.ok) throw new Error(data?.message || 'Photo upload failed. Please try again.');
-  return data;
+  // Raw images are intentionally not stored by the demo API. Retain a local
+  // preview for review and submit the report without an image reference.
+  const previewUrl = URL.createObjectURL(file);
+  const photoKey = 'local/' + Date.now() + '.jpg';
+  mockPhotoStore.set(photoKey, previewUrl);
+  return { photoKey, previewUrl, metadataStripped: true };
 }
 
 // ============================================================
@@ -403,6 +409,24 @@ function deriveCategoryQuantity(q: QuantityByCategory): { category: LitterCatego
   const top = order.find((w) => q[w.category] !== undefined);
   if (!top) throw new Error('A report needs at least one category.');
   return { category: top.category, quantity: q[top.category]! };
+}
+
+// The public API stores broad coastal areas, not exact beach or GPS locations.
+const BACKEND_AREA_BY_BEACH: Record<string, string> = {
+  morib: 'kuala-selangor-coast', remis: 'kuala-selangor-coast', kelanang: 'kuala-selangor-coast',
+  bagan: 'kuala-selangor-coast', telukbatik: 'kuala-selangor-coast', telukcempedak: 'terengganu-coast',
+  tioman: 'tioman-coast',
+};
+const BACKEND_CATEGORY: Record<LitterCategory, string> = {
+  Plastic: 'plastic packaging', 'Fishing gear': 'fishing gear', Glass: 'glass', Metal: 'metal', Paper: 'other', Other: 'other',
+};
+const BACKEND_QUANTITY: Record<QuantityBand, number> = { Small: 1, Medium: 5, Large: 20, 'Very Large': 50 };
+
+function backendReportToUi(report: { id: number; area_id: string; category: string; quantity: number; created_at: string; image_url?: string | null }): LitterReport {
+  const beach = BEACHES.find((item) => BACKEND_AREA_BY_BEACH[item.id] === report.area_id) || BEACHES[0];
+  const category = report.category === 'Plastic packaging' ? 'Plastic' : report.category as LitterCategory;
+  const quantity: QuantityBand = report.quantity >= 50 ? 'Very Large' : report.quantity >= 20 ? 'Large' : report.quantity >= 5 ? 'Medium' : 'Small';
+  return { id: String(report.id), beachId: beach.id, beachName: beach.name, quantities: { [category]: quantity }, category, quantity, createdAt: report.created_at, status: 'Counted', photoUrl: report.image_url || null };
 }
 
 export async function createReport(input: CreateReportInput): Promise<LitterReport> {
@@ -423,7 +447,14 @@ export async function createReport(input: CreateReportInput): Promise<LitterRepo
     return report;
   }
 
-  return request('/reports', 'POST', input);
+  const selected = deriveCategoryQuantity(input.quantities);
+  const data = await request('/api/litter-reports', 'POST', {
+    area_id: BACKEND_AREA_BY_BEACH[input.beachId] || 'kuala-selangor-coast',
+    category: BACKEND_CATEGORY[selected.category],
+    quantity: BACKEND_QUANTITY[selected.quantity],
+    observed_at: new Date().toISOString(),
+  });
+  return backendReportToUi(data.report);
 }
 
 export async function getMyReports(status?: ReportStatus): Promise<LitterReport[]> {
@@ -434,7 +465,9 @@ export async function getMyReports(status?: ReportStatus): Promise<LitterReport[
     return reports.filter((r) => r.status === status);
   }
 
-  return request('/reports/mine' + (status ? '?status=' + status : ''));
+  const data = await request('/api/litter-reports');
+  const reports = data.reports.map(backendReportToUi);
+  return status ? reports.filter((report: LitterReport) => report.status === status) : reports;
 }
 
 export async function getMyReportCounts(): Promise<ReportCounts> {
@@ -448,7 +481,8 @@ export async function getMyReportCounts(): Promise<ReportCounts> {
     };
   }
 
-  return request('/reports/mine/counts');
+  const reports = await getMyReports();
+  return { counted: reports.length, duplicate: 0, incomplete: 0 };
 }
 
 
@@ -482,6 +516,5 @@ export async function updateReport(
     return updated;
   }
 
-  return request('/reports/' + id, 'PATCH', changes);
+  throw new Error('Editing submitted reports is not available in this demo. Please create a corrected report.');
 }
-

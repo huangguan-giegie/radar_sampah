@@ -24,7 +24,7 @@ cp .env.example .env
 Set the API base URL when a compatible API is available:
 
 ```env
-VITE_API_BASE_URL=http://localhost:5000
+VITE_API_BASE_URL=http://localhost:5001
 ```
 
 The frontend development server uses port `5173`. The API port is not

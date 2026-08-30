@@ -19,6 +19,7 @@ from typing import Any
 import jwt
 from flask import Flask, jsonify, request
 from flask_cors import CORS
+from dotenv import load_dotenv
 from sqlalchemy import (
     Boolean,
     Column,
@@ -36,6 +37,7 @@ from sqlalchemy import (
     select,
 )
 from sqlalchemy.engine import Engine
+from sqlalchemy import event
 
 from recognition_adapter import recognise_litter
 
@@ -65,6 +67,9 @@ PERSONAL_IDENTIFIER_FIELDS = {
 }
 LOCAL_DATABASE_URL = "sqlite:///marine_observation.db"
 PRECISE_LOCATION_FIELDS = {"latitude", "longitude", "coordinates", "gps", "exact_location"}
+
+# Load local .env for development (optional). Production should set env vars externally.
+load_dotenv(Path(__file__).parent / ".env")
 
 # Anonymous participant auth (API.md §1). No name, email, phone or password is
 # collected. The four-digit participant ID is suitable only for this demo.
@@ -243,8 +248,25 @@ def contains_precise_location(payload: Any) -> bool:
 
 
 def create_engine_for_url(database_url: str) -> Engine:
-    connect_args = {"check_same_thread": False} if database_url.startswith("sqlite") else {}
-    return create_engine(database_url, future=True, connect_args=connect_args)
+    # For SQLite (local dev) allow check_same_thread. For Postgres/Neon we set
+    # the `search_path` on each new DB connection using an after-connect hook
+    # because Neon rejects startup parameters in the connection packet.
+    if database_url.startswith("sqlite"):
+        connect_args = {"check_same_thread": False}
+        engine = create_engine(database_url, future=True, connect_args=connect_args)
+        return engine
+
+    engine = create_engine(database_url, future=True)
+
+    # Ensure the session search_path includes the `app` schema where we applied
+    # the DDL earlier.
+    def _set_search_path(dbapi_conn, conn_record):
+        cursor = dbapi_conn.cursor()
+        cursor.execute("SET search_path TO app,public")
+        cursor.close()
+
+    event.listen(engine, "connect", _set_search_path)
+    return engine
 
 
 def error_response(status: int, code: str, message: str):
@@ -835,4 +857,4 @@ app = create_app()
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=int(os.getenv("PORT", "5000")))
+    app.run(host="0.0.0.0", port=int(os.getenv("PORT", "5001")))

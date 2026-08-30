@@ -42,7 +42,7 @@ cd frontend
 python -m http.server 8080
 ```
 
-Open `http://localhost:8080`. The local frontend uses `http://localhost:5000`.
+Open `http://localhost:8080`. The local frontend uses `http://localhost:5001`.
 
 ## Render deployment
 
