@@ -1,8 +1,8 @@
-// 假数据。后端做好之后，把 src/api.ts 里的 USE_MOCK 关掉，这个文件就用不到了。
+
 import { PENDING_SOURCE } from './sources';
 import type { BeachDetail, LitterReport, User } from './types';
 
-/** 设计稿里的四个 MVP 海滩。后端接上后整份文件即可删除。 */
+
 export const BEACHES: BeachDetail[] = [
   {
     id: 'morib',
@@ -37,18 +37,18 @@ export const BEACHES: BeachDetail[] = [
         name: 'Green Sea Turtle',
         kind: 'species',
         scientificName: 'Chelonia mydas',
-        threatCategory: null, // OBIS 收海龟；FishBase 只收鱼，没有
+        threatCategory: null,
         glyph: 'turtle',
         text: 'Occasional visitor along the Strait of Malacca. Floating plastic may be mistaken for food.',
         source: PENDING_SOURCE,
-        // ⚠️ 占位数字，等 Su 的 Epic 5 模型接进来替换
+
         likelihood: { percent: 38, basis: 'Placeholder — awaiting the Epic 5 model', placeholder: true },
       },
       {
         name: 'Mangrove Fringe',
         kind: 'habitat',
         scientificName: null,
-        threatCategory: null, // 生境，FishBase / OBIS 都没有
+        threatCategory: null,
         glyph: 'mangrove',
         text: 'Young mangroves at the northern end shelter juvenile fish and crabs.',
         source: PENDING_SOURCE,
@@ -57,7 +57,7 @@ export const BEACHES: BeachDetail[] = [
         name: 'Coastal Birds',
         kind: 'group',
         scientificName: null,
-        threatCategory: null, // 鸟类不在 FishBase / OBIS
+        threatCategory: null,
         glyph: 'bird',
         text: 'Migratory shorebirds feed along this tide line between September and April.',
         source: PENDING_SOURCE,
@@ -100,7 +100,7 @@ export const BEACHES: BeachDetail[] = [
         name: 'Migratory Shorebirds',
         kind: 'group',
         scientificName: null,
-        threatCategory: null, // 鸟类不在 FishBase / OBIS
+        threatCategory: null,
         glyph: 'bird',
         text: 'The Jeram mudflats are a stopover for migratory waders crossing the strait.',
         source: PENDING_SOURCE,
@@ -109,7 +109,7 @@ export const BEACHES: BeachDetail[] = [
         name: 'Marine Fish',
         kind: 'group',
         scientificName: null,
-        threatCategory: null, // FishBase + OBIS 都有，但这是统称不是单一物种
+        threatCategory: null,
         glyph: 'fish',
         text: 'Shallow nursery waters for coastal fish species.',
         source: PENDING_SOURCE,
@@ -118,7 +118,7 @@ export const BEACHES: BeachDetail[] = [
         name: 'Mangrove Belt',
         kind: 'habitat',
         scientificName: null,
-        threatCategory: null, // 生境，FishBase / OBIS 都没有
+        threatCategory: null,
         glyph: 'mangrove',
         text: 'A narrow mangrove belt lines the river mouth south of the beach.',
         source: PENDING_SOURCE,
@@ -146,7 +146,7 @@ export const BEACHES: BeachDetail[] = [
     coverImageUrl: null,
     scene:
       'radial-gradient(90% 55% at 70% 16%,rgba(156,174,168,.35),transparent 60%),linear-gradient(178deg,#2F6B7C 0%,#245A6B 44%,#1B4557 72%,#123244 100%)',
-    // 有 2 条 Counted 记录，所以成分是有的 —— 三条那个门槛只管 severity
+
     composition: [
       { category: 'Plastic', quantity: 'Medium' },
       { category: 'Other', quantity: 'Small' },
@@ -156,7 +156,7 @@ export const BEACHES: BeachDetail[] = [
         name: 'Mangrove Habitat',
         kind: 'habitat',
         scientificName: null,
-        threatCategory: null, // 生境，FishBase / OBIS 都没有
+        threatCategory: null,
         glyph: 'mangrove',
         text: 'Dense mangrove roots trap sediment and shelter juvenile marine life.',
         source: PENDING_SOURCE,
@@ -165,7 +165,7 @@ export const BEACHES: BeachDetail[] = [
         name: 'Coastal Birds',
         kind: 'group',
         scientificName: null,
-        threatCategory: null, // 鸟类不在 FishBase / OBIS
+        threatCategory: null,
         glyph: 'bird',
         text: 'Egrets and herons hunt along the shallow channels at low tide.',
         source: PENDING_SOURCE,
@@ -207,7 +207,7 @@ export const BEACHES: BeachDetail[] = [
         name: 'Horseshoe Crab',
         kind: 'species',
         scientificName: 'Carcinoscorpius rotundicauda',
-        threatCategory: null, // OBIS 收鲎；FishBase 没有
+        threatCategory: null,
         glyph: 'crab',
         text: 'One of the few Selangor shores where mangrove horseshoe crabs still come up to spawn.',
         source: PENDING_SOURCE,
@@ -216,7 +216,7 @@ export const BEACHES: BeachDetail[] = [
         name: 'Seagrass Patches',
         kind: 'habitat',
         scientificName: null,
-        threatCategory: null, // 生境，FishBase / OBIS 都没有
+        threatCategory: null,
         glyph: 'grass',
         text: 'Seagrass in the shallows feeds and shelters small marine animals.',
         source: PENDING_SOURCE,
@@ -225,7 +225,7 @@ export const BEACHES: BeachDetail[] = [
         name: 'Mangrove Habitat',
         kind: 'habitat',
         scientificName: null,
-        threatCategory: null, // 生境，FishBase / OBIS 都没有
+        threatCategory: null,
         glyph: 'mangrove',
         text: 'The Sepang river-mouth mangroves sit just south of this beach.',
         source: PENDING_SOURCE,
@@ -238,7 +238,7 @@ export const BEACHES: BeachDetail[] = [
 ];
 
 
-// 匿名用户。没有姓名和邮箱，只有一个参与者编号。
+
 export const MOCK_USER: User = {
   id: 'u_anon_1637',
   participantId: '1637',
@@ -251,7 +251,7 @@ export const SEED_REPORTS: LitterReport[] = [
     beachId: 'morib',
     beachName: 'Pantai Morib',
     quantities: { Plastic: 'Medium', Glass: 'Small' },
-    category: 'Plastic',      // 派生：Plastic 0.85 > Glass 0.70
+    category: 'Plastic',
     quantity: 'Medium',
     createdAt: '2026-08-14T02:00:00Z',
     status: 'Counted',
@@ -273,7 +273,7 @@ export const SEED_REPORTS: LitterReport[] = [
     beachId: 'remis',
     beachName: 'Pantai Remis',
     quantities: { 'Fishing gear': 'Small', Plastic: 'Small' },
-    category: 'Fishing gear', // 派生：Fishing gear 1.00 最高
+    category: 'Fishing gear',
     quantity: 'Small',
     createdAt: '2026-07-20T02:00:00Z',
     status: 'Counted',

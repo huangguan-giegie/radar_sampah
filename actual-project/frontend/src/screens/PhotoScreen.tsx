@@ -37,7 +37,7 @@ export default function PhotoScreen() {
 
   return (
     <div className="screen scroll-y" style={{ zIndex: 26 }}>
-      {/* 相机在移动端直出，桌面端退化为文件选择 */}
+
       <input
         ref={cameraRef}
         type="file"

@@ -6,10 +6,10 @@ import { BackButton, GhostButton, Label } from '../components/ui';
 import { C, MONO } from '../theme';
 import type { ScoringMethod } from '../types';
 
-/**
- * §3 说好的：后端那份规则和前端不一致时要提醒。
- * 只在开发模式跑，仍然以后端为准 —— 只是别让它悄悄改掉。
- */
+
+
+
+
 function warnIfRuleDiffers(remote: ScoringMethod) {
   const local = SCORING_METHOD;
   const diffs: string[] = [];
@@ -22,7 +22,7 @@ function warnIfRuleDiffers(remote: ScoringMethod) {
   cmp('quantityWeights', local.quantityWeights, remote.quantityWeights);
   cmp('bands', local.bands, remote.bands);
   if (diffs.length) {
-    console.warn('[scoring] 后端发下来的规则和 scoring.ts 不一致：\n  ' + diffs.join('\n  '));
+    console.warn('[scoring] The backend rule differs from scoring.ts:\n  ' + diffs.join('\n  '));
   }
 }
 
@@ -36,8 +36,8 @@ const limitations = (m: ScoringMethod) => [
 
 export default function MethodScreen() {
   const nav = useNavigate();
-  // US4.3 由前端交付：先用前端常量直出（离线、后端未就绪都能看），
-  // 后端如果提供了 /scoring-method 再无声升级为后端那份。
+
+
   const [m, setM] = useState<ScoringMethod>(SCORING_METHOD);
 
   useEffect(() => {
@@ -75,7 +75,7 @@ export default function MethodScreen() {
       </div>
 
       <div style={{ padding: '20px 16px calc(var(--safe-bottom) + 36px)', display: 'flex', flexDirection: 'column', gap: 20 }}>
-        {/* 规则 + 权重，并成一张 */}
+
         <div style={{ background: C.white, border: `1px solid ${C.line}`, borderRadius: 24, padding: 20 }}>
           <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: '.16em', color: C.muted, fontWeight: 600 }}>
             THE RULE
@@ -122,7 +122,7 @@ export default function MethodScreen() {
           </div>
         </div>
 
-        {/* 阈值 */}
+
         <div>
           <Label style={{ marginBottom: 11 }}>BANDS</Label>
           <div style={{ background: C.white, border: `1px solid ${C.line}`, borderRadius: 22, overflow: 'hidden' }}>
@@ -145,7 +145,7 @@ export default function MethodScreen() {
           </div>
         </div>
 
-        {/* 什么时候不给等级 */}
+
         <div>
           <Label style={{ marginBottom: 11 }}>WHEN NO BAND IS SHOWN</Label>
           <div style={{ background: C.white, border: `1px solid ${C.line}`, borderRadius: 22, padding: 18, display: 'flex', flexDirection: 'column', gap: 9 }}>
@@ -165,7 +165,7 @@ export default function MethodScreen() {
           </div>
         </div>
 
-        {/* 局限 */}
+
         <div>
           <Label style={{ marginBottom: 11 }}>LIMITATIONS</Label>
           <div style={{ background: C.white, border: `1px solid ${C.line}`, borderRadius: 22, padding: 18, display: 'flex', flexDirection: 'column', gap: 10 }}>
