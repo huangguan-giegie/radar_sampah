@@ -131,3 +131,19 @@ export type BackFromReview = { pop: true } | { pop: false; to: string };
 export function backFromReview(historyIdx: number | null | undefined): BackFromReview {
   return (historyIdx ?? 0) > 0 ? { pop: true } : { pop: false, to: '/report/details' };
 }
+
+type SavedRouteNavigate = (
+  to: '/report/saved',
+  options: { replace: true; flushSync: true },
+) => void;
+
+/**
+ * Commit the saved-route navigation while the review draft is still present.
+ * The confirmation screen clears the draft after it has mounted, so the
+ * review route guard cannot redirect during this transition.
+ */
+export function finishReportSubmission(
+  navigate: SavedRouteNavigate,
+) {
+  navigate('/report/saved', { replace: true, flushSync: true });
+}
