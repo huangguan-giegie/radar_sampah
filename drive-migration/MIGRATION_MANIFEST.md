@@ -147,18 +147,18 @@ Artefacts.
 Selected reference files remain at the reference root for easy access; this
 does not alter the actual marine-project folders.
 
-## Adapted marine deliverables — 14 August 2026
+## Adapted Radar Sampah deliverables — 14 August 2026
 
 These are new project outputs, not unchanged HealthFirst copies:
 
 | Local output | Purpose | Drive link |
 |---|---|---|
-| `deliverables/TEAM04_Marine_Project_Information.docx` | Team, scope and links | [Google Doc](https://docs.google.com/document/d/1TS_3soYkpeXXs8wzo9m2_9Khs6k0eU49/edit) |
-| `deliverables/TM04_Marine_Social_Contract.docx` | Working agreement | [Google Doc](https://docs.google.com/document/d/1qMRH9_it0VLtjlyf5WcbwFOpWXha_TQn/edit) |
-| `deliverables/Marine_MVP_Work_Plan_and_Handover.docx` | Ownership and handover | [Google Doc](https://docs.google.com/document/d/19W1niQXJdC3rVam4MTLN1w4Z1enoXo6Y/edit) |
-| `deliverables/Marine_MVP_QA_and_Deployment_Checklist.docx` | Acceptance and release evidence | [Google Doc](https://docs.google.com/document/d/1HJjSd-xeY4y8JJUx3m9qJdcSWaP8SAMD/edit) |
-| `deliverables/Team04_Marine_Miro_Reflection_Speaking_Notes.docx` | Reflection facilitation | [Google Doc](https://docs.google.com/document/d/1V0IVCBnqlVUG-Be1lKUJpqiFNZEhD5-Y/edit) |
-| `deliverables/presentation/Team04 Marine Observation Onboarding Presentation.pptx` | 19-slide English onboarding deck | [Google Slides](https://docs.google.com/presentation/d/1aU_HQoaEwIZ-__RMElYfMce7wdPLfnX4/edit) |
+| `deliverables/TEAM04_Radar_Sampah_Project_Information.docx` | Team, scope and links | [Google Doc](https://docs.google.com/document/d/1TS_3soYkpeXXs8wzo9m2_9Khs6k0eU49/edit) |
+| `deliverables/TM04_Radar_Sampah_Social_Contract.docx` | Working agreement | [Google Doc](https://docs.google.com/document/d/1qMRH9_it0VLtjlyf5WcbwFOpWXha_TQn/edit) |
+| `deliverables/Radar_Sampah_MVP_Work_Plan_and_Handover.docx` | Ownership and handover | [Google Doc](https://docs.google.com/document/d/19W1niQXJdC3rVam4MTLN1w4Z1enoXo6Y/edit) |
+| `deliverables/Radar_Sampah_MVP_QA_and_Deployment_Checklist.docx` | Acceptance and release evidence | [Google Doc](https://docs.google.com/document/d/1HJjSd-xeY4y8JJUx3m9qJdcSWaP8SAMD/edit) |
+| `deliverables/Team04_Radar_Sampah_Miro_Reflection_Speaking_Notes.docx` | Reflection facilitation | [Google Doc](https://docs.google.com/document/d/1V0IVCBnqlVUG-Be1lKUJpqiFNZEhD5-Y/edit) |
+| `deliverables/presentation/Team04 Radar Sampah Onboarding Presentation.pptx` | 19-slide English onboarding deck | [Google Slides](https://docs.google.com/presentation/d/1aU_HQoaEwIZ-__RMElYfMce7wdPLfnX4/edit) |
 
 An editable native Slides copy is also available for team updates:
 [Team04 DiveSafe MY Onboarding Presentation - editable](https://docs.google.com/presentation/d/1bFR83Sng4uYm_rUPjwVuzTzwKwcVLWPVoPJl9d-xbTU/edit).
@@ -225,17 +225,17 @@ alter the Marine API, schema or deployed inputs.
 
 Marine supplements added to the mirrored tree include:
 
-- `Analysis/MARINE_DATA_DICTIONARY.md`
-- `Analysis/MARINE_ANALYSIS_NOTES.md`
-- `Analysis/API.md — Marine runtime`
-- `Analysis/DATA_MANAGEMENT_PLAN.md — Marine runtime`
-- `Analysis/DECISIONS.md — Marine runtime`
-- `Analysis/PROJECT_SCOPE.md — Marine runtime`
-- `Analysis/INTEGRATION_CHECKLIST.md — Marine runtime`
-- `Security Aspects/SECURITY_PLAN.md — Marine runtime`
-- `Team Information/TEAM_INFORMATION.md — Marine project`
+- `Analysis/RADAR_SAMPAH_DATA_DICTIONARY.md`
+- `Analysis/RADAR_SAMPAH_ANALYSIS_NOTES.md`
+- `Analysis/API.md — Radar Sampah runtime`
+- `Analysis/DATA_MANAGEMENT_PLAN.md — Radar Sampah runtime`
+- `Analysis/DECISIONS.md — Radar Sampah runtime`
+- `Analysis/PROJECT_SCOPE.md — Radar Sampah runtime`
+- `Analysis/INTEGRATION_CHECKLIST.md — Radar Sampah runtime`
+- `Security Aspects/SECURITY_PLAN.md — Radar Sampah runtime`
+- `Team Information/TEAM_INFORMATION.md — Radar Sampah project`
 - `Datasets/MARINE_SYNTHETIC_OBSERVATIONS.csv`
-- `Datasets/obis_context.json — Marine runtime`
+- `Datasets/obis_context.json — Radar Sampah runtime`
 - root `miro board link`
 
 The exact Drive IDs for these folders and files are retained in the Drive
@@ -451,6 +451,15 @@ Severity is deterministic and versioned, with four bands, sensitivity factors
 1.0/1.25/1.5 and an open quantity display of `102+`. D1-D7 are in the active
 project docs. Current code gaps remain Future/TBD. Sample, reference, history
 and Future Features material was not changed.
+
+## Radar Sampah filename alignment — 30 August 2026
+
+The active deliverables were renamed from Marine-labelled filenames to
+Radar_Sampah-labelled filenames. Git history is unchanged and the previous
+names remain recoverable through Git history and rollback tags. The current
+Render services still use the legacy `team04-marine-observation-*` hostnames;
+these are compatibility endpoints, not the product name. The proposed
+`radar-sampah-*.onrender.com` names have not been provisioned.
 
 ## Radar Sampah flow and lightweight deck — 19 August 2026
 
