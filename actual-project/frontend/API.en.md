@@ -21,17 +21,17 @@
 
 ## 0. Conventions
 
-> ⚠️ **The backend currently in this repository does not implement this contract.**
+> ⚠️ **The backend currently implements anonymous auth, but not the full contract.**
 > `actual-project/backend/app.py` serves the `/api/*` routes (`/api/litter-reports`,
 > `/api/litter-options`, `/api/litter-recognize`, `/api/cleanup-missions` and others).
-> It predates this contract and is a different shape: no auth at all, places are `area_id`
+> It still differs from this contract: places are `area_id`
 > rather than `beaches`, five categories (`Plastic packaging`, no `Paper`), quantity is an
 > integer rather than one of four bands, and severity is a three-level high/medium/low
 > `priority` rather than the four bands here.
 >
 > **This document is the target, not a description of what runs today.** Until it is
-> implemented, the frontend's `VITE_API_BASE_URL` must stay empty — setting it produces 404s
-> for every call to `/auth/*`, `/beaches` and `/reports`. The app currently runs on the seed
+> implemented, the frontend's `VITE_API_BASE_URL` must stay empty — setting it still produces 404s
+> for `/beaches` and `/reports`. The app currently runs on the seed
 > data in `src/mockData.ts`.
 
 | Item | Convention |

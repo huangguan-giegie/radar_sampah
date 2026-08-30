@@ -9,10 +9,14 @@ from __future__ import annotations
 
 import json
 import os
-from datetime import datetime, timezone
+import re
+import secrets
+from datetime import datetime, timedelta, timezone
+from functools import wraps
 from pathlib import Path
 from typing import Any
 
+import jwt
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 from sqlalchemy import (
@@ -62,8 +66,27 @@ PERSONAL_IDENTIFIER_FIELDS = {
 LOCAL_DATABASE_URL = "sqlite:///marine_observation.db"
 PRECISE_LOCATION_FIELDS = {"latitude", "longitude", "coordinates", "gps", "exact_location"}
 
+# Anonymous participant auth (API.md §1). No name, email, phone or password is
+# collected. The four-digit participant ID is suitable only for this demo.
+AUTH_JWT_ALGORITHM = "HS256"
+AUTH_TOKEN_TTL_DAYS = 30
+PARTICIPANT_ID_MIN = 1000
+PARTICIPANT_ID_MAX = 9999
+PARTICIPANT_ID_POOL_SIZE = PARTICIPANT_ID_MAX - PARTICIPANT_ID_MIN + 1
+PARTICIPANT_ID_MAX_ATTEMPTS = 20
+DEFAULT_VOLUNTEER_ROLE = "volunteer"
+
 
 metadata = MetaData()
+# Users store a random participant ID and role, without personal identity data.
+users_table = Table(
+    "users",
+    metadata,
+    Column("id", String(80), primary_key=True),
+    Column("participant_id", String(4), nullable=False, unique=True),
+    Column("role", String(20), nullable=False, default=DEFAULT_VOLUNTEER_ROLE),
+    Column("created_at", DateTime(timezone=True), nullable=False),
+)
 observations_table = Table(
     "observations",
     metadata,
@@ -222,6 +245,57 @@ def contains_precise_location(payload: Any) -> bool:
 def create_engine_for_url(database_url: str) -> Engine:
     connect_args = {"check_same_thread": False} if database_url.startswith("sqlite") else {}
     return create_engine(database_url, future=True, connect_args=connect_args)
+
+
+def error_response(status: int, code: str, message: str):
+    return jsonify({"code": code, "message": message}), status
+
+
+def auth_jwt_secret(testing: bool) -> str:
+    secret = os.getenv("AUTH_JWT_SECRET", "").strip()
+    if secret:
+        return secret
+    if testing:
+        return "test-only-secret-not-for-production"
+    raise RuntimeError("AUTH_JWT_SECRET must be configured outside tests")
+
+
+def generate_user_id() -> str:
+    return "u_" + secrets.token_hex(12)
+
+
+def issue_token(user_id: str, jwt_secret: str) -> str:
+    now = datetime.now(timezone.utc)
+    payload = {
+        "sub": user_id,
+        "iat": now,
+        "exp": now + timedelta(days=AUTH_TOKEN_TTL_DAYS),
+    }
+    return jwt.encode(payload, jwt_secret, algorithm=AUTH_JWT_ALGORITHM)
+
+
+def decode_token_subject(token: str, jwt_secret: str) -> str | None:
+    try:
+        payload = jwt.decode(token, jwt_secret, algorithms=[AUTH_JWT_ALGORITHM])
+    except jwt.PyJWTError:
+        return None
+    return payload.get("sub")
+
+
+def generate_participant_id(connection: Any) -> str:
+    """Pick a random, unused 4-digit participant ID (API.md §1: random, not sequential)."""
+    for _ in range(PARTICIPANT_ID_MAX_ATTEMPTS):
+        candidate = str(secrets.randbelow(PARTICIPANT_ID_POOL_SIZE) + PARTICIPANT_ID_MIN)
+        taken = connection.execute(
+            select(users_table.c.id).where(users_table.c.participant_id == candidate)
+        ).first()
+        if taken is None:
+            return candidate
+    raise RuntimeError("No participant IDs are available")
+
+
+def user_dict(row: Any) -> dict[str, Any]:
+    return {"id": row.id, "participantId": row.participant_id, "role": row.role}
 
 
 def initialise_database(engine: Engine) -> None:
@@ -512,14 +586,32 @@ def parse_cleanup_evidence_payload(payload: Any, mission_ids: set[str], report_i
 
 def create_app(database_url: str | None = None, testing: bool = False) -> Flask:
     """Build an app with PostgreSQL when configured, otherwise SQLite."""
+    jwt_secret = auth_jwt_secret(testing)
     application = Flask(__name__)
     application.config["TESTING"] = testing
     origins = os.getenv("FRONTEND_ORIGINS", "*").split(",")
-    CORS(application, resources={r"/api/*": {"origins": origins}})
+    CORS(application, resources={r"/api/*": {"origins": origins}, r"/auth/*": {"origins": origins}})
 
     engine = create_engine_for_url(normalise_database_url(database_url or os.getenv("DATABASE_URL")))
     initialise_database(engine)
     application.extensions["marine_engine"] = engine
+
+    def require_auth(view):
+        @wraps(view)
+        def wrapper(*args: Any, **kwargs: Any):
+            header = request.headers.get("Authorization", "")
+            token = header[len("Bearer "):].strip() if header.startswith("Bearer ") else ""
+            user_id = decode_token_subject(token, jwt_secret) if token else None
+            if user_id is None:
+                return error_response(401, "UNAUTHENTICATED", "Sign in to continue.")
+            with engine.connect() as connection:
+                row = connection.execute(select(users_table).where(users_table.c.id == user_id)).first()
+            if row is None:
+                return error_response(401, "UNAUTHENTICATED", "Sign in to continue.")
+            request.current_user = row
+            return view(*args, **kwargs)
+
+        return wrapper
 
     @application.get("/")
     def root():
@@ -534,6 +626,51 @@ def create_app(database_url: str | None = None, testing: bool = False) -> Flask:
     @application.get("/health")
     def health():
         return jsonify({"status": "ok", "database": "configured"})
+
+    @application.post("/auth/anonymous")
+    def create_anonymous_participant():
+        with engine.begin() as connection:
+            try:
+                participant_id = generate_participant_id(connection)
+            except RuntimeError as error:
+                return error_response(500, "INTERNAL_ERROR", str(error))
+            user_id = generate_user_id()
+            connection.execute(
+                insert(users_table).values(
+                    id=user_id,
+                    participant_id=participant_id,
+                    role=DEFAULT_VOLUNTEER_ROLE,
+                    created_at=datetime.now(timezone.utc),
+                )
+            )
+        token = issue_token(user_id, jwt_secret)
+        return jsonify(
+            {"token": token, "user": {"id": user_id, "participantId": participant_id, "role": DEFAULT_VOLUNTEER_ROLE}}
+        ), 201
+
+    @application.post("/auth/restore")
+    def restore_anonymous_participant():
+        payload = request.get_json(silent=True)
+        participant_id = str(payload.get("participantId") or "").strip() if isinstance(payload, dict) else ""
+        if not re.fullmatch(r"\d{4}", participant_id):
+            return error_response(404, "UNKNOWN_PARTICIPANT", "That participant ID was not found.")
+        with engine.connect() as connection:
+            row = connection.execute(select(users_table).where(users_table.c.participant_id == participant_id)).first()
+        if row is None:
+            return error_response(404, "UNKNOWN_PARTICIPANT", "That participant ID was not found.")
+        token = issue_token(row.id, jwt_secret)
+        return jsonify({"token": token, "user": user_dict(row)})
+
+    # Logout is stateless: the client removes its token. This endpoint does not revoke it.
+    @application.post("/auth/logout")
+    @require_auth
+    def logout_anonymous_participant():
+        return "", 204
+
+    @application.get("/auth/me")
+    @require_auth
+    def get_current_participant():
+        return jsonify(user_dict(request.current_user))
 
     @application.get("/api/context")
     def get_context():
