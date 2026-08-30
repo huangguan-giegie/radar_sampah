@@ -34,6 +34,7 @@ The development server listens on `http://localhost:5000` by default.
 
 - `FRONTEND_ORIGINS`: deployed frontend URL.
 - `DATABASE_URL`: private Render database connection string.
+- `AUTH_JWT_SECRET`: required private signing secret for anonymous demo tokens.
 - `LITTER_RECOGNITION_ENABLED`: `false` by default. Only exact `true` can
   enable a provider request.
 - `LITTER_RECOGNITION_API_URL`: private HTTPS provider URL, only used when
@@ -48,6 +49,10 @@ cleanup instruction or enforcement evidence.
 ## Active endpoints
 
 - `GET /health`
+- `POST /auth/anonymous`
+- `POST /auth/restore`
+- `GET /auth/me`
+- `POST /auth/logout`
 - `GET /api/litter-options`
 - `GET/POST /api/litter-reports`
 - `POST /api/litter-recognize`
@@ -58,3 +63,7 @@ cleanup instruction or enforcement evidence.
 - `GET /api/community-progress`
 
 Read `../docs/API.md` for the full demo contract and privacy boundary.
+
+Anonymous access uses a four-digit participant number for this small demo only.
+It is not a full account system. Logout removes the token on the client; the
+server does not maintain a revocation list.

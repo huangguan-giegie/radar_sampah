@@ -67,9 +67,7 @@ LOCAL_DATABASE_URL = "sqlite:///marine_observation.db"
 PRECISE_LOCATION_FIELDS = {"latitude", "longitude", "coordinates", "gps", "exact_location"}
 
 # Anonymous participant auth (API.md §1). No name, email, phone or password is
-# ever collected — the 4-digit participant ID is the only credential.
-# hx：这里是匿名登录用到的一些固定参数，token 用 JWT，30 天过期；
-# 编号是 1000-9999 之间随机 4 位数字，一共 9000 个可以分配
+# collected. The four-digit participant ID is suitable only for this demo.
 AUTH_JWT_ALGORITHM = "HS256"
 AUTH_TOKEN_TTL_DAYS = 30
 PARTICIPANT_ID_MIN = 1000
@@ -80,8 +78,7 @@ DEFAULT_VOLUNTEER_ROLE = "volunteer"
 
 
 metadata = MetaData()
-# hx：users 表只存参与者编号和角色，不收集姓名、邮箱、手机号这些个人信息，
-# id 是内部用的用户主键，participant_id 才是用户看到、用来登录的 4 位编号
+# Users store a random participant ID and role, without personal identity data.
 users_table = Table(
     "users",
     metadata,
@@ -250,43 +247,41 @@ def create_engine_for_url(database_url: str) -> Engine:
     return create_engine(database_url, future=True, connect_args=connect_args)
 
 
-# hx：统一的错误返回格式，前端靠 code 字段判断具体是哪种错误
 def error_response(status: int, code: str, message: str):
     return jsonify({"code": code, "message": message}), status
 
 
-# hx：JWT 签名用的密钥，从环境变量读，本地没配置时用一个仅供开发用的默认值
-def auth_jwt_secret() -> str:
-    return os.getenv("AUTH_JWT_SECRET", "dev-only-insecure-secret-change-in-render")
+def auth_jwt_secret(testing: bool) -> str:
+    secret = os.getenv("AUTH_JWT_SECRET", "").strip()
+    if secret:
+        return secret
+    if testing:
+        return "test-only-secret-not-for-production"
+    raise RuntimeError("AUTH_JWT_SECRET must be configured outside tests")
 
 
-# hx：生成用户主键，前缀 u_ 加一段随机十六进制字符串，保证不重复
 def generate_user_id() -> str:
     return "u_" + secrets.token_hex(12)
 
 
-# hx：签发登录 token，把用户 id 放进 JWT 里，30 天后过期，不做续期
-def issue_token(user_id: str) -> str:
+def issue_token(user_id: str, jwt_secret: str) -> str:
     now = datetime.now(timezone.utc)
     payload = {
         "sub": user_id,
         "iat": now,
         "exp": now + timedelta(days=AUTH_TOKEN_TTL_DAYS),
     }
-    return jwt.encode(payload, auth_jwt_secret(), algorithm=AUTH_JWT_ALGORITHM)
+    return jwt.encode(payload, jwt_secret, algorithm=AUTH_JWT_ALGORITHM)
 
 
-# hx：解析 token，拿到里面的用户 id；token 缺失、过期或被篡改都会解析失败，返回 None
-def decode_token_subject(token: str) -> str | None:
+def decode_token_subject(token: str, jwt_secret: str) -> str | None:
     try:
-        payload = jwt.decode(token, auth_jwt_secret(), algorithms=[AUTH_JWT_ALGORITHM])
+        payload = jwt.decode(token, jwt_secret, algorithms=[AUTH_JWT_ALGORITHM])
     except jwt.PyJWTError:
         return None
     return payload.get("sub")
 
 
-# hx：随机抽一个还没被人用过的 4 位编号，撞号了就再抽一次，
-# 抽满 20 次还没找到空位就报错（说明编号池快用完了）
 def generate_participant_id(connection: Any) -> str:
     """Pick a random, unused 4-digit participant ID (API.md §1: random, not sequential)."""
     for _ in range(PARTICIPANT_ID_MAX_ATTEMPTS):
@@ -299,7 +294,6 @@ def generate_participant_id(connection: Any) -> str:
     raise RuntimeError("No participant IDs are available")
 
 
-# hx：把数据库里的一行 user 记录转成接口要返回的 JSON 格式
 def user_dict(row: Any) -> dict[str, Any]:
     return {"id": row.id, "participantId": row.participant_id, "role": row.role}
 
@@ -592,24 +586,22 @@ def parse_cleanup_evidence_payload(payload: Any, mission_ids: set[str], report_i
 
 def create_app(database_url: str | None = None, testing: bool = False) -> Flask:
     """Build an app with PostgreSQL when configured, otherwise SQLite."""
+    jwt_secret = auth_jwt_secret(testing)
     application = Flask(__name__)
     application.config["TESTING"] = testing
     origins = os.getenv("FRONTEND_ORIGINS", "*").split(",")
-    # hx：/auth/* 也要允许跨域，不然前端调登录接口会被浏览器挡掉
     CORS(application, resources={r"/api/*": {"origins": origins}, r"/auth/*": {"origins": origins}})
 
     engine = create_engine_for_url(normalise_database_url(database_url or os.getenv("DATABASE_URL")))
     initialise_database(engine)
     application.extensions["marine_engine"] = engine
 
-    # hx：装饰器，套在需要登录的接口上；从请求头里取 Authorization: Bearer <token>，
-    # 解出 token 对应的用户，找不到或过期就直接返回 401，找到了就把用户挂到 request 上
     def require_auth(view):
         @wraps(view)
         def wrapper(*args: Any, **kwargs: Any):
             header = request.headers.get("Authorization", "")
             token = header[len("Bearer "):].strip() if header.startswith("Bearer ") else ""
-            user_id = decode_token_subject(token) if token else None
+            user_id = decode_token_subject(token, jwt_secret) if token else None
             if user_id is None:
                 return error_response(401, "UNAUTHENTICATED", "Sign in to continue.")
             with engine.connect() as connection:
@@ -635,8 +627,6 @@ def create_app(database_url: str | None = None, testing: bool = False) -> Flask:
     def health():
         return jsonify({"status": "ok", "database": "configured"})
 
-    # hx：领一个新的匿名编号——生成随机 4 位数字 + 用户记录，签发 token 返回给前端，
-    # 前端存在 localStorage 里，以后每次请求都带着这个 token
     @application.post("/auth/anonymous")
     def create_anonymous_participant():
         with engine.begin() as connection:
@@ -653,13 +643,11 @@ def create_app(database_url: str | None = None, testing: bool = False) -> Flask:
                     created_at=datetime.now(timezone.utc),
                 )
             )
-        token = issue_token(user_id)
+        token = issue_token(user_id, jwt_secret)
         return jsonify(
             {"token": token, "user": {"id": user_id, "participantId": participant_id, "role": DEFAULT_VOLUNTEER_ROLE}}
         ), 201
 
-    # hx：换设备/清缓存后，靠输入自己的 4 位编号找回账号；编号格式不对或查无此人
-    # 都统一返回 404 UNKNOWN_PARTICIPANT，不是 401，因为这不是"没登录"而是"编号不存在"
     @application.post("/auth/restore")
     def restore_anonymous_participant():
         payload = request.get_json(silent=True)
@@ -670,16 +658,15 @@ def create_app(database_url: str | None = None, testing: bool = False) -> Flask:
             row = connection.execute(select(users_table).where(users_table.c.participant_id == participant_id)).first()
         if row is None:
             return error_response(404, "UNKNOWN_PARTICIPANT", "That participant ID was not found.")
-        token = issue_token(row.id)
+        token = issue_token(row.id, jwt_secret)
         return jsonify({"token": token, "user": user_dict(row)})
 
-    # hx：登出，因为 token 是无状态的 JWT，服务端不用存 session，直接返回 204 让前端清掉本地 token 即可
+    # Logout is stateless: the client removes its token. This endpoint does not revoke it.
     @application.post("/auth/logout")
     @require_auth
     def logout_anonymous_participant():
         return "", 204
 
-    # hx：前端进页面时用这个接口问"我是谁"，靠 require_auth 装饰器校验 token
     @application.get("/auth/me")
     @require_auth
     def get_current_participant():
