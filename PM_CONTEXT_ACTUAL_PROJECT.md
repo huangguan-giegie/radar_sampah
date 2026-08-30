@@ -2000,3 +2000,9 @@ key card text/header values were re-read from the live board.
   files or HealthFirst text outside the explicitly retained audit records and
   historical plan files.
 
+
+## Radar Sampah brand cleanup merge — 30 August 2026
+
+PR #9 (https://github.com/huangguan-giegie/radar_sampah/pull/9) was light-reviewed and merged into `main` with merge commit `2ea06b345d9e4e1afe14b6aba67706f099ce5fbf`. The cleanup renamed the active Marine-labelled Markdown, DOCX and onboarding deck files to Radar Sampah names, refreshed the five DOCX contents, and clarified the legacy Render-hostname and rollback boundaries. No runtime code, Drive file, Render setting, unmerged feature branch or Git history was changed. The pre-cleanup rollback tag is `radar-sampah-pre-legacy-cleanup` at `9af4bef`.
+
+Verification recorded before merge: backend `34 passed`; frontend `25 passed`, TypeScript typecheck and production build passed; all 19 presentation slides rendered and passed the overflow test. DOCX text/table/link structure passed inspection; PDF rendering was unavailable because LibreOffice/soffice was not present in the local environment.
