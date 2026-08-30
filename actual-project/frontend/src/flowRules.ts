@@ -17,7 +17,7 @@ export function buildReportSubmission(draft: ReportDraft): ReportSubmission {
   if (!draft.beachId || picked.length === 0) {
     throw new Error('This report is missing a required field. Go back and complete it.');
   }
-  // 选了类别却没选数量档的，不能放过去
+
   const noBand = picked.filter((c) => !draft.quantities[c]);
   if (noBand.length > 0) {
     throw new Error(`Pick how much for: ${noBand.join(', ')}.`);

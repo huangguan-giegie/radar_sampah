@@ -1,5 +1,5 @@
-// 反复用到的小组件：主按钮、次按钮、返回键、步骤标签、卡片等等。
-// 都是最普通的 div/button + 内联样式，没有用 CSS 框架。
+
+
 import type { CSSProperties, ReactNode } from 'react';
 import { C, MONO } from '../theme';
 import { ArrowRight, ChevronLeft } from './Icon';
@@ -115,7 +115,7 @@ export function TextButton({
   );
 }
 
-/** 圆形返回键。dark 用在图片/地图背景上。 */
+
 export function BackButton({
   onClick,
   dark = false,
@@ -151,7 +151,7 @@ export function BackButton({
   );
 }
 
-/** 「STEP 1 OF 3 · PHOTO」这类等宽小标签 */
+
 export function StepBadge({ children, dark = false }: { children: ReactNode; dark?: boolean }) {
   return (
     <div
@@ -217,7 +217,7 @@ export function Card({
   );
 }
 
-/** 加载中占位 —— 骨架条 */
+
 export function Skeleton({ h = 16, w = '100%', r = 8 }: { h?: number; w?: number | string; r?: number }) {
   return (
     <div

@@ -1,15 +1,15 @@
 // ============================================================
-// 所有和后端打交道的代码都在这个文件里。
+
 //
-// 现在没有真后端，所以每个函数都是这个结构：
+
 //
-//     if (USE_MOCK) {  返回假数据  }
-//     else          {  fetch 真后端  }
+
+
 //
-// 后端做好之后，在 .env 里填上 VITE_API_BASE_URL，USE_MOCK 自动变成 false，
-// 下面的 fetch 分支就会生效。页面代码一行都不用改。
+
+
 //
-// 接口的字段和路径写在 API.md 里。
+
 // ============================================================
 
 import { BEACHES, MOCK_USER, SEED_REPORTS } from './mockData';
@@ -30,18 +30,18 @@ import type {
   User,
 } from './types';
 
-// 后端地址。.env 里没填就用假数据。
+
 const BASE_URL = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '');
 export const USE_MOCK = BASE_URL === '';
 
-// ---------- 工具 ----------
 
-// 假装网络有延迟，这样加载状态能看出来
+
+
 function delay(ms = 250) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-// 登录后拿到的 token，存在浏览器里
+
 function getToken() {
   return localStorage.getItem('rs_token');
 }
@@ -52,8 +52,8 @@ function clearToken() {
   localStorage.removeItem('rs_token');
 }
 
-// 发一个请求。出错就抛异常，页面用 try/catch 接住。
-/** 请求失败时带上状态码，调用方要靠它区分「没登录」和「连不上」 */
+
+
 export class ApiError extends Error {
   status: number;
   code?: string;
@@ -64,10 +64,10 @@ export class ApiError extends Error {
   }
 }
 
-/**
- * 带超时的 fetch。后端接受了连接却一直不回时，
- * promise 会永远挂着，按钮就卡在「Saving…」出不来。
- */
+
+
+
+
 async function fetchWithTimeout(url: string, init: RequestInit, ms: number) {
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), ms);
@@ -108,13 +108,13 @@ async function request(path: string, method = 'GET', body?: unknown) {
   return data;
 }
 
-// ---------- 假数据用到的本地状态 ----------
+
 
 type MockAccounts = Record<string, LitterReport[]>;
 
 const MOCK_ACCOUNTS_KEY = 'rs_mock_accounts_v2';
 
-// mock 账号也按参与者编号隔离，1637 是演示数据账号。
+
 function loadMockAccounts(): MockAccounts {
   const saved = localStorage.getItem(MOCK_ACCOUNTS_KEY);
   if (!saved) return { [MOCK_USER.participantId]: SEED_REPORTS.map((report) => ({ ...report })) };
@@ -149,7 +149,7 @@ function replaceCurrentMockReports(reports: LitterReport[]) {
   saveMockAccounts();
 }
 
-// 两点之间的距离（公里）
+
 function distanceKm(lat1: number, lng1: number, lat2: number, lng2: number) {
   const R = 6371;
   const toRad = (d: number) => (d * Math.PI) / 180;
@@ -161,7 +161,7 @@ function distanceKm(lat1: number, lng1: number, lat2: number, lng2: number) {
   return 2 * R * Math.asin(Math.sqrt(a));
 }
 
-// 详情去掉三个字段就是列表项
+
 function toSummary(beach: BeachDetail): BeachSummary {
   return {
     id: beach.id,
@@ -185,10 +185,10 @@ function toSummary(beach: BeachDetail): BeachSummary {
 }
 
 // ============================================================
-// 1. 登录（匿名参与者编号）
+
 // ============================================================
 
-// 领一个新编号。就是一个 4 位数字，比如 1637。
+
 export async function createAnonymousId(): Promise<AuthSession> {
   if (USE_MOCK) {
     await delay();
@@ -212,7 +212,7 @@ export async function createAnonymousId(): Promise<AuthSession> {
   return data;
 }
 
-// 换设备时，输入自己的编号就能继续用。
+
 export async function restoreId(participantId: string): Promise<AuthSession> {
   if (USE_MOCK) {
     await delay();
@@ -243,12 +243,12 @@ export async function logout(): Promise<void> {
   try {
     await request('/auth/logout', 'POST');
   } catch {
-    // 登出失败也要把本地 token 清掉
+
   }
   clearToken();
 }
 
-// 打开网页时问一下「我是谁」。没登录返回 null。
+
 export async function getMe(): Promise<User | null> {
   if (USE_MOCK) {
     await delay(80);
@@ -265,14 +265,14 @@ export async function getMe(): Promise<User | null> {
   try {
     return await request('/auth/me');
   } catch (err) {
-    // 401 = 真的没登录；其他都是连不上，不能把用户当成登出
+
     if (err instanceof ApiError && err.status === 401) return null;
     throw err;
   }
 }
 
 // ============================================================
-// 2. 海滩
+
 // ============================================================
 
 export async function getBeaches(): Promise<BeachSummary[]> {
@@ -294,8 +294,8 @@ export async function getBeach(id: string): Promise<BeachDetail> {
 }
 
 // ============================================================
-// 3. 评分规则（US4.3）
-// 规则常量在 src/scoring.ts，前端自带，所以这里永远有结果。
+
+
 // ============================================================
 
 export async function getScoringMethod(): Promise<ScoringMethod> {
@@ -303,16 +303,16 @@ export async function getScoringMethod(): Promise<ScoringMethod> {
   try {
     return await request('/scoring-method');
   } catch {
-    // 后端没做这个接口也没关系，用前端自己那份
+
     return SCORING_METHOD;
   }
 }
 
 // ============================================================
-// 4. 定位 → 海滩
+
 // ============================================================
 
-// 用一次性坐标找最近的海滩。超过 25 公里就当作不在任何支持的海滩上。
+
 export async function resolveBeach(lat: number, lng: number): Promise<BeachSummary | null> {
   if (USE_MOCK) {
     await delay(600);
@@ -333,20 +333,20 @@ export async function resolveBeach(lat: number, lng: number): Promise<BeachSumma
 }
 
 // ============================================================
-// 5. 照片上传
+
 // ============================================================
 
-/**
- * mock 的「对象存储」：键 → data URL。
- * 真后端是 photo_key → 短时效签名地址，形状一样，只是这里不签名。
- */
+
+
+
+
 const mockPhotoStore = new Map<string, string>();
 
 export async function uploadPhoto(file: File): Promise<UploadedPhoto> {
   if (USE_MOCK) {
     await delay(700);
-    // 用 data: 不用 blob:。记录会写进 localStorage，
-    // blob: 地址刷新一次就失效，缩略图会变成裂图。
+
+
     const url = await new Promise<string>((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = () => resolve(String(reader.result));
@@ -358,10 +358,10 @@ export async function uploadPhoto(file: File): Promise<UploadedPhoto> {
     return { photoKey, previewUrl: url, metadataStripped: true };
   }
 
-  // 传文件要用 FormData，不能用 JSON
+
   const form = new FormData();
   form.append('photo', file);
-  // 照片可以到 10 MB，弱网上传比 JSON 请求慢得多，所以给 60 秒
+
   const res = await fetchWithTimeout(
     BASE_URL + '/uploads/photos',
     { method: 'POST', headers: { Authorization: 'Bearer ' + getToken() }, body: form },
@@ -373,13 +373,13 @@ export async function uploadPhoto(file: File): Promise<UploadedPhoto> {
 }
 
 // ============================================================
-// 6. 记录
+
 // ============================================================
 
-/**
- * 后端会做的那件事，mock 这边照做一遍：
- * category = 六列里权重最高的那个非空类别，quantity = 该列的值（API.md §2c）。
- */
+
+
+
+
 function deriveCategoryQuantity(q: QuantityByCategory): { category: LitterCategory; quantity: QuantityBand } {
   const order = SCORING_METHOD.categoryWeights;
   const top = order.find((w) => q[w.category] !== undefined);
@@ -433,7 +433,7 @@ export async function getMyReportCounts(): Promise<ReportCounts> {
   return request('/reports/mine/counts');
 }
 
-// 修正一条记录。改完后端会重新判定，Incomplete 会变回 Counted。
+
 export async function updateReport(
   id: string,
   changes: Partial<CreateReportInput>,

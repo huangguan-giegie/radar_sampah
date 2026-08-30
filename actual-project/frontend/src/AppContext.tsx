@@ -1,7 +1,7 @@
-// 全局状态：当前用户、记录草稿、提示条。
+
 //
-// 用 React 自带的 Context，不装第三方状态库。
-// 任何组件里写 const { user } = useApp() 就能拿到。
+
+
 
 import {
   createContext,
@@ -14,22 +14,22 @@ import { createAnonymousId, getMe, logout } from './api';
 import type { LitterReport, QuantityByCategory, UploadedPhoto, User } from './types';
 import { restoreId as apiRestoreId } from './api';
 
-// 「记录垃圾」这个流程分 3 步，中间填的东西先存在这里，提交成功后清空
+
 export type ReportDraft = {
   photo: UploadedPhoto | null;
   existingPhotoUrl: string | null;
   beachId: string | null;
-  /** 和 beachId 一起写。Review 页不用等 /beaches 回来才能显示名字 */
+
   beachName: string | null;
   locationSource: 'gps' | 'manual' | null;
   coords: { lat: number; lng: number } | null;
   quantities: QuantityByCategory;
-  gpsDenied: boolean; // 用户拒绝了定位，确认页要显示黄色提示
-  editingReportId: string | null; // 正在修正已有记录时存它的 id
+  gpsDenied: boolean;
+  editingReportId: string | null;
 };
 
-// 注意：这个函数故意不 export。
-// 一个文件里同时导出「组件」和「普通函数」会让 Vite 的热更新出问题。
+
+
 function emptyDraft(): ReportDraft {
   return {
     photo: null,
@@ -46,7 +46,7 @@ function emptyDraft(): ReportDraft {
 
 type AppState = {
   user: User | null;
-  authReady: boolean; // 还没问完「我是谁」之前不要急着跳转
+  authReady: boolean;
   createId: () => Promise<string>;
   restore: (participantId: string) => Promise<void>;
   signOut: () => Promise<void>;
@@ -55,11 +55,11 @@ type AppState = {
   patchDraft: (changes: Partial<ReportDraft>) => void;
   resetDraft: () => void;
 
-  /** POST/PATCH 直接返回的那条记录。确认页不该再去列表里捞一遍 */
+
   lastSavedReport: LitterReport | null;
   setLastSavedReport: (r: LitterReport | null) => void;
 
-  reportsVersion: number; // 加 1 就能让列表和计数重新去拿数据
+  reportsVersion: number;
   bumpReports: () => void;
 
   offline: boolean;
@@ -80,7 +80,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [offline, setOffline] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
 
-  // 打开网页时问一次「我是谁」
+
   useEffect(() => {
     getMe()
       .then((me) => setUser(me))
@@ -92,14 +92,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
     user,
     authReady,
 
-    // 领一个新编号，返回编号本身给页面显示
+
     async createId() {
       const session = await createAnonymousId();
       setUser(session.user);
       return session.user.participantId;
     },
 
-    // 用已有编号继续
+
     async restore(participantId) {
       const session = await apiRestoreId(participantId);
       setUser(session.user);
@@ -142,6 +142,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
 export function useApp() {
   const value = useContext(AppContext);
-  if (!value) throw new Error('useApp 必须写在 <AppProvider> 里面');
+  if (!value) throw new Error('useApp must be used inside <AppProvider>');
   return value;
 }

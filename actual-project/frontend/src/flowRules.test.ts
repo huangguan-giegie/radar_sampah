@@ -78,8 +78,8 @@ describe('buildReportSubmission', () => {
   });
 
   it('keeps every category when only the photo is corrected', () => {
-    // 回归：改正是整体替换 PATCH，草稿必须带着原记录的全部类别，
-    // 否则只换一张照片就会把其他类别的列清空。
+
+
     const result = buildReportSubmission(
       draft({
         editingReportId: 'report-1',

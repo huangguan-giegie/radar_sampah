@@ -9,8 +9,8 @@ export default function SubmittedScreen() {
   const nav = useNavigate();
   const { lastSavedReport: saved, patchDraft, resetDraft } = useApp();
 
-  // 记录就是 POST 刚返回的那条，不用再去列表里捞 ——
-  // 那个二次请求一旦慢一点或失败，用户就会被弹走，看不到确认页。
+
+
   if (!saved) return <Navigate to="/reports" replace />;
 
   const outcome = reportOutcome(saved.status);

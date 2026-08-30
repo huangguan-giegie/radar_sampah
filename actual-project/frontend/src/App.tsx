@@ -1,5 +1,5 @@
-// 路由表：哪个网址显示哪个页面。
-// 需要登录的页面用 <RequireAuth> 包一层。
+
+
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { DeviceFrame } from './components/DeviceFrame';
 import { TabBar } from './components/TabBar';
@@ -22,10 +22,10 @@ import SubmittedScreen from './screens/SubmittedScreen';
 import MyReportsScreen from './screens/MyReportsScreen';
 import AccountScreen from './screens/AccountScreen';
 
-// 这四个页面底部才显示 tab 栏，记录流程里不显示
+
 const TAB_ROUTES = ['/home', '/map', '/reports', '/account'];
 
-/** 未登录时跳到登录页，并记住回跳目标 */
+
 function RequireAuth({ children }: { children: JSX.Element }) {
   const { user, authReady } = useApp();
   const { pathname, search } = useLocation();

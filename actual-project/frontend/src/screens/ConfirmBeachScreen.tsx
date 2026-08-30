@@ -32,7 +32,7 @@ export default function ConfirmBeachScreen() {
 
   const manual = draft.locationSource !== 'gps' || !suggested;
 
-  // 搜索框：按名字或地区过滤
+
   const q = query.trim().toLowerCase();
   const filtered = q
     ? beaches.filter(
@@ -45,7 +45,7 @@ export default function ConfirmBeachScreen() {
   return (
     <div className="screen" style={{ zIndex: 26, background: C.cloud, overflow: 'hidden' }}>
       <MiniMap lat={center.lat} lng={center.lng} zoom={manual ? 9 : 12} />
-      {/* z-index 要压过 Leaflet：地图内部的图层在 400–700，普通元素会被盖住 */}
+
       <div style={{ position: 'absolute', inset: 0, zIndex: 800, background: 'linear-gradient(180deg,rgba(221,227,236,.3) 0%,transparent 30%,rgba(12,28,58,.4) 100%)', pointerEvents: 'none' }} />
 
       <BackButton

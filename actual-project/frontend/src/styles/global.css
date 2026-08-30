@@ -53,7 +53,7 @@ button {
   text-align: left;
 }
 
-/* 隐藏滚动条，保留滚动 —— 与原型一致 */
+
 .scroll-y {
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
@@ -69,7 +69,7 @@ button {
   height: 0;
 }
 
-/* ── 动画 ───────────────────────────────── */
+
 @keyframes ripple {
   0% {
     transform: scale(0.25);
@@ -161,7 +161,7 @@ button {
   }
 }
 
-/* ── 交互态（设计稿的 style-hover 等价物）──────── */
+
 .press {
   transition: transform 0.12s ease, background 0.15s ease, border-color 0.15s ease,
     box-shadow 0.15s ease;
@@ -219,7 +219,7 @@ button {
   color: #3e4f6e;
 }
 
-/* ── Web app 外壳尺寸 ─────────────────────── */
+
 .app-shell {
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
@@ -229,7 +229,7 @@ button {
   --shell-shadow: none;
 }
 
-/* 桌面：收成一台手机，保持设计稿构图 */
+
 @media (min-width: 900px) and (min-height: 720px) {
   .app-shell {
     --safe-top: 0px;
@@ -241,7 +241,7 @@ button {
   }
 }
 
-/* 平板 / 小桌面：限宽居中，仍然铺满高度 */
+
 @media (min-width: 620px) and (max-width: 899px) {
   .app-shell {
     --shell-w: 480px;
@@ -255,7 +255,7 @@ button {
   background: #f7f8fa;
 }
 
-/* 顶部留白 = 设计稿数值 - iOS 状态栏高度 + 实际安全区 */
+
 .app-shell {
   --top-inset: calc(max(var(--safe-top), 14px) + 10px);
   --bottom-inset: max(var(--safe-bottom), 12px);

@@ -1,5 +1,5 @@
-// 全站用到的图标。都是手写的 svg，没装图标库。
-// 每个图标都能传 size / color / strokeWidth。
+
+
 import type { CSSProperties } from 'react';
 import type { SpeciesGlyph } from '../types';
 
@@ -10,7 +10,7 @@ type Props = {
   style?: CSSProperties;
 };
 
-// 大部分图标的 svg 属性都一样，抽出来少写点重复代码
+
 function base(size: number, color: string, strokeWidth: number, style?: CSSProperties) {
   return {
     width: size,
@@ -189,7 +189,7 @@ export const SpeciesIcon = ({
   <svg {...base(size, color, 1.5)}>{GLYPH_PATHS[glyph] ?? GLYPH_PATHS.bird}</svg>
 );
 
-/** 启动页 / 侧栏用的品牌雷达标记 */
+
 export const RadarMark = ({ size = 30 }: { size?: number }) => (
   <svg width={size} height={size} viewBox="0 0 30 30" fill="none">
     <circle cx="15" cy="15" r="13" stroke="#B8FF36" strokeOpacity=".5" strokeWidth="1.4" />
