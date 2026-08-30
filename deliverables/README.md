@@ -10,15 +10,15 @@ a student can explain the demo.
 
 | File | Use |
 |---|---|
-| `documents/TEAM04_Marine_Project_Information.md` | Project and team overview |
-| `documents/TM04_Marine_Social_Contract.md` | Working agreements |
-| `documents/Marine_MVP_Work_Plan_and_Handover.md` | Ownership and handover |
+| `documents/TEAM04_Radar_Sampah_Project_Information.md` | Project and team overview |
+| `documents/TM04_Radar_Sampah_Social_Contract.md` | Working agreements |
+| `documents/Radar_Sampah_MVP_Work_Plan_and_Handover.md` | Ownership and handover |
 | `documents/Radar_Sampah_Work_Allocation_Plan.md` | Current task allocation and Darli's User Acceptance Criteria review |
-| `documents/Marine_MVP_QA_and_Deployment_Checklist.md` | Browser/API release checks |
-| `documents/Team04_Marine_Miro_Reflection_Speaking_Notes.md` | Team and PM reflection |
+| `documents/Radar_Sampah_MVP_QA_and_Deployment_Checklist.md` | Browser/API release checks |
+| `documents/Team04_Radar_Sampah_Miro_Reflection_Speaking_Notes.md` | Team and PM reflection |
 | `documents/Radar_Sampah_Presentation_Review_Bilingual.md` | Bilingual pre-presentation review notes |
 | `documents/Radar_Sampah_Presentation_Script_Bilingual.md` | Bilingual rehearsal script |
-| `presentation/Team04 Marine Observation Onboarding Presentation.pptx` | Radar Sampah legacy 19-slide deck |
+| `presentation/Team04 Radar Sampah Onboarding Presentation.pptx` | Radar Sampah 19-slide deck |
 
 Markdown is the editable source. DOCX files can be regenerated with
 `python build_documents.py`; the deck is edited separately. Existing Drive

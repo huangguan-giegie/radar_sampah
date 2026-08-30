@@ -1,7 +1,7 @@
 # Team 04 Real Project Drive Guide
 
 This Drive is the working Project Governance Portfolio for the new Team 04
-marine-observation project. Earlier sample material is kept in the recoverable
+Radar Sampah project. Earlier sample material is kept in the recoverable
 `Archive - Removed Sample Files` area and is not the current product.
 
 ## Start here
@@ -77,7 +77,7 @@ without copying the sample product content:
 - project information and social contract;
 - work-plan handover and QA/deployment checklist;
 - Miro reflection speaking notes;
-- a 19-slide English Marine Observation onboarding deck.
+- a 19-slide English Radar Sampah onboarding deck.
 
 The editable Markdown sources and DOCX copies are in `01 Governance`; the
 PPTX is in `03 Design`. The local source bundle is under

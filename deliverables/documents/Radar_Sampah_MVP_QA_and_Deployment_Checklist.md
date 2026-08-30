@@ -17,6 +17,10 @@
 | Synthetic area/category | |
 | Result and limits | |
 
+The Render hostnames above are legacy-compatible service hostnames retained for
+the current deployment. The new `radar-sampah-*.onrender.com` names have not
+been provisioned, so they are not used as active endpoints.
+
 ## Browser flow
 
 - [ ] Broad area, category and short report validate correctly.
