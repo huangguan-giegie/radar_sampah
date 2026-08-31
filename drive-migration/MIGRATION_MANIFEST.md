@@ -1,5 +1,10 @@
 # Migration Manifest
 
+> **Current-status notice:** Radar Sampah is the active product on `main`.
+> TideTrace, Marine Observation, HealthFirst and DiveSafe names in this
+> manifest are dated migration, audit, rollback or compatibility references;
+> they are not current product requirements. Do not delete these records.
+
 ## Work allocation update — 21 August 2026
 
 The actual-project allocation is now split between requirements authorship and
@@ -21,9 +26,9 @@ folder remain unchanged.
 
 The active Design Thinking tab was updated from the workshop decision set. It now records 19 stories (11 Must, 6 Should, 2 Could), GR1–GR9, the Report & Classify / Find & Understand / Connect & Prepare iteration split, GPS one-off area assistance, AI suggestion-only wording, deterministic illustrative scoring, moderator verification, collected reports, area sensitivity and the `102+` display. The historical requirements tab is marked superseded. The separate Radar Sampah deck remains a local, independently validated artifact until the team chooses a Drive destination.
 
-## DiveSafe MY alignment — 15 August 2026
+## Historical — DiveSafe MY alignment — 15 August 2026
 
-The active documentation name is **DiveSafe MY**. This is a naming and
+At that migration stage, the active documentation name was **DiveSafe MY**. This is a naming and
 governance alignment, not a migration of the deployed implementation. The
 current GitHub repository and Render services retain their legacy marine
 observation/litter names because those are the hosting identifiers currently
@@ -302,9 +307,9 @@ scope, decisions, integration-checklist, QA and project-information documents
 were updated to describe the same behaviour. The live Render frontend was
 checked to load all five labels from `GET /api/options` after commit `aea23c9`.
 
-## DiveSafe MY theme switch — 15 August 2026
+## Historical — DiveSafe MY theme switch — 15 August 2026
 
-The active product scope is now **DiveSafe MY — Endangered Species Hotspot
+At that historical stage, the active product scope was **DiveSafe MY — Endangered Species Hotspot
 Guide for Divers in Malaysia**. The Marine Litter flow stays in the repository
 as a rollback-compatible legacy path, but it is not the main user journey,
 presentation story or new evidence set.

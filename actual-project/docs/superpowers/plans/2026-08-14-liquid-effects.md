@@ -1,5 +1,9 @@
 # Liquid Effects Implementation Plan
 
+> **Historical/superseded record:** This dated visual plan uses “Marine
+> Observation” as the former working title. It is retained for audit; the
+> current product name is Radar Sampah.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
 **Goal:** Add a visible, accessible CSS-only liquid visual treatment to the Marine Observation frontend without changing business behavior or introducing a runtime dependency.

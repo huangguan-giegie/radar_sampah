@@ -1,5 +1,9 @@
 # Marine Governance and Presentation Migration Plan
 
+> **Historical/superseded record:** This dated migration plan is retained for
+> audit and rollback. “Marine Observation” and HealthFirst wording below
+> describes the 14 August migration stage, not the current Radar Sampah scope.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
 **Goal:** Carry the useful HealthFirst document and presentation formats into the Marine Litter Observation MVP as clearly labelled, English, scope-correct project deliverables.

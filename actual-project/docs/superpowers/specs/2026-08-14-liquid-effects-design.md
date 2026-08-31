@@ -1,5 +1,9 @@
 # Liquid Effects Design
 
+> **Historical/superseded record:** This dated design note uses the former
+> “Marine Observation” working title. It is retained for audit; it is not a
+> current product specification.
+
 ## Goal
 
 Add a more visible layered liquid visual treatment that reinforces the marine theme without changing the observation workflow or adding a runtime dependency.
