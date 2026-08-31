@@ -59,6 +59,7 @@ export class ApiError extends Error {
   code?: string;
   constructor(message: string, status: number, code?: string) {
     super(message);
+    this.name = 'ApiError';
     this.status = status;
     this.code = code;
   }
@@ -362,6 +363,31 @@ export function photoPreviewUrl(photoKey: string | null | undefined): string | n
   return mockPhotoStore.get(photoKey) ?? null;
 }
 
+async function metadataFreePhoto(file: File): Promise<File> {
+  const sourceUrl = URL.createObjectURL(file);
+  try {
+    const image = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const image = new Image();
+      image.onload = () => resolve(image);
+      image.onerror = () => reject(new Error('Could not read that photo. Please try another one.'));
+      image.src = sourceUrl;
+    });
+    const scale = Math.min(1, 2048 / Math.max(image.naturalWidth || image.width, image.naturalHeight || image.height));
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.max(1, Math.round((image.naturalWidth || image.width) * scale));
+    canvas.height = Math.max(1, Math.round((image.naturalHeight || image.height) * scale));
+    const context = canvas.getContext('2d');
+    if (!context) throw new Error('Could not process that photo. Please try another one.');
+    context.drawImage(image, 0, 0, canvas.width, canvas.height);
+    const blob = await new Promise<Blob>((resolve, reject) => {
+      canvas.toBlob((value) => value ? resolve(value) : reject(new Error('Could not process that photo. Please try another one.')), 'image/jpeg', 0.92);
+    });
+    return new File([blob], 'photo.jpg', { type: 'image/jpeg' });
+  } finally {
+    URL.revokeObjectURL(sourceUrl);
+  }
+}
+
 export async function uploadPhoto(file: File): Promise<UploadedPhoto> {
   if (USE_MOCK) {
     await delay(700);
@@ -381,15 +407,15 @@ export async function uploadPhoto(file: File): Promise<UploadedPhoto> {
 
 
   const form = new FormData();
-  form.append('photo', file);
+  form.append('photo', await metadataFreePhoto(file));
 
   const res = await fetchWithTimeout(
     BASE_URL + '/uploads/photos',
-    { method: 'POST', headers: { Authorization: 'Bearer ' + getToken() }, body: form },
+    { method: 'POST', headers: { Accept: 'application/json', ...(getToken() ? { Authorization: 'Bearer ' + getToken() } : {}) }, body: form },
     60_000,
   );
   const data = await res.json().catch(() => null);
-  if (!res.ok) throw new Error(data?.message || 'Photo upload failed. Please try again.');
+  if (!res.ok) throw new ApiError(data?.message || 'Photo upload failed. Please try again.', res.status, data?.code);
   return data;
 }
 

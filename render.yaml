@@ -34,3 +34,6 @@ services:
     buildCommand: npm ci && npm run build
     staticPublishPath: dist
     plan: free
+    envVars:
+      - key: VITE_API_BASE_URL
+        value: https://radar-sampah-api.onrender.com
