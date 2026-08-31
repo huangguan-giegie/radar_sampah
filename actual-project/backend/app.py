@@ -8,16 +8,18 @@ personal identifiers or exact litter coordinates in the main flow.
 from __future__ import annotations
 
 import json
+import math
 import os
 import re
 import secrets
+import tempfile
 from datetime import datetime, timedelta, timezone
 from functools import wraps
 from pathlib import Path
 from typing import Any
 
 import jwt
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, send_file
 from flask_cors import CORS
 from sqlalchemy import (
     Boolean,
@@ -65,6 +67,14 @@ PERSONAL_IDENTIFIER_FIELDS = {
 }
 LOCAL_DATABASE_URL = "sqlite:///marine_observation.db"
 PRECISE_LOCATION_FIELDS = {"latitude", "longitude", "coordinates", "gps", "exact_location"}
+FRONTEND_CATEGORIES = ("Plastic", "Fishing gear", "Glass", "Metal", "Paper", "Other")
+QUANTITY_WEIGHTS = {"Small": 1, "Medium": 2, "Large": 3, "Very Large": 4}
+CATEGORY_WEIGHTS = {"Fishing gear": 1.0, "Plastic": 0.85, "Glass": 0.7, "Metal": 0.6, "Other": 0.5, "Paper": 0.35}
+REPORT_STATUS_NOTES = {
+    "Duplicate": "Matched an existing record for the same beach and day — excluded from the severity calculation.",
+    "Incomplete": "Photo unreadable — excluded until you correct and save the record.",
+}
+KUALA_LUMPUR = timezone(timedelta(hours=8))
 
 # Anonymous participant auth (API.md §1). No name, email, phone or password is
 # collected. The four-digit participant ID is suitable only for this demo.
@@ -197,6 +207,21 @@ cleanup_evidence_table = Table(
     Column("after_image_url", String(500)),
     Column("impact_note", Text),
     Column("note", Text),
+    Column("created_at", DateTime(timezone=True), nullable=False),
+)
+frontend_reports_table = Table(
+    "frontend_reports",
+    metadata,
+    Column("id", String(40), primary_key=True),
+    Column("reporter_id", ForeignKey("users.id"), nullable=False),
+    Column("beach_id", String(80), nullable=False),
+    Column("beach_name", String(160), nullable=False),
+    Column("quantities", Text, nullable=False),
+    Column("category", String(40), nullable=False),
+    Column("quantity", String(20), nullable=False),
+    Column("photo_key", String(500), nullable=False),
+    Column("location_source", String(20), nullable=False),
+    Column("status", String(20), nullable=False),
     Column("created_at", DateTime(timezone=True), nullable=False),
 )
 
@@ -584,13 +609,43 @@ def parse_cleanup_evidence_payload(payload: Any, mission_ids: set[str], report_i
     return {"mission_id": mission_id or None, "before_report_id": before_report_id, "after_report_id": after_report_id, "item_count": item_count, "image_url": image_url, "before_image_url": before_image_url, "after_image_url": after_image_url, "impact_note": impact_note, "note": note}, None
 
 
+def frontend_beaches() -> list[dict[str, Any]]:
+    return load_data_file("beaches.json")
+
+
+def frontend_score(rows: list[Any]) -> tuple[str | None, int | None]:
+    if len(rows) < 3:
+        return None, None
+    mean = sum(max(CATEGORY_WEIGHTS[c] * QUANTITY_WEIGHTS[q] for c, q in json.loads(row.quantities).items()) for row in rows) / len(rows)
+    if mean < 1.5:
+        return "Low", 1
+    if mean < 2.5:
+        return "Moderate", 2
+    if mean < 3.5:
+        return "High", 3
+    return "Severe", 4
+
+
+def frontend_report_dict(row: Any, include_photo: bool = True) -> dict[str, Any]:
+    result = {
+        "id": row.id, "beachId": row.beach_id, "beachName": row.beach_name,
+        "quantities": json.loads(row.quantities), "category": row.category,
+        "quantity": row.quantity, "createdAt": row.created_at.isoformat(), "status": row.status,
+    }
+    if row.status in REPORT_STATUS_NOTES:
+        result["statusNote"] = REPORT_STATUS_NOTES[row.status]
+    if include_photo and row.photo_key:
+        result["photoUrl"] = request.host_url.rstrip("/") + "/uploads/photos/" + row.photo_key
+    return result
+
+
 def create_app(database_url: str | None = None, testing: bool = False) -> Flask:
     """Build an app with PostgreSQL when configured, otherwise SQLite."""
     jwt_secret = auth_jwt_secret(testing)
     application = Flask(__name__)
     application.config["TESTING"] = testing
     origins = os.getenv("FRONTEND_ORIGINS", "*").split(",")
-    CORS(application, resources={r"/api/*": {"origins": origins}, r"/auth/*": {"origins": origins}})
+    CORS(application, resources={r"/*": {"origins": origins}})
 
     engine = create_engine_for_url(normalise_database_url(database_url or os.getenv("DATABASE_URL")))
     initialise_database(engine)
@@ -671,6 +726,171 @@ def create_app(database_url: str | None = None, testing: bool = False) -> Flask:
     @require_auth
     def get_current_participant():
         return jsonify(user_dict(request.current_user))
+
+    @application.get("/beaches")
+    def get_frontend_beaches():
+        now = datetime.now(timezone.utc)
+        cutoff = now - timedelta(days=90)
+        result = []
+        with engine.connect() as connection:
+            rows = connection.execute(select(frontend_reports_table).where(frontend_reports_table.c.status == "Counted")).all()
+        for beach in frontend_beaches():
+            counted = [r for r in rows if r.beach_id == beach["id"] and r.created_at >= cutoff]
+            severity, band = frontend_score(counted)
+            newest = max(counted, key=lambda r: r.created_at) if counted else None
+            age = (now - newest.created_at).days if newest else 999
+            result.append({**beach, "severity": severity, "band": band, "insufficientData": severity is None,
+                           "validReports": len(counted), "lastReportedAt": newest.created_at.isoformat() if newest else None,
+                           "freshnessKind": "ok" if age < 30 else "aging" if age <= 90 else "stale"})
+        return jsonify(result)
+
+    @application.get("/beaches/<beach_id>")
+    def get_frontend_beach(beach_id: str):
+        beach = next((item for item in frontend_beaches() if item["id"] == beach_id), None)
+        if beach is None:
+            return error_response(404, "NOT_FOUND", "Beach not found.")
+        summary = get_frontend_beaches().get_json()
+        item = next(item for item in summary if item["id"] == beach_id)
+        with engine.connect() as connection:
+            row = connection.execute(select(frontend_reports_table).where(frontend_reports_table.c.beach_id == beach_id, frontend_reports_table.c.status == "Counted").order_by(frontend_reports_table.c.created_at.desc())).first()
+        detail = {**item, "species": beach.get("species", []), "ecologicalNote": beach.get("ecologicalNote", "")}
+        if row is None:
+            detail.update({"composition": None, "compositionSource": None})
+        else:
+            values = json.loads(row.quantities)
+            detail.update({"composition": [{"category": c, "quantity": q} for c, q in sorted(values.items(), key=lambda pair: -CATEGORY_WEIGHTS[pair[0]])],
+                           "compositionSource": {"reportId": row.id, "createdAt": row.created_at.isoformat()}})
+        return jsonify(detail)
+
+    @application.get("/scoring-method")
+    def get_scoring_method():
+        return jsonify({"categoryWeights": [{"category": c, "weight": w} for c, w in CATEGORY_WEIGHTS.items()], "quantityWeights": [{"quantity": q, "weight": w} for q, w in QUANTITY_WEIGHTS.items()], "bands": [{"band": "Low", "range": "below 1.5", "color": "#7CA98B"}, {"band": "Moderate", "range": "1.5 – 2.4", "color": "#D9A24B"}, {"band": "High", "range": "2.5 – 3.4", "color": "#CE6B45"}, {"band": "Severe", "range": "3.5 and above", "color": "#B84A3F"}], "windowDays": 90, "minReports": 3})
+
+    @application.post("/geo/resolve-beach")
+    def resolve_frontend_beach():
+        payload = request.get_json(silent=True) or {}
+        try:
+            lat, lng = float(payload["lat"]), float(payload["lng"])
+        except (KeyError, TypeError, ValueError):
+            return error_response(400, "VALIDATION_FAILED", "lat and lng are required.")
+        nearest, distance = None, float("inf")
+        for beach in frontend_beaches():
+            phi1, phi2 = math.radians(lat), math.radians(beach["lat"])
+            dphi, dlambda = math.radians(beach["lat"] - lat), math.radians(beach["lng"] - lng)
+            a = math.sin(dphi / 2) ** 2 + math.cos(phi1) * math.cos(phi2) * math.sin(dlambda / 2) ** 2
+            current = 6371 * 2 * math.asin(math.sqrt(a))
+            if current < distance:
+                nearest, distance = beach, current
+        if distance > 25:
+            return jsonify(None)
+        return jsonify(next(item for item in get_frontend_beaches().get_json() if item["id"] == nearest["id"]))
+
+    @application.post("/uploads/photos")
+    @require_auth
+    def upload_frontend_photo():
+        photo = request.files.get("photo")
+        if photo is None or not photo.filename:
+            return error_response(400, "PHOTO_REQUIRED", "A photo is required.")
+        if photo.mimetype not in {"image/jpeg", "image/png", "image/heic"}:
+            return error_response(400, "VALIDATION_FAILED", "Only JPEG, PNG, or HEIC photos are accepted.")
+        raw = photo.read()
+        if len(raw) > 10 * 1024 * 1024:
+            return error_response(413, "PHOTO_TOO_LARGE", "Photo must be 10 MB or smaller.")
+        directory = Path(tempfile.gettempdir()) / "radar-sampah-photos"
+        directory.mkdir(parents=True, exist_ok=True)
+        key = f"{request.current_user.id}_{secrets.token_hex(12)}{Path(photo.filename).suffix.lower() or '.jpg'}"
+        path = directory / key
+        path.write_bytes(raw)
+        preview = request.host_url.rstrip("/") + "/uploads/photos/" + key
+        return jsonify({"photoKey": key, "previewUrl": preview, "metadataStripped": True}), 201
+
+    @application.get("/uploads/photos/<path:photo_key>")
+    @require_auth
+    def serve_frontend_photo(photo_key: str):
+        directory = Path(tempfile.gettempdir()) / "radar-sampah-photos"
+        path = (directory / photo_key).resolve()
+        if directory.resolve() not in path.parents or not path.is_file():
+            return error_response(404, "NOT_FOUND", "Photo not found.")
+        return send_file(path)
+
+    @application.get("/uploads/photos")
+    @require_auth
+    def get_frontend_photo():
+        key = request.args.get("photoKey", "")
+        path = (Path(tempfile.gettempdir()) / "radar-sampah-photos" / key).resolve()
+        if not key or not path.is_file():
+            return error_response(404, "NOT_FOUND", "Photo not found.")
+        return jsonify({"previewUrl": request.host_url.rstrip("/") + "/uploads/photos/" + key})
+
+    def validate_frontend_report(payload: Any):
+        if not isinstance(payload, dict) or contains_personal_identifier(payload):
+            return None, "VALIDATION_FAILED"
+        beach_id = str(payload.get("beachId") or "")
+        beach = next((b for b in frontend_beaches() if b["id"] == beach_id), None)
+        quantities = payload.get("quantities")
+        if beach is None or not isinstance(quantities, dict) or not quantities or any(c not in FRONTEND_CATEGORIES or q not in QUANTITY_WEIGHTS for c, q in quantities.items()):
+            return None, "VALIDATION_FAILED"
+        photo_key = str(payload.get("photoKey") or "").strip()
+        if not photo_key:
+            return None, "PHOTO_REQUIRED"
+        top = max(quantities, key=lambda c: CATEGORY_WEIGHTS[c])
+        coords = payload.get("coords") if payload.get("locationSource") == "gps" else None
+        lat = lng = None
+        if coords is not None:
+            try:
+                lat, lng = round(float(coords["lat"]), 3), round(float(coords["lng"]), 3)
+            except (KeyError, TypeError, ValueError):
+                return None, "VALIDATION_FAILED"
+        return {"beach": beach, "quantities": quantities, "category": top, "quantity": quantities[top], "photo_key": photo_key, "location_source": payload.get("locationSource", "manual")}, None
+
+    @application.post("/reports")
+    @require_auth
+    def create_frontend_report():
+        data, error = validate_frontend_report(request.get_json(silent=True))
+        if error:
+            return error_response(400, error, "A photo is required." if error == "PHOTO_REQUIRED" else "Report data is invalid.")
+        now = datetime.now(timezone.utc)
+        local_day = now.astimezone(KUALA_LUMPUR).date()
+        with engine.begin() as connection:
+            report_id = "r_" + secrets.token_hex(10)
+            connection.execute(insert(frontend_reports_table).values(id=report_id, reporter_id=request.current_user.id, beach_id=data["beach"]["id"], beach_name=data["beach"]["name"], quantities=json.dumps(data["quantities"]), category=data["category"], quantity=data["quantity"], photo_key=data["photo_key"], location_source=data["location_source"], status="Counted", created_at=now))
+            row = connection.execute(select(frontend_reports_table).where(frontend_reports_table.c.id == report_id)).first()
+        return jsonify(frontend_report_dict(row)), 201
+
+    @application.get("/reports/mine")
+    @require_auth
+    def get_frontend_reports():
+        with engine.connect() as connection:
+            query = select(frontend_reports_table).where(frontend_reports_table.c.reporter_id == request.current_user.id).order_by(frontend_reports_table.c.created_at.desc())
+            status = request.args.get("status")
+            if status in {"Counted", "Duplicate", "Incomplete"}:
+                query = query.where(frontend_reports_table.c.status == status)
+            rows = connection.execute(query).all()
+        return jsonify([frontend_report_dict(row) for row in rows])
+
+    @application.get("/reports/mine/counts")
+    @require_auth
+    def get_frontend_report_counts():
+        with engine.connect() as connection:
+            rows = connection.execute(select(frontend_reports_table.c.status).where(frontend_reports_table.c.reporter_id == request.current_user.id)).scalars().all()
+        return jsonify({"counted": rows.count("Counted"), "duplicate": rows.count("Duplicate"), "incomplete": rows.count("Incomplete")})
+
+    @application.patch("/reports/<report_id>")
+    @require_auth
+    def update_frontend_report(report_id: str):
+        with engine.connect() as connection:
+            old = connection.execute(select(frontend_reports_table).where(frontend_reports_table.c.id == report_id, frontend_reports_table.c.reporter_id == request.current_user.id)).first()
+        if old is None:
+            return error_response(404, "NOT_FOUND", "Report not found.")
+        payload = request.get_json(silent=True) or {}
+        merged = {"beachId": payload.get("beachId", old.beach_id), "quantities": payload.get("quantities", json.loads(old.quantities)), "photoKey": payload.get("photoKey", old.photo_key), "locationSource": payload.get("locationSource", old.location_source), "coords": payload.get("coords")}
+        data, error = validate_frontend_report(merged)
+        if error:
+            return error_response(400, error, "Report data is invalid.")
+        with engine.begin() as connection:
+            connection.execute(frontend_reports_table.update().where(frontend_reports_table.c.id == report_id).values(beach_id=data["beach"]["id"], beach_name=data["beach"]["name"], quantities=json.dumps(data["quantities"]), category=data["category"], quantity=data["quantity"], photo_key=data["photo_key"], location_source=data["location_source"], status="Counted"))
+            row = connection.execute(select(frontend_reports_table).where(frontend_reports_table.c.id == report_id)).first()
+        return jsonify(frontend_report_dict(row))
 
     @application.get("/api/context")
     def get_context():

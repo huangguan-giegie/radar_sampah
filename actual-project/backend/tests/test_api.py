@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import io
 import re
 from datetime import datetime, timedelta, timezone
 
@@ -11,7 +12,7 @@ import pytest
 
 os.environ.setdefault("AUTH_JWT_SECRET", "test-only-secret-not-for-production")
 
-from app import context_table, create_app
+from app import context_table, create_app, frontend_reports_table
 
 
 @pytest.fixture
@@ -431,3 +432,74 @@ def test_non_testing_app_requires_an_auth_jwt_secret(tmp_path, monkeypatch):
 
     with pytest.raises(RuntimeError, match="AUTH_JWT_SECRET"):
         create_app(database_url=database_url, testing=False)
+
+
+def test_frontend_beach_contract_exposes_seed_beaches_and_nearest_resolution(client):
+    beaches = client.get("/beaches")
+    assert beaches.status_code == 200
+    assert len(beaches.get_json()) == 4
+    assert {item["id"] for item in beaches.get_json()} == {"morib", "remis", "kelanang", "bagan"}
+    resolved = client.post("/geo/resolve-beach", json={"lat": 2.746, "lng": 101.440})
+    assert resolved.status_code == 200
+    assert resolved.get_json()["id"] == "morib"
+    assert client.post("/geo/resolve-beach", json={"lat": 0, "lng": 0}).get_json() is None
+
+
+def test_frontend_report_contract_supports_auth_quantities_and_private_fields(client):
+    token = client.post("/auth/anonymous").get_json()["token"]
+    headers = {"Authorization": f"Bearer {token}"}
+    payload = {
+        "beachId": "morib",
+        "quantities": {"Plastic": "Large", "Fishing gear": "Medium"},
+        "photoKey": "photos/test.jpg",
+        "locationSource": "gps",
+        "coords": {"lat": 2.746, "lng": 101.440},
+    }
+    created = client.post("/reports", json=payload, headers=headers)
+    assert created.status_code == 201
+    report = created.get_json()
+    assert report["quantities"] == payload["quantities"]
+    assert report["category"] == "Fishing gear"
+    assert report["status"] == "Counted"
+    assert report["photoUrl"].startswith("http")
+    assert "lat" not in report and "lng" not in report and "participantId" not in report
+    assert client.get("/reports/mine", headers=headers).get_json()[0]["id"] == report["id"]
+    assert client.get("/reports/mine/counts", headers=headers).get_json() == {"counted": 1, "duplicate": 0, "incomplete": 0}
+    assert "lat" not in frontend_reports_table.c and "lng" not in frontend_reports_table.c
+
+
+def test_photo_upload_rejects_oversized_files(client):
+    token = client.post("/auth/anonymous").get_json()["token"]
+    response = client.post(
+        "/uploads/photos",
+        headers={"Authorization": f"Bearer {token}"},
+        data={"photo": (io.BytesIO(b"x" * (10 * 1024 * 1024 + 1)), "large.jpg")},
+        content_type="multipart/form-data",
+    )
+    assert response.status_code == 413
+
+
+def test_photo_upload_returns_opaque_preview_url_and_serves_bytes(client):
+    token = client.post("/auth/anonymous").get_json()["token"]
+    response = client.post(
+        "/uploads/photos",
+        headers={"Authorization": f"Bearer {token}"},
+        data={"photo": (io.BytesIO(b"fake-image"), "photo.jpg")},
+        content_type="multipart/form-data",
+    )
+    assert response.status_code == 201
+    body = response.get_json()
+    assert body["metadataStripped"] is True
+    assert not os.path.isabs(body["photoKey"])
+    served = client.get(body["previewUrl"].replace("http://localhost", ""), headers={"Authorization": f"Bearer {token}"})
+    assert served.status_code == 200
+    assert served.data == b"fake-image"
+
+
+def test_same_reporter_can_submit_two_complete_reports_without_duplicate_status(client):
+    token = client.post("/auth/anonymous").get_json()["token"]
+    headers = {"Authorization": f"Bearer {token}"}
+    payload = {"beachId": "morib", "quantities": {"Plastic": "Small"}, "photoKey": "p.jpg", "locationSource": "manual"}
+    first = client.post("/reports", json=payload, headers=headers).get_json()
+    second = client.post("/reports", json=payload, headers=headers).get_json()
+    assert first["status"] == second["status"] == "Counted"
