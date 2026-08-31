@@ -619,7 +619,7 @@ components:
             sending only the derived pair below would clear every other category.
           additionalProperties: { $ref: "#/components/schemas/QuantityBand" }
         category:
-          description: derived — the highest-weighted category present in quantities
+          description: derived — the category with the maximum category score (weight × quantity weight)
           allOf: [{ $ref: "#/components/schemas/LitterCategory" }]
         quantity:
           description: derived — that category's band
