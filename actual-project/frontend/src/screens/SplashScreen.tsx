@@ -70,7 +70,7 @@ export default function SplashScreen() {
         Radar Sampah
       </div>
       <div style={{ fontFamily: MONO, fontSize: 10.5, letterSpacing: '.24em', color: C.faint, marginTop: 10 }}>
-        SEE IT · RECORD IT · CORRECT IT
+        SEE IT · REPORT IT · CORRECT IT
       </div>
       <div
         style={{

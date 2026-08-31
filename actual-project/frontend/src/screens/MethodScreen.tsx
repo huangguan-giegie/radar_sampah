@@ -27,7 +27,7 @@ function warnIfRuleDiffers(remote: ScoringMethod) {
 }
 
 const limitations = (m: ScoringMethod) => [
-  'More visits means more records, not more litter.',
+  'More visits means more reports, not more litter.',
   'Bands are estimates by eye — comparable in order of magnitude only.',
   `Conditions move faster than a ${m.windowDays}-day window can show.`,
   'This is reported litter, not water quality, ecology or safety.',
@@ -72,7 +72,7 @@ export default function MethodScreen() {
             How the severity band is decided
           </div>
           <div style={{ fontSize: 14.5, lineHeight: 1.65, color: C.cloud, marginTop: 10 }}>
-            No model and no judgement call — the same arithmetic runs on every eligible record.
+            No model and no judgement call — the same arithmetic runs on every eligible report.
           </div>
         </div>
       </div>
@@ -86,7 +86,7 @@ export default function MethodScreen() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 9, marginTop: 12 }}>
             {[
               { of: 'ONE CATEGORY', is: 'category weight × quantity level' },
-              { of: 'ONE RECORD', is: 'highest category score (Max)' },
+              { of: 'ONE REPORT', is: 'highest category score (Max)' },
               { of: 'ONE BEACH', is: `median of eligible report scores, last ${m.windowDays} days` },
             ].map((f) => (
               <div key={f.of} style={{ background: C.tint, borderRadius: 14, padding: '11px 14px' }}>
@@ -154,7 +154,7 @@ export default function MethodScreen() {
           <Label style={{ marginBottom: 11 }}>WHEN NO BAND IS SHOWN</Label>
           <div style={{ background: C.white, border: `1px solid ${C.line}`, borderRadius: 22, padding: 18, display: 'flex', flexDirection: 'column', gap: 9 }}>
             {[
-              [`Under ${m.minReports} records`, 'Insufficient data'],
+              [`Under ${m.minReports} reports`, 'Insufficient data'],
               [`Nothing in ${m.windowDays} days`, 'Not recently reported'],
               ['Duplicate or incomplete', 'Never counted at all'],
             ].map(([when, then]) => (

@@ -51,7 +51,7 @@ export default function ReviewScreen() {
       bumpReports();
       finishReportSubmission(nav);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not save this record.');
+      setError(err instanceof Error ? err.message : 'Could not save this report.');
       showToast('Save failed');
     } finally {
       setBusy(false);
@@ -139,7 +139,7 @@ export default function ReviewScreen() {
         <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start', background: C.tint, borderRadius: 16, padding: '13px 14px' }}>
           <Info style={{ flex: 'none', marginTop: 1 }} />
           <div style={{ fontSize: 12, lineHeight: 1.55, color: C.slate }}>
-            Duplicate or incomplete records are excluded from the severity calculation — the same
+            Duplicate or incomplete reports are excluded from the severity calculation — the same
             rule for every beach.
           </div>
         </div>

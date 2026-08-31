@@ -1,6 +1,6 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { photoPreviewUrl, uploadPhoto } from '../api';
+import { photoPreviewUrl, refreshPhotoPreview, uploadPhoto, USE_MOCK } from '../api';
 import { ArrowRight, Camera, ChevronRight, Shield, Upload } from '../components/Icon';
 import { BackButton, ErrorNote, PrimaryButton, StepBadge } from '../components/ui';
 import { C, MONO } from '../theme';
@@ -19,6 +19,28 @@ export default function PhotoScreen() {
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
 
+  useEffect(() => {
+    const photoKey = draft.photo?.photoKey ?? draft.existingPhotoKey;
+    if (!photoKey || draft.photo?.previewUrl || USE_MOCK) return;
+    let active = true;
+    refreshPhotoPreview(photoKey)
+      .then((previewUrl) => {
+        if (active && previewUrl) {
+          if (draft.photo) patchDraft({ photo: { ...draft.photo, previewUrl } });
+          else patchDraft({ existingPhotoUrl: previewUrl });
+        }
+      })
+      .catch(() => {
+        if (active) {
+          patchDraft({ photo: null, existingPhotoUrl: null, existingPhotoKey: null });
+          setUploadError('That photo preview has expired. Please choose the photo again.');
+        }
+      });
+    return () => {
+      active = false;
+    };
+  }, [draft.photo?.photoKey, draft.existingPhotoKey]);
+
   async function handleFile(file: File | undefined) {
     if (!file) return;
 
@@ -31,6 +53,10 @@ export default function PhotoScreen() {
     if (file.size > MAX_PHOTO_BYTES) {
       const mb = (file.size / 1024 / 1024).toFixed(1);
       setUploadError(`That photo is ${mb} MB. The limit is 10 MB — try a smaller one.`);
+      return;
+    }
+    if (file.size === 0) {
+      setUploadError('That photo is empty. Please choose another photo.');
       return;
     }
 
@@ -91,7 +117,7 @@ export default function PhotoScreen() {
           <ErrorNote
             title="Photo upload failed"
             body={uploadError}
-            onRetry={() => cameraRef.current?.click()}
+            onRetry={() => (uploadError.includes('expired') ? libraryRef.current?.click() : cameraRef.current?.click())}
           />
         )}
 

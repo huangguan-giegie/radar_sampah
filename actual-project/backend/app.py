@@ -85,8 +85,8 @@ CATEGORY_WEIGHTS = {
 QUANTITY_WEIGHTS = {"Small": 1, "Medium": 2, "Large": 3, "Very Large": 4}
 REPORT_STATUSES = {"Counted", "Duplicate", "Incomplete"}
 REPORT_STATUS_NOTES = {
-    "Duplicate": "Matched an existing record for the same beach on the same day — excluded from the severity calculation.",
-    "Incomplete": "Photo unreadable — excluded until you correct and save the record.",
+    "Duplicate": "Matched an existing report for the same beach on the same day — excluded from the severity calculation.",
+    "Incomplete": "Photo unreadable — excluded until you correct and save the report.",
 }
 SCORING_BANDS = (
     {"band": "Low", "range": "below 1.5", "color": "#7CA98B"},
@@ -579,7 +579,7 @@ def schedule_orphan_cleanup(engine: Engine, directory: Path, photo_key: str, cre
 
 
 def report_dict(row: Any, viewer_id: str, jwt_secret: str, directory: Path, beach_names: dict[str, str]) -> dict[str, Any]:
-    # lat, lng and photo_key are intentionally never copied into this response.
+    # Exact coordinates and photo bytes are never copied into this response.
     quantities = quantities_from_row(row)
     value: dict[str, Any] = {
         "id": row.id,
@@ -592,10 +592,13 @@ def report_dict(row: Any, viewer_id: str, jwt_secret: str, directory: Path, beac
         "reportScore": round(report_score_for(quantities), 2),
         "createdAt": contract_timestamp(row.created_at),
         "status": row.status,
+        "locationSource": row.location_source,
     }
     if row.status in REPORT_STATUS_NOTES:
         value["statusNote"] = REPORT_STATUS_NOTES[row.status]
     if viewer_id == row.reporter_id:
+        # The opaque key is returned only to the owner so an expired preview can be renewed.
+        value["photoKey"] = row.photo_key
         photo_url = signed_photo_url(row.photo_key, row.reporter_id, jwt_secret, directory)
         if photo_url:
             value["photoUrl"] = photo_url
@@ -939,6 +942,18 @@ def create_app(
         )
         preview_url = signed_photo_url(photo_key, request.current_user.id, jwt_secret, directory)
         return jsonify({"photoKey": photo_key, "previewUrl": preview_url, "metadataStripped": True}), 201
+
+    @application.get("/uploads/photos/<photo_key>/preview-url")
+    @require_auth
+    def renew_photo_preview_url(photo_key: str):
+        metadata_value = read_photo_metadata(directory, photo_key)
+        path = photo_file_path(directory, photo_key)
+        if metadata_value is None or metadata_value.get("ownerId") != request.current_user.id or path is None or not path.is_file():
+            return error_response(404, "NOT_FOUND", "Photo not found.")
+        preview_url = signed_photo_url(photo_key, request.current_user.id, jwt_secret, directory)
+        if not preview_url:
+            return error_response(404, "NOT_FOUND", "Photo not found.")
+        return jsonify({"previewUrl": preview_url})
 
     @application.get("/uploads/photos/<photo_key>")
     def view_signed_photo(photo_key: str):

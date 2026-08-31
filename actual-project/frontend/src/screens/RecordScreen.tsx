@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { getBeaches, photoPreviewUrl } from '../api';
 import { ArrowRight, Alert } from '../components/Icon';
 import { BackButton, PrimaryButton, StepBadge } from '../components/ui';
@@ -14,6 +14,7 @@ export default function RecordScreen() {
   const nav = useNavigate();
   const { draft, patchDraft } = useApp();
   const [showErrors, setShowErrors] = useState(false);
+  const errorRef = useRef<HTMLDivElement>(null);
   const [beaches, setBeaches] = useState<BeachSummary[]>([]);
 
   useEffect(() => {
@@ -21,6 +22,10 @@ export default function RecordScreen() {
       .then((list) => setBeaches(list))
       .catch(() => setBeaches([]));
   }, []);
+
+  useEffect(() => {
+    if (showErrors) errorRef.current?.focus();
+  }, [showErrors]);
 
   const beach = beaches.find((b) => b.id === draft.beachId);
   const picked = CATEGORIES.filter((c) => c in draft.quantities);
@@ -119,8 +124,19 @@ export default function RecordScreen() {
         }}
       >
         <div style={{ fontSize: 25, fontWeight: 650, letterSpacing: '-.5px', color: C.ink3 }}>
-          What did you find?
+          {draft.editingReportId ? 'Correct your report' : 'What did you find?'}
         </div>
+        {draft.editingReportId && (
+          <div style={{ marginTop: 8, padding: '10px 12px', borderRadius: 14, background: C.tint, border: `1px solid ${C.line}`, color: C.slate, fontSize: 11.5, lineHeight: 1.45 }}>
+            <b style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '.12em' }}>CORRECT REPORT</b>
+            <div style={{ marginTop: 3 }}>
+              {draft.editingStatusNote || 'Your existing beach and photo are kept unless you choose to change them.'}
+            </div>
+            <button type="button" onClick={() => nav('/report/confirm', { replace: true })} style={{ color: C.navy, fontWeight: 700, fontSize: 11.5, marginTop: 6 }}>
+              Change beach
+            </button>
+          </div>
+        )}
         <div style={{ fontSize: 12.5, color: C.muted, marginTop: 5, lineHeight: 1.5 }}>
           No weighing, no guesswork. Tap everything you saw, then say roughly how much of each.
         </div>
@@ -235,6 +251,9 @@ export default function RecordScreen() {
                           >
                             {q}
                           </span>
+                          <span style={{ fontSize: 8.5, color: active ? 'rgba(247,248,250,.78)' : C.dim, textAlign: 'center', lineHeight: 1.1 }}>
+                            {QUANTITY_DESC[q]}
+                          </span>
                         </button>
                       );
                     })}
@@ -247,6 +266,9 @@ export default function RecordScreen() {
 
         {showErrors && (missCat || noBand.length > 0) && (
           <div
+            ref={errorRef}
+            role="alert"
+            tabIndex={-1}
             style={{
               display: 'flex',
               gap: 10,

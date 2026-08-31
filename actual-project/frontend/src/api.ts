@@ -142,6 +142,17 @@ function currentMockReports(): LitterReport[] {
   return mockAccounts[currentMockParticipantId()];
 }
 
+function mockDuplicateStatus(beachId: string, createdAt: string, excludeReportId?: string): LitterReport['status'] {
+  const day = new Date(createdAt).toISOString().slice(0, 10);
+  const duplicate = currentMockReports().some((report) =>
+    report.id !== excludeReportId &&
+    report.status === 'Counted' &&
+    report.beachId === beachId &&
+    new Date(report.createdAt).toISOString().slice(0, 10) === day,
+  );
+  return duplicate ? 'Duplicate' : 'Counted';
+}
+
 function replaceCurrentMockReports(reports: LitterReport[]) {
   mockAccounts = { ...mockAccounts, [currentMockParticipantId()]: reports };
   saveMockAccounts();
@@ -365,6 +376,13 @@ export function photoPreviewUrl(photoKey: string | null | undefined): string | n
   return mockPhotoStore.get(photoKey) ?? null;
 }
 
+export async function refreshPhotoPreview(photoKey: string | null | undefined): Promise<string | null> {
+  if (!photoKey) return null;
+  if (USE_MOCK) return photoPreviewUrl(photoKey);
+  const data = await request(`/uploads/photos/${encodeURIComponent(photoKey)}/preview-url`);
+  return typeof data?.previewUrl === 'string' ? data.previewUrl : null;
+}
+
 async function metadataFreePhoto(file: File): Promise<File> {
   const sourceUrl = URL.createObjectURL(file);
   try {
@@ -391,6 +409,7 @@ async function metadataFreePhoto(file: File): Promise<File> {
 }
 
 export async function uploadPhoto(file: File): Promise<UploadedPhoto> {
+  if (file.size === 0) throw new Error('That photo is empty. Please choose another photo.');
   if (USE_MOCK) {
     await delay(700);
 
@@ -453,7 +472,7 @@ export async function createReport(input: CreateReportInput): Promise<LitterRepo
       reportScore: reportScoreFor(input.quantities),
       photoUrl: mockPhotoStore.get(input.photoKey) ?? null,
       createdAt: new Date().toISOString(),
-      status: 'Counted',
+      status: mockDuplicateStatus(beach.id, new Date().toISOString()),
     };
     replaceCurrentMockReports([report, ...currentMockReports()]);
     return report;
@@ -496,7 +515,7 @@ export async function updateReport(
     await delay(300);
     const reports = currentMockReports();
     const index = reports.findIndex((r) => r.id === id);
-    if (index < 0) throw new Error('That record could not be found.');
+    if (index < 0) throw new Error('That report could not be found.');
 
     const old = reports[index];
     const beach = changes.beachId ? BEACHES.find((b) => b.id === changes.beachId) : undefined;
@@ -513,7 +532,7 @@ export async function updateReport(
       photoUrl: changes.photoKey ? mockPhotoStore.get(changes.photoKey) ?? null : old.photoUrl,
       beachId: beach ? beach.id : old.beachId,
       beachName: beach ? beach.name : old.beachName,
-      status: 'Counted',
+      status: mockDuplicateStatus(beach ? beach.id : old.beachId, old.createdAt, old.id),
       statusNote: undefined,
     };
 

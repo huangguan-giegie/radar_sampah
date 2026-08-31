@@ -29,9 +29,12 @@ export function markerHtml(
   selected: boolean,
   layer: MapLayer,
   primaryGlyph: SpeciesGlyph,
+  offset: [number, number] = [0, 0],
 ): string {
   const wrap = (inner: string) =>
-    `<div style="${F};transform:translate(-50%,-50%);position:absolute;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;${
+    `<div role="button" tabindex="0" aria-label="${b.name} · ${
+      layer === 'litter' ? (b.severity ? severityLabel(b.severity).toUpperCase() : 'NO DATA') : b.habitatTag
+    }" style="${F};transform:translate(calc(-50% + ${offset[0]}px),calc(-50% + ${offset[1]}px));position:absolute;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;outline:none;${
       selected ? 'animation:popIn .25s ease;z-index:600' : ''
     }">${inner}</div>`;
 
@@ -59,9 +62,7 @@ export function markerHtml(
       }">${bars}<b style="font-size:10.5px;font-weight:750;letter-spacing:.09em;${
         b.insufficientData ? `color:${selected ? '#CBD3E0' : '#5A6474'}` : ''
       }">${label}</b></div>` +
-      (selected
-        ? `<div style="background:rgba(11,33,97,.88);color:#F7F8FA;font-size:10px;font-weight:600;padding:4px 10px;border-radius:9px">${b.name}</div>`
-        : '');
+      `<div style="background:rgba(11,33,97,.88);color:#F7F8FA;font-size:10px;font-weight:600;padding:4px 10px;border-radius:9px">${b.name}</div>`;
     return wrap(pill);
   }
 

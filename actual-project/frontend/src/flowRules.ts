@@ -21,10 +21,21 @@ const STEP_PATH: Record<ReportStep, string> = {
   review: '/report/review',
 };
 
+export function hasDraftProgress(draft: ReportDraft): boolean {
+  return Boolean(
+    draft.photo ||
+    draft.existingPhotoUrl ||
+    draft.existingPhotoKey ||
+    draft.beachId ||
+    draft.editingReportId ||
+    Object.keys(draft.quantities).length > 0,
+  );
+}
+
 
 export function reachableStep(draft: ReportDraft): ReportStep {
 
-  const hasPhoto = !!draft.photo || !!draft.existingPhotoUrl || !!draft.editingReportId;
+  const hasPhoto = !!draft.photo || !!draft.existingPhotoUrl || !!draft.existingPhotoKey || !!draft.editingReportId;
   if (!hasPhoto) return 'photo';
 
 
@@ -38,6 +49,10 @@ export function reachableStep(draft: ReportDraft): ReportStep {
 export function guardStep(target: ReportStep, draft: ReportDraft): string | null {
   const furthest = reachableStep(draft);
   return STEP_ORDER.indexOf(target) <= STEP_ORDER.indexOf(furthest) ? null : STEP_PATH[furthest];
+}
+
+export function resumePath(draft: ReportDraft): string {
+  return STEP_PATH[reachableStep(draft)];
 }
 
 export type ReportSubmission =
@@ -59,7 +74,9 @@ export function buildReportSubmission(draft: ReportDraft): ReportSubmission {
   const common = {
     beachId: draft.beachId,
     quantities: draft.quantities,
-    locationSource: usesGps ? ('gps' as const) : ('manual' as const),
+    ...(draft.editingReportId && draft.locationSource === 'gps' && draft.coords === null
+      ? {}
+      : { locationSource: usesGps ? ('gps' as const) : ('manual' as const) }),
     ...(usesGps ? { coords: draft.coords! } : {}),
   };
 
@@ -86,7 +103,12 @@ export function buildReportSubmission(draft: ReportDraft): ReportSubmission {
 
   return {
     kind: 'create',
-    payload: { ...common, photoKey: draft.photo.photoKey },
+    payload: {
+      ...common,
+      photoKey: draft.photo.photoKey,
+      locationSource: usesGps ? 'gps' : 'manual',
+      ...(usesGps ? { coords: draft.coords! } : {}),
+    },
   };
 }
 
@@ -101,7 +123,7 @@ export function reportOutcome(status: ReportStatus): ReportOutcome {
   if (status === 'Counted') {
     return {
       title: "Nice one — it's on the map",
-      badge: 'VALID · NOT A DUPLICATE · COUNTED',
+      badge: 'COUNTED · NOT A DUPLICATE',
       message:
         "Thanks for this. Your report passed the checks, so it now counts toward this beach's rating — that's one more piece of evidence for the coast.",
       tone: 'success',
@@ -112,7 +134,7 @@ export function reportOutcome(status: ReportStatus): ReportOutcome {
       title: 'Saved — but not counted',
       badge: 'DUPLICATE · EXCLUDED',
       message:
-        'This report matches an existing record for the same beach and day, so it is saved in your records but excluded from the beach rating.',
+        'This report matches an existing report for the same beach and day, so it is saved in your reports but excluded from the beach rating.',
       tone: 'neutral',
     };
   }
@@ -120,7 +142,7 @@ export function reportOutcome(status: ReportStatus): ReportOutcome {
     title: 'Saved — correction needed',
     badge: 'INCOMPLETE · EXCLUDED',
     message:
-      'This report is saved in your records but is excluded from the beach rating until the missing or unusable information is corrected.',
+      'This report is saved in your reports but is excluded from the beach rating until the missing or unusable information is corrected.',
     tone: 'warning',
   };
 }

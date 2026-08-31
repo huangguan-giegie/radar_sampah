@@ -8,7 +8,7 @@ import { reportOutcome } from '../flowRules';
 
 export default function SubmittedScreen() {
   const nav = useNavigate();
-  const { lastSavedReport: saved, patchDraft, resetDraft } = useApp();
+  const { lastSavedReport: saved, patchDraft, resetDraft, setLastSavedReport } = useApp();
 
   useEffect(() => {
     if (saved) resetDraft();
@@ -113,12 +113,22 @@ export default function SubmittedScreen() {
             <ChevronRight color={C.slate} />
           </div>
           <div style={{ fontSize: 13, lineHeight: 1.6, color: C.ink2, marginTop: 7 }}>
-            Records use the highest category score, and each beach uses the median of eligible
-            report scores over the reporting window. Duplicate or incomplete records are excluded.
+            Reports use the highest category score, and each beach uses the median of counted
+            report scores over the reporting window. Duplicate or incomplete reports are excluded.
           </div>
         </button>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
+          <PrimaryButton
+            onClick={() => {
+              resetDraft();
+              setLastSavedReport(null);
+              nav('/report/photo');
+            }}
+          >
+            Add another report
+            <ArrowRight />
+          </PrimaryButton>
           <PrimaryButton onClick={() => nav(`/beach/${saved.beachId}`)}>
             View Beach
             <ArrowRight />
@@ -129,13 +139,17 @@ export default function SubmittedScreen() {
               style={{ borderRadius: 16, fontSize: 13.5 }}
               onClick={() => {
                 resetDraft();
+                setLastSavedReport(null);
                 patchDraft({
                   editingReportId: saved.id,
                   beachId: saved.beachId,
-                    beachName: saved.beachName,
+                  beachName: saved.beachName,
                   quantities: { ...saved.quantities },
                   existingPhotoUrl: saved.photoUrl ?? null,
-                  locationSource: 'manual',
+                  existingPhotoKey: saved.photoKey ?? null,
+                  editingStatus: saved.status,
+                  editingStatusNote: saved.statusNote ?? null,
+                  locationSource: saved.locationSource ?? 'manual',
                   coords: null,
                 });
 
@@ -143,10 +157,10 @@ export default function SubmittedScreen() {
                 nav('/report/details', { replace: true });
               }}
             >
-              Correct Record
+              Correct report
             </GhostButton>
             <GhostButton height={50} style={{ borderRadius: 16, fontSize: 13.5 }} onClick={() => nav('/reports')}>
-              My Records
+              My Reports
             </GhostButton>
           </div>
         </div>

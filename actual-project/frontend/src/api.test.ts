@@ -97,4 +97,32 @@ describe('真实 API contract', () => {
     expect(report.reportScore).toBe(2.55);
     expect(report.categoryScores).toEqual({ Plastic: 2.55, 'Fishing gear': 2 });
   });
+
+  it('marks a second same-day mock report as duplicate', async () => {
+    vi.stubEnv('VITE_API_BASE_URL', '');
+    storage.set('rs_mock_participant', '1637');
+    const { createReport } = await import('./api');
+    const input = {
+      beachId: 'morib',
+      quantities: { Plastic: 'Small' as const },
+      photoKey: 'mock/photo.jpg',
+      locationSource: 'manual' as const,
+    };
+
+    const first = await createReport(input);
+    const second = await createReport(input);
+
+    expect(first.status).toBe('Counted');
+    expect(second.status).toBe('Duplicate');
+  });
+
+  it('rejects an empty mock photo before creating a preview', async () => {
+    vi.stubEnv('VITE_API_BASE_URL', '');
+    storage.set('rs_mock_participant', '1637');
+    const { uploadPhoto } = await import('./api');
+
+    await expect(uploadPhoto(new File([], 'empty.jpg', { type: 'image/jpeg' }))).rejects.toThrow(
+      'That photo is empty. Please choose another photo.',
+    );
+  });
 });
