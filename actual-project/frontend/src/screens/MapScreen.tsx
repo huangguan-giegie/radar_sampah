@@ -5,7 +5,7 @@ import { getBeaches } from '../api';
 import { markerHtml } from '../components/BeachMarker';
 import { useLeafletMap } from '../components/useLeafletMap';
 import { ArrowRight, Check, Close, WifiOff } from '../components/Icon';
-import { C, MONO, freshStyle, freshnessLabel, lastReportedLabel } from '../theme';
+import { C, MONO, freshStyle, freshnessLabel, lastReportedLabel, severityLabel } from '../theme';
 import { GlassPanel, SeverityBadge } from '../components/ds';
 import { useApp } from '../AppContext';
 import type { BeachSummary, MapLayer } from '../types';
@@ -22,7 +22,7 @@ const LEGEND = [
   { label: 'LOW', color: '#7CA98B' },
   { label: 'MOD', color: '#D9A24B' },
   { label: 'HIGH', color: '#CE6B45' },
-  { label: 'SEVERE', color: '#B84A3F' },
+  { label: severityLabel('Severe').toUpperCase(), color: '#B84A3F' },
 ];
 
 export default function MapScreen() {

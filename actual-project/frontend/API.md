@@ -449,22 +449,20 @@ quantity  = 该类别对应那列的值
 | 位置 | 现状 | 要改成 |
 | --- | --- | --- |
 | `RecordScreen.tsx` | 类别单选（`patchDraft({ category: cat })`） | 六个类别各自能选一个数量档，可多选 |
-| 严重度公式（§7） | `类别权重 × 数量档`，一条记录一个值 | 一条记录有多个类别，要定清楚是取最大值、求和还是求平均 |
+| 严重度公式（§7） | `类别权重 × 数量档`，一条记录一个值 | Report Score 取类别分数最大值；Beach Attention Score 取合格报告分数中位数 |
 | `BeachScreen.tsx` 那行说明 | `SHARE OF n VERIFIED REPORTS` | 改成指向具体某条记录的日期 |
 
-**第二条必须由 Darli 定**，因为它直接改变地图上每个海滩的等级。在定下来之前，
-后端算严重度可以先按「取六列里权重最高的那个类别」跑，这和现在的单类别行为完全一致。
+当前 MVP 已确定：多类别报告取最高类别分数，海滩取最近 90 天合格报告分数的中位数。
 
 ---
 
-## 3. 评分规则（US4.3）　— 这个接口是**可选的**
+## 3. 评分规则（US4.3）　— 已发布规则
 
 | 方法 | 路径 | 鉴权 | 说明 |
 | --- | --- | --- | --- |
-| GET | `/scoring-method` | 否 | **可选**，不实现也不影响前端 |
+| GET | `/scoring-method` | 否 | 发布前后端当前使用的评分规则 |
 
-**团队决议：US4.3 为 non-blocking stretch，规则由前端交付。** 权重、阈值、窗口
-都写死在前端 `src/scoring.ts`，评分说明页直出，离线也能看，不依赖后端。
+类别权重、阈值、聚合方式和窗口由后端发布，并在 `src/scoring.ts` 保留 mock/offline 副本。
 
 ```json
 {
@@ -489,18 +487,18 @@ quantity  = 该类别对应那列的值
     { "band": "Severe",   "range": "3.5 and above", "color": "#B84A3F" }
   ],
   "windowDays": 90,
-  "minReports": 3
+  "minReports": 3,
+  "reportAggregation": "max",
+  "beachAggregation": "median",
+  "ruleVersion": "radar-sampah-scoring-v2"
 }
 ```
-
-### ⚠️ 后端不实现这个接口也可以，但**必须用上面这组数字**
 
 严重度是后端算的（§7），公布的规则是前端展示的。两边用的数字必须一模一样 ——
 否则页面上写着「Plastic 0.85」，后端却按 0.9 在算，那 US4.3 的整个意义就没了。
 
 - 上面这组数字是**规范**，`src/scoring.ts` 是它的可执行副本
-- 后端如果实现了这个接口且返回值不同，前端会**以后端为准**（那才是真正在算的
-  规则），并在开发模式下 console 告警指出哪个数字对不上
+- 配置真实 API 时，前端以后端发布的规则为准；开发模式下如果与 mock 副本不一致会告警
 - 要改任何一个权重或阈值，两边同时改，并升 `RULE_VERSION`
 
 ## 4. 定位 → 海滩
@@ -647,6 +645,12 @@ ALTER TABLE reports
   },
   "category": "Plastic",
   "quantity": "Large",
+  "categoryScores": {
+    "Plastic": 2.55,
+    "Fishing gear": 2.00,
+    "Glass": 0.70
+  },
+  "reportScore": 2.55,
   "createdAt": "2026-08-25T09:41:00+08:00",
   "status": "Counted",
   "photoUrl": "https://cdn.example.com/photos/ph_01H....jpg"

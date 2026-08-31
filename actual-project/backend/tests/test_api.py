@@ -386,7 +386,7 @@ def test_beach_attention_uses_median_report_scores_and_latest_composition(api):
     assert detail["compositionSource"]["reportId"] == report_ids[-1]
 
 
-def test_beach_attention_uses_average_of_two_middle_scores_for_even_count(api):
+def test_beach_attention_uses_median_for_even_count(api):
     _application, client = api
     for quantities in (
         {"Fishing gear": "Small"},
