@@ -140,6 +140,10 @@ reports_table = Table(
     Column("id", String(40), primary_key=True),
     Column("reporter_id", ForeignKey("users.id"), nullable=False),
     Column("beach_id", String(80), nullable=False),
+    # Legacy PR #13 columns. Existing Render tables may still require these
+    # fields, so new writes keep both representations in sync during migration.
+    Column("beach_name", String(160)),
+    Column("quantities", Text),
     Column("location_source", String(20), nullable=False),
     Column("photo_key", String(500), nullable=False),
     Column("photo_mime", String(64), nullable=False),
@@ -968,6 +972,8 @@ def create_app(
                     id=report_id,
                     reporter_id=request.current_user.id,
                     beach_id=data["beach"]["id"],
+                    beach_name=data["beach"]["name"],
+                    quantities=json.dumps(data["quantities"], separators=(",", ":")),
                     category=data["category"],
                     quantity=data["quantity"],
                     photo_key=data["photo_key"],
@@ -1064,6 +1070,8 @@ def create_app(
                 .where(reports_table.c.id == report_id)
                 .values(
                     beach_id=data["beach"]["id"],
+                    beach_name=data["beach"]["name"],
+                    quantities=json.dumps(data["quantities"], separators=(",", ":")),
                     category=data["category"],
                     quantity=data["quantity"],
                     photo_key=data["photo_key"],

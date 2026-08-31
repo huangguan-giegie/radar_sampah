@@ -138,6 +138,38 @@ def test_partial_main_database_is_migrated_to_contract_rules(tmp_path):
     assert rows[1].status == "Duplicate"
 
 
+def test_report_creation_keeps_legacy_required_columns_compatible(tmp_path):
+    database_path = tmp_path / "legacy-write.db"
+    connection = sqlite3.connect(database_path)
+    connection.executescript(
+        """
+        CREATE TABLE users (
+          id VARCHAR(80) PRIMARY KEY, participant_id VARCHAR(4) NOT NULL UNIQUE,
+          role VARCHAR(20) NOT NULL, created_at DATETIME NOT NULL
+        );
+        CREATE TABLE frontend_reports (
+          id VARCHAR(40) PRIMARY KEY, reporter_id VARCHAR(80) NOT NULL,
+          beach_id VARCHAR(80) NOT NULL, beach_name VARCHAR(160) NOT NULL,
+          quantities TEXT NOT NULL, category VARCHAR(40) NOT NULL,
+          quantity VARCHAR(20) NOT NULL, photo_key VARCHAR(500) NOT NULL,
+          location_source VARCHAR(20) NOT NULL, status VARCHAR(20) NOT NULL,
+          created_at DATETIME NOT NULL
+        );
+        """
+    )
+    connection.close()
+    application = create_app(
+        database_url=f"sqlite:///{database_path}",
+        testing=True,
+        photo_storage_dir=tmp_path / "photos",
+    )
+    client = application.test_client()
+    _session, headers = signup(client)
+    photo = upload(client, headers)
+    response = client.post("/reports", headers=headers, json=report_payload(photo["photoKey"]))
+    assert response.status_code == 201
+
+
 def test_anonymous_auth_restore_and_me(api):
     _application, client = api
     session, headers = signup(client)
