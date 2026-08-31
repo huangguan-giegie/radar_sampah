@@ -16,16 +16,10 @@ services:
         sync: false
       - key: AUTH_JWT_SECRET
         generateValue: true
-      # Recognition is off by default. Only true plus a private HTTPS URL may
-      # call a provider; otherwise the API uses its labelled demo fallback.
-      - key: LITTER_RECOGNITION_ENABLED
-        value: "false"
-      - key: LITTER_RECOGNITION_API_URL
+      # Configure a private persistent mount/path in production. The application
+      # never serves this directory directly; it issues 15-minute signed links.
+      - key: PHOTO_STORAGE_DIR
         sync: false
-      - key: LITTER_RECOGNITION_API_KEY
-        sync: false
-      - key: LITTER_RECOGNITION_TIMEOUT_MS
-        value: "4000"
 
   - type: web
     name: radar-sampah-frontend

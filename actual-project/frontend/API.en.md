@@ -21,13 +21,9 @@
 
 ## 0. Conventions
 
-> ⚠️ **The backend currently implements anonymous auth, but not the full contract.**
-> `actual-project/backend/app.py` serves the `/api/*` routes (`/api/litter-reports`,
-> `/api/litter-options`, `/api/litter-recognize`, `/api/cleanup-missions` and others).
-> It still differs from this contract: places are `area_id`
-> rather than `beaches`, five categories (`Plastic packaging`, no `Paper`), quantity is an
-> integer rather than one of four bands, and severity is a three-level high/medium/low
-> `priority` rather than the four bands here.
+> ✅ **`actual-project/backend/app.py` implements this contract.** The earlier `/api/*`
+> recognition, heatmap and cleanup-mission routes are no longer active Iteration 1 endpoints.
+> Contract coverage is kept in `backend/tests/test_api.py`.
 >
 > **Runtime modes:** leave `VITE_API_BASE_URL` empty for the local mock mode (the app uses the
 > seed data in `src/mockData.ts` and stores mock records in local storage). For the deployed

@@ -20,16 +20,9 @@
 
 ## 0. 通用约定
 
-> ⚠️ **仓库里现有的后端已实现匿名鉴权，但尚未实现完整契约。**
-> `actual-project/backend/app.py` 跑的是 `/api/*` 那一套（`/api/litter-reports`、
-> `/api/litter-options`、`/api/litter-recognize`、`/api/cleanup-missions` 等），
-> 其余部分仍与这份契约不同：地点叫 `area_id` 不是 `beaches`、
-> 类别是 5 个（`Plastic packaging`，没有 `Paper`）、数量是整数不是四档、
-> 分级是 high/medium/low 三档不是四档 severity。
->
-> **这份文档是目标状态，不是现状描述。** 在按它实现出来之前，
-> 前端的 `VITE_API_BASE_URL` 必须留空 —— 填了以后 `/beaches` 和 `/reports`
-> 仍会拿到 404。前端现在跑的是 `src/mockData.ts` 里的假数据。
+> ✅ **`actual-project/backend/app.py` 已实现本契约。** 早期的 `/api/*` 识别、
+> 热力图和清理任务路由不再是 Iteration 1 的活动接口。契约覆盖测试位于
+> `backend/tests/test_api.py`。
 
 | 项 | 约定 |
 | --- | --- |

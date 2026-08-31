@@ -1,527 +1,432 @@
-"""API contract tests for the Radar Sampah litter MVP."""
+"""Contract tests for frontend/API.md and frontend/API.en.md."""
 
 from __future__ import annotations
 
-import os
 import io
+import os
 import re
+import sqlite3
 from datetime import datetime, timedelta, timezone
+from urllib.parse import urlsplit
 
-import jwt
 import pytest
+from PIL import Image
+from sqlalchemy import inspect as sqlalchemy_inspect
+from sqlalchemy import insert, select
 
 os.environ.setdefault("AUTH_JWT_SECRET", "test-only-secret-not-for-production")
 
-from app import context_table, create_app, frontend_reports_table
+from app import (
+    create_app,
+    frontend_reports_table,
+    photo_file_path,
+    read_photo_metadata,
+    sweep_orphan_photos,
+    write_photo_metadata,
+)
 
 
 @pytest.fixture
-def client(tmp_path):
-    database_url = f"sqlite:///{tmp_path / 'marine_test.db'}"
-    application = create_app(database_url=database_url, testing=True)
-    return application.test_client()
+def api(tmp_path):
+    application = create_app(
+        database_url=f"sqlite:///{tmp_path / 'radar_test.db'}",
+        testing=True,
+        photo_storage_dir=tmp_path / "private-photos",
+    )
+    return application, application.test_client()
 
 
-def valid_observation():
-    return {
-        "category": "Plastic packaging",
-        "area": "Selected Malaysian coastal area",
-        "latitude": 3.139,
-        "longitude": 101.6869,
-        "observed_at": datetime(2026, 8, 14, 10, 0, tzinfo=timezone.utc).isoformat(),
-        "image_url": "/assets/demo-plastic.jpg",
-        "note": "Synthetic demonstration record",
-    }
-
-
-def test_health_reports_ready_status(client):
-    response = client.get("/health")
-
-    assert response.status_code == 200
-    assert response.get_json()["status"] == "ok"
-
-
-def test_options_endpoint_exposes_source_labelled_form_choices(client):
-    response = client.get("/api/options")
-
-    assert response.status_code == 200
-    body = response.get_json()
-    assert body["demo"] is True
-    assert body["category_source"]["license"] == "Open Government Licence v3.0"
-    assert {item["value"] for item in body["categories"]} == {
-        "Plastic packaging",
-        "Fishing gear",
-        "Glass",
-        "Metal",
-        "Other",
-    }
-    assert len(body["areas"]) >= 4
-    assert all("latitude" in item and "longitude" in item for item in body["areas"])
-    assert all(item["sensitivity"] == "aggregated" for item in body["areas"])
-
-
-def test_creating_valid_observation_returns_saved_rule_based_result(client):
-    response = client.post("/api/observations", json=valid_observation())
-
+def signup(client):
+    response = client.post("/auth/anonymous")
     assert response.status_code == 201
-    body = response.get_json()
-    assert body["observation"]["category"] == "Plastic packaging"
-    assert body["classification"] == {
-        "label": "Plastic packaging",
-        "method": "Fixed demonstration category selected by the reporter.",
-        "rule": "category_passthrough_v1",
+    session = response.get_json()
+    return session, {"Authorization": "Bearer " + session["token"]}
+
+
+def jpeg_bytes(size=(40, 30), with_metadata=False):
+    output = io.BytesIO()
+    image = Image.new("RGB", size, (44, 110, 145))
+    if with_metadata:
+        exif = Image.Exif()
+        exif[0x010E] = "private metadata"
+        image.save(output, "JPEG", exif=exif)
+    else:
+        image.save(output, "JPEG")
+    return output.getvalue()
+
+
+def upload(client, headers, *, size=(40, 30), with_metadata=False):
+    response = client.post(
+        "/uploads/photos",
+        headers=headers,
+        data={"photo": (io.BytesIO(jpeg_bytes(size, with_metadata)), "beach.jpg")},
+        content_type="multipart/form-data",
+    )
+    assert response.status_code == 201
+    return response.get_json()
+
+
+def report_payload(photo_key, beach_id="morib", quantities=None, location_source="manual"):
+    value = {
+        "beachId": beach_id,
+        "quantities": quantities or {"Plastic": "Large"},
+        "photoKey": photo_key,
+        "locationSource": location_source,
     }
-    assert body["priority"]["level"] == "medium"
-    assert body["priority"]["illustrative"] is True
-    assert "not a pollution-source proof" in body["priority"]["disclaimer"].lower()
-    assert body["context"]["source"] == "OBIS"
-    assert body["source"] == "synthetic/public demonstration data"
-    assert body["data_version"] == "marine-observation-v1"
-    assert body["demo"] is True
+    if location_source == "gps":
+        value["coords"] = {"lat": 2.74614, "lng": 101.44024}
+    return value
 
 
-def test_saved_observation_is_returned_by_list_endpoint(client):
-    created = client.post("/api/observations", json=valid_observation()).get_json()
+def test_health_and_legacy_routes(api):
+    _application, client = api
+    assert client.get("/health").get_json() == {"status": "ok", "database": "configured"}
 
-    response = client.get("/api/observations")
+    response = client.get("/api/options")
+    assert response.status_code == 404
+    assert response.get_json() == {"code": "NOT_FOUND", "message": "The requested resource was not found."}
 
+
+def test_partial_main_database_is_migrated_to_contract_rules(tmp_path):
+    database_path = tmp_path / "partial-main.db"
+    connection = sqlite3.connect(database_path)
+    connection.executescript(
+        """
+        CREATE TABLE users (
+          id VARCHAR(80) PRIMARY KEY, participant_id VARCHAR(4) NOT NULL UNIQUE,
+          role VARCHAR(20) NOT NULL, created_at DATETIME NOT NULL
+        );
+        CREATE TABLE frontend_reports (
+          id VARCHAR(40) PRIMARY KEY, reporter_id VARCHAR(80) NOT NULL,
+          beach_id VARCHAR(80) NOT NULL, beach_name VARCHAR(160) NOT NULL,
+          quantities TEXT NOT NULL, category VARCHAR(40) NOT NULL,
+          quantity VARCHAR(20) NOT NULL, photo_key VARCHAR(500) NOT NULL,
+          location_source VARCHAR(20) NOT NULL, status VARCHAR(20) NOT NULL,
+          created_at DATETIME NOT NULL
+        );
+        INSERT INTO users VALUES ('u_legacy', '1637', 'volunteer', '2026-08-31 00:00:00');
+        INSERT INTO frontend_reports VALUES
+          ('r_first', 'u_legacy', 'morib', 'Pantai Morib',
+           '{"Plastic":"Very Large","Fishing gear":"Small"}', 'Plastic', 'Very Large',
+           'old-one', 'manual', 'Counted', '2026-08-31 01:00:00'),
+          ('r_second', 'u_legacy', 'morib', 'Pantai Morib',
+           '{"Plastic":"Small"}', 'Plastic', 'Small',
+           'old-two', 'manual', 'Counted', '2026-08-31 02:00:00');
+        """
+    )
+    connection.close()
+
+    application = create_app(
+        database_url=f"sqlite:///{database_path}",
+        testing=True,
+        photo_storage_dir=tmp_path / "photos",
+    )
+    engine = application.extensions["marine_engine"]
+    assert {"photo_mime", "photo_stripped", "lat", "lng", "updated_at"} <= {
+        column["name"] for column in sqlalchemy_inspect(engine).get_columns("frontend_reports")
+    }
+    with engine.connect() as db_connection:
+        rows = db_connection.execute(select(frontend_reports_table).order_by(frontend_reports_table.c.created_at)).all()
+    assert (rows[0].category, rows[0].quantity, rows[0].status) == ("Fishing gear", "Small", "Counted")
+    assert rows[1].status == "Duplicate"
+
+
+def test_anonymous_auth_restore_and_me(api):
+    _application, client = api
+    session, headers = signup(client)
+    assert re.fullmatch(r"\d{4}", session["user"]["participantId"])
+    assert session["user"]["role"] == "volunteer"
+    assert client.get("/auth/me", headers=headers).get_json() == session["user"]
+
+    restored = client.post("/auth/restore", json={"participantId": session["user"]["participantId"]})
+    assert restored.status_code == 200
+    assert restored.get_json()["user"] == session["user"]
+    assert client.post("/auth/logout", headers=headers).status_code == 204
+
+
+@pytest.mark.parametrize("participant_id", ["123", "abcd", "00000", None])
+def test_unknown_participant_has_contract_error(api, participant_id):
+    _application, client = api
+    response = client.post("/auth/restore", json={"participantId": participant_id})
+    assert response.status_code == 404
+    assert response.get_json()["code"] == "UNKNOWN_PARTICIPANT"
+
+
+def test_protected_routes_require_a_bearer_token(api):
+    _application, client = api
+    for method, path in (("get", "/auth/me"), ("post", "/geo/resolve-beach"), ("get", "/reports/mine")):
+        response = getattr(client, method)(path)
+        assert response.status_code == 401
+        assert response.get_json()["code"] == "UNAUTHENTICATED"
+
+
+def test_beach_summary_and_detail_shapes_are_strict(api):
+    _application, client = api
+    response = client.get("/beaches")
     assert response.status_code == 200
-    observations = response.get_json()["observations"]
-    assert len(observations) == 1
-    item = observations[0]
-    assert item["id"] == created["observation"]["id"]
-    assert item["category"] == "Plastic packaging"
-    assert item["observed_at"] == "2026-08-14T10:00:00+00:00"
-    assert item["classification"]["rule"] == "category_passthrough_v1"
-    assert item["priority"]["illustrative"] is True
+    beaches = response.get_json()
+    assert len(beaches) == 4
+    expected_summary_fields = {
+        "id", "name", "area", "lat", "lng", "severity", "band", "insufficientData",
+        "validReports", "lastReportedAt", "freshnessKind", "habitat", "habitatTag",
+        "sensitivity", "primarySpeciesGlyph", "speciesNames", "coverImageUrl", "scene",
+    }
+    assert set(beaches[0]) == expected_summary_fields
+    assert beaches[0]["severity"] is None
+    assert beaches[0]["band"] is None
+    assert beaches[0]["insufficientData"] is True
+    assert beaches[0]["freshnessKind"] == "stale"
+
+    detail = client.get("/beaches/morib").get_json()
+    assert set(detail) == expected_summary_fields | {"composition", "compositionSource", "species", "ecologicalNote"}
+    assert detail["composition"] is None
+    assert detail["compositionSource"] is None
 
 
-@pytest.mark.parametrize(
-    ("change", "expected_error"),
-    [
-        ({"category": ""}, "Missing required fields"),
-        ({"category": "Cigarette waste"}, "Unsupported category"),
-        ({"latitude": 91}, "Coordinates are out of range"),
-        ({"observed_at": "tomorrow"}, "observed_at must be a valid ISO 8601 timestamp"),
-        ({"image_url": "http://example.test/demo.jpg"}, "image_url must use HTTPS or a local /assets/ path"),
-        ({"name": "Example Person"}, "Personal identifier fields are not accepted"),
-    ],
-)
-def test_invalid_or_personal_observation_data_is_rejected(client, change, expected_error):
-    payload = valid_observation()
-    payload.update(change)
-
-    response = client.post("/api/observations", json=payload)
-
-    assert response.status_code == 400
-    assert response.get_json()["error"] == expected_error
+def test_geo_resolution_is_authenticated_and_does_not_persist_coordinates(api):
+    _application, client = api
+    _session, headers = signup(client)
+    near = client.post("/geo/resolve-beach", headers=headers, json={"lat": 2.746, "lng": 101.440})
+    assert near.status_code == 200
+    assert near.get_json()["id"] == "morib"
+    assert client.post("/geo/resolve-beach", headers=headers, json={"lat": 0, "lng": 0}).get_json() is None
 
 
-def test_context_endpoint_exposes_source_and_safety_metadata(client):
-    response = client.get("/api/context")
+def test_scoring_method_matches_published_contract(api):
+    _application, client = api
+    body = client.get("/scoring-method").get_json()
+    assert body["categoryWeights"] == [
+        {"category": "Fishing gear", "weight": 1.0},
+        {"category": "Plastic", "weight": 0.85},
+        {"category": "Glass", "weight": 0.7},
+        {"category": "Metal", "weight": 0.6},
+        {"category": "Other", "weight": 0.5},
+        {"category": "Paper", "weight": 0.35},
+    ]
+    assert body["windowDays"] == 90
+    assert body["minReports"] == 3
 
+
+def test_photo_upload_strips_metadata_resizes_and_uses_signed_url(api):
+    _application, client = api
+    _session, headers = signup(client)
+    uploaded = upload(client, headers, size=(3000, 1000), with_metadata=True)
+    assert re.fullmatch(r"[0-9a-f]{32}\.jpg", uploaded["photoKey"])
+    assert uploaded["metadataStripped"] is True
+
+    unsigned = client.get("/uploads/photos/" + uploaded["photoKey"])
+    assert unsigned.status_code == 401
+
+    url = urlsplit(uploaded["previewUrl"])
+    response = client.get(url.path + "?" + url.query)
     assert response.status_code == 200
-    body = response.get_json()
-    assert body["source"] == "OBIS"
-    assert body["data_version"] == "obis-malaysia-public-2026-08-14-v1"
-    assert body["demo"] is True
-    assert len(body["context"]) >= 5
-    assert len({item["id"] for item in body["context"]}) == len(body["context"])
-    sample = body["context"][0]
-    assert {
-        "source_url",
-        "retrieved_at",
-        "license",
-        "approximate_location",
-        "taxon_or_context_label",
-        "sensitivity",
-    } <= sample.keys()
-    assert all(item["source"] == "OBIS" for item in body["context"])
-    assert all(item["sensitivity"] == "aggregated" for item in body["context"])
+    with Image.open(io.BytesIO(response.data)) as processed:
+        assert max(processed.size) <= 2048
+        assert not processed.getexif()
 
 
-def test_context_initialisation_removes_stale_static_records(tmp_path):
-    database_url = f"sqlite:///{tmp_path / 'marine_test.db'}"
-    application = create_app(database_url=database_url, testing=True)
+def test_photo_upload_error_codes(api):
+    _application, client = api
+    _session, headers = signup(client)
+    unsupported = client.post(
+        "/uploads/photos",
+        headers=headers,
+        data={"photo": (io.BytesIO(b"not an image"), "photo.gif")},
+        content_type="multipart/form-data",
+    )
+    assert unsupported.status_code == 400
+    assert unsupported.get_json()["code"] == "PHOTO_UNSUPPORTED_TYPE"
+
+    oversized = client.post(
+        "/uploads/photos",
+        headers=headers,
+        data={"photo": (io.BytesIO(b"x" * (10 * 1024 * 1024 + 1)), "photo.jpg")},
+        content_type="multipart/form-data",
+    )
+    assert oversized.status_code == 400
+    assert oversized.get_json()["code"] == "PHOTO_TOO_LARGE"
+
+
+def test_unattached_photo_is_swept_after_24_hours(api):
+    application, client = api
+    _session, headers = signup(client)
+    uploaded = upload(client, headers)
+    directory = application.extensions["photo_storage_dir"]
+    metadata_value = read_photo_metadata(directory, uploaded["photoKey"])
+    metadata_value["createdAt"] = (datetime.now(timezone.utc) - timedelta(hours=25)).isoformat()
+    write_photo_metadata(directory, uploaded["photoKey"], metadata_value)
+
+    sweep_orphan_photos(application.extensions["marine_engine"], directory)
+    assert not photo_file_path(directory, uploaded["photoKey"]).exists()
+
+
+def test_create_report_returns_full_contract_and_hides_private_fields(api):
+    application, client = api
+    _session, headers = signup(client)
+    uploaded = upload(client, headers)
+    payload = report_payload(
+        uploaded["photoKey"],
+        quantities={"Plastic": "Very Large", "Fishing gear": "Small", "Paper": "Large"},
+        location_source="gps",
+    )
+    response = client.post("/reports", headers=headers, json=payload)
+    assert response.status_code == 201
+    report = response.get_json()
+    assert report["status"] == "Counted"
+    assert report["quantities"] == payload["quantities"]
+    assert report["category"] == "Fishing gear"
+    assert report["quantity"] == "Small"
+    assert report["createdAt"].endswith("+08:00")
+    assert "lat" not in report and "lng" not in report and "photoKey" not in report
+    assert "token=" in report["photoUrl"]
+
+    engine = application.extensions["marine_engine"]
+    with engine.connect() as connection:
+        row = connection.execute(select(frontend_reports_table)).one()
+    assert row.lat == 2.746
+    assert row.lng == 101.44
+
+
+def test_duplicate_rule_and_counts(api):
+    _application, client = api
+    _session, headers = signup(client)
+    photo = upload(client, headers)
+    payload = report_payload(photo["photoKey"])
+    first = client.post("/reports", headers=headers, json=payload).get_json()
+    second = client.post("/reports", headers=headers, json=payload).get_json()
+    assert first["status"] == "Counted"
+    assert second["status"] == "Duplicate"
+    assert second["statusNote"].startswith("Matched an existing record")
+    assert client.get("/reports/mine/counts", headers=headers).get_json() == {
+        "counted": 1,
+        "duplicate": 1,
+        "incomplete": 0,
+    }
+    duplicate_only = client.get("/reports/mine?status=Duplicate", headers=headers).get_json()
+    assert [item["id"] for item in duplicate_only] == [second["id"]]
+
+
+def test_duplicate_rule_is_scoped_to_reporter(api):
+    _application, client = api
+    _first, first_headers = signup(client)
+    _second, second_headers = signup(client)
+    first_photo = upload(client, first_headers)
+    second_photo = upload(client, second_headers)
+    assert client.post("/reports", headers=first_headers, json=report_payload(first_photo["photoKey"])).get_json()["status"] == "Counted"
+    assert client.post("/reports", headers=second_headers, json=report_payload(second_photo["photoKey"])).get_json()["status"] == "Counted"
+
+
+def test_photo_key_is_private_to_uploader(api):
+    _application, client = api
+    _first, first_headers = signup(client)
+    _second, second_headers = signup(client)
+    first_photo = upload(client, first_headers)
+    response = client.post("/reports", headers=second_headers, json=report_payload(first_photo["photoKey"]))
+    assert response.status_code == 404
+    assert response.get_json()["code"] == "NOT_FOUND"
+
+
+def test_patch_enforces_ownership_and_rechecks_status(api):
+    application, client = api
+    _owner, owner_headers = signup(client)
+    _other, other_headers = signup(client)
+    photo = upload(client, owner_headers)
+    report = client.post("/reports", headers=owner_headers, json=report_payload(photo["photoKey"])).get_json()
+
+    forbidden = client.patch("/reports/" + report["id"], headers=other_headers, json={"quantities": {"Glass": "Small"}})
+    assert forbidden.status_code == 403
+    assert forbidden.get_json()["code"] == "NOT_OWNER"
+
     engine = application.extensions["marine_engine"]
     with engine.begin() as connection:
         connection.execute(
-            context_table.insert().values(
-                id="obsolete-demo-context",
-                source="OBIS",
-                source_url="https://obis.org/",
-                retrieved_at="2026-08-14",
-                license="OBIS data policy",
-                latitude=3.14,
-                longitude=101.69,
-                taxon_or_context_label="Obsolete placeholder",
-                sensitivity="aggregated",
+            frontend_reports_table.update().where(frontend_reports_table.c.id == report["id"]).values(status="Incomplete")
+        )
+    corrected = client.patch("/reports/" + report["id"], headers=owner_headers, json={"quantities": {"Glass": "Small"}})
+    assert corrected.status_code == 200
+    assert corrected.get_json()["status"] == "Counted"
+
+
+def test_severity_uses_three_counted_reports_mean_and_latest_composition(api):
+    _application, client = api
+    report_ids = []
+    for quantities in (
+        {"Plastic": "Large"},
+        {"Plastic": "Large", "Paper": "Small"},
+        {"Plastic": "Large", "Fishing gear": "Large"},
+    ):
+        _session, headers = signup(client)
+        photo = upload(client, headers)
+        report = client.post("/reports", headers=headers, json=report_payload(photo["photoKey"], quantities=quantities)).get_json()
+        report_ids.append(report["id"])
+
+    morib = next(item for item in client.get("/beaches").get_json() if item["id"] == "morib")
+    assert morib["validReports"] == 3
+    assert morib["severity"] == "High"
+    assert morib["band"] == 3
+    assert morib["insufficientData"] is False
+
+    detail = client.get("/beaches/morib").get_json()
+    assert detail["composition"] == [
+        {"category": "Fishing gear", "quantity": "Large"},
+        {"category": "Plastic", "quantity": "Large"},
+    ]
+    assert detail["compositionSource"]["reportId"] == report_ids[-1]
+
+
+def test_old_counted_report_is_not_eligible_but_still_drives_freshness(api):
+    application, client = api
+    session, _headers = signup(client)
+    old_time = datetime.now(timezone.utc) - timedelta(days=100)
+    engine = application.extensions["marine_engine"]
+    with engine.begin() as connection:
+        connection.execute(
+            insert(frontend_reports_table).values(
+                id="r_old",
+                reporter_id=session["user"]["id"],
+                beach_id="morib",
+                beach_name="Pantai Morib",
+                quantities='{"Plastic":"Large"}',
+                category="Plastic",
+                quantity="Large",
+                photo_key="legacy-photo-key",
+                location_source="manual",
+                status="Counted",
+                created_at=old_time,
+                updated_at=old_time,
             )
         )
-
-    refreshed = create_app(database_url=database_url, testing=True)
-    context = refreshed.test_client().get("/api/context").get_json()["context"]
-
-    assert len(context) == 5
-    assert all(item["id"] != "obsolete-demo-context" for item in context)
-
-
-def test_radar_catalogue_recognition_and_report_flow_are_anonymous_and_region_level(client, monkeypatch):
-    """The Radar Sampah routes keep the anonymous, region-level contract."""
-    monkeypatch.setenv("LITTER_RECOGNITION_ENABLED", "false")
-    monkeypatch.setenv("LITTER_RECOGNITION_API_URL", "https://recognition.example.test")
-    monkeypatch.setattr("recognition_adapter.urlopen", lambda *args, **kwargs: pytest.fail("disabled recognition contacted a provider"))
-    options = client.get("/api/litter-options")
-    assert options.status_code == 200
-    assert options.get_json()["areas"][0]["id"]
-    assert "latitude" not in options.get_json()["areas"][0]
-
-    recognition = client.post(
-        "/api/litter-recognize",
-        json={"image_url": "/assets/demo-plastic.jpg", "category_hint": "plastic packaging"},
-    )
-    assert recognition.status_code == 200
-    assert recognition.get_json()["recognition"]["method"] == "local_demo_fallback"
-    assert recognition.get_json()["recognition"]["category"] == "Plastic packaging"
-
-    rejected = client.post(
-        "/api/litter-reports",
-        json={"area_id": "tioman-coast", "category": "plastic packaging", "latitude": 2.8},
-    )
-    assert rejected.status_code == 400
-    assert "coordinate" in rejected.get_json()["error"].lower()
-
-    created = client.post(
-        "/api/litter-reports",
-        json={
-            "area_id": "tioman-coast",
-            "category": "plastic packaging",
-            "image_url": "/assets/demo-plastic.jpg",
-            "note": "Bottle and wrapper in the tide line",
-        },
-    )
-    assert created.status_code == 201
-    report = created.get_json()["report"]
-    assert report["area_id"] == "tioman-coast"
-    assert "latitude" not in report
-    assert "longitude" not in report
-    assert report["quantity"] == 1
-    assert report["detection"] == "reporter_selected"
-    assert report["priority"] == "medium"
-
-    reports = client.get("/api/litter-reports")
-    heatmap = client.get("/api/litter-heatmap")
-    assert reports.status_code == 200
-    assert reports.get_json()["reports"] == [report]
-    assert heatmap.status_code == 200
-    assert heatmap.get_json()["areas"][0]["report_count"] == 1
-    assert "coordinates" not in heatmap.get_json()["areas"][0]
-    assert heatmap.get_json()["areas"][0]["severity_score"] == 20
-    assert heatmap.get_json()["areas"][0]["no_exact_location"] is True
-
-
-def test_radar_cleanup_progress_flow_uses_anonymous_counters(client):
-    """Removing missions, joining, evidence, or progress aggregation must fail."""
-    missions = client.get("/api/cleanup-missions")
-    assert missions.status_code == 200
-    mission = missions.get_json()["missions"][0]
-
-    joined = client.post(f"/api/cleanup-missions/{mission['id']}/join", json={})
-    assert joined.status_code == 201
-    assert joined.get_json()["mission"]["joined_count"] == mission["joined_count"] + 1
-
-    evidence = client.post(
-        "/api/cleanup-evidence",
-        json={"mission_id": mission["id"], "item_count": 4, "before_image_url": "/assets/demo-before.jpg", "after_image_url": "/assets/demo-after.jpg", "impact_note": "Four items removed"},
-    )
-    assert evidence.status_code == 201
-    assert evidence.get_json()["evidence"]["item_count"] == 4
-    assert evidence.get_json()["evidence"]["after_image_url"] == "/assets/demo-after.jpg"
-
-    progress = client.get("/api/community-progress")
-    assert progress.status_code == 200
-    assert progress.get_json()["progress"]["mission_join_count"] == 1
-    assert progress.get_json()["progress"]["verified_item_count"] == 4
-
-
-def test_radar_report_returns_illustrative_detection_and_priority(client):
-    payload = {
-        "area_id": "tioman-coast",
-        "category": "Fishing gear",
-        "quantity": 3,
-        "observed_at": "2026-08-15T10:00:00Z",
-        "image_url": "/assets/demo-fishing-gear.jpg",
-        "note": "Synthetic demonstration record",
-        "detection_confirmed": True,
-    }
-    response = client.post("/api/litter-reports", json=payload)
-
-    assert response.status_code == 201
-    body = response.get_json()
-    assert body["detection"]["needs_user_confirmation"] is False
-    assert body["detection"]["illustrative"] is True
-    assert 0 <= body["priority"]["severity_score"] <= 100
-    assert body["priority"]["illustrative"] is True
-    assert "enforcement" in body["priority"]["disclaimer"].lower()
-
-
-def test_radar_recognition_fallback_exposes_privacy_boundary(client):
-    response = client.post(
-        "/api/litter-recognize",
-        json={"image_url": "/assets/demo-plastic.jpg", "category_hint": "Plastic packaging"},
-    )
-
-    assert response.status_code == 200
-    detection = response.get_json()["recognition"]
-    assert detection["data_sent_to_provider"] is False
-    assert detection["illustrative"] is True
-
-
-def test_radar_before_after_evidence_returns_illustrative_impact(client):
-    before = client.post(
-        "/api/litter-reports",
-        json={
-            "area_id": "tioman-coast",
-            "category": "Plastic packaging",
-            "quantity": 20,
-            "observed_at": "2026-08-15T10:00:00Z",
-            "detection_confirmed": True,
-        },
-    ).get_json()["report"]
-    after = client.post(
-        "/api/litter-reports",
-        json={
-            "area_id": "tioman-coast",
-            "category": "Plastic packaging",
-            "quantity": 2,
-            "observed_at": "2026-08-16T10:00:00Z",
-            "detection_confirmed": True,
-        },
-    ).get_json()["report"]
-
-    response = client.post(
-        "/api/cleanup-evidence",
-        json={"before_report_id": before["id"], "after_report_id": after["id"]},
-    )
-
-    assert response.status_code == 201
-    impact = response.get_json()["impact"]
-    assert impact["level"] == "improved"
-    assert impact["illustrative"] is True
-
-
-def test_radar_rejects_case_variant_personal_and_coordinate_keys(client):
-    """Changing key casing must not bypass the anonymous, region-level boundary."""
-    for field, value in (("Email", "person@example.test"), ("Latitude", 2.8)):
-        response = client.post(
-            "/api/litter-reports",
-            json={"area_id": "tioman-coast", "category": "plastic packaging", field: value},
-        )
-        assert response.status_code == 400
-
-
-def test_cleanup_evidence_compares_anonymous_before_and_after_reports(client):
-    """Dropping report references or impact classification must fail this contract."""
-    before = client.post("/api/litter-reports", json={"area_id": "tioman-coast", "category": "plastic packaging", "quantity": 8}).get_json()["report"]
-    after = client.post("/api/litter-reports", json={"area_id": "tioman-coast", "category": "plastic packaging", "quantity": 3}).get_json()["report"]
-
-    response = client.post("/api/cleanup-evidence", json={"before_report_id": before["id"], "after_report_id": after["id"], "item_count": 5})
-
-    assert response.status_code == 201
-    assert response.get_json()["evidence"]["before_report_id"] == before["id"]
-    assert response.get_json()["evidence"]["impact"] == "improved"
-
-
-def test_anonymous_signup_issues_a_token_and_a_random_4_digit_participant_id(client):
-    response = client.post("/auth/anonymous")
-
-    assert response.status_code == 201
-    body = response.get_json()
-    assert body["token"]
-    user = body["user"]
-    assert user["id"].startswith("u_")
-    assert re.fullmatch(r"\d{4}", user["participantId"])
-    assert user["role"] == "volunteer"
-    assert "name" not in user and "email" not in user and "password" not in user
-
-
-def test_two_anonymous_signups_get_different_participant_ids(client):
-    first = client.post("/auth/anonymous").get_json()["user"]["participantId"]
-    second = client.post("/auth/anonymous").get_json()["user"]["participantId"]
-
-    assert first != second
-
-
-def test_restore_with_a_known_participant_id_returns_a_working_token(client):
-    created = client.post("/auth/anonymous").get_json()["user"]
-
-    restored = client.post("/auth/restore", json={"participantId": created["participantId"]})
-
-    assert restored.status_code == 200
-    body = restored.get_json()
-    assert body["user"]["id"] == created["id"]
-    assert body["token"]
-
-
-def test_restore_with_an_unknown_participant_id_is_404_not_401(client):
-    """The app shows a different message for 'never existed' than for 'not signed in'."""
-    response = client.post("/auth/restore", json={"participantId": "9999"})
-
-    assert response.status_code == 404
-    assert response.get_json()["code"] == "UNKNOWN_PARTICIPANT"
-
-
-@pytest.mark.parametrize("bad_participant_id", ["163", "16377", "abcd", "", None])
-def test_restore_rejects_anything_that_is_not_exactly_4_digits(client, bad_participant_id):
-    response = client.post("/auth/restore", json={"participantId": bad_participant_id})
-
-    assert response.status_code == 404
-    assert response.get_json()["code"] == "UNKNOWN_PARTICIPANT"
-
-
-def test_me_without_a_token_is_401_unauthenticated(client):
-    response = client.get("/auth/me")
-
-    assert response.status_code == 401
-    assert response.get_json()["code"] == "UNAUTHENTICATED"
-
-
-def test_me_with_an_invalid_token_is_401_unauthenticated(client):
-    response = client.get("/auth/me", headers={"Authorization": "Bearer not-a-real-token"})
-
-    assert response.status_code == 401
-    assert response.get_json()["code"] == "UNAUTHENTICATED"
-
-
-def test_me_with_an_expired_token_is_401_unauthenticated(client):
-    expired_token = jwt.encode(
-        {"sub": "u_expired", "exp": datetime.now(timezone.utc) - timedelta(seconds=1)},
-        os.environ["AUTH_JWT_SECRET"],
-        algorithm="HS256",
-    )
-
-    response = client.get("/auth/me", headers={"Authorization": f"Bearer {expired_token}"})
-
-    assert response.status_code == 401
-    assert response.get_json()["code"] == "UNAUTHENTICATED"
-
-
-def test_me_with_a_valid_token_returns_the_signed_up_user(client):
-    created = client.post("/auth/anonymous").get_json()
-    token = created["token"]
-
-    response = client.get("/auth/me", headers={"Authorization": f"Bearer {token}"})
-
-    assert response.status_code == 200
-    assert response.get_json() == created["user"]
-
-
-def test_logout_without_a_token_is_401_and_with_one_is_204(client):
-    unauthenticated = client.post("/auth/logout")
-    assert unauthenticated.status_code == 401
-
-    token = client.post("/auth/anonymous").get_json()["token"]
-    response = client.post("/auth/logout", headers={"Authorization": f"Bearer {token}"})
-    assert response.status_code == 204
-    assert response.get_data() == b""
-
-
-def test_non_testing_app_requires_an_auth_jwt_secret(tmp_path, monkeypatch):
-    monkeypatch.delenv("AUTH_JWT_SECRET", raising=False)
-    database_url = f"sqlite:///{tmp_path / 'missing_secret.db'}"
-
-    with pytest.raises(RuntimeError, match="AUTH_JWT_SECRET"):
-        create_app(database_url=database_url, testing=False)
-
-
-def test_frontend_beach_contract_exposes_seed_beaches_and_nearest_resolution(client):
-    beaches = client.get("/beaches")
-    assert beaches.status_code == 200
-    assert len(beaches.get_json()) == 4
-    assert {item["id"] for item in beaches.get_json()} == {"morib", "remis", "kelanang", "bagan"}
-    resolved = client.post("/geo/resolve-beach", json={"lat": 2.746, "lng": 101.440})
-    assert resolved.status_code == 200
-    assert resolved.get_json()["id"] == "morib"
-    assert client.post("/geo/resolve-beach", json={"lat": 0, "lng": 0}).get_json() is None
-
-
-def test_frontend_report_contract_supports_auth_quantities_and_private_fields(client):
-    token = client.post("/auth/anonymous").get_json()["token"]
-    headers = {"Authorization": f"Bearer {token}"}
-    payload = {
-        "beachId": "morib",
-        "quantities": {"Plastic": "Large", "Fishing gear": "Medium"},
-        "photoKey": "photos/test.jpg",
-        "locationSource": "gps",
-        "coords": {"lat": 2.746, "lng": 101.440},
-    }
-    created = client.post("/reports", json=payload, headers=headers)
-    assert created.status_code == 201
-    report = created.get_json()
-    assert report["quantities"] == payload["quantities"]
-    assert report["category"] == "Plastic"
-    assert report["status"] == "Counted"
-    assert report["photoUrl"].startswith("http")
-    assert "lat" not in report and "lng" not in report and "participantId" not in report
-    assert client.get("/reports/mine", headers=headers).get_json()[0]["id"] == report["id"]
-    assert client.get("/reports/mine/counts", headers=headers).get_json() == {"counted": 1, "duplicate": 0, "incomplete": 0}
-    # SQLite 返回无时区时间；海滩摘要仍应正常处理已计入的报告。
-    assert client.get("/beaches").status_code == 200
-    assert "lat" not in frontend_reports_table.c and "lng" not in frontend_reports_table.c
-
-
-def test_photo_upload_rejects_oversized_files(client):
-    token = client.post("/auth/anonymous").get_json()["token"]
-    response = client.post(
-        "/uploads/photos",
-        headers={"Authorization": f"Bearer {token}"},
-        data={"photo": (io.BytesIO(b"x" * (10 * 1024 * 1024 + 1)), "large.jpg")},
-        content_type="multipart/form-data",
-    )
-    assert response.status_code == 413
-
-
-def test_photo_upload_returns_opaque_preview_url_and_serves_bytes(client):
-    token = client.post("/auth/anonymous").get_json()["token"]
-    response = client.post(
-        "/uploads/photos",
-        headers={"Authorization": f"Bearer {token}"},
-        data={"photo": (io.BytesIO(b"fake-image"), "photo.jpg")},
-        content_type="multipart/form-data",
-    )
-    assert response.status_code == 201
-    body = response.get_json()
-    assert body["metadataStripped"] is True
-    assert not os.path.isabs(body["photoKey"])
-    served = client.get(body["previewUrl"].replace("http://localhost", ""), headers={"Authorization": f"Bearer {token}"})
-    assert served.status_code == 200
-    assert served.data == b"fake-image"
-    browser_served = client.get(body["previewUrl"].replace("http://localhost", ""))
-    assert browser_served.status_code == 200
-    assert browser_served.data == b"fake-image"
-
-
-def test_same_reporter_can_submit_two_complete_reports_without_duplicate_status(client):
-    token = client.post("/auth/anonymous").get_json()["token"]
-    headers = {"Authorization": f"Bearer {token}"}
-    payload = {"beachId": "morib", "quantities": {"Plastic": "Small"}, "photoKey": "p.jpg", "locationSource": "manual"}
-    first = client.post("/reports", json=payload, headers=headers).get_json()
-    second = client.post("/reports", json=payload, headers=headers).get_json()
-    assert first["status"] == second["status"] == "Counted"
-
-
-def test_report_primary_category_uses_highest_category_quantity_score(client):
-    token = client.post("/auth/anonymous").get_json()["token"]
-    response = client.post(
+    morib = next(item for item in client.get("/beaches").get_json() if item["id"] == "morib")
+    assert morib["validReports"] == 0
+    assert morib["severity"] is None
+    assert morib["lastReportedAt"] is not None
+    assert morib["freshnessKind"] == "stale"
+
+
+def test_report_validation_errors_are_contract_shaped(api):
+    _application, client = api
+    _session, headers = signup(client)
+    missing_photo = client.post(
         "/reports",
-        headers={"Authorization": f"Bearer {token}"},
-        json={
-            "beachId": "morib",
-            "quantities": {"Plastic": "Very Large", "Fishing gear": "Small"},
-            "photoKey": "p.jpg",
-            "locationSource": "manual",
-        },
+        headers=headers,
+        json={"beachId": "morib", "quantities": {"Plastic": "Small"}, "locationSource": "manual"},
     )
-    assert response.status_code == 201
-    assert response.get_json()["category"] == "Plastic"
-    assert response.get_json()["quantity"] == "Very Large"
+    assert missing_photo.status_code == 400
+    assert missing_photo.get_json()["code"] == "PHOTO_REQUIRED"
+    assert set(missing_photo.get_json()) == {"code", "message"}
+
+    invalid_filter = client.get("/reports/mine?status=Pending", headers=headers)
+    assert invalid_filter.status_code == 400
+    assert invalid_filter.get_json()["code"] == "VALIDATION_FAILED"
+
+
+def test_report_rate_limit_is_per_user(api):
+    _application, client = api
+    _session, headers = signup(client)
+    photo = upload(client, headers)
+    payload = report_payload(photo["photoKey"])
+    for _ in range(30):
+        assert client.post("/reports", headers=headers, json=payload).status_code == 201
+    limited = client.post("/reports", headers=headers, json=payload)
+    assert limited.status_code == 429
+    assert limited.get_json()["code"] == "RATE_LIMITED"
