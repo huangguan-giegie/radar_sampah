@@ -79,4 +79,20 @@ describe('真实 API contract', () => {
 
     expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual(input);
   });
+
+  it('uses the highest category-by-quantity score in mock mode', async () => {
+    vi.stubEnv('VITE_API_BASE_URL', '');
+    storage.set('rs_mock_participant', '1637');
+    const { createReport } = await import('./api');
+
+    const report = await createReport({
+      beachId: 'morib',
+      quantities: { Plastic: 'Large', 'Fishing gear': 'Medium' },
+      photoKey: 'mock/photo.jpg',
+      locationSource: 'manual',
+    });
+
+    expect(report.category).toBe('Plastic');
+    expect(report.quantity).toBe('Large');
+  });
 });

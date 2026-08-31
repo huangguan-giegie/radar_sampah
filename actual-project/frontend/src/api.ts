@@ -425,10 +425,16 @@ export async function uploadPhoto(file: File): Promise<UploadedPhoto> {
 
 
 function deriveCategoryQuantity(q: QuantityByCategory): { category: LitterCategory; quantity: QuantityBand } {
-  const order = SCORING_METHOD.categoryWeights;
-  const top = order.find((w) => q[w.category] !== undefined);
-  if (!top) throw new Error('A report needs at least one category.');
-  return { category: top.category, quantity: q[top.category]! };
+  let selected: { category: LitterCategory; quantity: QuantityBand; score: number } | undefined;
+  for (const { category, weight } of SCORING_METHOD.categoryWeights) {
+    const quantity = q[category];
+    if (!quantity) continue;
+    const quantityWeight = SCORING_METHOD.quantityWeights.find((item) => item.quantity === quantity)?.weight ?? 0;
+    const score = weight * quantityWeight;
+    if (!selected || score > selected.score) selected = { category, quantity, score };
+  }
+  if (!selected) throw new Error('A report needs at least one category.');
+  return { category: selected.category, quantity: selected.quantity };
 }
 
 export async function createReport(input: CreateReportInput): Promise<LitterReport> {
