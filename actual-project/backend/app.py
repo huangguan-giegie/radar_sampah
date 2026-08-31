@@ -177,15 +177,94 @@ def create_engine_for_url(database_url: str) -> Engine:
 
 
 def database_schema() -> str:
-    schema = os.getenv("DATABASE_SCHEMA", "public").strip()
+    schema = os.getenv("DATABASE_SCHEMA", "app").strip()
     if not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", schema):
         raise RuntimeError("DATABASE_SCHEMA must be a valid PostgreSQL schema name")
     return schema
 
 
 def initialise_database(engine: Engine) -> None:
-    """Create the local test schema; Neon is provisioned from schema.sql."""
+    """Create the schema and preserve reports written under the former name."""
+    migrate_legacy_reports_table(engine)
     metadata.create_all(engine)
+    ensure_report_columns(engine)
+    repair_existing_reports(engine)
+
+
+def migrate_legacy_reports_table(engine: Engine) -> None:
+    """Rename the pre-PR-13 table before SQLAlchemy creates ``reports``.
+
+    The standalone PostgreSQL equivalent lives in migrations/001_*.sql.  This
+    startup guard keeps local SQLite databases and Render deployments safe when
+    the migration has not been run as a separate release step.
+    """
+    schema = database_schema() if engine.dialect.name != "sqlite" else None
+    table_names = set(inspect(engine).get_table_names(schema=schema))
+    if "frontend_reports" not in table_names or "reports" in table_names:
+        return
+    legacy_table = "frontend_reports" if schema is None else f'"{schema}".frontend_reports'
+    with engine.begin() as connection:
+        connection.execute(text(f"ALTER TABLE {legacy_table} RENAME TO reports"))
+
+
+def ensure_report_columns(engine: Engine) -> None:
+    """Add contract fields that were absent from the former partial table."""
+    schema = database_schema() if engine.dialect.name != "sqlite" else None
+    if "reports" not in inspect(engine).get_table_names(schema=schema):
+        return
+    existing = {column["name"] for column in inspect(engine).get_columns("reports", schema=schema)}
+    additions = {
+        "photo_mime": "VARCHAR(64)",
+        "photo_stripped": "BOOLEAN",
+        **{column: "VARCHAR(20)" for column in QUANTITY_COLUMNS.values()},
+        "lat": "DOUBLE PRECISION",
+        "lng": "DOUBLE PRECISION",
+        "status_note": "TEXT",
+        "updated_at": "TIMESTAMP WITH TIME ZONE",
+        "deleted_at": "TIMESTAMP WITH TIME ZONE",
+    }
+    report_table = "reports" if schema is None else f'"{schema}".reports'
+    with engine.begin() as connection:
+        for name, sql_type in additions.items():
+            if name not in existing:
+                connection.execute(text(f"ALTER TABLE {report_table} ADD COLUMN {name} {sql_type}"))
+
+
+def repair_existing_reports(engine: Engine) -> None:
+    """Backfill quantity columns and retain duplicate handling for legacy rows."""
+    schema = database_schema() if engine.dialect.name != "sqlite" else None
+    columns = {column["name"] for column in inspect(engine).get_columns("reports", schema=schema)}
+    if "quantities" not in columns:
+        return
+    report_table = "reports" if schema is None else f'"{schema}".reports'
+    with engine.begin() as connection:
+        rows = connection.execute(text(
+            f"SELECT id, reporter_id, beach_id, quantities, status, created_at FROM {report_table} "
+            "ORDER BY created_at, id"
+        )).mappings().all()
+        first_counted_by_day: set[tuple[str, str, Any]] = set()
+        for row in rows:
+            try:
+                quantities = json.loads(row["quantities"])
+                category, quantity = derive_category_quantity(quantities)
+            except (TypeError, ValueError, StopIteration):
+                continue
+            status = row["status"]
+            if status != "Incomplete":
+                created_at = row["created_at"]
+                if isinstance(created_at, str):
+                    created_at = datetime.fromisoformat(created_at)
+                local_day = utc_datetime(created_at).astimezone(KUALA_LUMPUR).date()
+                duplicate_key = (row["reporter_id"], row["beach_id"], local_day)
+                status = "Duplicate" if duplicate_key in first_counted_by_day else "Counted"
+                first_counted_by_day.add(duplicate_key)
+            values: dict[str, Any] = {"category": category, "quantity": quantity, "status": status}
+            values.update(quantity_values(quantities))
+            set_clause = ", ".join(f"{name} = :{name}" for name in values)
+            connection.execute(
+                text(f"UPDATE {report_table} SET {set_clause} WHERE id = :id"),
+                {**values, "id": row["id"]},
+            )
 
 
 def load_beaches(engine: Engine | None = None) -> list[dict[str, Any]]:
