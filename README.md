@@ -1,6 +1,7 @@
 # Team 04 Real Project Migration
 
-This folder holds the active Radar Sampah project and its migration audit record.
+This folder holds the active Radar Sampah project. The migration audit record
+is maintained locally only.
 
 ## Current project
 
@@ -13,9 +14,11 @@ The MVP uses five fixed litter categories, broad Malaysian area labels (includin
 Recognition is a labelled demo fallback by default. A private provider is only allowed when `LITTER_RECOGNITION_ENABLED=true` and an HTTPS URL has been reviewed by the team.
 
 The frontend API base is configured with `window.RADAR_SAMPAH_API_BASE`; the
-older `window.TIDETRACE_API_BASE` name remains a compatibility alias. Current
-deployment links are `https://radar-sampah-frontend.onrender.com` and
-`https://radar-sampah-api.onrender.com`.
+older `window.TIDETRACE_API_BASE` name remains a compatibility alias. The
+currently available deployment links are the legacy-compatible
+`https://team04-marine-observation-frontend.onrender.com` and
+`https://team04-marine-observation-api.onrender.com`. The new
+`radar-sampah-frontend` and `radar-sampah-api` hostnames are not yet enabled.
 
 ## Folder layout
 
@@ -26,6 +29,10 @@ deployment links are `https://radar-sampah-frontend.onrender.com` and
   available through the rollback tag, not in the active build.
 - `drive-migration/` - governance and migration record.
 
+PM context and the migration manifest are maintained locally only and are not
+tracked in GitHub. The archived `archive/compatibility/tidetrace_catalog.json`
+is historical compatibility material, not active runtime data.
+
 ## Legacy and rollback boundary
 
 The old sample runtime and reference files are not part of the active build.
@@ -33,9 +40,11 @@ They remain recoverable from the `divesafe-last-stable` and
 `radar-sampah-pre-legacy-cleanup-20260828` tags and Git history. They must not
 be used as current Radar Sampah evidence.
 
-Names such as `TIDETRACE_API_BASE`, `TIDETRACE_*`, `tidetrace_catalog.json`,
-`marine_engine` and the legacy Render hostnames are retained only for runtime
-compatibility or rollback. They are not alternative product names. HealthFirst
+Names such as `TIDETRACE_API_BASE`, `TIDETRACE_*`, `marine_engine` and the
+legacy Render hostnames are retained only for runtime compatibility or
+rollback. The archived `archive/compatibility/tidetrace_catalog.json` is
+historical compatibility material, not active runtime data. These names are
+not alternative product names. HealthFirst
 and DiveSafe references are historical records and are not current features.
 
 ## Deliverables

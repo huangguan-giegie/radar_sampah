@@ -11,21 +11,23 @@ Sampah documents listed below.
 
 ## Start here
 
-1. Read `01 Governance/PM_CONTEXT_ACTUAL_PROJECT.md` for the latest decision,
-   ownership and handover notes.
-2. Read `01 Governance/DECISIONS.md` and
+1. Read `01 Governance/DECISIONS.md` and
    `01 Governance/INTEGRATION_CHECKLIST.md` before changing scope or merging
    work.
-3. Read `02 Product Scope/PROJECT_SCOPE.md` to confirm what the MVP includes
+2. Read `02 Product Scope/PROJECT_SCOPE.md` to confirm what the MVP includes
    and what is out of scope.
-4. Use `04 Build` for the current frontend, backend and Render configuration.
+3. Use `04 Build` for the current frontend, backend and Render configuration.
    The GitHub repository is the source of truth for code:
    https://github.com/huangguan-giegie/radar_sampah
-5. Put screenshots, test notes, deployment evidence and PGP links in
+4. Put screenshots, test notes, deployment evidence and PGP links in
    `05 Evidence`.
-6. Use `03 Design` for the adapted 19-slide onboarding deck and
-   `01 Governance` for the editable DOCX/Markdown handover documents listed in
-   the migration manifest.
+5. Use `03 Design` for the adapted 19-slide onboarding deck and
+   `01 Governance` for the editable DOCX/Markdown handover documents.
+
+PM context and the migration manifest are maintained locally only and are not
+tracked in GitHub. The archived
+`archive/compatibility/tidetrace_catalog.json` is historical compatibility
+material, not active runtime data.
 
 ## Folder guide
 
@@ -61,8 +63,11 @@ Do not commit credentials, personal data or large generated files.
 
 Current demo services:
 
-- Frontend: https://radar-sampah-frontend.onrender.com
-- API: https://radar-sampah-api.onrender.com
+- Frontend: https://team04-marine-observation-frontend.onrender.com
+- API: https://team04-marine-observation-api.onrender.com
+
+The new `radar-sampah-frontend` and `radar-sampah-api` hostnames are not yet
+enabled.
 
 ### `05 Evidence`
 
@@ -86,8 +91,8 @@ without copying the sample product content:
 
 The editable Markdown sources and DOCX copies are in `01 Governance`; the
 PPTX is in `03 Design`. The local source bundle is under
-`realwork/deliverables/` and the exact Drive links are recorded in
-`MIGRATION_MANIFEST.md`.
+`realwork/deliverables/`. Exact Drive links remain in the local migration
+manifest.
 
 ### `Archive - Removed Sample Files`
 
