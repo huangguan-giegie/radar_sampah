@@ -2034,3 +2034,18 @@ Verification recorded before merge: backend `34 passed`; frontend `25 passed`, T
   not yet deployed online. The old compatibility frontend remains HTTP 200,
   while its API still lacks the new `/beaches` contract. Deployment and online
   smoke testing remain pending; no credentials, data or history were deleted.
+
+## GitHub main document naming cleanup — 2026-09-01
+
+- Refreshed `origin/main` before establishing the baseline. The baseline commit
+  was `b2b1eb4e2419c02dc8a8ff92ee9cd9c76626f41d` and the rollback tag is
+  `radar-sampah-pre-doc-cleanup-20260831`.
+- Current user-facing documentation now identifies Radar Sampah as the active
+  product and labels TideTrace, Marine Observation, HealthFirst and DiveSafe
+  wording as historical, rollback or compatibility context.
+- Historical migration records, `TIDETRACE_*` compatibility aliases,
+  `tidetrace_catalog.json`, internal marine domain terms and legacy Render
+  hostnames were intentionally retained.
+- Scope was limited to `main`; no other branches, code, deployment, Drive,
+  ePortfolio or Git history were changed. The untracked `bridge/` and
+  `ppt-render-check/` files were preserved.

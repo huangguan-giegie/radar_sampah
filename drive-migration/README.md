@@ -4,6 +4,11 @@ This Drive is the working Project Governance Portfolio for the new Team 04
 Radar Sampah project. Earlier sample material is kept in the recoverable
 `Archive - Removed Sample Files` area and is not the current product.
 
+If an audit or migration file mentions TideTrace, Marine Observation,
+HealthFirst or DiveSafe, treat that wording as historical, rollback or
+compatibility context. Current scope and requirements come from the Radar
+Sampah documents listed below.
+
 ## Start here
 
 1. Read `01 Governance/PM_CONTEXT_ACTUAL_PROJECT.md` for the latest decision,

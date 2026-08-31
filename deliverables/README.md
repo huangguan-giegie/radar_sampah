@@ -33,6 +33,10 @@ activity discovery, recurrence monitoring, biodiversity learning and full
 preparation flow remain Future/TBD where the current code does not support
 them. No identity data, credentials or exact coordinates are stored.
 
+Any TideTrace, Marine Observation, HealthFirst or DiveSafe wording in linked
+audit material is historical or compatibility context. The deliverables in
+this folder are the current Radar Sampah documents.
+
 Previous sample material is kept outside the active deliverables and is
 recoverable from the repository rollback tags. It is not current Radar
 Sampah evidence. The Sample Project PGIE was not changed.

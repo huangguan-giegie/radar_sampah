@@ -33,6 +33,11 @@ They remain recoverable from the `divesafe-last-stable` and
 `radar-sampah-pre-legacy-cleanup-20260828` tags and Git history. They must not
 be used as current Radar Sampah evidence.
 
+Names such as `TIDETRACE_API_BASE`, `TIDETRACE_*`, `tidetrace_catalog.json`,
+`marine_engine` and the legacy Render hostnames are retained only for runtime
+compatibility or rollback. They are not alternative product names. HealthFirst
+and DiveSafe references are historical records and are not current features.
+
 ## Deliverables
 
 The editable sources are in `deliverables/documents/`. Existing DOCX/PPTX copies are retained for Drive. Do not claim they were regenerated unless the document build and visual QA were actually run.
