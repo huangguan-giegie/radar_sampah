@@ -2012,18 +2012,23 @@ Verification recorded before merge: backend `34 passed`; frontend `25 passed`, T
 - Repair branch: `fix/real-api-integration-20260831`, based on `79107f5`.
   Commits: `c0519be` (frontend real API and metadata-free photo upload),
   `da28284` (backend contract/report/upload/scoring routes), `e0eee51`
-  (privacy and score regressions), and `aad8e6a` (SQLite timestamp handling).
+  (privacy and score regressions), `aad8e6a` (SQLite timestamp handling), and
+  `e76ac06` (frontend mock score alignment).
 - Added the current frontend contract routes while retaining legacy `/api/*`.
   The new report table stores only anonymous user, beach, quantities, opaque
   photo key, source, status and timestamp; exact GPS and photo bytes are not
   stored. Scoring follows category weight × quantity weight, 90-day counted
   window, minimum three reports and mean bands.
-- Verification: backend `40 passed`; frontend `29 passed`; TypeScript
+- Verification: backend `40 passed`; frontend `30 passed`; TypeScript
   typecheck and production build passed. Local browser flow completed anonymous
   login → beach selection → metadata-free photo upload → manual location →
   category/quantity → Review → Submit Report → `/report/saved` → My Reports;
   the report was Counted and the browser console had no errors. Screenshot:
   `realwork/mentor-check-real-api-reports.png`.
+- A follow-up regression test found mock-mode multi-category reports still
+  selected the first category instead of the highest category × quantity score;
+  `e76ac06` aligned that fallback with the backend rule. Frontend tests now pass
+  `30/30` after this fix.
 - Render target hosts `radar-sampah-api.onrender.com` and
   `radar-sampah-frontend.onrender.com` currently return 404, so this branch is
   not yet deployed online. The old compatibility frontend remains HTTP 200,
