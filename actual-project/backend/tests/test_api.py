@@ -21,6 +21,7 @@ from app import (
     frontend_reports_table,
     photo_file_path,
     read_photo_metadata,
+    reports_table,
     sweep_orphan_photos,
     write_photo_metadata,
 )
@@ -122,12 +123,13 @@ def test_partial_main_database_is_migrated_to_contract_rules(tmp_path):
         photo_storage_dir=tmp_path / "photos",
     )
     engine = application.extensions["marine_engine"]
-    assert {"photo_mime", "photo_stripped", "lat", "lng", "updated_at"} <= {
-        column["name"] for column in sqlalchemy_inspect(engine).get_columns("frontend_reports")
+    assert {"photo_mime", "photo_stripped", "lat", "lng", "updated_at", "qty_plastic", "qty_fishing_gear"} <= {
+        column["name"] for column in sqlalchemy_inspect(engine).get_columns("reports")
     }
     with engine.connect() as db_connection:
-        rows = db_connection.execute(select(frontend_reports_table).order_by(frontend_reports_table.c.created_at)).all()
+        rows = db_connection.execute(select(reports_table).order_by(reports_table.c.created_at)).all()
     assert (rows[0].category, rows[0].quantity, rows[0].status) == ("Plastic", "Very Large", "Counted")
+    assert (rows[0].qty_plastic, rows[0].qty_fishing_gear) == ("Very Large", "Small")
     assert rows[1].status == "Duplicate"
 
 
