@@ -7,6 +7,7 @@ import os
 import re
 import sqlite3
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
 from urllib.parse import urlsplit
 
 import pytest
@@ -85,6 +86,11 @@ def test_health_and_legacy_routes(api):
     response = client.get("/api/options")
     assert response.status_code == 404
     assert response.get_json() == {"code": "NOT_FOUND", "message": "The requested resource was not found."}
+
+
+def test_render_requirements_pin_available_psycopg_binary_release():
+    requirements = (Path(__file__).parents[1] / "requirements.txt").read_text(encoding="utf-8")
+    assert "psycopg[binary]==3.2.13" in requirements
 
 
 def test_partial_main_database_is_migrated_to_contract_rules(tmp_path):
