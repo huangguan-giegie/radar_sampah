@@ -43,6 +43,10 @@ The development server listens on `http://localhost:5000` by default.
 - `FRONTEND_ORIGINS`: deployed frontend URL.
 - `DATABASE_URL`: private Render database connection string.
 - `AUTH_JWT_SECRET`: required private signing secret for anonymous demo tokens.
+- `DEMO_PARTICIPANT_ID`: optional private deployment setting for a controlled
+  demo account (for example `1637`). When set, startup creates that empty
+  volunteer row only if it is missing; normal anonymous registration remains
+  random. This is for synthetic mentor-check data only.
 - `PHOTO_STORAGE_DIR`: optional private, persistent photo directory. Production
   must point this at persistent storage outside the public web root.
 
@@ -68,3 +72,7 @@ Read `../frontend/API.en.md` for the full contract and privacy boundary.
 Anonymous access uses a four-digit participant number for this small demo only.
 It is not a full account system. Logout removes the token on the client; the
 server does not maintain a revocation list.
+
+When `DEMO_PARTICIPANT_ID` is configured, the configured number is a public demo
+credential: anyone who knows it can restore that anonymous identity. Do not use
+it with personal or production data.

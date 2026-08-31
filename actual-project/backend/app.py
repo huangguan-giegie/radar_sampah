@@ -195,8 +195,41 @@ def initialise_database(engine: Engine) -> None:
     """Create the schema and preserve reports written under the former name."""
     migrate_legacy_reports_table(engine)
     metadata.create_all(engine)
+    ensure_demo_participant(engine)
     ensure_report_columns(engine)
     repair_existing_reports(engine)
+
+
+def ensure_demo_participant(engine: Engine) -> None:
+    """Optionally create one empty, anonymous participant for controlled demos."""
+    participant_id = os.getenv("DEMO_PARTICIPANT_ID", "").strip()
+    if not participant_id:
+        return
+    if not re.fullmatch(r"\d{4}", participant_id):
+        raise RuntimeError("DEMO_PARTICIPANT_ID must be a four-digit participant ID")
+
+    user_id = f"u_demo_{participant_id}"
+    with engine.begin() as connection:
+        participant = connection.execute(
+            select(users_table.c.id).where(users_table.c.participant_id == participant_id)
+        ).first()
+        if participant is not None:
+            return
+
+        conflicting_user = connection.execute(
+            select(users_table.c.participant_id).where(users_table.c.id == user_id)
+        ).first()
+        if conflicting_user is not None:
+            raise RuntimeError(f"Demo user ID {user_id} is already assigned to another participant")
+
+        connection.execute(
+            insert(users_table).values(
+                id=user_id,
+                participant_id=participant_id,
+                role=DEFAULT_VOLUNTEER_ROLE,
+                created_at=datetime.now(timezone.utc),
+            )
+        )
 
 
 def migrate_legacy_reports_table(engine: Engine) -> None:

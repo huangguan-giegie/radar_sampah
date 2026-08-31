@@ -44,6 +44,72 @@ def signup(client):
     return session, {"Authorization": "Bearer " + session["token"]}
 
 
+def test_demo_participant_1637_is_seeded_idempotently(tmp_path, monkeypatch):
+    monkeypatch.setenv("DEMO_PARTICIPANT_ID", "1637")
+    database_url = f"sqlite:///{tmp_path / 'demo-participant.db'}"
+    application = create_app(
+        database_url=database_url,
+        testing=True,
+        photo_storage_dir=tmp_path / "private-photos",
+    )
+    client = application.test_client()
+
+    restored = client.post("/auth/restore", json={"participantId": "1637"})
+
+    assert restored.status_code == 200
+    assert restored.get_json()["user"] == {
+        "id": "u_demo_1637",
+        "participantId": "1637",
+        "role": "volunteer",
+    }
+
+    second_application = create_app(
+        database_url=database_url,
+        testing=True,
+        photo_storage_dir=tmp_path / "private-photos",
+    )
+    second_response = second_application.test_client().post(
+        "/auth/restore", json={"participantId": "1637"}
+    )
+    assert second_response.status_code == 200
+    assert second_response.get_json()["user"]["id"] == "u_demo_1637"
+
+
+def test_demo_participant_id_must_be_four_digits(tmp_path, monkeypatch):
+    monkeypatch.setenv("DEMO_PARTICIPANT_ID", "163")
+
+    with pytest.raises(RuntimeError, match="DEMO_PARTICIPANT_ID must be a four-digit participant ID"):
+        create_app(
+            database_url=f"sqlite:///{tmp_path / 'invalid-demo.db'}",
+            testing=True,
+            photo_storage_dir=tmp_path / "private-photos",
+        )
+
+
+def test_demo_participant_runs_report_flow(tmp_path, monkeypatch):
+    monkeypatch.setenv("DEMO_PARTICIPANT_ID", "1637")
+    application = create_app(
+        database_url=f"sqlite:///{tmp_path / 'demo-flow.db'}",
+        testing=True,
+        photo_storage_dir=tmp_path / "private-photos",
+    )
+    client = application.test_client()
+    restored = client.post("/auth/restore", json={"participantId": "1637"})
+    headers = {"Authorization": "Bearer " + restored.get_json()["token"]}
+
+    photo = upload(client, headers)
+    created = client.post(
+        "/reports",
+        headers=headers,
+        json=report_payload(photo["photoKey"], quantities={"Plastic": "Large", "Glass": "Small"}),
+    )
+    assert created.status_code == 201
+    assert client.get("/auth/me", headers=headers).get_json()["participantId"] == "1637"
+    assert created.get_json()["status"] == "Counted"
+    assert client.get("/reports/mine", headers=headers).status_code == 200
+    assert client.get("/reports/mine/counts", headers=headers).get_json()["counted"] == 1
+
+
 def jpeg_bytes(size=(40, 30), with_metadata=False):
     output = io.BytesIO()
     image = Image.new("RGB", size, (44, 110, 145))
