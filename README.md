@@ -1,6 +1,7 @@
 # Team 04 Real Project Migration
 
-This folder holds the active Radar Sampah project and its migration audit record.
+This folder holds the active Radar Sampah project. The migration audit record
+is maintained locally only.
 
 ## Current project
 
@@ -13,9 +14,11 @@ The MVP uses five fixed litter categories, broad Malaysian area labels (includin
 Recognition is a labelled demo fallback by default. A private provider is only allowed when `LITTER_RECOGNITION_ENABLED=true` and an HTTPS URL has been reviewed by the team.
 
 The frontend API base is configured with `window.RADAR_SAMPAH_API_BASE`; the
-older `window.TIDETRACE_API_BASE` name remains a compatibility alias. Current
-deployment links are `https://radar-sampah-frontend.onrender.com` and
-`https://radar-sampah-api.onrender.com`.
+older `window.TIDETRACE_API_BASE` name remains a compatibility alias. The
+currently available deployment links are the legacy-compatible
+`https://team04-marine-observation-frontend.onrender.com` and
+`https://team04-marine-observation-api.onrender.com`. The new
+`radar-sampah-frontend` and `radar-sampah-api` hostnames are not yet enabled.
 
 ## Folder layout
 
