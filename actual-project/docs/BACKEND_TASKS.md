@@ -4,22 +4,16 @@
 **Source of truth:** [`frontend/API.md`](../frontend/API.md). English:
 [`frontend/API.en.md`](../frontend/API.en.md).
 
-> ⚠️ **`frontend/openapi.yaml` has drifted and is wrong in five places** — the composition shape,
-> the missing `compositionSource`, the species `source` shape, four missing `Species` fields, and
-> a leftover `id` on the photo upload. They are listed in
-> [`FRONTEND_TASKS.md`](FRONTEND_TASKS.md) §2 and are being fixed. **Until then, API.md wins** —
-> do not generate models from the YAML.
+> **Implementation status (2026-08-31):** `backend/app.py` now implements the 13-endpoint
+> Iteration 1 contract. `backend/tests/test_api.py` is the executable contract suite. API.md /
+> API.en.md remain authoritative if a prose/YAML inconsistency is found.
 **Schema:** [`DATABASE_TASKS.md`](DATABASE_TASKS.md) (Keith) — build order and constraints.
 
 13 endpoints. The frontend is already written against all of them and runs today on mock
 data, so **the contract is not a proposal — it is what the app already calls.**
 
-> ⚠️ **This replaces the `/api/*` backend currently in the repo.** `backend/app.py` serves a
-> different, earlier shape — no auth, `area_id` instead of `beaches`, five categories with
-> `Plastic packaging` and no `Paper`, an integer quantity, and a three-level `priority` instead
-> of four severity bands. It also carries `/api/litter-recognize` and `/api/cleanup-missions`,
-> which §10 puts out of scope. Qian Jiang's decision: **this contract is authoritative and the
-> existing routes are legacy.** Nothing here has to preserve them.
+> The older `/api/*` recognition, heatmap and cleanup-mission routes have been removed from the
+> active Flask app because §10 puts them out of Iteration 1 scope. Their history remains in Git.
 
 ---
 
@@ -52,7 +46,7 @@ Each step makes a bit more of the app usable. Do not build them in file order.
 | 3 | `POST /uploads/photos` | the photo step |
 | 4 | `POST /reports` | the whole record flow, end to end |
 | 5 | `GET /reports/mine`, `GET /reports/mine/counts` | "My records" |
-| 6 | `PATCH /reports/:id`, `DELETE /reports/:id` | correcting and removing |
+| 6 | `PATCH /reports/:id` | correcting an existing report |
 | 7 | `POST /geo/resolve-beach` | GPS → beach; the app falls back to manual pick without it |
 | 8 | `GET /scoring-method` | **optional.** The frontend already ships these numbers; see §5 |
 
@@ -260,9 +254,7 @@ recognition, US5.3 and US5.4. No endpoint is reserved for them.
    "area sensitivity" multiplier of 1.0/1.25/1.5. That is not the published rule, and area
    sensitivity in particular folds biodiversity into the litter score, which API.md §2b
    explicitly forbids. **One of the two documents has to change** — Huang Guan.
-3. **Does the backend own severity, or does `scoring.ts`?** (§5) Answering this decides whether
-   `severity_bands` becomes a table.
-4. **`areas` / `beaches` and `litter_reports` / `reports`.** The DMP and the contract use
+3. **`areas` / `beaches` and `litter_reports` / `reports`.** The DMP and the contract use
    different names for the same things. Renaming is cheap before there is a backend.
 
 ---

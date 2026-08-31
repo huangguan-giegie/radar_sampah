@@ -10,8 +10,8 @@ info:
       API.en.md    (English)             for LiHanXia and Keith, with the reasoning
       API.md       (Chinese)             for Qian Jiang
 
-    NOTE: the backend currently in the repo (backend/app.py, /api/*) does NOT implement this.
-    This document is the target. Leave VITE_API_BASE_URL empty until it exists.
+    backend/app.py implements this contract. The earlier /api/* recognition, heatmap and
+    cleanup-mission routes are not active Iteration 1 endpoints.
 
     The points that get missed:
     - Under 3 eligible reports, severity and band MUST be null — never fall back to Low
@@ -556,13 +556,17 @@ components:
 
     UploadedPhoto:
       type: object
-      required: [photoKey, metadataStripped]
+      required: [photoKey, previewUrl, metadataStripped]
       properties:
         photoKey:
           type: string
           description: |
             存储键，不是可访问地址。桶/目录在公开 Web 根目录之外且不可公开读。
             提交记录时把它原样放进 POST /reports 的 photoKey。
+        previewUrl:
+          type: string
+          format: uri
+          description: short-lived owner-scoped preview URL for the just-uploaded photo
         metadataStripped:
           type: boolean
           description: true only once the EXIF location data is really gone
