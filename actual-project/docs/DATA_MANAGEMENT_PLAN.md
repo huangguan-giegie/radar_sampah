@@ -14,14 +14,14 @@
 | Project | Radar Sampah — marine-litter monitoring & community cleanup for Malaysian coastal areas |
 | Purpose | Define how open biodiversity data and user-generated litter reports are acquired, transformed, governed, stored and retired in the Iteration 1 (MVP) build. |
 | Prepared | 22 August 2026 |
-| Scope (Iteration 1) | Threatened marine species reference data (FishBase), occurrence context (OBIS), manual user litter reports (photo + location), basic verification workflow, community cleanup missions, fixed severity scoring (4 bands), basic points, biodiversity context layer. |
+| Scope (Iteration 1) | Threatened marine species reference data (FishBase), occurrence context (OBIS), manual user litter reports (photo + location), automated completeness/duplicate checks, community cleanup missions, fixed severity scoring (4 bands), basic points, biodiversity context layer. |
 | Owner | Radar Sampah project team (TM04) |
 
 ## Executive summary
 
-Radar Sampah helps coastal communities report marine litter, understand local biodiversity context, prioritise cleanups and track basic impact. In Iteration 1, the system combines FishBase threatened-species checklists and OBIS occurrence records (used as sensitivity seeds for illustrative scoring) with a local PostgreSQL database and community mission workflows. Litter reporting is manual: users supply a photo, location and category/quantity; a basic internal verification path decides what appears on the public map. Reference biodiversity data is loaded at deployment (or on an approved refresh). User reports and cleanup records are written after verification, using synthetic/public data only in the current baseline. The app treats missing or unverified data as unavailable rather than inventing low-litter conditions, and keeps personal sensory or privacy preferences on the device where possible.
+Radar Sampah helps coastal communities report marine litter, understand local biodiversity context, prioritise cleanups and track basic impact. In Iteration 1, the system combines FishBase threatened-species checklists and OBIS occurrence records (used as contextual seeds only) with a local PostgreSQL database and community mission workflows. Litter reporting is manual: users supply a photo, location and category/quantity; automated checks exclude incomplete and duplicate records from public summaries. Reference biodiversity data is loaded at deployment (or on an approved refresh). User reports and cleanup records use synthetic/public data only in the current baseline. The app treats missing data as unavailable rather than inventing low-litter conditions, and keeps personal sensory or privacy preferences on the device where possible.
 
-MVP journey: discover a beach or cleanup activity → submit verified litter data (manual path) → view severity map and biodiversity context → join/create cleanup → submit after-cleanup evidence → see basic points and recurrence status.
+MVP journey: discover a beach or cleanup activity → submit a complete manual litter report → view the area-level severity map and biodiversity context → join/create cleanup → submit after-cleanup evidence → see basic points and recurrence status.
 
 ## 1. Purpose, scope and data principles
 
@@ -29,7 +29,7 @@ This plan describes the data process for the Iteration 1 (MVP) of Radar Sampah. 
 
 Purpose limitation: Only use the minimum data needed to show litter conditions, biodiversity context, cleanup priority and community progress. No AI training datasets are required or stored for this iteration.
 
-Transparency: Label results as observed (user-verified) or derived (severity score from fixed rules). Expose recency and never silently convert missing readings to “clean”.
+Transparency: Label results as observed (user-submitted) or derived (severity score from fixed rules). Expose recency and never silently convert missing readings to “clean”.
 
 Data minimisation: No continuous location tracking; no facial recognition; user profiles store only what is required for scoring and community membership. Photos are retained only as long as needed for verification and impact display.
 
@@ -58,7 +58,7 @@ Usage in Iteration 1:
 
 Ingestion & Mapping: Data is loaded into dim_species, dim_threat and fact_occurrence tables.
 
-Scoring: Presence of threatened species in an area is used as a sensitivity seed to influence the illustrative severity/priority score (fixed rule set).
+Scoring: Litter category and quantity produce the reported litter score. Biodiversity remains separate contextual information and does not change this score.
 
 Display: Populates the Biodiversity context layer in the UI (US5.1 / US5.2), informing users of potential species in a cleanup area with cautious language and source attribution.
 
@@ -96,11 +96,11 @@ Data minimisation: In the current baseline, only synthetic/public data is writte
 
 User enters or corrects beach, litter category and quantity (manual). Required fields are validated before acceptance (AC2.2.3).
 
-Severity is derived from confirmed type/quantity via a fixed, versioned scoring rule that maps into four severity bands (initial US4.3). Past scores remain explainable.
+Severity is derived from submitted type/quantity via `radar-sampah-scoring-v2`: category weight × quantity level, maximum category score per report, and median eligible report score per beach over 90 days. Past scores remain explainable through the published rule version.
 
-Verified reports update area-level aggregates (e.g. last_litter_score on areas) and feed the litter severity map. Missing or rejected reports do not invent “zero litter” (AC4.2.3).
+Counted reports update area-level aggregates and feed the litter severity map. Incomplete and duplicate reports do not invent “zero litter” (AC4.2.3).
 
-Pending, unreliable or duplicate reports are excluded from the public map (US3.2). A basic internal verification workflow supports status updates and duplicate identification (US3.1); a full moderator dashboard is deferred to Iteration 2.
+Incomplete and duplicate reports are excluded from the public map (US3.2). Manual moderator verification is not part of Iteration 1; a full review workflow is deferred to Iteration 2.
 
 ### 4.3 Cleanup missions and impact
 
@@ -166,13 +166,13 @@ ERD Diagram
 
 ### 7.1 Severity scoring design
 
-Severity and cleanup-priority scores are produced by a fixed, deterministic rule set applied to confirmed (verified) litter type/quantity and optional area context, including biodiversity sensitivity seeds. Four severity bands are displayed on the map (US4.1, initial US4.3). Biodiversity context from OBIS/FishBase is shown as historical occurrence context, not as a real-time abundance claim. Language on the UI remains cautious (US5.2).
+Severity and cleanup-priority scores are produced by a fixed, deterministic rule set applied to complete counted litter type/quantity. Each report uses the maximum category score; each beach uses the median of eligible reports from the latest 90 days. Four severity bands are displayed on the map. Biodiversity context from OBIS/FishBase is shown separately as historical occurrence context, not as a real-time abundance claim or score input. Language on the UI remains cautious (US5.2).
 
 ### 7.2 Validation, limitations and monitoring
 
 Required fields and coordinate validity are checked at submission; invalid rows are rejected.
 
-Unverified, pending or duplicate reports are excluded from the public severity map.
+Incomplete and duplicate reports are excluded from the public severity map; no manual verification is claimed for Iteration 1.
 
 Evidence status such as “Insufficient data” and “Not recently reported” is displayed; the system never claims a beach is clean solely because of missing reports (US4.2).
 
@@ -227,7 +227,7 @@ Do not expose raw database credentials, private keys or non-public logs through 
 | Source freshness | User reports timestamped on confirmation. Biodiversity loaded at deployment/refresh. | Automated freshness dashboard for last litter score and last verified report per area (later). |
 | Completeness & validity | Required fields checked; invalid coordinates/species rows skipped; DB constraints on keys and non-null critical columns. | Persist rejected-row counts and reason codes for ingestion jobs. |
 | Duplicates | Species unique on scientific_name; community_users composite PK; basic report dedup and exclusion of duplicates from public map (US3.1 / US3.2). | Source-specific duplicate exception reports for OBIS; richer moderator tools (Iteration 2). |
-| Severity scoring | Fixed rule set and four severity bands implemented and versioned (initial US4.3). Invalid/unverified records excluded from map. | Full calibration, sensitivity analysis and limitation documentation (Iteration 2). |
+| Severity scoring | Fixed `radar-sampah-scoring-v2` rule with Max report score and Median beach score; incomplete/duplicate records excluded from map. | Full calibration, sensitivity analysis and limitation documentation (Iteration 2). |
 | AI/model release | Not applicable — no AI model in Iteration 1. | Manual promotion, metrics review, model cards when AI is introduced (Iteration 2). |
 | Schema evolution | SQL migrations version database structure; API queries select explicit fields. | Migration rollback runbook and automated schema tests. |
 | Plan review | This report is scoped to Iteration 1 only. Update at the end of the iteration and file with project governance materials. | Record approvals, source access dates and changed assumptions; produce Iteration 2 DMP when AI and full moderation are introduced. |

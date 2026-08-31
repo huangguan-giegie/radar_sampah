@@ -13,7 +13,7 @@
 // ============================================================
 
 import { BEACHES, MOCK_USER, SEED_REPORTS } from './mockData';
-import { SCORING_METHOD } from './scoring';
+import { categoryScoresFor, reportScoreFor, SCORING_METHOD } from './scoring';
 import type {
   AuthSession,
   BeachDetail,
@@ -171,6 +171,8 @@ function toSummary(beach: BeachDetail): BeachSummary {
     band: beach.band,
     insufficientData: beach.insufficientData,
     validReports: beach.validReports,
+    attentionScore: beach.attentionScore,
+    eligibleReportCount: beach.eligibleReportCount,
     lastReportedAt: beach.lastReportedAt,
     freshnessKind: beach.freshnessKind,
     habitat: beach.habitat,
@@ -426,11 +428,11 @@ export async function uploadPhoto(file: File): Promise<UploadedPhoto> {
 
 function deriveCategoryQuantity(q: QuantityByCategory): { category: LitterCategory; quantity: QuantityBand } {
   let selected: { category: LitterCategory; quantity: QuantityBand; score: number } | undefined;
-  for (const { category, weight } of SCORING_METHOD.categoryWeights) {
+  const scores = categoryScoresFor(q);
+  for (const { category } of SCORING_METHOD.categoryWeights) {
     const quantity = q[category];
     if (!quantity) continue;
-    const quantityWeight = SCORING_METHOD.quantityWeights.find((item) => item.quantity === quantity)?.weight ?? 0;
-    const score = weight * quantityWeight;
+    const score = scores[category] ?? 0;
     if (!selected || score > selected.score) selected = { category, quantity, score };
   }
   if (!selected) throw new Error('A report needs at least one category.');
@@ -447,6 +449,8 @@ export async function createReport(input: CreateReportInput): Promise<LitterRepo
       beachName: beach.name,
       quantities: input.quantities,
       ...deriveCategoryQuantity(input.quantities),
+      categoryScores: categoryScoresFor(input.quantities),
+      reportScore: reportScoreFor(input.quantities),
       photoUrl: mockPhotoStore.get(input.photoKey) ?? null,
       createdAt: new Date().toISOString(),
       status: 'Counted',
@@ -499,7 +503,12 @@ export async function updateReport(
     const updated: LitterReport = {
       ...old,
       ...(changes.quantities
-        ? { quantities: changes.quantities, ...deriveCategoryQuantity(changes.quantities) }
+        ? {
+            quantities: changes.quantities,
+            ...deriveCategoryQuantity(changes.quantities),
+            categoryScores: categoryScoresFor(changes.quantities),
+            reportScore: reportScoreFor(changes.quantities),
+          }
         : { quantities: old.quantities, category: old.category, quantity: old.quantity }),
       photoUrl: changes.photoKey ? mockPhotoStore.get(changes.photoKey) ?? null : old.photoUrl,
       beachId: beach ? beach.id : old.beachId,

@@ -130,6 +130,8 @@ A person receives a 4-digit number (e.g. `1637`) and their reports hang off it.
   "band": 3,
   "insufficientData": false,
   "validReports": 8,
+  "attentionScore": 2.55,
+  "eligibleReportCount": 8,
   "lastReportedAt": "2026-08-19T16:00:00+08:00",
   "freshnessKind": "ok",
 
@@ -150,6 +152,8 @@ A person receives a 4-digit number (e.g. `1637`) and their reports hang off it.
 | `band` | `1｜2｜3｜4｜null` | Paired with `severity`; null together. Drives the four-bar marker |
 | `insufficientData` | boolean | True exactly when `severity === null` |
 | `validReports` | int | **Counts `Counted` rows only.** Duplicate and Incomplete never counted |
+| `attentionScore` | number｜null | Median of eligible Report Scores, rounded to two decimals; null when fewer than 3 qualify |
+| `eligibleReportCount` | int | Number of `Counted` reports in the latest 90-day scoring window |
 | `lastReportedAt` | string｜null | Newest **Counted** report. The frontend renders "6 days ago" itself — do not send prose |
 | `freshnessKind` | `"ok"｜"aging"｜"stale"` | Under 30 days / 30–90 / over 90 or never |
 | `primarySpeciesGlyph` | `"turtle"｜"bird"｜"mangrove"｜"grass"｜"crab"｜"fish"` | Icon for the biodiversity map marker |
@@ -419,9 +423,8 @@ those apart: an unrecorded category draws no bar, rather than a zero-length one.
 **The old `category` / `quantity` columns become derived**, kept so existing responses keep working:
 
 ```
-category  = the highest-weighted non-null category among the six
-            (weights in §3: Fishing gear 1.00 > Plastic 0.85 > Glass 0.70
-             > Metal 0.60 > Other 0.50 > Paper 0.35)
+category  = the category with the highest category score among the six
+            (category weight × its quantity weight; ties use the published category order)
 quantity  = the value in that category's column
 ```
 
@@ -464,24 +467,23 @@ place — the beach detail page. That page's "LITTER COMPOSITION" block changes 
 | Where | Today | Has to become |
 | --- | --- | --- |
 | `RecordScreen.tsx` | Single-select category (`patchDraft({ category: cat })`) | A quantity band per category, several selectable |
-| Severity formula (§7) | `category weight × quantity band`, one value per record | A record now has several categories — decide max, sum or mean |
+| Severity formula (§7) | `category weight × quantity level` | Report Score is the maximum category score; Beach Attention Score is the median of eligible report scores |
 | `BeachScreen.tsx` caption | `SHARE OF n VERIFIED REPORTS` | Point at the specific report and its date |
 
-**The second one is Darli's call**, because it changes every beach's band on the map. Until it is
-settled, severity can run on "the highest-weighted non-null category", which reproduces exactly
-today's single-category behaviour.
+The scoring choice is now fixed for the current MVP: a multi-category report uses the maximum
+category score, and a beach uses the median of eligible report scores from the latest 90 days.
 
 ---
 
-## 3. Scoring rule (US4.3) — this endpoint is optional
+## 3. Scoring rule (US4.3) — published rule
 
 | Method | Path | Auth | |
 | --- | --- | --- | --- |
-| GET | `/scoring-method` | no | **Optional.** Not implementing it does not break the frontend |
+| GET | `/scoring-method` | no | Publishes the active scoring rule used by the frontend and backend |
 
-**Team decision: US4.3 is a non-blocking stretch, delivered by the frontend.** The weights,
-thresholds and window are constants in `src/scoring.ts`, so the scoring-method screen renders
-instantly, works offline, and does not wait on the backend.
+The weights, thresholds, aggregation methods and window are published by the backend and mirrored
+in `src/scoring.ts`. The frontend keeps the local copy for mock/offline mode and compares it with
+the live response when a real API is configured.
 
 ```json
 {
@@ -501,27 +503,29 @@ instantly, works offline, and does not wait on the backend.
   ],
   "bands": [
     { "band": "Low",      "range": "below 1.5",     "color": "#7CA98B" },
-    { "band": "Moderate", "range": "1.5 – 2.4",     "color": "#D9A24B" },
-    { "band": "High",     "range": "2.5 – 3.4",     "color": "#CE6B45" },
+    { "band": "Moderate", "range": "1.5 – <2.5",    "color": "#D9A24B" },
+    { "band": "High",     "range": "2.5 – <3.5",    "color": "#CE6B45" },
     { "band": "Severe",   "range": "3.5 and above", "color": "#B84A3F" }
   ],
   "windowDays": 90,
-  "minReports": 3
+  "minReports": 3,
+  "reportAggregation": "max",
+  "beachAggregation": "median",
+  "ruleVersion": "radar-sampah-scoring-v2"
 }
 ```
-
-### ⚠️ You may skip the endpoint, but you must use these numbers
 
 Severity is computed by the backend (§7); the published rule is rendered by the frontend. **If the
 two disagree, the screen explaining the rule is lying about the rule.**
 
 - The numbers above are the specification; `src/scoring.ts` is their executable copy.
-- If you do implement the endpoint and return different values, the frontend **uses yours** (that
-  is the rule actually in force) and logs a console warning in dev naming the mismatched field.
+- When a real API is configured, the frontend uses the published response and logs a console warning
+  in development if it differs from the local mock copy.
 - Changing any weight or threshold means changing both sides and bumping the rule version.
 
 > DMP §7.1 requires the rule set to be **fixed and versioned** so past scores stay explainable.
-> Add a `ruleVersion` string when you implement scoring, and store it on each computed score.
+> The `/scoring-method` response publishes a `ruleVersion` string so the active rule remains
+> explainable alongside the returned report and beach scores.
 
 ---
 
@@ -651,7 +655,7 @@ GCS signed URLs), not a workaround.
   `null` and do not send 0. The backend maps this onto the six `qty_*` columns and leaves the
   rest `NULL`.
 - **`category` and `quantity` are no longer in the request.** They are derived server-side from
-  `quantities` — the highest-weighted non-null category and its band (see §2c) — and still come
+  `quantities` — the maximum category score and its band (see §2c) — and still come
   back in every response.
 - **The response must also carry the full `quantities` map.** The derived pair alone is not
   enough: the app's "correct this record" flow reads the response back into the form and PATCHes
@@ -669,8 +673,14 @@ GCS signed URLs), not a workaround.
     "Fishing gear": "Medium",
     "Glass": "Small"
   },
-  "category": "Fishing gear",
-  "quantity": "Medium",
+  "category": "Plastic",
+  "quantity": "Large",
+  "categoryScores": {
+    "Plastic": 2.55,
+    "Fishing gear": 2.00,
+    "Glass": 0.70
+  },
+  "reportScore": 2.55,
   "createdAt": "2026-08-28T09:41:00+08:00",
   "status": "Counted",
   "photoUrl": "https://cdn.example.com/photos/ph_01H....jpg"
@@ -783,9 +793,9 @@ eligible = that beach's reports where status = 'Counted'
 if count(eligible) < 3:
     severity = null;  band = null;  insufficientData = true
 else:
-    record_score  = category_weight[category] × quantity_weight[quantity]
-                    ← which category, when a report has several: see the open question below
-    beach_score   = mean(record_score across eligible)
+    category_score[category] = category_weight[category] × quantity_weight[quantity]
+    record_score  = max(category_score for every category in the report)
+    beach_score   = median(record_score across eligible)
     severity      = < 1.5 → Low | < 2.5 → Moderate | < 3.5 → High | else Severe
     band          = Low=1, Moderate=2, High=3, Severe=4
 
@@ -850,7 +860,7 @@ reports          id, reporter_id, beach_id, location_source,
                    signed per request after an ownership check (§5)
                  qty_plastic, qty_fishing_gear, qty_glass,
                  qty_metal, qty_paper, qty_other        ← each nullable, at least one set
-                 category, quantity                     ← derived: highest-weighted non-null
+                  category, quantity                     ← derived: maximum category score
                  lat(nullable), lng(nullable),
                  status, status_note, created_at, updated_at, deleted_at
                  ← lat/lng written only for gps, stored to 3 decimals,

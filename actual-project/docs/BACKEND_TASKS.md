@@ -102,9 +102,9 @@ flips an existing report to `Incomplete`. Create the value; nothing has to produ
 ### Six categories, one report
 
 `reports` has six nullable quantity columns, one per category. **`NULL` means "not seen", never
-"zero".** `category` and `quantity` are derived — the highest-weighted non-null column and its
-value — and are kept so the existing list views and the severity rule keep working. Compute them
-on write.
+"zero".** `category` and `quantity` are derived — the category with the maximum category score
+(category weight × quantity weight) and its value — and are kept so existing list views keep
+working. Compute them on write.
 
 ---
 
@@ -244,12 +244,11 @@ recognition, US5.3 and US5.4. No endpoint is reserved for them.
 
 ---
 
-## 10. Blocked on a decision — please chase these, do not guess
+## 10. Historical decisions — no longer blocked
 
-1. **Multi-category severity.** A report can now carry up to six categories. Max, sum or mean
-   changes every beach's band on the map. **Hnin Darli's call.** Until then use "the
-   highest-weighted non-null category and its band", which reproduces the previous
-   single-category behaviour exactly. See the warning box in API.md §7.
+1. **Multi-category severity.** The current decision is Max (Category Score) per report and
+   Median (eligible Report Score) per beach over the latest 90 days. The rule is published as
+   `radar-sampah-scoring-v2` and covered by backend contract tests.
 2. **`DECISIONS.md` (2026-08-19) describes a different severity formula** — with recency and an
    "area sensitivity" multiplier of 1.0/1.25/1.5. That is not the published rule, and area
    sensitivity in particular folds biodiversity into the litter score, which API.md §2b

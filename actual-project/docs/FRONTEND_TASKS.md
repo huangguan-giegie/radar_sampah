@@ -39,8 +39,9 @@ Once the shape is settled, it touches five files, not one:
 Keep `category` / `quantity` on the draft for now — responses still return the derived pair, and
 the correction flow (`SubmittedScreen.tsx:154`, `MyReportsScreen.tsx:115`) seeds from it.
 
-**The severity formula is not a prerequisite.** API.md §7 already gives the interim rule — take
-the highest-weighted non-null category and its band — which is exactly today's behaviour.
+The severity formula is now fixed: calculate Category Score for every selected category, use the
+maximum as Report Score, then use the median of eligible Report Scores from the latest 90 days for
+the beach band. The frontend mirrors this rule in `src/scoring.ts` for mock/offline mode.
 
 ---
 

@@ -97,6 +97,7 @@ export default function SubmittedScreen() {
           {row('Beach', saved.beachName)}
           {row('Category', saved.category)}
           {row('Quantity', saved.quantity)}
+          {row('Report score', saved.reportScore.toFixed(2))}
           {row('Location', 'Beach level only', undefined, true)}
         </div>
 
@@ -112,9 +113,8 @@ export default function SubmittedScreen() {
             <ChevronRight color={C.slate} />
           </div>
           <div style={{ fontSize: 13, lineHeight: 1.6, color: C.ink2, marginTop: 7 }}>
-            Records are scored with the same documented rule for every beach — category weight ×
-            quantity band, averaged over the reporting window. Duplicate or incomplete records are
-            excluded.
+            Records use the highest category score, and each beach uses the median of eligible
+            report scores over the reporting window. Duplicate or incomplete records are excluded.
           </div>
         </button>
 

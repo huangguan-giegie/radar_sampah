@@ -40,6 +40,10 @@ export const SEVERITY: Record<SeverityBand, { col: string; text: string; tint: s
   Severe: { col: '#B84A3F', text: '#7E2E24', tint: 'rgba(184,74,63,.16)' },
 };
 
+export function severityLabel(band: SeverityBand): string {
+  return band === 'Severe' ? 'Very high' : band;
+}
+
 
 export function freshStyle(k: FreshnessKind) {
   if (k === 'ok') return { bg: 'rgba(124,169,139,.16)', c: '#3E6B52', dot: '#7CA98B' };

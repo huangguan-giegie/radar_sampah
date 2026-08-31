@@ -1,6 +1,7 @@
 
 import type { CSSProperties, ReactNode } from 'react';
 import type { ReportStatus, SeverityBand } from '../types';
+import { severityLabel } from '../theme';
 
 type Div = { children?: ReactNode; style?: CSSProperties; className?: string };
 
@@ -98,7 +99,7 @@ export function SeverityBadge({
   }
   return (
     <StatusBadge status={band.toLowerCase() as BadgeStatus} size={size} indicator block={block}>
-      {label ?? band}
+      {label ?? severityLabel(band)}
     </StatusBadge>
   );
 }

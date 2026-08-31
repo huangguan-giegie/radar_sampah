@@ -12,6 +12,7 @@ import math
 import os
 import re
 import secrets
+from statistics import median
 import tempfile
 import threading
 import time
@@ -84,8 +85,8 @@ REPORT_STATUS_NOTES = {
 }
 SCORING_BANDS = (
     {"band": "Low", "range": "below 1.5", "color": "#7CA98B"},
-    {"band": "Moderate", "range": "1.5 – 2.4", "color": "#D9A24B"},
-    {"band": "High", "range": "2.5 – 3.4", "color": "#CE6B45"},
+    {"band": "Moderate", "range": "1.5 – <2.5", "color": "#D9A24B"},
+    {"band": "High", "range": "2.5 – <3.5", "color": "#CE6B45"},
     {"band": "Severe", "range": "3.5 and above", "color": "#B84A3F"},
 )
 PHOTO_MIME_TYPES = {"image/jpeg", "image/png", "image/heic", "image/heif"}
@@ -236,10 +237,32 @@ def contract_timestamp(value: datetime) -> str:
 
 
 def derive_category_quantity(quantities: dict[str, str]) -> tuple[str, str]:
-    """Use the documented fallback: highest category weight, then its band."""
+    """选择类别分数最高的类别；相同分数按固定类别顺序稳定决胜。"""
 
-    category = next(category for category in FRONTEND_CATEGORIES if category in quantities)
-    return category, quantities[category]
+    best_category = next(category for category in FRONTEND_CATEGORIES if category in quantities)
+    best_score = CATEGORY_WEIGHTS[best_category] * QUANTITY_WEIGHTS[quantities[best_category]]
+    for category in FRONTEND_CATEGORIES:
+        quantity = quantities.get(category)
+        if quantity is None:
+            continue
+        score = CATEGORY_WEIGHTS[category] * QUANTITY_WEIGHTS[quantity]
+        if score > best_score:
+            best_category, best_score = category, score
+    return best_category, quantities[best_category]
+
+
+def category_scores_for(quantities: dict[str, str]) -> dict[str, float]:
+    """按公开类别顺序返回每个已填类别的分数。"""
+
+    return {
+        category: CATEGORY_WEIGHTS[category] * QUANTITY_WEIGHTS[quantities[category]]
+        for category in FRONTEND_CATEGORIES
+        if category in quantities
+    }
+
+
+def report_score_for(quantities: dict[str, str]) -> float:
+    return max(category_scores_for(quantities).values())
 
 
 def repair_existing_reports(engine: Engine) -> None:
@@ -269,20 +292,22 @@ def repair_existing_reports(engine: Engine) -> None:
             )
 
 
-def severity_for(rows: list[Any]) -> tuple[str | None, int | None]:
+def attention_score_for(rows: list[Any]) -> float | None:
     if len(rows) < 3:
+        return None
+    scores = [report_score_for(json.loads(row.quantities)) for row in rows]
+    return float(median(scores))
+
+
+def severity_for(rows: list[Any]) -> tuple[str | None, int | None]:
+    score = attention_score_for(rows)
+    if score is None:
         return None, None
-    scores: list[float] = []
-    for row in rows:
-        quantities = json.loads(row.quantities)
-        category, quantity = derive_category_quantity(quantities)
-        scores.append(CATEGORY_WEIGHTS[category] * QUANTITY_WEIGHTS[quantity])
-    mean_score = sum(scores) / len(scores)
-    if mean_score < 1.5:
+    if score < 1.5:
         return "Low", 1
-    if mean_score < 2.5:
+    if score < 2.5:
         return "Moderate", 2
-    if mean_score < 3.5:
+    if score < 3.5:
         return "High", 3
     return "Severe", 4
 
@@ -298,6 +323,7 @@ def beach_summary(engine: Engine, beach: dict[str, Any], now: datetime | None = 
             )
         ).all()
     eligible = [row for row in all_counted if utc_datetime(row.created_at) >= cutoff]
+    attention_score = attention_score_for(eligible)
     severity, band = severity_for(eligible)
     newest = max(all_counted, key=lambda row: utc_datetime(row.created_at), default=None)
     newest_at = utc_datetime(newest.created_at) if newest else None
@@ -313,6 +339,8 @@ def beach_summary(engine: Engine, beach: dict[str, Any], now: datetime | None = 
             "band": band,
             "insufficientData": severity is None,
             "validReports": len(eligible),
+            "attentionScore": round(attention_score, 2) if attention_score is not None else None,
+            "eligibleReportCount": len(eligible),
             "lastReportedAt": contract_timestamp(newest.created_at) if newest else None,
             "freshnessKind": freshness,
         }
@@ -439,13 +467,16 @@ def schedule_orphan_cleanup(engine: Engine, directory: Path, photo_key: str, cre
 
 def report_dict(row: Any, viewer_id: str, jwt_secret: str, directory: Path) -> dict[str, Any]:
     # lat, lng and photo_key are intentionally never copied into this response.
+    quantities = json.loads(row.quantities)
     value: dict[str, Any] = {
         "id": row.id,
         "beachId": row.beach_id,
         "beachName": row.beach_name,
-        "quantities": json.loads(row.quantities),
+        "quantities": quantities,
         "category": row.category,
         "quantity": row.quantity,
+        "categoryScores": {category: round(score, 2) for category, score in category_scores_for(quantities).items()},
+        "reportScore": round(report_score_for(quantities), 2),
         "createdAt": contract_timestamp(row.created_at),
         "status": row.status,
     }
@@ -727,6 +758,9 @@ def create_app(
                 "bands": list(SCORING_BANDS),
                 "windowDays": 90,
                 "minReports": 3,
+                "reportAggregation": "max",
+                "beachAggregation": "median",
+                "ruleVersion": "radar-sampah-scoring-v2",
             }
         )
 

@@ -124,6 +124,8 @@
   "band": 3,
   "insufficientData": false,
   "validReports": 8,
+  "attentionScore": 2.55,
+  "eligibleReportCount": 8,
   "lastReportedAt": "2026-08-19T16:00:00+08:00",
   "freshnessKind": "ok",
 
@@ -144,6 +146,8 @@
 | `band` | `1｜2｜3｜4｜null` | 和 `severity` 一一对应，同时为 null。前端画那 4 根竖条用它 |
 | `insufficientData` | boolean | `severity === null` 时为 true |
 | `validReports` | int | **只数 `Counted` 的**，Duplicate / Incomplete 不算 |
+| `attentionScore` | number｜null | 最近 90 天合格报告分数的中位数，保留两位；不足 3 条时为 null |
+| `eligibleReportCount` | int | 最近 90 天评分窗口内的 `Counted` 报告数 |
 | `lastReportedAt` | string｜null | 最近一条 **Counted** 记录的时间。前端自己算「几天前」，后端不要给现成文案 |
 | `freshnessKind` | `"ok"｜"aging"｜"stale"` | < 30 天 / 30–90 天 / > 90 天或从无记录 |
 | `primarySpeciesGlyph` | `"turtle"｜"bird"｜"mangrove"｜"grass"｜"crab"｜"fish"` | 生物图层的地图标记图标 |
@@ -480,8 +484,8 @@ quantity  = 该类别对应那列的值
   ],
   "bands": [
     { "band": "Low",      "range": "below 1.5",     "color": "#7CA98B" },
-    { "band": "Moderate", "range": "1.5 – 2.4",     "color": "#D9A24B" },
-    { "band": "High",     "range": "2.5 – 3.4",     "color": "#CE6B45" },
+    { "band": "Moderate", "range": "1.5 – <2.5",    "color": "#D9A24B" },
+    { "band": "High",     "range": "2.5 – <3.5",    "color": "#CE6B45" },
     { "band": "Severe",   "range": "3.5 and above", "color": "#B84A3F" }
   ],
   "windowDays": 90,
@@ -641,8 +645,8 @@ ALTER TABLE reports
     "Fishing gear": "Medium",
     "Glass": "Small"
   },
-  "category": "Fishing gear",
-  "quantity": "Medium",
+  "category": "Plastic",
+  "quantity": "Large",
   "createdAt": "2026-08-25T09:41:00+08:00",
   "status": "Counted",
   "photoUrl": "https://cdn.example.com/photos/ph_01H....jpg"
@@ -753,7 +757,9 @@ if count(eligible) < 3:
 else:
     record_score  = category_weight[category] × quantity_weight[quantity]
                     ← 一条记录有多个类别时取哪一个：见下面的「待定」
-    beach_score   = mean(record_score for eligible)
+     category_score[category] = category_weight[category] × quantity_weight[quantity]
+     record_score  = max(category_score for every category in the report)
+     beach_score   = median(record_score for eligible)
     severity      = < 1.5 → Low | < 2.5 → Moderate | < 3.5 → High | else Severe
     band          = Low=1, Moderate=2, High=3, Severe=4
 

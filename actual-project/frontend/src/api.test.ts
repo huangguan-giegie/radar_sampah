@@ -94,5 +94,7 @@ describe('真实 API contract', () => {
 
     expect(report.category).toBe('Plastic');
     expect(report.quantity).toBe('Large');
+    expect(report.reportScore).toBe(2.55);
+    expect(report.categoryScores).toEqual({ Plastic: 2.55, 'Fishing gear': 2 });
   });
 });

@@ -161,7 +161,7 @@ Two things to get right while seeding:
 | `communities`, `community_users` | Epic 1, parked by the team's MVP split. |
 | `verification_log` | Epic 3, removed from the MVP split. |
 | `fact_occurrence` | In the DMP's ERD; nothing in Iteration 1 reads it. |
-| `severity_bands` | The four bands live in the frontend's `scoring.ts` today. It becomes a table only if the backend computes severity — see the open question below. |
+| `severity_bands` | The four bands remain published constants in `scoring.ts` and the backend response; no separate table is needed for the current MVP. |
 
 The Data Management Plan's ERD shows all of these. **The DMP and the team's MVP split disagree
 about Iteration 1 scope**, and this page follows the split. If that is wrong, it is Huang Guan's
