@@ -357,6 +357,7 @@ components:
       type: object
       required:
         [id, name, area, lat, lng, severity, band, insufficientData, validReports,
+         attentionScore, eligibleReportCount,
          lastReportedAt, freshnessKind, habitat, habitatTag, sensitivity,
          primarySpeciesGlyph, speciesNames, coverImageUrl, scene]
       properties:
@@ -379,6 +380,15 @@ components:
         validReports:
           type: integer
           description: counts Counted reports only
+        attentionScore:
+          type: number
+          format: float
+          nullable: true
+          description: median eligible report score over the latest 90 days; null when fewer than three reports qualify
+        eligibleReportCount:
+          type: integer
+          minimum: 0
+          description: Counted, complete and non-duplicate reports in the latest 90-day scoring window
         lastReportedAt:
           type: string
           format: date-time
@@ -524,7 +534,8 @@ components:
 
     ScoringMethod:
       type: object
-      required: [categoryWeights, quantityWeights, bands, windowDays, minReports]
+      required: [categoryWeights, quantityWeights, bands, windowDays, minReports,
+                 reportAggregation, beachAggregation, ruleVersion]
       properties:
         categoryWeights:
           type: array
@@ -549,10 +560,21 @@ components:
             required: [band, range, color]
             properties:
               band: { $ref: "#/components/schemas/SeverityBand" }
-              range: { type: string, example: "1.5 – 2.4" }
+              range: { type: string, example: "1.5 – <2.5" }
               color: { type: string, example: "#D9A24B" }
         windowDays: { type: integer, example: 90 }
         minReports: { type: integer, example: 3 }
+        reportAggregation:
+          type: string
+          enum: [max]
+          description: maximum Category Score in the report
+        beachAggregation:
+          type: string
+          enum: [median]
+          description: median of eligible Report Scores in the latest 90-day window
+        ruleVersion:
+          type: string
+          example: radar-sampah-scoring-v2
 
     UploadedPhoto:
       type: object
@@ -605,7 +627,8 @@ components:
 
     LitterReport:
       type: object
-      required: [id, beachId, beachName, quantities, category, quantity, createdAt, status]
+      required: [id, beachId, beachName, quantities, category, quantity, categoryScores,
+                 reportScore, createdAt, status]
       properties:
         id: { type: string }
         beachId: { type: string }
@@ -619,11 +642,19 @@ components:
             sending only the derived pair below would clear every other category.
           additionalProperties: { $ref: "#/components/schemas/QuantityBand" }
         category:
-          description: derived — the highest-weighted category present in quantities
+          description: derived — the category with the maximum category score (weight × quantity weight)
           allOf: [{ $ref: "#/components/schemas/LitterCategory" }]
         quantity:
           description: derived — that category's band
           allOf: [{ $ref: "#/components/schemas/QuantityBand" }]
+        categoryScores:
+          type: object
+          description: Category Score for each submitted category (category weight × quantity weight)
+          additionalProperties: { type: number, format: float }
+        reportScore:
+          type: number
+          format: float
+          description: maximum Category Score in this report
         createdAt: { type: string, format: date-time }
         status: { $ref: "#/components/schemas/ReportStatus" }
         statusNote:

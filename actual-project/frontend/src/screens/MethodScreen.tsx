@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { getScoringMethod } from '../api';
 import { SCORING_METHOD } from '../scoring';
 import { BackButton, GhostButton, Label } from '../components/ui';
-import { C, MONO } from '../theme';
+import { C, MONO, severityLabel } from '../theme';
 import type { ScoringMethod } from '../types';
 
 
@@ -18,6 +18,9 @@ function warnIfRuleDiffers(remote: ScoringMethod) {
   cmp('categoryWeights', local.categoryWeights, remote.categoryWeights);
   cmp('quantityWeights', local.quantityWeights, remote.quantityWeights);
   cmp('bands', local.bands, remote.bands);
+  cmp('reportAggregation', local.reportAggregation, remote.reportAggregation);
+  cmp('beachAggregation', local.beachAggregation, remote.beachAggregation);
+  cmp('ruleVersion', local.ruleVersion, remote.ruleVersion);
   if (diffs.length) {
     console.warn('[scoring] The backend rule differs from scoring.ts:\n  ' + diffs.join('\n  '));
   }
@@ -82,8 +85,9 @@ export default function MethodScreen() {
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 9, marginTop: 12 }}>
             {[
-              { of: 'ONE RECORD', is: 'category weight × quantity band' },
-              { of: 'ONE BEACH', is: `mean of its eligible records, last ${m.windowDays} days` },
+              { of: 'ONE CATEGORY', is: 'category weight × quantity level' },
+              { of: 'ONE RECORD', is: 'highest category score (Max)' },
+              { of: 'ONE BEACH', is: `median of eligible report scores, last ${m.windowDays} days` },
             ].map((f) => (
               <div key={f.of} style={{ background: C.tint, borderRadius: 14, padding: '11px 14px' }}>
                 <div style={{ fontFamily: MONO, fontSize: 8.5, letterSpacing: '.14em', color: C.dim }}>{f.of}</div>
@@ -138,7 +142,7 @@ export default function MethodScreen() {
                 }}
               >
                 <i style={{ width: 9, height: 9, borderRadius: 5, background: b.color, display: 'block', flex: 'none' }} />
-                <span style={{ fontSize: 14.5, fontWeight: 660, flex: 1 }}>{b.band}</span>
+                <span style={{ fontSize: 14.5, fontWeight: 660, flex: 1 }}>{severityLabel(b.band)}</span>
                 <span style={{ fontFamily: MONO, fontSize: 12.5, fontWeight: 600, color: C.ink2 }}>{b.range}</span>
               </div>
             ))}

@@ -127,7 +127,7 @@ def test_partial_main_database_is_migrated_to_contract_rules(tmp_path):
     }
     with engine.connect() as db_connection:
         rows = db_connection.execute(select(frontend_reports_table).order_by(frontend_reports_table.c.created_at)).all()
-    assert (rows[0].category, rows[0].quantity, rows[0].status) == ("Fishing gear", "Small", "Counted")
+    assert (rows[0].category, rows[0].quantity, rows[0].status) == ("Plastic", "Very Large", "Counted")
     assert rows[1].status == "Duplicate"
 
 
@@ -170,6 +170,7 @@ def test_beach_summary_and_detail_shapes_are_strict(api):
         "id", "name", "area", "lat", "lng", "severity", "band", "insufficientData",
         "validReports", "lastReportedAt", "freshnessKind", "habitat", "habitatTag",
         "sensitivity", "primarySpeciesGlyph", "speciesNames", "coverImageUrl", "scene",
+        "attentionScore", "eligibleReportCount",
     }
     assert set(beaches[0]) == expected_summary_fields
     assert beaches[0]["severity"] is None
@@ -205,6 +206,10 @@ def test_scoring_method_matches_published_contract(api):
     ]
     assert body["windowDays"] == 90
     assert body["minReports"] == 3
+    assert [band["range"] for band in body["bands"]] == ["below 1.5", "1.5 – <2.5", "2.5 – <3.5", "3.5 and above"]
+    assert body["reportAggregation"] == "max"
+    assert body["beachAggregation"] == "median"
+    assert body["ruleVersion"] == "radar-sampah-scoring-v2"
 
 
 def test_photo_upload_strips_metadata_resizes_and_uses_signed_url(api):
@@ -274,8 +279,14 @@ def test_create_report_returns_full_contract_and_hides_private_fields(api):
     report = response.get_json()
     assert report["status"] == "Counted"
     assert report["quantities"] == payload["quantities"]
-    assert report["category"] == "Fishing gear"
-    assert report["quantity"] == "Small"
+    assert report["category"] == "Plastic"
+    assert report["quantity"] == "Very Large"
+    assert report["reportScore"] == 3.4
+    assert report["categoryScores"] == {
+        "Plastic": 3.4,
+        "Fishing gear": 1.0,
+        "Paper": 1.05,
+    }
     assert report["createdAt"].endswith("+08:00")
     assert "lat" not in report and "lng" not in report and "photoKey" not in report
     assert "token=" in report["photoUrl"]
@@ -347,13 +358,13 @@ def test_patch_enforces_ownership_and_rechecks_status(api):
     assert corrected.get_json()["status"] == "Counted"
 
 
-def test_severity_uses_three_counted_reports_mean_and_latest_composition(api):
+def test_beach_attention_uses_median_report_scores_and_latest_composition(api):
     _application, client = api
     report_ids = []
     for quantities in (
-        {"Plastic": "Large"},
-        {"Plastic": "Large", "Paper": "Small"},
-        {"Plastic": "Large", "Fishing gear": "Large"},
+        {"Fishing gear": "Small"},
+        {"Fishing gear": "Small", "Paper": "Small"},
+        {"Fishing gear": "Large"},
     ):
         _session, headers = signup(client)
         photo = upload(client, headers)
@@ -362,16 +373,34 @@ def test_severity_uses_three_counted_reports_mean_and_latest_composition(api):
 
     morib = next(item for item in client.get("/beaches").get_json() if item["id"] == "morib")
     assert morib["validReports"] == 3
-    assert morib["severity"] == "High"
-    assert morib["band"] == 3
+    assert morib["severity"] == "Low"
+    assert morib["band"] == 1
+    assert morib["attentionScore"] == 1.0
+    assert morib["eligibleReportCount"] == 3
     assert morib["insufficientData"] is False
 
     detail = client.get("/beaches/morib").get_json()
     assert detail["composition"] == [
         {"category": "Fishing gear", "quantity": "Large"},
-        {"category": "Plastic", "quantity": "Large"},
     ]
     assert detail["compositionSource"]["reportId"] == report_ids[-1]
+
+
+def test_beach_attention_uses_median_for_even_count(api):
+    _application, client = api
+    for quantities in (
+        {"Fishing gear": "Small"},
+        {"Fishing gear": "Small"},
+        {"Fishing gear": "Large"},
+        {"Fishing gear": "Very Large"},
+    ):
+        _session, headers = signup(client)
+        photo = upload(client, headers)
+        assert client.post("/reports", headers=headers, json=report_payload(photo["photoKey"], quantities=quantities)).status_code == 201
+
+    morib = next(item for item in client.get("/beaches").get_json() if item["id"] == "morib")
+    assert morib["attentionScore"] == 2.0
+    assert morib["severity"] == "Moderate"
 
 
 def test_old_counted_report_is_not_eligible_but_still_drives_freshness(api):

@@ -12,6 +12,7 @@ import {
   formatDate,
   freshStyle,
   freshnessLabel,
+  severityLabel,
 } from '../theme';
 import { BandMeter, GlassPanel, InfoChip } from '../components/ds';
 import { useApp } from '../AppContext';
@@ -109,7 +110,7 @@ export default function BeachScreen() {
             {sev ? (
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 6 }}>
                 <div style={{ fontSize: 29, fontWeight: 750, letterSpacing: '.02em', color: sev.text }}>
-                  {b.severity?.toUpperCase()}
+                  {b.severity ? severityLabel(b.severity).toUpperCase() : null}
                 </div>
                 <BandMeter
                   level={(b.band ?? 0) as 0 | 1 | 2 | 3 | 4}
@@ -133,6 +134,11 @@ export default function BeachScreen() {
               <Check size={11} color={C.slate} strokeWidth={2.2} />
               {b.validReports} valid reports
             </InfoChip>
+            {b.attentionScore !== null && (
+              <InfoChip>
+                Attention score {b.attentionScore.toFixed(2)}
+              </InfoChip>
+            )}
             <InfoChip color={fs.c} background={fs.bg}>
               <i style={{ width: 6, height: 6, borderRadius: 3, background: fs.dot, display: 'block' }} />
               {freshnessLabel(b.freshnessKind, b.lastReportedAt)}
@@ -219,8 +225,8 @@ export default function BeachScreen() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 7, marginTop: 11 }}>
             {[
               'Duplicates and incomplete records are excluded.',
-              'Category weight × quantity band, averaged across the reporting window.',
-              'Four fixed bands: Low · Moderate · High · Severe.',
+              'Each report uses the highest category score; the beach uses the median over 90 days.',
+              'Four fixed bands: Low · Moderate · High · Very high.',
             ].map((t) => (
               <div key={t} style={{ display: 'flex', gap: 9, alignItems: 'flex-start', fontSize: 12.5, lineHeight: 1.5, color: C.mist }}>
                 <i style={{ width: 5, height: 5, borderRadius: 3, background: C.lime, display: 'block', flex: 'none', marginTop: 6 }} />

@@ -1,7 +1,7 @@
 
 
 import type { BeachSummary, MapLayer, SpeciesGlyph } from '../types';
-import { SEVERITY } from '../theme';
+import { SEVERITY, severityLabel } from '../theme';
 
 const F = "font-family:-apple-system,'Helvetica Neue',sans-serif";
 
@@ -46,7 +46,7 @@ export function markerHtml(
       }"></i>`;
     }
     bars += '</span>';
-    const label = b.severity ? b.severity.toUpperCase() : 'NO DATA';
+    const label = b.severity ? severityLabel(b.severity).toUpperCase() : 'NO DATA';
     const pill =
       `<div style="display:flex;align-items:center;gap:6px;background:${
         selected ? '#0B2161' : 'rgba(255,255,255,.95)'

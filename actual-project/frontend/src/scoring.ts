@@ -8,7 +8,7 @@
 //
 
 
-import type { ScoringMethod } from './types';
+import type { LitterCategory, QuantityBand, QuantityByCategory, ScoringMethod } from './types';
 
 export const SCORING_METHOD: ScoringMethod = {
 
@@ -32,11 +32,32 @@ export const SCORING_METHOD: ScoringMethod = {
 
   bands: [
     { band: 'Low', range: 'below 1.5', color: '#7CA98B' },
-    { band: 'Moderate', range: '1.5 – 2.4', color: '#D9A24B' },
-    { band: 'High', range: '2.5 – 3.4', color: '#CE6B45' },
+    { band: 'Moderate', range: '1.5 – <2.5', color: '#D9A24B' },
+    { band: 'High', range: '2.5 – <3.5', color: '#CE6B45' },
     { band: 'Severe', range: '3.5 and above', color: '#B84A3F' },
   ],
 
   windowDays: 90,
   minReports: 3,
+  reportAggregation: 'max',
+  beachAggregation: 'median',
+  ruleVersion: 'radar-sampah-scoring-v2',
 };
+
+export function categoryScoresFor(quantities: QuantityByCategory): Partial<Record<LitterCategory, number>> {
+  return Object.fromEntries(
+    SCORING_METHOD.categoryWeights
+      .filter(({ category }) => quantities[category])
+      .map(({ category, weight }) => {
+        const quantity = quantities[category] as QuantityBand;
+        const quantityWeight = SCORING_METHOD.quantityWeights.find((item) => item.quantity === quantity)?.weight ?? 0;
+        return [category, weight * quantityWeight];
+      }),
+  ) as Partial<Record<LitterCategory, number>>;
+}
+
+export function reportScoreFor(quantities: QuantityByCategory): number {
+  const scores = Object.values(categoryScoresFor(quantities));
+  if (!scores.length) throw new Error('A report needs at least one category.');
+  return Math.max(...scores);
+}

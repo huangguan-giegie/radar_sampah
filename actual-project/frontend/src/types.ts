@@ -79,6 +79,8 @@ export interface BeachSummary {
   band: number | null;
   insufficientData: boolean;
   validReports: number;
+  attentionScore: number | null;
+  eligibleReportCount: number;
 
   lastReportedAt: string | null;
   freshnessKind: FreshnessKind;
@@ -114,6 +116,10 @@ export interface ScoringMethod {
   windowDays: number;
 
   minReports: number;
+
+  reportAggregation: 'max';
+  beachAggregation: 'median';
+  ruleVersion: string;
 }
 
 export interface LitterReport {
@@ -126,6 +132,9 @@ export interface LitterReport {
   category: LitterCategory;
 
   quantity: QuantityBand;
+
+  categoryScores: Partial<Record<LitterCategory, number>>;
+  reportScore: number;
 
   createdAt: string;
   status: ReportStatus;
