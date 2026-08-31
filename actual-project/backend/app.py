@@ -613,6 +613,13 @@ def frontend_beaches() -> list[dict[str, Any]]:
     return load_data_file("beaches.json")
 
 
+def frontend_created_at_utc(value: datetime) -> datetime:
+    """统一 SQLite 的无时区时间，避免比较时发生异常。"""
+    if value.tzinfo is None:
+        return value.replace(tzinfo=timezone.utc)
+    return value.astimezone(timezone.utc)
+
+
 def frontend_score(rows: list[Any]) -> tuple[str | None, int | None]:
     if len(rows) < 3:
         return None, None
@@ -735,12 +742,13 @@ def create_app(database_url: str | None = None, testing: bool = False) -> Flask:
         with engine.connect() as connection:
             rows = connection.execute(select(frontend_reports_table).where(frontend_reports_table.c.status == "Counted")).all()
         for beach in frontend_beaches():
-            counted = [r for r in rows if r.beach_id == beach["id"] and r.created_at >= cutoff]
+            counted = [r for r in rows if r.beach_id == beach["id"] and frontend_created_at_utc(r.created_at) >= cutoff]
             severity, band = frontend_score(counted)
             newest = max(counted, key=lambda r: r.created_at) if counted else None
-            age = (now - newest.created_at).days if newest else 999
+            newest_created = frontend_created_at_utc(newest.created_at) if newest else None
+            age = (now - newest_created).days if newest_created else 999
             result.append({**beach, "severity": severity, "band": band, "insufficientData": severity is None,
-                           "validReports": len(counted), "lastReportedAt": newest.created_at.isoformat() if newest else None,
+                           "validReports": len(counted), "lastReportedAt": newest_created.isoformat() if newest_created else None,
                            "freshnessKind": "ok" if age < 30 else "aging" if age <= 90 else "stale"})
         return jsonify(result)
 

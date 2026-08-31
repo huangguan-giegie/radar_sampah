@@ -465,6 +465,8 @@ def test_frontend_report_contract_supports_auth_quantities_and_private_fields(cl
     assert "lat" not in report and "lng" not in report and "participantId" not in report
     assert client.get("/reports/mine", headers=headers).get_json()[0]["id"] == report["id"]
     assert client.get("/reports/mine/counts", headers=headers).get_json() == {"counted": 1, "duplicate": 0, "incomplete": 0}
+    # SQLite 返回无时区时间；海滩摘要仍应正常处理已计入的报告。
+    assert client.get("/beaches").status_code == 200
     assert "lat" not in frontend_reports_table.c and "lng" not in frontend_reports_table.c
 
 
