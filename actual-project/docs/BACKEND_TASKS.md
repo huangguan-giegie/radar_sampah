@@ -28,7 +28,7 @@ data, so **the contract is not a proposal — it is what the app already calls.*
 The app switches from mock data to a real backend with one environment variable:
 
 ```
-VITE_API_BASE_URL=http://localhost:5000
+VITE_API_BASE_URL=http://localhost:5001
 ```
 
 With it unset, `USE_MOCK` in `frontend/src/api.ts` is true and nothing hits the network. Set it,

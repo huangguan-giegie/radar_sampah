@@ -1,6 +1,6 @@
 # Radar Sampah API Contract
 
-Local base URL: `http://localhost:5000`. All request examples are synthetic
+Local base URL: `http://localhost:5001`. All request examples are synthetic
 or illustrative. This student demo never stores exact coordinates or personal
 details. One-off GPS assistance may return only a broad area name.
 
