@@ -63,8 +63,11 @@ Do not commit credentials, personal data or large generated files.
 
 Current demo services:
 
-- Frontend: https://radar-sampah-frontend.onrender.com
-- API: https://radar-sampah-api.onrender.com
+- Frontend: https://team04-marine-observation-frontend.onrender.com
+- API: https://team04-marine-observation-api.onrender.com
+
+The new `radar-sampah-frontend` and `radar-sampah-api` hostnames are not yet
+enabled.
 
 ### `05 Evidence`
 
