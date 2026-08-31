@@ -2,7 +2,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { getBeach } from '../api';
 import { BeachCover } from '../components/BeachCover';
-import { Camera, Check, ChevronRight, Clock, SpeciesIcon } from '../components/Icon';
+import { Camera, Check, ChevronRight, Clock, Info, SpeciesIcon } from '../components/Icon';
 import { BackButton, GhostButton, Label, PrimaryButton, Skeleton } from '../components/ui';
 import {
   C,
@@ -17,13 +17,14 @@ import {
 import { BandMeter, GlassPanel, InfoChip } from '../components/ds';
 import { useApp } from '../AppContext';
 import type { BeachDetail } from '../types';
+import { hasDraftProgress, resumePath } from '../flowRules';
 
 const COMP_COLORS = ['#B8FF36', '#2C4A8C', '#5470A8', '#7A879B', '#98A4B5', '#CBD3E0'];
 
 export default function BeachScreen() {
   const { beachId = '' } = useParams();
   const nav = useNavigate();
-  const { user, resetDraft, patchDraft } = useApp();
+  const { user, draft, resetDraft, patchDraft, setLastSavedReport } = useApp();
   const [b, setB] = useState<BeachDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
@@ -37,8 +38,15 @@ export default function BeachScreen() {
   }, [beachId]);
 
   const startReport = () => {
+    if (hasDraftProgress(draft)) {
+      if (window.confirm('Resume your unfinished report? Choose Cancel to start a new report.')) {
+        nav(resumePath(draft));
+        return;
+      }
+    }
     resetDraft();
-    patchDraft({ beachId });
+    setLastSavedReport(null);
+    patchDraft({ beachId, beachName: b?.name ?? null });
     nav(user ? '/report/photo' : `/identity?next=${encodeURIComponent('/report/photo')}`);
   };
 
@@ -124,15 +132,19 @@ export default function BeachScreen() {
                   Insufficient data
                 </div>
                 <div style={{ fontSize: 12, lineHeight: 1.5, color: C.dim, marginTop: 5, maxWidth: 210 }}>
-                  Fewer than three valid reports. Not a sign the beach is clean.
+                  Fewer than three counted reports. Not a sign the beach is clean.
                 </div>
               </>
             )}
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'flex-end' }}>
             <InfoChip>
-              <Check size={11} color={C.slate} strokeWidth={2.2} />
-              {b.validReports} valid reports
+              {b.validReports > 0 && !b.insufficientData ? (
+                <Check size={11} color={C.slate} strokeWidth={2.2} />
+              ) : (
+                <Info size={11} color={C.slate} strokeWidth={2.2} />
+              )}
+              {b.validReports} counted reports
             </InfoChip>
             {b.attentionScore !== null && (
               <InfoChip>
@@ -152,8 +164,8 @@ export default function BeachScreen() {
             <div style={{ flex: 1, fontSize: 12, lineHeight: 1.5, color: C.muted }}>
 
               {b.lastReportedAt
-                ? 'The most recent verified report is older than 90\u00a0days. Conditions may have changed in either direction.'
-                : 'No verified report has ever been filed for this beach. That is missing evidence, not a finding.'}
+                ? 'The most recent counted report is older than 90\u00a0days. Conditions may have changed in either direction.'
+                : 'No counted report has ever been filed for this beach. That is missing evidence, not a finding.'}
             </div>
           </div>
         )}
@@ -194,7 +206,7 @@ export default function BeachScreen() {
           ) : (
             <div style={{ border: '1.5px dashed rgba(11,33,97,.18)', borderRadius: 24, padding: 22, textAlign: 'center' }}>
               <div style={{ fontSize: 13.5, fontWeight: 640, color: C.muted }}>
-                No verified report yet
+                No counted report yet
               </div>
 
             </div>
@@ -224,7 +236,7 @@ export default function BeachScreen() {
           <div style={{ fontSize: 15.5, fontWeight: 650, marginTop: 9 }}>Same rule for every beach</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 7, marginTop: 11 }}>
             {[
-              'Duplicates and incomplete records are excluded.',
+              'Duplicates and incomplete reports are excluded.',
               'Each report uses the highest category score; the beach uses the median over 90 days.',
               'Four fixed bands: Low · Moderate · High · Very high.',
             ].map((t) => (

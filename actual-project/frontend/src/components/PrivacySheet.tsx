@@ -5,7 +5,7 @@ import { GhostButton } from './ui';
 const POINTS = [
   'Suggest the correct beach',
   'Assign the report to a supported beach',
-  'Detect duplicate records',
+  'Detect duplicate reports',
 ];
 
 

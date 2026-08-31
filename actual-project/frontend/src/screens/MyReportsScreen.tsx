@@ -16,7 +16,7 @@ const TABS: Tab[] = ['All', 'Counted', 'Excluded'];
 export default function MyReportsScreen() {
   const nav = useNavigate();
   const [params, setParams] = useSearchParams();
-  const { patchDraft, resetDraft, reportsVersion } = useApp();
+  const { patchDraft, resetDraft, setLastSavedReport, reportsVersion } = useApp();
 
   const tab = (params.get('tab') as Tab) ?? 'All';
   const [reports, setReports] = useState<LitterReport[]>([]);
@@ -72,6 +72,7 @@ export default function MyReportsScreen() {
                 key={t}
                 type="button"
                 onClick={() => setParams(t === 'All' ? {} : { tab: t })}
+                aria-pressed={active}
                 style={{
                   flex: 1,
                   textAlign: 'center',
@@ -99,7 +100,7 @@ export default function MyReportsScreen() {
         {!loading && failed && (
           <div style={{ marginTop: 8 }}>
             <ErrorNote
-              title="Couldn't load your records"
+              title="Couldn't load your reports"
               body="They're still saved — this is just the connection."
               onRetry={loadReports}
             />
@@ -120,27 +121,28 @@ export default function MyReportsScreen() {
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {rows.map((r) => {
-            const fixable = r.status === 'Incomplete';
             return (
               <button
                 key={r.id}
                 type="button"
-
-                disabled={!fixable}
                 onClick={() => {
-                  if (!fixable) return;
                   resetDraft();
+                  setLastSavedReport(null);
                   patchDraft({
                     editingReportId: r.id,
                     beachId: r.beachId,
                     beachName: r.beachName,
                     quantities: { ...r.quantities },
-                    locationSource: 'manual',
+                    locationSource: r.locationSource ?? 'manual',
                     coords: null,
                     existingPhotoUrl: r.photoUrl ?? null,
+                    existingPhotoKey: r.photoKey ?? null,
+                    editingStatus: r.status,
+                    editingStatusNote: r.statusNote ?? null,
                   });
-                  nav('/report/photo');
+                  nav('/report/details', { replace: true });
                 }}
+                aria-label={`Correct report for ${r.beachName}`}
                 className="card-hover"
                 style={{
                   display: 'flex',
@@ -150,7 +152,7 @@ export default function MyReportsScreen() {
                   borderRadius: 22,
                   padding: 13,
                   width: '100%',
-                  cursor: fixable ? 'pointer' : 'default',
+                  cursor: 'pointer',
                 }}
               >
                 <BeachCover
@@ -187,8 +189,8 @@ export default function MyReportsScreen() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: 11.5, lineHeight: 1.55, color: C.muted, marginTop: 7 }}>
             {[
               { s: 'Counted', c: C.green, t: 'counts toward the beach rating' },
-              { s: 'Duplicate', c: C.muted, t: 'same beach and day as an existing record' },
-              { s: 'Incomplete', c: C.red, t: 'missing field or unusable photo — fixable' },
+              { s: 'Duplicate', c: C.muted, t: 'same beach and day as an existing report' },
+              { s: 'Incomplete', c: C.red, t: 'missing field or unusable photo — correctable' },
             ].map((r) => (
               <div key={r.s}>
                 <b style={{ color: r.c }}>{r.s}</b> — {r.t}

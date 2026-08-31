@@ -555,6 +555,7 @@ root; references in DB only. Access controlled.`
 | Method | Path | Auth | Notes |
 | --- | --- | --- | --- |
 | POST | `/uploads/photos` | yes | `multipart/form-data`, field name `photo` |
+| GET | `/uploads/photos/<photo_key>/preview-url` | yes | Renew an owner-only short-lived preview URL |
 
 ```json
 // 201
@@ -568,6 +569,10 @@ root; references in DB only. Access controlled.`
 The browser creates a JPEG copy with native `Image` and `canvas` before sending the multipart
 request, so the original file's metadata is not uploaded. The field name is `photo` and the
 upload response is used as-is by the report form.
+
+If a report is reopened after a refresh and its previous signed URL has expired, the owner can
+call `GET /uploads/photos/<photo_key>/preview-url`. The endpoint checks the photo metadata owner
+and file before returning a fresh `{ "previewUrl": "..." }`; another participant cannot renew it.
 
 Three columns on the report:
 
@@ -593,6 +598,8 @@ So the rule is simple:
 - The bucket or directory is **not publicly readable**. No long-lived public address exists.
 - In the responses of `GET /reports/mine` and `POST` / `PATCH /reports`, `photoUrl` is a
   **short-lived signed URL** (15 minutes is plenty), minted from `photo_key` at serialisation time.
+- The same owner-only responses include the opaque `photoKey` so the client can request a fresh
+  preview URL after reload. The key is not a public address and is omitted from other users' views.
 - **Check ownership before minting**: `report.reporter_id` must equal the caller's user. If it
   does not, do not sign — omit the `photoUrl` field entirely.
 - The signed URL expires on its own. The app does not cache it; every list fetch gets a fresh one.

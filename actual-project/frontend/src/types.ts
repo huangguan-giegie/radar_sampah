@@ -139,9 +139,12 @@ export interface LitterReport {
   createdAt: string;
   status: ReportStatus;
 
+  locationSource?: 'gps' | 'manual';
+
   statusNote?: string | null;
 
   photoUrl?: string | null;
+  photoKey?: string | null;
 }
 
 

@@ -8,12 +8,16 @@ import {
   reachableStep,
   reportOutcome,
   safeNextPath,
+  hasDraftProgress,
 } from './flowRules';
+import { markerHtml } from './components/BeachMarker';
+import type { BeachSummary } from './types';
 
 function draft(changes: Partial<ReportDraft> = {}): ReportDraft {
   return {
     photo: { photoKey: 'mock/test.jpg', previewUrl: 'blob:test', metadataStripped: true },
     existingPhotoUrl: null,
+    existingPhotoKey: null,
     beachId: 'morib',
     beachName: 'Pantai Morib',
     locationSource: 'manual',
@@ -21,6 +25,8 @@ function draft(changes: Partial<ReportDraft> = {}): ReportDraft {
     quantities: { Plastic: 'Small' },
     gpsIssue: null,
     editingReportId: null,
+    editingStatus: null,
+    editingStatusNote: null,
     ...changes,
   };
 }
@@ -118,6 +124,23 @@ describe('buildReportSubmission', () => {
       },
     });
   });
+
+  it('preserves the original GPS source when correcting without new coordinates', () => {
+    const result = buildReportSubmission(
+      draft({
+        editingReportId: 'report-gps',
+        photo: null,
+        existingPhotoUrl: '/existing.jpg',
+        locationSource: 'gps',
+        coords: null,
+      }),
+    );
+    expect(result.kind).toBe('update');
+    if (result.kind === 'update') {
+      expect(result.changes).not.toHaveProperty('locationSource');
+      expect(result.changes).not.toHaveProperty('coords');
+    }
+  });
 });
 
 describe('reportOutcome', () => {
@@ -176,6 +199,53 @@ describe('Flow guards for direct URLs into the reporting flow', () => {
   it('accepts the existing photo while editing a record', () => {
     const d = draft({ photo: null, existingPhotoUrl: 'data:image/png;base64,x' });
     expect(reachableStep(d)).toBe('review');
+  });
+});
+
+describe('Report draft entry', () => {
+  it('recognises a draft that should be offered for resume', () => {
+    const blank = draft({
+      photo: null,
+      existingPhotoUrl: null,
+      beachId: null,
+      beachName: null,
+      locationSource: null,
+      quantities: {},
+      editingReportId: null,
+    });
+    expect(hasDraftProgress(blank)).toBe(false);
+    expect(hasDraftProgress(draft({ quantities: { Plastic: 'Small' } }))).toBe(true);
+  });
+});
+
+describe('Map marker accessibility', () => {
+  it('includes a readable beach label and keyboard target', () => {
+    const beach: BeachSummary = {
+      id: 'morib',
+      name: 'Pantai Morib',
+      area: 'Banting',
+      lat: 2.746,
+      lng: 101.44,
+      severity: 'High',
+      band: 3,
+      insufficientData: false,
+      validReports: 3,
+      attentionScore: 2.8,
+      eligibleReportCount: 3,
+      lastReportedAt: null,
+      freshnessKind: 'ok',
+      habitat: 'mudflat',
+      habitatTag: 'MUD FLAT',
+      sensitivity: 'medium',
+      primarySpeciesGlyph: 'bird',
+      speciesNames: [],
+      coverImageUrl: null,
+      scene: '#123456',
+    };
+
+    const html = markerHtml(beach, false, 'litter', 'bird');
+    expect(html).toContain('aria-label="Pantai Morib · HIGH"');
+    expect(html).toContain('tabindex="0"');
   });
 });
 

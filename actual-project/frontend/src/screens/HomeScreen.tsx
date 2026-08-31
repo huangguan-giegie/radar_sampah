@@ -7,6 +7,7 @@ import { OverlayChip, SeverityBadge, StatTile } from '../components/ds';
 import { C, MONO, NOISE, lastReportedLabel } from '../theme';
 import { useApp } from '../AppContext';
 import type { BeachSummary, ReportCounts } from '../types';
+import { hasDraftProgress, resumePath } from '../flowRules';
 
 function greeting(d = new Date()) {
   const h = d.getHours();
@@ -45,12 +46,12 @@ function BeachRow({ b, last, onClick }: { b: BeachSummary; last: boolean; onClic
           justifyContent: 'center',
         }}
       >
-        {b.insufficientData ? <Info size={16} color={C.cloud} /> : <Check size={16} color={C.lime} strokeWidth={2} />}
+        {b.validReports > 0 && !b.insufficientData ? <Check size={16} color={C.lime} strokeWidth={2} /> : <Info size={16} color={C.cloud} />}
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontSize: 14, fontWeight: 620 }}>{b.name}</div>
         <div style={{ fontSize: 11.5, color: C.dim, marginTop: 3 }}>
-          {b.validReports} valid reports · {lastReportedLabel(b.lastReportedAt).toLowerCase()}
+          {b.validReports} counted reports · {lastReportedLabel(b.lastReportedAt).toLowerCase()}
         </div>
       </div>
       <SeverityBadge band={b.severity} block />
@@ -60,7 +61,7 @@ function BeachRow({ b, last, onClick }: { b: BeachSummary; last: boolean; onClic
 
 export default function HomeScreen() {
   const nav = useNavigate();
-  const { user, resetDraft, reportsVersion } = useApp();
+  const { user, draft, resetDraft, setLastSavedReport, reportsVersion } = useApp();
 
   const [beaches, setBeaches] = useState<BeachSummary[]>([]);
   const [loadingBeaches, setLoadingBeaches] = useState(true);
@@ -92,7 +93,14 @@ export default function HomeScreen() {
   }, [reportsVersion, user]);
 
   const startReport = () => {
+    if (hasDraftProgress(draft)) {
+      if (window.confirm('Resume your unfinished report? Choose Cancel to start a new report.')) {
+        nav(resumePath(draft));
+        return;
+      }
+    }
     resetDraft();
+    setLastSavedReport(null);
     nav(user ? '/report/photo' : '/identity?next=/report/photo');
   };
 
@@ -299,8 +307,8 @@ export default function HomeScreen() {
             READING THE MAP
           </div>
           <div style={{ fontSize: 11, lineHeight: 1.6, color: C.muted, marginTop: 6 }}>
-            <b style={{ color: C.muted }}>Insufficient data</b> — fewer than three valid reports.{' '}
-            <b style={{ color: C.muted }}>Not recently reported</b> — nothing valid in 90 days.
+            <b style={{ color: C.muted }}>Insufficient data</b> — fewer than three counted reports.{' '}
+            <b style={{ color: C.muted }}>Not recently reported</b> — nothing counted in 90 days.
             Neither means the beach is clean.
           </div>
         </div>

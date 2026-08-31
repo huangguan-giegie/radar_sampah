@@ -269,6 +269,44 @@ def test_photo_upload_strips_metadata_resizes_and_uses_signed_url(api):
         assert not processed.getexif()
 
 
+def test_photo_preview_url_can_be_renewed_by_owner(api):
+    _application, client = api
+    _session, headers = signup(client)
+    uploaded = upload(client, headers)
+
+    renewed = client.get(
+        "/uploads/photos/" + uploaded["photoKey"] + "/preview-url",
+        headers=headers,
+    )
+    assert renewed.status_code == 200
+    refreshed_url = renewed.get_json()["previewUrl"]
+    assert refreshed_url != uploaded["previewUrl"] or "token=" in refreshed_url
+
+    url = urlsplit(refreshed_url)
+    assert client.get(url.path + "?" + url.query).status_code == 200
+
+    _other_session, other_headers = signup(client)
+    forbidden = client.get(
+        "/uploads/photos/" + uploaded["photoKey"] + "/preview-url",
+        headers=other_headers,
+    )
+    assert forbidden.status_code == 404
+    assert forbidden.get_json()["code"] == "NOT_FOUND"
+
+
+def test_empty_photo_is_rejected(api):
+    _application, client = api
+    _session, headers = signup(client)
+    response = client.post(
+        "/uploads/photos",
+        headers=headers,
+        data={"photo": (io.BytesIO(b""), "empty.jpg")},
+        content_type="multipart/form-data",
+    )
+    assert response.status_code == 400
+    assert response.get_json()["code"] == "VALIDATION_FAILED"
+
+
 def test_photo_upload_error_codes(api):
     _application, client = api
     _session, headers = signup(client)
@@ -327,7 +365,7 @@ def test_create_report_returns_full_contract_and_hides_private_fields(api):
         "Paper": 1.05,
     }
     assert report["createdAt"].endswith("+08:00")
-    assert "lat" not in report and "lng" not in report and "photoKey" not in report
+    assert "lat" not in report and "lng" not in report and report["photoKey"] == uploaded["photoKey"]
     assert "token=" in report["photoUrl"]
 
     engine = application.extensions["marine_engine"]
@@ -346,7 +384,7 @@ def test_duplicate_rule_and_counts(api):
     second = client.post("/reports", headers=headers, json=payload).get_json()
     assert first["status"] == "Counted"
     assert second["status"] == "Duplicate"
-    assert second["statusNote"].startswith("Matched an existing record")
+    assert second["statusNote"].startswith("Matched an existing report")
     assert client.get("/reports/mine/counts", headers=headers).get_json() == {
         "counted": 1,
         "duplicate": 1,
@@ -364,6 +402,23 @@ def test_duplicate_rule_is_scoped_to_reporter(api):
     second_photo = upload(client, second_headers)
     assert client.post("/reports", headers=first_headers, json=report_payload(first_photo["photoKey"])).get_json()["status"] == "Counted"
     assert client.post("/reports", headers=second_headers, json=report_payload(second_photo["photoKey"])).get_json()["status"] == "Counted"
+
+
+def test_duplicate_rule_resets_on_a_new_local_day(api):
+    application, client = api
+    _session, headers = signup(client)
+    first_photo = upload(client, headers)
+    first = client.post("/reports", headers=headers, json=report_payload(first_photo["photoKey"])).get_json()
+    engine = application.extensions["marine_engine"]
+    yesterday = datetime.now(timezone.utc) - timedelta(days=1)
+    with engine.begin() as connection:
+        connection.execute(
+            reports_table.update().where(reports_table.c.id == first["id"]).values(created_at=yesterday)
+        )
+    second_photo = upload(client, headers)
+    second = client.post("/reports", headers=headers, json=report_payload(second_photo["photoKey"])).get_json()
+    assert first["status"] == "Counted"
+    assert second["status"] == "Counted"
 
 
 def test_photo_key_is_private_to_uploader(api):

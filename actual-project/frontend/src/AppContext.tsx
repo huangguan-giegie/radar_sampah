@@ -11,13 +11,14 @@ import {
   type ReactNode,
 } from 'react';
 import { createAnonymousId, getMe, logout } from './api';
-import type { LitterReport, QuantityByCategory, UploadedPhoto, User } from './types';
+import type { LitterReport, QuantityByCategory, ReportStatus, UploadedPhoto, User } from './types';
 import { restoreId as apiRestoreId } from './api';
 
 
 export type ReportDraft = {
   photo: UploadedPhoto | null;
   existingPhotoUrl: string | null;
+  existingPhotoKey: string | null;
   beachId: string | null;
 
   beachName: string | null;
@@ -27,6 +28,8 @@ export type ReportDraft = {
 
   gpsIssue: 'denied' | 'unavailable' | 'timeout' | 'inaccurate' | 'noBeach' | 'failed' | null;
   editingReportId: string | null;
+  editingStatus: ReportStatus | null;
+  editingStatusNote: string | null;
 };
 
 
@@ -35,6 +38,7 @@ function emptyDraft(): ReportDraft {
   return {
     photo: null,
     existingPhotoUrl: null,
+    existingPhotoKey: null,
     beachId: null,
     beachName: null,
     locationSource: null,
@@ -42,6 +46,8 @@ function emptyDraft(): ReportDraft {
     quantities: {},
     gpsIssue: null,
     editingReportId: null,
+    editingStatus: null,
+    editingStatusNote: null,
   };
 }
 
@@ -108,8 +114,20 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [draft, setDraft] = useState<ReportDraft>(loadDraft);
   const [lastSavedReport, setLastSavedReport] = useState<LitterReport | null>(null);
   const [reportsVersion, setReportsVersion] = useState(0);
-  const [offline, setOffline] = useState(false);
+  const [offline, setOffline] = useState(() => typeof navigator !== 'undefined' && navigator.onLine === false);
   const [toast, setToast] = useState<string | null>(null);
+
+
+  useEffect(() => {
+    const markOnline = () => setOffline(false);
+    const markOffline = () => setOffline(true);
+    window.addEventListener('online', markOnline);
+    window.addEventListener('offline', markOffline);
+    return () => {
+      window.removeEventListener('online', markOnline);
+      window.removeEventListener('offline', markOffline);
+    };
+  }, []);
 
 
   useEffect(() => {

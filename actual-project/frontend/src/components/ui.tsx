@@ -132,9 +132,9 @@ export function BackButton({
       aria-label="Back"
       className="press"
       style={{
-        width: 38,
-        height: 38,
-        borderRadius: 19,
+        width: 44,
+        height: 44,
+        borderRadius: 22,
         flex: 'none',
         background: dark ? 'rgba(12,24,52,.5)' : C.white,
         backdropFilter: dark ? 'blur(10px)' : undefined,
@@ -235,6 +235,8 @@ export function Skeleton({ h = 16, w = '100%', r = 8 }: { h?: number; w?: number
 export function ErrorNote({ title, body, onRetry }: { title: string; body?: string; onRetry?: () => void }) {
   return (
     <div
+      role="alert"
+      tabIndex={-1}
       style={{
         display: 'flex',
         gap: 11,

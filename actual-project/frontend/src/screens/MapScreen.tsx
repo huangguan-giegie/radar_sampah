@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { getBeaches } from '../api';
 import { markerHtml } from '../components/BeachMarker';
 import { useLeafletMap } from '../components/useLeafletMap';
-import { ArrowRight, Check, Close, WifiOff } from '../components/Icon';
+import { ArrowRight, Check, Close, Info, WifiOff } from '../components/Icon';
 import { C, MONO, freshStyle, freshnessLabel, lastReportedLabel, severityLabel } from '../theme';
 import { GlassPanel, SeverityBadge } from '../components/ds';
 import { useApp } from '../AppContext';
@@ -14,13 +14,19 @@ import type { BeachSummary, MapLayer } from '../types';
 const CENTER: [number, number] = [2.92, 101.45];
 const ZOOM = 9;
 
+const MARKER_OFFSETS: Record<string, [number, number]> = {
+  // Separate the two nearby south-coast markers at narrow mobile widths.
+  morib: [-45, -45],
+  kelanang: [-10, 65],
+};
+
 
 const LAYERS: MapLayer[] = ['litter', 'bio'];
 
 
 const LEGEND = [
   { label: 'LOW', color: '#7CA98B' },
-  { label: 'MOD', color: '#D9A24B' },
+  { label: 'MODERATE', color: '#D9A24B' },
   { label: 'HIGH', color: '#CE6B45' },
   { label: severityLabel('Severe').toUpperCase(), color: '#B84A3F' },
 ];
@@ -64,13 +70,26 @@ export default function MapScreen() {
         icon: L.divIcon({
           className: '',
           iconSize: [0, 0],
-          html: markerHtml(b, selectedId === b.id, layer, b.primarySpeciesGlyph),
+          html: markerHtml(b, selectedId === b.id, layer, b.primarySpeciesGlyph, MARKER_OFFSETS[b.id] ?? [0, 0]),
         }),
-        keyboard: false,
+        keyboard: true,
       });
       marker.on('click', () => setSelectedId(b.id));
       marker.setZIndexOffset(selectedId === b.id ? 1000 : 0);
       marker.addTo(map);
+      const markerElement = marker.getElement();
+      markerElement?.setAttribute('role', 'button');
+      markerElement?.setAttribute('tabindex', '0');
+      markerElement?.setAttribute(
+        'aria-label',
+        `${b.name} · ${layer === 'litter' ? (b.severity ? severityLabel(b.severity).toUpperCase() : 'NO DATA') : b.habitatTag}`,
+      );
+      markerElement?.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          setSelectedId(b.id);
+        }
+      });
       markersRef.current[b.id] = marker;
     });
   }, [ready, beaches, layer, selectedId, mapRef]);
@@ -111,6 +130,7 @@ export default function MapScreen() {
               key={k}
               type="button"
               onClick={() => setLayer(k)}
+              aria-pressed={layer === k}
               style={{
                 padding: '9px 20px',
                 borderRadius: 999,
@@ -165,7 +185,7 @@ export default function MapScreen() {
                   {item.label}
                 </span>
               ))}
-              <span style={{ color: C.dim }}>· VALID RECORDS ONLY</span>
+              <span style={{ color: C.dim }}>· COUNTED REPORTS ONLY</span>
             </>
           ) : (
             <>HABITAT CONTEXT · BROAD AREAS ONLY</>
@@ -284,9 +304,9 @@ function SelectedCard({
             position: 'absolute',
             top: 12,
             right: 12,
-            width: 28,
-            height: 28,
-            borderRadius: 14,
+            width: 44,
+            height: 44,
+            borderRadius: 22,
             background: 'rgba(11,33,97,.06)',
             display: 'flex',
             alignItems: 'center',
@@ -308,15 +328,19 @@ function SelectedCard({
 
             {beach.insufficientData && (
               <div style={{ fontSize: 12.5, lineHeight: 1.5, color: C.muted, marginTop: 10 }}>
-                Fewer than three valid reports — no severity band is shown. This does not mean the
+                Fewer than three counted reports — no severity band is shown. This does not mean the
                 beach is clean.
               </div>
             )}
 
             <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 11px', borderRadius: 999, background: 'rgba(11,33,97,.06)', fontSize: 11.5, fontWeight: 600, color: C.ink2 }}>
-                <Check size={12} color={C.slate} strokeWidth={2} />
-                {beach.validReports} valid reports
+                {beach.validReports > 0 && !beach.insufficientData ? (
+                  <Check size={12} color={C.slate} strokeWidth={2} />
+                ) : (
+                  <Info size={12} color={C.slate} strokeWidth={2} />
+                )}
+                {beach.validReports} counted reports
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 11px', borderRadius: 999, background: fs.bg, fontSize: 11.5, fontWeight: 600, color: fs.c }}>
                 <i style={{ width: 6, height: 6, borderRadius: 3, background: fs.dot, display: 'block' }} />

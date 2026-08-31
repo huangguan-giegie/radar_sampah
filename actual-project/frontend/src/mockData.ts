@@ -288,7 +288,7 @@ export const SEED_REPORTS: LitterReport[] = [
     createdAt: '2026-08-09T02:00:00Z',
     status: 'Duplicate',
     statusNote:
-      'Matched an existing record for the same beach on the same day — excluded from the severity calculation.',
+      'Matched an existing report for the same beach on the same day — excluded from the severity calculation.',
   },
   {
     id: 'r3',
@@ -313,6 +313,6 @@ export const SEED_REPORTS: LitterReport[] = [
     reportScore: 0.5,
     createdAt: '2026-07-02T02:00:00Z',
     status: 'Incomplete',
-    statusNote: 'Photo unreadable — excluded until you correct and save the record.',
+    statusNote: 'Photo unreadable — excluded until you correct and save the report.',
   },
 ];

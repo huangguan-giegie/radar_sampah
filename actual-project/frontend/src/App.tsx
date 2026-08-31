@@ -1,6 +1,7 @@
 
 
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
+import { useEffect } from 'react';
 import { DeviceFrame } from './components/DeviceFrame';
 import { TabBar } from './components/TabBar';
 import { Toast } from './components/Toast';
@@ -39,17 +40,43 @@ function RequireAuth({ children }: { children: JSX.Element }) {
 
 
 function RequireStep({ step, children }: { step: ReportStep; children: JSX.Element }) {
-  const { draft } = useApp();
+  const { draft, lastSavedReport } = useApp();
   const to = guardStep(step, draft);
+  if (to && lastSavedReport) return <Navigate to="/reports" replace />;
   return to ? <Navigate to={to} replace /> : children;
 }
 
 export default function App() {
   const { pathname } = useLocation();
   const { toast } = useApp();
+  const pageTitle = pathname.startsWith('/report/saved')
+    ? 'Report saved'
+    : pathname.startsWith('/report/')
+      ? 'Add a report'
+      : pathname.startsWith('/beach/')
+        ? 'Beach details'
+        : pathname === '/map'
+          ? 'Beach map'
+          : pathname === '/reports'
+            ? 'My reports'
+            : pathname === '/account'
+              ? 'Account'
+              : pathname === '/home'
+                ? 'Home'
+                : 'Radar Sampah';
+
+  useEffect(() => {
+    document.title = `${pageTitle} · Radar Sampah`;
+  }, [pageTitle]);
 
   return (
     <DeviceFrame>
+      <div
+        aria-live="polite"
+        style={{ position: 'absolute', width: 1, height: 1, padding: 0, margin: -1, overflow: 'hidden', clip: 'rect(0 0 0 0)', whiteSpace: 'nowrap', border: 0 }}
+      >
+        {pageTitle}
+      </div>
       <Routes>
         <Route path="/" element={<SplashScreen />} />
         <Route path="/welcome" element={<WelcomeScreen />} />
