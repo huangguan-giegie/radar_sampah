@@ -459,7 +459,7 @@ def test_frontend_report_contract_supports_auth_quantities_and_private_fields(cl
     assert created.status_code == 201
     report = created.get_json()
     assert report["quantities"] == payload["quantities"]
-    assert report["category"] == "Fishing gear"
+    assert report["category"] == "Plastic"
     assert report["status"] == "Counted"
     assert report["photoUrl"].startswith("http")
     assert "lat" not in report and "lng" not in report and "participantId" not in report
@@ -494,6 +494,9 @@ def test_photo_upload_returns_opaque_preview_url_and_serves_bytes(client):
     served = client.get(body["previewUrl"].replace("http://localhost", ""), headers={"Authorization": f"Bearer {token}"})
     assert served.status_code == 200
     assert served.data == b"fake-image"
+    browser_served = client.get(body["previewUrl"].replace("http://localhost", ""))
+    assert browser_served.status_code == 200
+    assert browser_served.data == b"fake-image"
 
 
 def test_same_reporter_can_submit_two_complete_reports_without_duplicate_status(client):
@@ -503,3 +506,20 @@ def test_same_reporter_can_submit_two_complete_reports_without_duplicate_status(
     first = client.post("/reports", json=payload, headers=headers).get_json()
     second = client.post("/reports", json=payload, headers=headers).get_json()
     assert first["status"] == second["status"] == "Counted"
+
+
+def test_report_primary_category_uses_highest_category_quantity_score(client):
+    token = client.post("/auth/anonymous").get_json()["token"]
+    response = client.post(
+        "/reports",
+        headers={"Authorization": f"Bearer {token}"},
+        json={
+            "beachId": "morib",
+            "quantities": {"Plastic": "Very Large", "Fishing gear": "Small"},
+            "photoKey": "p.jpg",
+            "locationSource": "manual",
+        },
+    )
+    assert response.status_code == 201
+    assert response.get_json()["category"] == "Plastic"
+    assert response.get_json()["quantity"] == "Very Large"

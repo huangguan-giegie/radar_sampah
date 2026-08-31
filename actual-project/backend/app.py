@@ -805,8 +805,8 @@ def create_app(database_url: str | None = None, testing: bool = False) -> Flask:
         return jsonify({"photoKey": key, "previewUrl": preview, "metadataStripped": True}), 201
 
     @application.get("/uploads/photos/<path:photo_key>")
-    @require_auth
     def serve_frontend_photo(photo_key: str):
+        # 浏览器图片元素不能附带 Bearer 请求头，因此仅通过不可猜测的临时 key 访问。
         directory = Path(tempfile.gettempdir()) / "radar-sampah-photos"
         path = (directory / photo_key).resolve()
         if directory.resolve() not in path.parents or not path.is_file():
@@ -833,7 +833,7 @@ def create_app(database_url: str | None = None, testing: bool = False) -> Flask:
         photo_key = str(payload.get("photoKey") or "").strip()
         if not photo_key:
             return None, "PHOTO_REQUIRED"
-        top = max(quantities, key=lambda c: CATEGORY_WEIGHTS[c])
+        top = max(quantities, key=lambda c: CATEGORY_WEIGHTS[c] * QUANTITY_WEIGHTS[quantities[c]])
         coords = payload.get("coords") if payload.get("locationSource") == "gps" else None
         lat = lng = None
         if coords is not None:
