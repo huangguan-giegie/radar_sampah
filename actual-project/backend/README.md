@@ -22,8 +22,15 @@ The development server listens on `http://localhost:5000` by default.
 ## Storage
 
 - `DATABASE_URL` selects PostgreSQL; absent means the local SQLite fallback.
-- Schema setup is idempotent and migrates the partial `frontend_reports` table
-  with the privacy and photo metadata fields required by the contract.
+  PostgreSQL tables use the database's default schema unless an already-created
+  schema is explicitly selected with `DATABASE_SCHEMA`.
+- Schema setup is idempotent. On startup it safely renames a legacy
+  `frontend_reports` table to `reports`, then backfills the contract fields and
+  quantity columns without deleting report rows.
+- For a controlled PostgreSQL release, run
+  [`migrations/001_rename_frontend_reports_to_reports.sql`](migrations/001_rename_frontend_reports_to_reports.sql).
+  Its commented **DOWN** block is the rollback plan: first roll back the app,
+  then rename `reports` back only when `frontend_reports` does not exist.
 - GPS reports store only coordinates rounded to three decimal places. No API
   response serialises report `lat` or `lng`.
 - Photo bytes live outside the public web root. `PHOTO_STORAGE_DIR` selects that

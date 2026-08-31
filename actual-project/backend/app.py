@@ -28,6 +28,7 @@ import jwt
 from flask import Flask, jsonify, request, send_file
 from flask_cors import CORS
 from PIL import Image, ImageOps, UnidentifiedImageError
+from dotenv import load_dotenv
 from sqlalchemy import (
     Boolean,
     Column,
@@ -54,6 +55,10 @@ try:
     register_heif_opener()
 except ImportError:  # pragma: no cover - dependency is installed in deployed builds
     register_heif_opener = None
+
+
+# Local development settings are intentionally loaded from the ignored .env.
+load_dotenv(Path(__file__).with_name(".env"))
 
 
 LOCAL_DATABASE_URL = "sqlite:///radar_sampah.db"
@@ -117,70 +122,189 @@ users_table = Table(
     Column("created_at", DateTime(timezone=True), nullable=False),
 )
 
-# Keep the name used by the partial backend already deployed on main so this
-# update does not strand existing reports. Its API shape is `reports`.
-frontend_reports_table = Table(
-    "frontend_reports",
+# The database contract in schema.sql stores one nullable column per litter
+# category.  Keep this mapping at the boundary so the API can continue to use
+# the frontend's compact `{category: quantity}` shape.
+QUANTITY_COLUMNS = {
+    "Plastic": "qty_plastic",
+    "Fishing gear": "qty_fishing_gear",
+    "Glass": "qty_glass",
+    "Metal": "qty_metal",
+    "Paper": "qty_paper",
+    "Other": "qty_other",
+}
+
+reports_table = Table(
+    "reports",
     metadata,
     Column("id", String(40), primary_key=True),
     Column("reporter_id", ForeignKey("users.id"), nullable=False),
     Column("beach_id", String(80), nullable=False),
-    Column("beach_name", String(160), nullable=False),
-    Column("quantities", Text, nullable=False),
+    Column("location_source", String(20), nullable=False),
+    Column("photo_key", String(500), nullable=False),
+    Column("photo_mime", String(64), nullable=False),
+    Column("photo_stripped", Boolean, nullable=False, default=False),
+    *(Column(column, String(20)) for column in QUANTITY_COLUMNS.values()),
     Column("category", String(40), nullable=False),
     Column("quantity", String(20), nullable=False),
-    Column("photo_key", String(500), nullable=False),
-    Column("photo_mime", String(64)),
-    Column("photo_stripped", Boolean),
-    Column("location_source", String(20), nullable=False),
     Column("lat", Float),
     Column("lng", Float),
     Column("status", String(20), nullable=False),
+    Column("status_note", Text),
     Column("created_at", DateTime(timezone=True), nullable=False),
-    Column("updated_at", DateTime(timezone=True)),
+    Column("updated_at", DateTime(timezone=True), nullable=False),
+    Column("deleted_at", DateTime(timezone=True)),
 )
 
 
 def normalise_database_url(database_url: str | None) -> str:
     value = (database_url or LOCAL_DATABASE_URL).strip()
     if value.startswith("postgres://"):
-        return value.replace("postgres://", "postgresql+psycopg2://", 1)
+        return value.replace("postgres://", "postgresql+psycopg://", 1)
     if value.startswith("postgresql://"):
-        return value.replace("postgresql://", "postgresql+psycopg2://", 1)
+        return value.replace("postgresql://", "postgresql+psycopg://", 1)
     return value
 
 
 def create_engine_for_url(database_url: str) -> Engine:
     connect_args = {"check_same_thread": False} if database_url.startswith("sqlite") else {}
-    return create_engine(database_url, future=True, connect_args=connect_args)
+    engine = create_engine(database_url, future=True, connect_args=connect_args)
+    if database_url.startswith("sqlite"):
+        return engine
+    # Neon poolers can reset session settings between transactions. Translate
+    # unqualified SQLAlchemy tables into the configured schema at compile time
+    # instead of relying on a connection-level `SET search_path`.
+    schema = database_schema()
+    return engine.execution_options(schema_translate_map={None: schema}) if schema else engine
 
 
-def ensure_report_columns(engine: Engine) -> None:
-    """Add columns missing from the partial backend already deployed on main."""
-
-    existing = {column["name"] for column in inspect(engine).get_columns("frontend_reports")}
-    additions = {
-        "photo_mime": "VARCHAR(64)",
-        "photo_stripped": "BOOLEAN",
-        "lat": "DOUBLE PRECISION",
-        "lng": "DOUBLE PRECISION",
-        "updated_at": "TIMESTAMP WITH TIME ZONE",
-    }
-    with engine.begin() as connection:
-        for name, sql_type in additions.items():
-            if name not in existing:
-                connection.execute(text(f"ALTER TABLE frontend_reports ADD COLUMN {name} {sql_type}"))
+def database_schema() -> str | None:
+    schema = os.getenv("DATABASE_SCHEMA", "").strip()
+    if not schema:
+        return None
+    if not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", schema):
+        raise RuntimeError("DATABASE_SCHEMA must be a valid PostgreSQL schema name")
+    return schema
 
 
 def initialise_database(engine: Engine) -> None:
+    """Create the schema and preserve reports written under the former name."""
+    migrate_legacy_reports_table(engine)
     metadata.create_all(engine)
     ensure_report_columns(engine)
     repair_existing_reports(engine)
 
 
-def load_beaches() -> list[dict[str, Any]]:
+def migrate_legacy_reports_table(engine: Engine) -> None:
+    """Rename the pre-PR-13 table before SQLAlchemy creates ``reports``.
+
+    The standalone PostgreSQL equivalent lives in migrations/001_*.sql.  This
+    startup guard keeps local SQLite databases and Render deployments safe when
+    the migration has not been run as a separate release step.
+    """
+    schema = database_schema() if engine.dialect.name != "sqlite" else None
+    table_names = set(inspect(engine).get_table_names(schema=schema))
+    if "frontend_reports" not in table_names or "reports" in table_names:
+        return
+    legacy_table = "frontend_reports" if schema is None else f'"{schema}".frontend_reports'
+    with engine.begin() as connection:
+        connection.execute(text(f"ALTER TABLE {legacy_table} RENAME TO reports"))
+
+
+def ensure_report_columns(engine: Engine) -> None:
+    """Add contract fields that were absent from the former partial table."""
+    schema = database_schema() if engine.dialect.name != "sqlite" else None
+    if "reports" not in inspect(engine).get_table_names(schema=schema):
+        return
+    existing = {column["name"] for column in inspect(engine).get_columns("reports", schema=schema)}
+    additions = {
+        "photo_mime": "VARCHAR(64)",
+        "photo_stripped": "BOOLEAN",
+        **{column: "VARCHAR(20)" for column in QUANTITY_COLUMNS.values()},
+        "lat": "DOUBLE PRECISION",
+        "lng": "DOUBLE PRECISION",
+        "status_note": "TEXT",
+        "updated_at": "TIMESTAMP WITH TIME ZONE",
+        "deleted_at": "TIMESTAMP WITH TIME ZONE",
+    }
+    report_table = "reports" if schema is None else f'"{schema}".reports'
+    with engine.begin() as connection:
+        for name, sql_type in additions.items():
+            if name not in existing:
+                connection.execute(text(f"ALTER TABLE {report_table} ADD COLUMN {name} {sql_type}"))
+
+
+def repair_existing_reports(engine: Engine) -> None:
+    """Backfill quantity columns and retain duplicate handling for legacy rows."""
+    schema = database_schema() if engine.dialect.name != "sqlite" else None
+    columns = {column["name"] for column in inspect(engine).get_columns("reports", schema=schema)}
+    if "quantities" not in columns:
+        return
+    report_table = "reports" if schema is None else f'"{schema}".reports'
+    with engine.begin() as connection:
+        rows = connection.execute(text(
+            f"SELECT id, reporter_id, beach_id, quantities, status, created_at FROM {report_table} "
+            "ORDER BY created_at, id"
+        )).mappings().all()
+        first_counted_by_day: set[tuple[str, str, Any]] = set()
+        for row in rows:
+            try:
+                quantities = json.loads(row["quantities"])
+                category, quantity = derive_category_quantity(quantities)
+            except (TypeError, ValueError, StopIteration):
+                continue
+            status = row["status"]
+            if status != "Incomplete":
+                created_at = row["created_at"]
+                if isinstance(created_at, str):
+                    created_at = datetime.fromisoformat(created_at)
+                local_day = utc_datetime(created_at).astimezone(KUALA_LUMPUR).date()
+                duplicate_key = (row["reporter_id"], row["beach_id"], local_day)
+                status = "Duplicate" if duplicate_key in first_counted_by_day else "Counted"
+                first_counted_by_day.add(duplicate_key)
+            values: dict[str, Any] = {"category": category, "quantity": quantity, "status": status}
+            values.update(quantity_values(quantities))
+            set_clause = ", ".join(f"{name} = :{name}" for name in values)
+            connection.execute(
+                text(f"UPDATE {report_table} SET {set_clause} WHERE id = :id"),
+                {**values, "id": row["id"]},
+            )
+
+
+def load_beaches(engine: Engine | None = None) -> list[dict[str, Any]]:
+    """Prefer the seeded database records, with JSON only as local-test fallback."""
     with (Path(__file__).parent / "data" / "beaches.json").open(encoding="utf-8") as data_file:
-        return json.load(data_file)
+        fallback = json.load(data_file)
+    schema = database_schema() if engine is not None and engine.dialect.name != "sqlite" else None
+    if engine is None or "beaches" not in inspect(engine).get_table_names(schema=schema):
+        return fallback
+    beach_table = "beaches" if schema is None else f'"{schema}".beaches'
+    with engine.connect() as connection:
+        rows = connection.execute(
+            text(f"""
+                SELECT id, name, area, lat, lng, habitat, habitat_tag, sensitivity,
+                       primary_species_glyph, cover_image_url, scene, ecological_note
+                FROM {beach_table} ORDER BY id
+            """)
+        ).mappings().all()
+    if not rows:
+        return fallback
+    fallback_by_id = {beach["id"]: beach for beach in fallback}
+    beaches: list[dict[str, Any]] = []
+    for row in rows:
+        base = fallback_by_id.get(row["id"], {})
+        beaches.append(
+            {
+                **base,
+                "id": row["id"], "name": row["name"], "area": row["area"],
+                "lat": row["lat"], "lng": row["lng"], "habitat": row["habitat"],
+                "habitatTag": row["habitat_tag"], "sensitivity": row["sensitivity"],
+                "primarySpeciesGlyph": row["primary_species_glyph"],
+                "coverImageUrl": row["cover_image_url"], "scene": row["scene"],
+                "ecologicalNote": row["ecological_note"],
+            }
+        )
+    return beaches
 
 
 def error_response(status: int, code: str, message: str):
@@ -265,37 +389,22 @@ def report_score_for(quantities: dict[str, str]) -> float:
     return max(category_scores_for(quantities).values())
 
 
-def repair_existing_reports(engine: Engine) -> None:
-    """Bring rows written by the partial integration onto the published rules."""
+def quantities_from_row(row: Any) -> dict[str, str]:
+    return {
+        category: getattr(row, column)
+        for category, column in QUANTITY_COLUMNS.items()
+        if getattr(row, column) is not None
+    }
 
-    with engine.begin() as connection:
-        rows = connection.execute(
-            select(frontend_reports_table).order_by(frontend_reports_table.c.created_at, frontend_reports_table.c.id)
-        ).all()
-        first_counted_by_day: set[tuple[str, str, Any]] = set()
-        for row in rows:
-            try:
-                quantities = json.loads(row.quantities)
-                category, quantity = derive_category_quantity(quantities)
-            except (TypeError, ValueError, StopIteration):
-                continue
-            status = row.status
-            if status != "Incomplete":
-                local_day = utc_datetime(row.created_at).astimezone(KUALA_LUMPUR).date()
-                duplicate_key = (row.reporter_id, row.beach_id, local_day)
-                status = "Duplicate" if duplicate_key in first_counted_by_day else "Counted"
-                first_counted_by_day.add(duplicate_key)
-            connection.execute(
-                frontend_reports_table.update()
-                .where(frontend_reports_table.c.id == row.id)
-                .values(category=category, quantity=quantity, status=status)
-            )
+
+def quantity_values(quantities: dict[str, str]) -> dict[str, str | None]:
+    return {column: quantities.get(category) for category, column in QUANTITY_COLUMNS.items()}
 
 
 def attention_score_for(rows: list[Any]) -> float | None:
     if len(rows) < 3:
         return None
-    scores = [report_score_for(json.loads(row.quantities)) for row in rows]
+    scores = [report_score_for(quantities_from_row(row)) for row in rows]
     return float(median(scores))
 
 
@@ -317,9 +426,9 @@ def beach_summary(engine: Engine, beach: dict[str, Any], now: datetime | None = 
     cutoff = current_time - timedelta(days=90)
     with engine.connect() as connection:
         all_counted = connection.execute(
-            select(frontend_reports_table).where(
-                frontend_reports_table.c.beach_id == beach["id"],
-                frontend_reports_table.c.status == "Counted",
+            select(reports_table).where(
+                reports_table.c.beach_id == beach["id"],
+                reports_table.c.status == "Counted",
             )
         ).all()
     eligible = [row for row in all_counted if utc_datetime(row.created_at) >= cutoff]
@@ -434,7 +543,7 @@ def delete_photo(directory: Path, photo_key: str) -> None:
 def delete_photo_if_unreferenced(engine: Engine, directory: Path, photo_key: str) -> None:
     with engine.connect() as connection:
         referenced = connection.execute(
-            select(frontend_reports_table.c.id).where(frontend_reports_table.c.photo_key == photo_key)
+            select(reports_table.c.id).where(reports_table.c.photo_key == photo_key)
         ).first()
     if referenced is None:
         delete_photo(directory, photo_key)
@@ -443,7 +552,7 @@ def delete_photo_if_unreferenced(engine: Engine, directory: Path, photo_key: str
 def sweep_orphan_photos(engine: Engine, directory: Path) -> None:
     cutoff = datetime.now(timezone.utc) - PHOTO_ORPHAN_TTL
     with engine.connect() as connection:
-        referenced = set(connection.execute(select(frontend_reports_table.c.photo_key)).scalars().all())
+        referenced = set(connection.execute(select(reports_table.c.photo_key)).scalars().all())
     for metadata_path in directory.glob("*.jpg.meta.json"):
         photo_key = metadata_path.name.removesuffix(".meta.json")
         if photo_key in referenced:
@@ -465,13 +574,13 @@ def schedule_orphan_cleanup(engine: Engine, directory: Path, photo_key: str, cre
     return timer
 
 
-def report_dict(row: Any, viewer_id: str, jwt_secret: str, directory: Path) -> dict[str, Any]:
+def report_dict(row: Any, viewer_id: str, jwt_secret: str, directory: Path, beach_names: dict[str, str]) -> dict[str, Any]:
     # lat, lng and photo_key are intentionally never copied into this response.
-    quantities = json.loads(row.quantities)
+    quantities = quantities_from_row(row)
     value: dict[str, Any] = {
         "id": row.id,
         "beachId": row.beach_id,
-        "beachName": row.beach_name,
+        "beachName": beach_names.get(row.beach_id, row.beach_id),
         "quantities": quantities,
         "category": row.category,
         "quantity": row.quantity,
@@ -567,10 +676,10 @@ def duplicate_status(
     created_at: datetime,
     exclude_report_id: str | None = None,
 ) -> str:
-    query = select(frontend_reports_table.c.id, frontend_reports_table.c.created_at).where(
-        frontend_reports_table.c.reporter_id == reporter_id,
-        frontend_reports_table.c.beach_id == beach_id,
-        frontend_reports_table.c.status == "Counted",
+    query = select(reports_table.c.id, reports_table.c.created_at).where(
+        reports_table.c.reporter_id == reporter_id,
+        reports_table.c.beach_id == beach_id,
+        reports_table.c.status == "Counted",
     )
     rows = connection.execute(query).all()
     local_day = utc_datetime(created_at).astimezone(KUALA_LUMPUR).date()
@@ -593,7 +702,8 @@ def create_app(
     engine = create_engine_for_url(normalise_database_url(database_url or os.getenv("DATABASE_URL")))
     initialise_database(engine)
     directory = photo_storage_path(photo_storage_dir)
-    beaches = load_beaches()
+    beaches = load_beaches(engine)
+    beach_names = {beach["id"]: beach["name"] for beach in beaches}
     application.extensions["marine_engine"] = engine
     application.extensions["photo_storage_dir"] = directory
     application.extensions["photo_cleanup_timers"] = []
@@ -726,17 +836,17 @@ def create_app(
         detail.update({"species": beach.get("species", []), "ecologicalNote": beach.get("ecologicalNote", "")})
         with engine.connect() as connection:
             row = connection.execute(
-                select(frontend_reports_table)
+                select(reports_table)
                 .where(
-                    frontend_reports_table.c.beach_id == beach_id,
-                    frontend_reports_table.c.status == "Counted",
+                    reports_table.c.beach_id == beach_id,
+                    reports_table.c.status == "Counted",
                 )
-                .order_by(frontend_reports_table.c.created_at.desc())
+                .order_by(reports_table.c.created_at.desc())
             ).first()
         if row is None:
             detail.update({"composition": None, "compositionSource": None})
         else:
-            quantities = json.loads(row.quantities)
+            quantities = quantities_from_row(row)
             detail.update(
                 {
                     "composition": [
@@ -854,27 +964,26 @@ def create_app(
         with engine.begin() as connection:
             status = duplicate_status(connection, request.current_user.id, data["beach"]["id"], now)
             connection.execute(
-                insert(frontend_reports_table).values(
+                insert(reports_table).values(
                     id=report_id,
                     reporter_id=request.current_user.id,
                     beach_id=data["beach"]["id"],
-                    beach_name=data["beach"]["name"],
-                    quantities=json.dumps(data["quantities"], separators=(",", ":")),
                     category=data["category"],
                     quantity=data["quantity"],
                     photo_key=data["photo_key"],
-                    photo_mime=data["photo_mime"],
-                    photo_stripped=data["photo_stripped"],
+                    photo_mime=data["photo_mime"] or "image/jpeg",
+                    photo_stripped=bool(data["photo_stripped"]),
                     location_source=data["location_source"],
                     lat=data["lat"],
                     lng=data["lng"],
                     status=status,
                     created_at=now,
                     updated_at=now,
+                    **quantity_values(data["quantities"]),
                 )
             )
-            row = connection.execute(select(frontend_reports_table).where(frontend_reports_table.c.id == report_id)).first()
-        return jsonify(report_dict(row, request.current_user.id, jwt_secret, directory)), 201
+            row = connection.execute(select(reports_table).where(reports_table.c.id == report_id)).first()
+        return jsonify(report_dict(row, request.current_user.id, jwt_secret, directory, beach_names)), 201
 
     @application.get("/reports/mine")
     @require_auth
@@ -883,22 +992,22 @@ def create_app(
         if status is not None and status not in REPORT_STATUSES:
             return error_response(400, "VALIDATION_FAILED", "status is not valid.")
         query = (
-            select(frontend_reports_table)
-            .where(frontend_reports_table.c.reporter_id == request.current_user.id)
-            .order_by(frontend_reports_table.c.created_at.desc())
+            select(reports_table)
+            .where(reports_table.c.reporter_id == request.current_user.id)
+            .order_by(reports_table.c.created_at.desc())
         )
         if status:
-            query = query.where(frontend_reports_table.c.status == status)
+            query = query.where(reports_table.c.status == status)
         with engine.connect() as connection:
             rows = connection.execute(query).all()
-        return jsonify([report_dict(row, request.current_user.id, jwt_secret, directory) for row in rows])
+        return jsonify([report_dict(row, request.current_user.id, jwt_secret, directory, beach_names) for row in rows])
 
     @application.get("/reports/mine/counts")
     @require_auth
     def get_my_report_counts():
         with engine.connect() as connection:
             statuses = connection.execute(
-                select(frontend_reports_table.c.status).where(frontend_reports_table.c.reporter_id == request.current_user.id)
+                select(reports_table.c.status).where(reports_table.c.reporter_id == request.current_user.id)
             ).scalars().all()
         return jsonify(
             {
@@ -915,7 +1024,7 @@ def create_app(
         if not isinstance(payload, dict) or not payload or set(payload) - REPORT_INPUT_FIELDS:
             return error_response(400, "VALIDATION_FAILED", "Send at least one supported report field.")
         with engine.connect() as connection:
-            old = connection.execute(select(frontend_reports_table).where(frontend_reports_table.c.id == report_id)).first()
+            old = connection.execute(select(reports_table).where(reports_table.c.id == report_id)).first()
         if old is None:
             return error_response(404, "NOT_FOUND", "Report not found.")
         if old.reporter_id != request.current_user.id:
@@ -929,7 +1038,7 @@ def create_app(
             coords = {"lat": old.lat, "lng": old.lng} if old.location_source == "gps" else None
         merged = {
             "beachId": payload.get("beachId", old.beach_id),
-            "quantities": payload.get("quantities", json.loads(old.quantities)),
+            "quantities": payload.get("quantities", quantities_from_row(old)),
             "photoKey": payload.get("photoKey", old.photo_key),
             "locationSource": location_source,
         }
@@ -951,34 +1060,30 @@ def create_app(
                 exclude_report_id=report_id,
             )
             connection.execute(
-                frontend_reports_table.update()
-                .where(frontend_reports_table.c.id == report_id)
+                reports_table.update()
+                .where(reports_table.c.id == report_id)
                 .values(
                     beach_id=data["beach"]["id"],
-                    beach_name=data["beach"]["name"],
-                    quantities=json.dumps(data["quantities"], separators=(",", ":")),
                     category=data["category"],
                     quantity=data["quantity"],
                     photo_key=data["photo_key"],
                     photo_mime=data["photo_mime"] or old.photo_mime,
-                    photo_stripped=data["photo_stripped"] if data["photo_stripped"] is not None else old.photo_stripped,
+                    photo_stripped=bool(data["photo_stripped"]) if data["photo_stripped"] is not None else old.photo_stripped,
                     location_source=data["location_source"],
                     lat=data["lat"],
                     lng=data["lng"],
                     status=status,
                     updated_at=now,
+                    **quantity_values(data["quantities"]),
                 )
             )
-            row = connection.execute(select(frontend_reports_table).where(frontend_reports_table.c.id == report_id)).first()
+            row = connection.execute(select(reports_table).where(reports_table.c.id == report_id)).first()
         if old.photo_key != data["photo_key"]:
             delete_photo_if_unreferenced(engine, directory, old.photo_key)
-        return jsonify(report_dict(row, request.current_user.id, jwt_secret, directory))
+        return jsonify(report_dict(row, request.current_user.id, jwt_secret, directory, beach_names))
 
     return application
 
 
-app = create_app()
-
-
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=int(os.getenv("PORT", "5000")))
+    create_app().run(host="0.0.0.0", port=int(os.getenv("PORT", "5000")))

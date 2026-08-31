@@ -18,7 +18,6 @@ os.environ.setdefault("AUTH_JWT_SECRET", "test-only-secret-not-for-production")
 
 from app import (
     create_app,
-    frontend_reports_table,
     photo_file_path,
     read_photo_metadata,
     reports_table,
@@ -295,7 +294,7 @@ def test_create_report_returns_full_contract_and_hides_private_fields(api):
 
     engine = application.extensions["marine_engine"]
     with engine.connect() as connection:
-        row = connection.execute(select(frontend_reports_table)).one()
+        row = connection.execute(select(reports_table)).one()
     assert row.lat == 2.746
     assert row.lng == 101.44
 
@@ -353,7 +352,7 @@ def test_patch_enforces_ownership_and_rechecks_status(api):
     engine = application.extensions["marine_engine"]
     with engine.begin() as connection:
         connection.execute(
-            frontend_reports_table.update().where(frontend_reports_table.c.id == report["id"]).values(status="Incomplete")
+            reports_table.update().where(reports_table.c.id == report["id"]).values(status="Incomplete")
         )
     corrected = client.patch("/reports/" + report["id"], headers=owner_headers, json={"quantities": {"Glass": "Small"}})
     assert corrected.status_code == 200
@@ -412,12 +411,13 @@ def test_old_counted_report_is_not_eligible_but_still_drives_freshness(api):
     engine = application.extensions["marine_engine"]
     with engine.begin() as connection:
         connection.execute(
-            insert(frontend_reports_table).values(
+            insert(reports_table).values(
                 id="r_old",
                 reporter_id=session["user"]["id"],
                 beach_id="morib",
-                beach_name="Pantai Morib",
-                quantities='{"Plastic":"Large"}',
+                photo_mime="image/jpeg",
+                photo_stripped=True,
+                qty_plastic="Large",
                 category="Plastic",
                 quantity="Large",
                 photo_key="legacy-photo-key",
