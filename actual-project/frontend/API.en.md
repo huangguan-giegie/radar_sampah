@@ -29,10 +29,10 @@
 > integer rather than one of four bands, and severity is a three-level high/medium/low
 > `priority` rather than the four bands here.
 >
-> **This document is the target, not a description of what runs today.** Until it is
-> implemented, the frontend's `VITE_API_BASE_URL` must stay empty — setting it still produces 404s
-> for `/beaches` and `/reports`. The app currently runs on the seed
-> data in `src/mockData.ts`.
+> **Runtime modes:** leave `VITE_API_BASE_URL` empty for the local mock mode (the app uses the
+> seed data in `src/mockData.ts` and stores mock records in local storage). For the deployed
+> frontend, Render sets `VITE_API_BASE_URL=https://radar-sampah-api.onrender.com`; this selects
+> the real API and sends the bearer token on authenticated requests.
 
 | Item | Convention |
 | --- | --- |
@@ -560,9 +560,14 @@ root; references in DB only. Access controlled.`
 // 201
 {
   "photoKey": "2026/08/8f3a....jpg",
+  "previewUrl": "https://cdn.example.com/photos/ph_01H....jpg",
   "metadataStripped": true
 }
 ```
+
+The browser creates a JPEG copy with native `Image` and `canvas` before sending the multipart
+request, so the original file's metadata is not uploaded. The field name is `photo` and the
+upload response is used as-is by the report form.
 
 Three columns on the report:
 
