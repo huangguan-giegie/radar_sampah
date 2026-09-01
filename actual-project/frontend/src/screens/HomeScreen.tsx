@@ -4,7 +4,7 @@ import { getBeaches, getMyReportCounts } from '../api';
 import { ArrowRight, BarChart, Camera, Check, Info, UserIcon } from '../components/Icon';
 import { ErrorNote, Label, Skeleton } from '../components/ui';
 import { OverlayChip, SeverityBadge, StatTile } from '../components/ds';
-import { C, MONO, NOISE, lastReportedLabel } from '../theme';
+import { attentionStateFor, C, MONO, NOISE, lastReportedLabel } from '../theme';
 import { useApp } from '../AppContext';
 import type { BeachSummary, ReportCounts } from '../types';
 import { hasDraftProgress, resumePath } from '../flowRules';
@@ -18,6 +18,7 @@ function greeting(d = new Date()) {
 
 
 function BeachRow({ b, last, onClick }: { b: BeachSummary; last: boolean; onClick: () => void }) {
+  const attention = attentionStateFor(b.severity, b.insufficientData, b.validReports);
   return (
     <button
       type="button"
@@ -46,7 +47,7 @@ function BeachRow({ b, last, onClick }: { b: BeachSummary; last: boolean; onClic
           justifyContent: 'center',
         }}
       >
-        {b.validReports > 0 && !b.insufficientData ? <Check size={16} color={C.lime} strokeWidth={2} /> : <Info size={16} color={C.cloud} />}
+        {attention.hasBand ? <Check size={16} color={C.lime} strokeWidth={2} /> : <Info size={16} color={C.cloud} />}
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontSize: 14, fontWeight: 620 }}>{b.name}</div>
@@ -54,7 +55,7 @@ function BeachRow({ b, last, onClick }: { b: BeachSummary; last: boolean; onClic
           {b.validReports} counted reports · {lastReportedLabel(b.lastReportedAt).toLowerCase()}
         </div>
       </div>
-      <SeverityBadge band={b.severity} block />
+      <SeverityBadge band={attention.hasBand ? b.severity : null} label={attention.pageLabel} block />
     </button>
   );
 }

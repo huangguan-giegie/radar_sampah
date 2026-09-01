@@ -4,7 +4,7 @@ import { getBeaches } from '../api';
 import { MiniMap } from '../components/MiniMap';
 import { Alert, Check, Pin, Search } from '../components/Icon';
 import { BackButton, ErrorNote, PrimaryButton, Skeleton, TextButton } from '../components/ui';
-import { C, MONO } from '../theme';
+import { attentionStateFor, C, MONO } from '../theme';
 import { OverlayChip, SeverityBadge } from '../components/ds';
 import { useApp } from '../AppContext';
 import type { BeachSummary } from '../types';
@@ -131,7 +131,10 @@ export default function ConfirmBeachScreen() {
                   <div style={{ fontSize: 16.5, fontWeight: 650 }}>{suggested.name}</div>
                   <div style={{ fontSize: 12, color: C.dim, marginTop: 3 }}>{suggested.area}</div>
                 </div>
-                <SeverityBadge band={suggested.severity} />
+                <SeverityBadge
+                  band={attentionStateFor(suggested.severity, suggested.insufficientData, suggested.validReports).hasBand ? suggested.severity : null}
+                  label={attentionStateFor(suggested.severity, suggested.insufficientData, suggested.validReports).pageLabel}
+                />
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 9, marginTop: 16 }}>
                 <PrimaryButton onClick={() => nav('/report/details')} height={54} style={{ borderRadius: 17, boxShadow: 'none' }}>
@@ -198,7 +201,10 @@ export default function ConfirmBeachScreen() {
                       <div style={{ fontSize: 14.5, fontWeight: 640 }}>{b.name}</div>
                       <div style={{ fontSize: 11.5, color: C.dim, marginTop: 3 }}>{b.area}</div>
                     </div>
-                    <SeverityBadge band={b.severity} />
+                    <SeverityBadge
+                      band={attentionStateFor(b.severity, b.insufficientData, b.validReports).hasBand ? b.severity : null}
+                      label={attentionStateFor(b.severity, b.insufficientData, b.validReports).pageLabel}
+                    />
                   </button>
                 ))}
                 {!loading && failed && (

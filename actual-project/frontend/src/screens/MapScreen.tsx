@@ -5,7 +5,7 @@ import { getBeaches } from '../api';
 import { markerHtml } from '../components/BeachMarker';
 import { useLeafletMap } from '../components/useLeafletMap';
 import { ArrowRight, Check, Close, Info, WifiOff } from '../components/Icon';
-import { C, MONO, freshStyle, freshnessLabel, lastReportedLabel, severityLabel } from '../theme';
+import { attentionStateFor, C, MONO, freshStyle, freshnessLabel, lastReportedLabel, severityLabel } from '../theme';
 import { GlassPanel, SeverityBadge } from '../components/ds';
 import { useApp } from '../AppContext';
 import type { BeachSummary, MapLayer } from '../types';
@@ -82,7 +82,7 @@ export default function MapScreen() {
       markerElement?.setAttribute('tabindex', '0');
       markerElement?.setAttribute(
         'aria-label',
-        `${b.name} · ${layer === 'litter' ? (b.severity ? severityLabel(b.severity).toUpperCase() : 'NO DATA') : b.habitatTag}`,
+        `${b.name} · ${layer === 'litter' ? attentionStateFor(b.severity, b.insufficientData, b.validReports).markerLabel : b.habitatTag}`,
       );
       markerElement?.addEventListener('keydown', (event) => {
         if (event.key === 'Enter' || event.key === ' ') {
@@ -185,7 +185,7 @@ export default function MapScreen() {
                   {item.label}
                 </span>
               ))}
-              <span style={{ color: C.dim }}>· COUNTED REPORTS ONLY</span>
+              <span style={{ color: C.muted }}>· COUNTED REPORTS ONLY</span>
             </>
           ) : (
             <>HABITAT CONTEXT · BROAD AREAS ONLY</>
@@ -280,6 +280,7 @@ function SelectedCard({
   onOpen: () => void;
 }) {
   const fs = freshStyle(beach.freshnessKind);
+  const attention = attentionStateFor(beach.severity, beach.insufficientData, beach.validReports);
 
   const metaRow = (k: string, v: string, color: string = C.ink2, weight = 400) => (
     <div style={{ display: 'flex', gap: 9, alignItems: 'center' }}>
@@ -323,19 +324,18 @@ function SelectedCard({
                 <div style={{ fontSize: 18, fontWeight: 650, letterSpacing: '-.3px' }}>{beach.name}</div>
                 <div style={{ fontSize: 12, color: C.dim, marginTop: 3 }}>{beach.area}</div>
               </div>
-              <SeverityBadge band={beach.severity} size="lg" />
+              <SeverityBadge band={attention.hasBand ? beach.severity : null} label={attention.pageLabel} size="lg" />
             </div>
 
-            {beach.insufficientData && (
+            {!attention.hasBand && (
               <div style={{ fontSize: 12.5, lineHeight: 1.5, color: C.muted, marginTop: 10 }}>
-                Fewer than three counted reports — no severity band is shown. This does not mean the
-                beach is clean.
+                {attention.detail}
               </div>
             )}
 
             <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 11px', borderRadius: 999, background: 'rgba(11,33,97,.06)', fontSize: 11.5, fontWeight: 600, color: C.ink2 }}>
-                {beach.validReports > 0 && !beach.insufficientData ? (
+                {attention.hasBand ? (
                   <Check size={12} color={C.slate} strokeWidth={2} />
                 ) : (
                   <Info size={12} color={C.slate} strokeWidth={2} />

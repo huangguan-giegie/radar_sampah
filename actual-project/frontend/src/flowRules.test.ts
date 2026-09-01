@@ -12,6 +12,7 @@ import {
 } from './flowRules';
 import { markerHtml } from './components/BeachMarker';
 import type { BeachSummary } from './types';
+import { attentionStateFor } from './theme';
 
 function draft(changes: Partial<ReportDraft> = {}): ReportDraft {
   return {
@@ -30,6 +31,31 @@ function draft(changes: Partial<ReportDraft> = {}): ReportDraft {
     ...changes,
   };
 }
+
+describe('attentionStateFor', () => {
+  it.each([0, 1, 2])('keeps %s counted reports in a neutral insufficient-data state', (validReports) => {
+    const reportWord = validReports === 1 ? 'report' : 'reports';
+    expect(attentionStateFor(null, true, validReports)).toEqual({
+      markerLabel: 'NO DATA',
+      pageLabel: 'Insufficient data',
+      detail: `${validReports} counted ${reportWord} · At least 3 counted reports are required for a band`,
+      hasBand: false,
+    });
+  });
+
+  it('shows the severity label once the beach has enough counted reports', () => {
+    expect(attentionStateFor('High', false, 3)).toEqual({
+      markerLabel: 'HIGH',
+      pageLabel: 'High',
+      detail: null,
+      hasBand: true,
+    });
+  });
+
+  it('does not trust a band when the count is below the minimum', () => {
+    expect(attentionStateFor('High', false, 1).hasBand).toBe(false);
+  });
+});
 
 describe('safeNextPath', () => {
   it('keeps valid internal paths', () => {
@@ -246,6 +272,10 @@ describe('Map marker accessibility', () => {
     const html = markerHtml(beach, false, 'litter', 'bird');
     expect(html).toContain('aria-label="Pantai Morib · HIGH"');
     expect(html).toContain('tabindex="0"');
+
+    const insufficientHtml = markerHtml({ ...beach, validReports: 1 }, false, 'litter', 'bird');
+    expect(insufficientHtml).toContain('aria-label="Pantai Morib · NO DATA"');
+    expect(insufficientHtml).not.toContain('>HIGH</b>');
   });
 });
 

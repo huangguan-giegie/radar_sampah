@@ -1,7 +1,7 @@
 
 
 import type { BeachSummary, MapLayer, SpeciesGlyph } from '../types';
-import { SEVERITY, severityLabel } from '../theme';
+import { attentionStateFor, SEVERITY } from '../theme';
 
 const F = "font-family:-apple-system,'Helvetica Neue',sans-serif";
 
@@ -31,25 +31,28 @@ export function markerHtml(
   primaryGlyph: SpeciesGlyph,
   offset: [number, number] = [0, 0],
 ): string {
+  const attention = layer === 'litter'
+    ? attentionStateFor(b.severity, b.insufficientData, b.validReports)
+    : null;
   const wrap = (inner: string) =>
     `<div role="button" tabindex="0" aria-label="${b.name} · ${
-      layer === 'litter' ? (b.severity ? severityLabel(b.severity).toUpperCase() : 'NO DATA') : b.habitatTag
+      attention ? attention.markerLabel : b.habitatTag
     }" style="${F};transform:translate(calc(-50% + ${offset[0]}px),calc(-50% + ${offset[1]}px));position:absolute;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;outline:none;${
       selected ? 'animation:popIn .25s ease;z-index:600' : ''
     }">${inner}</div>`;
 
   if (layer === 'litter') {
-    const sv = b.severity ? SEVERITY[b.severity] : null;
+    const sv = attention?.hasBand && b.severity ? SEVERITY[b.severity] : null;
     const col = sv ? sv.col : '#98A4B5';
     let bars = '<span style="display:flex;gap:2px;align-items:flex-end">';
     for (let i = 0; i < 4; i++) {
-      const on = b.band !== null && i < b.band;
+      const on = attention?.hasBand && b.band !== null && i < b.band;
       bars += `<i style="display:block;width:3px;height:${5 + i * 3}px;border-radius:2px;background:${
         on ? col : 'rgba(30,36,44,.18)'
       }"></i>`;
     }
     bars += '</span>';
-    const label = b.severity ? severityLabel(b.severity).toUpperCase() : 'NO DATA';
+    const label = attention?.markerLabel ?? 'NO DATA';
     const pill =
       `<div style="display:flex;align-items:center;gap:6px;background:${
         selected ? '#0B2161' : 'rgba(255,255,255,.95)'

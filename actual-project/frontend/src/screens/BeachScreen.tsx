@@ -9,6 +9,7 @@ import {
   MONO,
   NOISE,
   SEVERITY,
+  attentionStateFor,
   formatDate,
   freshStyle,
   freshnessLabel,
@@ -69,7 +70,8 @@ export default function BeachScreen() {
     );
   }
 
-  const sev = b.severity ? SEVERITY[b.severity] : null;
+  const attention = attentionStateFor(b.severity, b.insufficientData, b.validReports);
+  const sev = attention.hasBand && b.severity ? SEVERITY[b.severity] : null;
   const fs = freshStyle(b.freshnessKind);
 
   const BAND_WIDTH: Record<string, string> = {
@@ -112,7 +114,7 @@ export default function BeachScreen() {
       >
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
           <div>
-            <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '.16em', color: C.dim }}>
+            <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '.16em', color: C.muted }}>
               LITTER SEVERITY
             </div>
             {sev ? (
@@ -129,24 +131,24 @@ export default function BeachScreen() {
             ) : (
               <>
                 <div style={{ fontSize: 22, fontWeight: 700, letterSpacing: '-.2px', color: C.muted, marginTop: 6 }}>
-                  Insufficient data
+                  {attention.pageLabel}
                 </div>
-                <div style={{ fontSize: 12, lineHeight: 1.5, color: C.dim, marginTop: 5, maxWidth: 210 }}>
-                  Fewer than three counted reports. Not a sign the beach is clean.
+                <div style={{ fontSize: 12, lineHeight: 1.5, color: C.muted, marginTop: 5, maxWidth: 250 }}>
+                  {attention.detail}
                 </div>
               </>
             )}
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'flex-end' }}>
             <InfoChip>
-              {b.validReports > 0 && !b.insufficientData ? (
+              {attention.hasBand ? (
                 <Check size={11} color={C.slate} strokeWidth={2.2} />
               ) : (
                 <Info size={11} color={C.slate} strokeWidth={2.2} />
               )}
               {b.validReports} counted reports
             </InfoChip>
-            {b.attentionScore !== null && (
+            {attention.hasBand && b.attentionScore !== null && (
               <InfoChip>
                 Attention score {b.attentionScore.toFixed(2)}
               </InfoChip>

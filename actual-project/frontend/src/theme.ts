@@ -1,6 +1,7 @@
 
 
 import type { FreshnessKind, ReportStatus, SeverityBand } from './types';
+import { SCORING_METHOD } from './scoring';
 
 
 export const C = {
@@ -42,6 +43,29 @@ export const SEVERITY: Record<SeverityBand, { col: string; text: string; tint: s
 
 export function severityLabel(band: SeverityBand): string {
   return band === 'Severe' ? 'Very high' : band;
+}
+
+export function attentionStateFor(
+  severity: SeverityBand | null,
+  insufficientData: boolean,
+  validReports: number,
+) {
+  const minimum = SCORING_METHOD.minReports;
+  const reportWord = validReports === 1 ? 'report' : 'reports';
+  if (insufficientData || validReports < minimum || !severity) {
+    return {
+      markerLabel: 'NO DATA',
+      pageLabel: 'Insufficient data',
+      detail: `${validReports} counted ${reportWord} · At least ${minimum} counted reports are required for a band`,
+      hasBand: false,
+    } as const;
+  }
+  return {
+    markerLabel: severityLabel(severity).toUpperCase(),
+    pageLabel: severityLabel(severity),
+    detail: null,
+    hasBand: true,
+  } as const;
 }
 
 
