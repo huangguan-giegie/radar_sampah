@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import { CAME_FROM_DETAILS } from '../flowRules';
 import { useEffect, useRef, useState } from 'react';
 import { getBeaches, photoPreviewUrl } from '../api';
 import { ArrowRight, Alert } from '../components/Icon';
@@ -59,7 +60,9 @@ export default function RecordScreen() {
       return;
     }
     setShowErrors(false);
-    nav('/report/review');
+    // Stamp the navigation so the review screen knows the details screen is
+    // genuinely the previous history entry, and its back button can pop.
+    nav('/report/review', { state: { from: CAME_FROM_DETAILS } });
   }
 
   return (

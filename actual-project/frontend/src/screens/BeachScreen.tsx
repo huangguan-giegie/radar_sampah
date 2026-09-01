@@ -4,18 +4,9 @@ import { getBeach } from '../api';
 import { BeachCover } from '../components/BeachCover';
 import { Camera, Check, ChevronRight, Clock, Info, SpeciesIcon } from '../components/Icon';
 import { BackButton, GhostButton, Label, PrimaryButton, Skeleton } from '../components/ui';
-import {
-  C,
-  MONO,
-  NOISE,
-  SEVERITY,
-  attentionStateFor,
-  formatDate,
-  freshStyle,
-  freshnessLabel,
-  severityLabel,
-} from '../theme';
+import { attentionStateFor, C, formatDate, freshnessLabel, freshStyle, MONO, NOISE, reportWord, SEVERITY, severityLabel } from '../theme';
 import { BandMeter, GlassPanel, InfoChip } from '../components/ds';
+import { NON_COMMERCIAL_NOTICE } from '../sources';
 import { useApp } from '../AppContext';
 import type { BeachDetail } from '../types';
 import { hasDraftProgress, resumePath } from '../flowRules';
@@ -146,7 +137,7 @@ export default function BeachScreen() {
               ) : (
                 <Info size={11} color={C.slate} strokeWidth={2.2} />
               )}
-              {b.validReports} counted reports
+              {b.validReports} counted {reportWord(b.validReports)}
             </InfoChip>
             {attention.hasBand && b.attentionScore !== null && (
               <InfoChip>
@@ -367,6 +358,24 @@ export default function BeachScreen() {
               {b.species.some((sp) => sp.likelihood)
                 ? 'When the occurrence model is connected it reports a relative occurrence score, built from OBIS records and background samples at coordinate level. It is not a calibrated probability of presence, never a confirmed sighting, and never a measure of litter severity or of ecological recovery.'
                 : 'Context only — never proof of current presence or of ecological recovery.'}
+            </div>
+            {/* AC5.1.3 - the reference datasets and their licence, shown to the
+                user rather than only recorded in the DMP. CC BY-NC requires the
+                attribution to be visible, and until now NON_COMMERCIAL_NOTICE
+                was exported from sources.ts and rendered nowhere at all.
+
+                This names the datasets the biodiversity feature is built on. It
+                is deliberately NOT a per-card citation: no FishBase or OBIS
+                extract has been run yet, so every card still carries its own
+                honest SOURCE PENDING badge. Printing a real-looking citation on
+                a card whose data never came from that dataset would be inventing
+                provenance, which is far worse than an unfinished badge. */}
+            <div style={{ fontFamily: MONO, fontSize: 8.5, letterSpacing: '.08em', color: C.faint, marginTop: 10, lineHeight: 1.6 }}>
+              REFERENCE DATASETS · FISHBASE (Froese &amp; Pauly, www.fishbase.org) · OBIS
+              (Ocean Biodiversity Information System, IOC-UNESCO, www.obis.org)
+            </div>
+            <div style={{ fontSize: 10, color: C.dim, marginTop: 6, lineHeight: 1.5 }}>
+              {NON_COMMERCIAL_NOTICE}
             </div>
           </div>
         </div>

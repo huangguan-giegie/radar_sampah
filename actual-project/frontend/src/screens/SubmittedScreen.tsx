@@ -1,3 +1,4 @@
+import { useRef } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
 import { ArrowRight, Check, ChevronRight } from '../components/Icon';
@@ -15,7 +16,20 @@ export default function SubmittedScreen() {
   }, []);
 
 
-  if (!saved) return <Navigate to="/reports" replace />;
+  // Both "Add another report" and "Correct report" clear lastSavedReport and
+  // then navigate. Those happen in one event, so React re-renders with saved
+  // === null BEFORE the navigation commits. A bare `if (!saved) <Navigate>`
+  // therefore won a race against nav() and threw the user to /reports every
+  // time - the draft was built correctly, only the destination was lost.
+  //
+  // So remember whether this screen ever actually held a report. The redirect
+  // is for ONE case only: someone opening /report/saved cold, with nothing to
+  // show. Once we have shown a report, clearing it just means we are on our
+  // way out, and we render nothing for that single frame instead of redirecting.
+  const hadReport = useRef(false);
+  if (saved) hadReport.current = true;
+  if (!saved && !hadReport.current) return <Navigate to="/reports" replace />;
+  if (!saved) return null;
 
   const outcome = reportOutcome(saved.status);
   const outcomeColor =

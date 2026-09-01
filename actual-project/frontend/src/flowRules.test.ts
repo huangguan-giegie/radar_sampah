@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { ReportDraft } from './AppContext';
 import {
   backFromReview,
+  CAME_FROM_DETAILS,
   buildReportSubmission,
   finishReportSubmission,
   guardStep,
@@ -279,26 +280,34 @@ describe('Map marker accessibility', () => {
   });
 });
 
-describe('Returning from review to details when the history index is zero', () => {
-
-
-  it('returns a fallback path without popping at index zero', () => {
-    expect(backFromReview(0)).toEqual({ pop: false, to: '/report/details' });
+// Going back from the review screen. The rule is no longer "is there anything
+// behind me in the history" - it is "is the DETAILS screen behind me", and only
+// RecordScreen can answer that, by stamping the navigation.
+describe('Returning from review to details', () => {
+  it('pops the history when the details screen stamped the navigation', () => {
+    expect(backFromReview({ from: CAME_FROM_DETAILS })).toEqual({ pop: true });
   });
 
-  it('returns a fallback when the history index is missing', () => {
-    expect(backFromReview(undefined)).toEqual({ pop: false, to: '/report/details' });
+  // The regression this rewrite exists for. resumePath() can send a restored
+  // draft straight to /report/review from the home or beach screen. That pushes
+  // a history entry, so the old index-based check saw "index > 0" and popped -
+  // straight back out to /home, out of the report flow entirely.
+  it('does NOT pop when the user arrived from a resumed draft', () => {
     expect(backFromReview(null)).toEqual({ pop: false, to: '/report/details' });
+    expect(backFromReview(undefined)).toEqual({ pop: false, to: '/report/details' });
   });
 
-  it('pops the stack only when the history index is positive', () => {
-    expect(backFromReview(1)).toEqual({ pop: true });
-    expect(backFromReview(7)).toEqual({ pop: true });
+  it('does not pop for a bookmark or a typed URL, which carry no state', () => {
+    expect(backFromReview({})).toEqual({ pop: false, to: '/report/details' });
+  });
+
+  it('ignores a stamp it does not recognise', () => {
+    expect(backFromReview({ from: 'somewhere-else' })).toEqual({ pop: false, to: '/report/details' });
   });
 
   it('returns either back or replace and never loops to itself', () => {
-    for (const idx of [-1, 0, 1, 2, undefined, null]) {
-      const r = backFromReview(idx);
+    for (const state of [null, undefined, {}, { from: '' }, { from: 'home' }, { from: CAME_FROM_DETAILS }]) {
+      const r = backFromReview(state);
       expect(r.pop === true || (r.pop === false && r.to === '/report/details')).toBe(true);
     }
   });

@@ -5,7 +5,7 @@ import { getBeaches } from '../api';
 import { markerHtml } from '../components/BeachMarker';
 import { useLeafletMap } from '../components/useLeafletMap';
 import { ArrowRight, Check, Close, Info, WifiOff } from '../components/Icon';
-import { attentionStateFor, C, MONO, freshStyle, freshnessLabel, lastReportedLabel, severityLabel } from '../theme';
+import { attentionStateFor, C, freshnessLabel, freshStyle, lastReportedLabel, MONO, reportWord, severityLabel } from '../theme';
 import { GlassPanel, SeverityBadge } from '../components/ds';
 import { useApp } from '../AppContext';
 import type { BeachSummary, MapLayer } from '../types';
@@ -340,7 +340,7 @@ function SelectedCard({
                 ) : (
                   <Info size={12} color={C.slate} strokeWidth={2} />
                 )}
-                {beach.validReports} counted reports
+                {beach.validReports} counted {reportWord(beach.validReports)}
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 11px', borderRadius: 999, background: fs.bg, fontSize: 11.5, fontWeight: 600, color: fs.c }}>
                 <i style={{ width: 6, height: 6, borderRadius: 3, background: fs.dot, display: 'block' }} />
