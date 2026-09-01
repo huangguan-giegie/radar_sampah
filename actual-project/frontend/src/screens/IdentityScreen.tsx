@@ -1,7 +1,28 @@
 
+// The anonymous participant number - this app's entire idea of an account.
 //
-
-
+// We collect no name, no email, no phone and no password. The user is given a
+// four digit number such as 1637, and their reports hang off that number. On a
+// new device they type the number back in.
+//
+// WHY - two reasons, and both are worth saying out loud in a review.
+// Privacy: data we never collect cannot be leaked, subpoenaed or sold, and
+// litter reports carry locations, so the less we know about who filed them the
+// better. Take-up: our user is a volunteer standing on a beach in the sun.
+// A sign-up form with email verification is where that person gives up.
+//
+// The trade-off is real and we do not hide it: lose the number and you lose
+// access to your past reports. The screen says so in plain words, twice.
+//
+// Two pieces of copy further down are load-bearing, so please do not soften
+// them. The shield note says a report carries only the participant number, the
+// beach, and what was recorded - never the exact location. That is a real
+// rule, not a slogan: it is enforced in flowRules.ts and by the backend
+// stripping EXIF, and it is shown here, at the moment we ask for an identity,
+// rather than buried in a policy page. The "Forgot it?" line says exactly what
+// is lost and what is not - the old reports are not deleted, they still count
+// for their beach, only the link to this person is gone. Vaguer wording there
+// would read as "your work was thrown away".
 
 import { useState, type FormEvent } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -21,14 +42,23 @@ export default function IdentityScreen() {
   const [typedId, setTypedId] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // The number we have just issued. While it is null we show the two choices;
+  // once it is set we show the number itself and nothing else. It is a piece
+  // of state and not a separate route on purpose - a user must not be able to
+  // reach "here is your number" again with the back button, because the number
+  // shown would no longer be the one they were given.
   const [newId, setNewId] = useState<string | null>(null);
 
 
+  // Ask for a new number.
   async function getNewId() {
     setBusy(true);
     setError(null);
     try {
       const id = await createId();
+      // Note we do NOT navigate away here. The user has to see the number and
+      // write it down first - jumping straight to the home page would lose it
+      // before they ever read it.
       setNewId(id);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not get an ID. Please try again.');
@@ -37,15 +67,25 @@ export default function IdentityScreen() {
   }
 
 
+  // Continue with a number the user already has.
+  //
+  // The field that feeds this is inputMode="numeric", not type="number". The
+  // number input adds spinner arrows, and it silently strips a leading zero -
+  // which would turn a valid ID into a different, wrong one before we ever
+  // send it.
   async function useExistingId(e: FormEvent) {
     e.preventDefault();
     setBusy(true);
     setError(null);
     try {
       await restore(typedId.trim());
+      // Back to wherever they were heading before we asked them to sign in.
+      // replace, so Back does not return them to this login screen.
       nav(next, { replace: true });
     } catch (err) {
-
+      // A server error or a dead connection also lands here, so we must not
+      // blame the user's typing every time. The message from the API is
+      // preferred, and "check the number" is only the last resort.
       setError(err instanceof Error ? err.message : 'Could not use that ID. Please check the number.');
     }
     setBusy(false);
@@ -75,7 +115,10 @@ export default function IdentityScreen() {
         </div>
 
         {newId ? (
-
+          // After the number is issued: show it big, and say to write it down.
+          // That warning is the honest cost of having no password. It is
+          // repeated on the Account page, because a user who skips it here has
+          // no other way to recover their reports.
           <>
             <div
               style={{
@@ -97,6 +140,8 @@ export default function IdentityScreen() {
                   letterSpacing: '.06em',
                   color: C.lime,
                   marginTop: 8,
+                  // userSelect: 'all' means one tap selects the whole number,
+                  // so it can be copied without fiddly text dragging.
                   userSelect: 'all',
                 }}
               >
@@ -114,6 +159,12 @@ export default function IdentityScreen() {
             </div>
           </>
         ) : (
+          // No number yet. Two choices: get one, or use one you already have.
+          // A segmented control rather than two separate pages, so a user who
+          // picked the wrong one can switch back without losing what they
+          // typed. This branch also ends with a way out that is not the back
+          // button - someone who arrived from a deep link should still be able
+          // to just look around.
           <>
 
             <div

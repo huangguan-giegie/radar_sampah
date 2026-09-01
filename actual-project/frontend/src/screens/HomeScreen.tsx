@@ -1,3 +1,14 @@
+// The home page: where a signed-in volunteer starts.
+//
+// It answers three questions in this order:
+//   1. Which beach needs me?      -> the map card
+//   2. What can I do right now?   -> Add a Report / How It's Rated
+//   3. What have I already done?  -> the three status tiles
+//
+// It works signed out too. A guest sees the same beaches and the same map -
+// only the personal counts are missing. Making the home page refuse to load
+// without an account would put a wall in front of the public data, which is
+// the opposite of what this project is for.
 import { useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { getBeaches, getMyReportCounts } from '../api';
@@ -9,6 +20,8 @@ import { useApp } from '../AppContext';
 import type { BeachSummary, ReportCounts } from '../types';
 import { hasDraftProgress, resumePath } from '../flowRules';
 
+// Morning / afternoon / evening, from the device clock. The date is a
+// parameter with a default so this can be tested without faking the clock.
 function greeting(d = new Date()) {
   const h = d.getHours();
   if (h < 12) return 'Good morning,';
@@ -17,6 +30,21 @@ function greeting(d = new Date()) {
 }
 
 
+/**
+ * One beach in the evidence list.
+ *
+ * attentionStateFor is the one place that decides whether a beach has earned
+ * a severity band. Asking it here, instead of reading b.severity straight
+ * off, is what stops the same beach reading "Low" on the map and
+ * "Insufficient data" on its own page.
+ *
+ * The icon carries the important distinction: a tick means we have enough
+ * counted reports to rate this beach, the info symbol means we do not. Those
+ * are very different claims, so they must not look the same at a glance.
+ *
+ * `last` only removes the final divider line - a border under the last row
+ * would double up with the card edge below it.
+ */
 function BeachRow({ b, last, onClick }: { b: BeachSummary; last: boolean; onClick: () => void }) {
   const attention = attentionStateFor(b.severity, b.insufficientData, b.validReports);
   return (
@@ -47,8 +75,13 @@ function BeachRow({ b, last, onClick }: { b: BeachSummary; last: boolean; onClic
           justifyContent: 'center',
         }}
       >
+        {/* Shape as well as colour. Someone who cannot tell the two blues
+            apart still sees a tick against an "i". */}
         {attention.hasBand ? <Check size={16} color={C.lime} strokeWidth={2} /> : <Info size={16} color={C.cloud} />}
       </div>
+      {/* minWidth: 0 lets this flex child shrink. Without it a long beach
+          name refuses to shrink and pushes the severity badge off screen -
+          the classic flexbox overflow. */}
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontSize: 14, fontWeight: 620 }}>{b.name}</div>
         <div style={{ fontSize: 11.5, color: C.dim, marginTop: 3 }}>
@@ -64,10 +97,16 @@ export default function HomeScreen() {
   const nav = useNavigate();
   const { user, draft, resetDraft, setLastSavedReport, reportsVersion } = useApp();
 
+  // Three pieces of state for one request: the data, "still waiting", and
+  // "it failed". A single `beaches` array cannot tell an empty result apart
+  // from a request that never came back, and those need different screens.
   const [beaches, setBeaches] = useState<BeachSummary[]>([]);
   const [loadingBeaches, setLoadingBeaches] = useState(true);
   const [beachesFailed, setBeachesFailed] = useState(false);
 
+  // A named function, not an inline effect body, because the error panel's
+  // Retry button calls exactly the same code. Retry must repeat the request,
+  // not something that only looks like it.
   function loadBeaches() {
     setLoadingBeaches(true);
     setBeachesFailed(false);
@@ -80,10 +119,16 @@ export default function HomeScreen() {
   useEffect(loadBeaches, []);
 
 
+  // My report counts. reportsVersion is in the dependency list below, so
+  // submitting a report anywhere in the app makes these tiles refresh - the
+  // user comes back to home and their new report is already counted.
   const [counts, setCounts] = useState<ReportCounts | null>(null);
 
   useEffect(() => {
 
+    // /home is deliberately not behind RequireAuth, so a guest can land here.
+    // For a guest this endpoint would answer 401 every time - there is no
+    // point asking, and a red error would be misleading rather than useful.
     if (!user) {
       setCounts(null);
       return;
@@ -93,6 +138,9 @@ export default function HomeScreen() {
       .catch(() => setCounts(null));
   }, [reportsVersion, user]);
 
+  // An unfinished draft is never thrown away without asking. Resume takes the
+  // user back to the furthest step they had reached, so a report started days
+  // ago can still be finished instead of being started again from the photo.
   const startReport = () => {
     if (hasDraftProgress(draft)) {
       if (window.confirm('Resume your unfinished report? Choose Cancel to start a new report.')) {
@@ -100,8 +148,19 @@ export default function HomeScreen() {
         return;
       }
     }
+    // Cancel means "start a new one", so the old draft goes. Otherwise a
+    // report abandoned last week would come back with its old photo and old
+    // beach already filled in, and that stale beach could be submitted
+    // without the user noticing.
+    //
+    // Clearing the last saved report matters too: while that value is set the
+    // report routes send the user to /reports, so a new report would bounce
+    // straight out of the flow.
     resetDraft();
     setLastSavedReport(null);
+    // A guest is sent to get a number first, and ?next= brings them straight
+    // back to the photo step. Without that they would land on the home page
+    // after signing in and have to find this button again.
     nav(user ? '/report/photo' : '/identity?next=/report/photo');
   };
 
@@ -116,10 +175,15 @@ export default function HomeScreen() {
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div>
             <div style={{ fontSize: 14.5, color: C.dim }}>{greeting()}</div>
+            {/* The participant number IS the name here. Showing it on the
+                home page every visit is also how the user keeps seeing the
+                number they were told to write down. */}
             <div style={{ fontSize: 23, fontWeight: 650, letterSpacing: '-.4px', marginTop: 1 }}>
               {user ? `Participant ${user.participantId}` : 'Guest'}
             </div>
           </div>
+          {/* aria-label because this button has an icon and no text. Without
+              it a screen reader announces only "button". */}
           <button
             type="button"
             onClick={() => nav('/account')}
@@ -174,6 +238,9 @@ export default function HomeScreen() {
           <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg,transparent 40%,rgba(221,227,236,.18) 46%,transparent 54%)' }} />
           <div style={{ position: 'absolute', inset: 0, opacity: 0.3, backgroundImage: NOISE }} />
           <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg,transparent 30%,rgba(9,22,48,.78) 100%)' }} />
+          {/* `|| 4` keeps the chip sensible while the list is still loading -
+              it would otherwise flash "0 BEACHES" for a moment, which reads
+              as "there is nothing here". */}
           <OverlayChip style={{ position: 'absolute', top: 14, left: 14 }}>
             MAP · {beaches.length || 4} BEACHES
           </OverlayChip>
@@ -259,6 +326,9 @@ export default function HomeScreen() {
           </button>
         </div>
 
+        {/* The three tiles are the same three statuses the backend uses, and
+            each one links into the filtered list. A number the user cannot
+            click through to is just a number they have to trust. */}
         <Label style={{ margin: '28px 0 12px' }}>WHAT YOU'VE ADDED</Label>
         <div style={{ display: 'flex', gap: 10 }}>
           <StatTile value={counts?.counted} caption="Counted" tone="counted" onClick={() => nav('/reports?tab=Counted')} />
@@ -277,6 +347,8 @@ export default function HomeScreen() {
           />
         ) : (
         <div style={{ background: C.white, border: '1px solid rgba(11,33,97,.07)', borderRadius: 22, overflow: 'hidden' }}>
+          {/* Skeleton rows, not a spinner: they hold the space the real rows
+              will take, so the page does not jump when the data arrives. */}
           {loadingBeaches && (
             <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
               <Skeleton h={38} r={14} />
@@ -307,6 +379,9 @@ export default function HomeScreen() {
             <Info size={11} color={C.dim} strokeWidth={2} />
             READING THE MAP
           </div>
+          {/* The last sentence is the whole point of this box. Both labels
+              mean "we do not know", and a user who reads them as "this beach
+              is fine" would take away the opposite of what the data says. */}
           <div style={{ fontSize: 11, lineHeight: 1.6, color: C.muted, marginTop: 6 }}>
             <b style={{ color: C.muted }}>Insufficient data</b> — fewer than three counted reports.{' '}
             <b style={{ color: C.muted }}>Not recently reported</b> — nothing counted in 90 days.

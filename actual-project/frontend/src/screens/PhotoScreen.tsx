@@ -1,3 +1,13 @@
+// Step 1 of the report: the photo.
+//
+// The photo comes FIRST, before the location and before the categories. Two
+// reasons. It is the evidence - a report without one cannot be checked by
+// anybody - and it is the thing the volunteer is standing in front of right
+// now. Asking for it last would mean asking them to walk back.
+//
+// Nothing here identifies the litter automatically. The user says what it is
+// on the next screen, and the screen says so out loud: we do not want a wrong
+// machine guess recorded as if a person had confirmed it.
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { photoPreviewUrl, refreshPhotoPreview, uploadPhoto, USE_MOCK } from '../api';
@@ -8,6 +18,10 @@ import { OverlayChip } from '../components/ds';
 import { useApp } from '../AppContext';
 
 
+// Matches API.md section 5: 10 MB or less, and only these three formats.
+// HEIC is iPhone's default. Some browsers hand us an empty MIME type for it,
+// so the check below also accepts the .heic file extension - otherwise iPhone
+// users, who are most of our users, would be turned away.
 const ACCEPTED_TYPES = ['image/jpeg', 'image/png', 'image/heic'];
 const MAX_PHOTO_BYTES = 10 * 1024 * 1024;
 
@@ -19,6 +33,12 @@ export default function PhotoScreen() {
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
 
+  // Preview links from the real backend do not last forever. A draft picked up
+  // again later still has the photo key but its picture link is dead, so ask
+  // the backend for a fresh one. If even that fails the photo is gone for
+  // good: clear it from the draft and say so, because a blank grey box with no
+  // words reads as a bug. The mock keeps photos in memory and its links never
+  // expire, so there is nothing to refresh there.
   useEffect(() => {
     const photoKey = draft.photo?.photoKey ?? draft.existingPhotoKey;
     if (!photoKey || draft.photo?.previewUrl || USE_MOCK) return;
@@ -41,6 +61,15 @@ export default function PhotoScreen() {
     };
   }, [draft.photo?.photoKey, draft.existingPhotoKey]);
 
+  // Three checks before we upload anything. The accept="..." attribute is only
+  // a hint to the file picker: the user can switch it to "All files" and pick a
+  // PDF, so it stops nothing.
+  //
+  // In the contract the backend enforces type and size (API.md section 5), but
+  // with the mock running that defence does not exist yet. So we check here as
+  // well, and report every failure through the same red panel - one error
+  // style, not two. The zero-byte case is worth its own check: an empty file
+  // uploads without complaint and only shows up later as a broken picture.
   async function handleFile(file: File | undefined) {
     if (!file) return;
 
@@ -64,12 +93,19 @@ export default function PhotoScreen() {
     setUploadError(null);
     try {
       const photo = await uploadPhoto(file);
+      // Refuse the photo if the location metadata is still in it. Every photo
+      // from a phone carries the exact spot it was taken; publishing that
+      // would break the promise made two screens earlier. We would rather
+      // reject a photo than quietly upload someone's coordinates.
       if (!photo.metadataStripped) {
         throw new Error('Location metadata could not be removed. Please choose another photo.');
       }
       patchDraft({ photo });
     } catch (error) {
       setUploadError(error instanceof Error ? error.message : 'Please try again.');
+      // Clear the photo as well as showing the error. Leaving a half-failed
+      // upload in the draft would let the user press Continue and submit a
+      // report pointing at a photo that was never stored.
       patchDraft({ photo: null });
     } finally {
       setUploading(false);
@@ -78,6 +114,11 @@ export default function PhotoScreen() {
 
   const photo = draft.photo;
 
+  // Two hidden file inputs below, one visible pair of buttons.
+  // capture="environment" on the first opens the back camera straight away on
+  // a phone; on a laptop, where there is no such camera, the browser ignores it
+  // and shows the normal file picker. That single attribute is how one code
+  // path serves both, with no device sniffing and no separate mobile build.
   return (
     <div className="screen scroll-y" style={{ zIndex: 26 }}>
 
@@ -114,6 +155,9 @@ export default function PhotoScreen() {
         </div>
 
         {uploadError && (
+          // Retry reopens whichever picker fits the failure. An expired preview
+          // means the photo is already in their library, so send them there;
+          // anything else is a fresh attempt, so open the camera.
           <ErrorNote
             title="Photo upload failed"
             body={uploadError}
@@ -194,6 +238,10 @@ export default function PhotoScreen() {
           <>
             <div style={{ position: 'relative', height: 280, borderRadius: 26, overflow: 'hidden', background: '#87847B' }}>
               <img
+                /* previewUrl first, then look the key up. After a refresh the
+                   preview is gone - we strip it before saving the draft, see
+                   AppContext - so the second source is what brings the picture
+                   back instead of showing a broken image. */
                 src={photo.previewUrl || photoPreviewUrl(photo.photoKey) || undefined}
                 alt="Litter you photographed"
                 style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
@@ -212,6 +260,8 @@ export default function PhotoScreen() {
                 Retake
               </button>
               {photo.metadataStripped && (
+                // Tell the user we removed the location from their photo. A
+                // privacy step nobody can see is one nobody can trust.
                 <OverlayChip style={{ position: 'absolute', left: 14, bottom: 14 }}>
                   <Shield size={11} />
                   LOCATION METADATA REMOVED

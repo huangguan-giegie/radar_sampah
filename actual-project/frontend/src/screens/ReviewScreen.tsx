@@ -1,3 +1,13 @@
+// The last step: check everything, then submit.
+//
+// Every row here can be changed from here. A review screen that only shows you
+// your mistake, without a way to fix it, forces the user to guess how many
+// times to press Back - and on a phone that usually ends with them starting
+// again.
+//
+// It handles BOTH new reports and corrections to an old one. The difference is
+// worked out by buildReportSubmission in flowRules.ts, so this screen does not
+// have to branch on it.
 import { useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { createReport, getBeaches, photoPreviewUrl, updateReport } from '../api';
@@ -13,6 +23,9 @@ export default function ReviewScreen() {
   const nav = useNavigate();
   const { draft, setLastSavedReport, bumpReports, showToast } = useApp();
   const [beaches, setBeaches] = useState<BeachSummary[]>([]);
+  // busy disables the submit button while the request is in flight - the one
+  // place a disabled button is right, because a second tap would file the
+  // report twice.
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -28,6 +41,10 @@ export default function ReviewScreen() {
     draft.photo?.previewUrl || photoPreviewUrl(draft.photo?.photoKey) || draft.existingPhotoUrl;
 
   async function submit() {
+    // Two separate try blocks, on purpose. This first one is about the DRAFT
+    // being wrong, and the user can fix it here. The second is about the
+    // REQUEST failing, which they can only retry. Merging them would report a
+    // network outage as a mistake the user made.
     let submission: ReturnType<typeof buildReportSubmission>;
     try {
       submission = buildReportSubmission(draft);
@@ -47,6 +64,14 @@ export default function ReviewScreen() {
         submission.kind === 'update'
           ? await updateReport(submission.reportId, submission.changes)
           : await createReport(submission.payload);
+      // Order matters here.
+      // 1. keep the saved report, so the next screen can show it without
+      //    another request that might fail
+      // 2. tell the rest of the app to refresh its counts
+      // 3. navigate through finishReportSubmission, which commits the move
+      //    BEFORE the draft is cleared - the confirmation screen clears it
+      //    after mounting. Clearing first would let this page's own route
+      //    guard see an empty draft and bounce the user back to step 1.
       setLastSavedReport(saved);
       bumpReports();
       finishReportSubmission(nav);
@@ -59,6 +84,22 @@ export default function ReviewScreen() {
   }
 
 
+  /*
+   * Going back to the details step: pop this page off the history, do not push
+   * another one.
+   *
+   * Pushing would leave the history as [..., details, details], so the back
+   * arrow on the details screen would appear to do nothing - it lands on an
+   * identical page. Using replace has the same effect. Popping restores
+   * [..., confirm, details], so the in-page back button and the browser's own
+   * back button finally point the same way.
+   *
+   * There is one case with nothing to pop: the draft survives a refresh, so a
+   * reloaded tab can open directly on this review page. The decision lives in
+   * backFromReview() in flowRules.ts, where it is tested - it used to be inline
+   * here, and an edit turned its fallback into a call to itself, which locked
+   * the whole screen with a stack overflow.
+   */
   const backToDetails = () => {
     const idx = (window.history.state as { idx?: number } | null)?.idx;
     const action = backFromReview(idx);
@@ -67,6 +108,15 @@ export default function ReviewScreen() {
   };
 
 
+  // The label is used as the React key. These rows come from a map, and within
+  // one report a category appears at most once, so the label is unique. Using
+  // the array index instead would reassign rows to the wrong data as soon as a
+  // category was removed.
+  //
+  // The optional badge is what the location row uses to say what was stored:
+  // "GPS PRIVATE" means coordinates were used but stay unpublished, "NO GPS
+  // STORED" means there were none at all. This is the last screen before the
+  // data leaves their device, so it is the honest place to say it.
   const row = (label: string, value: string, action?: () => void, badge?: string) => (
     <button
       key={label}

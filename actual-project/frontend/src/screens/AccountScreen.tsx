@@ -1,3 +1,9 @@
+// The account page.
+//
+// There is very little here, and that is the design. With no name, no email
+// and no password there are no profile fields to manage. What is left is the
+// participant number, a summary of what the user has contributed, the two
+// documents that explain how we treat their data, and a way to sign out.
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getMyReportCounts } from '../api';
@@ -14,6 +20,9 @@ export default function AccountScreen() {
   const { user, signOut, reportsVersion, offline, setOffline } = useApp();
   const [counts, setCounts] = useState<ReportCounts | null>(null);
 
+  // On failure we set null rather than 0. The tiles then show a dash instead
+  // of a number: telling a volunteer they have contributed nothing, when we
+  // simply could not reach the server, would be a lie about their work.
   useEffect(() => {
     getMyReportCounts()
       .then((c) => setCounts(c))
@@ -22,6 +31,9 @@ export default function AccountScreen() {
   const [sheet, setSheet] = useState(false);
 
 
+  // One row of the settings list. Written once as a function so every row has
+  // the same height, the same chevron and the same divider - a list where the
+  // rows are each built by hand always drifts apart.
   const link = (
     title: string,
     subtitle: string,
@@ -91,10 +103,15 @@ export default function AccountScreen() {
               <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '.14em', color: C.dim }}>
                 PARTICIPANT ID
               </div>
+              {/* The participant number, shown large. This is the only copy of
+                  it the user has - it is not in an email anywhere - so the
+                  account page has to be the place they can always find it. */}
               <div style={{ fontSize: 24, fontWeight: 660, letterSpacing: '-.3px', marginTop: 2 }}>
                 {user?.participantId ?? '—'}
               </div>
             </div>
+            {/* A badge, not body text. It states what kind of account this is
+                at a glance: we hold nothing that identifies this person. */}
             <StatusBadge status="counted">ANONYMOUS</StatusBadge>
           </div>
 
@@ -106,6 +123,10 @@ export default function AccountScreen() {
           <StatTile value={counts?.incomplete} caption="Incomplete" tone="incomplete" onClick={() => nav('/reports?tab=Excluded')} />
         </div>
 
+        {/* Both promises the app makes, reachable from the account page: what
+            we do with location, and how the score is calculated. Neither is
+            buried in a footer, because both are claims the user is entitled to
+            check. */}
         <Label style={{ fontSize: 9.5 }}>PRIVACY &amp; RULES</Label>
         <div style={{ background: C.white, border: '1px solid rgba(11,33,97,.07)', borderRadius: 22, overflow: 'hidden' }}>
           {link(
@@ -123,6 +144,12 @@ export default function AccountScreen() {
           )}
         </div>
 
+        {/* A demo switch that forces the map's offline banner on. It is here
+            so the offline behaviour can be shown in a review or a usability
+            test without unplugging the network - it changes nothing about how
+            data is stored. A real deployment would drop this row.
+            The whole thing is a <label> wrapping the checkbox, so tapping the
+            text toggles it too - a 16px checkbox is a poor target on a phone. */}
         <label
           style={{
             display: 'flex',
@@ -159,10 +186,16 @@ export default function AccountScreen() {
         >
           Sign Out
         </GhostButton>
+        {/* Sits under the button, before it is pressed. Signing out is not
+            destructive here, but without the number the user cannot get back
+            in - so the warning has to come before the tap, not after. */}
         <div style={{ fontSize: 11, lineHeight: 1.5, color: C.dim, textAlign: 'center', marginTop: -10 }}>
           Signing out just forgets your ID on this device. Write the number down first.
         </div>
 
+        {/* Says which iteration this build is, and what is deliberately not in
+            it yet. A user who has read about AI recognition in our proposal
+            should not be left hunting for a feature that was never shipped. */}
         <div style={{ fontFamily: MONO, fontSize: 9, lineHeight: 1.7, letterSpacing: '.06em', color: C.faint, textAlign: 'center' }}>
           ITERATION 1 · CORE MVP
           <br />

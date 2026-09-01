@@ -1,3 +1,13 @@
+// Step 2 of the report: which beach are you on?
+//
+// The user is asked for their location ONCE, and it is used once, to suggest a
+// beach. There is no tracking, and no background location. The screen says
+// this before the browser prompt appears, because a permission dialog with no
+// explanation is the one most people refuse.
+//
+// Every path out of this screen goes to /report/confirm, where the user
+// confirms or changes the beach. Location never chooses on its own - the
+// person always gets the last word.
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { resolveBeach } from '../api';
@@ -9,6 +19,8 @@ import { C } from '../theme';
 import { useApp } from '../AppContext';
 
 
+/** Where the little map sits before we know anything: the Selangor coast.
+ *  Once the user allows location, it pans to where they actually are. */
 const FALLBACK: [number, number] = [2.95, 101.42];
 
 export default function GpsScreen() {
@@ -18,6 +30,9 @@ export default function GpsScreen() {
   const [busy, setBusy] = useState(false);
 
   async function allowOnce() {
+    // Some browsers have no geolocation at all, and any page served over
+    // plain http does not get it either. Fall through to picking by hand
+    // rather than crashing on an undefined API.
     if (!('geolocation' in navigator)) {
       patchDraft({ locationSource: 'manual', gpsIssue: 'unavailable' });
       nav('/report/confirm');
@@ -26,13 +41,28 @@ export default function GpsScreen() {
     setBusy(true);
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
-
-
+        // Round the coordinates the moment we receive them.
+        //
+        // DMP section 4.2 says we store an approximate location, and the
+        // screen promises the exact position never leaves the device. Three
+        // decimal places is about 110 metres. We round HERE, at the point of
+        // collection, so the precise value is never put in a variable that
+        // could be sent anywhere - a promise kept by the shape of the code,
+        // not by remembering to strip it later.
+        //
+        // 110 m is plenty: the nearest two beaches are about 10 km apart.
+        //
+        // This rounding is also what makes the bold line in the card below
+        // true - "Your exact coordinates never appear publicly." That line is
+        // bold because it is the sentence that decides whether the user
+        // presses Allow, so it has to stay true here.
         const round3 = (n: number) => Math.round(n * 1000) / 1000;
         const coords = { lat: round3(pos.coords.latitude), lng: round3(pos.coords.longitude) };
 
-
-
+        // A rough fix is worse than no fix. accuracy is the radius the browser
+        // itself is confident about; past 2 km the answer is little better
+        // than a guess, and a guessed beach becomes a wrong report that counts
+        // towards a real score. So we hand it back to the user instead.
         if (pos.coords.accuracy > 2000) {
           setBusy(false);
           patchDraft({ locationSource: 'manual', coords: null, gpsIssue: 'inaccurate' });
@@ -42,6 +72,8 @@ export default function GpsScreen() {
 
         try {
           const beach = await resolveBeach(coords.lat, coords.lng);
+          // A beach was found: pre-select it, and remember this came from GPS.
+          // The backend needs that flag for its duplicate check.
           if (beach) {
             patchDraft({ locationSource: 'gps', coords, beachId: beach.id, beachName: beach.name, gpsIssue: null });
           } else {
@@ -56,7 +88,10 @@ export default function GpsScreen() {
       },
       (err) => {
         setBusy(false);
-
+        // "You refused", "your device cannot get a fix" and "it timed out" are
+        // three different problems. Reporting all of them as "permission
+        // denied" sends people into their settings to fix something that was
+        // never broken. The confirm screen prints a different line for each.
         const issue =
           err.code === err.PERMISSION_DENIED ? 'denied'
           : err.code === err.TIMEOUT ? 'timeout'
@@ -64,10 +99,16 @@ export default function GpsScreen() {
         patchDraft({ locationSource: 'manual', gpsIssue: issue, coords: null });
         nav('/report/confirm');
       },
+      // 10 seconds, then give up. Without a timeout this call can hang for
+      // ever indoors, leaving the button stuck on "Locating..." with no way
+      // out. high accuracy because 100 metres decides which beach it is.
       { enableHighAccuracy: true, timeout: 10_000 },
     );
   }
 
+  // Skip location entirely. This is offered as an equal choice next to Allow,
+  // not hidden as a fallback: some volunteers simply will not share location,
+  // and their reports are worth just as much.
   function chooseManually() {
     patchDraft({ locationSource: 'manual', gpsIssue: null, coords: null });
     nav('/report/confirm');
@@ -76,6 +117,10 @@ export default function GpsScreen() {
   const center = draft.coords ?? { lat: FALLBACK[0], lng: FALLBACK[1] };
 
   return (
+    // Layering note for everything below. Leaflet's own layers sit between
+    // z-index 400 and 700, so the tint overlay and the card that sit on top of
+    // the map use 800 and 820. Anything below 400 is swallowed by the map,
+    // however late it appears in the markup.
     <div className="screen" style={{ zIndex: 26, background: C.cloud, overflow: 'hidden' }}>
       <MiniMap lat={center.lat} lng={center.lng} zoom={9} />
 
@@ -128,6 +173,9 @@ export default function GpsScreen() {
             Choose Beach Manually
           </GhostButton>
           <TextButton
+            // "Why do we need this?" opens the full explanation without
+            // leaving the page. Asked at the moment the question occurs, which
+            // is not the same as a privacy policy in a footer.
             onClick={() => setSheet(true)}
             style={{ fontSize: 12.5, color: C.dim, textDecoration: 'underline', textUnderlineOffset: 3, fontWeight: 400, padding: 6 }}
           >

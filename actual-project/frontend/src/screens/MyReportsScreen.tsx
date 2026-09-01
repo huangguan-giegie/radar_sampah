@@ -1,3 +1,8 @@
+// Everything this volunteer has submitted, and what became of each report.
+//
+// The point of this screen is accountability in both directions. The user can
+// see that their work was kept, and see plainly which reports did not count
+// and why - with a way to open any of them and correct it.
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { getBeaches, getMyReports } from '../api';
@@ -9,6 +14,9 @@ import { StatusBadge, type BadgeStatus } from '../components/ds';
 import { useApp } from '../AppContext';
 import type { BeachSummary, LitterReport } from '../types';
 
+// Three tabs, not four. Duplicate and Incomplete are both grouped under
+// "Excluded" because from the user's side they are the same question - "why is
+// this not counted?" - and the badge on each row still gives the exact reason.
 type Tab = 'All' | 'Counted' | 'Excluded';
 
 const TABS: Tab[] = ['All', 'Counted', 'Excluded'];
@@ -18,6 +26,9 @@ export default function MyReportsScreen() {
   const [params, setParams] = useSearchParams();
   const { patchDraft, resetDraft, setLastSavedReport, reportsVersion } = useApp();
 
+  // The tab lives in the URL, not in useState. That makes /reports?tab=Counted
+  // a real link, which is how the three tiles on the home page can jump
+  // straight to the right filter, and it survives a refresh.
   const tab = (params.get('tab') as Tab) ?? 'All';
   const [reports, setReports] = useState<LitterReport[]>([]);
   const [beaches, setBeaches] = useState<BeachSummary[]>([]);
@@ -25,6 +36,7 @@ export default function MyReportsScreen() {
   const [failed, setFailed] = useState(false);
 
 
+  // Named so the Retry button in the error panel can call the same code.
   function loadReports() {
     setLoading(true);
     setFailed(false);
@@ -34,6 +46,8 @@ export default function MyReportsScreen() {
       .finally(() => setLoading(false));
   }
 
+  // Runs again whenever reportsVersion changes, so a report submitted a moment
+  // ago is already in this list when the user arrives.
   useEffect(loadReports, [reportsVersion]);
 
   useEffect(() => {
@@ -43,6 +57,9 @@ export default function MyReportsScreen() {
   }, []);
 
 
+  // The thumbnail: the report's own photo if we can still fetch it, otherwise
+  // the beach cover, otherwise a gradient. Never an empty grey box - a row
+  // with a hole in it looks like the report itself is damaged.
   function coverOf(beachId: string) {
     const beach = beaches.find((b) => b.id === beachId);
     return {
@@ -52,6 +69,8 @@ export default function MyReportsScreen() {
   }
 
 
+  // Filter in the browser. The full list is already here, so re-asking the
+  // server for a subset would make switching tabs slower than it needs to be.
   let rows = reports;
   if (tab === 'Counted') rows = reports.filter((r) => r.status === 'Counted');
   if (tab === 'Excluded') rows = reports.filter((r) => r.status !== 'Counted');
@@ -107,6 +126,10 @@ export default function MyReportsScreen() {
           </div>
         )}
 
+        {/* Three different empty states, never confused with each other:
+            still loading, the request failed, or genuinely nothing yet. A
+            first-time user must not be shown an error, and a user whose
+            connection dropped must not be told they have never contributed. */}
         {!loading && !failed && rows.length === 0 && (
           <div style={{ border: '1.5px dashed rgba(11,33,97,.18)', borderRadius: 24, padding: '36px 24px', textAlign: 'center', marginTop: 8 }}>
             <div style={{ width: 52, height: 52, borderRadius: 26, background: 'rgba(11,33,97,.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto' }}>
@@ -125,8 +148,15 @@ export default function MyReportsScreen() {
               <button
                 key={r.id}
                 type="button"
+                // Every row opens the correction flow, not only the excluded
+                // ones. A volunteer may want to fix a report that already
+                // counted, and a row that takes focus and then does nothing
+                // tells a keyboard or screen reader user it is broken.
                 onClick={() => {
                   resetDraft();
+                  // Left over from the last submission. The route guard in
+                  // App.tsx reads it when a draft is not ready for the step
+                  // being opened, and would send this edit back to the list.
                   setLastSavedReport(null);
                   patchDraft({
                     editingReportId: r.id,
@@ -142,6 +172,9 @@ export default function MyReportsScreen() {
                   });
                   nav('/report/details', { replace: true });
                 }}
+                // The visible row is three separate scraps of text, so a
+                // screen reader would read it out as a run-on. This gives the
+                // button one clear name and says what pressing it does.
                 aria-label={`Correct report for ${r.beachName}`}
                 className="card-hover"
                 style={{
@@ -173,6 +206,9 @@ export default function MyReportsScreen() {
                   <div style={{ fontFamily: MONO, fontSize: 9, color: C.faint, marginTop: 3 }}>
                     {formatDate(r.createdAt)}
                   </div>
+                  {/* The server's explanation of why this one was excluded,
+                      printed on the row itself. Without it "Incomplete" is a
+                      verdict with no reason attached. */}
                   {r.statusNote && (
                     <div style={{ fontSize: 11, color: '#8A6420', marginTop: 5, background: 'rgba(217,162,75,.1)', borderRadius: 8, padding: '5px 8px', lineHeight: 1.45 }}>
                       {r.statusNote}
@@ -184,6 +220,9 @@ export default function MyReportsScreen() {
           })}
         </div>
 
+        {/* The status guide is always on screen, not hidden behind a help
+            link. These three words decide whether a volunteer's work counted,
+            so the definitions belong next to them. */}
         <div style={{ marginTop: 4, padding: '13px 15px', borderRadius: 16, background: 'rgba(11,33,97,.03)', border: '1px solid rgba(11,33,97,.07)' }}>
           <div style={{ fontFamily: MONO, fontSize: 8.5, letterSpacing: '.14em', color: C.dim }}>STATUS GUIDE</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: 11.5, lineHeight: 1.55, color: C.muted, marginTop: 7 }}>
