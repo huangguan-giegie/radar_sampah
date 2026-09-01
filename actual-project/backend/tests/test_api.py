@@ -287,6 +287,12 @@ def test_beach_summary_and_detail_shapes_are_strict(api):
     assert set(detail) == expected_summary_fields | {"composition", "compositionSource", "species", "ecologicalNote"}
     assert detail["composition"] is None
     assert detail["compositionSource"] is None
+    expected_species_counts = {"morib": 3, "remis": 3, "kelanang": 2, "bagan": 3}
+    for beach_id, expected_count in expected_species_counts.items():
+        beach_detail = client.get(f"/beaches/{beach_id}").get_json()
+        assert len(beach_detail["species"]) == expected_count
+        assert [species["name"] for species in beach_detail["species"]] == beach_detail["speciesNames"]
+        assert all(species["source"]["dataset"] == "pending" for species in beach_detail["species"])
 
 
 def test_geo_resolution_is_authenticated_and_does_not_persist_coordinates(api):

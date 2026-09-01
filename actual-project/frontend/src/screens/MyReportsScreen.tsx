@@ -186,7 +186,10 @@ export default function MyReportsScreen() {
 
         <div style={{ marginTop: 4, padding: '13px 15px', borderRadius: 16, background: 'rgba(11,33,97,.03)', border: '1px solid rgba(11,33,97,.07)' }}>
           <div style={{ fontFamily: MONO, fontSize: 8.5, letterSpacing: '.14em', color: C.dim }}>STATUS GUIDE</div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: 11.5, lineHeight: 1.55, color: C.muted, marginTop: 7 }}>
+          <div style={{ fontSize: 11.5, lineHeight: 1.55, color: C.ink2, marginTop: 7 }}>
+            Excluded shows Duplicate and Incomplete reports.
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: 11.5, lineHeight: 1.55, color: C.muted, marginTop: 5 }}>
             {[
               { s: 'Counted', c: C.green, t: 'counts toward the beach rating' },
               { s: 'Duplicate', c: C.muted, t: 'same participant, beach and local day as an existing counted report' },

@@ -148,11 +148,6 @@ export default function BeachScreen() {
               )}
               {b.validReports} counted reports
             </InfoChip>
-            {attention.hasBand && b.attentionScore !== null && (
-              <InfoChip>
-                Attention score {b.attentionScore.toFixed(2)}
-              </InfoChip>
-            )}
             <InfoChip color={fs.c} background={fs.bg}>
               <i style={{ width: 6, height: 6, borderRadius: 3, background: fs.dot, display: 'block' }} />
               {freshnessLabel(b.freshnessKind, b.lastReportedAt)}
@@ -199,7 +194,17 @@ export default function BeachScreen() {
                   </span>
                 </div>
               ))}
-              <div style={{ fontFamily: MONO, fontSize: 8.5, letterSpacing: '.1em', color: C.faint, marginTop: 4 }}>
+              <div
+                style={{
+                  fontFamily: MONO,
+                  fontSize: 10.5,
+                  fontWeight: 600,
+                  lineHeight: 1.5,
+                  letterSpacing: '.05em',
+                  color: C.muted,
+                  marginTop: 5,
+                }}
+              >
                 {b.compositionSource
                   ? `REPORT ${formatDate(b.compositionSource.createdAt).toUpperCase()} · BROAD CATEGORIES`
                   : 'BROAD CATEGORIES'}
