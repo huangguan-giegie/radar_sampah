@@ -94,20 +94,3 @@ Call `POST /auth/restore` with `1637`, then run the deployed flow without writin
 - [ ] **Step 5: Record the result**
 
 Append the exact commit, deployment URL, test timestamps, flow result and the public-demo credential limitation to `PM_CONTEXT_ACTUAL_PROJECT.md`.
-
-### Task 4: Notify Darli
-
-**Files:**
-- Modify: `PM_CONTEXT_ACTUAL_PROJECT.md` with the sent-message status.
-
-**Interfaces:**
-- Consumes: verified production result for participant `1637`.
-- Produces: one concise private WhatsApp message to Darli.
-
-- [ ] **Step 1: Prepare the message**
-
-Use: `Hi Darli, I created the demo participant ID 1637 on the current compatibility deployment and verified the real report flow from restore through submission, saved result, My Reports and correction. The ID is now available for mentor-check demos. It is a public demo credential, so it should only be used with synthetic data.`
-
-- [ ] **Step 2: Send after verification**
-
-Send only after the deployed restore and flow checks pass, then record the send status in the PM context.
