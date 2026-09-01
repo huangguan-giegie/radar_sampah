@@ -85,7 +85,7 @@ CATEGORY_WEIGHTS = {
 QUANTITY_WEIGHTS = {"Small": 1, "Medium": 2, "Large": 3, "Very Large": 4}
 REPORT_STATUSES = {"Counted", "Duplicate", "Incomplete"}
 REPORT_STATUS_NOTES = {
-    "Duplicate": "Matched an existing report for the same beach on the same day — excluded from the severity calculation.",
+    "Duplicate": "Same participant, beach and local day as an existing counted report. Saved here but excluded from the beach score.",
     "Incomplete": "Photo unreadable — excluded until you correct and save the report.",
 }
 SCORING_BANDS = (

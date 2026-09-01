@@ -142,13 +142,25 @@ function currentMockReports(): LitterReport[] {
   return mockAccounts[currentMockParticipantId()];
 }
 
+export function localDayInKualaLumpur(iso: string): string {
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Kuala_Lumpur',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(new Date(iso));
+}
+
+const MOCK_DUPLICATE_STATUS_NOTE =
+  'Same participant, beach and local day as an existing counted report. Saved here but excluded from the beach score.';
+
 function mockDuplicateStatus(beachId: string, createdAt: string, excludeReportId?: string): LitterReport['status'] {
-  const day = new Date(createdAt).toISOString().slice(0, 10);
+  const day = localDayInKualaLumpur(createdAt);
   const duplicate = currentMockReports().some((report) =>
     report.id !== excludeReportId &&
     report.status === 'Counted' &&
     report.beachId === beachId &&
-    new Date(report.createdAt).toISOString().slice(0, 10) === day,
+    localDayInKualaLumpur(report.createdAt) === day,
   );
   return duplicate ? 'Duplicate' : 'Counted';
 }
@@ -462,6 +474,8 @@ export async function createReport(input: CreateReportInput): Promise<LitterRepo
   if (USE_MOCK) {
     await delay(500);
     const beach = BEACHES.find((b) => b.id === input.beachId) || BEACHES[0];
+    const createdAt = new Date().toISOString();
+    const status = mockDuplicateStatus(beach.id, createdAt);
     const report: LitterReport = {
       id: 'r_' + Date.now(),
       beachId: beach.id,
@@ -471,8 +485,9 @@ export async function createReport(input: CreateReportInput): Promise<LitterRepo
       categoryScores: categoryScoresFor(input.quantities),
       reportScore: reportScoreFor(input.quantities),
       photoUrl: mockPhotoStore.get(input.photoKey) ?? null,
-      createdAt: new Date().toISOString(),
-      status: mockDuplicateStatus(beach.id, new Date().toISOString()),
+      createdAt,
+      status,
+      statusNote: status === 'Duplicate' ? MOCK_DUPLICATE_STATUS_NOTE : undefined,
     };
     replaceCurrentMockReports([report, ...currentMockReports()]);
     return report;
@@ -519,6 +534,7 @@ export async function updateReport(
 
     const old = reports[index];
     const beach = changes.beachId ? BEACHES.find((b) => b.id === changes.beachId) : undefined;
+    const status = mockDuplicateStatus(beach ? beach.id : old.beachId, old.createdAt, old.id);
     const updated: LitterReport = {
       ...old,
       ...(changes.quantities
@@ -532,8 +548,8 @@ export async function updateReport(
       photoUrl: changes.photoKey ? mockPhotoStore.get(changes.photoKey) ?? null : old.photoUrl,
       beachId: beach ? beach.id : old.beachId,
       beachName: beach ? beach.name : old.beachName,
-      status: mockDuplicateStatus(beach ? beach.id : old.beachId, old.createdAt, old.id),
-      statusNote: undefined,
+      status,
+      statusNote: status === 'Duplicate' ? MOCK_DUPLICATE_STATUS_NOTE : undefined,
     };
 
     const nextReports = reports.slice();

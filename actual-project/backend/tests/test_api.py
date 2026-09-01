@@ -450,7 +450,10 @@ def test_duplicate_rule_and_counts(api):
     second = client.post("/reports", headers=headers, json=payload).get_json()
     assert first["status"] == "Counted"
     assert second["status"] == "Duplicate"
-    assert second["statusNote"].startswith("Matched an existing report")
+    assert second["statusNote"] == (
+        "Same participant, beach and local day as an existing counted report. "
+        "Saved here but excluded from the beach score."
+    )
     assert client.get("/reports/mine/counts", headers=headers).get_json() == {
         "counted": 1,
         "duplicate": 1,
@@ -468,6 +471,36 @@ def test_duplicate_rule_is_scoped_to_reporter(api):
     second_photo = upload(client, second_headers)
     assert client.post("/reports", headers=first_headers, json=report_payload(first_photo["photoKey"])).get_json()["status"] == "Counted"
     assert client.post("/reports", headers=second_headers, json=report_payload(second_photo["photoKey"])).get_json()["status"] == "Counted"
+
+
+def test_duplicate_rule_is_scoped_to_beach_and_ignores_incomplete(api):
+    application, client = api
+    _session, headers = signup(client)
+    first_photo = upload(client, headers)
+    first = client.post("/reports", headers=headers, json=report_payload(first_photo["photoKey"])).get_json()
+
+    other_beach_photo = upload(client, headers)
+    other_beach = client.post(
+        "/reports",
+        headers=headers,
+        json=report_payload(other_beach_photo["photoKey"], beach_id="remis"),
+    ).get_json()
+    assert first["status"] == "Counted"
+    assert other_beach["status"] == "Counted"
+
+    engine = application.extensions["marine_engine"]
+    with engine.begin() as connection:
+        connection.execute(
+            reports_table.update().where(reports_table.c.id == first["id"]).values(status="Incomplete")
+        )
+
+    after_incomplete_photo = upload(client, headers)
+    after_incomplete = client.post(
+        "/reports",
+        headers=headers,
+        json=report_payload(after_incomplete_photo["photoKey"]),
+    ).get_json()
+    assert after_incomplete["status"] == "Counted"
 
 
 def test_duplicate_rule_resets_on_a_new_local_day(api):

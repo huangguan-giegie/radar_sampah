@@ -189,7 +189,7 @@ export default function MyReportsScreen() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: 11.5, lineHeight: 1.55, color: C.muted, marginTop: 7 }}>
             {[
               { s: 'Counted', c: C.green, t: 'counts toward the beach rating' },
-              { s: 'Duplicate', c: C.muted, t: 'same beach and day as an existing report' },
+              { s: 'Duplicate', c: C.muted, t: 'same participant, beach and local day as an existing counted report' },
               { s: 'Incomplete', c: C.red, t: 'missing field or unusable photo — correctable' },
             ].map((r) => (
               <div key={r.s}>

@@ -694,12 +694,14 @@ GCS signed URLs), not a workaround.
 }
 ```
 
-When judged a duplicate, the same 201 shape carries:
+When the same participant submits again for the same beach on the same Kuala Lumpur local day,
+the same 201 shape carries `status: "Duplicate"`. This is a same-day submission limit; it does
+not prove that the photos or litter content are identical:
 
 ```json
 {
   "status": "Duplicate",
-  "statusNote": "Matched an existing record for the same beach on the same day — excluded from the severity calculation."
+  "statusNote": "Same participant, beach and local day as an existing counted report. Saved here but excluded from the beach score."
 }
 ```
 
@@ -718,10 +720,9 @@ Evaluated in order, first match wins:
 | 3 | Same **reporter** + same **beachId** + same **calendar day** (`Asia/Kuala_Lumpur`) already has a `Counted` row | `Duplicate` |
 | 4 | Otherwise | `Counted` |
 
-**Rule 3 is the entire duplicate definition — do not add a coordinate-distance test.** The sentence
-the app shows the user ("Matched an existing record for the same beach on the same day") is the
-natural-language form of exactly this rule, and the two must not drift. Several photos of different
-angles on one beach in one day should not score twice anyway.
+**Rule 3 is the entire duplicate definition — do not add a coordinate-distance or content-similarity
+test.** The app describes this as a same-participant, same-beach, same-local-day submission limit.
+It is an anti-double-counting rule, not a claim that two photos or litter observations are identical.
 
 **Where does `Incomplete` come from?** Never from a POST — a missing field is rejected with a 400 and
 nothing is stored. `Incomplete` is set **afterwards**, from one of two places:
@@ -738,7 +739,7 @@ the judgement.
 **The backend sends a finished English sentence; the frontend prints it verbatim.** Two standard
 strings:
 
-- Duplicate → `Matched an existing record for the same beach on the same day — excluded from the severity calculation.`
+- Duplicate → `Same participant, beach and local day as an existing counted report. Saved here but excluded from the beach score.`
 - Incomplete → `Photo unreadable — excluded until you correct and save the record.`
 
 Omit the field (or send `null`) when `Counted`.
