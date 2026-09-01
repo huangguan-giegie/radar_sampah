@@ -134,7 +134,7 @@ export function reportOutcome(status: ReportStatus): ReportOutcome {
       title: 'Saved — but not counted',
       badge: 'DUPLICATE · EXCLUDED',
       message:
-        'This report matches an existing report for the same beach and day, so it is saved in your reports but excluded from the beach rating.',
+        'This is a same-participant, same-beach, same-local-day submission. It is saved in your reports but excluded from the beach rating.',
       tone: 'neutral',
     };
   }

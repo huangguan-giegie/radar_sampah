@@ -98,6 +98,14 @@ describe('真实 API contract', () => {
     expect(report.categoryScores).toEqual({ Plastic: 2.55, 'Fishing gear': 2 });
   });
 
+  it('uses the Kuala Lumpur calendar day for mock duplicate checks', async () => {
+    vi.stubEnv('VITE_API_BASE_URL', '');
+    const { localDayInKualaLumpur } = await import('./api');
+
+    expect(localDayInKualaLumpur('2026-09-01T15:59:59.000Z')).toBe('2026-09-01');
+    expect(localDayInKualaLumpur('2026-09-01T16:00:00.000Z')).toBe('2026-09-02');
+  });
+
   it('marks a second same-day mock report as duplicate', async () => {
     vi.stubEnv('VITE_API_BASE_URL', '');
     storage.set('rs_mock_participant', '1637');
@@ -114,6 +122,35 @@ describe('真实 API contract', () => {
 
     expect(first.status).toBe('Counted');
     expect(second.status).toBe('Duplicate');
+    expect(second.statusNote).toBe(
+      'Same participant, beach and local day as an existing counted report. Saved here but excluded from the beach score.',
+    );
+  });
+
+  it('keeps the duplicate explanation after a mock correction', async () => {
+    vi.stubEnv('VITE_API_BASE_URL', '');
+    storage.set('rs_mock_participant', '1637');
+    const { createReport, updateReport } = await import('./api');
+    const first = await createReport({
+      beachId: 'morib',
+      quantities: { Plastic: 'Small' },
+      photoKey: 'mock/first.jpg',
+      locationSource: 'manual',
+    });
+    const second = await createReport({
+      beachId: 'remis',
+      quantities: { Plastic: 'Small' },
+      photoKey: 'mock/second.jpg',
+      locationSource: 'manual',
+    });
+
+    expect(first.status).toBe('Counted');
+    const corrected = await updateReport(second.id, { beachId: 'morib' });
+
+    expect(corrected.status).toBe('Duplicate');
+    expect(corrected.statusNote).toBe(
+      'Same participant, beach and local day as an existing counted report. Saved here but excluded from the beach score.',
+    );
   });
 
   it('rejects an empty mock photo before creating a preview', async () => {

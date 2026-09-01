@@ -184,7 +184,7 @@ VALUES
    'Small', NULL, NULL, NULL, NULL, NULL,
    'Plastic', 'Small', NULL, NULL,
    'Duplicate',
-   'Matched an existing record for the same beach on the same day — excluded from the severity calculation.',
+   'Same participant, beach and local day as an existing counted report. Saved here but excluded from the beach score.',
    '2026-08-09T02:00:00Z', '2026-08-09T02:00:00Z'),
 
   ('r3', 'u_anon_1637', 'remis', 'manual',
