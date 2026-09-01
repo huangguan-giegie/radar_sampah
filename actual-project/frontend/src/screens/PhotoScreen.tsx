@@ -9,17 +9,12 @@ import { useApp } from '../AppContext';
 
 
 /**
- * Confirm the browser can actually DECODE these bytes into pixels.
+ * Can the browser actually turn these bytes into pixels?
  *
  * Accepting a file is not the same as being able to show it. HEIC is the
- * default on an iPhone, and iOS Safari decodes it - but desktop Chrome and
- * Firefox do not. The upload still "succeeded" there: the bytes were read and
- * stored, so the screen said Photo added while the preview was 0 x 0 and the
- * report carried an image nobody could open. Promising HEIC and then failing
- * silently is the worst of both worlds.
- *
- * naturalWidth is the real test. A broken decode still fires onload in some
- * browsers, but always with zero dimensions.
+ * iPhone default and desktop browsers cannot decode it, yet the upload still
+ * reported success with a 0 x 0 preview. naturalWidth is the real test: a
+ * failed decode can still fire onload, but never with a size.
  */
 function decodesToPixels(url: string): Promise<boolean> {
   return new Promise((resolve) => {

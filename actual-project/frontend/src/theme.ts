@@ -70,17 +70,9 @@ export function attentionStateFor(
 
 
 /**
- * Colours for the freshness chip - HOW OLD the newest report is.
- *
- * These are deliberately NOT the severity colours, and that is the whole point
- * of this function. They used to be bit-for-bit identical: freshStyle('ok') was
- * SEVERITY.Low and 'aging' was SEVERITY.Moderate. So a beach rated HIGH in
- * orange sat next to a green freshness chip, and the green read as "this beach
- * is fine" - the exact opposite of what the page was reporting.
- *
- * Freshness is a statement about our DATA, not about the beach, so it gets a
- * neutral blue-grey ramp that cannot be confused with a severity band. Only
- * saturation changes across the three states; no hue here appears in SEVERITY.
+ * How old the newest report is. Deliberately NOT the severity palette - these
+ * were once bit-identical to Low and Moderate, so a beach rated HIGH carried a
+ * green chip that read as "fine". Freshness describes our data, not the beach.
  */
 export function freshStyle(k: FreshnessKind) {
   if (k === 'ok') return { bg: 'rgba(62,79,110,.12)', c: '#3E4F6E', dot: '#5A6E96' };

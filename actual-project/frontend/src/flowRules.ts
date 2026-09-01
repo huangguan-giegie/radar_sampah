@@ -154,24 +154,12 @@ export type BackFromReview = { pop: true } | { pop: false; to: string };
 export const CAME_FROM_DETAILS = 'details';
 
 /**
- * Going back from the review page: pop the history, or replace the URL?
+ * Back from review: pop the history, or replace the URL?
  *
- * IT ASKS THE RIGHT QUESTION NOW. This used to test the history index: "is
- * there anything behind me?" That is not the same question as "is the details
- * screen behind me?", and the difference is a real bug. resumePath() can send
- * a restored draft straight to /report/review from the home or beach screen,
- * which pushes an entry - so the index is above zero, but the previous page is
- * /home. Popping there threw the user out of the report flow altogether. That
- * path matters: while the confirmation screen's buttons were broken it was the
- * only way back into an unfinished report.
- *
- * So we no longer guess from the index. RecordScreen stamps the navigation
- * with { from: 'details' }, and only that stamp earns a pop. Anything else -
- * a resume, a bookmark, a typed URL, a refresh - gets an explicit path.
- *
- * (The earlier version of this function called itself in the fallback branch
- * and overflowed the stack at index 0, which is why it lives out here with
- * tests rather than inside the component.)
+ * Only a pop when RecordScreen stamped the navigation. The old version checked
+ * the history index instead, which answers "is anything behind me", not "is
+ * details behind me" - and resumePath() can push straight here from /home, so
+ * a pop threw the user out of the flow entirely.
  */
 export function backFromReview(state: { from?: string } | null | undefined): BackFromReview {
   return state?.from === CAME_FROM_DETAILS ? { pop: true } : { pop: false, to: '/report/details' };

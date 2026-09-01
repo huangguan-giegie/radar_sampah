@@ -16,16 +16,10 @@ export default function SubmittedScreen() {
   }, []);
 
 
-  // Both "Add another report" and "Correct report" clear lastSavedReport and
-  // then navigate. Those happen in one event, so React re-renders with saved
-  // === null BEFORE the navigation commits. A bare `if (!saved) <Navigate>`
-  // therefore won a race against nav() and threw the user to /reports every
-  // time - the draft was built correctly, only the destination was lost.
-  //
-  // So remember whether this screen ever actually held a report. The redirect
-  // is for ONE case only: someone opening /report/saved cold, with nothing to
-  // show. Once we have shown a report, clearing it just means we are on our
-  // way out, and we render nothing for that single frame instead of redirecting.
+  // Both exit buttons clear lastSavedReport and then navigate, in one event.
+  // React re-renders with saved === null before the navigation commits, so a
+  // bare `if (!saved) <Navigate>` beat nav() and sent everyone to /reports.
+  // Only redirect on a cold open; on the way out, render nothing for a frame.
   const hadReport = useRef(false);
   if (saved) hadReport.current = true;
   if (!saved && !hadReport.current) return <Navigate to="/reports" replace />;

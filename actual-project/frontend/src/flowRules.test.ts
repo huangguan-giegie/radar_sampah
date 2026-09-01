@@ -277,7 +277,17 @@ describe('Map marker accessibility', () => {
     const insufficientHtml = markerHtml({ ...beach, validReports: 1 }, false, 'litter', 'bird');
     expect(insufficientHtml).toContain('aria-label="Pantai Morib · NO DATA"');
     expect(insufficientHtml).not.toContain('>HIGH</b>');
+
+    // Zoomed out the beaches converge and the pills overlap into an unreadable
+    // stack, so the pin drops to a dot. It has to stay reachable: the label and
+    // the keyboard affordances sit on the wrapper, not on the pill.
+    const compactHtml = markerHtml(beach, false, 'litter', 'bird', [0, 0], true);
+    expect(compactHtml).toContain('aria-label="Pantai Morib · HIGH"');
+    expect(compactHtml).toContain('tabindex="0"');
+    expect(compactHtml).not.toContain('>HIGH</b>');
+    expect(compactHtml.length).toBeLessThan(html.length);
   });
+
 });
 
 // Going back from the review screen. The rule is no longer "is there anything
