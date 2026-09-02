@@ -287,6 +287,7 @@ def test_beach_summary_and_detail_shapes_are_strict(api):
     assert set(detail) == expected_summary_fields | {"composition", "compositionSource", "species", "ecologicalNote"}
     assert detail["composition"] is None
     assert detail["compositionSource"] is None
+    assert [species["name"] for species in detail["species"]] == detail["speciesNames"]
 
 
 def test_geo_resolution_is_authenticated_and_does_not_persist_coordinates(api):
