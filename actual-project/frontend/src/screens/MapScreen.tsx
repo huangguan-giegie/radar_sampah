@@ -213,18 +213,30 @@ export default function MapScreen() {
             fontSize: 8.5,
             letterSpacing: '.08em',
             color: C.slate,
-            whiteSpace: 'nowrap',
+            // Wrap, do not clip. With five swatches plus the caption this pill
+            // is about 423px of content, and a phone gives it 402 - as one
+            // nowrap line it overflowed 11px off BOTH edges and the last words
+            // were cut to "COUNTED REPORTS ONL". It only started overflowing
+            // when the NO DATA swatch was added, and a legend that loses its
+            // own labels explains nothing.
+            // maxWidth keeps the pill inside the parent's 12px gutter; each
+            // item below sets nowrap on itself so a label never breaks in the
+            // middle of "VERY HIGH".
+            flexWrap: 'wrap',
+            justifyContent: 'center',
+            maxWidth: '100%',
+            rowGap: 3,
           }}
         >
           {layer === 'litter' ? (
             <>
               {LEGEND.map((item) => (
-                <span key={item.label} style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+                <span key={item.label} style={{ display: 'flex', alignItems: 'center', gap: 3, whiteSpace: 'nowrap' }}>
                   <i style={{ width: 7, height: 7, borderRadius: 3, background: item.color, display: 'block' }} />
                   {item.label}
                 </span>
               ))}
-              <span style={{ color: C.muted }}>· COUNTED REPORTS ONLY</span>
+              <span style={{ color: C.muted, whiteSpace: 'nowrap' }}>· COUNTED REPORTS ONLY</span>
             </>
           ) : (
             <>HABITAT CONTEXT · BROAD AREAS ONLY</>
