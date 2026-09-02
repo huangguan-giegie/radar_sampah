@@ -27,6 +27,7 @@ from app import (
 )
 
 
+# hx：每个测试用例拿到一个全新的临时数据库和临时照片目录，互相不干扰
 @pytest.fixture
 def api(tmp_path):
     application = create_app(
@@ -37,6 +38,8 @@ def api(tmp_path):
     return application, application.test_client()
 
 
+# hx：注册一个匿名用户，返回 session 信息和带 Authorization 头的字典，
+# 后面测试要调需要登录的接口时直接把 headers 传进去
 def signup(client):
     response = client.post("/auth/anonymous")
     assert response.status_code == 201
@@ -110,6 +113,8 @@ def test_demo_participant_runs_report_flow(tmp_path, monkeypatch):
     assert client.get("/reports/mine/counts", headers=headers).get_json()["counted"] == 1
 
 
+# hx：现造一张 JPEG 测试图片，可以选择要不要带一段 EXIF 元数据，
+# 用来测试上传接口是不是真的把 EXIF 剥干净了
 def jpeg_bytes(size=(40, 30), with_metadata=False):
     output = io.BytesIO()
     image = Image.new("RGB", size, (44, 110, 145))
@@ -122,6 +127,7 @@ def jpeg_bytes(size=(40, 30), with_metadata=False):
     return output.getvalue()
 
 
+# hx：帮测试快速走一遍"上传照片"这一步，拿到 photoKey 供后面提交举报用
 def upload(client, headers, *, size=(40, 30), with_metadata=False):
     response = client.post(
         "/uploads/photos",
@@ -133,6 +139,7 @@ def upload(client, headers, *, size=(40, 30), with_metadata=False):
     return response.get_json()
 
 
+# hx：拼一份合法的举报请求体，gps 来源时自动带上示例坐标
 def report_payload(photo_key, beach_id="morib", quantities=None, location_source="manual"):
     value = {
         "beachId": beach_id,
