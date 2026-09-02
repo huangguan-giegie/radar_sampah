@@ -1,3 +1,4 @@
+import { useRef } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
 import { ArrowRight, Check, ChevronRight } from '../components/Icon';
@@ -15,7 +16,14 @@ export default function SubmittedScreen() {
   }, []);
 
 
-  if (!saved) return <Navigate to="/reports" replace />;
+  // Both exit buttons clear lastSavedReport and then navigate, in one event.
+  // React re-renders with saved === null before the navigation commits, so a
+  // bare `if (!saved) <Navigate>` beat nav() and sent everyone to /reports.
+  // Only redirect on a cold open; on the way out, render nothing for a frame.
+  const hadReport = useRef(false);
+  if (saved) hadReport.current = true;
+  if (!saved && !hadReport.current) return <Navigate to="/reports" replace />;
+  if (!saved) return null;
 
   const outcome = reportOutcome(saved.status);
   const outcomeColor =

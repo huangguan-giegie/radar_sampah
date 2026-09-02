@@ -51,12 +51,12 @@ export function attentionStateFor(
   validReports: number,
 ) {
   const minimum = SCORING_METHOD.minReports;
-  const reportWord = validReports === 1 ? 'report' : 'reports';
+  const word = reportWord(validReports);
   if (insufficientData || validReports < minimum || !severity) {
     return {
       markerLabel: 'NO DATA',
       pageLabel: 'Insufficient data',
-      detail: `${validReports} counted ${reportWord} · At least ${minimum} counted reports are required for a band`,
+      detail: `${validReports} counted ${word} · At least ${minimum} counted reports are required for a band`,
       hasBand: false,
     } as const;
   }
@@ -69,10 +69,25 @@ export function attentionStateFor(
 }
 
 
+/**
+ * How old the newest report is. Deliberately NOT the severity palette - these
+ * were once bit-identical to Low and Moderate, so a beach rated HIGH carried a
+ * green chip that read as "fine". Freshness describes our data, not the beach.
+ */
 export function freshStyle(k: FreshnessKind) {
-  if (k === 'ok') return { bg: 'rgba(124,169,139,.16)', c: '#3E6B52', dot: '#7CA98B' };
-  if (k === 'aging') return { bg: 'rgba(217,162,75,.14)', c: '#8A6420', dot: '#D9A24B' };
+  if (k === 'ok') return { bg: 'rgba(62,79,110,.12)', c: '#3E4F6E', dot: '#5A6E96' };
+  if (k === 'aging') return { bg: 'rgba(122,135,155,.16)', c: '#5A6474', dot: '#8794AD' };
   return { bg: 'rgba(30,36,44,.07)', c: C.muted, dot: C.faint };
+}
+
+/**
+ * "report" or "reports" for a count. One shared helper, because the same
+ * sentence is built on the home list, the map card and the beach page, and
+ * three hand-written copies drifted - the live site was showing
+ * "1 counted reports".
+ */
+export function reportWord(count: number): string {
+  return count === 1 ? 'report' : 'reports';
 }
 
 

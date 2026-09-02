@@ -150,8 +150,19 @@ export function reportOutcome(status: ReportStatus): ReportOutcome {
 
 export type BackFromReview = { pop: true } | { pop: false; to: string };
 
-export function backFromReview(historyIdx: number | null | undefined): BackFromReview {
-  return (historyIdx ?? 0) > 0 ? { pop: true } : { pop: false, to: '/report/details' };
+/** The marker RecordScreen attaches when it sends the user to the review page. */
+export const CAME_FROM_DETAILS = 'details';
+
+/**
+ * Back from review: pop the history, or replace the URL?
+ *
+ * Only a pop when RecordScreen stamped the navigation. The old version checked
+ * the history index instead, which answers "is anything behind me", not "is
+ * details behind me" - and resumePath() can push straight here from /home, so
+ * a pop threw the user out of the flow entirely.
+ */
+export function backFromReview(state: { from?: string } | null | undefined): BackFromReview {
+  return state?.from === CAME_FROM_DETAILS ? { pop: true } : { pop: false, to: '/report/details' };
 }
 
 type SavedRouteNavigate = (

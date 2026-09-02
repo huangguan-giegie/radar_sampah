@@ -30,6 +30,10 @@ export function markerHtml(
   layer: MapLayer,
   primaryGlyph: SpeciesGlyph,
   offset: [number, number] = [0, 0],
+  // Zoomed far out the four beaches sit within a few dozen pixels of each
+  // other and the full pills overlap into an unreadable stack. The dot keeps
+  // every beach visible and tappable; the label comes back on zoom in.
+  compact = false,
 ): string {
   const attention = layer === 'litter'
     ? attentionStateFor(b.severity, b.insufficientData, b.validReports)
@@ -40,6 +44,15 @@ export function markerHtml(
     }" style="${F};transform:translate(calc(-50% + ${offset[0]}px),calc(-50% + ${offset[1]}px));position:absolute;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;outline:none;${
       selected ? 'animation:popIn .25s ease;z-index:600' : ''
     }">${inner}</div>`;
+
+  if (compact) {
+    const dot = attention && attention.hasBand && b.severity ? SEVERITY[b.severity].col : '#98A4B5';
+    return wrap(
+      `<div style="width:${selected ? 18 : 13}px;height:${selected ? 18 : 13}px;border-radius:50%;background:${dot};border:2px solid ${
+        selected ? '#B8FF36' : '#FFFFFF'
+      };box-shadow:0 4px 10px rgba(14,30,64,.45)"></div>`,
+    );
+  }
 
   if (layer === 'litter') {
     const sv = attention?.hasBand && b.severity ? SEVERITY[b.severity] : null;

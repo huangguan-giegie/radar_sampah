@@ -5,7 +5,7 @@ import { getBeaches } from '../api';
 import { markerHtml } from '../components/BeachMarker';
 import { useLeafletMap } from '../components/useLeafletMap';
 import { ArrowRight, Check, Close, Info, WifiOff } from '../components/Icon';
-import { attentionStateFor, C, MONO, freshStyle, freshnessLabel, lastReportedLabel, severityLabel } from '../theme';
+import { attentionStateFor, C, freshnessLabel, freshStyle, lastReportedLabel, MONO, reportWord, severityLabel } from '../theme';
 import { GlassPanel, SeverityBadge } from '../components/ds';
 import { useApp } from '../AppContext';
 import type { BeachSummary, MapLayer } from '../types';
@@ -13,6 +13,12 @@ import type { BeachSummary, MapLayer } from '../types';
 
 const CENTER: [number, number] = [2.92, 101.45];
 const ZOOM = 9;
+
+const LAYER_KEY = 'rs_map_layer';
+
+// Below this the four beaches are close enough that the full pills collide, so
+// the pins drop to a compact dot. Nothing is hidden - it stays tappable.
+const COMPACT_ZOOM = 8;
 
 const MARKER_OFFSETS: Record<string, [number, number]> = {
   // Separate the two nearby south-coast markers at narrow mobile widths.
@@ -29,13 +35,34 @@ const LEGEND = [
   { label: 'MODERATE', color: '#D9A24B' },
   { label: 'HIGH', color: '#CE6B45' },
   { label: severityLabel('Severe').toUpperCase(), color: '#B84A3F' },
+  // The grey pin was on the map with nothing in the legend to explain it, so
+  // "no evidence yet" looked like a fifth, milder severity. Same grey as
+  // BeachMarker uses when severity is null - dashed there, dashed here.
+  { label: 'NO DATA', color: '#98A4B5', dashed: true },
 ];
 
 export default function MapScreen() {
   const nav = useNavigate();
   const { offline, setOffline } = useApp();
-  const [layer, setLayer] = useState<MapLayer>('litter');
+  // Remembered per tab. Opening a beach and coming back used to drop the user
+  // on the litter layer again, so anyone browsing biodiversity had to re-pick
+  // it after every single beach.
+  const [layer, setLayer] = useState<MapLayer>(() => {
+    try {
+      return sessionStorage.getItem(LAYER_KEY) === 'bio' ? 'bio' : 'litter';
+    } catch {
+      return 'litter';
+    }
+  });
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(LAYER_KEY, layer);
+    } catch {
+      // Storage off: the layer just will not be remembered. Not worth an error.
+    }
+  }, [layer]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [compact, setCompact] = useState(false);
 
   const [beaches, setBeaches] = useState<BeachSummary[]>([]);
   const [loading, setLoading] = useState(true);
@@ -70,7 +97,7 @@ export default function MapScreen() {
         icon: L.divIcon({
           className: '',
           iconSize: [0, 0],
-          html: markerHtml(b, selectedId === b.id, layer, b.primarySpeciesGlyph, MARKER_OFFSETS[b.id] ?? [0, 0]),
+          html: markerHtml(b, selectedId === b.id, layer, b.primarySpeciesGlyph, compact ? [0, 0] : MARKER_OFFSETS[b.id] ?? [0, 0], compact),
         }),
         keyboard: true,
       });
@@ -92,7 +119,19 @@ export default function MapScreen() {
       });
       markersRef.current[b.id] = marker;
     });
-  }, [ready, beaches, layer, selectedId, mapRef]);
+  }, [ready, beaches, layer, selectedId, compact, mapRef]);
+
+  // Follow the zoom so the pins can switch to dots when they would collide.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!ready || !map) return;
+    const sync = () => setCompact(map.getZoom() < COMPACT_ZOOM);
+    sync();
+    map.on('zoomend', sync);
+    return () => {
+      map.off('zoomend', sync);
+    };
+  }, [ready, mapRef]);
 
   return (
     <div className="screen" style={{ zIndex: 1, background: '#D9E6EF' }}>
@@ -261,7 +300,12 @@ export default function MapScreen() {
           beach={selected}
           layer={layer}
           onClose={() => setSelectedId(null)}
-          onOpen={() => nav(`/beach/${selected.id}`)}
+          // From the biodiversity layer the button says Learn More, so it has
+          // to land on the species cards. It used to open the beach at the top
+          // and leave the user to find them.
+          onOpen={() =>
+            nav(`/beach/${selected.id}`, layer === 'bio' ? { state: { focus: 'species' } } : undefined)
+          }
         />
       )}
     </div>
@@ -340,7 +384,7 @@ function SelectedCard({
                 ) : (
                   <Info size={12} color={C.slate} strokeWidth={2} />
                 )}
-                {beach.validReports} counted reports
+                {beach.validReports} counted {reportWord(beach.validReports)}
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 11px', borderRadius: 999, background: fs.bg, fontSize: 11.5, fontWeight: 600, color: fs.c }}>
                 <i style={{ width: 6, height: 6, borderRadius: 3, background: fs.dot, display: 'block' }} />

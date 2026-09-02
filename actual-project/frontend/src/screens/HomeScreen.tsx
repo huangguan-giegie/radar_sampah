@@ -4,7 +4,7 @@ import { getBeaches, getMyReportCounts } from '../api';
 import { ArrowRight, BarChart, Camera, Check, Info, UserIcon } from '../components/Icon';
 import { ErrorNote, Label, Skeleton } from '../components/ui';
 import { OverlayChip, SeverityBadge, StatTile } from '../components/ds';
-import { attentionStateFor, C, MONO, NOISE, lastReportedLabel } from '../theme';
+import { attentionStateFor, C, lastReportedLabel, MONO, NOISE, reportWord } from '../theme';
 import { useApp } from '../AppContext';
 import type { BeachSummary, ReportCounts } from '../types';
 import { hasDraftProgress, resumePath } from '../flowRules';
@@ -52,7 +52,7 @@ function BeachRow({ b, last, onClick }: { b: BeachSummary; last: boolean; onClic
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontSize: 14, fontWeight: 620 }}>{b.name}</div>
         <div style={{ fontSize: 11.5, color: C.dim, marginTop: 3 }}>
-          {b.validReports} counted reports · {lastReportedLabel(b.lastReportedAt).toLowerCase()}
+          {b.validReports} counted {reportWord(b.validReports)} · {lastReportedLabel(b.lastReportedAt).toLowerCase()}
         </div>
       </div>
       <SeverityBadge band={attention.hasBand ? b.severity : null} label={attention.pageLabel} block />

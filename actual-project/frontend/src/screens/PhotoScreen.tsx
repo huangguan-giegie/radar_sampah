@@ -8,6 +8,23 @@ import { OverlayChip } from '../components/ds';
 import { useApp } from '../AppContext';
 
 
+/**
+ * Can the browser actually turn these bytes into pixels?
+ *
+ * Accepting a file is not the same as being able to show it. HEIC is the
+ * iPhone default and desktop browsers cannot decode it, yet the upload still
+ * reported success with a 0 x 0 preview. naturalWidth is the real test: a
+ * failed decode can still fire onload, but never with a size.
+ */
+function decodesToPixels(url: string): Promise<boolean> {
+  return new Promise((resolve) => {
+    const probe = new Image();
+    probe.onload = () => resolve(probe.naturalWidth > 0 && probe.naturalHeight > 0);
+    probe.onerror = () => resolve(false);
+    probe.src = url;
+  });
+}
+
 const ACCEPTED_TYPES = ['image/jpeg', 'image/png', 'image/heic'];
 const MAX_PHOTO_BYTES = 10 * 1024 * 1024;
 
@@ -64,6 +81,15 @@ export default function PhotoScreen() {
     setUploadError(null);
     try {
       const photo = await uploadPhoto(file);
+      // AC2.2.3 - check the stored photo really opens before we call it added.
+      // Nothing else in the flow verified this, so an undecodable file reached
+      // the review screen and the submitted report as a blank box.
+      const preview = photo.previewUrl || photoPreviewUrl(photo.photoKey);
+      if (preview && !(await decodesToPixels(preview))) {
+        throw new Error(
+          'This browser could not open that photo. HEIC photos often only open on an iPhone — please choose a JPG or PNG.',
+        );
+      }
       if (!photo.metadataStripped) {
         throw new Error('Location metadata could not be removed. Please choose another photo.');
       }

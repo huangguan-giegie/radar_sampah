@@ -173,7 +173,7 @@ export default function ConfirmBeachScreen() {
                   style={{ flex: 1, border: 'none', background: 'transparent', fontSize: 13.5, color: C.ink }}
                 />
               </div>
-              <div className="scroll-y" style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 10, maxHeight: 250 }}>
+              <div className="scroll-y" style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 10, maxHeight: 'min(340px, 42vh)' }}>
                 {loading && <Skeleton h={58} r={16} />}
                 {filtered.map((b) => (
                   <button

@@ -1,21 +1,12 @@
-import { useNavigate, useParams } from 'react-router-dom';
-import { useEffect, useState } from 'react';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { useEffect, useRef, useState } from 'react';
 import { getBeach } from '../api';
 import { BeachCover } from '../components/BeachCover';
 import { Camera, Check, ChevronRight, Clock, Info, SpeciesIcon } from '../components/Icon';
 import { BackButton, GhostButton, Label, PrimaryButton, Skeleton } from '../components/ui';
-import {
-  C,
-  MONO,
-  NOISE,
-  SEVERITY,
-  attentionStateFor,
-  formatDate,
-  freshStyle,
-  freshnessLabel,
-  severityLabel,
-} from '../theme';
+import { attentionStateFor, C, formatDate, freshnessLabel, freshStyle, MONO, NOISE, reportWord, SEVERITY, severityLabel } from '../theme';
 import { BandMeter, GlassPanel, InfoChip } from '../components/ds';
+import { NON_COMMERCIAL_NOTICE } from '../sources';
 import { useApp } from '../AppContext';
 import type { BeachDetail } from '../types';
 import { hasDraftProgress, resumePath } from '../flowRules';
@@ -25,6 +16,10 @@ const COMP_COLORS = ['#B8FF36', '#2C4A8C', '#5470A8', '#7A879B', '#98A4B5', '#CB
 export default function BeachScreen() {
   const { beachId = '' } = useParams();
   const nav = useNavigate();
+  const location = useLocation();
+  // "Learn More" on the map's biodiversity layer asks for the species cards,
+  // not the top of the page, so it arrives with focus: 'species'.
+  const speciesRef = useRef<HTMLDivElement | null>(null);
   const { user, draft, resetDraft, patchDraft, setLastSavedReport } = useApp();
   const [b, setB] = useState<BeachDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -37,6 +32,16 @@ export default function BeachScreen() {
       .catch(() => setFailed(true))
       .finally(() => setLoading(false));
   }, [beachId]);
+
+  // Scroll once the beach has loaded - before that the section does not exist
+  // yet. scrollIntoView is skipped for anyone who has asked for reduced motion.
+  useEffect(() => {
+    if (!b || (location.state as { focus?: string } | null)?.focus !== 'species') return;
+    const target = speciesRef.current;
+    if (!target) return;
+    const smooth = !window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    target.scrollIntoView({ behavior: smooth ? 'smooth' : 'auto', block: 'start' });
+  }, [b, location.state]);
 
   const startReport = () => {
     if (hasDraftProgress(draft)) {
@@ -146,7 +151,7 @@ export default function BeachScreen() {
               ) : (
                 <Info size={11} color={C.slate} strokeWidth={2.2} />
               )}
-              {b.validReports} counted reports
+              {b.validReports} counted {reportWord(b.validReports)}
             </InfoChip>
             {attention.hasBand && b.attentionScore !== null && (
               <InfoChip>
@@ -257,7 +262,7 @@ export default function BeachScreen() {
         </button>
 
 
-        <div>
+        <div ref={speciesRef}>
           <Label style={{ marginBottom: 12 }}>BIODIVERSITY NEARBY · {b.habitat}</Label>
           <div className="scroll-x" style={{ display: 'flex', gap: 12, paddingBottom: 6, margin: '0 -16px', paddingLeft: 16, paddingRight: 16 }}>
             {b.species.map((sp) => (
@@ -364,9 +369,38 @@ export default function BeachScreen() {
               {b.ecologicalNote}
             </div>
             <div style={{ fontSize: 10.5, color: C.dim, marginTop: 8, lineHeight: 1.5 }}>
-              {b.species.some((sp) => sp.likelihood)
-                ? 'When the occurrence model is connected it reports a relative occurrence score, built from OBIS records and background samples at coordinate level. It is not a calibrated probability of presence, never a confirmed sighting, and never a measure of litter severity or of ecological recovery.'
-                : 'Context only — never proof of current presence or of ecological recovery.'}
+              {/* The model sentence is ADDED to the base disclaimer, not swapped
+                  in for it. Morib has occurrence scores, so it used to lose the
+                  "never proof of current presence" line entirely - the beaches
+                  showing actual numbers were the ones dropping the warning that
+                  those numbers are not sightings. */}
+              Context only — never proof of current presence or of ecological recovery.
+              {b.species.some((sp) => sp.likelihood) ? (
+                <>
+                  {' '}When the occurrence model is connected it reports a relative occurrence
+                  score, built from OBIS records and background samples at coordinate level. It is
+                  not a calibrated probability of presence, never a confirmed sighting, and never a
+                  measure of litter severity or of ecological recovery.
+                </>
+              ) : null}
+            </div>
+            {/* AC5.1.3 - the reference datasets and their licence, shown to the
+                user rather than only recorded in the DMP. CC BY-NC requires the
+                attribution to be visible, and until now NON_COMMERCIAL_NOTICE
+                was exported from sources.ts and rendered nowhere at all.
+
+                This names the datasets the biodiversity feature is built on. It
+                is deliberately NOT a per-card citation: no FishBase or OBIS
+                extract has been run yet, so every card still carries its own
+                honest SOURCE PENDING badge. Printing a real-looking citation on
+                a card whose data never came from that dataset would be inventing
+                provenance, which is far worse than an unfinished badge. */}
+            <div style={{ fontFamily: MONO, fontSize: 8.5, letterSpacing: '.08em', color: C.faint, marginTop: 10, lineHeight: 1.6 }}>
+              REFERENCE DATASETS · FISHBASE (Froese &amp; Pauly, www.fishbase.org) · OBIS
+              (Ocean Biodiversity Information System, IOC-UNESCO, www.obis.org)
+            </div>
+            <div style={{ fontSize: 10, color: C.dim, marginTop: 6, lineHeight: 1.5 }}>
+              {NON_COMMERCIAL_NOTICE}
             </div>
           </div>
         </div>

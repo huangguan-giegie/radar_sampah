@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { createReport, getBeaches, photoPreviewUrl, updateReport } from '../api';
 import { ArrowRight, Info, Shield } from '../components/Icon';
@@ -11,6 +11,7 @@ import { backFromReview, buildReportSubmission, finishReportSubmission } from '.
 
 export default function ReviewScreen() {
   const nav = useNavigate();
+  const location = useLocation();
   const { draft, setLastSavedReport, bumpReports, showToast } = useApp();
   const [beaches, setBeaches] = useState<BeachSummary[]>([]);
   const [busy, setBusy] = useState(false);
@@ -60,8 +61,7 @@ export default function ReviewScreen() {
 
 
   const backToDetails = () => {
-    const idx = (window.history.state as { idx?: number } | null)?.idx;
-    const action = backFromReview(idx);
+    const action = backFromReview(location.state as { from?: string } | null);
     if (action.pop) nav(-1);
     else nav(action.to, { replace: true });
   };
