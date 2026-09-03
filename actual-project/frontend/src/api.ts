@@ -354,6 +354,7 @@ export async function getSpeciesDistribution(latitude: number, longitude: number
   if (USE_MOCK) {
     throw new Error('Species distribution model is not enabled in mock mode.');
   }
+  // The model receives a beach's broad-area coordinate and returns context, not a litter score.
   return request('/api/species-distribution/predict', 'POST', { latitude, longitude });
 }
 
