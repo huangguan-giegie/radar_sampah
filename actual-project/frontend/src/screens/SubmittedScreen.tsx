@@ -5,7 +5,7 @@ import { ArrowRight, Check, ChevronRight } from '../components/Icon';
 import { GhostButton, PrimaryButton } from '../components/ui';
 import { C, MONO } from '../theme';
 import { useApp } from '../AppContext';
-import { reportOutcome } from '../flowRules';
+import { historicalPhotoUnavailable, reportOutcome } from '../flowRules';
 
 export default function SubmittedScreen() {
   const nav = useNavigate();
@@ -155,6 +155,7 @@ export default function SubmittedScreen() {
                   quantities: { ...saved.quantities },
                   existingPhotoUrl: saved.photoUrl ?? null,
                   existingPhotoKey: saved.photoKey ?? null,
+                  existingPhotoUnavailable: historicalPhotoUnavailable(saved.photoUrl, saved.photoKey),
                   editingStatus: saved.status,
                   editingStatusNote: saved.statusNote ?? null,
                   locationSource: saved.locationSource ?? 'manual',

@@ -10,6 +10,7 @@ import {
   reportOutcome,
   safeNextPath,
   hasDraftProgress,
+  historicalPhotoUnavailable,
 } from './flowRules';
 import { markerHtml } from './components/BeachMarker';
 import type { BeachSummary } from './types';
@@ -190,6 +191,14 @@ describe('buildReportSubmission', () => {
       expect(result.changes).not.toHaveProperty('locationSource');
       expect(result.changes).not.toHaveProperty('coords');
     }
+  });
+});
+
+describe('Historical correction draft photo state', () => {
+  it('marks a keyed report without a preview as unavailable on entry', () => {
+    expect(historicalPhotoUnavailable(null, 'seed/r1.jpg')).toBe(true);
+    expect(historicalPhotoUnavailable('/photo.jpg', 'seed/r1.jpg')).toBe(false);
+    expect(historicalPhotoUnavailable(null, null)).toBe(false);
   });
 });
 

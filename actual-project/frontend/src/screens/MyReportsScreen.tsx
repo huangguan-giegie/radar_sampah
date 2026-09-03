@@ -7,6 +7,7 @@ import { ErrorNote, Skeleton } from '../components/ui';
 import { C, MONO, formatDate } from '../theme';
 import { StatusBadge, type BadgeStatus } from '../components/ds';
 import { useApp } from '../AppContext';
+import { historicalPhotoUnavailable } from '../flowRules';
 import type { BeachSummary, LitterReport } from '../types';
 
 type Tab = 'All' | 'Counted' | 'Excluded';
@@ -137,6 +138,7 @@ export default function MyReportsScreen() {
                     coords: null,
                     existingPhotoUrl: r.photoUrl ?? null,
                     existingPhotoKey: r.photoKey ?? null,
+                    existingPhotoUnavailable: historicalPhotoUnavailable(r.photoUrl, r.photoKey),
                     editingStatus: r.status,
                     editingStatusNote: r.statusNote ?? null,
                   });

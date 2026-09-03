@@ -32,6 +32,10 @@ export function hasDraftProgress(draft: ReportDraft): boolean {
   );
 }
 
+export function historicalPhotoUnavailable(photoUrl: string | null | undefined, photoKey: string | null | undefined): boolean {
+  return Boolean(photoKey && !photoUrl);
+}
+
 
 export function reachableStep(draft: ReportDraft): ReportStep {
 

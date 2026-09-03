@@ -50,8 +50,8 @@ export default function PhotoScreen() {
     refreshPhotoPreview(photoKey)
       .then((previewUrl) => {
         if (active && previewUrl) {
-          if (draft.photo) patchDraft({ photo: { ...draft.photo, previewUrl } });
-          else patchDraft({ existingPhotoUrl: previewUrl });
+          if (draft.photo) patchDraft({ photo: { ...draft.photo, previewUrl }, existingPhotoUnavailable: false });
+          else patchDraft({ existingPhotoUrl: previewUrl, existingPhotoUnavailable: false });
         }
       })
       .catch(() => {
