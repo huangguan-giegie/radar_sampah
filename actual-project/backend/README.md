@@ -27,9 +27,13 @@ The development server listens on `http://localhost:5000` by default.
 - Schema setup is idempotent. On startup the API creates the six contract tables
   (`users`, `beaches`, `dim_threat`, `dim_species`, `area_species`, and
   `reports`), safely renames a legacy `frontend_reports` table to `reports`,
-  backfills the contract fields and quantity columns, and inserts the fixed
-  beach/biodiversity reference rows when they are missing. Existing report rows
-  are never deleted or overwritten.
+  backfills the contract fields (including the legacy `beach_name` and
+  `quantities` compatibility columns) and quantity columns, and inserts the
+  fixed beach/biodiversity reference rows when they are missing. Existing
+  report rows are never deleted or overwritten.
+- New databases receive the value checks, foreign keys and indexes defined in
+  `schema.sql`. Reference inserts use database-native conflict handling, so
+  concurrent application starts remain safe and repeatable.
 - `seeds.sql` remains a manual PostgreSQL fixture for the optional demo user and
   report rows. It is intentionally not run during application startup, so a
   deploy cannot add synthetic reports to an existing database.

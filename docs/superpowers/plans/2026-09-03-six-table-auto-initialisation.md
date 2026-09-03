@@ -180,4 +180,6 @@ Keep the pre-change commit tag and revert the two implementation commits if star
 - Startup seeds four beaches and eleven biodiversity cards from `data/beaches.json` only when missing.
 - Existing users, reports, and legacy `frontend_reports` migration behavior are preserved.
 - `seeds.sql` remains manual; its synthetic report rows are never added automatically.
-- Backend verification completed with 36 passing tests and successful bytecode compilation.
+- Standard `schema.sql` databases receive the two legacy runtime compatibility columns (`beach_name`, `quantities`) on startup.
+- Runtime table definitions include the contract value checks, foreign keys and indexes for new databases; reference inserts use native SQLite/PostgreSQL conflict handling.
+- Backend verification completed with 39 passing tests and successful bytecode compilation; frontend verification completed with 48 tests, typecheck and production build.
