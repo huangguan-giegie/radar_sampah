@@ -203,24 +203,6 @@ button.ds-chip { min-height: 44px; padding-inline: 14px; cursor: pointer; }
   -webkit-backdrop-filter: blur(18px) saturate(150%);
 }
 
-/*
- * The same panel, for when it sits over BUSY content rather than a photograph.
- *
- * 0.88 is right over the beach cover, which is a smooth gradient: the frost
- * reads as depth. Over the map it does not. OpenStreetMap tiles are dense
- * high-frequency detail - road networks, coastlines, town names - and an 18px
- * blur does not flatten text, it smears it. The coastline and the place labels
- * came through the card behind the beach name and the chips, which is what
- * everyone reviewing the map kept reporting.
- *
- * It is a legibility problem, not only a taste one: at 0.88 the colour behind
- * the card's text depends on which bit of map happens to be under it, so the
- * text contrast changes as the user pans.
- */
-.ds-glass-solid {
-  background: rgba(255, 255, 255, 0.97);
-}
-
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
   .ds-glass { background: #f7f8fa; }
 }

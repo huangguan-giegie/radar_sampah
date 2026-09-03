@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { getBeaches, getMyReportCounts } from '../api';
-import { ArrowRight, BarChart, Camera, Info, UserIcon } from '../components/Icon';
+import { ArrowRight, BarChart, Camera, Check, Info, UserIcon } from '../components/Icon';
 import { ErrorNote, Label, Skeleton } from '../components/ui';
 import { OverlayChip, SeverityBadge, StatTile } from '../components/ds';
 import { attentionStateFor, C, lastReportedLabel, MONO, NOISE, reportWord } from '../theme';
@@ -47,16 +47,7 @@ function BeachRow({ b, last, onClick }: { b: BeachSummary; last: boolean; onClic
           justifyContent: 'center',
         }}
       >
-        {/* A bar chart, not a tick. This glyph says "this beach has enough
-            evidence to carry a rating" - but a lime green CHECK MARK says
-            "passed", and it was sitting immediately left of a red HIGH badge on
-            the two dirtiest beaches in the list. AC4.2.3 is the one criterion
-            marked [Blocker], and the app is careful never to imply a beach is
-            clean in words; a green tick says it in a way words cannot take
-            back. The bars also match the BandMeter on the beach page, so the
-            same idea is drawn the same way in both places. Info still marks the
-            beaches we cannot rate. */}
-        {attention.hasBand ? <BarChart size={16} color={C.cloud} strokeWidth={2} /> : <Info size={16} color={C.cloud} />}
+        {attention.hasBand ? <Check size={16} color={C.lime} strokeWidth={2} /> : <Info size={16} color={C.cloud} />}
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontSize: 14, fontWeight: 620 }}>{b.name}</div>
