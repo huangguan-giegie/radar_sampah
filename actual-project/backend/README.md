@@ -24,9 +24,15 @@ The development server listens on `http://localhost:5000` by default.
 - `DATABASE_URL` selects PostgreSQL; absent means the local SQLite fallback.
   PostgreSQL tables use the database's default schema unless an already-created
   schema is explicitly selected with `DATABASE_SCHEMA`.
-- Schema setup is idempotent. On startup it safely renames a legacy
-  `frontend_reports` table to `reports`, then backfills the contract fields and
-  quantity columns without deleting report rows.
+- Schema setup is idempotent. On startup the API creates the six contract tables
+  (`users`, `beaches`, `dim_threat`, `dim_species`, `area_species`, and
+  `reports`), safely renames a legacy `frontend_reports` table to `reports`,
+  backfills the contract fields and quantity columns, and inserts the fixed
+  beach/biodiversity reference rows when they are missing. Existing report rows
+  are never deleted or overwritten.
+- `seeds.sql` remains a manual PostgreSQL fixture for the optional demo user and
+  report rows. It is intentionally not run during application startup, so a
+  deploy cannot add synthetic reports to an existing database.
 - For a controlled PostgreSQL release, run
   [`migrations/001_rename_frontend_reports_to_reports.sql`](migrations/001_rename_frontend_reports_to_reports.sql).
   Its commented **DOWN** block is the rollback plan: first roll back the app,

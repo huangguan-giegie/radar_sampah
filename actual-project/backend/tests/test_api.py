@@ -13,7 +13,7 @@ from urllib.parse import urlsplit
 import pytest
 from PIL import Image
 from sqlalchemy import inspect as sqlalchemy_inspect
-from sqlalchemy import insert, select
+from sqlalchemy import insert, select, text
 
 os.environ.setdefault("AUTH_JWT_SECRET", "test-only-secret-not-for-production")
 
@@ -35,6 +35,40 @@ def api(tmp_path):
         photo_storage_dir=tmp_path / "private-photos",
     )
     return application, application.test_client()
+
+
+def test_startup_creates_all_six_contract_tables(tmp_path):
+    application = create_app(
+        database_url=f"sqlite:///{tmp_path / 'six-tables.db'}",
+        testing=True,
+        photo_storage_dir=tmp_path / "photos",
+    )
+    names = set(sqlalchemy_inspect(application.extensions["marine_engine"]).get_table_names())
+    assert {"users", "beaches", "dim_threat", "dim_species", "area_species", "reports"} <= names
+
+
+def test_startup_seeds_reference_tables_idempotently(tmp_path):
+    database_url = f"sqlite:///{tmp_path / 'reference.db'}"
+    create_app(database_url=database_url, testing=True, photo_storage_dir=tmp_path / "photos")
+    second = create_app(database_url=database_url, testing=True, photo_storage_dir=tmp_path / "photos")
+    engine = second.extensions["marine_engine"]
+    with engine.connect() as connection:
+        assert connection.execute(text("SELECT COUNT(*) FROM beaches")).scalar_one() == 4
+        assert connection.execute(text("SELECT COUNT(*) FROM area_species")).scalar_one() == 11
+        assert connection.execute(text("SELECT COUNT(*) FROM reports")).scalar_one() == 0
+
+
+def test_startup_repairs_partial_reference_seed_without_touching_reports(tmp_path):
+    database_url = f"sqlite:///{tmp_path / 'partial-reference.db'}"
+    first = create_app(database_url=database_url, testing=True, photo_storage_dir=tmp_path / "photos")
+    with first.extensions["marine_engine"].begin() as connection:
+        connection.execute(text("DELETE FROM area_species WHERE area_id <> 'morib'"))
+        connection.execute(text("DELETE FROM beaches WHERE id <> 'morib'"))
+    second = create_app(database_url=database_url, testing=True, photo_storage_dir=tmp_path / "photos")
+    with second.extensions["marine_engine"].connect() as connection:
+        assert connection.execute(text("SELECT COUNT(*) FROM beaches")).scalar_one() == 4
+        assert connection.execute(text("SELECT COUNT(*) FROM area_species")).scalar_one() == 11
+        assert connection.execute(text("SELECT COUNT(*) FROM reports")).scalar_one() == 0
 
 
 def signup(client):
@@ -194,6 +228,9 @@ def test_partial_main_database_is_migrated_to_contract_rules(tmp_path):
         photo_storage_dir=tmp_path / "photos",
     )
     engine = application.extensions["marine_engine"]
+    assert {"users", "beaches", "dim_threat", "dim_species", "area_species", "reports"} <= set(
+        sqlalchemy_inspect(engine).get_table_names()
+    )
     assert {"photo_mime", "photo_stripped", "lat", "lng", "updated_at", "qty_plastic", "qty_fishing_gear"} <= {
         column["name"] for column in sqlalchemy_inspect(engine).get_columns("reports")
     }
