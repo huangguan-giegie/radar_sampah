@@ -21,6 +21,14 @@ import { useApp } from '../AppContext';
 import type { BeachDetail, SpeciesDistributionResult } from '../types';
 import { hasDraftProgress, resumePath } from '../flowRules';
 
+/*
+ * relativeOccurrenceScore is shown exactly as the API sends it, on a 0..1 scale.
+ * That is what AC5.5.1 asks for, and the User Story Map was updated to say so.
+ *
+ * Do not "fix" this into a percentage. A previous version multiplied by 100 to
+ * print "12 / 100"; the AC was settled the other way, so the raw value stands.
+ */
+
 // Bar colours for the composition rows. They only separate one row from the
 // next - they carry no meaning, which is why they are deliberately NOT the four
 // severity colours. Reusing those would suggest that a row is "severe".
@@ -525,7 +533,8 @@ export default function BeachScreen() {
                 that shows no score, on every beach that has a modelled species.
                 When Su's output lands, the sentence comes back with it. */}
             <div style={{ fontSize: 10.5, color: C.muted, marginTop: 8, lineHeight: 1.5 }}>
-              Context only — never proof of current presence or of ecological recovery.
+              Context only — never a confirmed sighting, never proof of current presence or of
+              ecological recovery.
               {b.species.some((sp) => sp.likelihood?.state === 'ready') ? (
                 <>
                   {' '}The relative occurrence score is built from OBIS records and background
