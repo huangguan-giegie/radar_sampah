@@ -114,10 +114,15 @@ export default function ReviewScreen() {
           {photoUrl && (
             <img src={photoUrl} alt="Report evidence" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
           )}
-          {(draft.photo?.metadataStripped || draft.existingPhotoUrl) && (
+          {draft.existingPhotoUnavailable && !photoUrl && (
+            <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, textAlign: 'center', color: C.slate, fontSize: 12 }}>
+              Existing photo unavailable. The existing record will be kept unless you choose a replacement photo.
+            </div>
+          )}
+          {(draft.photo?.metadataStripped || draft.existingPhotoUrl || draft.existingPhotoUnavailable) && (
             <OverlayChip style={{ position: 'absolute', left: 12, bottom: 12 }}>
               <Shield size={10} />
-              {draft.photo ? 'LOCATION METADATA REMOVED' : 'EXISTING PHOTO RETAINED'}
+              {draft.photo ? 'LOCATION METADATA REMOVED' : draft.existingPhotoUnavailable ? 'EXISTING PHOTO UNAVAILABLE' : 'EXISTING PHOTO RETAINED'}
             </OverlayChip>
           )}
         </div>

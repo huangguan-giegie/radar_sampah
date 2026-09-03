@@ -20,6 +20,7 @@ function draft(changes: Partial<ReportDraft> = {}): ReportDraft {
     photo: { photoKey: 'mock/test.jpg', previewUrl: 'blob:test', metadataStripped: true },
     existingPhotoUrl: null,
     existingPhotoKey: null,
+    existingPhotoUnavailable: false,
     beachId: 'morib',
     beachName: 'Pantai Morib',
     locationSource: 'manual',
@@ -148,6 +149,28 @@ describe('buildReportSubmission', () => {
         beachId: 'morib',
         quantities: { Plastic: 'Small' },
         locationSource: 'manual',
+      },
+    });
+  });
+
+  it('reuses the existing photo key when its preview is unavailable', () => {
+    const result = buildReportSubmission(
+      draft({
+        editingReportId: 'report-1',
+        photo: null,
+        existingPhotoUrl: null,
+        existingPhotoKey: 'seed/r1.jpg',
+        existingPhotoUnavailable: true,
+      }),
+    );
+    expect(result).toEqual({
+      kind: 'update',
+      reportId: 'report-1',
+      changes: {
+        beachId: 'morib',
+        quantities: { Plastic: 'Small' },
+        locationSource: 'manual',
+        photoKey: 'seed/r1.jpg',
       },
     });
   });

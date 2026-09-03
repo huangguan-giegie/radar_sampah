@@ -19,6 +19,7 @@ export type ReportDraft = {
   photo: UploadedPhoto | null;
   existingPhotoUrl: string | null;
   existingPhotoKey: string | null;
+  existingPhotoUnavailable: boolean;
   beachId: string | null;
 
   beachName: string | null;
@@ -39,6 +40,7 @@ function emptyDraft(): ReportDraft {
     photo: null,
     existingPhotoUrl: null,
     existingPhotoKey: null,
+    existingPhotoUnavailable: false,
     beachId: null,
     beachName: null,
     locationSource: null,

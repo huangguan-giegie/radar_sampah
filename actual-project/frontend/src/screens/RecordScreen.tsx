@@ -138,6 +138,9 @@ export default function RecordScreen() {
             <button type="button" onClick={() => nav('/report/confirm', { replace: true })} style={{ color: C.navy, fontWeight: 700, fontSize: 11.5, marginTop: 6 }}>
               Change beach
             </button>
+            <button type="button" onClick={() => nav('/report/photo', { replace: true })} style={{ color: C.navy, fontWeight: 700, fontSize: 11.5, marginTop: 6, marginLeft: 12 }}>
+              Replace photo
+            </button>
           </div>
         )}
         <div style={{ fontSize: 12.5, color: C.muted, marginTop: 5, lineHeight: 1.5 }}>

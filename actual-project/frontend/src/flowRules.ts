@@ -102,7 +102,11 @@ export function buildReportSubmission(draft: ReportDraft): ReportSubmission {
       reportId: draft.editingReportId,
       changes: {
         ...common,
-        ...(draft.photo ? { photoKey: draft.photo.photoKey } : {}),
+        ...(draft.photo
+          ? { photoKey: draft.photo.photoKey }
+          : draft.existingPhotoKey
+            ? { photoKey: draft.existingPhotoKey }
+            : {}),
       },
     };
   }

@@ -56,8 +56,12 @@ export default function PhotoScreen() {
       })
       .catch(() => {
         if (active) {
-          patchDraft({ photo: null, existingPhotoUrl: null, existingPhotoKey: null });
-          setUploadError('That photo preview has expired. Please choose the photo again.');
+          if (!draft.photo && draft.existingPhotoKey) {
+            patchDraft({ existingPhotoUrl: null, existingPhotoUnavailable: true });
+          } else {
+            patchDraft({ photo: null, existingPhotoUrl: null, existingPhotoKey: null });
+            setUploadError('That photo preview has expired. Please choose the photo again.');
+          }
         }
       });
     return () => {
@@ -105,7 +109,7 @@ export default function PhotoScreen() {
       if (!photo.metadataStripped) {
         throw new Error('Location metadata could not be removed. Please choose another photo.');
       }
-      patchDraft({ photo });
+      patchDraft({ photo, existingPhotoUnavailable: false });
     } catch (error) {
       setUploadError(error instanceof Error ? error.message : 'Please try again.');
       patchDraft({ photo: null });
@@ -157,6 +161,20 @@ export default function PhotoScreen() {
             body={uploadError}
             onRetry={() => (uploadError.includes('expired') ? libraryRef.current?.click() : cameraRef.current?.click())}
           />
+        )}
+
+        {draft.existingPhotoUnavailable && !photo && (
+          <div style={{ background: C.tint, border: `1px solid ${C.line}`, borderRadius: 16, padding: '13px 14px', color: C.slate, fontSize: 12, lineHeight: 1.5 }}>
+            <div>Existing photo unavailable. You can keep this report or choose a replacement photo.</div>
+            <div style={{ display: 'flex', gap: 10, marginTop: 10 }}>
+              <button type="button" onClick={() => nav('/report/details')} style={{ color: C.navy, fontWeight: 700, fontSize: 12 }}>
+                Keep existing record
+              </button>
+              <button type="button" onClick={() => libraryRef.current?.click()} style={{ color: C.navy, fontWeight: 700, fontSize: 12 }}>
+                Choose replacement photo
+              </button>
+            </div>
+          </div>
         )}
 
         {!photo ? (
