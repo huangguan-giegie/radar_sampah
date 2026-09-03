@@ -42,6 +42,7 @@ function RequireAuth({ children }: { children: JSX.Element }) {
 function RequireStep({ step, children }: { step: ReportStep; children: JSX.Element }) {
   const { draft, lastSavedReport } = useApp();
   const to = guardStep(step, draft);
+  // A completed submission wins over a stale history entry, so Back cannot reopen the form.
   if (to && lastSavedReport) return <Navigate to="/reports" replace />;
   return to ? <Navigate to={to} replace /> : children;
 }
@@ -49,6 +50,7 @@ function RequireStep({ step, children }: { step: ReportStep; children: JSX.Eleme
 export default function App() {
   const { pathname } = useLocation();
   const { toast, authSyncError, retryAuth } = useApp();
+  // Keep the browser title and live region aligned with the route for keyboard and screen-reader users.
   const pageTitle = pathname.startsWith('/report/saved')
     ? 'Report saved'
     : pathname.startsWith('/report/')

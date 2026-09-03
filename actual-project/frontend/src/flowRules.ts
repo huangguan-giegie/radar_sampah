@@ -110,6 +110,7 @@ export function buildReportSubmission(draft: ReportDraft): ReportSubmission {
     if (draft.photo && !draft.photo.metadataStripped) {
       throw new Error('The replacement photo still contains location metadata.');
     }
+    // Keep the original key when no replacement was selected, even if its preview is unavailable.
     return {
       kind: 'update',
       reportId: draft.editingReportId,

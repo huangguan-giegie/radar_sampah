@@ -183,6 +183,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       saveUserSnapshot(me);
       setAuthSyncError(null);
     } catch (error) {
+      // A temporary refresh failure must not turn a still-valid anonymous session into Guest.
       if (authFailureAction(error) === 'preserve') {
         setAuthSyncError('We could not refresh your session. You are still signed in.');
       } else {
