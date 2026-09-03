@@ -12,12 +12,13 @@ import type { BeachDetail, SpeciesDistributionResult } from '../types';
 import { hasDraftProgress, resumePath } from '../flowRules';
 
 /**
- * The model returns a relative occurrence score between 0 and 1; AC5.5.1 asks
- * for it on a 0-100 scale. Converting here, at the point of display, keeps the
- * stored value exactly what the API sent.
+ * The API contract for relativeOccurrenceScore is 0..1. That was agreed with the
+ * API owner, so the backend keeps sending the raw model output and the 0-100
+ * scale AC5.5.1 asks for is produced here, at the point of display.
  *
- * If the backend is ever changed to return 0-100 itself, delete this and print
- * the raw value - doing both would show 1183 out of 100.
+ * Keep the conversion on this side only. If someone ever makes the endpoint
+ * return 0-100 as well, this function has to go in the same change - doing both
+ * would put "1183 / 100" on the page.
  */
 function occurrenceOutOf100(score: number): number {
   return Math.round(score * 100);
