@@ -113,15 +113,43 @@ type MockAccounts = Record<string, LitterReport[]>;
 const MOCK_ACCOUNTS_KEY = 'rs_mock_accounts_v2';
 
 
+// Falls back to the seed rather than throwing.
+//
+// This runs at module scope, so a throw here happens BEFORE React mounts and
+// nothing can catch it: the whole app went white, no text, no error, no way
+// back except clearing site data - which there is no screen left to say. Any
+// junk in this one key did it. A string, an array, a truncated write from a
+// tab that was closed mid-save.
+//
+// Bad stored data is not worth an app for. We start over from the seed, and
+// drop the unusable value so the next write is clean.
 function loadMockAccounts(): MockAccounts {
-  const saved = localStorage.getItem(MOCK_ACCOUNTS_KEY);
-  if (!saved) return { [MOCK_USER.participantId]: SEED_REPORTS.map((report) => ({ ...report })) };
-
-  const parsed: unknown = JSON.parse(saved);
-  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
-    throw new Error('Mock account data is invalid.');
+  const seed = (): MockAccounts => ({ [MOCK_USER.participantId]: SEED_REPORTS.map((report) => ({ ...report })) });
+  let saved: string | null = null;
+  try {
+    saved = localStorage.getItem(MOCK_ACCOUNTS_KEY);
+  } catch {
+    return seed();
   }
-  return parsed as MockAccounts;
+  if (!saved) return seed();
+
+  try {
+    const parsed: unknown = JSON.parse(saved);
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) throw new Error('not an object');
+    // Every value has to be an array of reports, or the screens that map over
+    // one will throw later instead - further from the cause and harder to read.
+    for (const reports of Object.values(parsed as Record<string, unknown>)) {
+      if (!Array.isArray(reports)) throw new Error('not a report list');
+    }
+    return parsed as MockAccounts;
+  } catch {
+    try {
+      localStorage.removeItem(MOCK_ACCOUNTS_KEY);
+    } catch {
+      // Storage is unwritable too. The seed still works for this session.
+    }
+    return seed();
+  }
 }
 
 let mockAccounts = loadMockAccounts();

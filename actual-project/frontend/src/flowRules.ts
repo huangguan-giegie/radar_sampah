@@ -35,7 +35,20 @@ export function hasDraftProgress(draft: ReportDraft): boolean {
 
 export function reachableStep(draft: ReportDraft): ReportStep {
 
-  const hasPhoto = !!draft.photo || !!draft.existingPhotoUrl || !!draft.existingPhotoKey || !!draft.editingReportId;
+  // A correction is NOT proof that a photo exists.
+  //
+  // This used to end in `|| !!draft.editingReportId`, so opening any report to
+  // correct it counted as having a photo. The report the whole feature exists
+  // for is the one excluded BECAUSE its photo is unusable - it carries no
+  // photoUrl and no photoKey - and that clause sent it straight past the photo
+  // step. It could then be submitted and promoted to Counted with the photo
+  // still missing, while the status guide called it "correctable" and /method
+  // said an incomplete report is "never counted at all". Both untrue.
+  //
+  // A correction that already has a photo still has existingPhotoUrl or
+  // existingPhotoKey, so it skips the step as before. Only one with neither is
+  // sent to fetch what it is missing.
+  const hasPhoto = !!draft.photo || !!draft.existingPhotoUrl || !!draft.existingPhotoKey;
   if (!hasPhoto) return 'photo';
 
 

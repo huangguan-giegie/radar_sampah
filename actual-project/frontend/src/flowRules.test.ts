@@ -215,10 +215,19 @@ describe('Flow guards for direct URLs into the reporting flow', () => {
     }
   });
 
-  it('allows editing to re-enter the photo step without a new photo', () => {
+  // This used to assert the opposite - that a correction with NO photo could
+  // reach review - which is how the one report the feature exists for, the one
+  // excluded because its photo is unusable, could be submitted and counted with
+  // the photo still missing. Correcting a report that HAS a photo is covered by
+  // the next test, through existingPhotoUrl.
+  it('sends a correction with no photo at all back to the photo step', () => {
+    const d = draft({ photo: null, existingPhotoUrl: null, existingPhotoKey: null, editingReportId: 'r4' });
+    expect(reachableStep(d)).toBe('photo');
+    expect(guardStep('review', d)).toBe('/report/photo');
+  });
 
-
-    const d = draft({ photo: null, editingReportId: 'r3' });
+  it('lets a correction keep a photo it was stored with, by key alone', () => {
+    const d = draft({ photo: null, existingPhotoKey: 'mock/1.jpg', editingReportId: 'r3' });
     expect(reachableStep(d)).toBe('review');
     expect(guardStep('photo', d)).toBeNull();
   });
