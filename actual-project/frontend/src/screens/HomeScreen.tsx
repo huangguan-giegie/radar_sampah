@@ -7,7 +7,7 @@ import { OverlayChip, SeverityBadge, StatTile } from '../components/ds';
 import { attentionStateFor, C, lastReportedLabel, MONO, NOISE, reportWord } from '../theme';
 import { useApp } from '../AppContext';
 import type { BeachSummary, ReportCounts } from '../types';
-import { hasDraftProgress, resumePath } from '../flowRules';
+import { hasDraftProgress, orderByNeed, resumePath } from '../flowRules';
 
 function greeting(d = new Date()) {
   const h = d.getHours();
@@ -276,7 +276,10 @@ export default function HomeScreen() {
         </div>
 
         <Label style={{ margin: '26px 0 12px' }}>
-          {beachesFailed ? 'EVIDENCE STATUS' : `EVIDENCE STATUS · ${beaches.length || 4} BEACHES`}
+          {/* The list is ordered, so the header says so. UF-17: participants
+              could not tell what the order meant and asked whether it was
+              distance or random. */}
+          {beachesFailed ? 'EVIDENCE STATUS' : `EVIDENCE STATUS · NEEDS ATTENTION FIRST`}
         </Label>
         {beachesFailed ? (
           <ErrorNote
@@ -292,7 +295,7 @@ export default function HomeScreen() {
               <Skeleton h={38} r={14} />
             </div>
           )}
-          {beaches.map((b, i) => (
+          {orderByNeed(beaches).map((b, i) => (
             <BeachRow
               key={b.id}
               b={b}

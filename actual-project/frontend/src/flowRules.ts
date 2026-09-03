@@ -210,3 +210,44 @@ export function finishReportSubmission(
 ) {
   navigate('/report/saved', { replace: true, flushSync: true });
 }
+
+/*
+ * Order the home beach list by which beach needs a volunteer most.
+ *
+ * This is the answer to the question that screen asks - "Which beach needs
+ * you?" - and until now the list was in whatever order the API returned it.
+ *
+ * WHY ORDER RATHER THAN SHOW THE NUMBER. Usability finding UF-01 is Critical:
+ * with three of four beaches reading "Moderate", nothing on screen told a
+ * volunteer which one to go to, and that task failed in the sessions. Its
+ * suggested fix was to surface the attention score. Epic 4 decided the public
+ * sees the band and not the number, so the score is used here to SORT and is
+ * never displayed. The rule that produces it is still published in full on
+ * /method.
+ *
+ * Beaches we cannot rate go last, and among themselves the ones closest to the
+ * three-report threshold come first: "we do not know yet" is not a reason to
+ * send someone, but it is a reason to ask for a report. Ties fall back to the
+ * name so the order never wobbles between renders - Array.prototype.sort is
+ * only stable within one call, and this list re-sorts on every fetch.
+ */
+export function orderByNeed<T extends {
+  name: string;
+  severity: unknown;
+  insufficientData: boolean;
+  validReports: number;
+  attentionScore: number | null;
+}>(beaches: T[]): T[] {
+  const rated = (b: T) => !b.insufficientData && b.severity !== null;
+  return [...beaches].sort((a, b) => {
+    if (rated(a) !== rated(b)) return rated(a) ? -1 : 1;
+    if (rated(a)) {
+      const diff = (b.attentionScore ?? 0) - (a.attentionScore ?? 0);
+      if (diff !== 0) return diff;
+    } else {
+      const diff = b.validReports - a.validReports;
+      if (diff !== 0) return diff;
+    }
+    return a.name.localeCompare(b.name);
+  });
+}
