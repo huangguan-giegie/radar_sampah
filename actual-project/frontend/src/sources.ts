@@ -6,7 +6,13 @@
 
 
 
-import type { SpeciesSource } from './types';
+import type { SpeciesKind, SpeciesSource } from './types';
+
+export function pendingSourceLabel(kind: SpeciesKind): string {
+  if (kind === 'habitat') return 'HABITAT CONTEXT · TEAM DESCRIPTION';
+  if (kind === 'group') return 'GROUP CONTEXT · TEAM DESCRIPTION';
+  return 'SOURCE PENDING · NOT YET FROM FISHBASE / OBIS';
+}
 
 export const FISHBASE = (accessedAt: string): SpeciesSource => ({
   dataset: 'FishBase',
