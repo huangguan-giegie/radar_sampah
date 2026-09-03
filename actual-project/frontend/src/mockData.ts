@@ -1,8 +1,22 @@
 
+// The mock data. Once the backend is live, USE_MOCK in src/api.ts turns itself
+// off and nothing here is loaded any more.
+//
+// It is not filler. Every row is written to exercise a state the UI has to
+// handle: a beach with plenty of evidence, a beach with too little, a beach
+// whose last report falls outside the 90 day window, species with a source and
+// species still waiting for one, and reports in all three statuses. That is how
+// the empty states and the "insufficient data" paths were built and tested
+// before a single endpoint existed.
+//
+// It also keeps the demo honest: the mock obeys the same rules as the contract,
+// so nothing here can look better than the real thing will.
 import { PENDING_SOURCE } from './sources';
 import type { BeachDetail, LitterReport, User } from './types';
 
 
+/** The four beaches in the MVP scope. Delete this whole file once the backend
+ *  serves them - nothing imports it except the mock branches in api.ts. */
 export const BEACHES: BeachDetail[] = [
   {
     id: 'morib',
@@ -14,6 +28,10 @@ export const BEACHES: BeachDetail[] = [
     band: 3,
     insufficientData: false,
     validReports: 8,
+    // The median of those 8 report scores, which is what the band comes from.
+    // 2.55 lands in the 2.5 - <3.5 range, so this beach reads High. The number
+    // is stored, not derived here, because the backend is the one that
+    // computes it - the mock has to answer with the same shape.
     attentionScore: 2.55,
     eligibleReportCount: 8,
     lastReportedAt: '2026-08-19T08:00:00Z',
@@ -39,6 +57,8 @@ export const BEACHES: BeachDetail[] = [
         name: 'Green Sea Turtle',
         kind: 'species',
         scientificName: 'Chelonia mydas',
+        // null, never invented. OBIS covers turtles, but the threat category comes from
+        // FishBase, which only covers fish.
         threatCategory: null,
         glyph: 'turtle',
         text: 'Occasional visitor along the Strait of Malacca. Floating plastic may be mistaken for food.',
@@ -54,6 +74,7 @@ export const BEACHES: BeachDetail[] = [
         name: 'Mangrove Fringe',
         kind: 'habitat',
         scientificName: null,
+        // null, never invented. A habitat, not a species - neither FishBase nor OBIS has one.
         threatCategory: null,
         glyph: 'mangrove',
         text: 'Young mangroves at the northern end shelter juvenile fish and crabs.',
@@ -63,6 +84,8 @@ export const BEACHES: BeachDetail[] = [
         name: 'Coastal Birds',
         kind: 'group',
         scientificName: null,
+        // null, never invented. A group of animals, not one species, so there is no single
+        // threat category to quote.
         threatCategory: null,
         glyph: 'bird',
         text: 'Migratory shorebirds feed along this tide line between September and April.',
@@ -112,6 +135,8 @@ export const BEACHES: BeachDetail[] = [
         name: 'Migratory Shorebirds',
         kind: 'group',
         scientificName: null,
+        // null, never invented. A group of animals, not one species, so there is no single
+        // threat category to quote.
         threatCategory: null,
         glyph: 'bird',
         text: 'The Jeram mudflats are a stopover for migratory waders crossing the strait.',
@@ -121,6 +146,8 @@ export const BEACHES: BeachDetail[] = [
         name: 'Marine Fish',
         kind: 'group',
         scientificName: null,
+        // null, never invented. A group of animals, not one species, so there is no single
+        // threat category to quote.
         threatCategory: null,
         glyph: 'fish',
         text: 'Shallow nursery waters for coastal fish species.',
@@ -130,6 +157,7 @@ export const BEACHES: BeachDetail[] = [
         name: 'Mangrove Belt',
         kind: 'habitat',
         scientificName: null,
+        // null, never invented. A habitat, not a species - neither FishBase nor OBIS has one.
         threatCategory: null,
         glyph: 'mangrove',
         text: 'A narrow mangrove belt lines the river mouth south of the beach.',
@@ -150,7 +178,14 @@ export const BEACHES: BeachDetail[] = [
     insufficientData: true,
 
 
+    // 0, not 2. validReports counts Counted reports inside the 90 day window,
+    // and this beach's newest report is older than that - so nothing falls
+    // inside it. With 2 here the page would show "2 valid reports" next to
+    // "Not recently reported", which the contract makes impossible. Mock data
+    // that contradicts the contract teaches the wrong thing about the UI.
     validReports: 0,
+    // null, never 0. A zero score would read as a measurement of a very clean
+    // beach; null is the only honest answer when nothing was measured.
     attentionScore: null,
     eligibleReportCount: 0,
     lastReportedAt: '2026-05-21T08:00:00Z',
@@ -172,6 +207,7 @@ export const BEACHES: BeachDetail[] = [
         name: 'Mangrove Habitat',
         kind: 'habitat',
         scientificName: null,
+        // null, never invented. A habitat, not a species - neither FishBase nor OBIS has one.
         threatCategory: null,
         glyph: 'mangrove',
         text: 'Dense mangrove roots trap sediment and shelter juvenile marine life.',
@@ -181,6 +217,8 @@ export const BEACHES: BeachDetail[] = [
         name: 'Coastal Birds',
         kind: 'group',
         scientificName: null,
+        // null, never invented. A group of animals, not one species, so there is no single
+        // threat category to quote.
         threatCategory: null,
         glyph: 'bird',
         text: 'Egrets and herons hunt along the shallow channels at low tide.',
@@ -225,6 +263,7 @@ export const BEACHES: BeachDetail[] = [
         name: 'Horseshoe Crab',
         kind: 'species',
         scientificName: 'Carcinoscorpius rotundicauda',
+        // null, never invented. OBIS covers horseshoe crabs; FishBase does not.
         threatCategory: null,
         glyph: 'crab',
         text: 'One of the few Selangor shores where mangrove horseshoe crabs still come up to spawn.',
@@ -234,6 +273,7 @@ export const BEACHES: BeachDetail[] = [
         name: 'Seagrass Patches',
         kind: 'habitat',
         scientificName: null,
+        // null, never invented. A habitat, not a species - neither FishBase nor OBIS has one.
         threatCategory: null,
         glyph: 'grass',
         text: 'Seagrass in the shallows feeds and shelters small marine animals.',
@@ -243,6 +283,7 @@ export const BEACHES: BeachDetail[] = [
         name: 'Mangrove Habitat',
         kind: 'habitat',
         scientificName: null,
+        // null, never invented. A habitat, not a species - neither FishBase nor OBIS has one.
         threatCategory: null,
         glyph: 'mangrove',
         text: 'The Sepang river-mouth mangroves sit just south of this beach.',
@@ -257,12 +298,16 @@ export const BEACHES: BeachDetail[] = [
 
 
 
+// The demo participant. No name, no email - just a number, exactly like a real
+// account.
 export const MOCK_USER: User = {
   id: 'u_anon_1637',
   participantId: '1637',
   role: 'volunteer',
 };
 
+// Four seeded reports covering all three statuses, so My Reports, the status
+// tiles and the correction flow all have something real to show on first run.
 export const SEED_REPORTS: LitterReport[] = [
   {
     id: 'r1',
@@ -271,6 +316,9 @@ export const SEED_REPORTS: LitterReport[] = [
     quantities: { Plastic: 'Medium', Glass: 'Small' },
     category: 'Plastic',
     quantity: 'Medium',
+    // The working, then the result. Plastic Medium = 0.85 x 2 = 1.7;
+    // Glass Small = 0.7 x 1 = 0.7. reportScore is the higher of the two,
+    // following the "worst category wins" rule in scoring.ts - not the average.
     categoryScores: { Plastic: 1.7, Glass: 0.7 },
     reportScore: 1.7,
     createdAt: '2026-08-14T02:00:00Z',
@@ -297,6 +345,8 @@ export const SEED_REPORTS: LitterReport[] = [
     quantities: { 'Fishing gear': 'Small', Plastic: 'Small' },
     category: 'Fishing gear',
     quantity: 'Small',
+    // Fishing gear Small = 1.0 x 1 = 1.0 beats Plastic Small = 0.85 x 1 = 0.85,
+    // so it is both the derived category and the report score.
     categoryScores: { 'Fishing gear': 1, Plastic: 0.85 },
     reportScore: 1,
     createdAt: '2026-07-20T02:00:00Z',

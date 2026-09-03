@@ -1,9 +1,17 @@
-
-
+// Shared colours, fonts and the small formatting helpers that go with them.
+//
+// Anything visual used on more than one screen lives here, so changing a colour
+// is one edit and two screens cannot drift to slightly different navies.
+// The date helpers sit here too: "6 DAYS AGO" is wording, not business logic.
+// The backend sends ISO timestamps, the frontend decides how to say them.
 import type { FreshnessKind, ReportStatus, SeverityBand } from './types';
 import { SCORING_METHOD } from './scoring';
 
 
+// C is for colours. C.navy reads better than '#0B2161' where it is used, and
+// the hex value then exists in exactly one place. The names run dark to light -
+// ink, navy, slate, muted, dim, faint, mist, pale, cloud - so reaching for a
+// lighter shade needs no colour picker. lime is the one accent, used sparingly.
 export const C = {
   ink: '#1E2421',
   ink2: '#26303F',
@@ -29,11 +37,17 @@ export const C = {
   tint: 'rgba(11,33,97,.05)',
 };
 
+// Both stacks start with the system font. The device already has it, so there
+// is nothing to download and no flash of the wrong typeface on a slow beach
+// connection. MONO is for numbers and labels, where digits must line up.
 export const FONT =
   "-apple-system,BlinkMacSystemFont,'SF Pro Text','Helvetica Neue',Segoe UI,Roboto,sans-serif";
 export const MONO = "ui-monospace,'SF Mono',Menlo,Consolas,monospace";
 
 
+// Every band in three shades: `col` fills, `text` is dark enough to read, and
+// `tint` is the faint background. They are kept in one object so a band cannot
+// end up with one level's background and another level's text.
 export const SEVERITY: Record<SeverityBand, { col: string; text: string; tint: string }> = {
   Low: { col: '#7CA98B', text: '#3E6B52', tint: 'rgba(124,169,139,.18)' },
   Moderate: { col: '#D9A24B', text: '#8A6420', tint: 'rgba(217,162,75,.18)' },
@@ -41,10 +55,25 @@ export const SEVERITY: Record<SeverityBand, { col: string; text: string; tint: s
   Severe: { col: '#B84A3F', text: '#7E2E24', tint: 'rgba(184,74,63,.16)' },
 };
 
+/**
+ * The data keeps 'Severe', because that is the word in the contract and in the
+ * database. Screens say "Very high" instead. "Severe" sounds like an official
+ * hazard warning, and volunteer litter counts cannot support that claim.
+ * Renaming here keeps it wording we can revise without touching the backend.
+ */
 export function severityLabel(band: SeverityBand): string {
   return band === 'Severe' ? 'Very high' : band;
 }
 
+/**
+ * Whether a beach may show a band at all, and what to say when it may not.
+ *
+ * Below SCORING_METHOD.minReports counted reports the answer is "Insufficient
+ * data" plus the count so far, because a band drawn from one report looks just
+ * as confident as one drawn from fifty. Two labels come back because pins
+ * shout and pages do not. Every screen asks this one function, so a beach
+ * cannot read "Low" on the map and "Insufficient data" on its own page.
+ */
 export function attentionStateFor(
   severity: SeverityBand | null,
   insufficientData: boolean,
@@ -91,6 +120,8 @@ export function reportWord(count: number): string {
 }
 
 
+// Report status colours. Duplicate is grey, not red: it is not a mistake by
+// the volunteer, just a record we already had.
 export function statusChip(s: ReportStatus) {
   if (s === 'Counted') return { bg: C.greenBg, c: C.green };
   if (s === 'Incomplete') return { bg: 'rgba(196,87,74,.13)', c: C.red };
@@ -98,9 +129,15 @@ export function statusChip(s: ReportStatus) {
 }
 
 
+/** Film grain, inlined as an SVG data URL rather than an image file. It costs
+ *  no extra request and cannot 404 - which matters, because it sits over the
+ *  gradient placeholder on beaches that have no photo. */
 export const NOISE =
   "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.32'/%3E%3C/svg%3E\")";
 
+/** Whole days between now and an ISO timestamp. null in, null out: the caller
+ *  must handle "never reported", a real state here that must not quietly
+ *  become 0 days. */
 export function daysAgo(iso: string | null): number | null {
   if (!iso) return null;
   const ms = Date.now() - new Date(iso).getTime();
@@ -108,6 +145,8 @@ export function daysAgo(iso: string | null): number | null {
 }
 
 
+/** The "6 DAYS AGO" text on chips and pins. "NEVER REPORTED" is its own
+ *  answer and never "0 DAYS AGO" - those two mean opposite things. */
 export function lastReportedLabel(iso: string | null): string {
   const d = daysAgo(iso);
   if (d === null) return 'NEVER REPORTED';
@@ -117,6 +156,9 @@ export function lastReportedLabel(iso: string | null): string {
 }
 
 
+/** The longer freshness wording on cards. All three phrases describe the DATA,
+ *  never the beach: "not recently reported" says what we do not know, where
+ *  "clean" would claim something nobody measured. */
 export function freshnessLabel(kind: FreshnessKind, iso: string | null): string {
   const d = daysAgo(iso);
   if (kind === 'ok') return 'Recently reported';
@@ -124,6 +166,9 @@ export function freshnessLabel(kind: FreshnessKind, iso: string | null): string 
   return `Reported ${d} days ago`;
 }
 
+/** A date a person can read: "Today", otherwise "5 Sep 2026". en-GB because
+ *  the app is used in Malaysia, where 5/9 means 5 September - the US default
+ *  would silently turn that into 9 May. */
 export function formatDate(iso: string): string {
   const d = new Date(iso);
   const today = new Date();
@@ -135,6 +180,9 @@ export function formatDate(iso: string): string {
   return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
+// Everyday descriptions of the four amounts, shown on the record screen. Two
+// volunteers will judge "about a grocery bag" roughly the same way; "Medium"
+// on its own they will not.
 export const QUANTITY_DESC: Record<string, string> = {
   Small: 'Fits in one hand',
   Medium: 'About a grocery bag',

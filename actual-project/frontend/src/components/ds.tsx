@@ -1,3 +1,20 @@
+/**
+ * The design-system components. All the styling lives in src/styles/ds.css;
+ * this file is only a thin wrapper that picks the right class and data
+ * attributes.
+ *
+ * THE RULE: do not restyle these things inside a screen. If you need a variant
+ * that does not exist yet, add it HERE and in ds.css, so it exists once and
+ * everybody gets it.
+ *
+ * This rule was written after the fact. The same badge had been rewritten by
+ * hand at five different sizes across the app, and "no data" was worded three
+ * different ways - so the same state looked like three different states to a
+ * user. That is what a design system prevents.
+ *
+ * Styles are in CSS rather than inline here for a reason: hover, focus and
+ * disabled states cannot be expressed in an inline style object at all.
+ */
 
 import type { CSSProperties, ReactNode } from 'react';
 import type { ReportStatus, SeverityBand } from '../types';
@@ -29,6 +46,8 @@ export function Surface({
 }
 
 
+/** A panel nested inside a card: smaller corners, lighter background, so two
+ *  levels of grouping stay readable without adding another border. */
 export function Nested({ children, style }: Div) {
   return (
     <div className="ds-nested" style={style}>
@@ -53,6 +72,14 @@ export function SectionLabel({
 
 /* ---------- StatusBadge ---------- */
 
+/**
+ * The status pill.
+ *
+ * 'none' means "we have no conclusion yet". It has its own dashed style, used
+ * nowhere else in the app, so an absence of evidence can never be mistaken for
+ * a low reading. That distinction is the single most important thing this
+ * component does.
+ */
 export type BadgeStatus = Lowercase<SeverityBand> | Lowercase<ReportStatus> | 'none';
 
 export function StatusBadge({
@@ -78,6 +105,14 @@ export function StatusBadge({
 }
 
 
+/**
+ * The severity badge.
+ *
+ * A null band means "not enough evidence" and MUST NOT be drawn as Low. This
+ * is enforced here, in one place, rather than trusted to every screen that
+ * shows a band - it is the mistake that would quietly turn our own data into a
+ * claim that an unmonitored beach is clean.
+ */
 export function SeverityBadge({
   band,
   size = 'md',
@@ -88,6 +123,8 @@ export function SeverityBadge({
   size?: 'md' | 'lg';
   label?: string;
 
+  /** For lists: gives every badge in a column the same width, so their left
+   *  edges line up instead of stepping in and out with the word length. */
   block?: boolean;
 }) {
   if (!band) {
@@ -99,6 +136,9 @@ export function SeverityBadge({
   }
   return (
     <StatusBadge status={band.toLowerCase() as BadgeStatus} size={size} indicator block={block}>
+      {/* severityLabel(), not the raw band: the data keeps 'Severe' because
+          that is the word in the contract, but the user is shown "Very high".
+          The translation happens here so every badge in the app gets it. */}
       {label ?? severityLabel(band)}
     </StatusBadge>
   );
@@ -106,6 +146,9 @@ export function SeverityBadge({
 
 /* ---------- InfoChip ---------- */
 
+/** A chip that states a FACT - "12 valid reports", "reported 5 days ago" -
+ *  never a judgement. It is deliberately styled unlike the severity badge, so
+ *  a plain count is not read as a rating. */
 export function InfoChip({
   children,
   color,
@@ -128,6 +171,9 @@ export function InfoChip({
 
 /* ---------- BandMeter ---------- */
 
+/** The four-segment meter next to a severity band. level 0 lights nothing,
+ *  which is the "no conclusion" case - not a zero measurement. It repeats the
+ *  band as a shape, so the reading survives without colour. */
 export function BandMeter({
   level,
   tone,
@@ -175,6 +221,9 @@ export function ListRow({
     </>
   );
 
+  // A row that does nothing when clicked must not take keyboard focus. A
+  // focusable element that reacts to nothing tells a keyboard or screen reader
+  // user that the app is broken.
   if (!onClick || disabled) {
     return (
       <div className="ds-row" aria-disabled={disabled || undefined} style={style}>
@@ -190,6 +239,9 @@ export function ListRow({
 }
 
 
+/** A label-and-value row, used by the review and result screens. The label
+ *  column is a fixed width everywhere, so the values line up in a column
+ *  instead of each row starting somewhere different. */
 export function KeyRow({
   label,
   value,
@@ -324,6 +376,8 @@ export function Callout({
 
 /* ---------- Alert ---------- */
 
+/** One problem, one way to recover from it. If there is nothing the user can
+ *  do, no button is shown - a Retry that cannot help is worse than none. */
 export function Alert({
   title,
   children,
@@ -400,6 +454,8 @@ export function BulletList({ items, tone }: { items: ReactNode[]; tone?: 'dark' 
 
 /* ---------- EmptyState ---------- */
 
+/** "There is nothing here yet" - and the wording has to make clear that this
+ *  is not a failure by the user, and not evidence that a beach is clean. */
 export function EmptyState({
   icon,
   title,

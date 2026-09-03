@@ -1,3 +1,13 @@
+// One beach in full: the litter status, what the litter is made of, how the
+// band was worked out, and what lives nearby.
+//
+// The order of the page is an argument. Status first, because that is why the
+// user came. Then the evidence, then the method, then the wildlife that makes
+// litter matter, and last the report button - by then the user has a reason.
+//
+// Litter data and biodiversity data are kept visibly apart all the way down.
+// Volunteers measure one; the other is reference and modelled context. Mixing
+// them would let a species score be read as something seen on this beach.
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useEffect, useRef, useState } from 'react';
 import { getBeach, getSpeciesDistribution, USE_MOCK } from '../api';
@@ -11,6 +21,9 @@ import { useApp } from '../AppContext';
 import type { BeachDetail, SpeciesDistributionResult } from '../types';
 import { hasDraftProgress, resumePath } from '../flowRules';
 
+// Bar colours for the composition rows. They only separate one row from the
+// next - they carry no meaning, which is why they are deliberately NOT the four
+// severity colours. Reusing those would suggest that a row is "severe".
 const COMP_COLORS = ['#B8FF36', '#2C4A8C', '#5470A8', '#7A879B', '#98A4B5', '#CBD3E0'];
 
 export default function BeachScreen() {
@@ -27,6 +40,10 @@ export default function BeachScreen() {
   const [modelResult, setModelResult] = useState<SpeciesDistributionResult | null>(null);
   const [modelFailed, setModelFailed] = useState(false);
 
+  // beachId is in the dependency list, so moving between beaches refetches.
+  // Without it React would show the previous beach under the new name. Model
+  // state is cleared on the same pass, and the model call is kept separate from
+  // the beach call so a model failure never takes the whole page down.
   useEffect(() => {
     setLoading(true);
     setModelResult(null);
@@ -54,6 +71,15 @@ export default function BeachScreen() {
     target.scrollIntoView({ behavior: smooth ? 'smooth' : 'auto', block: 'start' });
   }, [b, location.state]);
 
+  // Reporting from this page pre-fills the beach and its name, so the user
+  // skips the location step for a beach they are already looking at.
+  //
+  // An unfinished draft is never thrown away without asking. If one exists the
+  // user is offered it back, and Resume returns them to the furthest step they
+  // had reached. Choosing Cancel starts a new report instead, which also has to
+  // clear the last saved report: while that value is set the report routes send
+  // the user to /reports, so a new report would bounce straight out of the flow
+  // if it were left behind.
   const startReport = () => {
     if (hasDraftProgress(draft)) {
       if (window.confirm('Resume your unfinished report? Choose Cancel to start a new report.')) {
@@ -67,6 +93,9 @@ export default function BeachScreen() {
     nav(user ? '/report/photo' : `/identity?next=${encodeURIComponent('/report/photo')}`);
   };
 
+  // Early return for loading and failure. The back button is rendered in BOTH
+  // states: a user who reaches a beach that will not load must still be able to
+  // leave without the browser's back button.
   if (loading || !b) {
     return (
       <div className="screen scroll-y" style={{ zIndex: 20 }}>
@@ -86,13 +115,22 @@ export default function BeachScreen() {
     );
   }
 
+  // One shared helper decides whether a beach has earned a band, so this page,
+  // the home list, the map markers and the confirm screen all draw that line in
+  // the same place. sev stays null unless the helper agrees there is a band, so
+  // a severity value that arrives with too few reports behind it still cannot
+  // be shown as one.
   const attention = attentionStateFor(b.severity, b.insufficientData, b.validReports);
   const sev = attention.hasBand && b.severity ? SEVERITY[b.severity] : null;
   const fs = freshStyle(b.freshnessKind);
+  // Scientific name is the only id a species card and a model prediction share.
   const modelByScientificName = new Map(
     (modelResult?.predictions ?? []).map((prediction) => [prediction.scientificName, prediction]),
   );
 
+  // Bar width comes from the quantity band, not from a percentage. There are
+  // only four bands and they do not add up to 100 - drawing them as shares of a
+  // whole would invent precision the data does not have.
   const BAND_WIDTH: Record<string, string> = {
     Small: '25%', Medium: '50%', Large: '75%', 'Very Large': '100%',
   };
@@ -101,12 +139,20 @@ export default function BeachScreen() {
     <div className="screen scroll-y" style={{ zIndex: 20 }}>
 
       <BeachCover coverImageUrl={b.coverImageUrl} scene={b.scene} alt={b.name} style={{ height: 300 }}>
+        {/* The cover is a real photo when the backend has one. When it does
+            not, the gradient the backend sends is used instead, so a beach
+            looks the same everywhere in the app rather than getting a random
+            placeholder per screen. The noise layer only goes on that gradient. */}
         {!b.coverImageUrl && (
           <div style={{ position: 'absolute', inset: 0, opacity: 0.32, backgroundImage: NOISE }} />
         )}
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg,rgba(9,24,52,.35) 0%,transparent 30%,transparent 52%,rgba(9,22,48,.72) 100%)' }} />
         <BackButton dark onClick={() => nav(-1)} style={{ position: 'absolute', top: 'var(--top-inset)', left: 18, zIndex: 5 }} />
 
+        {/* The title follows the reading column. On a wide window without this
+            it would sit hard against the left edge while the content it
+            introduces sits in the middle of the screen, hundreds of pixels
+            away. The back button above is chrome and stays at the edge. */}
         <div className="measure" style={{ position: 'absolute', left: 20, right: 20, bottom: 52 }}>
           <div style={{ fontFamily: MONO, fontSize: 8.5, letterSpacing: '.2em', color: 'rgba(9,26,64,.8)', marginBottom: 8 }}>
             WEST COAST · {b.habitatTag}
@@ -122,6 +168,11 @@ export default function BeachScreen() {
 
 
 
+      {/* The status card, pulled up over the cover photo by the negative top
+          margin. The width is set with calc() rather than the .measure class,
+          because this card's 16px side margins are written inline and inline
+          styles beat a stylesheet. On a phone calc(100% - 32px) is exactly the
+          width it had before, so the phone layout did not change. */}
       <GlassPanel
         style={{
           margin: '-40px auto 0',
@@ -144,6 +195,10 @@ export default function BeachScreen() {
             <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '.16em', color: C.muted }}>
               LITTER STATUS
             </div>
+            {/* A band, or an honest refusal to give one. Never a default and
+                never a zero - both would read as "this beach is fine". The
+                words of the refusal come from the shared helper, so this page
+                and the map explain the gap in the same terms. */}
             {sev ? (
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 6 }}>
                 <div style={{ fontSize: 29, fontWeight: 750, letterSpacing: '.02em', color: sev.text }}>
@@ -168,6 +223,9 @@ export default function BeachScreen() {
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'flex-end' }}>
             <InfoChip>
+              {/* A tick only once the reports add up to a band. Beside a count
+                  too small to band, the same tick would read as approval of a
+                  beach nobody has measured enough. */}
               {attention.hasBand ? (
                 <Check size={11} color={C.slate} strokeWidth={2.2} />
               ) : (
@@ -191,6 +249,11 @@ export default function BeachScreen() {
           </div>
         </div>
 
+        {/* 'stale' covers two different situations (API.md section 4): nothing
+            in 90 days, and never reported at all. They need different
+            sentences. Without the split, a beach nobody has ever reported would
+            be told how old its most recent report is - a report that does not
+            exist. */}
         {b.freshnessKind === 'stale' && (
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: 9, marginTop: 14, padding: '11px 13px', borderRadius: 16, background: 'rgba(30,36,44,.05)', border: '1px solid rgba(30,36,44,.12)' }}>
             <Clock style={{ flex: 'none', marginTop: 1 }} />
@@ -211,6 +274,10 @@ export default function BeachScreen() {
           <div style={{ fontSize: 12, lineHeight: 1.5, color: C.muted, margin: '-4px 0 12px' }}>
             Latest reported litter categories and quantity bands. Litter status above uses the median of eligible reports from the last 90 days.
           </div>
+          {/* What the litter is made of. This comes from the single most recent
+              counted report, and that report's date is printed under the bars -
+              so the user knows they are reading one day's observation, not an
+              average over months. */}
           {b.composition ? (
             <div style={{ background: C.white, border: `1px solid ${C.line}`, borderRadius: 24, padding: 20, display: 'flex', flexDirection: 'column', gap: 11 }}>
               {b.composition.map((c, i) => (
@@ -240,6 +307,8 @@ export default function BeachScreen() {
               </div>
             </div>
           ) : (
+            /* No counted report yet. A dashed empty box, not a chart of
+               zeroes: an empty chart still looks like a measurement. */
             <div style={{ border: '1.5px dashed rgba(11,33,97,.18)', borderRadius: 24, padding: 22, textAlign: 'center' }}>
               <div style={{ fontSize: 13.5, fontWeight: 640, color: C.muted }}>
                 No counted report yet
@@ -250,6 +319,10 @@ export default function BeachScreen() {
         </div>
 
 
+        {/* The whole card is the link. It carries the three lines that matter
+            most from the method, with a way through to the full page: somebody
+            who has just read a band about their own beach should not have to go
+            looking for how it was calculated. */}
         <button
           type="button"
           onClick={() => nav('/method')}
@@ -297,9 +370,16 @@ export default function BeachScreen() {
             Contextual information only — it does not contribute to litter severity.
           </div>
           <div className="scroll-x" style={{ display: 'flex', gap: 12, paddingBottom: 6, margin: '0 -16px', paddingLeft: 16, paddingRight: 16 }}>
+            {/* Biodiversity. A separate section with its own heading, its own
+                colours and its own sources - it is context for why litter here
+                matters, and never an input to the litter status. */}
             {b.species.map((sp) => (
               <div key={sp.name} style={{ width: 196, flex: 'none', background: C.white, border: `1px solid ${C.line}`, borderRadius: 22, overflow: 'hidden' }}>
 
+                {/* The species' own photo, or just the gradient. This used to
+                    fall back to the beach cover, which made every card on a
+                    beach show the same picture - and each one read as "this is
+                    what that animal looks like". */}
                 <BeachCover coverImageUrl={sp.pictureUrl ?? null} scene={b.scene} style={{ height: 88 }}>
                   <div style={{ position: 'absolute', inset: 0, background: 'rgba(12,24,52,.25)' }} />
                   <div
@@ -329,6 +409,8 @@ export default function BeachScreen() {
                       {sp.threatCategory ? ` · ${sp.threatCategory}` : ''}
                     </div>
                   )}
+                  {/* Live model context, printed as a plain labelled line so it
+                      is never mistaken for the card's sourced content. */}
                   {sp.scientificName && modelByScientificName.has(sp.scientificName) && (
                     <div style={{ marginTop: 7, fontFamily: MONO, fontSize: 8, letterSpacing: '.07em', color: '#855A10' }}>
                       MODELLED CONTEXT · RELATIVE SCORE {modelByScientificName.get(sp.scientificName)?.relativeOccurrenceScore}
@@ -359,6 +441,10 @@ export default function BeachScreen() {
                         border: '1px dashed rgba(154,106,20,.32)',
                       }}
                     >
+                      {/* Amber and dashed, never the severity colours and never
+                          a bar: this is a different kind of measure. It is a
+                          relative score rather than a probability, so no % sign
+                          - the label says so and "/ 100" gives the scale. */}
                       <div style={{ fontFamily: MONO, fontSize: 7.5, letterSpacing: '.1em', color: '#855A10' }}>
                         RELATIVE OCCURRENCE SCORE · NOT A PROBABILITY
                       </div>
@@ -374,6 +460,13 @@ export default function BeachScreen() {
                     </div>
                   )}
 
+                  {/* Show the gap when there is no real source yet. An amber
+                      badge is embarrassing; an invented citation in a marked
+                      assignment is misconduct. The wording comes from
+                      sources.ts, because habitat and group cards are team
+                      descriptions and were never coming from FishBase or OBIS -
+                      calling those "source pending" promised a source that was
+                      never going to arrive. */}
                   {sp.source.dataset === 'pending' ? (
 
                     <div
@@ -396,6 +489,9 @@ export default function BeachScreen() {
                       {pendingSourceLabel(sp.kind)}
                     </div>
                   ) : (
+                    /* The credit line, printed on every card. CC BY-NC requires
+                       attribution and DMP section 9 requires the access date, so
+                       both are shown rather than stored and forgotten. */
                     <div style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '.08em', color: C.faint, marginTop: 9, lineHeight: 1.5 }}>
                       SOURCE · {sp.source.citation}
                       {sp.source.accessedAt ? ` · accessed ${sp.source.accessedAt}` : ''}
@@ -465,6 +561,9 @@ export default function BeachScreen() {
           </div>
         </div>
 
+        {/* The model result on its own, apart from the sourced cards. Mock mode
+            runs no model, so it says that outright instead of showing an empty
+            panel or a simulated score. */}
         <div style={{ background: C.white, border: `1px solid ${C.line}`, borderRadius: 22, padding: '16px 17px' }}>
           <Label style={{ marginBottom: 9 }}>MODELLED SPECIES CONTEXT</Label>
           <div style={{ fontSize: 12, lineHeight: 1.5, color: C.muted }}>
