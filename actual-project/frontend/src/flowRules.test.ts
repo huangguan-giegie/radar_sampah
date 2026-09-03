@@ -1,3 +1,14 @@
+// Tests for the report-flow rules, and for the small helpers the map, the home
+// list and the beach pages lean on.
+//
+// WHY THESE AND NOT THE SCREENS. Everything under test here is a pure
+// function: give it a draft, or a handful of values, and it returns a
+// decision, with no React and no browser involved. That makes these cases
+// cheap to write and cheap to trust. The same logic buried inside a component
+// would need a rendered page and a fake router before one case could be run.
+//
+// Two blocks below exist because of bugs that actually shipped: the photo
+// guard for corrections, and the way back from the review screen.
 import { describe, expect, it } from 'vitest';
 import type { ReportDraft } from './AppContext';
 import { CAME_FROM_DETAILS, backFromReview, buildReportSubmission, finishReportSubmission, formatReportComposition, guardStep, hasDraftProgress, historicalPhotoUnavailable, orderByNeed, reachableStep, reportOutcome, safeNextPath } from './flowRules';
@@ -5,6 +16,9 @@ import { markerHtml } from './components/BeachMarker';
 import type { BeachSummary } from './types';
 import { attentionStateFor } from './theme';
 
+// A complete, valid draft. Each test passes in only the fields it wants to
+// break, so a test reads as "this one thing is wrong" rather than twelve lines
+// of setup that hide which field the case is actually about.
 function draft(changes: Partial<ReportDraft> = {}): ReportDraft {
   return {
     photo: { photoKey: 'mock/test.jpg', previewUrl: 'blob:test', metadataStripped: true },
@@ -24,6 +38,11 @@ function draft(changes: Partial<ReportDraft> = {}): ReportDraft {
   };
 }
 
+// A beach with one or two reports gets no severity band at all. Three counted
+// reports is the minimum the scoring method asks for, and printing "High" off
+// a single report would be a claim the data cannot support. These tests hold
+// that line, including the sentence that tells the reader why there is no band
+// yet.
 describe('attentionStateFor', () => {
   it.each([0, 1, 2])('keeps %s counted reports in a neutral insufficient-data state', (validReports) => {
     const reportWord = validReports === 1 ? 'report' : 'reports';
@@ -49,6 +68,9 @@ describe('attentionStateFor', () => {
   });
 });
 
+// safeNextPath cleans the "?next=" value we redirect to after login. That
+// value comes from the URL, so anyone can put anything in it - these tests are
+// the guard against an open redirect off our own site.
 describe('safeNextPath', () => {
   it('keeps valid internal paths', () => {
     expect(safeNextPath('/report/photo?from=home')).toBe('/report/photo?from=home');
@@ -165,6 +187,9 @@ describe('buildReportSubmission', () => {
     });
   });
 
+  // Correcting a report must not quietly change how its location was found.
+  // There are no fresh coordinates in the draft, so neither field is sent, and
+  // the report keeps the GPS source it was filed with.
   it('preserves the original GPS source when correcting without new coordinates', () => {
     const result = buildReportSubmission(
       draft({
@@ -183,6 +208,9 @@ describe('buildReportSubmission', () => {
   });
 });
 
+// The one-line summary that stands in for the findings table on the saved
+// screen and in the report list. The order must not follow whatever order the
+// user happened to tick the boxes in.
 describe('report composition display', () => {
   it('shows every selected category and quantity in a stable order', () => {
     expect(formatReportComposition({ Glass: 'Small', Plastic: 'Large', 'Fishing gear': 'Medium' }))
@@ -194,6 +222,9 @@ describe('report composition display', () => {
   });
 });
 
+// A report can have a photo on file and still have nothing to show for it -
+// a key with no URL. The correction draft has to carry that fact, or the
+// review page promises a photo the user cannot see.
 describe('Historical correction draft photo state', () => {
   it('marks a keyed report without a preview as unavailable on entry', () => {
     expect(historicalPhotoUnavailable(null, 'seed/r1.jpg')).toBe(true);
@@ -210,6 +241,9 @@ describe('reportOutcome', () => {
   });
 });
 
+// What happens when somebody types a URL straight into the middle of the
+// report flow, or opens an old bookmark. This is a web-only problem: a phone
+// app has no address bar.
 describe('Flow guards for direct URLs into the reporting flow', () => {
   const blank = draft({ photo: null, beachId: null, beachName: null, quantities: {} });
 
@@ -270,6 +304,9 @@ describe('Flow guards for direct URLs into the reporting flow', () => {
   });
 });
 
+// Whether the app should offer "carry on with your report" when the user comes
+// back. An empty draft must not set that off, or someone who has never started
+// a report is asked to resume one that does not exist.
 describe('Report draft entry', () => {
   it('recognises a draft that should be offered for resume', () => {
     const blank = draft({
@@ -286,6 +323,11 @@ describe('Report draft entry', () => {
   });
 });
 
+// The map pins are built as plain HTML, not as React, so nothing else checks
+// them. A pin has to carry a spoken label and be reachable by keyboard, or the
+// map cannot be used with a screen reader or without a mouse. The rest of the
+// case proves a pin with too few reports never announces a band it does not
+// have, and that the compact pin keeps both of those properties.
 describe('Map marker accessibility', () => {
   it('includes a readable beach label and keyboard target', () => {
     const beach: BeachSummary = {
@@ -364,6 +406,9 @@ describe('Returning from review to details', () => {
   });
 });
 
+// Proves the navigation is committed with flushSync, before the draft is
+// cleared. Without it the review page's guard sees an empty draft mid-update
+// and bounces the user back to step 1 instead of showing their confirmation.
 describe('Completing a report submission', () => {
   it('navigates to the saved screen before clearing the review draft', () => {
     const events: string[] = [];

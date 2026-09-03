@@ -1,9 +1,23 @@
+/*
+ * The base stylesheet: browser resets, animations, hover states, the Leaflet
+ * overrides, and the rules that make one codebase fit both a phone and a
+ * laptop. Component styling lives in ds.css.
+ */
+
+/* Tell the browser this app is light-themed, so form controls and scrollbars
+   are drawn in light colours even for a user whose OS is set to dark. Without
+   it, a dark-mode browser paints inputs dark on our light background. */
 :root {
   color-scheme: light;
 }
 
 * {
+  /* Remove the grey flash iOS Safari paints over anything tapped. We draw our
+     own press state (.press below), and both at once looks like a glitch. */
   -webkit-tap-highlight-color: transparent;
+  /* border-box everywhere: padding and border count INSIDE a stated width.
+     Without it, "width: 100%" plus padding is wider than its parent, which is
+     where most unexplained horizontal scrollbars come from. */
   box-sizing: border-box;
 }
 
@@ -39,11 +53,21 @@ button {
   font-family: inherit;
 }
 
+/* A clear focus ring for keyboard users on every interactive element.
+   focus-visible, not focus: the ring appears for keyboard navigation but not
+   after a mouse click, which is why it can be this obvious without looking
+   wrong. :where() keeps the specificity at zero, so a component can still
+   override it. Removing focus outlines entirely is the single most common way
+   an app becomes unusable without a mouse. */
 :where(a, button, input, textarea, select):focus-visible {
   outline: 3px solid #14317e;
   outline-offset: 3px;
 }
 
+/* Strip the browser's default button chrome. This is what lets us use a real
+   <button> everywhere something is clickable - keeping keyboard support and
+   the right screen reader announcement - while styling it as a card, a row or
+   a chip. It is the reason there are almost no clickable <div>s in this app. */
 button {
   border: none;
   background: none;
@@ -53,7 +77,9 @@ button {
   text-align: left;
 }
 
-
+/* Hide the scrollbar but keep scrolling, matching the prototype. Safe here
+   because every scrolling area has a visible edge or content cut off at the
+   boundary, so there is still a cue that more is below. */
 .scroll-y {
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
@@ -69,7 +95,11 @@ button {
   height: 0;
 }
 
-
+/* ── Animations ─────────────────────────── */
+/* Short and few. Everything below is 0.5s or less, and each one has a job:
+   fadeUp for a page arriving, sheetUp for a panel coming from the bottom edge,
+   popIn to draw the eye to a result. Longer animations make an app feel slow
+   however smooth they are. */
 @keyframes ripple {
   0% {
     transform: scale(0.25);
@@ -151,6 +181,9 @@ button {
   animation: popIn 0.5s cubic-bezier(0.2, 0.8, 0.3, 1);
 }
 
+/* Honour the accessibility setting. Some people get motion sickness or
+   migraines from movement on screen, and the OS has a switch for it - this is
+   how a web app respects it. Everything still works; it just stops moving. */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -161,7 +194,11 @@ button {
   }
 }
 
-
+/* ── Interactive states ─────────────────── */
+/* These live in CSS rather than in the inline styles, because :hover, :focus
+   and :active cannot be expressed in a React style object at all.
+   Hover states are a web-only concern - there is no hover on a phone - and
+   they cost nothing on touch, which is why the same components serve both. */
 .press {
   transition: transform 0.12s ease, background 0.15s ease, border-color 0.15s ease,
     box-shadow 0.15s ease;
@@ -196,10 +233,15 @@ button {
 }
 
 /* ── Leaflet ───────────────────────────── */
+/* Overrides for the map library's own stylesheet. We do not fork Leaflet's
+   CSS; we adjust the few things that would otherwise clash with our design. */
 .leaflet-container {
   background: #d9e6ef;
   font-family: -apple-system, 'Helvetica Neue', sans-serif;
 }
+/* Wash out the OpenStreetMap tiles. The default map is full of saturated
+   greens and reds that compete with our severity colours - a red road would
+   read as a severe beach. Muting the base map keeps colour meaningful. */
 .leaflet-tile {
   filter: saturate(0.72) brightness(1.08) contrast(0.93);
 }
@@ -207,6 +249,8 @@ button {
   background: transparent;
   border: none;
 }
+/* The OpenStreetMap credit. Restyled to sit quietly, never removed - the
+   licence requires it to be visible. */
 .leaflet-control-attribution {
   background: rgba(255, 255, 255, 0.72);
   font-size: 8.5px;
@@ -219,8 +263,24 @@ button {
   color: #3e4f6e;
 }
 
-
-
+/* ── The web app shell ──────────────────── */
+/*
+ * THIS BLOCK IS HOW ONE CODEBASE SERVES PHONE AND DESKTOP. Worth reading
+ * before changing anything below.
+ *
+ * The shell fills the window at every width. It used to clamp itself at 900px
+ * and above into a 402x874 phone floating on a grey background - so opening
+ * the product on a laptop showed a picture of a phone in the middle of the
+ * screen, with the map using 27% of the available width.
+ *
+ * What stops the CONTENT from stretching to 1440px is .measure below, not the
+ * shell. Two separate jobs: the shell fills the window, the reading column
+ * caps its own width. Splitting them is why there is no second set of screens
+ * for desktop, and why "make it work on the web" changed no screen logic.
+ *
+ * The variables here are set on .app-shell rather than :root so the phone
+ * frame below can override them for one subtree.
+ */
 .app-shell {
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
@@ -230,7 +290,14 @@ button {
   --shell-shadow: none;
 }
 
-
+/*
+ * The phone frame, for slide screenshots. Add ?frame=phone to any URL.
+ *
+ * What comes out is genuinely what a phone shows, not an approximation: inside
+ * a 402px frame the content column is about 362px, so .measure (640px) never
+ * takes effect, and every other rule is identical. Nothing else in the app
+ * branches on width.
+ */
 .app-shell[data-frame='phone'] {
   --safe-top: 0px;
   --safe-bottom: 0px;
@@ -240,7 +307,20 @@ button {
   --shell-shadow: 0 40px 80px rgba(0, 0, 0, 0.18), 0 0 0 1px rgba(0, 0, 0, 0.1);
 }
 
-
+/*
+ * The reading column: the one rule that adapts the whole app to a wide screen.
+ *
+ * 640px is chosen for reading, not for the window. Beyond roughly that width a
+ * line of text becomes hard to follow, because the eye loses its place coming
+ * back to the start of the next line.
+ *
+ * The same class works on normal blocks and on absolutely positioned panels:
+ * with left and right both set, margin-inline: auto makes the browser split
+ * the leftover width evenly, which centres it.
+ *
+ * The rule for using it: CONTENT follows this column; CHROME (back buttons,
+ * step badges, map controls) stays at the edges of the full-bleed area.
+ */
 .measure {
   max-width: var(--measure);
   margin-inline: auto;
@@ -252,7 +332,10 @@ button {
   background: #f7f8fa;
 }
 
-
+/* Top and bottom spacing that respects the notch and the home indicator.
+   env(safe-area-inset-*) is 0 on a laptop and on an old phone, so max() puts a
+   sensible minimum underneath - otherwise the back button would sit flush
+   against the very top edge of a desktop browser window. */
 .app-shell {
   --top-inset: calc(max(var(--safe-top), 14px) + 10px);
   --bottom-inset: max(var(--safe-bottom), 12px);

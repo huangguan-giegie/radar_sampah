@@ -1,11 +1,29 @@
+/* ============================================================
+   THE DESIGN SYSTEM - one definition, used everywhere.
 
+   The values come from the component sheet; the colours are the same set as
+   theme.ts, because they were always meant to be one palette.
+
+   Change a value here and it lands everywhere. Do not hand-write these styles
+   inside a screen. This file exists because the same badge had been rewritten
+   by hand at five different sizes, and a user cannot tell whether two things
+   that look different are meant to mean different things.
+
+   The React wrappers that pick these classes are in components/ds.tsx.
+   ============================================================ */
 
 :root {
-
+  /* Exactly three corner radii. Do not invent 20px or 26px in between - a
+     scale with three steps reads as deliberate; one with nine reads as
+     nobody having decided. */
   --r-inner: 14px;
   --r-surface: 22px;
   --r-pill: 999px;
 
+  /* The widest a line of text may be. On a phone the content is about 362px,
+     so this is never reached and nothing about the phone layout changes. It
+     only takes effect on a desktop window, where it stops the page stretching
+     to 1400px. One variable is the whole desktop adaptation. */
   --measure: 640px;
 
   --shadow-sm: 0 8px 22px rgba(8, 23, 57, 0.08);
@@ -21,6 +39,9 @@
   --ds-faint: #7a879b;
   --ds-navy: #0b2161;
 
+  /* Semantic colours, each with a matching background. Meaning is always
+     carried by colour AND words together - colour never carries it alone, so
+     the app still works for a colour-blind user and in a printed report. */
   --ds-success: #177a3e;    --ds-success-bg: #e9f6ee;
   --ds-caution: #8a6420;    --ds-caution-bg: #fff5dc;
   --ds-high: #9c4237;       --ds-high-bg: #f7e9e6;
@@ -33,7 +54,7 @@
   --ds-mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
 }
 
-
+/* ---------- Surface: every white card in the app ---------- */
 .ds-surface {
   position: relative;
   border: 1px solid var(--ds-line);
@@ -52,7 +73,8 @@ button.ds-surface {
 button.ds-surface:hover { border-color: rgba(11, 33, 97, 0.2); }
 button.ds-surface:active { transform: scale(0.994); }
 
-
+/* A panel nested inside a card gets the smaller radius, so the two levels of
+   grouping are visible without adding another border. */
 .ds-nested {
   border: 1px solid var(--ds-line);
   border-radius: var(--r-inner);
@@ -60,7 +82,7 @@ button.ds-surface:active { transform: scale(0.994); }
   padding: 16px;
 }
 
-
+/* ---------- SectionLabel: the small heading above every section ---------- */
 .ds-label {
   display: inline-flex;
   align-items: center;
@@ -78,7 +100,7 @@ button.ds-surface:active { transform: scale(0.994); }
 .ds-label[data-tone='alert'] { color: var(--ds-high); }
 .ds-label[data-tone='strong']{ color: var(--ds-muted); }
 
-
+/* ---------- StatusBadge: severity, report status, and "no conclusion" ----- */
 .ds-badge {
   --badge-color: var(--ds-muted);
   --badge-bg: var(--ds-surface-2);
@@ -110,7 +132,9 @@ button.ds-surface:active { transform: scale(0.994); }
 }
 .ds-badge[data-indicator='true']::before { display: block; }
 .ds-badge[data-size='lg'] { min-height: 34px; padding: 7px 13px; font-size: 12px; }
-
+/* In a list, every badge needs the same width. Right-aligned but unequal, the
+   left edges step in and out down the column and the list looks broken.
+   96px fits MODERATE, the longest word. */
 .ds-badge[data-block='true'] { min-width: 96px; }
 
 .ds-badge[data-status='low']      { --badge-color: var(--ds-success); --badge-bg: var(--ds-success-bg); }
@@ -121,7 +145,11 @@ button.ds-surface:active { transform: scale(0.994); }
 .ds-badge[data-status='severe']   { --badge-color: var(--ds-critical);--badge-bg: var(--ds-critical-bg); }
 .ds-badge[data-status='duplicate']{ --badge-color: var(--ds-muted);   --badge-bg: var(--ds-surface-2); }
 
-
+/* "We have no conclusion yet". The dashed border is this state's own
+   language, used nowhere else in the app, because this is the single most
+   important thing in the product not to misread: it must never look like a
+   Low rating, which would turn missing evidence into a claim that a beach is
+   clean. */
 .ds-badge[data-status='none'] {
   --badge-color: var(--ds-muted);
   --badge-bg: transparent;
@@ -129,7 +157,10 @@ button.ds-surface:active { transform: scale(0.994); }
   border-color: rgba(11, 33, 97, 0.22);
 }
 
-
+/* ---------- InfoChip: states a fact, not a verdict ----------
+   Same height and radius as StatusBadge, but normal sentence case and no
+   uppercase tracking. "8 valid reports" is a count, not a rating, and it must
+   not be dressed to look like one. */
 .ds-info {
   --info-color: var(--ds-ink-soft);
   --info-bg: var(--ds-surface-2);
@@ -166,7 +197,7 @@ button.ds-surface:active { transform: scale(0.994); }
 .ds-row-sub { margin-top: 2px; color: var(--ds-muted); font-size: 13px; line-height: 1.35; }
 .ds-row-tile { flex: none; width: 38px; height: 38px; border-radius: var(--r-inner); overflow: hidden; }
 
-
+/* ---------- OverlayChip: labels that sit on photos and maps ---------- */
 .ds-chip {
   min-height: 28px;
   display: inline-flex;
@@ -221,6 +252,10 @@ button.ds-chip { min-height: 44px; padding-inline: 14px; cursor: pointer; }
   background: rgba(255, 255, 255, 0.97);
 }
 
+/* Fall back to a solid background where backdrop-filter is unsupported.
+   These sit on top of photos and maps, so without the blur OR a solid fill
+   the text lands on an unpredictable image and becomes unreadable. Frosted
+   glass is a nice-to-have; legible text is not. */
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
   .ds-glass { background: #f7f8fa; }
 }
@@ -256,7 +291,7 @@ button.ds-chip { min-height: 44px; padding-inline: 14px; cursor: pointer; }
 }
 .ds-seg[data-tone='glass'] { background: rgba(255, 255, 255, 0.82); border-color: rgba(255, 255, 255, 0.6); }
 
-
+/* ---------- BandMeter: the four-segment scale, one definition ---------- */
 .ds-meter {
   --meter-color: var(--ds-high);
   --meter-empty: rgba(11, 33, 97, 0.14);
@@ -349,7 +384,8 @@ button.ds-chip { min-height: 44px; padding-inline: 14px; cursor: pointer; }
 .ds-stat:active { transform: scale(0.985); }
 .ds-stat-number { color: var(--ds-navy); font-size: 26px; font-weight: 780; letter-spacing: -0.04em; line-height: 1; }
 .ds-stat-caption { color: var(--ds-muted); font-size: 12px; font-weight: 650; line-height: 1.35; }
-
+/* Missing data gets its own visible treatment. A bare dash reads as an empty
+   cell somebody forgot to fill in, rather than as "we do not have this". */
 .ds-stat[data-empty='true'] .ds-stat-number { color: var(--ds-faint); }
 
 /* ---------- BulletList ---------- */

@@ -1,5 +1,13 @@
-
-
+// Every icon in the app, written by hand as SVG.
+//
+// WHY NO ICON LIBRARY. A package would ship hundreds of icons to download so
+// we could use fifteen, and it would be one more licence to check for a
+// university submission. Written here they are a few hundred bytes, they all
+// share one stroke weight, and none of them can change under us in a version
+// bump.
+//
+// Every icon takes size, color and strokeWidth, so the same drawing works in a
+// tab bar, on a dark photo and inside a button without a second copy.
 import type { CSSProperties } from 'react';
 import type { SpeciesGlyph } from '../types';
 
@@ -10,7 +18,10 @@ type Props = {
   style?: CSSProperties;
 };
 
-
+// The attributes shared by nearly every icon. Pulled out so the drawings
+// below are just their path data - and so a change to the stroke style is one
+// edit rather than fifteen. The round caps and joins are what make them look
+// like one family instead of fifteen separate drawings.
 function base(size: number, color: string, strokeWidth: number, style?: CSSProperties) {
   return {
     width: size,
@@ -189,7 +200,7 @@ export const SpeciesIcon = ({
   <svg {...base(size, color, 1.5)}>{GLYPH_PATHS[glyph] ?? GLYPH_PATHS.bird}</svg>
 );
 
-
+/** The radar mark used on the splash screen - the app's own logo. */
 export const RadarMark = ({ size = 30 }: { size?: number }) => (
   <svg width={size} height={size} viewBox="0 0 30 30" fill="none">
     <circle cx="15" cy="15" r="13" stroke="#B8FF36" strokeOpacity=".5" strokeWidth="1.4" />
