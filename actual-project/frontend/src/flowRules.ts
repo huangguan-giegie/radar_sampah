@@ -1,5 +1,5 @@
 import type { ReportDraft } from './AppContext';
-import type { CreateReportInput, LitterCategory, ReportStatus } from './types';
+import type { CreateReportInput, LitterCategory, QuantityByCategory, ReportStatus } from './types';
 
 export function safeNextPath(value: string | null): string {
   if (!value || !value.startsWith('/') || value.startsWith('//') || value.includes('\\')) {
@@ -34,6 +34,15 @@ export function hasDraftProgress(draft: ReportDraft): boolean {
 
 export function historicalPhotoUnavailable(photoUrl: string | null | undefined, photoKey: string | null | undefined): boolean {
   return Boolean(photoKey && !photoUrl);
+}
+
+const REPORT_CATEGORY_ORDER: LitterCategory[] = ['Plastic', 'Fishing gear', 'Glass', 'Metal', 'Paper', 'Other'];
+
+export function formatReportComposition(quantities: QuantityByCategory): string {
+  const items = REPORT_CATEGORY_ORDER
+    .filter((category) => quantities[category])
+    .map((category) => `${category} — ${quantities[category]}`);
+  return items.length > 0 ? items.join(' · ') : 'No categories recorded';
 }
 
 

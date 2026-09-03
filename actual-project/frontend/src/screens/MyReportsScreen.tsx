@@ -7,7 +7,7 @@ import { ErrorNote, Skeleton } from '../components/ui';
 import { C, MONO, formatDate } from '../theme';
 import { StatusBadge, type BadgeStatus } from '../components/ds';
 import { useApp } from '../AppContext';
-import { historicalPhotoUnavailable } from '../flowRules';
+import { formatReportComposition, historicalPhotoUnavailable } from '../flowRules';
 import type { BeachSummary, LitterReport } from '../types';
 
 type Tab = 'All' | 'Counted' | 'Excluded';
@@ -169,8 +169,8 @@ export default function MyReportsScreen() {
                     <span style={{ fontSize: 14.5, fontWeight: 650 }}>{r.beachName}</span>
                     <StatusBadge status={r.status.toLowerCase() as BadgeStatus} indicator>{r.status}</StatusBadge>
                   </div>
-                  <div style={{ fontSize: 12, color: C.muted, marginTop: 3 }}>
-                    {r.category} · {r.quantity}
+                  <div style={{ fontSize: 12, color: C.muted, marginTop: 3, lineHeight: 1.45 }}>
+                    {formatReportComposition(r.quantities)}
                   </div>
                   <div style={{ fontFamily: MONO, fontSize: 9, color: C.faint, marginTop: 3 }}>
                     {formatDate(r.createdAt)}

@@ -22,6 +22,7 @@ export default function IdentityScreen() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [newId, setNewId] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
 
 
   async function getNewId() {
@@ -102,15 +103,38 @@ export default function IdentityScreen() {
               >
                 {newId}
               </div>
+              <button
+                type="button"
+                onClick={async () => {
+                  if (!navigator.clipboard) return;
+                  try {
+                    await navigator.clipboard.writeText(newId);
+                    setCopied(true);
+                  } catch {
+                    setCopied(false);
+                  }
+                }}
+                style={{
+                  marginTop: 10,
+                  padding: '7px 11px',
+                  borderRadius: 10,
+                  border: '1px solid rgba(232,238,245,.28)',
+                  color: C.bg,
+                  fontSize: 11.5,
+                  fontWeight: 650,
+                }}
+              >
+                {copied ? 'Copied' : 'Copy ID'}
+              </button>
               <div style={{ fontSize: 12.5, lineHeight: 1.55, color: C.mist, marginTop: 12 }}>
-                Write it down — you'll need it on another device.
+                Save this number now. You will need it to restore your reports on another device.
               </div>
             </div>
 
             <PrimaryButton onClick={() => nav(next, { replace: true })}>Continue</PrimaryButton>
 
             <div style={{ fontSize: 11.5, lineHeight: 1.5, color: C.dim, textAlign: 'center' }}>
-              Your ID is always shown on the Account page.
+              Your ID is always shown on the Account page. If you lose it, a new ID cannot reopen old reports.
             </div>
           </>
         ) : (

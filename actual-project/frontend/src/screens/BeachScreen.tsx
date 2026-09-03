@@ -127,7 +127,7 @@ export default function BeachScreen() {
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', rowGap: 10 }}>
           <div style={{ minWidth: 0 }}>
             <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '.16em', color: C.muted }}>
-              LITTER SEVERITY
+              LITTER STATUS
             </div>
             {sev ? (
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 6 }}>
@@ -193,6 +193,9 @@ export default function BeachScreen() {
 
         <div>
           <Label style={{ marginBottom: 12 }}>LITTER COMPOSITION</Label>
+          <div style={{ fontSize: 12, lineHeight: 1.5, color: C.muted, margin: '-4px 0 12px' }}>
+            Latest reported litter categories and quantity bands. Litter status above uses the median of eligible reports from the last 90 days.
+          </div>
           {b.composition ? (
             <div style={{ background: C.white, border: `1px solid ${C.line}`, borderRadius: 24, padding: 20, display: 'flex', flexDirection: 'column', gap: 11 }}>
               {b.composition.map((c, i) => (
@@ -275,6 +278,9 @@ export default function BeachScreen() {
 
         <div ref={speciesRef}>
           <Label style={{ marginBottom: 12 }}>BIODIVERSITY NEARBY · {b.habitat}</Label>
+          <div style={{ fontSize: 12, lineHeight: 1.5, color: C.muted, margin: '-4px 0 12px' }}>
+            Contextual information only — it does not contribute to litter severity.
+          </div>
           <div className="scroll-x" style={{ display: 'flex', gap: 12, paddingBottom: 6, margin: '0 -16px', paddingLeft: 16, paddingRight: 16 }}>
             {b.species.map((sp) => (
               <div key={sp.name} style={{ width: 196, flex: 'none', background: C.white, border: `1px solid ${C.line}`, borderRadius: 22, overflow: 'hidden' }}>
