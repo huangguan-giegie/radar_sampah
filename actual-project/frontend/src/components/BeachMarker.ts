@@ -1,10 +1,19 @@
-
-
+// What the pins on the map look like.
+//
+// Leaflet's divIcon takes an HTML string, not a React root, so a component
+// cannot be mounted into it. That is why the styling here is inline text and
+// not JSX. Everything drawn comes from the BeachSummary that was passed in;
+// there is no local table of beach data, so a pin can never disagree with the
+// card that opens when you tap it.
 import type { BeachSummary, MapLayer, SpeciesGlyph } from '../types';
 import { attentionStateFor, SEVERITY } from '../theme';
 
+// Written out once. These strings sit outside React and outside our
+// stylesheet, so nothing else would give them our typeface.
 const F = "font-family:-apple-system,'Helvetica Neue',sans-serif";
 
+// Drawn by hand rather than pulled from an icon library. Six shapes is not
+// worth a dependency, and every extra package is another licence to check.
 const GLYPH_D: Record<SpeciesGlyph, string> = {
   turtle:
     '<ellipse cx="12" cy="12" rx="6.2" ry="4.8"/><circle cx="19.4" cy="12" r="1.7"/><path d="M8 8.2 6 6.4M16 8.2 18 6.4M8 15.8 6 17.6M16 15.8 18 17.6"/><path d="M12 7.2v9.6M8.4 10h7.2M8.4 14h7.2"/>',
@@ -19,11 +28,20 @@ const GLYPH_D: Record<SpeciesGlyph, string> = {
 
 function glyphSvg(g: SpeciesGlyph, color: string, size: number) {
   return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">${
+    // Falls back to the bird if the backend sends a glyph name we do not know.
+    // An unknown species must not leave an empty pin that nobody can tap.
     GLYPH_D[g] ?? GLYPH_D.bird
   }</svg>`;
 }
 
 
+/**
+ * Build the HTML for one pin. The two layers get genuinely different pins, not
+ * one pin in another colour, so a glance tells you which layer you are on.
+ * offset moves the drawing and nothing else: two south-coast beaches sit close
+ * enough to cover each other at phone width, but each marker keeps its real
+ * coordinate.
+ */
 export function markerHtml(
   b: BeachSummary,
   selected: boolean,
@@ -35,9 +53,17 @@ export function markerHtml(
   // every beach visible and tappable; the label comes back on zoom in.
   compact = false,
 ): string {
+  // The beach page asks this same helper, so a pin can never read "LOW" while
+  // the beach's own page says there is not enough data. null on biodiversity,
+  // because that layer makes no claim about litter.
   const attention = layer === 'litter'
     ? attentionStateFor(b.severity, b.insufficientData, b.validReports)
     : null;
+  // The pin is a div, so role and tabindex are what make it reachable by
+  // keyboard. The label carries the status word as well as the name, since a
+  // screen reader user gets none of the colour or bars. MapScreen puts the
+  // same three attributes on the element Leaflet wraps around this one - keep
+  // the wording identical.
   const wrap = (inner: string) =>
     `<div role="button" tabindex="0" aria-label="${b.name} · ${
       attention ? attention.markerLabel : b.habitatTag
@@ -46,6 +72,8 @@ export function markerHtml(
     }">${inner}</div>`;
 
   if (compact) {
+    // Colour is the only thing left at this size, so hasBand is still tested:
+    // a beach with too few reports must not show a status colour here either.
     const dot = attention && attention.hasBand && b.severity ? SEVERITY[b.severity].col : '#98A4B5';
     return wrap(
       `<div style="width:${selected ? 18 : 13}px;height:${selected ? 18 : 13}px;border-radius:50%;background:${dot};border:2px solid ${
@@ -55,8 +83,13 @@ export function markerHtml(
   }
 
   if (layer === 'litter') {
+    // Grey unless the beach has earned a band. hasBand is checked before
+    // SEVERITY is read, so an unproven beach cannot borrow a colour from a
+    // b.severity value it is not allowed to show.
     const sv = attention?.hasBand && b.severity ? SEVERITY[b.severity] : null;
     const col = sv ? sv.col : '#98A4B5';
+    // Four bars, filled up to the band. Shape as well as colour, so the gap
+    // between Low and Very high survives for a colour-blind reader.
     let bars = '<span style="display:flex;gap:2px;align-items:flex-end">';
     for (let i = 0; i < 4; i++) {
       const on = attention?.hasBand && b.band !== null && i < b.band;
@@ -65,6 +98,9 @@ export function markerHtml(
       }"></i>`;
     }
     bars += '</span>';
+    // The helper supplies the wording, never the raw band: the pin says "VERY
+    // HIGH" where the data says 'Severe'. "NO DATA" is spelled out because
+    // empty bars with no label read as a Low rating, not as missing evidence.
     const label = attention?.markerLabel ?? 'NO DATA';
     const pill =
       `<div style="display:flex;align-items:center;gap:6px;background:${
@@ -74,10 +110,14 @@ export function markerHtml(
       };border-radius:999px;border:1.5px solid ${
         selected ? '#B8FF36' : b.insufficientData ? 'rgba(30,36,44,.25)' : 'rgba(11,33,97,.1)'
       };box-shadow:0 10px 22px -8px rgba(14,30,64,.5);${
+        // A dashed border is the third signal for "not enough evidence",
+        // alongside the empty bars and the NO DATA label.
         b.insufficientData ? 'border-style:dashed;' : ''
       }">${bars}<b style="font-size:10.5px;font-weight:750;letter-spacing:.09em;${
         b.insufficientData ? `color:${selected ? '#CBD3E0' : '#5A6474'}` : ''
       }">${label}</b></div>` +
+      // The name sits under every litter pin, selected or not, so the map can
+      // be read without tapping each pin to find out which beach it is.
       `<div style="background:rgba(11,33,97,.88);color:#F7F8FA;font-size:10px;font-weight:600;padding:4px 10px;border-radius:9px">${b.name}</div>`;
     return wrap(pill);
   }
@@ -99,5 +139,7 @@ export function markerHtml(
 }
 
 
+/** The single location dot on the two small maps in the report flow. A
+ *  constant, not a function - it is the same everywhere it appears. */
 export const MINI_PIN_HTML =
   '<div style="transform:translate(-50%,-50%);position:absolute"><div style="width:34px;height:34px;border-radius:50%;background:rgba(184,255,54,.25);display:flex;align-items:center;justify-content:center"><div style="width:14px;height:14px;border-radius:50%;background:#0B2161;border:2.5px solid #B8FF36;box-shadow:0 4px 10px rgba(14,30,64,.5)"></div></div></div>';

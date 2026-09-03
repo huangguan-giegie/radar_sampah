@@ -1,7 +1,10 @@
 
-//
-
-
+// The anonymous participant number - this app's whole idea of an account.
+// No name, no email, no password. The user gets a four digit number and their
+// reports hang off it. Data we never collect cannot leak, and a volunteer
+// standing on a beach in the sun will not stop to verify an email address.
+// The cost is real, so the screen says it twice: lose the number and the old
+// reports still count for their beach, but nobody can reopen them.
 
 import { useState, type FormEvent } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -21,15 +24,22 @@ export default function IdentityScreen() {
   const [typedId, setTypedId] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // The number we have just issued. Null means show the two choices; set means
+  // show the number and nothing else. State rather than its own route on
+  // purpose - Back must not bring "here is your number" up a second time, when
+  // the number on screen would no longer be the one they were given.
   const [newId, setNewId] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
 
+  // Ask for a new number.
   async function getNewId() {
     setBusy(true);
     setError(null);
     try {
       const id = await createId();
+      // Deliberately no navigation here. The user has to see the number and
+      // save it first - moving straight on would lose it before they read it.
       setNewId(id);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not get an ID. Please try again.');
@@ -38,15 +48,22 @@ export default function IdentityScreen() {
   }
 
 
+  // Continue with a number the user already has.
+  //
+  // The field feeding this is inputMode="numeric", not type="number". A number
+  // input silently drops a leading zero, which would send a different ID.
   async function useExistingId(e: FormEvent) {
     e.preventDefault();
     setBusy(true);
     setError(null);
     try {
       await restore(typedId.trim());
+      // On to wherever they were heading before we asked for an ID. Replace,
+      // so Back does not drop them onto this screen again.
       nav(next, { replace: true });
     } catch (err) {
-
+      // A server fault or a dead connection lands here too, so we must not
+      // blame the user's typing every time. Prefer the message from the API.
       setError(err instanceof Error ? err.message : 'Could not use that ID. Please check the number.');
     }
     setBusy(false);
@@ -76,7 +93,9 @@ export default function IdentityScreen() {
         </div>
 
         {newId ? (
-
+          // The number is issued: show it big, offer a one-tap copy, and press
+          // the user to save it. That warning is the honest price of having no
+          // password, and the Account page repeats it.
           <>
             <div
               style={{
@@ -98,11 +117,15 @@ export default function IdentityScreen() {
                   letterSpacing: '.06em',
                   color: C.lime,
                   marginTop: 8,
+                  // One tap grabs the whole number, which is how it gets copied
+                  // on devices where the button below has no clipboard to use.
                   userSelect: 'all',
                 }}
               >
                 {newId}
               </div>
+              {/* Clipboard writes need a secure context and can still be
+                  refused, so the label only flips after a successful write. */}
               <button
                 type="button"
                 onClick={async () => {
@@ -138,6 +161,10 @@ export default function IdentityScreen() {
             </div>
           </>
         ) : (
+          // No number yet. A segmented control instead of two separate pages,
+          // so someone who picked the wrong side can switch back without losing
+          // what they typed. It ends with a way out for people who only want to
+          // look around.
           <>
 
             <div
@@ -264,12 +291,18 @@ export default function IdentityScreen() {
                   {busy ? 'Checking…' : 'Continue'}
                 </PrimaryButton>
 
+                {/* Please do not soften this line. It names what is lost and
+                    what is not; vaguer wording reads as "your work was binned",
+                    which is not what happens. */}
                 <div style={{ fontSize: 12, lineHeight: 1.55, color: C.dim, textAlign: 'center' }}>
                   Forgot it? Get a new ID — your old reports still count toward their beach, but you can't open them again.
                 </div>
               </form>
             )}
 
+            {/* A rule, not a slogan: flowRules drops the coordinates and the
+                backend strips EXIF. Said here, where we ask for an identity,
+                rather than buried in a policy page. */}
             <div
               style={{
                 display: 'flex',

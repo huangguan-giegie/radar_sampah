@@ -1,3 +1,9 @@
+// Last step: check everything, then submit.
+// Every row can be changed from here. A review screen that shows a mistake
+// without a way to fix it makes people guess how many times to press Back,
+// and on a phone that usually ends with them starting again.
+// New reports and corrections both land here; buildReportSubmission in
+// flowRules.ts decides which, so this screen never has to branch on it.
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { createReport, getBeaches, photoPreviewUrl, updateReport } from '../api';
@@ -14,6 +20,8 @@ export default function ReviewScreen() {
   const location = useLocation();
   const { draft, setLastSavedReport, bumpReports, showToast } = useApp();
   const [beaches, setBeaches] = useState<BeachSummary[]>([]);
+  // busy disables the submit button while the request is in flight - the one
+  // place a disabled button is right, since a second tap would file twice.
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -29,6 +37,9 @@ export default function ReviewScreen() {
     draft.photo?.previewUrl || photoPreviewUrl(draft.photo?.photoKey) || draft.existingPhotoUrl;
 
   async function submit() {
+    // Two try blocks on purpose. This one is about the DRAFT being wrong, and
+    // the user can fix that here. The one below is about the REQUEST failing,
+    // which they can only retry. Merged, an outage would read as their fault.
     let submission: ReturnType<typeof buildReportSubmission>;
     try {
       submission = buildReportSubmission(draft);
@@ -48,6 +59,11 @@ export default function ReviewScreen() {
         submission.kind === 'update'
           ? await updateReport(submission.reportId, submission.changes)
           : await createReport(submission.payload);
+      // Order matters. Keep the saved report first, so the next screen needs no
+      // second request that might fail. Refresh the counts. Then navigate via
+      // finishReportSubmission, which commits the move before the confirmation
+      // screen clears the draft - clear it first and this page's route guard
+      // sees an empty draft and bounces the user back to step 1.
       setLastSavedReport(saved);
       bumpReports();
       finishReportSubmission(nav);
@@ -60,6 +76,18 @@ export default function ReviewScreen() {
   }
 
 
+  /*
+   * Going back to details should pop this page off the history, not push
+   * another one. Pushing leaves [..., details, details], so the back arrow on
+   * the details screen appears to do nothing - it lands on an identical page.
+   *
+   * Whether there is anything to pop is read from the router state that the
+   * details screen stamps on the navigation. A refreshed tab can open straight
+   * on this review page with no such state; backFromReview() in flowRules.ts
+   * turns that case into a replace. It lives there because it is tested there
+   * - inline, an edit once turned its fallback into a call to itself and locked
+   * the screen with a stack overflow.
+   */
   const backToDetails = () => {
     const action = backFromReview(location.state as { from?: string } | null);
     if (action.pop) nav(-1);
@@ -67,6 +95,13 @@ export default function ReviewScreen() {
   };
 
 
+  // The label doubles as the React key. A category appears at most once in a
+  // report, so it is unique, while an array index would rebind rows to the
+  // wrong data as soon as a category was removed.
+  //
+  // The optional badge is how the location row says what was stored: "GPS
+  // PRIVATE" means coordinates were used but stay unpublished, "NO GPS STORED"
+  // means there were none. Last screen before the data leaves the phone.
   const row = (label: string, value: string, action?: () => void, badge?: string) => (
     <button
       key={label}
@@ -114,6 +149,9 @@ export default function ReviewScreen() {
           {photoUrl && (
             <img src={photoUrl} alt="Report evidence" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
           )}
+          {/* Correcting a report whose original photo will not load. Say so
+              plainly, because the old photo is still kept unless they pick
+              a replacement. */}
           {draft.existingPhotoUnavailable && !photoUrl && (
             <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, textAlign: 'center', color: C.slate, fontSize: 12 }}>
               Existing photo unavailable. The existing record will be kept unless you choose a replacement photo.
