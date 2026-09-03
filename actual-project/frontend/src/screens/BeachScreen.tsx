@@ -1,6 +1,7 @@
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useEffect, useRef, useState } from 'react';
 import { getBeach, getSpeciesDistribution, USE_MOCK } from '../api';
+import { pendingSourceLabel } from '../sources';
 import { BeachCover } from '../components/BeachCover';
 import { Camera, Check, ChevronRight, Clock, Info, SpeciesIcon } from '../components/Icon';
 import { BackButton, GhostButton, Label, PrimaryButton, Skeleton } from '../components/ui';
@@ -392,7 +393,7 @@ export default function BeachScreen() {
                       }}
                     >
                       <i style={{ width: 4, height: 4, borderRadius: 2, background: '#D9A24B', display: 'block' }} />
-                      SOURCE PENDING · NOT YET FROM FISHBASE / OBIS
+                      {pendingSourceLabel(sp.kind)}
                     </div>
                   ) : (
                     <div style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '.08em', color: C.faint, marginTop: 9, lineHeight: 1.5 }}>
