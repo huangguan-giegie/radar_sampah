@@ -5,7 +5,7 @@ import { ArrowRight, Check, ChevronRight } from '../components/Icon';
 import { GhostButton, PrimaryButton } from '../components/ui';
 import { C, MONO } from '../theme';
 import { useApp } from '../AppContext';
-import { historicalPhotoUnavailable, reportOutcome } from '../flowRules';
+import { formatReportComposition, historicalPhotoUnavailable, reportOutcome } from '../flowRules';
 
 export default function SubmittedScreen() {
   const nav = useNavigate();
@@ -45,7 +45,7 @@ export default function SubmittedScreen() {
       }}
     >
       <span style={{ width: 104, flex: 'none', fontSize: 11, fontWeight: 600, color: C.dim }}>{label}</span>
-      <span style={{ fontSize: 13.5, fontWeight: 630 }}>{value}</span>
+      <span style={{ minWidth: 0, flex: 1, fontSize: 13.5, fontWeight: 630, lineHeight: 1.4, overflowWrap: 'anywhere' }}>{value}</span>
       {badge && (
         <span style={{ marginLeft: 'auto', fontFamily: MONO, fontSize: 8, letterSpacing: '.08em', color: C.slate, background: 'rgba(11,33,97,.06)', padding: '4px 7px', borderRadius: 7 }}>
           {badge}
@@ -103,8 +103,7 @@ export default function SubmittedScreen() {
 
         <div style={{ background: C.white, border: `1px solid ${C.line}`, borderRadius: 22, overflow: 'hidden' }}>
           {row('Beach', saved.beachName)}
-          {row('Category', saved.category)}
-          {row('Quantity', saved.quantity)}
+          {row('Findings', formatReportComposition(saved.quantities))}
           {row('Report score', saved.reportScore.toFixed(2))}
           {row('Location', 'Beach level only', undefined, true)}
         </div>

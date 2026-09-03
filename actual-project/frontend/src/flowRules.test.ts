@@ -11,6 +11,7 @@ import {
   safeNextPath,
   hasDraftProgress,
   historicalPhotoUnavailable,
+  formatReportComposition,
 } from './flowRules';
 import { markerHtml } from './components/BeachMarker';
 import type { BeachSummary } from './types';
@@ -191,6 +192,17 @@ describe('buildReportSubmission', () => {
       expect(result.changes).not.toHaveProperty('locationSource');
       expect(result.changes).not.toHaveProperty('coords');
     }
+  });
+});
+
+describe('report composition display', () => {
+  it('shows every selected category and quantity in a stable order', () => {
+    expect(formatReportComposition({ Glass: 'Small', Plastic: 'Large', 'Fishing gear': 'Medium' }))
+      .toBe('Plastic — Large · Fishing gear — Medium · Glass — Small');
+  });
+
+  it('returns a neutral value when no category is available', () => {
+    expect(formatReportComposition({})).toBe('No categories recorded');
   });
 });
 
