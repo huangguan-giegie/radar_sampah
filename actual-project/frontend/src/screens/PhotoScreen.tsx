@@ -25,7 +25,14 @@ function decodesToPixels(url: string): Promise<boolean> {
   });
 }
 
-const ACCEPTED_TYPES = ['image/jpeg', 'image/png', 'image/heic'];
+// HEIC is deliberately absent, and that is what makes an iPhone work.
+//
+// iOS Safari CAN decode HEIC; desktop browsers cannot. But when accept does not
+// list HEIC, iOS transcodes the picked photo to JPEG on its way into the input.
+// Listing it did the opposite: the picker handed over the raw HEIC, and the app
+// then refused it - after the hint and the wrong-type error had both told the
+// user HEIC was fine. Leaving it out is what actually accepts an iPhone photo.
+const ACCEPTED_TYPES = ['image/jpeg', 'image/png'];
 const MAX_PHOTO_BYTES = 10 * 1024 * 1024;
 
 export default function PhotoScreen() {
@@ -63,8 +70,13 @@ export default function PhotoScreen() {
 
 
 
-    if (!ACCEPTED_TYPES.includes(file.type) && !/\.heic$/i.test(file.name)) {
-      setUploadError('That file is not a photo we can read. Use JPG, PNG or HEIC.');
+    // The `|| /\.heic$/` escape hatch that used to be here let a HEIC through
+    // this gate so it could fail further along, with a vaguer message. Now it
+    // is refused where the reason is clearest, and consistently with the accept
+    // attribute and the hint - which is the whole point: one answer about HEIC,
+    // not three.
+    if (!ACCEPTED_TYPES.includes(file.type)) {
+      setUploadError('That file is not a photo we can read. Use JPG or PNG.');
       return;
     }
     if (file.size > MAX_PHOTO_BYTES) {
@@ -110,7 +122,7 @@ export default function PhotoScreen() {
       <input
         ref={cameraRef}
         type="file"
-        accept="image/jpeg,image/png,image/heic,.heic"
+        accept="image/jpeg,image/png"
         capture="environment"
         hidden
         onChange={(e) => handleFile(e.target.files?.[0])}
@@ -118,7 +130,7 @@ export default function PhotoScreen() {
       <input
         ref={libraryRef}
         type="file"
-        accept="image/jpeg,image/png,image/heic,.heic"
+        accept="image/jpeg,image/png"
         hidden
         onChange={(e) => handleFile(e.target.files?.[0])}
       />
@@ -210,7 +222,7 @@ export default function PhotoScreen() {
               </div>
               <div style={{ flex: 1 }}>
                 <div style={{ fontSize: 15, fontWeight: 640 }}>Upload Photo</div>
-                <div style={{ fontSize: 12, color: C.dim, marginTop: 3 }}>JPG, PNG or HEIC</div>
+                <div style={{ fontSize: 12, color: C.dim, marginTop: 3 }}>JPG or PNG · up to 10 MB</div>
               </div>
               <ChevronRight size={14} />
             </button>
