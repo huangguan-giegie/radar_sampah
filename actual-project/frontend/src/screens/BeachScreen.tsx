@@ -1,13 +1,13 @@
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useEffect, useRef, useState } from 'react';
-import { getBeach } from '../api';
+import { getBeach, getSpeciesDistribution, USE_MOCK } from '../api';
 import { BeachCover } from '../components/BeachCover';
 import { Camera, Check, ChevronRight, Clock, Info, SpeciesIcon } from '../components/Icon';
 import { BackButton, GhostButton, Label, PrimaryButton, Skeleton } from '../components/ui';
 import { attentionStateFor, C, formatDate, freshnessLabel, freshStyle, MONO, NOISE, reportWord, SEVERITY, severityLabel } from '../theme';
 import { BandMeter, GlassPanel, InfoChip } from '../components/ds';
 import { useApp } from '../AppContext';
-import type { BeachDetail } from '../types';
+import type { BeachDetail, SpeciesDistributionResult } from '../types';
 import { hasDraftProgress, resumePath } from '../flowRules';
 
 const COMP_COLORS = ['#B8FF36', '#2C4A8C', '#5470A8', '#7A879B', '#98A4B5', '#CBD3E0'];
@@ -23,11 +23,22 @@ export default function BeachScreen() {
   const [b, setB] = useState<BeachDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
+  const [modelResult, setModelResult] = useState<SpeciesDistributionResult | null>(null);
+  const [modelFailed, setModelFailed] = useState(false);
 
   useEffect(() => {
     setLoading(true);
+    setModelResult(null);
+    setModelFailed(false);
     getBeach(beachId)
-      .then((data) => setB(data))
+      .then((data) => {
+        setB(data);
+        if (!USE_MOCK) {
+          getSpeciesDistribution(data.lat, data.lng)
+            .then(setModelResult)
+            .catch(() => setModelFailed(true));
+        }
+      })
       .catch(() => setFailed(true))
       .finally(() => setLoading(false));
   }, [beachId]);
@@ -77,6 +88,9 @@ export default function BeachScreen() {
   const attention = attentionStateFor(b.severity, b.insufficientData, b.validReports);
   const sev = attention.hasBand && b.severity ? SEVERITY[b.severity] : null;
   const fs = freshStyle(b.freshnessKind);
+  const modelByScientificName = new Map(
+    (modelResult?.predictions ?? []).map((prediction) => [prediction.scientificName, prediction]),
+  );
 
   const BAND_WIDTH: Record<string, string> = {
     Small: '25%', Medium: '50%', Large: '75%', 'Very Large': '100%',
@@ -314,6 +328,11 @@ export default function BeachScreen() {
                       {sp.threatCategory ? ` · ${sp.threatCategory}` : ''}
                     </div>
                   )}
+                  {sp.scientificName && modelByScientificName.has(sp.scientificName) && (
+                    <div style={{ marginTop: 7, fontFamily: MONO, fontSize: 8, letterSpacing: '.07em', color: '#855A10' }}>
+                      MODELLED CONTEXT · RELATIVE SCORE {modelByScientificName.get(sp.scientificName)?.relativeOccurrenceScore}
+                    </div>
+                  )}
                   <div style={{ fontSize: 11.5, lineHeight: 1.5, color: C.muted, marginTop: 3 }}>{sp.text}</div>
 
                   {/* The occurrence box appears only once there is a score in
@@ -325,12 +344,9 @@ export default function BeachScreen() {
                       look at a beach - and it is live on the deployed site,
                       because the real API returns it as well.
 
-                      Nothing honest is lost by hiding it. The card still says
-                      SOURCE PENDING, which is the part that tells the reader we
-                      do not have the data yet; the occurrence box only ever
-                      qualified a number, and there is no number until Su's
-                      model lands. When it does, the box and its disclaimer come
-                      back together. */}
+                      Static cards remain source-pending. The live model result is
+                      shown in the separate contextual panel below, so a modelled
+                      score is never mistaken for a sourced card or a severity band. */}
                   {sp.likelihood?.state === 'ready' && (
 
                     <div
@@ -443,9 +459,36 @@ export default function BeachScreen() {
                 no species images on these cards yet, so it currently warns
                 about something that is not on screen. */}
             <div style={{ fontSize: 10, color: C.muted, marginTop: 10, lineHeight: 1.55 }}>
-              Species data will come from FishBase and OBIS · CC BY-NC, non-commercial academic use
+              Biodiversity cards are contextual; modelled occurrence uses a packaged OBIS snapshot · CC BY-NC, non-commercial academic use
             </div>
           </div>
+        </div>
+
+        <div style={{ background: C.white, border: `1px solid ${C.line}`, borderRadius: 22, padding: '16px 17px' }}>
+          <Label style={{ marginBottom: 9 }}>MODELLED SPECIES CONTEXT</Label>
+          <div style={{ fontSize: 12, lineHeight: 1.5, color: C.muted }}>
+            {USE_MOCK
+              ? 'The offline species model is not enabled in mock mode. No model result is being simulated.'
+              : 'Packaged OBIS snapshot baseline for the beach broad-area coordinate. Context only — it does not contribute to litter severity.'}
+          </div>
+          {!USE_MOCK && modelResult && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 12 }}>
+              {modelResult.predictions.map((prediction) => (
+                <div key={prediction.speciesSlug} style={{ display: 'flex', justifyContent: 'space-between', gap: 12, fontSize: 12, color: C.ink2 }}>
+                  <span>{prediction.commonNameEn}</span>
+                  <span style={{ fontFamily: MONO, color: '#855A10' }}>{prediction.relativeOccurrenceScore}</span>
+                </div>
+              ))}
+              <div style={{ fontSize: 10.5, lineHeight: 1.45, color: C.muted, marginTop: 3 }}>
+                Not a calibrated probability or a real-time OBIS query. Model version {modelResult.modelVersion}.
+              </div>
+            </div>
+          )}
+          {!USE_MOCK && !modelResult && (
+            <div style={{ fontSize: 11, color: modelFailed ? C.muted : C.dim, marginTop: 10 }}>
+              {modelFailed ? 'Model context is unavailable for this beach; the biodiversity cards remain contextual.' : 'Loading model context…'}
+            </div>
+          )}
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>

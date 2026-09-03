@@ -68,6 +68,16 @@ describe('真实 API contract', () => {
     } satisfies Partial<InstanceType<typeof ApiError>>);
   });
 
+  it('clears the token when auth explicitly returns 401', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ code: 'UNAUTHENTICATED', message: 'Sign in to continue.' }), { status: 401 }),
+    ));
+    const { getMe } = await import('./api');
+
+    await expect(getMe()).resolves.toBeNull();
+    expect(storage.get('rs_token')).toBeUndefined();
+  });
+
   it('submits the report body in the backend contract shape', async () => {
     const report = { id: 'r1', beachId: 'morib', quantities: { Plastic: 'Large' }, category: 'Plastic', quantity: 'Large', beachName: 'Morib', createdAt: '2026-08-31T00:00:00Z', status: 'Counted' };
     const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify(report), { status: 201 }));
@@ -78,6 +88,23 @@ describe('真实 API contract', () => {
     await createReport(input);
 
     expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual(input);
+  });
+
+  it('requests the offline species model with the beach broad-area coordinate', async () => {
+    const result = {
+      insideMalaysianEez: true,
+      scoreType: 'relative_occurrence',
+      calibratedProbability: false,
+      predictions: [],
+      modelVersion: '2026-08-29',
+    };
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify(result), { status: 200 }));
+    vi.stubGlobal('fetch', fetchMock);
+    const { getSpeciesDistribution } = await import('./api');
+
+    await expect(getSpeciesDistribution(2.746, 101.44)).resolves.toEqual(result);
+    expect(fetchMock.mock.calls[0][0]).toBe('https://radar-sampah-api.onrender.com/api/species-distribution/predict');
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({ latitude: 2.746, longitude: 101.44 });
   });
 
   it('uses the highest category-by-quantity score in mock mode', async () => {

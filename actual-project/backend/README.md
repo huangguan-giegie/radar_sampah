@@ -70,6 +70,7 @@ The development server listens on `http://localhost:5000` by default.
 - `GET /beaches`
 - `GET /beaches/<id>`
 - `GET /scoring-method`
+- `POST /api/species-distribution/predict`
 - `POST /geo/resolve-beach`
 - `POST /uploads/photos`
 - `POST /reports`
@@ -78,6 +79,10 @@ The development server listens on `http://localhost:5000` by default.
 - `PATCH /reports/<id>`
 
 Read `../frontend/API.en.md` for the full contract and privacy boundary.
+
+The species-distribution endpoint serves a four-model offline OBIS snapshot baseline. Its scores
+are relative occurrence/suitability context, not calibrated probabilities or real-time OBIS
+results, and they do not affect litter severity or report status.
 
 Anonymous access uses a four-digit participant number for this small demo only.
 It is not a full account system. Logout removes the token on the client; the
