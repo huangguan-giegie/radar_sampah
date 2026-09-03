@@ -6,22 +6,25 @@ import io
 import os
 import re
 import sqlite3
+import threading
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from urllib.parse import urlsplit
 
 import pytest
 from PIL import Image
-from sqlalchemy import inspect as sqlalchemy_inspect
-from sqlalchemy import insert, select
+from sqlalchemy import event, inspect as sqlalchemy_inspect
+from sqlalchemy import insert, select, text
 
 os.environ.setdefault("AUTH_JWT_SECRET", "test-only-secret-not-for-production")
 
 from app import (
     create_app,
+    load_beaches,
     photo_file_path,
     read_photo_metadata,
     reports_table,
+    seed_reference_data,
     sweep_orphan_photos,
     write_photo_metadata,
 )
@@ -35,6 +38,40 @@ def api(tmp_path):
         photo_storage_dir=tmp_path / "private-photos",
     )
     return application, application.test_client()
+
+
+def test_startup_creates_all_six_contract_tables(tmp_path):
+    application = create_app(
+        database_url=f"sqlite:///{tmp_path / 'six-tables.db'}",
+        testing=True,
+        photo_storage_dir=tmp_path / "photos",
+    )
+    names = set(sqlalchemy_inspect(application.extensions["marine_engine"]).get_table_names())
+    assert {"users", "beaches", "dim_threat", "dim_species", "area_species", "reports"} <= names
+
+
+def test_startup_seeds_reference_tables_idempotently(tmp_path):
+    database_url = f"sqlite:///{tmp_path / 'reference.db'}"
+    create_app(database_url=database_url, testing=True, photo_storage_dir=tmp_path / "photos")
+    second = create_app(database_url=database_url, testing=True, photo_storage_dir=tmp_path / "photos")
+    engine = second.extensions["marine_engine"]
+    with engine.connect() as connection:
+        assert connection.execute(text("SELECT COUNT(*) FROM beaches")).scalar_one() == 4
+        assert connection.execute(text("SELECT COUNT(*) FROM area_species")).scalar_one() == 11
+        assert connection.execute(text("SELECT COUNT(*) FROM reports")).scalar_one() == 0
+
+
+def test_startup_repairs_partial_reference_seed_without_touching_reports(tmp_path):
+    database_url = f"sqlite:///{tmp_path / 'partial-reference.db'}"
+    first = create_app(database_url=database_url, testing=True, photo_storage_dir=tmp_path / "photos")
+    with first.extensions["marine_engine"].begin() as connection:
+        connection.execute(text("DELETE FROM area_species WHERE area_id <> 'morib'"))
+        connection.execute(text("DELETE FROM beaches WHERE id <> 'morib'"))
+    second = create_app(database_url=database_url, testing=True, photo_storage_dir=tmp_path / "photos")
+    with second.extensions["marine_engine"].connect() as connection:
+        assert connection.execute(text("SELECT COUNT(*) FROM beaches")).scalar_one() == 4
+        assert connection.execute(text("SELECT COUNT(*) FROM area_species")).scalar_one() == 11
+        assert connection.execute(text("SELECT COUNT(*) FROM reports")).scalar_one() == 0
 
 
 def signup(client):
@@ -194,6 +231,9 @@ def test_partial_main_database_is_migrated_to_contract_rules(tmp_path):
         photo_storage_dir=tmp_path / "photos",
     )
     engine = application.extensions["marine_engine"]
+    assert {"users", "beaches", "dim_threat", "dim_species", "area_species", "reports"} <= set(
+        sqlalchemy_inspect(engine).get_table_names()
+    )
     assert {"photo_mime", "photo_stripped", "lat", "lng", "updated_at", "qty_plastic", "qty_fishing_gear"} <= {
         column["name"] for column in sqlalchemy_inspect(engine).get_columns("reports")
     }
@@ -202,6 +242,114 @@ def test_partial_main_database_is_migrated_to_contract_rules(tmp_path):
     assert (rows[0].category, rows[0].quantity, rows[0].status) == ("Plastic", "Very Large", "Counted")
     assert (rows[0].qty_plastic, rows[0].qty_fishing_gear) == ("Very Large", "Small")
     assert rows[1].status == "Duplicate"
+
+
+def test_standard_schema_database_gets_runtime_compatibility_columns(tmp_path):
+    database_path = tmp_path / "standard-schema.db"
+    connection = sqlite3.connect(database_path)
+    connection.executescript(
+        """
+        CREATE TABLE users (
+          id TEXT PRIMARY KEY, participant_id TEXT NOT NULL UNIQUE,
+          role TEXT NOT NULL, created_at TIMESTAMP NOT NULL
+        );
+        CREATE TABLE beaches (
+          id TEXT PRIMARY KEY, name TEXT NOT NULL, area TEXT NOT NULL,
+          lat REAL NOT NULL, lng REAL NOT NULL, habitat TEXT NOT NULL,
+          habitat_tag TEXT NOT NULL, sensitivity TEXT NOT NULL,
+          primary_species_glyph TEXT NOT NULL, cover_image_url TEXT,
+          scene TEXT NOT NULL, ecological_note TEXT NOT NULL,
+          created_at TIMESTAMP NOT NULL
+        );
+        CREATE TABLE reports (
+          id TEXT PRIMARY KEY, reporter_id TEXT NOT NULL, beach_id TEXT NOT NULL,
+          location_source TEXT NOT NULL, photo_key TEXT NOT NULL,
+          photo_mime TEXT NOT NULL, photo_stripped BOOLEAN NOT NULL,
+          qty_plastic TEXT, qty_fishing_gear TEXT, qty_glass TEXT,
+          qty_metal TEXT, qty_paper TEXT, qty_other TEXT,
+          category TEXT NOT NULL, quantity TEXT NOT NULL,
+          lat NUMERIC, lng NUMERIC, status TEXT NOT NULL, status_note TEXT,
+          created_at TIMESTAMP NOT NULL, updated_at TIMESTAMP NOT NULL,
+          deleted_at TIMESTAMP
+        );
+        INSERT INTO users VALUES ('u_standard', '1637', 'volunteer', '2026-08-31 00:00:00');
+        INSERT INTO beaches VALUES
+          ('morib', 'Pantai Morib', 'Banting, Selangor', 2.746, 101.44,
+           'Intertidal mudflat & sandy shore', 'MUDFLAT', 'Migratory feeding ground',
+           'turtle', NULL, 'scene', 'note', '2026-08-31 00:00:00');
+        """
+    )
+    connection.close()
+
+    application = create_app(
+        database_url=f"sqlite:///{database_path}",
+        testing=True,
+        photo_storage_dir=tmp_path / "photos",
+    )
+    report_columns = {column["name"] for column in sqlalchemy_inspect(application.extensions["marine_engine"]).get_columns("reports")}
+    assert {"beach_name", "quantities"} <= report_columns
+    assert application.test_client().get("/beaches").status_code == 200
+
+
+def test_new_contract_schema_rejects_invalid_reference_values(tmp_path):
+    application = create_app(
+        database_url=f"sqlite:///{tmp_path / 'constraints.db'}",
+        testing=True,
+        photo_storage_dir=tmp_path / "photos",
+    )
+    engine = application.extensions["marine_engine"]
+    with pytest.raises(Exception, match="CHECK constraint failed"):
+        with engine.begin() as connection:
+            connection.execute(
+                text(
+                    "INSERT INTO dim_species "
+                    "(species_id, scientific_name, common_name, threat_id, glyph, picture_url, created_at) "
+                    "VALUES ('bad', 'Bad species', 'Bad', NULL, 'invalid', NULL, CURRENT_TIMESTAMP)"
+                )
+            )
+
+
+def test_reference_seed_is_safe_for_concurrent_startups(tmp_path):
+    database_url = f"sqlite:///{tmp_path / 'concurrent-seed.db'}"
+    application = create_app(database_url=database_url, testing=True, photo_storage_dir=tmp_path / "photos")
+    engine = application.extensions["marine_engine"]
+    with engine.begin() as connection:
+        connection.execute(text("DELETE FROM area_species"))
+        connection.execute(text("DELETE FROM dim_species"))
+        connection.execute(text("DELETE FROM beaches"))
+
+    barrier = threading.Barrier(2)
+    lock = threading.Lock()
+    first_beach_selects = 0
+
+    def pause_first_selects(_connection, _cursor, statement, _parameters, _context, _executemany):
+        nonlocal first_beach_selects
+        if "FROM beaches" not in statement or not statement.lstrip().upper().startswith("SELECT"):
+            return
+        with lock:
+            first_beach_selects += 1
+            should_wait = first_beach_selects <= 2
+        if should_wait:
+            barrier.wait(timeout=5)
+
+    event.listen(engine, "before_cursor_execute", pause_first_selects)
+    errors = []
+
+    def seed():
+        try:
+            seed_reference_data(engine, load_beaches())
+        except Exception as error:  # pragma: no cover - assertion reports the concrete backend error
+            errors.append(error)
+
+    workers = [threading.Thread(target=seed) for _ in range(2)]
+    for worker in workers:
+        worker.start()
+    for worker in workers:
+        worker.join(timeout=10)
+    event.remove(engine, "before_cursor_execute", pause_first_selects)
+
+    assert all(not worker.is_alive() for worker in workers)
+    assert errors == []
 
 
 def test_report_creation_keeps_legacy_required_columns_compatible(tmp_path):
