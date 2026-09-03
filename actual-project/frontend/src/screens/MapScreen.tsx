@@ -199,42 +199,32 @@ export default function MapScreen() {
           padding: '0 12px',
         }}
       >
-        {/* The legend wraps rather than running off the screen. It needs 419px
-            on one line, and almost every phone is narrower than that: 17px of
-            it was cut at 390 (this project's reference width), 24 at 375 and
-            52 at 320, always from the right - so "· COUNTED REPORTS ONLY", the
-            line that says which reports the colours are counting, was the part
-            nobody could read. nowrap made it unwrappable and the pill has no
-            scroller, so the text was simply gone rather than reachable. */}
         <div
           style={{
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center',
-            flexWrap: 'wrap',
             gap: 8,
-            rowGap: 3,
-            maxWidth: '100%',
             padding: '6px 12px',
             borderRadius: 999,
-            background: 'rgba(255,255,255,.82)',
+            background: 'rgba(255,255,255,.7)',
             backdropFilter: 'blur(10px)',
             border: '1px solid rgba(255,255,255,.55)',
             fontFamily: MONO,
             fontSize: 8.5,
             letterSpacing: '.08em',
             color: C.slate,
+            whiteSpace: 'nowrap',
           }}
         >
           {layer === 'litter' ? (
             <>
               {LEGEND.map((item) => (
-                <span key={item.label} style={{ display: 'flex', alignItems: 'center', gap: 3, whiteSpace: 'nowrap' }}>
+                <span key={item.label} style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
                   <i style={{ width: 7, height: 7, borderRadius: 3, background: item.color, display: 'block' }} />
                   {item.label}
                 </span>
               ))}
-              <span style={{ color: C.muted, whiteSpace: 'nowrap' }}>· COUNTED REPORTS ONLY</span>
+              <span style={{ color: C.muted }}>· COUNTED REPORTS ONLY</span>
             </>
           ) : (
             <>HABITAT CONTEXT · BROAD AREAS ONLY</>
@@ -350,7 +340,7 @@ function SelectedCard({
       className="anim-sheet-up measure"
       style={{ position: 'absolute', left: 12, right: 12, bottom: 'calc(var(--bottom-inset) + 84px)', zIndex: 880 }}
     >
-      <GlassPanel className="ds-glass-solid" style={{ position: 'relative', padding: 18 }}>
+      <GlassPanel style={{ position: 'relative', padding: 18 }}>
         <button
           type="button"
           onClick={onClose}

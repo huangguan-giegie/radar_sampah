@@ -6,6 +6,7 @@ import { Camera, Check, ChevronRight, Clock, Info, SpeciesIcon } from '../compon
 import { BackButton, GhostButton, Label, PrimaryButton, Skeleton } from '../components/ui';
 import { attentionStateFor, C, formatDate, freshnessLabel, freshStyle, MONO, NOISE, reportWord, SEVERITY, severityLabel } from '../theme';
 import { BandMeter, GlassPanel, InfoChip } from '../components/ds';
+import { NON_COMMERCIAL_NOTICE } from '../sources';
 import { useApp } from '../AppContext';
 import type { BeachDetail } from '../types';
 import { hasDraftProgress, resumePath } from '../flowRules';
@@ -116,16 +117,8 @@ export default function BeachScreen() {
           padding: 18,
         }}
       >
-        {/* wrap, and let the left block shrink. "MODERATE" is the widest band
-            word we render - 163px against HIGH's 76px, wider even than
-            "VERY HIGH" - and next to a long freshness chip it used to push the
-            chip column past the right edge of the phone, clipping "6 counted
-            reports" to "6 counted repor". Wrapping drops the chips onto their
-            own row instead of overflowing; minWidth 0 lets the band block give
-            way first, because a flex item will not shrink below its content
-            without it. */}
-        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', rowGap: 10 }}>
-          <div style={{ minWidth: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
+          <div>
             <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '.16em', color: C.muted }}>
               LITTER SEVERITY
             </div>
@@ -160,15 +153,11 @@ export default function BeachScreen() {
               )}
               {b.validReports} counted {reportWord(b.validReports)}
             </InfoChip>
-            {/* The raw attention score is deliberately NOT shown. Epic 4's
-                call: the public sees the band, not the number behind it. The
-                value still arrives on BeachDetail and /method still publishes
-                the whole rule, so the arithmetic is still checkable - you just
-                cannot read one beach's score off its own page. No acceptance
-                criterion asks for the number: AC4.1.2 asks for the band,
-                AC4.2.4 lists count, date and freshness as the evidence
-                context, and AC4.3.2 asks for the rule to be documented. Do not
-                re-add this chip without asking Epic 4. */}
+            {attention.hasBand && b.attentionScore !== null && (
+              <InfoChip>
+                Attention score {b.attentionScore.toFixed(2)}
+              </InfoChip>
+            )}
             <InfoChip color={fs.c} background={fs.bg}>
               <i style={{ width: 6, height: 6, borderRadius: 3, background: fs.dot, display: 'block' }} />
               {freshnessLabel(b.freshnessKind, b.lastReportedAt)}
@@ -310,22 +299,7 @@ export default function BeachScreen() {
                   )}
                   <div style={{ fontSize: 11.5, lineHeight: 1.5, color: C.muted, marginTop: 3 }}>{sp.text}</div>
 
-                  {/* The occurrence box appears only once there is a score in
-                      it. It used to render for 'pending' and 'unavailable' too,
-                      and the basis text it printed comes straight from the API:
-                      "Green sea turtle is one of the four modelled species.
-                      Backend not connected yet." That is a sentence about our
-                      wiring, shown on a public page to somebody who came to
-                      look at a beach - and it is live on the deployed site,
-                      because the real API returns it as well.
-
-                      Nothing honest is lost by hiding it. The card still says
-                      SOURCE PENDING, which is the part that tells the reader we
-                      do not have the data yet; the occurrence box only ever
-                      qualified a number, and there is no number until Su's
-                      model lands. When it does, the box and its disclaimer come
-                      back together. */}
-                  {sp.likelihood?.state === 'ready' && (
+                  {sp.likelihood && (
 
                     <div
                       style={{
@@ -336,16 +310,20 @@ export default function BeachScreen() {
                         border: '1px dashed rgba(154,106,20,.32)',
                       }}
                     >
-                      <div style={{ fontFamily: MONO, fontSize: 7.5, letterSpacing: '.1em', color: '#855A10' }}>
-                        RELATIVE OCCURRENCE SCORE · NOT A PROBABILITY
+                      <div style={{ fontFamily: MONO, fontSize: 7.5, letterSpacing: '.1em', color: '#9A6A14' }}>
+                        {sp.likelihood.state === 'ready'
+                          ? 'RELATIVE OCCURRENCE SCORE · NOT A PROBABILITY'
+                          : sp.likelihood.state === 'pending'
+                            ? 'OCCURRENCE MODEL · RESULT PENDING'
+                            : 'OCCURRENCE MODEL · NO DATA FOR THIS CARD'}
                       </div>
-                      {sp.likelihood.score !== undefined && (
-                        <div style={{ fontFamily: MONO, fontSize: 15, fontWeight: 650, color: '#855A10', marginTop: 3 }}>
+                      {sp.likelihood.state === 'ready' && sp.likelihood.score !== undefined && (
+                        <div style={{ fontFamily: MONO, fontSize: 15, fontWeight: 650, color: '#9A6A14', marginTop: 3 }}>
                           {sp.likelihood.score}
                           <span style={{ fontSize: 9, marginLeft: 4, letterSpacing: '.08em' }}>/ 100</span>
                         </div>
                       )}
-                      <div style={{ fontSize: 10, lineHeight: 1.45, color: C.muted, marginTop: 3 }}>
+                      <div style={{ fontSize: 10, lineHeight: 1.45, color: C.dim, marginTop: 3 }}>
                         {sp.likelihood.basis}
                       </div>
                     </div>
@@ -390,54 +368,39 @@ export default function BeachScreen() {
             <div style={{ fontSize: 13, lineHeight: 1.6, color: C.ink2, marginTop: 7 }}>
               {b.ecologicalNote}
             </div>
-            {/* This line is the AC5.2.3 promise, so it is the last thing that
-                should be hard to read. It used to be C.dim, which is 3.11:1 on
-                this tint - under the 4.5:1 AA floor for text this size. C.muted
-                measures 5.11:1 on the same background.
-
-                The model sentence is ADDED to it, never swapped in for it: the
-                beaches showing actual numbers must not be the ones that drop
-                the warning that those numbers are not sightings.
-
-                It now waits for state 'ready' rather than for the field to
-                merely exist. The sentence is there to qualify a number, and
-                until the model is connected there is no number on screen - so
-                46 words describing how a score is built were sitting on a page
-                that shows no score, on every beach that has a modelled species.
-                When Su's output lands, the sentence comes back with it. */}
-            <div style={{ fontSize: 10.5, color: C.muted, marginTop: 8, lineHeight: 1.5 }}>
+            <div style={{ fontSize: 10.5, color: C.dim, marginTop: 8, lineHeight: 1.5 }}>
+              {/* The model sentence is ADDED to the base disclaimer, not swapped
+                  in for it. Morib has occurrence scores, so it used to lose the
+                  "never proof of current presence" line entirely - the beaches
+                  showing actual numbers were the ones dropping the warning that
+                  those numbers are not sightings. */}
               Context only — never proof of current presence or of ecological recovery.
-              {b.species.some((sp) => sp.likelihood?.state === 'ready') ? (
+              {b.species.some((sp) => sp.likelihood) ? (
                 <>
-                  {' '}The relative occurrence score is built from OBIS records and background
-                  samples at coordinate level. It is not a calibrated probability of presence,
-                  never a confirmed sighting, and never a measure of litter severity or of
-                  ecological recovery.
+                  {' '}When the occurrence model is connected it reports a relative occurrence
+                  score, built from OBIS records and background samples at coordinate level. It is
+                  not a calibrated probability of presence, never a confirmed sighting, and never a
+                  measure of litter severity or of ecological recovery.
                 </>
               ) : null}
             </div>
-            {/* AC5.1.3 - the datasets and their licence, shown to the user
-                rather than only recorded in the DMP.
+            {/* AC5.1.3 - the reference datasets and their licence, shown to the
+                user rather than only recorded in the DMP. CC BY-NC requires the
+                attribution to be visible, and until now NON_COMMERCIAL_NOTICE
+                was exported from sources.ts and rendered nowhere at all.
 
-                FUTURE TENSE, deliberately. The long form said "REFERENCE
-                DATASETS · FISHBASE ... OBIS" in the present tense directly
-                under three badges reading "NOT YET FROM FISHBASE / OBIS" - the
-                same page asserting both that we use these datasets and that we
-                do not. No extract has run, so "will come from" is the true one,
-                and it stops contradicting the badges.
-
-                It was also the least legible text on the page: 8.5px at C.faint
-                is 2.16:1, less than half the AA floor, which is a strange way
-                to satisfy a licence whose whole point is visible attribution.
-                One line at 10px/C.muted measures 5.11:1.
-
-                When the extract lands: switch to the present tense, restore the
-                full citations from sources.ts, and bring back the
-                NON_COMMERCIAL_NOTICE sentence about image copyright - there are
-                no species images on these cards yet, so it currently warns
-                about something that is not on screen. */}
-            <div style={{ fontSize: 10, color: C.muted, marginTop: 10, lineHeight: 1.55 }}>
-              Species data will come from FishBase and OBIS · CC BY-NC, non-commercial academic use
+                This names the datasets the biodiversity feature is built on. It
+                is deliberately NOT a per-card citation: no FishBase or OBIS
+                extract has been run yet, so every card still carries its own
+                honest SOURCE PENDING badge. Printing a real-looking citation on
+                a card whose data never came from that dataset would be inventing
+                provenance, which is far worse than an unfinished badge. */}
+            <div style={{ fontFamily: MONO, fontSize: 8.5, letterSpacing: '.08em', color: C.faint, marginTop: 10, lineHeight: 1.6 }}>
+              REFERENCE DATASETS · FISHBASE (Froese &amp; Pauly, www.fishbase.org) · OBIS
+              (Ocean Biodiversity Information System, IOC-UNESCO, www.obis.org)
+            </div>
+            <div style={{ fontSize: 10, color: C.dim, marginTop: 6, lineHeight: 1.5 }}>
+              {NON_COMMERCIAL_NOTICE}
             </div>
           </div>
         </div>
