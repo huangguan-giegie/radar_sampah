@@ -11,6 +11,18 @@ import { useApp } from '../AppContext';
 import type { BeachDetail, SpeciesDistributionResult } from '../types';
 import { hasDraftProgress, resumePath } from '../flowRules';
 
+/**
+ * The model returns a relative occurrence score between 0 and 1; AC5.5.1 asks
+ * for it on a 0-100 scale. Converting here, at the point of display, keeps the
+ * stored value exactly what the API sent.
+ *
+ * If the backend is ever changed to return 0-100 itself, delete this and print
+ * the raw value - doing both would show 1183 out of 100.
+ */
+function occurrenceOutOf100(score: number): number {
+  return Math.round(score * 100);
+}
+
 const COMP_COLORS = ['#B8FF36', '#2C4A8C', '#5470A8', '#7A879B', '#98A4B5', '#CBD3E0'];
 
 export default function BeachScreen() {
@@ -331,7 +343,7 @@ export default function BeachScreen() {
                   )}
                   {sp.scientificName && modelByScientificName.has(sp.scientificName) && (
                     <div style={{ marginTop: 7, fontFamily: MONO, fontSize: 8, letterSpacing: '.07em', color: '#855A10' }}>
-                      MODELLED CONTEXT · RELATIVE SCORE {modelByScientificName.get(sp.scientificName)?.relativeOccurrenceScore}
+                      MODELLED CONTEXT · RELATIVE SCORE {occurrenceOutOf100(modelByScientificName.get(sp.scientificName)!.relativeOccurrenceScore)} / 100
                     </div>
                   )}
                   <div style={{ fontSize: 11.5, lineHeight: 1.5, color: C.muted, marginTop: 3 }}>{sp.text}</div>
@@ -429,7 +441,8 @@ export default function BeachScreen() {
                 that shows no score, on every beach that has a modelled species.
                 When Su's output lands, the sentence comes back with it. */}
             <div style={{ fontSize: 10.5, color: C.muted, marginTop: 8, lineHeight: 1.5 }}>
-              Context only — never proof of current presence or of ecological recovery.
+              Context only — never a confirmed sighting, never proof of current presence or of
+              ecological recovery.
               {b.species.some((sp) => sp.likelihood?.state === 'ready') ? (
                 <>
                   {' '}The relative occurrence score is built from OBIS records and background
@@ -477,7 +490,7 @@ export default function BeachScreen() {
               {modelResult.predictions.map((prediction) => (
                 <div key={prediction.speciesSlug} style={{ display: 'flex', justifyContent: 'space-between', gap: 12, fontSize: 12, color: C.ink2 }}>
                   <span>{prediction.commonNameEn}</span>
-                  <span style={{ fontFamily: MONO, color: '#855A10' }}>{prediction.relativeOccurrenceScore}</span>
+                  <span style={{ fontFamily: MONO, color: '#855A10' }}>{occurrenceOutOf100(prediction.relativeOccurrenceScore)} / 100</span>
                 </div>
               ))}
               <div style={{ fontSize: 10.5, lineHeight: 1.45, color: C.muted, marginTop: 3 }}>
