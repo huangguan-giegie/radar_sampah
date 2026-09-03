@@ -187,10 +187,16 @@ export default function MyReportsScreen() {
         <div style={{ marginTop: 4, padding: '13px 15px', borderRadius: 16, background: 'rgba(11,33,97,.03)', border: '1px solid rgba(11,33,97,.07)' }}>
           <div style={{ fontFamily: MONO, fontSize: 8.5, letterSpacing: '.14em', color: C.dim }}>STATUS GUIDE</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: 11.5, lineHeight: 1.55, color: C.muted, marginTop: 7 }}>
+            {/* The guide has to name the tabs, not just the statuses. It used
+                to explain Counted, Duplicate and Incomplete while the tabs
+                above read All / Counted / Excluded - so the word "Excluded" was
+                on screen twice with nothing anywhere saying which statuses land
+                under it, leaving the reader to infer it. Naming Excluded and
+                folding its two statuses into that line also makes the guide
+                shorter than it was. */}
             {[
               { s: 'Counted', c: C.green, t: 'counts toward the beach rating' },
-              { s: 'Duplicate', c: C.muted, t: 'same participant, beach and local day as an existing counted report' },
-              { s: 'Incomplete', c: C.red, t: 'missing field or unusable photo — correctable' },
+              { s: 'Excluded', c: C.muted, t: 'Duplicate (same participant, beach and local day as an existing counted report) or Incomplete (missing field or unusable photo — correctable). Neither changes any beach rating.' },
             ].map((r) => (
               <div key={r.s}>
                 <b style={{ color: r.c }}>{r.s}</b> — {r.t}

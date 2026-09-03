@@ -154,8 +154,30 @@ function loadMockAccounts(): MockAccounts {
 
 let mockAccounts = loadMockAccounts();
 
+// Never let storage take down a submit.
+//
+// This was the throw the user actually saw: a large photo filled the quota, and
+// the next write - this one, during submit - failed with the browser's own
+// message, so "Submit Report" answered with
+// "Failed to execute 'setItem' on 'Storage': Setting the value of
+// 'rs_mock_accounts_v2'..." in the error box.
+//
+// The report is already in mockAccounts in memory by this point, so the
+// submission itself has succeeded; only its persistence across a reload is at
+// risk. Dropping the photo previews frees the space they were taking, and if
+// even that is not enough we carry on rather than failing the submit.
 function saveMockAccounts() {
-  localStorage.setItem(MOCK_ACCOUNTS_KEY, JSON.stringify(mockAccounts));
+  try {
+    localStorage.setItem(MOCK_ACCOUNTS_KEY, JSON.stringify(mockAccounts));
+  } catch {
+    mockPhotoStore.clear();
+    try {
+      localStorage.removeItem(MOCK_PHOTOS_KEY);
+      localStorage.setItem(MOCK_ACCOUNTS_KEY, JSON.stringify(mockAccounts));
+    } catch {
+      // Out of room for good. The reports live in memory for this session.
+    }
+  }
 }
 
 function currentMockParticipantId(): string {
@@ -402,11 +424,29 @@ function loadMockPhotos(): Map<string, string> {
 
 const mockPhotoStore = loadMockPhotos();
 
-function saveMockPhotos() {
+// Returns whether the store actually persisted.
+//
+// It used to swallow the failure and carry on, which is how a photo could be
+// "saved", survive to the review screen, and then be a broken image after a
+// reload. On a quota error we drop the oldest previews and retry - this is a
+// stand-in for object storage, so the older ones are the expendable ones.
+function saveMockPhotos(): boolean {
+  const write = () => localStorage.setItem(MOCK_PHOTOS_KEY, JSON.stringify(Object.fromEntries(mockPhotoStore)));
   try {
-    localStorage.setItem(MOCK_PHOTOS_KEY, JSON.stringify(Object.fromEntries(mockPhotoStore)));
+    write();
+    return true;
   } catch {
-
+    const keys = [...mockPhotoStore.keys()];
+    for (const key of keys.slice(0, Math.max(0, keys.length - 1))) {
+      mockPhotoStore.delete(key);
+      try {
+        write();
+        return true;
+      } catch {
+        // Still over. Keep evicting.
+      }
+    }
+    return false;
   }
 }
 
@@ -423,7 +463,12 @@ export async function refreshPhotoPreview(photoKey: string | null | undefined): 
   return typeof data?.previewUrl === 'string' ? data.previewUrl : null;
 }
 
-async function metadataFreePhoto(file: File): Promise<File> {
+// maxEdge: 2048 is what the backend wants. The mock passes something smaller,
+// because there the photo is not going to object storage - it goes into
+// localStorage as base64, where a 2048px frame costs about 1.3 MB per report
+// and the whole quota is around 5 MB. Four reports and the demo stops
+// persisting. The preview is never displayed wider than about 350 CSS px.
+async function metadataFreePhoto(file: File, maxEdge = 2048): Promise<File> {
   const sourceUrl = URL.createObjectURL(file);
   try {
     const image = await new Promise<HTMLImageElement>((resolve, reject) => {
@@ -432,7 +477,7 @@ async function metadataFreePhoto(file: File): Promise<File> {
       image.onerror = () => reject(new Error('Could not read that photo. Please try another one.'));
       image.src = sourceUrl;
     });
-    const scale = Math.min(1, 2048 / Math.max(image.naturalWidth || image.width, image.naturalHeight || image.height));
+    const scale = Math.min(1, maxEdge / Math.max(image.naturalWidth || image.width, image.naturalHeight || image.height));
     const canvas = document.createElement('canvas');
     canvas.width = Math.max(1, Math.round((image.naturalWidth || image.width) * scale));
     canvas.height = Math.max(1, Math.round((image.naturalHeight || image.height) * scale));
@@ -453,16 +498,35 @@ export async function uploadPhoto(file: File): Promise<UploadedPhoto> {
   if (USE_MOCK) {
     await delay(700);
 
-
+    // Through the same canvas re-encode the real path uses, for two reasons.
+    //
+    // It makes the promise true. This branch used to read the ORIGINAL file
+    // and return metadataStripped: true, so the screen said "LOCATION METADATA
+    // REMOVED" over a photo that still carried its GPS EXIF. Re-encoding
+    // through a canvas is what actually drops it.
+    //
+    // And it makes the photo fit. An ordinary 1.9 MB phone photo becomes about
+    // 2.6 MB as a base64 data URL, which alone overflows the ~5 MB localStorage
+    // quota. The write failed silently here, and the NEXT write - the accounts
+    // blob, on submit - threw, so submitting a normal photo died with a raw
+    // "Failed to execute 'setItem' on 'Storage'" in the error box.
+    const stripped = await metadataFreePhoto(file, 1280);
     const url = await new Promise<string>((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = () => resolve(String(reader.result));
       reader.onerror = () => reject(new Error('Could not read that photo. Please try another one.'));
-      reader.readAsDataURL(file);
+      reader.readAsDataURL(stripped);
     });
     const photoKey = 'mock/' + Date.now() + '.jpg';
     mockPhotoStore.set(photoKey, url);
-    saveMockPhotos();
+    if (!saveMockPhotos()) {
+      // Still too big even after the re-encode. Keep the preview for this
+      // session but do not pretend it survived - photoPreviewUrl reads the
+      // same map, so leaving a key we could not persist is what produced a
+      // grey box with broken-image alt text after a reload.
+      mockPhotoStore.delete(photoKey);
+      return { photoKey, previewUrl: url, metadataStripped: true };
+    }
     return { photoKey, previewUrl: url, metadataStripped: true };
   }
 
