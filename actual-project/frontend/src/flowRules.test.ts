@@ -1,18 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { ReportDraft } from './AppContext';
-import {
-  backFromReview,
-  CAME_FROM_DETAILS,
-  buildReportSubmission,
-  finishReportSubmission,
-  guardStep,
-  reachableStep,
-  reportOutcome,
-  safeNextPath,
-  hasDraftProgress,
-  historicalPhotoUnavailable,
-  formatReportComposition,
-} from './flowRules';
+import { CAME_FROM_DETAILS, backFromReview, buildReportSubmission, finishReportSubmission, formatReportComposition, guardStep, hasDraftProgress, historicalPhotoUnavailable, orderByNeed, reachableStep, reportOutcome, safeNextPath } from './flowRules';
 import { markerHtml } from './components/BeachMarker';
 import type { BeachSummary } from './types';
 import { attentionStateFor } from './theme';
@@ -384,5 +372,53 @@ describe('Completing a report submission', () => {
     );
 
     expect(events).toEqual(['navigate:/report/saved:true:true']);
+  });
+});
+
+describe('orderByNeed', () => {
+  const beach = (name: string, o: Partial<{ severity: string | null; insufficientData: boolean; validReports: number; attentionScore: number | null }> = {}) => ({
+    name,
+    severity: o.severity ?? 'Moderate',
+    insufficientData: o.insufficientData ?? false,
+    validReports: o.validReports ?? 5,
+    attentionScore: o.attentionScore ?? 2,
+  });
+
+  it('puts the highest attention score first', () => {
+    const out = orderByNeed([
+      beach('Low one', { attentionScore: 1.2 }),
+      beach('High one', { attentionScore: 3.1 }),
+      beach('Middle', { attentionScore: 2.0 }),
+    ]);
+    expect(out.map((b) => b.name)).toEqual(['High one', 'Middle', 'Low one']);
+  });
+
+  it('puts every unrated beach after every rated one, however high its count', () => {
+    const out = orderByNeed([
+      beach('No band', { insufficientData: true, severity: null, attentionScore: null, validReports: 2 }),
+      beach('Rated low', { attentionScore: 0.4 }),
+    ]);
+    expect(out.map((b) => b.name)).toEqual(['Rated low', 'No band']);
+  });
+
+  it('orders unrated beaches by how close they are to the threshold', () => {
+    const out = orderByNeed([
+      beach('Never reported', { insufficientData: true, severity: null, attentionScore: null, validReports: 0 }),
+      beach('Nearly there', { insufficientData: true, severity: null, attentionScore: null, validReports: 2 }),
+    ]);
+    expect(out.map((b) => b.name)).toEqual(['Nearly there', 'Never reported']);
+  });
+
+  it('breaks ties on name so the order cannot wobble between fetches', () => {
+    const same = { attentionScore: 2.0 };
+    expect(orderByNeed([beach('Zeta', same), beach('Alpha', same)]).map((b) => b.name))
+      .toEqual(['Alpha', 'Zeta']);
+  });
+
+  it('does not mutate the array it was given', () => {
+    const input = [beach('B', { attentionScore: 1 }), beach('A', { attentionScore: 9 })];
+    const before = input.map((b) => b.name);
+    orderByNeed(input);
+    expect(input.map((b) => b.name)).toEqual(before);
   });
 });
