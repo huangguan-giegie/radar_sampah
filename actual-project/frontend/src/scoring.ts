@@ -59,5 +59,6 @@ export function categoryScoresFor(quantities: QuantityByCategory): Partial<Recor
 export function reportScoreFor(quantities: QuantityByCategory): number {
   const scores = Object.values(categoryScoresFor(quantities));
   if (!scores.length) throw new Error('A report needs at least one category.');
+  // Max keeps the strongest category signal without double-counting one report.
   return Math.max(...scores);
 }

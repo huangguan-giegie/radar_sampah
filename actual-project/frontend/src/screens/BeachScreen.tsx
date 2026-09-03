@@ -9,6 +9,7 @@ import { BandMeter, GlassPanel, InfoChip } from '../components/ds';
 import { useApp } from '../AppContext';
 import type { BeachDetail, SpeciesDistributionResult } from '../types';
 import { hasDraftProgress, resumePath } from '../flowRules';
+import { pendingSourceLabel } from '../sources';
 
 const COMP_COLORS = ['#B8FF36', '#2C4A8C', '#5470A8', '#7A879B', '#98A4B5', '#CBD3E0'];
 
@@ -392,7 +393,7 @@ export default function BeachScreen() {
                       }}
                     >
                       <i style={{ width: 4, height: 4, borderRadius: 2, background: '#D9A24B', display: 'block' }} />
-                      SOURCE PENDING · NOT YET FROM FISHBASE / OBIS
+                      {pendingSourceLabel(sp.kind)}
                     </div>
                   ) : (
                     <div style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '.08em', color: C.faint, marginTop: 9, lineHeight: 1.5 }}>
