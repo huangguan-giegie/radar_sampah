@@ -108,6 +108,22 @@ export interface BeachDetail extends Omit<BeachSummary, 'speciesNames'> {
   ecologicalNote: string;
 }
 
+export interface SpeciesPrediction {
+  speciesSlug: string;
+  scientificName: string;
+  commonNameEn: string;
+  relativeOccurrenceScore: number;
+  selectedModel: string;
+}
+
+export interface SpeciesDistributionResult {
+  insideMalaysianEez: boolean;
+  scoreType: 'relative_occurrence';
+  calibratedProbability: false;
+  predictions: SpeciesPrediction[];
+  modelVersion: string;
+}
+
 export interface ScoringMethod {
   categoryWeights: { category: LitterCategory; weight: number }[];
   quantityWeights: { quantity: QuantityBand; weight: number }[];

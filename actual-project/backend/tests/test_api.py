@@ -26,6 +26,7 @@ from app import (
     reports_table,
     seed_reference_data,
     sweep_orphan_photos,
+    users_table,
     write_photo_metadata,
 )
 
@@ -145,6 +146,65 @@ def test_demo_participant_runs_report_flow(tmp_path, monkeypatch):
     assert created.get_json()["status"] == "Counted"
     assert client.get("/reports/mine", headers=headers).status_code == 200
     assert client.get("/reports/mine/counts", headers=headers).get_json()["counted"] == 1
+
+
+def test_species_distribution_predicts_from_packaged_models(api):
+    _application, client = api
+    response = client.post(
+        "/api/species-distribution/predict",
+        json={"latitude": 2.746, "longitude": 101.44},
+    )
+
+    assert response.status_code == 200
+    payload = response.get_json()
+    assert payload["insideMalaysianEez"] is True
+    assert payload["scoreType"] == "relative_occurrence"
+    assert payload["calibratedProbability"] is False
+    assert {prediction["speciesSlug"] for prediction in payload["predictions"]} == {
+        "green_sea_turtle",
+        "ocellaris_clownfish",
+        "irrawaddy_dolphin",
+        "moorish_idol",
+    }
+
+
+def test_species_distribution_rejects_coordinates_outside_model_area(api):
+    _application, client = api
+    response = client.post(
+        "/api/species-distribution/predict",
+        json={"latitude": 0, "longitude": 0},
+    )
+
+    assert response.status_code == 422
+    assert response.get_json() == {
+        "code": "OUTSIDE_MODEL_AREA",
+        "message": "The coordinate is outside the supported Malaysian EEZ.",
+    }
+
+
+def test_species_distribution_rejects_malformed_coordinates(api):
+    _application, client = api
+    response = client.post("/api/species-distribution/predict", json={"latitude": "north", "longitude": 101.44})
+    assert response.status_code == 400
+    assert response.get_json() == {
+        "code": "VALIDATION_FAILED",
+        "message": "latitude and longitude must be numbers.",
+    }
+
+
+def test_species_distribution_does_not_write_to_database(api):
+    application, client = api
+    engine = application.extensions["marine_engine"]
+    with engine.connect() as connection:
+        before_users = connection.execute(select(users_table)).all()
+        before_reports = connection.execute(select(reports_table)).all()
+
+    response = client.post("/api/species-distribution/predict", json={"latitude": 2.746, "longitude": 101.44})
+    assert response.status_code == 200
+
+    with engine.connect() as connection:
+        assert connection.execute(select(users_table)).all() == before_users
+        assert connection.execute(select(reports_table)).all() == before_reports
 
 
 def jpeg_bytes(size=(40, 30), with_metadata=False):

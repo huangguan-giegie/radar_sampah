@@ -54,6 +54,7 @@ from sqlalchemy import (
 from sqlalchemy.engine import Engine
 from werkzeug.exceptions import HTTPException
 from werkzeug.exceptions import RequestEntityTooLarge
+from species_distribution import ModelAreaError, ModelInputError, SpeciesDistributionModel
 
 try:
     from pillow_heif import register_heif_opener
@@ -1007,6 +1008,9 @@ def create_app(
     beach_names = {beach["id"]: beach["name"] for beach in beaches}
     application.extensions["marine_engine"] = engine
     application.extensions["photo_storage_dir"] = directory
+    # Load the four validated offline models once at startup. Prediction never
+    # queries OBIS and does not write coordinates or scores to the database.
+    application.extensions["species_distribution_model"] = SpeciesDistributionModel()
     application.extensions["photo_cleanup_timers"] = []
     sweep_orphan_photos(engine, directory)
     for metadata_path in directory.glob("*.jpg.meta.json"):
@@ -1174,6 +1178,23 @@ def create_app(
                 "ruleVersion": "radar-sampah-scoring-v2",
             }
         )
+
+    @application.post("/api/species-distribution/predict")
+    def predict_species_distribution():
+        payload = request.get_json(silent=True)
+        if not isinstance(payload, dict) or set(payload) != {"latitude", "longitude"}:
+            return error_response(400, "VALIDATION_FAILED", "latitude and longitude are required.")
+        try:
+            latitude, longitude = float(payload["latitude"]), float(payload["longitude"])
+        except (TypeError, ValueError):
+            return error_response(400, "VALIDATION_FAILED", "latitude and longitude must be numbers.")
+        try:
+            result = application.extensions["species_distribution_model"].predict(latitude, longitude)
+        except ModelInputError as error:
+            return error_response(400, "VALIDATION_FAILED", str(error))
+        except ModelAreaError as error:
+            return error_response(422, "OUTSIDE_MODEL_AREA", str(error))
+        return jsonify(result)
 
     @application.post("/geo/resolve-beach")
     @require_auth

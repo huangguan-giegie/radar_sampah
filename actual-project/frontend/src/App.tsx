@@ -48,7 +48,7 @@ function RequireStep({ step, children }: { step: ReportStep; children: JSX.Eleme
 
 export default function App() {
   const { pathname } = useLocation();
-  const { toast } = useApp();
+  const { toast, authSyncError, retryAuth } = useApp();
   const pageTitle = pathname.startsWith('/report/saved')
     ? 'Report saved'
     : pathname.startsWith('/report/')
@@ -109,6 +109,34 @@ export default function App() {
 
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+
+      {authSyncError && (
+        <div
+          role="status"
+          style={{
+            position: 'fixed',
+            left: 16,
+            right: 16,
+            bottom: 'calc(var(--safe-bottom) + 14px)',
+            zIndex: 100,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 12,
+            padding: '10px 12px',
+            borderRadius: 14,
+            background: '#FFF8E8',
+            border: '1px solid rgba(154,106,20,.25)',
+            color: '#6B4A14',
+            fontSize: 12,
+          }}
+        >
+          <span>{authSyncError}</span>
+          <button type="button" onClick={() => void retryAuth()} style={{ border: 0, background: 'transparent', color: '#6B4A14', fontWeight: 700, padding: 0 }}>
+            Retry
+          </button>
+        </div>
+      )}
 
       {TAB_ROUTES.includes(pathname) && <TabBar />}
       {toast && <Toast message={toast} />}

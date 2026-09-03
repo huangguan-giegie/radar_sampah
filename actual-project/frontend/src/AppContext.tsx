@@ -6,6 +6,7 @@
 import {
   createContext,
   useContext,
+  useCallback,
   useEffect,
   useState,
   type ReactNode,
@@ -13,6 +14,7 @@ import {
 import { createAnonymousId, getMe, logout } from './api';
 import type { LitterReport, QuantityByCategory, ReportStatus, UploadedPhoto, User } from './types';
 import { restoreId as apiRestoreId } from './api';
+import { authFailureAction } from './authPolicy';
 
 
 export type ReportDraft = {
@@ -55,6 +57,7 @@ function emptyDraft(): ReportDraft {
 
 
 const DRAFT_KEY = 'rs_report_draft_v1';
+const USER_SNAPSHOT_KEY = 'rs_user_snapshot_v1';
 const DRAFT_MAX_AGE_MS = 24 * 60 * 60 * 1000;
 
 type StoredDraft = { v: 1; savedAt: number; draft: ReportDraft };
@@ -83,9 +86,35 @@ function saveDraft(d: ReportDraft) {
   }
 }
 
+function readUserSnapshot(): User | null {
+  try {
+    if (!localStorage.getItem('rs_token')) return null;
+    const parsed = JSON.parse(localStorage.getItem(USER_SNAPSHOT_KEY) || 'null') as Partial<User> | null;
+    if (!parsed || typeof parsed.id !== 'string' || typeof parsed.participantId !== 'string') return null;
+    if (parsed.role !== 'volunteer' && parsed.role !== 'moderator') return null;
+    return { id: parsed.id, participantId: parsed.participantId, role: parsed.role };
+  } catch {
+    return null;
+  }
+}
+
+function saveUserSnapshot(user: User | null) {
+  try {
+    if (!user) {
+      localStorage.removeItem(USER_SNAPSHOT_KEY);
+      return;
+    }
+    localStorage.setItem(USER_SNAPSHOT_KEY, JSON.stringify({ id: user.id, participantId: user.participantId, role: user.role }));
+  } catch {
+    // A snapshot is a convenience only; authentication still uses the token.
+  }
+}
+
 type AppState = {
   user: User | null;
   authReady: boolean;
+  authSyncError: string | null;
+  retryAuth: () => Promise<void>;
   createId: () => Promise<string>;
   restore: (participantId: string) => Promise<void>;
   signOut: () => Promise<void>;
@@ -111,8 +140,9 @@ type AppState = {
 const AppContext = createContext<AppState | null>(null);
 
 export function AppProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<User | null>(readUserSnapshot);
   const [authReady, setAuthReady] = useState(false);
+  const [authSyncError, setAuthSyncError] = useState<string | null>(null);
   const [draft, setDraft] = useState<ReportDraft>(loadDraft);
   const [lastSavedReport, setLastSavedReport] = useState<LitterReport | null>(null);
   const [reportsVersion, setReportsVersion] = useState(0);
@@ -146,40 +176,59 @@ export function AppProvider({ children }: { children: ReactNode }) {
   };
 
 
-  useEffect(() => {
-    getMe()
-      .then((me) => setUser(me))
-      .catch(() => setUser(null))
-      .finally(() => setAuthReady(true));
+  const syncAuth = useCallback(async () => {
+    try {
+      const me = await getMe();
+      setUser(me);
+      saveUserSnapshot(me);
+      setAuthSyncError(null);
+    } catch (error) {
+      if (authFailureAction(error) === 'preserve') {
+        setAuthSyncError('We could not refresh your session. You are still signed in.');
+      } else {
+        setUser(null);
+        saveUserSnapshot(null);
+      }
+    } finally {
+      setAuthReady(true);
+    }
   }, []);
+
+  useEffect(() => {
+    void syncAuth();
+  }, [syncAuth]);
 
 
   useEffect(() => {
     const onStorage = (e: StorageEvent) => {
       if (e.key === 'rs_token' && e.newValue === null) {
         setUser(null);
+        saveUserSnapshot(null);
+        setAuthSyncError(null);
         clearDraft();
         return;
       }
       if (e.key === 'rs_token' || e.key === 'rs_mock_participant') {
-        getMe()
-          .then(setUser)
-          .catch(() => setUser(null));
+        void syncAuth();
       }
       if (e.key === 'rs_mock_accounts_v2') setReportsVersion((n) => n + 1);
     };
     window.addEventListener('storage', onStorage);
     return () => window.removeEventListener('storage', onStorage);
-  }, []);
+  }, [syncAuth]);
 
   const value: AppState = {
     user,
     authReady,
+    authSyncError,
+    retryAuth: syncAuth,
 
 
     async createId() {
       const session = await createAnonymousId();
       setUser(session.user);
+      saveUserSnapshot(session.user);
+      setAuthSyncError(null);
       return session.user.participantId;
     },
 
@@ -187,11 +236,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
     async restore(participantId) {
       const session = await apiRestoreId(participantId);
       setUser(session.user);
+      saveUserSnapshot(session.user);
+      setAuthSyncError(null);
     },
 
     async signOut() {
       await logout();
       setUser(null);
+      saveUserSnapshot(null);
+      setAuthSyncError(null);
       clearDraft();
     },
 

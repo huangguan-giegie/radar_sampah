@@ -11,7 +11,8 @@ info:
       API.md       (Chinese)             for Qian Jiang
 
     backend/app.py implements this contract. The earlier /api/* recognition, heatmap and
-    cleanup-mission routes are not active Iteration 1 endpoints.
+    cleanup-mission routes are not active Iteration 1 endpoints; the offline species context
+    route below is the current exception.
 
     The points that get missed:
     - Under 3 eligible reports, severity and band MUST be null — never fall back to Low
@@ -30,6 +31,7 @@ tags:
   - name: Auth
   - name: Beaches
   - name: Scoring
+  - name: Biodiversity
   - name: Geo
   - name: Uploads
   - name: Reports
@@ -143,6 +145,57 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/ScoringMethod" }
+
+  /api/species-distribution/predict:
+    post:
+      tags: [Biodiversity]
+      security: []
+      summary: Predict contextual species occurrence from the offline baseline
+      description: |
+        Uses four models trained from a packaged OBIS snapshot. It is not a real-time OBIS query,
+        does not store coordinates or predictions, and the relative scores do not contribute to
+        litter severity. Coordinates must be inside the supported Malaysian EEZ.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [latitude, longitude]
+              additionalProperties: false
+              properties:
+                latitude: { type: number, format: double, example: 2.746 }
+                longitude: { type: number, format: double, example: 101.44 }
+      responses:
+        "200":
+          description: four relative occurrence predictions
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [insideMalaysianEez, scoreType, calibratedProbability, predictions, modelVersion]
+                properties:
+                  insideMalaysianEez: { type: boolean, example: true }
+                  scoreType: { type: string, enum: [relative_occurrence] }
+                  calibratedProbability: { type: boolean, example: false }
+                  modelVersion: { type: string, example: "2026-08-29" }
+                  predictions:
+                    type: array
+                    minItems: 4
+                    maxItems: 4
+                    items:
+                      type: object
+                      required: [speciesSlug, scientificName, commonNameEn, relativeOccurrenceScore, selectedModel]
+                      properties:
+                        speciesSlug: { type: string }
+                        scientificName: { type: string }
+                        commonNameEn: { type: string }
+                        relativeOccurrenceScore: { type: number, minimum: 0, maximum: 1 }
+                        selectedModel: { type: string }
+        "400":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
 
   /geo/resolve-beach:
     post:
@@ -478,7 +531,7 @@ components:
           enum: [ready, pending, unavailable]
           description: |
             ready       connected, score is set
-            pending     this species is covered but the backend is not connected yet
+            pending     this static card has no sourced occurrence result
             unavailable this species is not one of the four
             pending and unavailable must stay apart on screen: one means not built yet,
             the other means it cannot be built.

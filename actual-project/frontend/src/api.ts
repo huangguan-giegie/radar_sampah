@@ -26,6 +26,7 @@ import type {
   ReportCounts,
   ReportStatus,
   ScoringMethod,
+  SpeciesDistributionResult,
   UploadedPhoto,
   User,
 } from './types';
@@ -341,9 +342,19 @@ export async function getMe(): Promise<User | null> {
     return await request('/auth/me');
   } catch (err) {
 
-    if (err instanceof ApiError && err.status === 401) return null;
+    if (err instanceof ApiError && err.status === 401) {
+      clearToken();
+      return null;
+    }
     throw err;
   }
+}
+
+export async function getSpeciesDistribution(latitude: number, longitude: number): Promise<SpeciesDistributionResult> {
+  if (USE_MOCK) {
+    throw new Error('Species distribution model is not enabled in mock mode.');
+  }
+  return request('/api/species-distribution/predict', 'POST', { latitude, longitude });
 }
 
 // ============================================================
