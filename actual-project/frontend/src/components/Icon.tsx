@@ -160,6 +160,14 @@ export const UserIcon = ({ size = 21, color = 'currentColor', strokeWidth = 1.7,
   </svg>
 );
 
+export const CommunityIcon = ({ size = 21, color = 'currentColor', strokeWidth = 1.7, style }: Props) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" style={style} aria-hidden="true">
+    <circle cx="9" cy="8" r="3" />
+    <circle cx="17" cy="9" r="2.3" />
+    <path d="M3.8 19.2c.5-3.4 2.2-5.2 5.2-5.2s4.7 1.8 5.2 5.2M14.5 14.2c2.9-.7 4.9.8 5.5 3.8" />
+  </svg>
+);
+
 const GLYPH_PATHS: Record<SpeciesGlyph, JSX.Element> = {
   turtle: (
     <>

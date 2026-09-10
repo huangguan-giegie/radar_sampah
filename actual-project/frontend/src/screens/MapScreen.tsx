@@ -17,6 +17,7 @@ import { attentionStateFor, C, freshnessLabel, freshStyle, lastReportedLabel, MO
 import { GlassPanel, SeverityBadge } from '../components/ds';
 import { useApp } from '../AppContext';
 import type { BeachSummary, MapLayer } from '../types';
+import { cleanupTotal, formatEventDate, getCleanupTarget, listCleanupEvents, type CleanupEvent } from '../iteration2';
 
 
 // The opening view. Zoom 9 fits all four beaches at once, so the user sees the
@@ -115,6 +116,7 @@ export default function MapScreen() {
   const markersRef = useRef<Record<string, L.Marker>>({});
 
   const selected = beaches.find((b) => b.id === selectedId) || null;
+  const selectedEvent = selected ? listCleanupEvents().find((event) => event.beachId === selected.id) ?? null : null;
 
 
   // Redraw every pin when the data, the layer, the selection or the compact
@@ -386,6 +388,7 @@ export default function MapScreen() {
         <SelectedCard
           beach={selected}
           layer={layer}
+          event={selectedEvent}
           onClose={() => setSelectedId(null)}
           // From the biodiversity layer the button says Learn More, so it has
           // to land on the species cards. It used to open the beach at the top
@@ -393,6 +396,8 @@ export default function MapScreen() {
           onOpen={() =>
             nav(`/beach/${selected.id}`, layer === 'bio' ? { state: { focus: 'species' } } : undefined)
           }
+          onCleanup={() => nav(`/cleanup/${selected.id}`)}
+          onJoin={(eventId) => nav(`/events/${eventId}`)}
         />
       )}
     </div>
@@ -409,19 +414,26 @@ export default function MapScreen() {
 function SelectedCard({
   beach,
   layer,
+  event,
   onClose,
   onOpen,
+  onCleanup,
+  onJoin,
 }: {
   beach: BeachSummary;
   layer: MapLayer;
+  event: CleanupEvent | null;
   onClose: () => void;
   onOpen: () => void;
+  onCleanup: () => void;
+  onJoin: (eventId: string) => void;
 }) {
   const fs = freshStyle(beach.freshnessKind);
   // Worked out once, then used by the badge, the explanation and the icon
   // below. One source, so the card cannot show a status band in one place and
   // say "Insufficient data" in another.
   const attention = attentionStateFor(beach.severity, beach.insufficientData, beach.validReports);
+  const cleanupTarget = getCleanupTarget(beach.id);
 
   // A small label/value row. Written once as a function so the labels line up
   // in one column - a fixed 78px label width, rather than each row guessing.
@@ -508,6 +520,13 @@ function SelectedCard({
             <div style={{ fontSize: 10.5, color: C.faint, marginTop: 10, fontFamily: MONO, letterSpacing: '.04em' }}>
               {beach.lastReportedAt ? `LAST REPORTED ${lastReportedLabel(beach.lastReportedAt)}` : lastReportedLabel(null)} · BROAD AREA SHOWN — EXACT GPS IS PRIVATE
             </div>
+
+            {cleanupTarget && (
+              <button type="button" onClick={onCleanup} className="press" style={{ width: '100%', marginTop: 12, padding: '10px 12px', borderRadius: 14, background: 'rgba(184,255,54,.18)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, textAlign: 'left' }}>
+                <span><strong style={{ display: 'block', fontSize: 12.5, color: C.ink2 }}>＋ Add a Cleanup</strong><span style={{ display: 'block', marginTop: 2, fontSize: 10.5, color: C.muted }}>{cleanupTotal(cleanupTarget)} recorded items · cleanups subtract from them</span></span>
+                <ArrowRight size={13} />
+              </button>
+            )}
           </>
         ) : (
           <>
@@ -579,6 +598,11 @@ function SelectedCard({
           <span>{layer === 'litter' ? 'View Beach' : 'Learn More'}</span>
           <ArrowRight size={14} />
         </button>
+        {layer === 'litter' && event && (
+          <button type="button" onClick={() => onJoin(event.id)} className="press" style={{ marginTop: 8, height: 46, width: '100%', borderRadius: 16, border: `1.5px solid ${C.line2}`, color: C.navy, background: C.white, fontSize: 13.5, fontWeight: 650 }}>
+            Join · {formatEventDate(event.date).replace(',', '').replace(/ \d{4}$/, '')} cleanup
+          </button>
+        )}
       </GlassPanel>
     </div>
   );

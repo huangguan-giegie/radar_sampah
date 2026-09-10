@@ -16,10 +16,11 @@ import { BeachCover } from '../components/BeachCover';
 import { Camera, Check, ChevronRight, Clock, Info, SpeciesIcon } from '../components/Icon';
 import { BackButton, GhostButton, Label, PrimaryButton, Skeleton } from '../components/ui';
 import { attentionStateFor, C, formatDate, freshnessLabel, freshStyle, MONO, NOISE, reportWord, SEVERITY, severityLabel } from '../theme';
-import { BandMeter, GlassPanel, InfoChip } from '../components/ds';
+import { BandMeter, Callout, GlassPanel, InfoChip } from '../components/ds';
 import { useApp } from '../AppContext';
 import type { BeachDetail, SpeciesDistributionResult } from '../types';
 import { hasDraftProgress, resumePath } from '../flowRules';
+import { cleanupTotal, getCleanupTarget, getLatestCleanupForBeach } from '../iteration2';
 
 /*
  * relativeOccurrenceScore is shown exactly as the API sends it, on a 0..1 scale.
@@ -47,6 +48,8 @@ export default function BeachScreen() {
   const [failed, setFailed] = useState(false);
   const [modelResult, setModelResult] = useState<SpeciesDistributionResult | null>(null);
   const [modelFailed, setModelFailed] = useState(false);
+  const latestCleanup = getLatestCleanupForBeach(beachId);
+  const cleanupTarget = getCleanupTarget(beachId);
 
   // beachId is in the dependency list, so moving between beaches refetches.
   // Without it React would show the previous beach under the new name. Model
@@ -268,14 +271,30 @@ export default function BeachScreen() {
             <div style={{ flex: 1, fontSize: 12, lineHeight: 1.5, color: C.muted }}>
 
               {b.lastReportedAt
-                ? 'The most recent counted report is older than 90\u00a0days. Conditions may have changed in either direction.'
-                : 'No counted report has ever been filed for this beach. That is missing evidence, not a finding.'}
+                ? 'Last reported over 90 days ago. That means unchecked, not clean.'
+                : 'No counted report yet. That means unchecked, not clean.'}
             </div>
           </div>
         )}
       </GlassPanel>
 
       <div className="measure" style={{ padding: '20px 16px calc(var(--safe-bottom) + 36px)', display: 'flex', flexDirection: 'column', gap: 22 }}>
+
+        {cleanupTarget && (
+          <div className="i2-card">
+            <Label style={{ marginBottom: 8 }}>ADD A CLEANUP</Label>
+            <div style={{ fontSize: 17, fontWeight: 680, color: C.ink2 }}>Cleaned up here?</div>
+            <div style={{ marginTop: 5, fontSize: 12.5, lineHeight: 1.5, color: C.muted }}>
+              Record what you removed — the beach count drops.
+            </div>
+            <div style={{ marginTop: 9, fontFamily: MONO, fontSize: 9, color: C.dim }}>
+              REPORT {cleanupTarget.reportId.toUpperCase()} · {cleanupTotal(cleanupTarget)} ITEMS REMAIN
+            </div>
+            <PrimaryButton onClick={() => nav(user ? `/cleanup/${beachId}` : `/identity?next=${encodeURIComponent(`/cleanup/${beachId}`)}`)} style={{ marginTop: 13 }}>
+              Add a Cleanup <ChevronRight size={13} color={C.lime} />
+            </PrimaryButton>
+          </div>
+        )}
 
         <div>
           <Label style={{ marginBottom: 12 }}>LITTER COMPOSITION</Label>
@@ -325,6 +344,12 @@ export default function BeachScreen() {
             </div>
           )}
         </div>
+
+        {latestCleanup && (
+          <Callout title="Cleanup recorded — awaiting follow-up" tone="reassurance" icon={<Check color={C.green} />}>
+            {latestCleanup.score} items were recorded as removed on {formatDate(latestCleanup.createdAt)}. A later report is still needed; this is not a claim that the beach is clean.
+          </Callout>
+        )}
 
 
         {/* The whole card is the link. It carries the three lines that matter
@@ -605,6 +630,10 @@ export default function BeachScreen() {
             <Camera size={16} strokeWidth={1.9} />
             Report Litter Here
           </PrimaryButton>
+          <GhostButton onClick={() => nav(user ? `/cleanup/${beachId}` : `/identity?next=${encodeURIComponent(`/cleanup/${beachId}`)}`)}>
+            Add a Cleanup
+          </GhostButton>
+          <GhostButton onClick={() => nav('/community')}>Community Cleanups</GhostButton>
           <GhostButton onClick={() => nav('/map')}>Back to Map</GhostButton>
         </div>
       </div>

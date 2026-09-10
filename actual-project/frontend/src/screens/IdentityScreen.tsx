@@ -22,13 +22,14 @@ export default function IdentityScreen() {
 
   const [mode, setMode] = useState<'new' | 'existing'>('new');
   const [typedId, setTypedId] = useState('');
+  const [typedToken, setTypedToken] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   // The number we have just issued. Null means show the two choices; set means
   // show the number and nothing else. State rather than its own route on
   // purpose - Back must not bring "here is your number" up a second time, when
   // the number on screen would no longer be the one they were given.
-  const [newId, setNewId] = useState<string | null>(null);
+  const [newSession, setNewSession] = useState<{ participantId: string; token: string } | null>(null);
   const [copied, setCopied] = useState(false);
 
 
@@ -37,10 +38,10 @@ export default function IdentityScreen() {
     setBusy(true);
     setError(null);
     try {
-      const id = await createId();
+      const session = await createId();
       // Deliberately no navigation here. The user has to see the number and
       // save it first - moving straight on would lose it before they read it.
-      setNewId(id);
+      setNewSession(session);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not get an ID. Please try again.');
     }
@@ -57,7 +58,7 @@ export default function IdentityScreen() {
     setBusy(true);
     setError(null);
     try {
-      await restore(typedId.trim());
+      await restore(typedId.trim(), typedToken.trim());
       // On to wherever they were heading before we asked for an ID. Replace,
       // so Back does not drop them onto this screen again.
       nav(next, { replace: true });
@@ -81,18 +82,18 @@ export default function IdentityScreen() {
           gap: 20,
         }}
       >
-        <BackButton onClick={() => nav('/welcome')} />
+        <BackButton onClick={() => nav(next === '/home' ? '/welcome' : next)} />
 
         <div>
           <div style={{ fontSize: 31, fontWeight: 640, letterSpacing: '-.8px' }}>
-            Join in — no name needed
+            {mode === 'existing' ? 'Log in' : 'Join in — no name needed'}
           </div>
           <div style={{ fontSize: 14, color: C.muted, marginTop: 8, lineHeight: 1.5 }}>
-            No name, no email, no phone — ever.
+            {mode === 'existing' ? 'No sign-up needed. Use the two values issued to you.' : 'No name, no email, no phone — ever.'}
           </div>
         </div>
 
-        {newId ? (
+        {newSession ? (
           // The number is issued: show it big, offer a one-tap copy, and press
           // the user to save it. That warning is the honest price of having no
           // password, and the Account page repeats it.
@@ -122,7 +123,13 @@ export default function IdentityScreen() {
                   userSelect: 'all',
                 }}
               >
-                {newId}
+                {newSession.participantId}
+              </div>
+              <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '.16em', color: C.dim, marginTop: 18 }}>
+                YOUR TOKEN
+              </div>
+              <div style={{ fontFamily: MONO, fontSize: 15, color: C.bg, marginTop: 7, wordBreak: 'break-all' }}>
+                {newSession.token}
               </div>
               {/* Clipboard writes need a secure context and can still be
                   refused, so the label only flips after a successful write. */}
@@ -131,7 +138,7 @@ export default function IdentityScreen() {
                 onClick={async () => {
                   if (!navigator.clipboard) return;
                   try {
-                    await navigator.clipboard.writeText(newId);
+                    await navigator.clipboard.writeText(`Participant ID: ${newSession.participantId}\nToken: ${newSession.token}`);
                     setCopied(true);
                   } catch {
                     setCopied(false);
@@ -147,17 +154,17 @@ export default function IdentityScreen() {
                   fontWeight: 650,
                 }}
               >
-                {copied ? 'Copied' : 'Copy ID'}
+                {copied ? 'Copied' : 'Copy login details'}
               </button>
               <div style={{ fontSize: 12.5, lineHeight: 1.55, color: C.mist, marginTop: 12 }}>
-                Save this number now. You will need it to restore your reports on another device.
+                Save both values now. Together they restore your reports on another device.
               </div>
             </div>
 
             <PrimaryButton onClick={() => nav(next, { replace: true })}>Continue</PrimaryButton>
 
             <div style={{ fontSize: 11.5, lineHeight: 1.5, color: C.dim, textAlign: 'center' }}>
-              Your ID is always shown on the Account page. If you lose it, a new ID cannot reopen old reports.
+              Keep your participant ID and token together. They work like a username and password.
             </div>
           </>
         ) : (
@@ -207,7 +214,7 @@ export default function IdentityScreen() {
                   fontWeight: mode === 'existing' ? 650 : 600,
                 }}
               >
-                I have an ID
+                Log in
               </button>
             </div>
 
@@ -263,7 +270,13 @@ export default function IdentityScreen() {
                 </PrimaryButton>
               </>
             ) : (
-              <form onSubmit={useExistingId} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+              <form onSubmit={useExistingId} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                <div style={{ background: C.white, border: `1px solid ${C.line}`, borderRadius: 20, padding: 17 }}>
+                  <div style={{ fontSize: 17, fontWeight: 680, color: C.ink2 }}>No sign-up needed</div>
+                  <div style={{ marginTop: 5, fontSize: 12.5, lineHeight: 1.5, color: C.muted }}>
+                    Your participant ID and token work like a username and password.
+                  </div>
+                </div>
                 <label style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
                   <span style={{ fontFamily: MONO, fontSize: 9.5, letterSpacing: '.14em', color: C.dim }}>
                     PARTICIPANT ID
@@ -287,15 +300,38 @@ export default function IdentityScreen() {
                   />
                 </label>
 
-                <PrimaryButton type="submit" disabled={busy || !typedId.trim()}>
-                  {busy ? 'Checking…' : 'Continue'}
+                <label style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+                  <span style={{ fontFamily: MONO, fontSize: 9.5, letterSpacing: '.14em', color: C.dim }}>
+                    TOKEN
+                  </span>
+                  <input
+                    className="field"
+                    type="password"
+                    autoComplete="current-password"
+                    value={typedToken}
+                    onChange={(e) => setTypedToken(e.target.value)}
+                    placeholder="Enter your token"
+                    style={{
+                      background: C.white,
+                      border: `1.5px solid ${C.cloud}`,
+                      borderRadius: 16,
+                      padding: 16,
+                      fontSize: 16,
+                      fontFamily: MONO,
+                      color: C.ink,
+                    }}
+                  />
+                </label>
+
+                <PrimaryButton type="submit" disabled={busy || !typedId.trim() || !typedToken.trim()}>
+                  {busy ? 'Checking…' : 'Log in'}
                 </PrimaryButton>
 
                 {/* Please do not soften this line. It names what is lost and
                     what is not; vaguer wording reads as "your work was binned",
                     which is not what happens. */}
                 <div style={{ fontSize: 12, lineHeight: 1.55, color: C.dim, textAlign: 'center' }}>
-                  Forgot it? Get a new ID — your old reports still count toward their beach, but you can't open them again.
+                  Keep both values. No name, email or phone number is stored with this account.
                 </div>
               </form>
             )}
