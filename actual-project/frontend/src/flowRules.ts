@@ -6,7 +6,7 @@
 // back a decision. That is what makes it testable, and it is also why the same
 // rules cannot drift apart between the five report screens.
 import type { ReportDraft } from './AppContext';
-import type { CreateReportInput, LitterCategory, QuantityByCategory, ReportStatus } from './types';
+import type { CreateReportInput, LitterCategory, LitterReport, QuantityByCategory, ReportStatus } from './types';
 
 /**
  * Clean a "?next=..." value before we redirect to it.
@@ -45,15 +45,16 @@ export function safeNextPath(value: string | null): string {
  * is still there, so the user can carry on from where they were. Storing
  * visited-page flags would fight the saved draft instead of working with it.
  */
-export type ReportStep = 'photo' | 'location' | 'confirm' | 'details' | 'review';
+export type ReportStep = 'photo' | 'location' | 'confirm' | 'details' | 'suggestions' | 'review';
 
-const STEP_ORDER: ReportStep[] = ['photo', 'location', 'confirm', 'details', 'review'];
+const STEP_ORDER: ReportStep[] = ['photo', 'location', 'confirm', 'details', 'suggestions', 'review'];
 
 const STEP_PATH: Record<ReportStep, string> = {
   photo: '/report/photo',
   location: '/report/location',
   confirm: '/report/confirm',
   details: '/report/details',
+  suggestions: '/report/suggestions',
   review: '/report/review',
 };
 
@@ -129,7 +130,46 @@ export function reachableStep(draft: ReportDraft): ReportStep {
   // amount yet would be sent to the backend as an incomplete report.
   const picked = Object.keys(draft.quantities) as LitterCategory[];
   if (picked.length === 0 || picked.some((c) => !draft.quantities[c])) return 'details';
-  return 'review';
+  return draft.aiDecision ? 'review' : 'suggestions';
+}
+
+function malaysiaLocalDay(value: string | Date): string {
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Kuala_Lumpur',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(typeof value === 'string' ? new Date(value) : value);
+}
+
+function normalizedQuantities(quantities: QuantityByCategory): string {
+  return Object.entries(quantities)
+    .filter((entry): entry is [LitterCategory, NonNullable<QuantityByCategory[LitterCategory]>] => Boolean(entry[1]))
+    .sort(([left], [right]) => left.localeCompare(right))
+    .map(([category, quantity]) => `${category}:${quantity}`)
+    .join('|');
+}
+
+/**
+ * Iteration 2 warns before an exact repeat but never blocks it. The match is
+ * deliberately stricter than the older post-submit duplicate status: beach,
+ * Kuala Lumpur day, normalized category set and every confirmed quantity must
+ * all agree. A correction never warns about the report currently being edited.
+ */
+export function findExactDuplicateReport(
+  draft: ReportDraft,
+  reports: LitterReport[],
+  now: Date = new Date(),
+): LitterReport | null {
+  if (!draft.beachId || Object.keys(draft.quantities).length === 0) return null;
+  const today = malaysiaLocalDay(now);
+  const signature = normalizedQuantities(draft.quantities);
+  return reports.find((report) =>
+    report.id !== draft.editingReportId
+    && report.beachId === draft.beachId
+    && malaysiaLocalDay(report.createdAt) === today
+    && normalizedQuantities(report.quantities) === signature,
+  ) ?? null;
 }
 
 
@@ -173,6 +213,9 @@ export type ReportSubmission =
  * without ever passing the buttons.
  */
 export function buildReportSubmission(draft: ReportDraft): ReportSubmission {
+  if (!draft.aiDecision) {
+    throw new Error('Confirm the AI suggestion or your manual values before submitting.');
+  }
   const picked = Object.keys(draft.quantities) as LitterCategory[];
   if (!draft.beachId || picked.length === 0) {
     throw new Error('This report is missing a required field. Go back and complete it.');

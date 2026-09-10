@@ -54,6 +54,14 @@ export type ReportDraft = {
   quantities: QuantityByCategory;
 
   /**
+   * Iteration 2 keeps AI output separate from the participant's final report.
+   * A report can move to Review only after the participant either confirms an
+   * AI suggestion or explicitly keeps the manual values they entered.
+   */
+  aiDecision: 'confirmed' | 'manual' | null;
+  aiModelVersion: string | null;
+
+  /**
    * Why finding the location failed, so the confirm screen can say something
    * useful instead of one vague sentence.
    *
@@ -91,6 +99,8 @@ function emptyDraft(): ReportDraft {
     locationSource: null,
     coords: null,
     quantities: {},
+    aiDecision: null,
+    aiModelVersion: null,
     gpsIssue: null,
     editingReportId: null,
     editingStatus: null,
@@ -215,8 +225,8 @@ type AppState = {
   // button; null means there is nothing to tell the user.
   authSyncError: string | null;
   retryAuth: () => Promise<void>;
-  createId: () => Promise<string>;
-  restore: (participantId: string) => Promise<void>;
+  createId: () => Promise<{ participantId: string; token: string }>;
+  restore: (participantId: string, token: string) => Promise<void>;
   signOut: () => Promise<void>;
 
   draft: ReportDraft;
@@ -381,13 +391,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setUser(session.user);
       saveUserSnapshot(session.user);
       setAuthSyncError(null);
-      return session.user.participantId;
+      return { participantId: session.user.participantId, token: session.token };
     },
 
 
     // Continue with a number the user already has.
-    async restore(participantId) {
-      const session = await apiRestoreId(participantId);
+    async restore(participantId, token) {
+      const session = await apiRestoreId(participantId, token);
       setUser(session.user);
       saveUserSnapshot(session.user);
       setAuthSyncError(null);

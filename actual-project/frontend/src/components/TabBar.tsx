@@ -1,13 +1,14 @@
 import { useLocation, useNavigate } from 'react-router-dom';
 import { C } from '../theme';
-import { BookmarkIcon, HomeIcon, Pin, UserIcon } from './Icon';
+import { BookmarkIcon, CommunityIcon, HomeIcon, Pin, UserIcon } from './Icon';
 
 
-// The four tabs. Deliberately four: the app has exactly four places a user
-// can be outside the report flow. A "more" menu would be hiding something.
+// Iteration 2 adds Community as a first-class place rather than hiding cleanup
+// activities behind the map or account page.
 const TABS = [
   { to: '/home', label: 'Home', Icon: HomeIcon },
   { to: '/map', label: 'Map', Icon: Pin },
+  { to: '/community', label: 'Community', Icon: CommunityIcon },
   { to: '/reports', label: 'Reports', Icon: BookmarkIcon },
   { to: '/account', label: 'Account', Icon: UserIcon },
 ];

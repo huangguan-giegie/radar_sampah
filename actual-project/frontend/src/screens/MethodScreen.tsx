@@ -254,6 +254,19 @@ export default function MethodScreen() {
           </div>
         </div>
 
+        <div>
+          <Label style={{ marginBottom: 11 }}>AI-ASSISTED REPORTING</Label>
+          <div style={{ background: C.white, border: `1px solid ${C.line}`, borderRadius: 22, padding: 18 }}>
+            <div style={{ fontSize: 14.5, fontWeight: 660, color: C.ink2 }}>Suggestions stay separate from the score</div>
+            <div style={{ marginTop: 6, fontSize: 12.5, lineHeight: 1.55, color: C.muted }}>
+              The photo model suggests broad litter categories. A participant confirms the final values, and the model never decides Beach Attention or cleanup completion.
+            </div>
+            <GhostButton onClick={() => nav('/method/ai')} height={46} style={{ marginTop: 13, borderRadius: 15, fontSize: 13.5 }}>
+              How the AI suggestion works
+            </GhostButton>
+          </div>
+        </div>
+
         <GhostButton onClick={() => nav(-1)} height={54} style={{ borderRadius: 17, fontSize: 14.5 }}>
           Back
         </GhostButton>

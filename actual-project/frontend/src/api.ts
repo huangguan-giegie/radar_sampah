@@ -388,22 +388,23 @@ export async function createAnonymousId(): Promise<AuthSession> {
 // Continue on another device by typing the number you were given. This is the
 // only way back into an account, which is why the welcome screen is so blunt
 // about writing it down.
-export async function restoreId(participantId: string): Promise<AuthSession> {
+export async function restoreId(participantId: string, token: string): Promise<AuthSession> {
   if (USE_MOCK) {
     await delay();
     const id = participantId.trim();
     if (!/^\d{4}$/.test(id) || !mockAccounts[id]) {
       throw new Error('Participant ID not found.');
     }
+    if (!token.trim()) throw new Error('Enter the token issued with your participant ID.');
     localStorage.setItem('rs_mock_participant', id);
-    saveToken('mock-token');
+    saveToken(token.trim());
     return {
-      token: 'mock-token',
+      token: token.trim(),
       user: { id: 'u_anon_' + id, participantId: id, role: 'volunteer' },
     };
   }
 
-  const data = await request('/auth/restore', 'POST', { participantId });
+  const data = await request('/auth/restore', 'POST', { participantId, token });
   saveToken(data.token);
   return data;
 }

@@ -10,7 +10,7 @@
 // It also keeps the browser tab title and a spoken page name in step with the
 // route, and shows the session-trouble banner. See pageTitle below.
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
-import { useEffect } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
 import { DeviceFrame } from './components/DeviceFrame';
 import { TabBar } from './components/TabBar';
 import { Toast } from './components/Toast';
@@ -32,13 +32,23 @@ import ReviewScreen from './screens/ReviewScreen';
 import SubmittedScreen from './screens/SubmittedScreen';
 import MyReportsScreen from './screens/MyReportsScreen';
 import AccountScreen from './screens/AccountScreen';
+const CommunityScreen = lazy(() => import('./screens/CommunityScreen'));
+const EventScreen = lazy(() => import('./screens/EventScreen'));
+const CheckInScreen = lazy(() => import('./screens/CheckInScreen'));
+const CleanupScreen = lazy(() => import('./screens/CleanupScreen'));
+const CleanupResultScreen = lazy(() => import('./screens/CleanupResultScreen'));
+const EventResultScreen = lazy(() => import('./screens/EventResultScreen'));
+const SharedEventScreen = lazy(() => import('./screens/SharedEventScreen'));
+const AiSuggestionScreen = lazy(() => import('./screens/AiSuggestionScreen'));
+const AiMethodScreen = lazy(() => import('./screens/AiMethodScreen'));
+const AdminEventScreen = lazy(() => import('./screens/AdminEventScreen'));
 
 
 // The bottom tab bar appears on these four pages only.
 // It is hidden all through the report flow on purpose: while filing a report
 // the user has one job, and a tab bar is an invitation to wander off and lose
 // what they typed.
-const TAB_ROUTES = ['/home', '/map', '/reports', '/account'];
+const TAB_ROUTES = ['/home', '/map', '/community', '/reports', '/account'];
 
 
 /**
@@ -60,6 +70,15 @@ function RequireAuth({ children }: { children: JSX.Element }) {
   if (!user) {
     return <Navigate to={`/identity?next=${encodeURIComponent(pathname + search)}`} replace />;
   }
+  return children;
+}
+
+function RequireAdmin({ children }: { children: JSX.Element }) {
+  const { user, authReady } = useApp();
+  const { pathname, search } = useLocation();
+  if (!authReady) return null;
+  if (!user) return <Navigate to={`/identity?next=${encodeURIComponent(pathname + search)}`} replace />;
+  if (user.role !== 'moderator') return <Navigate to="/community" replace />;
   return children;
 }
 
@@ -107,8 +126,24 @@ export default function App() {
     ? 'Report saved'
     : pathname.startsWith('/report/')
       ? 'Add a report'
-      : pathname.startsWith('/beach/')
+      : pathname.startsWith('/share/events/')
+        ? 'Shared cleanup activity'
+        : pathname.startsWith('/events/') && pathname.endsWith('/check-in')
+          ? 'Cleanup check-in'
+          : pathname.startsWith('/events/') && pathname.endsWith('/result')
+            ? 'Cleanup activity result'
+            : pathname.startsWith('/events/')
+              ? 'Cleanup activity'
+              : pathname.startsWith('/cleanup/result/')
+                ? 'Cleanup result'
+                : pathname.startsWith('/cleanup/')
+                  ? 'Add a cleanup'
+                  : pathname.startsWith('/beach/')
         ? 'Beach details'
+        : pathname === '/community'
+          ? 'Community cleanups'
+          : pathname === '/method/ai'
+            ? 'AI suggestion method'
         : pathname === '/map'
           ? 'Beach map'
           : pathname === '/reports'
@@ -146,6 +181,7 @@ export default function App() {
       >
         {pageTitle}
       </div>
+      <Suspense fallback={null}>
       <Routes>
         {/* Public pages. Anyone can look at beach data without an account -
             that is the point of the project, and it is what makes the map
@@ -158,6 +194,16 @@ export default function App() {
         <Route path="/map" element={<MapScreen />} />
         <Route path="/beach/:beachId" element={<BeachScreen />} />
         <Route path="/method" element={<MethodScreen />} />
+        <Route path="/method/ai" element={<AiMethodScreen />} />
+
+        <Route path="/community" element={<CommunityScreen />} />
+        <Route path="/events/:eventId" element={<EventScreen />} />
+        <Route path="/events/:eventId/result" element={<EventResultScreen />} />
+        <Route path="/share/events/:eventId" element={<SharedEventScreen />} />
+        <Route path="/events/:eventId/check-in" element={<RequireAuth><CheckInScreen /></RequireAuth>} />
+        <Route path="/cleanup/:beachId" element={<RequireAuth><CleanupScreen /></RequireAuth>} />
+        <Route path="/cleanup/result/:cleanupId" element={<RequireAuth><CleanupResultScreen /></RequireAuth>} />
+        <Route path="/platform/events/new" element={<RequireAdmin><AdminEventScreen /></RequireAdmin>} />
 
         {/* The report flow, in order. Two wrappers on each one:
             RequireAuth  - you must be identified to file a report
@@ -173,6 +219,9 @@ export default function App() {
         } />
         <Route path="/report/details" element={
           <RequireAuth><RequireStep step="details"><RecordScreen /></RequireStep></RequireAuth>
+        } />
+        <Route path="/report/suggestions" element={
+          <RequireAuth><RequireStep step="suggestions"><AiSuggestionScreen /></RequireStep></RequireAuth>
         } />
         <Route path="/report/review" element={
           <RequireAuth><RequireStep step="review"><ReviewScreen /></RequireStep></RequireAuth>
@@ -190,6 +239,7 @@ export default function App() {
             trap the user on the back button. */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+      </Suspense>
 
       {/* We could not refresh the session, but the old one still looks valid,
           so the user stays where they are and gets a quiet strip instead of
