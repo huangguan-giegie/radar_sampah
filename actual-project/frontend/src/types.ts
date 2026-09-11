@@ -40,8 +40,8 @@ export type SpeciesGlyph = 'turtle' | 'bird' | 'mangrove' | 'grass' | 'crab' | '
  * uncalibrated "relative occurrence score". Saying "70% chance of turtles"
  * would be claiming something we did not measure.
  *
- * It covers four species: green turtle, clown anemonefish, Irrawaddy dolphin
- * and the sickle butterflyfish.
+ * It covers four species: green turtle, ocellaris clownfish, Irrawaddy dolphin
+ * and the Moorish idol.
  */
 export interface SpeciesLikelihood {
   /**
@@ -119,7 +119,9 @@ export interface Species {
  */
 export interface CompositionSlice {
   category: LitterCategory;
-  quantity: QuantityBand;
+  /** Percentage of the latest report photo assigned to this category.
+   * The backend owns the calculation so the rows always add up to 100. */
+  percentage: number;
 }
 
 /** Which report the composition came from. The UI must print this date, so it
@@ -127,6 +129,9 @@ export interface CompositionSlice {
 export interface CompositionSource {
   reportId: string;
   createdAt: string;
+  /** The UI is ready for YOLO output but does not label a fallback estimate as
+   * model output before the detector is connected. */
+  method?: 'yolo' | 'reported_quantity_estimate';
 }
 
 /** The small version of a beach, used by the map and the home list. */
@@ -325,7 +330,11 @@ export interface User {
 }
 
 export interface AuthSession {
+  /** Short-lived session JWT used for authenticated API calls. */
   token: string;
+  /** Shown once when a participant is created. It is required to restore the
+   * account on another device and must never be used as the bearer token. */
+  recoveryToken?: string;
   user: User;
 }
 

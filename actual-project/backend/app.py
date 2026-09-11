@@ -7,6 +7,9 @@ server-side data and are deliberately excluded from response serializers.
 
 from __future__ import annotations
 
+import base64
+import hashlib
+import hmac
 import json
 import math
 import os
@@ -644,6 +647,23 @@ def decode_token_subject(token: str, jwt_secret: str) -> str | None:
     return subject if isinstance(subject, str) else None
 
 
+def issue_recovery_token(user_id: str, jwt_secret: str) -> str:
+    """Create the stable, non-session secret shown once to a new participant."""
+
+    digest = hmac.new(
+        jwt_secret.encode("utf-8"),
+        f"radar-sampah-recovery:{user_id}".encode("utf-8"),
+        hashlib.sha256,
+    ).digest()
+    raw = base64.b32encode(digest).decode("ascii").rstrip("=")[:24]
+    return "RS-" + "-".join(raw[index:index + 4] for index in range(0, len(raw), 4))
+
+
+def recovery_token_matches(user_id: str, supplied_token: str, jwt_secret: str) -> bool:
+    expected = issue_recovery_token(user_id, jwt_secret)
+    return hmac.compare_digest(expected, supplied_token.strip().upper())
+
+
 def user_dict(row: Any) -> dict[str, Any]:
     return {"id": row.id, "participantId": row.participant_id, "role": row.role}
 
@@ -697,6 +717,29 @@ def quantities_from_row(row: Any) -> dict[str, str]:
 
 def quantity_values(quantities: dict[str, str]) -> dict[str, str | None]:
     return {column: quantities.get(category) for category, column in QUANTITY_COLUMNS.items()}
+
+
+def composition_percentages(quantities: dict[str, str]) -> list[dict[str, Any]]:
+    """Convert the newest report's category weights into whole percentages.
+
+    The largest-remainder method keeps every response at exactly 100, avoiding
+    a chart whose labels visibly add up to 99 or 101 because of rounding.
+    """
+
+    weighted = [
+        (category, QUANTITY_WEIGHTS[quantities[category]])
+        for category in FRONTEND_CATEGORIES
+        if category in quantities
+    ]
+    total = sum(weight for _, weight in weighted)
+    if total <= 0:
+        return []
+    exact = [(category, weight * 100 / total) for category, weight in weighted]
+    whole = {category: math.floor(value) for category, value in exact}
+    remainder = 100 - sum(whole.values())
+    for category, _ in sorted(exact, key=lambda item: item[1] - math.floor(item[1]), reverse=True)[:remainder]:
+        whole[category] += 1
+    return [{"category": category, "percentage": whole[category]} for category, _ in weighted]
 
 
 def attention_score_for(rows: list[Any]) -> float | None:
@@ -1103,18 +1146,31 @@ def create_app(
                     created_at=now,
                 )
             )
-        return jsonify({"token": issue_token(user_id, jwt_secret), "user": {"id": user_id, "participantId": participant_id, "role": DEFAULT_VOLUNTEER_ROLE}}), 201
+        return jsonify(
+            {
+                "token": issue_token(user_id, jwt_secret),
+                "recoveryToken": issue_recovery_token(user_id, jwt_secret),
+                "user": {"id": user_id, "participantId": participant_id, "role": DEFAULT_VOLUNTEER_ROLE},
+            }
+        ), 201
 
     @application.post("/auth/restore")
     def restore_anonymous_participant():
         payload = request.get_json(silent=True)
         participant_id = str(payload.get("participantId") or "").strip() if isinstance(payload, dict) else ""
+        recovery_token = str(payload.get("token") or "").strip() if isinstance(payload, dict) else ""
         if not re.fullmatch(r"\d{4}", participant_id):
             return error_response(404, "UNKNOWN_PARTICIPANT", "That participant ID was not found.")
         with engine.connect() as connection:
             row = connection.execute(select(users_table).where(users_table.c.participant_id == participant_id)).first()
         if row is None:
             return error_response(404, "UNKNOWN_PARTICIPANT", "That participant ID was not found.")
+        if not recovery_token_matches(row.id, recovery_token, jwt_secret):
+            return error_response(
+                401,
+                "INVALID_RECOVERY_TOKEN",
+                "That participant ID and recovery token do not match.",
+            )
         return jsonify({"token": issue_token(row.id, jwt_secret), "user": user_dict(row)})
 
     @application.post("/auth/logout")
@@ -1154,12 +1210,12 @@ def create_app(
             quantities = quantities_from_row(row)
             detail.update(
                 {
-                    "composition": [
-                        {"category": category, "quantity": quantities[category]}
-                        for category in FRONTEND_CATEGORIES
-                        if category in quantities
-                    ],
-                    "compositionSource": {"reportId": row.id, "createdAt": contract_timestamp(row.created_at)},
+                    "composition": composition_percentages(quantities),
+                    "compositionSource": {
+                        "reportId": row.id,
+                        "createdAt": contract_timestamp(row.created_at),
+                        "method": "reported_quantity_estimate",
+                    },
                 }
             )
         return jsonify(detail)

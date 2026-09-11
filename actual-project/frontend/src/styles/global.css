@@ -75,6 +75,24 @@ button {
   cursor: pointer;
   color: inherit;
   text-align: left;
+  line-height: 1.25;
+  min-width: 0;
+}
+
+/* Full-width action buttons opt into this shared alignment contract. Text
+   stays centred after copy changes, icons remain on the same visual axis, and
+   longer labels can wrap instead of touching a rounded edge. Card/row buttons
+   deliberately keep the left-aligned reset above. */
+.btn-primary,
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding-inline: 18px;
+  text-align: center;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
 }
 
 /* Hide the scrollbar but keep scrolling, matching the prototype. Safe here

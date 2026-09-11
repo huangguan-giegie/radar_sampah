@@ -20,6 +20,7 @@ os.environ.setdefault("AUTH_JWT_SECRET", "test-only-secret-not-for-production")
 
 from app import (
     create_app,
+    issue_recovery_token,
     load_beaches,
     photo_file_path,
     read_photo_metadata,
@@ -92,7 +93,8 @@ def test_demo_participant_1637_is_seeded_idempotently(tmp_path, monkeypatch):
     )
     client = application.test_client()
 
-    restored = client.post("/auth/restore", json={"participantId": "1637"})
+    recovery_token = issue_recovery_token("u_demo_1637", os.environ["AUTH_JWT_SECRET"])
+    restored = client.post("/auth/restore", json={"participantId": "1637", "token": recovery_token})
 
     assert restored.status_code == 200
     assert restored.get_json()["user"] == {
@@ -107,7 +109,7 @@ def test_demo_participant_1637_is_seeded_idempotently(tmp_path, monkeypatch):
         photo_storage_dir=tmp_path / "private-photos",
     )
     second_response = second_application.test_client().post(
-        "/auth/restore", json={"participantId": "1637"}
+        "/auth/restore", json={"participantId": "1637", "token": recovery_token}
     )
     assert second_response.status_code == 200
     assert second_response.get_json()["user"]["id"] == "u_demo_1637"
@@ -132,7 +134,13 @@ def test_demo_participant_runs_report_flow(tmp_path, monkeypatch):
         photo_storage_dir=tmp_path / "private-photos",
     )
     client = application.test_client()
-    restored = client.post("/auth/restore", json={"participantId": "1637"})
+    restored = client.post(
+        "/auth/restore",
+        json={
+            "participantId": "1637",
+            "token": issue_recovery_token("u_demo_1637", os.environ["AUTH_JWT_SECRET"]),
+        },
+    )
     headers = {"Authorization": "Bearer " + restored.get_json()["token"]}
 
     photo = upload(client, headers)
@@ -448,13 +456,28 @@ def test_anonymous_auth_restore_and_me(api):
     _application, client = api
     session, headers = signup(client)
     assert re.fullmatch(r"\d{4}", session["user"]["participantId"])
+    assert re.fullmatch(r"RS-(?:[A-Z2-7]{4}-){5}[A-Z2-7]{4}", session["recoveryToken"])
     assert session["user"]["role"] == "volunteer"
     assert client.get("/auth/me", headers=headers).get_json() == session["user"]
 
-    restored = client.post("/auth/restore", json={"participantId": session["user"]["participantId"]})
+    restored = client.post(
+        "/auth/restore",
+        json={"participantId": session["user"]["participantId"], "token": session["recoveryToken"]},
+    )
     assert restored.status_code == 200
     assert restored.get_json()["user"] == session["user"]
     assert client.post("/auth/logout", headers=headers).status_code == 204
+
+
+def test_restore_rejects_wrong_or_missing_recovery_token(api):
+    _application, client = api
+    session, _headers = signup(client)
+    participant_id = session["user"]["participantId"]
+
+    for supplied in (None, "RS-WRONG-TOKEN"):
+        response = client.post("/auth/restore", json={"participantId": participant_id, "token": supplied})
+        assert response.status_code == 401
+        assert response.get_json()["code"] == "INVALID_RECOVERY_TOKEN"
 
 
 @pytest.mark.parametrize("participant_id", ["123", "abcd", "00000", None])
@@ -783,9 +806,10 @@ def test_beach_attention_uses_median_report_scores_and_latest_composition(api):
 
     detail = client.get("/beaches/morib").get_json()
     assert detail["composition"] == [
-        {"category": "Fishing gear", "quantity": "Large"},
+        {"category": "Fishing gear", "percentage": 100},
     ]
     assert detail["compositionSource"]["reportId"] == report_ids[-1]
+    assert detail["compositionSource"]["method"] == "reported_quantity_estimate"
 
 
 def test_beach_attention_uses_median_for_even_count(api):

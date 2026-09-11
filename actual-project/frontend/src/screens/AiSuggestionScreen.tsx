@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Check, Info } from '../components/Icon';
+import { Check } from '../components/Icon';
 import { Alert, Callout, SectionLabel } from '../components/ds';
 import { BackButton, GhostButton, PrimaryButton, TextButton } from '../components/ui';
 import { useApp } from '../AppContext';
@@ -108,9 +108,6 @@ export default function AiSuggestionScreen() {
           </>
         )}
 
-        <Callout title="About this suggestion" tone="quiet" icon={<Info color={C.navy} />}>
-          These counts are suggestions only. Edit any category or amount before you confirm.
-        </Callout>
         <TextButton onClick={() => nav('/method/ai')}>How the AI suggestion works</TextButton>
       </div>
     </div>

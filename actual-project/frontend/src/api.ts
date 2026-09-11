@@ -163,8 +163,10 @@ async function request(path: string, method = 'GET', body?: unknown) {
 // be. 1637 is the seeded demo account. Pool them and a demo proves nothing
 // about who can see whose reports.
 type MockAccounts = Record<string, LitterReport[]>;
+type MockRecoveryTokens = Record<string, string>;
 
 const MOCK_ACCOUNTS_KEY = 'rs_mock_accounts_v2';
+const MOCK_RECOVERY_TOKENS_KEY = 'rs_mock_recovery_tokens_v1';
 
 
 // Falls back to the seed rather than throwing.
@@ -207,6 +209,38 @@ function loadMockAccounts(): MockAccounts {
 }
 
 let mockAccounts = loadMockAccounts();
+
+function loadMockRecoveryTokens(): MockRecoveryTokens {
+  const seeded = { [MOCK_USER.participantId]: 'RS-DEMO-1637-RADAR' };
+  try {
+    const saved = localStorage.getItem(MOCK_RECOVERY_TOKENS_KEY);
+    if (!saved) return seeded;
+    const parsed: unknown = JSON.parse(saved);
+    return parsed && typeof parsed === 'object' && !Array.isArray(parsed)
+      ? { ...seeded, ...(parsed as MockRecoveryTokens) }
+      : seeded;
+  } catch {
+    return seeded;
+  }
+}
+
+let mockRecoveryTokens = loadMockRecoveryTokens();
+
+function saveMockRecoveryTokens() {
+  try {
+    localStorage.setItem(MOCK_RECOVERY_TOKENS_KEY, JSON.stringify(mockRecoveryTokens));
+  } catch {
+    // Mock authentication still works for this tab when storage is unavailable.
+  }
+}
+
+function makeMockRecoveryToken(): string {
+  const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  const bytes = new Uint8Array(24);
+  globalThis.crypto.getRandomValues(bytes);
+  const raw = Array.from(bytes, (byte) => alphabet[byte % alphabet.length]).join('');
+  return `RS-${raw.match(/.{1,4}/g)?.join('-') ?? raw}`;
+}
 
 // Never let storage take down a submit.
 //
@@ -370,11 +404,16 @@ export async function createAnonymousId(): Promise<AuthSession> {
     if (availableIds.length === 0) throw new Error('No participant IDs are available.');
     const participantId = availableIds[Math.floor(Math.random() * availableIds.length)];
     mockAccounts = { ...mockAccounts, [participantId]: [] };
+    const recoveryToken = makeMockRecoveryToken();
+    mockRecoveryTokens = { ...mockRecoveryTokens, [participantId]: recoveryToken };
     saveMockAccounts();
+    saveMockRecoveryTokens();
     localStorage.setItem('rs_mock_participant', participantId);
-    saveToken('mock-token');
+    const sessionToken = `mock-session-${participantId}-${Date.now()}`;
+    saveToken(sessionToken);
     return {
-      token: 'mock-token',
+      token: sessionToken,
+      recoveryToken,
       user: { id: 'u_anon_' + participantId, participantId, role: 'volunteer' },
     };
   }
@@ -395,11 +434,16 @@ export async function restoreId(participantId: string, token: string): Promise<A
     if (!/^\d{4}$/.test(id) || !mockAccounts[id]) {
       throw new Error('Participant ID not found.');
     }
-    if (!token.trim()) throw new Error('Enter the token issued with your participant ID.');
+    const suppliedToken = token.trim().toUpperCase();
+    if (!suppliedToken) throw new Error('Enter the recovery token issued with your participant ID.');
+    if (mockRecoveryTokens[id]?.toUpperCase() !== suppliedToken) {
+      throw new Error('That participant ID and recovery token do not match.');
+    }
     localStorage.setItem('rs_mock_participant', id);
-    saveToken(token.trim());
+    const sessionToken = `mock-session-${id}-${Date.now()}`;
+    saveToken(sessionToken);
     return {
-      token: token.trim(),
+      token: sessionToken,
       user: { id: 'u_anon_' + id, participantId: id, role: 'volunteer' },
     };
   }

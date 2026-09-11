@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { Camera, Check, Shield, Upload } from '../components/Icon';
+import { Camera, Check, Upload } from '../components/Icon';
 import { Alert, Callout, EmptyState, InfoChip, SectionLabel } from '../components/ds';
 import { BackButton, GhostButton, PrimaryButton, TextButton } from '../components/ui';
 import { useApp } from '../AppContext';
@@ -151,7 +151,7 @@ export default function CleanupScreen() {
         <div>
           <SectionLabel size="sm">ADD A CLEANUP</SectionLabel>
           <h1 className="i2-title" style={{ marginTop: 7 }}>Confirm what you removed</h1>
-          <p className="i2-subtitle">Use whole item counts. You can type them manually or start from an AI suggestion.</p>
+          <p className="i2-subtitle">Enter item counts or start from an AI suggestion.</p>
         </div>
 
         <div className="i2-card">
@@ -166,7 +166,6 @@ export default function CleanupScreen() {
           <div style={{ marginTop: 12, paddingTop: 11, borderTop: `1px solid ${C.line}`, display: 'flex', justifyContent: 'space-between', fontFamily: MONO, fontSize: 10, color: C.muted }}>
             <span>WHAT YOU CONFIRM COMES OFF THIS TOTAL</span><strong style={{ color: C.navy }}>{cleanupTotal(target)} UNITS</strong>
           </div>
-          <p style={{ margin: '9px 0 0', color: C.muted, fontSize: 11.5, lineHeight: 1.5 }}>One cleanup is allowed for each Counted report.</p>
         </div>
 
         {event && (
@@ -178,7 +177,7 @@ export default function CleanupScreen() {
         <div className="i2-card">
           <SectionLabel size="sm">OPTIONAL AI SUGGESTION</SectionLabel>
           <p style={{ margin: '7px 0 12px', fontSize: 12, lineHeight: 1.5, color: C.muted }}>
-            The after-cleanup photo is processed temporarily and is not kept as a cleanup record.
+            Optional photo · processed, then discarded
           </p>
           <button type="button" className="i2-field press" onClick={() => inputRef.current?.click()} style={{ display: 'flex', alignItems: 'center', gap: 11, textAlign: 'left' }}>
             <span style={{ width: 36, height: 36, borderRadius: 12, background: 'rgba(11,33,97,.07)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -238,10 +237,6 @@ export default function CleanupScreen() {
             <textarea className="i2-field" rows={3} maxLength={240} value={note} onChange={(event) => setNote(event.target.value)} placeholder="For example: bagged and placed at the collection point" />
           </label>
         </div>
-
-        <Callout title="Privacy" tone="quiet" icon={<Shield color={C.navy} />}>
-          Only your confirmed categories and item counts are saved. The temporary after photo is discarded after processing.
-        </Callout>
 
         {error && <Alert title="Cleanup not saved" tone="error">{error}</Alert>}
 

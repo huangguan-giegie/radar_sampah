@@ -282,6 +282,8 @@ export default function HomeScreen() {
               color: C.bg,
               display: 'flex',
               flexDirection: 'column',
+              alignItems: 'flex-start',
+              textAlign: 'left',
               gap: 26,
               boxShadow: '0 18px 38px -18px rgba(11,33,97,.6)',
             }}
@@ -378,17 +380,15 @@ export default function HomeScreen() {
             border: '1px solid rgba(11,33,97,.07)',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontFamily: MONO, fontSize: 8.5, letterSpacing: '.14em', color: C.dim }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontFamily: MONO, fontSize: 9.5, letterSpacing: '.12em', color: C.dim }}>
             <Info size={11} color={C.dim} strokeWidth={2} />
             READING THE MAP
           </div>
           {/* The last sentence is the whole point of this box. Both labels
               mean "we do not know", and a user who reads them as "this beach
               is fine" would take away the opposite of what the data says. */}
-          <div style={{ fontSize: 11, lineHeight: 1.6, color: C.muted, marginTop: 6 }}>
-            <b style={{ color: C.muted }}>Insufficient data</b> — fewer than three counted reports.{' '}
-            <b style={{ color: C.muted }}>Not recently reported</b> — nothing counted in 90 days.
-            Neither means the beach is clean.
+          <div style={{ fontSize: 12, lineHeight: 1.5, color: C.muted, marginTop: 6 }}>
+            Not enough or recent data means <b>unchecked</b>, not clean.
           </div>
         </div>
       </div>

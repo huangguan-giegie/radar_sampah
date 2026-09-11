@@ -10,7 +10,7 @@ import { useState, type FormEvent } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { C, MONO } from '../theme';
 import { ShieldCheck } from '../components/Icon';
-import { BackButton, ErrorNote, PrimaryButton, TextButton } from '../components/ui';
+import { BackButton, ErrorNote, GhostButton, PrimaryButton, TextButton } from '../components/ui';
 import { useApp } from '../AppContext';
 import { safeNextPath } from '../flowRules';
 
@@ -31,6 +31,27 @@ export default function IdentityScreen() {
   // the number on screen would no longer be the one they were given.
   const [newSession, setNewSession] = useState<{ participantId: string; token: string } | null>(null);
   const [copied, setCopied] = useState(false);
+  const [savedRecovery, setSavedRecovery] = useState(false);
+
+  const recoveryKitText = newSession
+    ? `Radar Sampah recovery details\nParticipant ID: ${newSession.participantId}\nRecovery token: ${newSession.token}\n\nKeep this file private. The token works like a password.`
+    : '';
+
+  function downloadRecoveryKit() {
+    if (!newSession) return;
+    const url = URL.createObjectURL(new Blob([recoveryKitText], { type: 'text/plain;charset=utf-8' }));
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `radar-sampah-recovery-${newSession.participantId}.txt`;
+    link.click();
+    URL.revokeObjectURL(url);
+    setSavedRecovery(true);
+  }
+
+  function goBack() {
+    if (newSession && !savedRecovery && !window.confirm('Leave without saving your recovery token?')) return;
+    nav(next === '/home' ? '/welcome' : next);
+  }
 
 
   // Ask for a new number.
@@ -82,14 +103,18 @@ export default function IdentityScreen() {
           gap: 20,
         }}
       >
-        <BackButton onClick={() => nav(next === '/home' ? '/welcome' : next)} />
+        <BackButton onClick={goBack} />
 
         <div>
           <div style={{ fontSize: 31, fontWeight: 640, letterSpacing: '-.8px' }}>
-            {mode === 'existing' ? 'Log in' : 'Join in — no name needed'}
+            {newSession ? 'Save your recovery token' : mode === 'existing' ? 'Log in' : 'Join without sharing your name'}
           </div>
           <div style={{ fontSize: 14, color: C.muted, marginTop: 8, lineHeight: 1.5 }}>
-            {mode === 'existing' ? 'No sign-up needed. Use the two values issued to you.' : 'No name, no email, no phone — ever.'}
+            {newSession
+              ? "You won't see this token again after leaving this screen."
+              : mode === 'existing'
+                ? 'Use your participant ID and recovery token.'
+                : 'No name, email or phone number required.'}
           </div>
         </div>
 
@@ -98,74 +123,51 @@ export default function IdentityScreen() {
           // the user to save it. That warning is the honest price of having no
           // password, and the Account page repeats it.
           <>
-            <div
-              style={{
-                background: C.deep,
-                borderRadius: 24,
-                padding: 24,
-                color: C.bg,
-                textAlign: 'center',
-              }}
-            >
-              <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '.16em', color: C.dim }}>
-                YOUR PARTICIPANT ID
+            <div style={{ background: C.white, border: `1px solid ${C.line}`, borderRadius: 24, overflow: 'hidden' }}>
+              <div style={{ padding: '14px 18px', borderBottom: `1px solid ${C.line}`, color: '#9C4237', fontFamily: MONO, fontSize: 10, fontWeight: 700, letterSpacing: '.14em' }}>
+                KEEP PRIVATE
               </div>
-              <div
-                style={{
-                  fontFamily: MONO,
-                  fontSize: 44,
-                  fontWeight: 650,
-                  letterSpacing: '.06em',
-                  color: C.lime,
-                  marginTop: 8,
-                  // One tap grabs the whole number, which is how it gets copied
-                  // on devices where the button below has no clipboard to use.
-                  userSelect: 'all',
-                }}
-              >
-                {newSession.participantId}
+              <div style={{ padding: 18 }}>
+                <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: '.12em', color: C.dim }}>PARTICIPANT ID</div>
+                <div style={{ fontFamily: MONO, fontSize: 34, fontWeight: 700, color: C.navy, marginTop: 5, userSelect: 'all' }}>
+                  {newSession.participantId}
+                </div>
+                <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: '.12em', color: C.dim, marginTop: 18 }}>RECOVERY TOKEN</div>
+                <div style={{ fontFamily: MONO, fontSize: 15, lineHeight: 1.65, color: C.ink2, marginTop: 5, wordBreak: 'break-word', userSelect: 'all' }}>
+                  {newSession.token}
+                </div>
               </div>
-              <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '.16em', color: C.dim, marginTop: 18 }}>
-                YOUR TOKEN
-              </div>
-              <div style={{ fontFamily: MONO, fontSize: 15, color: C.bg, marginTop: 7, wordBreak: 'break-all' }}>
-                {newSession.token}
-              </div>
-              {/* Clipboard writes need a secure context and can still be
-                  refused, so the label only flips after a successful write. */}
-              <button
-                type="button"
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+              <GhostButton
                 onClick={async () => {
                   if (!navigator.clipboard) return;
                   try {
-                    await navigator.clipboard.writeText(`Participant ID: ${newSession.participantId}\nToken: ${newSession.token}`);
+                    await navigator.clipboard.writeText(recoveryKitText);
                     setCopied(true);
+                    setSavedRecovery(true);
                   } catch {
                     setCopied(false);
                   }
                 }}
-                style={{
-                  marginTop: 10,
-                  padding: '7px 11px',
-                  borderRadius: 10,
-                  border: '1px solid rgba(232,238,245,.28)',
-                  color: C.bg,
-                  fontSize: 11.5,
-                  fontWeight: 650,
-                }}
               >
-                {copied ? 'Copied' : 'Copy login details'}
-              </button>
-              <div style={{ fontSize: 12.5, lineHeight: 1.55, color: C.mist, marginTop: 12 }}>
-                Save both values now. Together they restore your reports on another device.
-              </div>
+                {copied ? 'Copied' : 'Copy details'}
+              </GhostButton>
+              <GhostButton onClick={downloadRecoveryKit}>Download</GhostButton>
             </div>
 
-            <PrimaryButton onClick={() => nav(next, { replace: true })}>Continue</PrimaryButton>
+            <label style={{ display: 'flex', gap: 11, alignItems: 'center', padding: '13px 14px', borderRadius: 16, background: C.tint, color: C.ink2, fontSize: 13.5, fontWeight: 620 }}>
+              <input
+                type="checkbox"
+                checked={savedRecovery}
+                onChange={(event) => setSavedRecovery(event.target.checked)}
+                style={{ width: 20, height: 20, accentColor: C.navy }}
+              />
+              I have saved my recovery token
+            </label>
 
-            <div style={{ fontSize: 11.5, lineHeight: 1.5, color: C.dim, textAlign: 'center' }}>
-              Keep your participant ID and token together. They work like a username and password.
-            </div>
+            <PrimaryButton disabled={!savedRecovery} onClick={() => nav(next, { replace: true })}>Continue</PrimaryButton>
           </>
         ) : (
           // No number yet. A segmented control instead of two separate pages,
@@ -222,61 +224,12 @@ export default function IdentityScreen() {
 
             {mode === 'new' ? (
               <>
-                <div
-                  style={{
-                    background: C.white,
-                    border: `1px solid ${C.line}`,
-                    borderRadius: 22,
-                    padding: 20,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: 10,
-                  }}
-                >
-                  {[
-
-
-                    'Your reports stay linked to it, so you can fix them later',
-                  ].map((line) => (
-                    <div
-                      key={line}
-                      style={{
-                        display: 'flex',
-                        gap: 10,
-                        alignItems: 'flex-start',
-                        fontSize: 13,
-                        lineHeight: 1.5,
-                        color: C.ink2,
-                      }}
-                    >
-                      <i
-                        style={{
-                          width: 5,
-                          height: 5,
-                          borderRadius: 3,
-                          background: C.navy,
-                          display: 'block',
-                          flex: 'none',
-                          marginTop: 7,
-                        }}
-                      />
-                      {line}
-                    </div>
-                  ))}
-                </div>
-
                 <PrimaryButton onClick={getNewId} disabled={busy}>
-                  {busy ? 'Getting your number…' : 'Get My Number'}
+                  {busy ? 'Creating your ID…' : 'Create participant ID'}
                 </PrimaryButton>
               </>
             ) : (
               <form onSubmit={useExistingId} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                <div style={{ background: C.white, border: `1px solid ${C.line}`, borderRadius: 20, padding: 17 }}>
-                  <div style={{ fontSize: 17, fontWeight: 680, color: C.ink2 }}>No sign-up needed</div>
-                  <div style={{ marginTop: 5, fontSize: 12.5, lineHeight: 1.5, color: C.muted }}>
-                    Your participant ID and token work like a username and password.
-                  </div>
-                </div>
                 <label style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
                   <span style={{ fontFamily: MONO, fontSize: 9.5, letterSpacing: '.14em', color: C.dim }}>
                     PARTICIPANT ID
@@ -302,7 +255,7 @@ export default function IdentityScreen() {
 
                 <label style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
                   <span style={{ fontFamily: MONO, fontSize: 9.5, letterSpacing: '.14em', color: C.dim }}>
-                    TOKEN
+                    RECOVERY TOKEN
                   </span>
                   <input
                     className="field"
@@ -310,7 +263,7 @@ export default function IdentityScreen() {
                     autoComplete="current-password"
                     value={typedToken}
                     onChange={(e) => setTypedToken(e.target.value)}
-                    placeholder="Enter your token"
+                    placeholder="Enter your recovery token"
                     style={{
                       background: C.white,
                       border: `1.5px solid ${C.cloud}`,
@@ -327,12 +280,6 @@ export default function IdentityScreen() {
                   {busy ? 'Checking…' : 'Log in'}
                 </PrimaryButton>
 
-                {/* Please do not soften this line. It names what is lost and
-                    what is not; vaguer wording reads as "your work was binned",
-                    which is not what happens. */}
-                <div style={{ fontSize: 12, lineHeight: 1.55, color: C.dim, textAlign: 'center' }}>
-                  Keep both values. No name, email or phone number is stored with this account.
-                </div>
               </form>
             )}
 
@@ -351,7 +298,7 @@ export default function IdentityScreen() {
             >
               <ShieldCheck style={{ flex: 'none', marginTop: 1 }} />
               <div style={{ fontSize: 12, lineHeight: 1.55, color: C.slate }}>
-                A report carries only your participant number, the beach, and what you recorded — never your exact location.
+                Reports use your participant ID, not your name. Exact location stays private.
               </div>
             </div>
 
