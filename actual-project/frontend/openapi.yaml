@@ -45,7 +45,7 @@ paths:
       tags: [Auth]
       security: []
       summary: Issue an anonymous participant number
-      description: No name, email or password is collected. Returns a random 4-digit number.
+      description: No personal details are collected. Returns a random 4-digit ID and a recovery token shown once.
       responses:
         "201":
           description: the new participant
@@ -64,9 +64,10 @@ paths:
           application/json:
             schema:
               type: object
-              required: [participantId]
+              required: [participantId, token]
               properties:
                 participantId: { type: string, example: "1637" }
+                token: { type: string, description: "System-generated recovery token" }
       responses:
         "200":
           description: session
@@ -74,6 +75,8 @@ paths:
             application/json:
               schema: { $ref: "#/components/schemas/AuthSession" }
         "404":
+          $ref: "#/components/responses/Error"
+        "401":
           $ref: "#/components/responses/Error"
 
   /auth/logout:
@@ -384,6 +387,7 @@ components:
       required: [token, user]
       properties:
         token: { type: string, description: "JWT, valid for 30 days" }
+        recoveryToken: { type: string, description: "Returned only when the participant is created; save it like a password" }
         user: { $ref: "#/components/schemas/User" }
 
     SeverityBand:
@@ -548,18 +552,19 @@ components:
 
     CompositionSlice:
       type: object
-      required: [category, quantity]
+      required: [category, percentage]
       properties:
         category: { $ref: "#/components/schemas/LitterCategory" }
-        quantity: { $ref: "#/components/schemas/QuantityBand" }
+        percentage: { type: integer, minimum: 0, maximum: 100 }
 
     CompositionSource:
       type: object
-      required: [reportId, createdAt]
+      required: [reportId, createdAt, method]
       description: which report the composition came from. Required whenever composition is non-null
       properties:
         reportId: { type: string }
         createdAt: { type: string, format: date-time }
+        method: { type: string, enum: [yolo, reported_quantity_estimate] }
 
     BeachDetail:
       allOf:
@@ -571,8 +576,8 @@ components:
               type: array
               nullable: true
               description: |
-                The non-null categories of that beach's newest Counted report, ordered by
-                category weight. Not an aggregate, and unrelated to insufficientData.
+                Category percentages for that beach's newest Counted report, calculated by
+                the backend for the model-ready UI. Rows add up to 100. Not an aggregate.
                 Null when the beach has no Counted report at all.
               items: { $ref: "#/components/schemas/CompositionSlice" }
             compositionSource:

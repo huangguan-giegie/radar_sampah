@@ -50,7 +50,7 @@ export function PrimaryButton({
       disabled={disabled}
       className={disabled ? 'press' : 'btn-primary press'}
       style={{
-        height,
+        minHeight: height,
         borderRadius: 18,
         background: disabled ? '#8794AD' : C.navy,
         color: C.bg,
@@ -58,6 +58,9 @@ export function PrimaryButton({
         alignItems: 'center',
         justifyContent: 'center',
         gap: 9,
+        padding: '12px 18px',
+        textAlign: 'center',
+        lineHeight: 1.3,
         fontSize: 15.5,
         fontWeight: 650,
         cursor: disabled ? 'not-allowed' : 'pointer',
@@ -91,7 +94,7 @@ export function GhostButton({
       onClick={onClick}
       className="btn-ghost press"
       style={{
-        height,
+        minHeight: height,
         borderRadius: 18,
         background: C.white,
         border: `1.5px solid ${C.line2}`,
@@ -99,6 +102,10 @@ export function GhostButton({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
+        gap: 8,
+        padding: '11px 18px',
+        textAlign: 'center',
+        lineHeight: 1.3,
         fontSize: 15,
         fontWeight: 620,
         width: '100%',

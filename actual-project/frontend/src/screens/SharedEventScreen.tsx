@@ -41,7 +41,7 @@ export default function SharedEventScreen() {
           No friends list and no messaging. This page shows only this activity and its selected litter target.
         </Callout>
 
-        {user && <Callout title="Logged in · back on the shared page" tone="reassurance" icon={<Check color={C.green} />}>You can record a cleanup without losing this event link.</Callout>}
+        {user && <Callout title="Logged in · back on the shared page" tone="reassurance" icon={<Check color={C.green} />}>You can add a cleanup without losing this event link.</Callout>}
 
         <div className="i2-hero">
           <SectionLabel size="sm" tone="dark">RADAR SAMPAH · SHARED ACTIVITY</SectionLabel>
@@ -75,11 +75,11 @@ export default function SharedEventScreen() {
         {cleanups.length > 0 ? (
           <PrimaryButton onClick={() => nav(`/events/${event.id}/result`)}>View result</PrimaryButton>
         ) : user ? (
-          <PrimaryButton onClick={() => nav(`/cleanup/${event.beachId}?event=${encodeURIComponent(event.id)}`)}>Clean up this report</PrimaryButton>
+          <PrimaryButton onClick={() => nav(`/cleanup/${event.beachId}?event=${encodeURIComponent(event.id)}`)}>Add a Cleanup</PrimaryButton>
         ) : (
           <>
-            <Callout title="Anyone can view this page" tone="quiet">Log in to record a cleanup. No sign-up is needed; your participant ID and token work like a username and password.</Callout>
-            <PrimaryButton onClick={() => nav(`/identity?next=${encodeURIComponent(`/share/events/${event.id}`)}`)}>Log in to clean up</PrimaryButton>
+            <Callout title="Anyone can view this page" tone="quiet">Log in to add a cleanup. No sign-up is needed; your participant ID and token work like a username and password.</Callout>
+            <PrimaryButton onClick={() => nav(`/identity?next=${encodeURIComponent(`/share/events/${event.id}`)}`)}>Log in to Add a Cleanup</PrimaryButton>
           </>
         )}
         <GhostButton onClick={() => nav(`/events/${event.id}`)}>Back to the event page</GhostButton>

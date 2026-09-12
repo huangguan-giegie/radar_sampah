@@ -71,8 +71,8 @@ rewrite or template it.
 
 ## 1. Auth — anonymous participant numbers
 
-**Team decision: Iteration 1 collects no personal data.** No name, no email, no password.
-A person receives a 4-digit number (e.g. `1637`) and their reports hang off it.
+**Team decision: the app collects no personal data.** No name, email or phone number.
+A person receives a 4-digit ID plus a system-generated recovery token. The token works like a password.
 
 | Method | Path | Auth | |
 | --- | --- | --- | --- |
@@ -87,11 +87,12 @@ A person receives a 4-digit number (e.g. `1637`) and their reports hang off it.
 // 201
 {
   "token": "eyJhbGciOi...",
+  "recoveryToken": "RS-ABCD-EFGH-JKLM-NPQR-STUV-WXYZ",
   "user": { "id": "u_01H...", "participantId": "1637", "role": "volunteer" }
 }
 ```
 
-**POST `/auth/restore`** — body `{ "participantId": "1637" }`, responds as above.
+**POST `/auth/restore`** — body `{ "participantId": "1637", "token": "RS-..." }`. The recovery token is required and verified before a new session JWT is returned.
 
 **GET `/auth/me`** — returns `user`; 401 if the token is invalid.
 

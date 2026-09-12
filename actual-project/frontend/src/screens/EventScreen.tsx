@@ -159,7 +159,7 @@ export default function EventScreen() {
             <PrimaryButton onClick={() => nav(`/events/${eventId}/check-in`)}>Check in</PrimaryButton>
           ) : (
             <PrimaryButton onClick={() => nav(`/cleanup/${event.beachId}?event=${encodeURIComponent(event.id)}`)}>
-              Add cleanup evidence <ChevronRight color={C.lime} />
+              Add a Cleanup <ChevronRight color={C.lime} />
             </PrimaryButton>
           )}
           {event.cleanupIds.length > 0 && (

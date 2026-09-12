@@ -522,8 +522,8 @@ function SelectedCard({
             </div>
 
             {cleanupTarget && (
-              <button type="button" onClick={onCleanup} className="press" style={{ width: '100%', marginTop: 12, padding: '10px 12px', borderRadius: 14, background: 'rgba(184,255,54,.18)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, textAlign: 'left' }}>
-                <span><strong style={{ display: 'block', fontSize: 12.5, color: C.ink2 }}>＋ Add a Cleanup</strong><span style={{ display: 'block', marginTop: 2, fontSize: 10.5, color: C.muted }}>{cleanupTotal(cleanupTarget)} recorded items · cleanups subtract from them</span></span>
+              <button type="button" onClick={onCleanup} className="press" style={{ width: '100%', marginTop: 12, padding: '11px 13px', borderRadius: 14, background: 'rgba(184,255,54,.18)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, textAlign: 'left' }}>
+                <span style={{ minWidth: 0 }}><strong style={{ display: 'block', fontSize: 12.5, lineHeight: 1.35, color: C.ink2 }}>Add a Cleanup</strong><span style={{ display: 'block', marginTop: 3, fontSize: 10.5, lineHeight: 1.4, color: C.muted }}>{cleanupTotal(cleanupTarget)} recorded items remain</span></span>
                 <ArrowRight size={13} />
               </button>
             )}
@@ -599,7 +599,7 @@ function SelectedCard({
           <ArrowRight size={14} />
         </button>
         {layer === 'litter' && event && (
-          <button type="button" onClick={() => onJoin(event.id)} className="press" style={{ marginTop: 8, height: 46, width: '100%', borderRadius: 16, border: `1.5px solid ${C.line2}`, color: C.navy, background: C.white, fontSize: 13.5, fontWeight: 650 }}>
+          <button type="button" onClick={() => onJoin(event.id)} className="btn-ghost press" style={{ marginTop: 8, minHeight: 48, width: '100%', borderRadius: 16, border: `1.5px solid ${C.line2}`, color: C.navy, background: C.white, fontSize: 13.5, fontWeight: 650 }}>
             Join · {formatEventDate(event.date).replace(',', '').replace(/ \d{4}$/, '')} cleanup
           </button>
         )}

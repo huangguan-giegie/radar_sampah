@@ -31,6 +31,7 @@ import RecordScreen from './screens/RecordScreen';
 import ReviewScreen from './screens/ReviewScreen';
 import SubmittedScreen from './screens/SubmittedScreen';
 import MyReportsScreen from './screens/MyReportsScreen';
+import ReportDetailScreen from './screens/ReportDetailScreen';
 import AccountScreen from './screens/AccountScreen';
 const CommunityScreen = lazy(() => import('./screens/CommunityScreen'));
 const EventScreen = lazy(() => import('./screens/EventScreen'));
@@ -146,7 +147,9 @@ export default function App() {
             ? 'AI suggestion method'
         : pathname === '/map'
           ? 'Beach map'
-          : pathname === '/reports'
+          : pathname.startsWith('/reports/')
+            ? 'Report details'
+            : pathname === '/reports'
             ? 'My reports'
             : pathname === '/account'
               ? 'Account'
@@ -232,6 +235,7 @@ export default function App() {
         <Route path="/report/saved" element={<RequireAuth><SubmittedScreen /></RequireAuth>} />
 
         <Route path="/reports" element={<RequireAuth><MyReportsScreen /></RequireAuth>} />
+        <Route path="/reports/:reportId" element={<RequireAuth><ReportDetailScreen /></RequireAuth>} />
         <Route path="/account" element={<RequireAuth><AccountScreen /></RequireAuth>} />
 
         {/* Anything we do not recognise goes home rather than showing a blank

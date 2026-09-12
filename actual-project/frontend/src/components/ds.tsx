@@ -352,23 +352,23 @@ export function Callout({
 }) {
   const inner = (
     <>
-      {icon ?? <span />}
+      {icon && <span className="ds-callout-icon">{icon}</span>}
       <span className="ds-copy">
         {title && <strong className="ds-callout-title">{title}</strong>}
         {children}
       </span>
-      {trailing ?? <span />}
+      {trailing && <span className="ds-callout-trailing">{trailing}</span>}
     </>
   );
   if (onClick) {
     return (
-      <button type="button" className="ds-callout" data-tone={tone} onClick={onClick} style={style}>
+      <button type="button" className="ds-callout" data-tone={tone} data-has-icon={Boolean(icon)} data-has-trailing={Boolean(trailing)} onClick={onClick} style={style}>
         {inner}
       </button>
     );
   }
   return (
-    <div className="ds-callout" data-tone={tone} style={style}>
+    <div className="ds-callout" data-tone={tone} data-has-icon={Boolean(icon)} data-has-trailing={Boolean(trailing)} style={style}>
       {inner}
     </div>
   );
@@ -394,8 +394,8 @@ export function Alert({
   onAction?: () => void;
 }) {
   return (
-    <div className="ds-alert" data-tone={tone} role="status" style={style}>
-      {icon ?? <span />}
+    <div className="ds-alert" data-tone={tone} data-has-icon={Boolean(icon)} data-has-action={Boolean(action && onAction)} role="status" style={style}>
+      {icon && <span className="ds-callout-icon">{icon}</span>}
       <span className="ds-copy">
         {title && <strong>{title}</strong>}
         {children}
@@ -405,7 +405,7 @@ export function Alert({
           {action}
         </button>
       ) : (
-        <span />
+        null
       )}
     </div>
   );

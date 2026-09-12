@@ -44,14 +44,14 @@ export const BEACHES: BeachDetail[] = [
     scene:
       'linear-gradient(180deg,transparent 42%,rgba(221,227,236,.2) 47%,transparent 55%),radial-gradient(110% 55% at 72% 18%,rgba(221,227,236,.35),transparent 58%),linear-gradient(178deg,#8FD0E8 0%,#4E9EC9 36%,#2E6EA8 58%,#173E77 100%)',
     composition: [
-      { category: 'Plastic', quantity: 'Very Large' },
-      { category: 'Fishing gear', quantity: 'Large' },
-      { category: 'Glass', quantity: 'Medium' },
-      { category: 'Metal', quantity: 'Small' },
-      { category: 'Paper', quantity: 'Small' },
-      { category: 'Other', quantity: 'Small' },
+      { category: 'Plastic', percentage: 33 },
+      { category: 'Fishing gear', percentage: 25 },
+      { category: 'Glass', percentage: 17 },
+      { category: 'Metal', percentage: 8 },
+      { category: 'Paper', percentage: 8 },
+      { category: 'Other', percentage: 9 },
     ],
-    compositionSource: { reportId: 'r_seed_morib', createdAt: '2026-08-19T16:00:00+08:00' },
+    compositionSource: { reportId: 'r_seed_morib', createdAt: '2026-08-19T16:00:00+08:00', method: 'reported_quantity_estimate' },
     species: [
       {
         name: 'Green Sea Turtle',
@@ -122,14 +122,14 @@ export const BEACHES: BeachDetail[] = [
     scene:
       'radial-gradient(100% 60% at 30% 14%,rgba(255,255,255,.4),transparent 55%),linear-gradient(180deg,#D8ECF4 0%,#8FC6DC 38%,#5FA3C4 52%,#CFC9BA 78%,#B5AF9E 100%)',
     composition: [
-      { category: 'Plastic', quantity: 'Very Large' },
-      { category: 'Fishing gear', quantity: 'Medium' },
-      { category: 'Paper', quantity: 'Medium' },
-      { category: 'Glass', quantity: 'Small' },
-      { category: 'Metal', quantity: 'Small' },
-      { category: 'Other', quantity: 'Small' },
+      { category: 'Plastic', percentage: 36 },
+      { category: 'Fishing gear', percentage: 18 },
+      { category: 'Paper', percentage: 18 },
+      { category: 'Glass', percentage: 9 },
+      { category: 'Metal', percentage: 9 },
+      { category: 'Other', percentage: 10 },
     ],
-    compositionSource: { reportId: 'r_seed_remis', createdAt: '2026-07-25T16:00:00+08:00' },
+    compositionSource: { reportId: 'r_seed_remis', createdAt: '2026-07-25T16:00:00+08:00', method: 'reported_quantity_estimate' },
     species: [
       {
         name: 'Migratory Shorebirds',
@@ -199,8 +199,8 @@ export const BEACHES: BeachDetail[] = [
       'radial-gradient(90% 55% at 70% 16%,rgba(156,174,168,.35),transparent 60%),linear-gradient(178deg,#2F6B7C 0%,#245A6B 44%,#1B4557 72%,#123244 100%)',
 
     composition: [
-      { category: 'Plastic', quantity: 'Medium' },
-      { category: 'Other', quantity: 'Small' },
+      { category: 'Plastic', percentage: 67 },
+      { category: 'Other', percentage: 33 },
     ],
     species: [
       {
@@ -225,7 +225,7 @@ export const BEACHES: BeachDetail[] = [
         source: PENDING_SOURCE,
       },
     ],
-    compositionSource: { reportId: 'r_seed_kelanang', createdAt: '2026-05-21T16:00:00+08:00' },
+    compositionSource: { reportId: 'r_seed_kelanang', createdAt: '2026-05-21T16:00:00+08:00', method: 'reported_quantity_estimate' },
     ecologicalNote:
       'Litter caught in mangrove roots can persist for years and may break down into microplastics.',
   },
@@ -251,12 +251,12 @@ export const BEACHES: BeachDetail[] = [
     scene:
       'radial-gradient(110% 60% at 60% 12%,rgba(255,255,255,.45),transparent 58%),linear-gradient(178deg,#E4EEF3 0%,#9CCAD8 34%,#5FA3C4 52%,#D6CFBE 76%,#BFB8A6 100%)',
     composition: [
-      { category: 'Plastic', quantity: 'Very Large' },
-      { category: 'Fishing gear', quantity: 'Large' },
-      { category: 'Glass', quantity: 'Medium' },
-      { category: 'Metal', quantity: 'Small' },
-      { category: 'Paper', quantity: 'Small' },
-      { category: 'Other', quantity: 'Small' },
+      { category: 'Plastic', percentage: 33 },
+      { category: 'Fishing gear', percentage: 25 },
+      { category: 'Glass', percentage: 17 },
+      { category: 'Metal', percentage: 8 },
+      { category: 'Paper', percentage: 8 },
+      { category: 'Other', percentage: 9 },
     ],
     species: [
       {
@@ -290,7 +290,7 @@ export const BEACHES: BeachDetail[] = [
         source: PENDING_SOURCE,
       },
     ],
-    compositionSource: { reportId: 'r_seed_bagan', createdAt: '2026-07-24T16:00:00+08:00' },
+    compositionSource: { reportId: 'r_seed_bagan', createdAt: '2026-07-24T16:00:00+08:00', method: 'reported_quantity_estimate' },
     ecologicalNote:
       'Ghost nets and plastic sheeting may trap horseshoe crabs that come ashore to spawn.',
   },

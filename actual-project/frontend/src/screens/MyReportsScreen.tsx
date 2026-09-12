@@ -12,7 +12,7 @@ import { ErrorNote, Skeleton } from '../components/ui';
 import { C, MONO, formatDate } from '../theme';
 import { StatusBadge, type BadgeStatus } from '../components/ds';
 import { useApp } from '../AppContext';
-import { formatReportComposition, historicalPhotoUnavailable } from '../flowRules';
+import { formatReportComposition } from '../flowRules';
 import type { BeachSummary, LitterReport } from '../types';
 
 // Three tabs, not four. Duplicate and Incomplete both sit under "Excluded"
@@ -25,7 +25,7 @@ const TABS: Tab[] = ['All', 'Counted', 'Excluded'];
 export default function MyReportsScreen() {
   const nav = useNavigate();
   const [params, setParams] = useSearchParams();
-  const { patchDraft, resetDraft, setLastSavedReport, reportsVersion } = useApp();
+  const { reportsVersion } = useApp();
 
   // The tab lives in the URL, not in useState. That makes /reports?tab=Counted
   // a real link, which is how the tiles on the home and account pages jump
@@ -149,38 +149,11 @@ export default function MyReportsScreen() {
               <button
                 key={r.id}
                 type="button"
-                // Every row opens the correction flow, not only the excluded
-                // ones. A row that takes focus and then does nothing tells a
-                // keyboard or screen reader user it is broken.
-                onClick={() => {
-                  resetDraft();
-                  // Left over from the last submission. The route guard in
-                  // App.tsx reads it when a draft is not ready for the step
-                  // being opened, and would send this edit back to the list.
-                  setLastSavedReport(null);
-                  patchDraft({
-                    editingReportId: r.id,
-                    beachId: r.beachId,
-                    beachName: r.beachName,
-                    quantities: { ...r.quantities },
-                    locationSource: r.locationSource ?? 'manual',
-                    coords: null,
-                    existingPhotoUrl: r.photoUrl ?? null,
-                    existingPhotoKey: r.photoKey ?? null,
-                    // An old report can carry a photo key whose file we can no
-                    // longer show. Working it out here means the edit screens
-                    // say the photo is unavailable instead of drawing an empty
-                    // frame, and the photo step is not skipped over.
-                    existingPhotoUnavailable: historicalPhotoUnavailable(r.photoUrl, r.photoKey),
-                    editingStatus: r.status,
-                    editingStatusNote: r.statusNote ?? null,
-                  });
-                  nav('/report/details', { replace: true });
-                }}
+                onClick={() => nav(`/reports/${r.id}`)}
                 // The visible row is three separate scraps of text, so a screen
                 // reader would run them together. This gives the button one
                 // clear name and says what pressing it does.
-                aria-label={`Correct report for ${r.beachName}`}
+                aria-label={`View report for ${r.beachName}`}
                 className="card-hover"
                 style={{
                   display: 'flex',
@@ -228,27 +201,9 @@ export default function MyReportsScreen() {
           })}
         </div>
 
-        {/* The guide stays on screen instead of hiding behind a help link.
-            These words decide whether a volunteer's work counted, so the
-            definitions belong next to them. */}
         <div style={{ marginTop: 4, padding: '13px 15px', borderRadius: 16, background: 'rgba(11,33,97,.03)', border: '1px solid rgba(11,33,97,.07)' }}>
-          <div style={{ fontFamily: MONO, fontSize: 8.5, letterSpacing: '.14em', color: C.dim }}>STATUS GUIDE</div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: 11.5, lineHeight: 1.55, color: C.muted, marginTop: 7 }}>
-            {/* The guide has to name the tabs, not just the statuses. It used
-                to explain Counted, Duplicate and Incomplete while the tabs
-                above read All / Counted / Excluded - so the word "Excluded" was
-                on screen twice with nothing anywhere saying which statuses land
-                under it, leaving the reader to infer it. Naming Excluded and
-                folding its two statuses into that line also makes the guide
-                shorter than it was. */}
-            {[
-              { s: 'Counted', c: C.green, t: 'counts toward the beach rating' },
-              { s: 'Excluded', c: C.muted, t: 'Duplicate (same participant, beach and local day as an existing counted report) or Incomplete (missing field or unusable photo — correctable). Neither changes any beach rating.' },
-            ].map((r) => (
-              <div key={r.s}>
-                <b style={{ color: r.c }}>{r.s}</b> — {r.t}
-              </div>
-            ))}
+          <div style={{ fontSize: 12, lineHeight: 1.5, color: C.muted }}>
+            <b style={{ color: C.green }}>Counted</b> affects beach status. <b>Excluded</b> does not.
           </div>
         </div>
       </div>

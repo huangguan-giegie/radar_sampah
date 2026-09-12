@@ -391,7 +391,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setUser(session.user);
       saveUserSnapshot(session.user);
       setAuthSyncError(null);
-      return { participantId: session.user.participantId, token: session.token };
+      return {
+        participantId: session.user.participantId,
+        token: session.recoveryToken ?? session.token,
+      };
     },
 
 

@@ -108,6 +108,23 @@ describe('真实 API contract', () => {
     expect(storage.get('rs_token')).toBeUndefined();
   });
 
+  it('sends the recovery token when restoring a participant account', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({
+      token: 'fresh-session-token',
+      user: { id: 'u_1637', participantId: '1637', role: 'volunteer' },
+    }), { status: 200 }));
+    vi.stubGlobal('fetch', fetchMock);
+    const { restoreId } = await import('./api');
+
+    await restoreId('1637', 'RS-ABCD-EFGH');
+
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({
+      participantId: '1637',
+      token: 'RS-ABCD-EFGH',
+    });
+    expect(storage.get('rs_token')).toBe('fresh-session-token');
+  });
+
   // The exact JSON we POST. If a field is renamed or dropped, this fails here
   // rather than during a demo against the live API.
   it('submits the report body in the backend contract shape', async () => {
