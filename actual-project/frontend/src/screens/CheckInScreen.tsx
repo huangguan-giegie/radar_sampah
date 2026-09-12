@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Check, Pin, Shield } from '../components/Icon';
-import { Alert, Callout, InfoChip, SectionLabel } from '../components/ds';
+import { Check, Pin } from '../components/Icon';
+import { Alert, InfoChip, SectionLabel } from '../components/ds';
 import { BackButton, GhostButton, PrimaryButton } from '../components/ui';
 import { useApp } from '../AppContext';
 import { formatEventDate, getCleanupEvent, recordCheckIn, type CheckInState } from '../iteration2';
@@ -39,7 +39,7 @@ export default function CheckInScreen() {
     }
     if (!navigator.geolocation) {
       setState('denied');
-      setMessage('This device cannot provide a location. You can still add a report or cleanup, but attendance remains Not recorded.');
+      setMessage('Location is not available on this device. Attendance remains Not recorded.');
       return;
     }
     setState('checking');
@@ -55,14 +55,33 @@ export default function CheckInScreen() {
       () => {
         recordCheckIn(event.id, user.participantId, 'denied');
         setState('denied');
-        setMessage('Location was not available. Retry when you are ready; your exact coordinates are not stored.');
+        setMessage('Location was not available. Retry when you are ready.');
       },
       { enableHighAccuracy: false, timeout: 10_000, maximumAge: 60_000 },
     );
   }
 
   if (!event || !user) return null;
+  const joined = event.joinedBy.includes(user.participantId);
   const attendanceRecorded = event.attendanceBy.includes(user.participantId);
+  const withinArea = state === 'within_area';
+  const locationFailed = state === 'denied' || state === 'outside_area';
+  const attendanceSteps = [
+    ['Joined this event', joined],
+    ['Near the beach on the day', withinArea],
+    ['Added a photo report or cleanup', attendanceRecorded],
+    ['Attendance recorded automatically', attendanceRecorded],
+  ] as const;
+
+  const statusTitle = state === 'checking'
+    ? 'Checking the beach area…'
+    : withinArea
+      ? 'Checked in'
+      : state === 'outside_area'
+        ? 'Outside the beach area'
+        : state === 'denied'
+          ? 'Location not available'
+          : 'Check in on the event day';
 
   return (
     <div className="screen scroll-y" style={{ zIndex: 26 }}>
@@ -70,46 +89,42 @@ export default function CheckInScreen() {
         <BackButton onClick={() => nav(`/events/${event.id}`)} />
         <div>
           <SectionLabel size="sm">CHECK IN</SectionLabel>
-          <h1 className="i2-title" style={{ marginTop: 7 }}>{event.beachName} cleanup</h1>
-          <p className="i2-subtitle">{formatEventDate(event.date)} · {event.startsAt}–{event.endsAt}</p>
+          <h1 className="i2-title" style={{ marginTop: 7 }}>Check in</h1>
         </div>
 
-        <div className="i2-card" style={{ padding: 22, textAlign: 'center' }}>
-          <div style={{ width: 64, height: 64, margin: '0 auto', borderRadius: 32, background: state === 'within_area' ? C.greenBg : 'rgba(11,33,97,.07)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            {state === 'within_area' ? <Check size={26} color={C.green} /> : <Pin size={27} color={C.navy} />}
+        <div className="i2-card i2-event-strip">
+          <div>
+            <strong>{event.beachName} cleanup</strong>
+            <span>{formatEventDate(event.date)} · {event.startsAt}–{event.endsAt}</span>
           </div>
-          <h2 style={{ margin: '16px 0 0', fontSize: 19, color: C.ink2 }}>
-            {state === 'checking' ? 'Checking the broad beach area…' : state === 'within_area' ? 'Checked in' : state === 'outside_area' ? 'You appear to be outside the beach area' : 'Check in on the event day'}
-          </h2>
-          <p style={{ margin: '7px 0 0', color: C.muted, fontSize: 12.5, lineHeight: 1.55 }}>
-            {state === 'within_area'
-              ? `Within the ${event.beachName} area — exact GPS discarded.`
-              : 'The app checks whether you are near the beach. Exact coordinates are never stored or shown publicly.'}
-          </p>
+          <InfoChip color={joined ? C.green : C.muted} background={joined ? C.greenBg : undefined}>{joined ? 'Joined' : 'Not joined'}</InfoChip>
         </div>
 
-        <Callout title="Location privacy" icon={<Shield color={C.navy} />} tone="quiet">
-          Location is requested only when you tap Check in — never on page load. A broad-area result is kept; the precise location is discarded.
-        </Callout>
+        <div className={`i2-checkin-status${withinArea ? ' is-success' : ''}`}>
+          <span className="i2-checkin-icon">
+            {withinArea ? <Check size={22} color={C.navy} /> : <Pin size={22} color={C.navy} />}
+          </span>
+          <div>
+            <strong>{statusTitle}</strong>
+            <span>{withinArea ? `Near ${event.beachName} · exact location not kept` : 'Only a broad beach-area result is kept.'}</span>
+          </div>
+        </div>
 
         {attendanceRecorded && (
-          <Callout title="Attendance confirmed" icon={<Check color={C.green} />} tone="reassurance">
-            Stored separately from your Join record.
-          </Callout>
+          <div className="i2-confirmed-row"><Check size={15} color={C.green} /><strong>Attendance confirmed</strong></div>
         )}
+
+        <div className="i2-privacy-note">
+          Exact coordinates are checked only after you tap Check in, then discarded.
+        </div>
 
         <div className="i2-card">
           <SectionLabel size="sm">RECORDED ATTENDANCE NEEDS</SectionLabel>
-          <div style={{ display: 'grid', gap: 8, marginTop: 11, fontSize: 12.5, color: C.slate }}>
-            {[
-              ['Logged in', true],
-              ['Joined this event', event.joinedBy.includes(user.participantId)],
-              ['Near the beach on the day', state === 'within_area'],
-              ['Confirmed you were there', attendanceRecorded],
-              ['Photo report or cleanup at this beach', attendanceRecorded],
-            ].map(([label, done]) => (
-              <div key={String(label)} style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
-                <span style={{ color: done ? C.green : C.faint }}>{done ? '✓' : '○'}</span><span>{label}</span>
+          <div className="i2-step-list">
+            {attendanceSteps.map(([label, done]) => (
+              <div className="i2-step" key={label}>
+                <span className="i2-step-index" data-done={done}>{done ? <Check size={13} /> : '○'}</span>
+                <span>{label}</span>
               </div>
             ))}
           </div>
@@ -120,18 +135,26 @@ export default function CheckInScreen() {
 
         {message && <Alert title="Check-in not completed" tone="caution">{message}</Alert>}
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
-          {state === 'within_area' && !attendanceRecorded ? (
+        <div className="i2-action-stack">
+          {withinArea && !attendanceRecorded ? (
             <>
-              <PrimaryButton onClick={() => nav(`/cleanup/${event.beachId}?event=${encodeURIComponent(event.id)}`)}>Add a Cleanup to complete attendance</PrimaryButton>
+              <PrimaryButton onClick={() => nav(`/cleanup/${event.beachId}?event=${encodeURIComponent(event.id)}`)}>Add a Cleanup</PrimaryButton>
               <GhostButton onClick={() => nav(`/beach/${event.beachId}`)}>Report litter here instead</GhostButton>
             </>
-          ) : state === 'within_area' ? (
+          ) : attendanceRecorded ? (
             <PrimaryButton onClick={() => nav(`/events/${event.id}`)}>Back to event</PrimaryButton>
           ) : (
-            <PrimaryButton onClick={checkIn} disabled={state === 'checking'}>{state === 'checking' ? 'Checking…' : state === 'idle' ? 'Check in — use my location now' : 'Retry check-in'}</PrimaryButton>
+            <>
+              <PrimaryButton onClick={checkIn} disabled={state === 'checking'}>{state === 'checking' ? 'Checking…' : state === 'idle' ? 'Check in — use my location' : 'Retry location'}</PrimaryButton>
+              {locationFailed && (
+                <>
+                  <GhostButton onClick={() => nav(`/cleanup/${event.beachId}?event=${encodeURIComponent(event.id)}`)}>Add a Cleanup</GhostButton>
+                  <GhostButton onClick={() => nav(`/beach/${event.beachId}`)}>Report litter here instead</GhostButton>
+                </>
+              )}
+            </>
           )}
-          <GhostButton onClick={() => nav(`/events/${event.id}`)}>Back to activity</GhostButton>
+          {!attendanceRecorded && <GhostButton onClick={() => nav(`/events/${event.id}`)}>Back to activity</GhostButton>}
         </div>
         <p style={{ margin: 0, textAlign: 'center', color: C.dim, fontSize: 11 }}>Being nearby is not proof of a cleanup.</p>
       </div>

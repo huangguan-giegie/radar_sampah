@@ -33,6 +33,7 @@ import SubmittedScreen from './screens/SubmittedScreen';
 import MyReportsScreen from './screens/MyReportsScreen';
 import ReportDetailScreen from './screens/ReportDetailScreen';
 import AccountScreen from './screens/AccountScreen';
+import AdminAccessDeniedScreen from './screens/AdminAccessDeniedScreen';
 const CommunityScreen = lazy(() => import('./screens/CommunityScreen'));
 const EventScreen = lazy(() => import('./screens/EventScreen'));
 const CheckInScreen = lazy(() => import('./screens/CheckInScreen'));
@@ -79,7 +80,7 @@ function RequireAdmin({ children }: { children: JSX.Element }) {
   const { pathname, search } = useLocation();
   if (!authReady) return null;
   if (!user) return <Navigate to={`/identity?next=${encodeURIComponent(pathname + search)}`} replace />;
-  if (user.role !== 'moderator') return <Navigate to="/community" replace />;
+  if (user.role !== 'moderator') return <AdminAccessDeniedScreen />;
   return children;
 }
 
@@ -135,6 +136,8 @@ export default function App() {
             ? 'Cleanup activity result'
             : pathname.startsWith('/events/')
               ? 'Cleanup activity'
+              : pathname === '/platform/events/new'
+                ? 'Create an activity'
               : pathname.startsWith('/cleanup/result/')
                 ? 'Cleanup result'
                 : pathname.startsWith('/cleanup/')

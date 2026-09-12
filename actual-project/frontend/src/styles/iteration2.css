@@ -98,6 +98,26 @@
   box-shadow: 0 24px 46px -30px rgba(8, 23, 57, 0.8);
 }
 
+.i2-hero-compact {
+  border-radius: 22px;
+  padding: 17px;
+}
+
+.i2-event-meta {
+  display: grid;
+  gap: 7px;
+  margin-top: 14px;
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 12px;
+}
+
+.i2-event-meta span {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
 .i2-stat-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -184,9 +204,219 @@
   background: rgba(11, 33, 97, 0.08);
 }
 
+.i2-step-list {
+  display: grid;
+  gap: 10px;
+  margin-top: 13px;
+}
+
+.i2-step {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #5a6474;
+  font-size: 12.5px;
+  line-height: 1.35;
+}
+
+.i2-step-index {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 1px solid rgba(11, 33, 97, 0.14);
+  color: #788293;
+  display: grid;
+  place-items: center;
+  flex: none;
+  font-size: 10.5px;
+  font-weight: 750;
+}
+
+.i2-step-index[data-done='true'] {
+  border-color: rgba(21, 126, 78, 0.18);
+  background: #eaf8ef;
+  color: #157e4e;
+}
+
+.i2-action-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.i2-share-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 7px;
+  margin-top: 11px;
+}
+
+.i2-share-button {
+  min-height: 44px;
+  border-radius: 14px;
+  border: 1.5px solid rgba(11, 33, 97, 0.13);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  color: #0b2161;
+  background: #fff;
+  text-decoration: none;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.i2-share-button.btn-primary {
+  border-color: #0b2161;
+  background: #0b2161;
+  color: #fff;
+}
+
+.i2-copy-success,
+.i2-share-button.btn-primary.i2-copy-success {
+  border-color: #157e4e;
+  background: #157e4e;
+  color: #fff;
+}
+
+.btn-primary.i2-copy-success:hover {
+  background: #157e4e !important;
+}
+
+.i2-event-strip {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.i2-event-strip strong {
+  display: block;
+  color: #26303f;
+  font-size: 14px;
+}
+
+.i2-event-strip span span {
+  display: block;
+  margin-top: 4px;
+  color: #5a6474;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.i2-checkin-status {
+  min-height: 72px;
+  padding: 15px 16px;
+  border: 1px solid rgba(11, 33, 97, 0.09);
+  border-radius: 20px;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.i2-checkin-status.is-success {
+  border-color: #0b2161;
+  background: #0b2161;
+  color: #fff;
+}
+
+.i2-checkin-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: #b8ff36;
+  display: grid;
+  place-items: center;
+  flex: none;
+}
+
+.i2-checkin-status strong {
+  display: block;
+  color: #26303f;
+  font-size: 14px;
+}
+
+.i2-checkin-status.is-success strong {
+  color: #fff;
+}
+
+.i2-checkin-status div span {
+  display: block;
+  margin-top: 3px;
+  color: #5a6474;
+  font-size: 10.5px;
+  line-height: 1.4;
+}
+
+.i2-checkin-status.is-success div span {
+  color: rgba(255, 255, 255, 0.74);
+}
+
+.i2-confirmed-row {
+  min-height: 46px;
+  padding: 11px 14px;
+  border: 1px solid rgba(21, 126, 78, 0.18);
+  border-radius: 15px;
+  background: #eaf8ef;
+  color: #157e4e;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 12.5px;
+}
+
+.i2-privacy-note {
+  margin-top: -6px;
+  padding-inline: 3px;
+  color: #788293;
+  font-size: 10.5px;
+  line-height: 1.45;
+}
+
+.i2-link-field {
+  width: 100%;
+  min-height: 40px;
+  border: 1px solid rgba(11, 33, 97, 0.14);
+  border-radius: 13px;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 9px 11px;
+  color: #5a6474;
+  text-align: left;
+}
+
+.i2-link-field span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 10.5px;
+}
+
+.i2-link-field strong {
+  flex: none;
+  color: #0b2161;
+  font-size: 10.5px;
+}
+
+.i2-link-field.is-copied {
+  border-color: rgba(21, 126, 78, 0.25);
+  background: #eaf8ef;
+}
+
+.i2-link-field.is-copied strong {
+  color: #157e4e;
+}
+
 @media (max-width: 380px) {
   .i2-page {
     padding-inline: 16px;
   }
   .i2-event-card { grid-template-columns: 50px minmax(0, 1fr) auto; }
+  .i2-share-grid { grid-template-columns: 1fr; }
 }
