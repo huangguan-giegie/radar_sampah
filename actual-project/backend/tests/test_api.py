@@ -18,11 +18,15 @@ from sqlalchemy import insert, select
 os.environ.setdefault("AUTH_JWT_SECRET", "test-only-secret-not-for-production")
 
 from app import (
+    cleanup_actions_table,
     create_app,
+    event_members_table,
+    events_table,
     photo_file_path,
     read_photo_metadata,
     reports_table,
     sweep_orphan_photos,
+    users_table,
     write_photo_metadata,
 )
 
@@ -243,7 +247,10 @@ def test_anonymous_auth_restore_and_me(api):
     assert session["user"]["role"] == "volunteer"
     assert client.get("/auth/me", headers=headers).get_json() == session["user"]
 
-    restored = client.post("/auth/restore", json={"participantId": session["user"]["participantId"]})
+    restored = client.post(
+        "/auth/restore",
+        json={"participantId": session["user"]["participantId"], "token": session["recoveryToken"]},
+    )
     assert restored.status_code == 200
     assert restored.get_json()["user"] == session["user"]
     assert client.post("/auth/logout", headers=headers).status_code == 204
@@ -654,3 +661,177 @@ def test_report_rate_limit_is_per_user(api):
     limited = client.post("/reports", headers=headers, json=payload)
     assert limited.status_code == 429
     assert limited.get_json()["code"] == "RATE_LIMITED"
+
+
+def test_recovery_token_is_required_for_normal_participants(api):
+    _application, client = api
+    session, _headers = signup(client)
+    participant_id = session["user"]["participantId"]
+
+    missing = client.post("/auth/restore", json={"participantId": participant_id})
+    wrong = client.post("/auth/restore", json={"participantId": participant_id, "token": "wrong-token"})
+    restored = client.post("/auth/restore", json={"participantId": participant_id, "token": session["recoveryToken"]})
+
+    assert missing.status_code == 401
+    assert wrong.status_code == 401
+    assert restored.status_code == 200
+    assert restored.get_json()["user"] == session["user"]
+
+
+def test_model_recognition_falls_back_to_manual_when_weights_are_unavailable(api):
+    _application, client = api
+    _session, headers = signup(client)
+    photo = upload(client, headers)
+
+    response = client.post("/recognitions", headers=headers, json={"photoKey": photo["photoKey"]})
+
+    assert response.status_code == 200
+    result = response.get_json()
+    assert result["state"] == "unavailable"
+    assert result["modelVersion"]
+    assert result["manualEntryRequired"] is True
+    assert result["quantityBands"] == {}
+
+
+def test_iteration2_report_supports_repeated_partial_cleanup_and_private_location(api):
+    application, client = api
+    _session, headers = signup(client)
+    photo = upload(client, headers)
+    payload = {
+        "beachId": "morib",
+        "photoKey": photo["photoKey"],
+        "locationSource": "gps",
+        "coords": {"lat": 2.74614, "lng": 101.44024},
+        "itemCounts": {"Plastic": 8, "Other": 2},
+    }
+    created = client.post("/reports", headers=headers, json=payload)
+    assert created.status_code == 201
+    report = created.get_json()
+    assert report["quantities"] == {"Plastic": "Medium", "Other": "Small"}
+    assert report["itemCounts"] == {"Plastic": 8, "Other": 2}
+    assert report["remainingItemCounts"] == report["itemCounts"]
+    assert client.get("/cleanup-targets?beachId=morib").get_json()[0]["remaining"] == report["itemCounts"]
+
+    engine = application.extensions["marine_engine"]
+    with engine.connect() as connection:
+        row = connection.execute(select(reports_table).where(reports_table.c.id == report["id"])).one()
+    assert row.lat is None and row.lng is None
+    assert len(row.proximity_ref) == 64
+
+    first_payload = {
+        "targetReportId": report["id"],
+        "removedCounts": {"Plastic": 3},
+        "handling": "Recycled / handled",
+        "idempotencyKey": "iteration2-cleanup-1",
+    }
+    first = client.post("/cleanup-actions", headers=headers, json=first_payload)
+    assert first.status_code == 201
+    assert first.get_json()["rows"] == [{"category": "Plastic", "removed": 3, "before": 8, "after": 5}]
+    retry = client.post("/cleanup-actions", headers=headers, json=first_payload)
+    assert retry.status_code == 200
+    assert retry.get_json()["id"] == first.get_json()["id"]
+    conflict = client.post("/cleanup-actions", headers=headers, json={
+        **first_payload,
+        "removedCounts": {"Plastic": 2},
+    })
+    assert conflict.status_code == 409
+    assert conflict.get_json()["code"] == "IDEMPOTENCY_CONFLICT"
+
+    second = client.post("/cleanup-actions", headers=headers, json={
+        "targetReportId": report["id"],
+        "removedCounts": {"Plastic": 5, "Other": 2},
+        "handling": "Collected for disposal",
+        "idempotencyKey": "iteration2-cleanup-2",
+    })
+    assert second.status_code == 201
+    assert client.get("/cleanup-targets?beachId=morib").get_json() == []
+    mine = client.get("/reports/mine", headers=headers).get_json()
+    assert mine[0]["itemCounts"] == {"Plastic": 8, "Other": 2}
+    assert mine[0]["remainingItemCounts"] == {}
+    assert len(client.get("/cleanups/mine", headers=headers).get_json()) == 2
+
+
+def test_iteration2_gps_rejects_a_report_near_an_active_target(api):
+    _application, client = api
+    _first, first_headers = signup(client)
+    _second, second_headers = signup(client)
+    first_photo = upload(client, first_headers)
+    first = client.post("/reports", headers=first_headers, json={
+        "beachId": "morib",
+        "photoKey": first_photo["photoKey"],
+        "locationSource": "gps",
+        "coords": {"lat": 2.74614, "lng": 101.44024},
+        "itemCounts": {"Plastic": 4},
+    })
+    assert first.status_code == 201
+    second_photo = upload(client, second_headers)
+    nearby = client.post("/reports", headers=second_headers, json={
+        "beachId": "morib",
+        "photoKey": second_photo["photoKey"],
+        "locationSource": "gps",
+        "coords": {"lat": 2.74618, "lng": 101.44024},
+        "itemCounts": {"Glass": 1},
+    })
+    assert nearby.status_code == 409
+    assert nearby.get_json()["code"] == "ACTIVE_CLEANUP_TARGET_NEARBY"
+
+
+def test_events_require_join_location_and_evidence_for_attendance(api):
+    application, client = api
+    session, headers = signup(client)
+    event = next(item for item in client.get("/events?beachId=morib").get_json() if item["beachId"] == "morib")
+    now = datetime.now(timezone.utc)
+    with application.extensions["marine_engine"].begin() as connection:
+        connection.execute(events_table.update().where(events_table.c.id == event["id"]).values(
+            starts_at=now - timedelta(minutes=1),
+            ends_at=now + timedelta(hours=2),
+            status="Open",
+        ))
+
+    joined = client.post(f"/events/{event['id']}/join", headers=headers)
+    assert joined.status_code == 200
+    checkin = client.post(f"/events/{event['id']}/check-in", headers=headers, json={"lat": 2.746, "lng": 101.440})
+    assert checkin.status_code == 200
+    assert checkin.get_json()["checkedIn"] is True
+    assert checkin.get_json()["attendanceConfirmed"] is False
+
+    photo = upload(client, headers)
+    report = client.post("/reports", headers=headers, json={
+        "beachId": "morib",
+        "photoKey": photo["photoKey"],
+        "locationSource": "manual",
+        "itemCounts": {"Plastic": 1},
+        "eventId": event["id"],
+    })
+    assert report.status_code == 201
+    attended = client.get(f"/events/{event['id']}", headers=headers).get_json()
+    assert attended["attendanceConfirmed"] is True
+    assert session["user"]["participantId"] in attended["joinedBy"]
+    assert session["user"]["participantId"] in attended["checkIns"]
+    assert session["user"]["participantId"] in attended["attendanceBy"]
+    with application.extensions["marine_engine"].connect() as connection:
+        membership = connection.execute(select(event_members_table).where(
+            event_members_table.c.event_id == event["id"],
+            event_members_table.c.participant_id == session["user"]["id"],
+        )).one()
+    assert membership.location_passed is True
+    assert membership.checked_in_at is not None
+
+
+def test_only_moderator_can_manage_events(api):
+    application, client = api
+    _session, headers = signup(client)
+    starts = (datetime.now(timezone.utc) + timedelta(days=10)).replace(hour=1, minute=0, second=0, microsecond=0)
+    payload = {
+        "beachId": "morib",
+        "startsAt": starts.isoformat(),
+        "endsAt": (starts + timedelta(hours=2)).isoformat(),
+    }
+    denied = client.post("/events", headers=headers, json=payload)
+    assert denied.status_code == 403
+    assert denied.get_json()["code"] == "MODERATOR_REQUIRED"
+    with application.extensions["marine_engine"].begin() as connection:
+        connection.execute(users_table.update().where(users_table.c.id == _session["user"]["id"]).values(role="moderator"))
+    created = client.post("/events", headers=headers, json=payload)
+    assert created.status_code == 201
+    assert created.get_json()["source"] == "moderator"

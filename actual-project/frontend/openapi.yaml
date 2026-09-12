@@ -62,15 +62,18 @@ paths:
           application/json:
             schema:
               type: object
-              required: [participantId]
+              required: [participantId, token]
               properties:
                 participantId: { type: string, example: "1637" }
+                token: { type: string, description: "Recovery token returned once at anonymous signup" }
       responses:
         "200":
           description: session
           content:
             application/json:
               schema: { $ref: "#/components/schemas/AuthSession" }
+        "401":
+          $ref: "#/components/responses/Error"
         "404":
           $ref: "#/components/responses/Error"
 
@@ -331,6 +334,7 @@ components:
       required: [token, user]
       properties:
         token: { type: string, description: "JWT, valid for 30 days" }
+        recoveryToken: { type: string, description: "Returned once by signup; store securely" }
         user: { $ref: "#/components/schemas/User" }
 
     SeverityBand:

@@ -22,7 +22,7 @@ CREATE TABLE users (
   participant_id text        NOT NULL UNIQUE,          -- '1637', four digits
   role           text        NOT NULL DEFAULT 'volunteer'
                              CHECK (role IN ('volunteer','moderator')),
-  user_token     text,
+  user_token     text,                                  -- SHA-256 recovery-token digest; never the raw token
   created_at     timestamptz NOT NULL DEFAULT now()
   -- No name, email or phone column of any kind. API.md §9 states this as a rule,
   -- not as an omission — adding one later is a DMP change, not a schema change.
@@ -180,6 +180,13 @@ CREATE TABLE reports (
   lat             numeric(9,3),
   lng             numeric(9,3),
 
+  -- Iteration 2 stores actual whole-item counts separately from the v1 bands.
+  -- The original GPS coordinate is not saved for v2 reports: proximity_ref is
+  -- a keyed, target-scoped HMAC of a roughly one-metre projected grid cell.
+  item_counts     text,
+  proximity_ref   char(64),
+  event_id        text,
+
   status          text        NOT NULL DEFAULT 'Counted'
                   CHECK (status IN ('Counted','Duplicate','Incomplete')),   -- types.ts:7
   status_note     text,                                -- why it was excluded, shown to the user
@@ -222,6 +229,65 @@ CREATE TABLE community_cleanup (
   cleaner_id     text        NOT NULL REFERENCES users(id),
   community_date timestamptz NOT NULL
 );
+
+-- ---------------------------------------------------------------------------
+-- community_events — scheduled Saturday beach cleanups and moderator-created
+-- activities. Event times are stored in UTC; API responses are Kuala Lumpur.
+-- ---------------------------------------------------------------------------
+CREATE TABLE community_events (
+  id          text PRIMARY KEY,
+  beach_id    text NOT NULL REFERENCES beaches(id),
+  starts_at   timestamptz NOT NULL,
+  ends_at     timestamptz NOT NULL,
+  status      text NOT NULL CHECK (status IN ('Open','Closed')),
+  source      text NOT NULL CHECK (source IN ('scheduled','moderator')),
+  created_by  text REFERENCES users(id),
+  created_at  timestamptz NOT NULL DEFAULT now(),
+  updated_at  timestamptz NOT NULL DEFAULT now(),
+  CHECK (ends_at > starts_at),
+  UNIQUE (beach_id, starts_at)
+);
+
+CREATE INDEX community_events_window ON community_events (beach_id, starts_at);
+
+-- ---------------------------------------------------------------------------
+-- community_event_members — joining is separate from attendance. Exact check-in
+-- coordinates are request-only; only the pass result and timestamp are kept.
+-- Attendance is computed from join + passed proximity + same-event evidence.
+-- ---------------------------------------------------------------------------
+CREATE TABLE community_event_members (
+  event_id       text NOT NULL REFERENCES community_events(id) ON DELETE CASCADE,
+  participant_id text NOT NULL REFERENCES users(id),
+  joined_at      timestamptz NOT NULL DEFAULT now(),
+  checked_in_at  timestamptz,
+  location_passed boolean NOT NULL DEFAULT false,
+  PRIMARY KEY (event_id, participant_id),
+  CHECK (location_passed = (checked_in_at IS NOT NULL))
+);
+
+-- ---------------------------------------------------------------------------
+-- cleanup_actions — append-only partial cleanup records. Multiple actions may
+-- reduce one target until its remaining item counts reach zero. No points.
+-- ---------------------------------------------------------------------------
+CREATE TABLE cleanup_actions (
+  id                text PRIMARY KEY,
+  target_report_id  text NOT NULL REFERENCES reports(id),
+  participant_id    text NOT NULL REFERENCES users(id),
+  event_id          text REFERENCES community_events(id),
+  beach_id          text NOT NULL REFERENCES beaches(id),
+  removed_counts    text NOT NULL,
+  rows              text NOT NULL,
+  total_removed     integer NOT NULL CHECK (total_removed > 0),
+  handling          text NOT NULL CHECK (handling IN
+                    ('Collected for disposal','Recycled / handled','Not recorded')),
+  note              text,
+  idempotency_key   varchar(128) NOT NULL,
+  request_fingerprint char(64) NOT NULL,
+  created_at        timestamptz NOT NULL DEFAULT now(),
+  UNIQUE (participant_id, idempotency_key)
+);
+
+CREATE INDEX cleanup_actions_target ON cleanup_actions (target_report_id, created_at);
 
 COMMIT;
 

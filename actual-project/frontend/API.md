@@ -79,6 +79,7 @@
 // 201
 {
   "token": "eyJhbGciOi...",
+  "recoveryToken": "show once and store securely",
   "user": { "id": "u_01H...", "participantId": "1637", "role": "volunteer" }
 }
 ```
@@ -87,19 +88,17 @@
 
 ```json
 // 请求
-{ "participantId": "1637" }
+{ "participantId": "1637", "token": "<recoveryToken>" }
 // 200 —— 同上
 ```
 
 **GET `/auth/me`** 返回 `user`；token 无效返回 401。
 
 - `participantId`：4 位数字，随机生成，不重复
-- `role`：Iteration 1 只用 `"volunteer"`，`"moderator"` 是给后面迭代留的
+- `role`：`"volunteer"｜"moderator"`。Iteration 2 的 `moderator` 是活动管理员，负责创建、修改和关闭活动；举报审核不在本迭代范围内。账号由后端配置，不允许客户端自行提升权限
 - token 用 JWT 就行，有效期给长一点（30 天），不用做 refresh
 
-> **一句话提醒（不影响本次开发）**：编号本身就是凭证，所以任何人输入 `1637`
-> 都能看到 1637 的记录。这次是 MVP、数据是合成的，够用。
-> 如果以后要收真实投稿，这一层需要加密码 —— 到时候再说，现在不做。
+恢复令牌只在创建参与者时返回一次，服务端只存 SHA-256 摘要。恢复时必须同时提供编号和令牌；只有受控演示账号 `DEMO_PARTICIPANT_ID` 可以仅用编号恢复。Moderator 账号通过后端脚本创建，不能从客户端升级。
 
 ## 2. 海滩
 

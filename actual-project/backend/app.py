@@ -8,6 +8,8 @@ server-side data and are deliberately excluded from response serializers.
 from __future__ import annotations
 
 import json
+import hashlib
+import hmac
 import math
 import os
 import re
@@ -35,10 +37,13 @@ from sqlalchemy import (
     DateTime,
     Float,
     ForeignKey,
+    Index,
+    Integer,
     MetaData,
     String,
     Table,
     Text,
+    UniqueConstraint,
     create_engine,
     insert,
     inspect,
@@ -46,6 +51,7 @@ from sqlalchemy import (
     text,
 )
 from sqlalchemy.engine import Engine
+from sqlalchemy.exc import IntegrityError
 from werkzeug.exceptions import HTTPException
 from werkzeug.exceptions import RequestEntityTooLarge
 
@@ -65,6 +71,7 @@ LOCAL_DATABASE_URL = "sqlite:///radar_sampah.db"
 KUALA_LUMPUR = timezone(timedelta(hours=8))
 AUTH_JWT_ALGORITHM = "HS256"
 AUTH_TOKEN_TTL_DAYS = 30
+RECOVERY_TOKEN_BYTES = 32
 PHOTO_URL_TTL_MINUTES = 15
 PHOTO_MAX_BYTES = 10 * 1024 * 1024
 PHOTO_MAX_EDGE = 2048
@@ -72,6 +79,23 @@ PHOTO_ORPHAN_TTL = timedelta(hours=24)
 PARTICIPANT_ID_MIN = 1000
 PARTICIPANT_ID_MAX = 9999
 DEFAULT_VOLUNTEER_ROLE = "volunteer"
+ITERATION2_CATEGORIES = {
+    "plastic": "Plastic",
+    "metal": "Metal",
+    "glass": "Glass",
+    "paper_cardboard": "Paper",
+    "styrofoam": "Other",
+    "fishing_gear": "Fishing gear",
+}
+ITEM_COUNT_BANDS = ((5, "Small"), (20, "Medium"), (50, "Large"), (None, "Very Large"))
+ITEM_COUNT_LIMIT = 100_000
+ACTIVE_TARGET_RADIUS_METRES = 10
+EVENT_CHECKIN_RADIUS_KM = 25
+EVENT_START_LOCAL_HOUR = 9
+EVENT_END_LOCAL_HOUR = 12
+EVENTS_PER_BEACH = 4
+GEO_GRID_METRES = 1
+GEO_HMAC_CONTEXT = b"radar-sampah-proximity-v1"
 
 FRONTEND_CATEGORIES = ("Fishing gear", "Plastic", "Glass", "Metal", "Other", "Paper")
 CATEGORY_WEIGHTS = {
@@ -96,6 +120,8 @@ SCORING_BANDS = (
 )
 PHOTO_MIME_TYPES = {"image/jpeg", "image/png", "image/heic", "image/heif"}
 REPORT_INPUT_FIELDS = {"beachId", "quantities", "photoKey", "locationSource", "coords"}
+ITERATION2_REPORT_FIELDS = {"itemCounts", "eventId"}
+EVENT_HANDLING_VALUES = {"Collected for disposal", "Recycled / handled", "Not recorded"}
 BEACH_SUMMARY_FIELDS = (
     "id",
     "name",
@@ -119,6 +145,7 @@ users_table = Table(
     Column("id", String(80), primary_key=True),
     Column("participant_id", String(4), nullable=False, unique=True),
     Column("role", String(20), nullable=False, default=DEFAULT_VOLUNTEER_ROLE),
+    Column("user_token", String(128)),
     Column("created_at", DateTime(timezone=True), nullable=False),
 )
 
@@ -153,12 +180,60 @@ reports_table = Table(
     Column("quantity", String(20), nullable=False),
     Column("lat", Float),
     Column("lng", Float),
+    Column("item_counts", Text),
+    Column("proximity_ref", String(64)),
+    Column("event_id", String(100)),
     Column("status", String(20), nullable=False),
     Column("status_note", Text),
     Column("created_at", DateTime(timezone=True), nullable=False),
     Column("updated_at", DateTime(timezone=True), nullable=False),
     Column("deleted_at", DateTime(timezone=True)),
 )
+
+i2_metadata = MetaData()
+events_table = Table(
+    "community_events",
+    i2_metadata,
+    Column("id", String(100), primary_key=True),
+    Column("beach_id", String(80), nullable=False),
+    Column("starts_at", DateTime(timezone=True), nullable=False),
+    Column("ends_at", DateTime(timezone=True), nullable=False),
+    Column("status", String(20), nullable=False),
+    Column("source", String(20), nullable=False),
+    Column("created_by", String(80)),
+    Column("created_at", DateTime(timezone=True), nullable=False),
+    Column("updated_at", DateTime(timezone=True), nullable=False),
+    UniqueConstraint("beach_id", "starts_at", name="community_events_beach_start"),
+)
+event_members_table = Table(
+    "community_event_members",
+    i2_metadata,
+    Column("event_id", String(100), primary_key=True),
+    Column("participant_id", String(80), primary_key=True),
+    Column("joined_at", DateTime(timezone=True), nullable=False),
+    Column("checked_in_at", DateTime(timezone=True)),
+    Column("location_passed", Boolean, nullable=False, default=False),
+)
+cleanup_actions_table = Table(
+    "cleanup_actions",
+    i2_metadata,
+    Column("id", String(40), primary_key=True),
+    Column("target_report_id", String(40), nullable=False),
+    Column("participant_id", String(80), nullable=False),
+    Column("event_id", String(100)),
+    Column("beach_id", String(80), nullable=False),
+    Column("removed_counts", Text, nullable=False),
+    Column("rows", Text, nullable=False),
+    Column("total_removed", Integer, nullable=False),
+    Column("handling", String(40), nullable=False),
+    Column("note", Text),
+    Column("idempotency_key", String(128), nullable=False),
+    Column("request_fingerprint", String(64), nullable=False),
+    Column("created_at", DateTime(timezone=True), nullable=False),
+    UniqueConstraint("participant_id", "idempotency_key", name="cleanup_actions_idempotency"),
+)
+Index("cleanup_actions_target", cleanup_actions_table.c.target_report_id)
+Index("community_events_window", events_table.c.beach_id, events_table.c.starts_at)
 
 
 def normalise_database_url(database_url: str | None) -> str:
@@ -195,9 +270,23 @@ def initialise_database(engine: Engine) -> None:
     """Create the schema and preserve reports written under the former name."""
     migrate_legacy_reports_table(engine)
     metadata.create_all(engine)
-    ensure_demo_participant(engine)
+    ensure_user_columns(engine)
     ensure_report_columns(engine)
+    i2_metadata.create_all(engine)
+    ensure_demo_participant(engine)
     repair_existing_reports(engine)
+
+
+def ensure_user_columns(engine: Engine) -> None:
+    schema = database_schema() if engine.dialect.name != "sqlite" else None
+    if "users" not in inspect(engine).get_table_names(schema=schema):
+        return
+    existing = {column["name"] for column in inspect(engine).get_columns("users", schema=schema)}
+    if "user_token" in existing:
+        return
+    user_table = "users" if schema is None else f'"{schema}".users'
+    with engine.begin() as connection:
+        connection.execute(text(f"ALTER TABLE {user_table} ADD COLUMN user_token VARCHAR(128)"))
 
 
 def ensure_demo_participant(engine: Engine) -> None:
@@ -260,6 +349,9 @@ def ensure_report_columns(engine: Engine) -> None:
         **{column: "VARCHAR(20)" for column in QUANTITY_COLUMNS.values()},
         "lat": "DOUBLE PRECISION",
         "lng": "DOUBLE PRECISION",
+        "item_counts": "TEXT",
+        "proximity_ref": "VARCHAR(64)",
+        "event_id": "VARCHAR(100)",
         "status_note": "TEXT",
         "updated_at": "TIMESTAMP WITH TIME ZONE",
         "deleted_at": "TIMESTAMP WITH TIME ZONE",
@@ -426,6 +518,99 @@ def report_score_for(quantities: dict[str, str]) -> float:
     return max(category_scores_for(quantities).values())
 
 
+def band_for_item_count(count: int) -> str:
+    for upper, band in ITEM_COUNT_BANDS:
+        if upper is None or count <= upper:
+            return band
+    return "Very Large"
+
+
+def quantity_bands_for_counts(item_counts: dict[str, int]) -> dict[str, str]:
+    return {
+        category: band_for_item_count(count)
+        for category, count in item_counts.items()
+        if count > 0
+    }
+
+
+def validate_item_counts(value: Any) -> dict[str, int] | None:
+    if not isinstance(value, dict) or not value:
+        return None
+    if any(category not in CATEGORY_WEIGHTS for category in value):
+        return None
+    counts: dict[str, int] = {}
+    for category, count in value.items():
+        if isinstance(count, bool) or not isinstance(count, int) or not 0 <= count <= ITEM_COUNT_LIMIT:
+            return None
+        if count > 0:
+            counts[category] = count
+    return counts or None
+
+
+def remaining_counts_for(report: Any, actions: list[Any]) -> dict[str, int]:
+    try:
+        original = json.loads(report.item_counts or "{}")
+    except (TypeError, ValueError):
+        return {}
+    remaining = {category: int(count) for category, count in original.items() if int(count) > 0}
+    for action in actions:
+        try:
+            removed = json.loads(action.removed_counts)
+        except (TypeError, ValueError):
+            continue
+        for category, count in removed.items():
+            remaining[category] = max(0, remaining.get(category, 0) - int(count))
+    return {category: count for category, count in remaining.items() if count > 0}
+
+
+def recovery_token_digest(recovery_token: str) -> str:
+    return hashlib.sha256(recovery_token.encode("utf-8")).hexdigest()
+
+
+def create_recovery_token() -> str:
+    return secrets.token_urlsafe(RECOVERY_TOKEN_BYTES)
+
+
+def projected_grid(lat: float, lng: float) -> tuple[int, int]:
+    """Return a roughly one-metre Web Mercator grid cell (all project beaches are tropical)."""
+    latitude = min(85.05112878, max(-85.05112878, lat))
+    radius = 6_378_137.0
+    x = radius * math.radians(lng)
+    y = radius * math.log(math.tan(math.pi / 4 + math.radians(latitude) / 2))
+    return math.floor(x / GEO_GRID_METRES), math.floor(y / GEO_GRID_METRES)
+
+
+def proximity_ref(lat: float, lng: float, target_id: str, secret: str) -> str:
+    cell_x, cell_y = projected_grid(lat, lng)
+    return proximity_ref_for_cell(cell_x, cell_y, target_id, secret)
+
+
+def proximity_ref_for_cell(cell_x: int, cell_y: int, target_id: str, secret: str) -> str:
+    message = b"|".join((GEO_HMAC_CONTEXT, target_id.encode("utf-8"), str(cell_x).encode(), str(cell_y).encode()))
+    return hmac.new(secret.encode("utf-8"), message, hashlib.sha256).hexdigest()
+
+
+def nearby_proximity_refs(lat: float, lng: float, target_id: str, secret: str) -> set[str]:
+    cell_x, cell_y = projected_grid(lat, lng)
+    # Include every one-metre cell that can intersect a 10 m circle. The extra
+    # half-diagonal makes boundary decisions conservative by at most ~1.5 m.
+    radius_cells = ACTIVE_TARGET_RADIUS_METRES + 1.5
+    extent = math.ceil(radius_cells)
+    return {
+        proximity_ref_for_cell(cell_x + dx, cell_y + dy, target_id, secret)
+        for dy in range(-extent, extent + 1)
+        for dx in range(-extent, extent + 1)
+        if math.hypot(dx, dy) <= radius_cells
+    }
+
+
+def distance_km(lat1: float, lng1: float, lat2: float, lng2: float) -> float:
+    phi1, phi2 = math.radians(lat1), math.radians(lat2)
+    dphi, dlambda = math.radians(lat2 - lat1), math.radians(lng2 - lng1)
+    haversine = math.sin(dphi / 2) ** 2 + math.cos(phi1) * math.cos(phi2) * math.sin(dlambda / 2) ** 2
+    return 6371.0088 * 2 * math.asin(math.sqrt(min(1.0, haversine)))
+
+
 def quantities_from_row(row: Any) -> dict[str, str]:
     return {
         category: getattr(row, column)
@@ -458,6 +643,41 @@ def severity_for(rows: list[Any]) -> tuple[str | None, int | None]:
     return "Severe", 4
 
 
+def remaining_count_attention(engine: Engine, rows: list[Any]) -> float | None:
+    if len(rows) < 3:
+        return None
+    counted_rows = [row for row in rows if getattr(row, "item_counts", None)]
+    if not counted_rows:
+        return attention_score_for(rows)
+    report_ids = [row.id for row in counted_rows]
+    with engine.connect() as connection:
+        actions = connection.execute(
+            select(cleanup_actions_table).where(cleanup_actions_table.c.target_report_id.in_(report_ids))
+        ).all()
+    actions_by_report: defaultdict[str, list[Any]] = defaultdict(list)
+    for action in actions:
+        actions_by_report[action.target_report_id].append(action)
+    aggregate = {category: 0 for category in CATEGORY_WEIGHTS}
+    for row in counted_rows:
+        for category, count in remaining_counts_for(row, actions_by_report[row.id]).items():
+            aggregate[category] += count
+    scores = [CATEGORY_WEIGHTS[category] * QUANTITY_WEIGHTS[band_for_item_count(count)] for category, count in aggregate.items() if count > 0]
+    # A zero means the whole recent count-backed backlog has been cleared.
+    return max(scores, default=0.0)
+
+
+def severity_from_score(score: float | None) -> tuple[str | None, int | None]:
+    if score is None:
+        return None, None
+    if score < 1.5:
+        return "Low", 1
+    if score < 2.5:
+        return "Moderate", 2
+    if score < 3.5:
+        return "High", 3
+    return "Severe", 4
+
+
 def beach_summary(engine: Engine, beach: dict[str, Any], now: datetime | None = None) -> dict[str, Any]:
     current_time = now or datetime.now(timezone.utc)
     cutoff = current_time - timedelta(days=90)
@@ -469,8 +689,8 @@ def beach_summary(engine: Engine, beach: dict[str, Any], now: datetime | None = 
             )
         ).all()
     eligible = [row for row in all_counted if utc_datetime(row.created_at) >= cutoff]
-    attention_score = attention_score_for(eligible)
-    severity, band = severity_for(eligible)
+    attention_score = remaining_count_attention(engine, eligible)
+    severity, band = severity_from_score(attention_score)
     newest = max(all_counted, key=lambda row: utc_datetime(row.created_at), default=None)
     newest_at = utc_datetime(newest.created_at) if newest else None
     if newest_at is None:
@@ -611,7 +831,14 @@ def schedule_orphan_cleanup(engine: Engine, directory: Path, photo_key: str, cre
     return timer
 
 
-def report_dict(row: Any, viewer_id: str, jwt_secret: str, directory: Path, beach_names: dict[str, str]) -> dict[str, Any]:
+def report_dict(
+    row: Any,
+    viewer_id: str,
+    jwt_secret: str,
+    directory: Path,
+    beach_names: dict[str, str],
+    engine: Engine | None = None,
+) -> dict[str, Any]:
     # Exact coordinates and photo bytes are never copied into this response.
     quantities = quantities_from_row(row)
     value: dict[str, Any] = {
@@ -629,6 +856,21 @@ def report_dict(row: Any, viewer_id: str, jwt_secret: str, directory: Path, beac
     }
     if row.status in REPORT_STATUS_NOTES:
         value["statusNote"] = REPORT_STATUS_NOTES[row.status]
+    if getattr(row, "item_counts", None):
+        try:
+            item_counts = json.loads(row.item_counts)
+        except (TypeError, ValueError):
+            item_counts = {}
+        value["itemCounts"] = item_counts
+        remaining = item_counts
+        if engine is not None:
+            with engine.connect() as connection:
+                actions = connection.execute(
+                    select(cleanup_actions_table).where(cleanup_actions_table.c.target_report_id == row.id)
+                ).all()
+            remaining = remaining_counts_for(row, actions)
+        value["remainingItemCounts"] = remaining
+        value["eventId"] = getattr(row, "event_id", None)
     if viewer_id == row.reporter_id:
         # The opaque key is returned only to the owner so an expired preview can be renewed.
         value["photoKey"] = row.photo_key
@@ -651,20 +893,27 @@ def validate_report_payload(
 ) -> tuple[dict[str, Any] | None, tuple[int, str, str] | None]:
     if not isinstance(payload, dict):
         return None, report_problem(400, "VALIDATION_FAILED", "A JSON object is required.")
-    if set(payload) - REPORT_INPUT_FIELDS:
+    if set(payload) - REPORT_INPUT_FIELDS - ITERATION2_REPORT_FIELDS:
         return None, report_problem(400, "VALIDATION_FAILED", "The report contains unsupported fields.")
 
     photo_key = str(payload.get("photoKey") or "").strip()
     if not photo_key:
         return None, report_problem(400, "PHOTO_REQUIRED", "A photo is required.")
 
+    item_counts = validate_item_counts(payload.get("itemCounts")) if "itemCounts" in payload else None
+    if "itemCounts" in payload and item_counts is None:
+        return None, report_problem(400, "VALIDATION_FAILED", "itemCounts must contain positive whole-item counts for valid categories.")
     quantities = payload.get("quantities")
+    if quantities is None and item_counts is not None:
+        quantities = quantity_bands_for_counts(item_counts)
     if (
         not isinstance(quantities, dict)
         or not quantities
         or any(category not in CATEGORY_WEIGHTS or quantity not in QUANTITY_WEIGHTS for category, quantity in quantities.items())
     ):
         return None, report_problem(400, "VALIDATION_FAILED", "Choose at least one valid category and quantity band.")
+    if item_counts is not None and quantities != quantity_bands_for_counts(item_counts):
+        return None, report_problem(400, "VALIDATION_FAILED", "quantity bands must match the submitted itemCounts.")
 
     beach_id = str(payload.get("beachId") or "").strip()
     beach = next((item for item in beaches if item["id"] == beach_id), None)
@@ -686,7 +935,7 @@ def validate_report_payload(
             return None, report_problem(400, "VALIDATION_FAILED", "lat and lng must be numbers.")
         if not math.isfinite(raw_lat) or not math.isfinite(raw_lng) or not -90 <= raw_lat <= 90 or not -180 <= raw_lng <= 180:
             return None, report_problem(400, "VALIDATION_FAILED", "lat or lng is outside its valid range.")
-        lat, lng = round(raw_lat, 3), round(raw_lng, 3)
+        lat, lng = (raw_lat, raw_lng) if item_counts is not None else (round(raw_lat, 3), round(raw_lng, 3))
     elif coords is not None:
         return None, report_problem(400, "VALIDATION_FAILED", "Manual reports must not include coordinates.")
 
@@ -695,6 +944,9 @@ def validate_report_payload(
         return None, report_problem(404, "NOT_FOUND", "Photo not found.")
 
     category, quantity = derive_category_quantity(quantities)
+    event_id = payload.get("eventId")
+    if event_id is not None and (not isinstance(event_id, str) or not event_id.strip() or len(event_id) > 100):
+        return None, report_problem(400, "VALIDATION_FAILED", "eventId must be a valid event identifier.")
     return {
         "beach": beach,
         "quantities": quantities,
@@ -706,6 +958,8 @@ def validate_report_payload(
         "location_source": location_source,
         "lat": lat,
         "lng": lng,
+        "item_counts": item_counts,
+        "event_id": event_id,
     }, None
 
 
@@ -741,12 +995,16 @@ def create_app(
 
     engine = create_engine_for_url(normalise_database_url(database_url or os.getenv("DATABASE_URL")))
     initialise_database(engine)
+    from recognition import LitterRecognizer
+
+    recognizer = LitterRecognizer.load()
     directory = photo_storage_path(photo_storage_dir)
     beaches = load_beaches(engine)
     beach_names = {beach["id"]: beach["name"] for beach in beaches}
     application.extensions["marine_engine"] = engine
     application.extensions["photo_storage_dir"] = directory
     application.extensions["photo_cleanup_timers"] = []
+    application.extensions["litter_recognizer"] = recognizer
     sweep_orphan_photos(engine, directory)
     for metadata_path in directory.glob("*.jpg.meta.json"):
         photo_key = metadata_path.name.removesuffix(".meta.json")
@@ -777,6 +1035,25 @@ def create_app(
 
         return wrapper
 
+    def require_moderator(view: Callable[..., Any]):
+        @wraps(view)
+        @require_auth
+        def wrapper(*args: Any, **kwargs: Any):
+            if request.current_user.role != "moderator":
+                return error_response(403, "MODERATOR_REQUIRED", "A moderator account is required to manage events.")
+            return view(*args, **kwargs)
+
+        return wrapper
+
+    def optional_current_user() -> Any | None:
+        header = request.headers.get("Authorization", "")
+        token = header[len("Bearer "):].strip() if header.startswith("Bearer ") else ""
+        user_id = decode_token_subject(token, jwt_secret) if token else None
+        if user_id is None:
+            return None
+        with engine.connect() as connection:
+            return connection.execute(select(users_table).where(users_table.c.id == user_id)).first()
+
     def rate_limited(bucket: str, limit: int):
         def decorator(view: Callable[..., Any]):
             @wraps(view)
@@ -793,6 +1070,163 @@ def create_app(
             return wrapper
 
         return decorator
+
+    def upcoming_saturdays(now: datetime) -> list[datetime]:
+        local_now = utc_datetime(now).astimezone(KUALA_LUMPUR)
+        first_date = local_now.date() + timedelta(days=(5 - local_now.weekday()) % 7)
+        first_start = datetime.combine(first_date, datetime.min.time(), tzinfo=KUALA_LUMPUR).replace(hour=EVENT_START_LOCAL_HOUR)
+        if first_date == local_now.date() and local_now >= first_start.replace(hour=EVENT_END_LOCAL_HOUR):
+            first_date += timedelta(days=7)
+        return [
+            datetime.combine(first_date + timedelta(days=7 * offset), datetime.min.time(), tzinfo=KUALA_LUMPUR)
+            .replace(hour=EVENT_START_LOCAL_HOUR)
+            .astimezone(timezone.utc)
+            for offset in range(EVENTS_PER_BEACH)
+        ]
+
+    def ensure_scheduled_events(now: datetime | None = None) -> None:
+        current = now or datetime.now(timezone.utc)
+        starts = upcoming_saturdays(current)
+        with engine.begin() as connection:
+            for beach in beaches:
+                for starts_at in starts:
+                    local_date = starts_at.astimezone(KUALA_LUMPUR).date().isoformat()
+                    event_id = f"{beach['id']}-{local_date}"
+                    existing = connection.execute(select(events_table.c.id).where(events_table.c.id == event_id)).first()
+                    if existing is not None:
+                        continue
+                    ends_at = starts_at + timedelta(hours=EVENT_END_LOCAL_HOUR - EVENT_START_LOCAL_HOUR)
+                    try:
+                        with connection.begin_nested():
+                            connection.execute(insert(events_table).values(
+                                id=event_id,
+                                beach_id=beach["id"],
+                                starts_at=starts_at,
+                                ends_at=ends_at,
+                                status="Open",
+                                source="scheduled",
+                                created_by=None,
+                                created_at=current,
+                                updated_at=current,
+                            ))
+                    except IntegrityError:
+                        # Another worker may have inserted this deterministic slot first.
+                        continue
+            stale = connection.execute(select(events_table).where(events_table.c.status == "Open")).all()
+            for event in stale:
+                if utc_datetime(event.ends_at) < current:
+                    connection.execute(events_table.update().where(events_table.c.id == event.id).values(status="Closed", updated_at=current))
+
+    def event_has_evidence(connection: Any, event: Any, participant_id: str) -> bool:
+        start, end = utc_datetime(event.starts_at), utc_datetime(event.ends_at)
+        report = connection.execute(
+            select(reports_table.c.id).where(
+                reports_table.c.reporter_id == participant_id,
+                reports_table.c.beach_id == event.beach_id,
+                reports_table.c.status == "Counted",
+                reports_table.c.created_at >= start,
+                reports_table.c.created_at <= end,
+            ).limit(1)
+        ).first()
+        if report is not None:
+            return True
+        cleanup = connection.execute(
+            select(cleanup_actions_table.c.id).where(
+                cleanup_actions_table.c.participant_id == participant_id,
+                cleanup_actions_table.c.event_id == event.id,
+                cleanup_actions_table.c.created_at >= start,
+                cleanup_actions_table.c.created_at <= end,
+            ).limit(1)
+        ).first()
+        return cleanup is not None
+
+    def event_dict(event: Any, viewer_id: str | None = None) -> dict[str, Any]:
+        with engine.connect() as connection:
+            members = connection.execute(
+                select(event_members_table).where(event_members_table.c.event_id == event.id)
+            ).all()
+            user_ids = [member.participant_id for member in members]
+            user_rows = connection.execute(select(users_table.c.id, users_table.c.participant_id).where(users_table.c.id.in_(user_ids))).all() if user_ids else []
+            participant_numbers = {row.id: row.participant_id for row in user_rows}
+            joined_by = [participant_numbers[member.participant_id] for member in members if member.participant_id in participant_numbers]
+            check_ins = [participant_numbers[member.participant_id] for member in members if member.location_passed and member.participant_id in participant_numbers]
+            attendance_by = [
+                participant_numbers[member.participant_id]
+                for member in members
+                if member.location_passed
+                and member.participant_id in participant_numbers
+                and event_has_evidence(connection, event, member.participant_id)
+            ]
+            viewer_member = next((member for member in members if member.participant_id == viewer_id), None)
+            cleanup_ids = connection.execute(select(cleanup_actions_table.c.id).where(
+                cleanup_actions_table.c.event_id == event.id
+            ).order_by(cleanup_actions_table.c.created_at)).scalars().all()
+            viewer_attended = bool(
+                viewer_member
+                and viewer_member.location_passed
+                and event_has_evidence(connection, event, viewer_id)
+            ) if viewer_id else False
+        beach_name = beach_names.get(event.beach_id, event.beach_id)
+        local_start = utc_datetime(event.starts_at).astimezone(KUALA_LUMPUR)
+        local_end = utc_datetime(event.ends_at).astimezone(KUALA_LUMPUR)
+        return {
+            "id": event.id,
+            "beachId": event.beach_id,
+            "beachName": beach_name,
+            "date": local_start.date().isoformat(),
+            "start": local_start.strftime("%H:%M"),
+            "end": local_end.strftime("%H:%M"),
+            "startsAt": contract_timestamp(event.starts_at),
+            "endsAt": contract_timestamp(event.ends_at),
+            "status": event.status,
+            "source": event.source,
+            "participantCount": len(joined_by),
+            "joinedBy": joined_by,
+            "checkIns": check_ins,
+            "attendanceBy": attendance_by,
+            "cleanupIds": cleanup_ids,
+            "checkedInCount": len(check_ins),
+            "attendanceCount": len(attendance_by),
+            "joined": bool(viewer_member),
+            "checkedIn": bool(viewer_member and viewer_member.location_passed),
+            "attendanceConfirmed": viewer_attended,
+        }
+
+    def cleanup_target_dict(report: Any, actions: list[Any]) -> dict[str, Any] | None:
+        remaining = remaining_counts_for(report, actions)
+        if report.status != "Counted" or not remaining:
+            return None
+        return {
+            "reportId": report.id,
+            "targetReportId": report.id,
+            "beachId": report.beach_id,
+            "beach": report.beach_id,
+            "beachName": beach_names.get(report.beach_id, report.beach_id),
+            "createdAt": contract_timestamp(report.created_at),
+            "itemCounts": remaining,
+            "remaining": remaining,
+            "remainingTotal": sum(remaining.values()),
+        }
+
+    def cleanup_action_dict(action: Any) -> dict[str, Any]:
+        with engine.connect() as connection:
+            participant = connection.execute(select(users_table.c.participant_id).where(
+                users_table.c.id == action.participant_id
+            )).scalar_one_or_none()
+        return {
+            "id": action.id,
+            "participantId": participant or action.participant_id,
+            "targetReportId": action.target_report_id,
+            "eventId": action.event_id,
+            "beachId": action.beach_id,
+            "beach": action.beach_id,
+            "createdAt": contract_timestamp(action.created_at),
+            "rows": json.loads(action.rows),
+            "score": action.total_removed,
+            "handling": action.handling,
+            "note": action.note,
+            "status": "Cleanup recorded — awaiting follow-up",
+        }
 
     @application.errorhandler(RequestEntityTooLarge)
     def payload_too_large(_error: RequestEntityTooLarge):
@@ -823,6 +1257,7 @@ def create_app(
 
     @application.post("/auth/anonymous")
     def create_anonymous_participant():
+        recovery_token = create_recovery_token()
         with engine.begin() as connection:
             try:
                 participant_id = generate_participant_id(connection)
@@ -835,21 +1270,36 @@ def create_app(
                     id=user_id,
                     participant_id=participant_id,
                     role=DEFAULT_VOLUNTEER_ROLE,
+                    user_token=recovery_token_digest(recovery_token),
                     created_at=now,
                 )
             )
-        return jsonify({"token": issue_token(user_id, jwt_secret), "user": {"id": user_id, "participantId": participant_id, "role": DEFAULT_VOLUNTEER_ROLE}}), 201
+        return jsonify({
+            "token": issue_token(user_id, jwt_secret),
+            "recoveryToken": recovery_token,
+            "user": {"id": user_id, "participantId": participant_id, "role": DEFAULT_VOLUNTEER_ROLE},
+        }), 201
 
     @application.post("/auth/restore")
     def restore_anonymous_participant():
         payload = request.get_json(silent=True)
         participant_id = str(payload.get("participantId") or "").strip() if isinstance(payload, dict) else ""
+        supplied_recovery_token = str(payload.get("token") or "") if isinstance(payload, dict) else ""
         if not re.fullmatch(r"\d{4}", participant_id):
             return error_response(404, "UNKNOWN_PARTICIPANT", "That participant ID was not found.")
         with engine.connect() as connection:
             row = connection.execute(select(users_table).where(users_table.c.participant_id == participant_id)).first()
         if row is None:
             return error_response(404, "UNKNOWN_PARTICIPANT", "That participant ID was not found.")
+        configured_demo_id = os.getenv("DEMO_PARTICIPANT_ID", "").strip()
+        demo_restore = (
+            participant_id == configured_demo_id
+            and row.id == f"u_demo_{participant_id}"
+            and not supplied_recovery_token
+        )
+        supplied_digest = recovery_token_digest(supplied_recovery_token) if supplied_recovery_token else ""
+        if not demo_restore and (not row.user_token or not hmac.compare_digest(row.user_token, supplied_digest)):
+            return error_response(401, "INVALID_RECOVERY_TOKEN", "The recovery token is invalid.")
         return jsonify({"token": issue_token(row.id, jwt_secret), "user": user_dict(row)})
 
     @application.post("/auth/logout")
@@ -887,6 +1337,12 @@ def create_app(
             detail.update({"composition": None, "compositionSource": None})
         else:
             quantities = quantities_from_row(row)
+            if getattr(row, "item_counts", None):
+                with engine.connect() as connection:
+                    actions = connection.execute(
+                        select(cleanup_actions_table).where(cleanup_actions_table.c.target_report_id == row.id)
+                    ).all()
+                quantities = quantity_bands_for_counts(remaining_counts_for(row, actions))
             detail.update(
                 {
                     "composition": [
@@ -913,6 +1369,374 @@ def create_app(
                 "ruleVersion": "radar-sampah-scoring-v2",
             }
         )
+
+    @application.get("/scoring-method/iteration2")
+    def get_iteration2_scoring_method():
+        return jsonify({
+            "ruleVersion": "radar-sampah-scoring-i2-v1",
+            "categoryWeights": [{"category": category, "weight": CATEGORY_WEIGHTS[category]} for category in FRONTEND_CATEGORIES],
+            "itemCountBands": [
+                {"minimum": 1, "maximum": 5, "quantity": "Small", "weight": 1},
+                {"minimum": 6, "maximum": 20, "quantity": "Medium", "weight": 2},
+                {"minimum": 21, "maximum": 50, "quantity": "Large", "weight": 3},
+                {"minimum": 51, "maximum": None, "quantity": "Very Large", "weight": 4},
+            ],
+            "windowDays": 90,
+            "minReports": 3,
+            "remainingCountAggregation": "sum-by-category-after-cleanup",
+            "reportAggregation": "max-category-score",
+            "beachAggregation": "remaining-counts",
+            "modelClassMapping": [{"modelClass": model_class, "category": category} for model_class, category in ITERATION2_CATEGORIES.items()],
+            "cleanupScore": "number-of-items-removed",
+            "cleanupPoints": 0,
+        })
+
+    @application.post("/recognitions")
+    @require_auth
+    @rate_limited("recognition", 30)
+    def recognise_report_photo():
+        payload = request.get_json(silent=True)
+        photo_key = str(payload.get("photoKey") or "").strip() if isinstance(payload, dict) else ""
+        metadata_value = read_photo_metadata(directory, photo_key) if photo_key else None
+        photo_path = photo_file_path(directory, photo_key) if photo_key else None
+        if metadata_value is None or metadata_value.get("ownerId") != request.current_user.id or photo_path is None or not photo_path.is_file():
+            return error_response(404, "NOT_FOUND", "Photo not found.")
+        result = recognizer.recognise(photo_path.read_bytes())
+        counts = validate_item_counts(result["counts"])
+        result["quantityBands"] = quantity_bands_for_counts(counts) if counts else {}
+        result["manualEntryRequired"] = result["state"] != "ready" or not counts
+        return jsonify(result)
+
+    @application.post("/recognitions/cleanup-photo")
+    @require_auth
+    @rate_limited("recognition", 30)
+    def recognise_ephemeral_cleanup_photo():
+        photo = request.files.get("photo")
+        if photo is None or not photo.filename:
+            return error_response(400, "PHOTO_REQUIRED", "A photo is required.")
+        mime = (photo.mimetype or "").lower().split(";", 1)[0]
+        if mime not in PHOTO_MIME_TYPES:
+            return error_response(400, "PHOTO_UNSUPPORTED_TYPE", "Only JPEG, PNG, or HEIC photos are accepted.")
+        raw = photo.read(PHOTO_MAX_BYTES + 1)
+        if len(raw) > PHOTO_MAX_BYTES:
+            return error_response(400, "PHOTO_TOO_LARGE", "Photo exceeds the 10 MB limit.")
+        try:
+            processed = process_photo(raw)
+        except ValueError as error:
+            return error_response(400, "VALIDATION_FAILED", str(error))
+        result = recognizer.recognise(processed)
+        counts = validate_item_counts(result["counts"])
+        result["quantityBands"] = quantity_bands_for_counts(counts) if counts else {}
+        result["manualEntryRequired"] = result["state"] != "ready" or not counts
+        # The after-cleanup photo is passed to inference from memory and is never persisted.
+        return jsonify(result)
+
+    @application.get("/events")
+    def list_events():
+        ensure_scheduled_events()
+        beach_id = request.args.get("beachId")
+        if beach_id and not any(beach["id"] == beach_id for beach in beaches):
+            return error_response(404, "NOT_FOUND", "Beach not found.")
+        current = datetime.now(timezone.utc) - timedelta(days=30)
+        query = select(events_table).where(events_table.c.starts_at >= current).order_by(events_table.c.starts_at)
+        if beach_id:
+            query = query.where(events_table.c.beach_id == beach_id)
+        with engine.connect() as connection:
+            rows = connection.execute(query).all()
+        viewer = optional_current_user()
+        return jsonify([event_dict(row, viewer.id if viewer else None) for row in rows])
+
+    @application.get("/events/<event_id>")
+    def get_event(event_id: str):
+        ensure_scheduled_events()
+        with engine.connect() as connection:
+            event = connection.execute(select(events_table).where(events_table.c.id == event_id)).first()
+        if event is None:
+            return error_response(404, "NOT_FOUND", "Event not found.")
+        viewer = optional_current_user()
+        return jsonify(event_dict(event, viewer.id if viewer else None))
+
+    @application.post("/events")
+    @require_moderator
+    def create_moderator_event():
+        payload = request.get_json(silent=True)
+        if not isinstance(payload, dict) or set(payload) != {"beachId", "startsAt", "endsAt"}:
+            return error_response(400, "VALIDATION_FAILED", "beachId, startsAt and endsAt are required.")
+        beach_id = str(payload.get("beachId") or "").strip()
+        if not any(beach["id"] == beach_id for beach in beaches):
+            return error_response(404, "NOT_FOUND", "Beach not found.")
+        try:
+            starts_at = datetime.fromisoformat(str(payload["startsAt"]))
+            ends_at = datetime.fromisoformat(str(payload["endsAt"]))
+        except (TypeError, ValueError):
+            return error_response(400, "VALIDATION_FAILED", "startsAt and endsAt must be ISO 8601 timestamps with a timezone.")
+        if starts_at.tzinfo is None or ends_at.tzinfo is None:
+            return error_response(400, "VALIDATION_FAILED", "Event timestamps must include a timezone.")
+        starts_at, ends_at = utc_datetime(starts_at), utc_datetime(ends_at)
+        if ends_at <= starts_at or ends_at - starts_at > timedelta(hours=12):
+            return error_response(400, "VALIDATION_FAILED", "An event must last between 0 and 12 hours.")
+        now = datetime.now(timezone.utc)
+        event_id = "ev_" + secrets.token_hex(10)
+        with engine.begin() as connection:
+            conflict = connection.execute(select(events_table.c.id).where(
+                events_table.c.beach_id == beach_id,
+                events_table.c.starts_at == starts_at,
+            )).first()
+            if conflict is not None:
+                return error_response(409, "EVENT_SLOT_TAKEN", "An event is already scheduled for that beach and start time.")
+            try:
+                with connection.begin_nested():
+                    connection.execute(insert(events_table).values(
+                        id=event_id,
+                        beach_id=beach_id,
+                        starts_at=starts_at,
+                        ends_at=ends_at,
+                        status="Open" if ends_at > now else "Closed",
+                        source="moderator",
+                        created_by=request.current_user.id,
+                        created_at=now,
+                        updated_at=now,
+                    ))
+            except IntegrityError:
+                return error_response(409, "EVENT_SLOT_TAKEN", "An event is already scheduled for that beach and start time.")
+            event = connection.execute(select(events_table).where(events_table.c.id == event_id)).first()
+        return jsonify(event_dict(event, request.current_user.id)), 201
+
+    @application.patch("/events/<event_id>")
+    @require_moderator
+    def update_event(event_id: str):
+        payload = request.get_json(silent=True)
+        if not isinstance(payload, dict) or not payload or set(payload) - {"startsAt", "endsAt", "status"}:
+            return error_response(400, "VALIDATION_FAILED", "Send startsAt, endsAt, or status.")
+        with engine.connect() as connection:
+            event = connection.execute(select(events_table).where(events_table.c.id == event_id)).first()
+        if event is None:
+            return error_response(404, "NOT_FOUND", "Event not found.")
+        starts_at, ends_at = utc_datetime(event.starts_at), utc_datetime(event.ends_at)
+        try:
+            if "startsAt" in payload:
+                starts_at = datetime.fromisoformat(str(payload["startsAt"]))
+                if starts_at.tzinfo is None:
+                    raise ValueError("timezone required")
+                starts_at = utc_datetime(starts_at)
+            if "endsAt" in payload:
+                ends_at = datetime.fromisoformat(str(payload["endsAt"]))
+                if ends_at.tzinfo is None:
+                    raise ValueError("timezone required")
+                ends_at = utc_datetime(ends_at)
+        except (TypeError, ValueError):
+            return error_response(400, "VALIDATION_FAILED", "Event timestamps must be ISO 8601 timestamps with a timezone.")
+        if ends_at <= starts_at or ends_at - starts_at > timedelta(hours=12):
+            return error_response(400, "VALIDATION_FAILED", "An event must last between 0 and 12 hours.")
+        values: dict[str, Any] = {"starts_at": starts_at, "ends_at": ends_at, "updated_at": datetime.now(timezone.utc)}
+        if "status" in payload:
+            if payload["status"] not in {"Open", "Closed"}:
+                return error_response(400, "VALIDATION_FAILED", "status must be Open or Closed.")
+            if payload["status"] == "Open" and ends_at <= datetime.now(timezone.utc):
+                return error_response(409, "EVENT_ENDED", "An ended event cannot be reopened.")
+            values["status"] = payload["status"]
+        with engine.begin() as connection:
+            connection.execute(events_table.update().where(events_table.c.id == event_id).values(**values))
+            updated = connection.execute(select(events_table).where(events_table.c.id == event_id)).first()
+        return jsonify(event_dict(updated, request.current_user.id))
+
+    @application.post("/events/<event_id>/join")
+    @require_auth
+    def join_event(event_id: str):
+        now = datetime.now(timezone.utc)
+        with engine.begin() as connection:
+            event = connection.execute(select(events_table).where(events_table.c.id == event_id)).first()
+            if event is None:
+                return error_response(404, "NOT_FOUND", "Event not found.")
+            if event.status != "Open" or utc_datetime(event.ends_at) <= now:
+                return error_response(409, "EVENT_CLOSED", "This event is closed.")
+            existing = connection.execute(select(event_members_table).where(
+                event_members_table.c.event_id == event_id,
+                event_members_table.c.participant_id == request.current_user.id,
+            )).first()
+            if existing is None:
+                connection.execute(insert(event_members_table).values(
+                    event_id=event_id,
+                    participant_id=request.current_user.id,
+                    joined_at=now,
+                    checked_in_at=None,
+                    location_passed=False,
+                ))
+            event = connection.execute(select(events_table).where(events_table.c.id == event_id)).first()
+        return jsonify(event_dict(event, request.current_user.id))
+
+    @application.post("/events/<event_id>/check-in")
+    @require_auth
+    def check_in_event(event_id: str):
+        payload = request.get_json(silent=True)
+        if not isinstance(payload, dict) or set(payload) != {"lat", "lng"}:
+            return error_response(400, "VALIDATION_FAILED", "lat and lng are required for check-in.")
+        try:
+            lat, lng = float(payload["lat"]), float(payload["lng"])
+        except (TypeError, ValueError):
+            return error_response(400, "VALIDATION_FAILED", "lat and lng must be numbers.")
+        if not math.isfinite(lat) or not math.isfinite(lng) or not -90 <= lat <= 90 or not -180 <= lng <= 180:
+            return error_response(400, "VALIDATION_FAILED", "lat or lng is outside its valid range.")
+        with engine.connect() as connection:
+            event = connection.execute(select(events_table).where(events_table.c.id == event_id)).first()
+            member = connection.execute(select(event_members_table).where(
+                event_members_table.c.event_id == event_id,
+                event_members_table.c.participant_id == request.current_user.id,
+            )).first()
+        if event is None:
+            return error_response(404, "NOT_FOUND", "Event not found.")
+        if member is None:
+            return error_response(409, "JOIN_REQUIRED", "Join this event before checking in.")
+        now = datetime.now(timezone.utc)
+        if event.status != "Open" or not (utc_datetime(event.starts_at) <= now <= utc_datetime(event.ends_at)):
+            return error_response(409, "EVENT_NOT_ACTIVE", "Check-in is available only while the event is active.")
+        beach = next((item for item in beaches if item["id"] == event.beach_id), None)
+        if beach is None or distance_km(lat, lng, beach["lat"], beach["lng"]) > EVENT_CHECKIN_RADIUS_KM:
+            return error_response(403, "LOCATION_OUT_OF_RANGE", "You must be within 25 km of the event beach to check in.")
+        with engine.begin() as connection:
+            connection.execute(event_members_table.update().where(
+                event_members_table.c.event_id == event_id,
+                event_members_table.c.participant_id == request.current_user.id,
+            ).values(checked_in_at=now, location_passed=True))
+        return jsonify(event_dict(event, request.current_user.id))
+
+    @application.get("/cleanup-targets")
+    def list_cleanup_targets():
+        beach_id = request.args.get("beachId")
+        if beach_id and not any(beach["id"] == beach_id for beach in beaches):
+            return error_response(404, "NOT_FOUND", "Beach not found.")
+        query = select(reports_table).where(
+            reports_table.c.status == "Counted",
+            reports_table.c.item_counts.is_not(None),
+        ).order_by(reports_table.c.created_at.desc())
+        if beach_id:
+            query = query.where(reports_table.c.beach_id == beach_id)
+        with engine.connect() as connection:
+            reports = connection.execute(query).all()
+            targets: list[dict[str, Any]] = []
+            for report in reports:
+                actions = connection.execute(select(cleanup_actions_table).where(
+                    cleanup_actions_table.c.target_report_id == report.id
+                )).all()
+                target = cleanup_target_dict(report, actions)
+                if target:
+                    targets.append(target)
+        return jsonify(targets)
+
+    @application.post("/cleanup-actions")
+    @require_auth
+    @rate_limited("cleanup-create", 60)
+    def create_cleanup_action():
+        payload = request.get_json(silent=True)
+        required = {"targetReportId", "removedCounts", "handling"}
+        allowed = required | {"eventId", "note", "idempotencyKey"}
+        if not isinstance(payload, dict) or not required <= set(payload) or set(payload) - allowed:
+            return error_response(400, "VALIDATION_FAILED", "targetReportId, removedCounts and handling are required.")
+        target_report_id = str(payload.get("targetReportId") or "").strip()
+        handling = payload.get("handling")
+        removed_counts = validate_item_counts(payload.get("removedCounts"))
+        note = payload.get("note")
+        event_id = payload.get("eventId")
+        idempotency_key = str(payload.get("idempotencyKey") or request.headers.get("Idempotency-Key") or "").strip()
+        if not target_report_id or not removed_counts:
+            return error_response(400, "VALIDATION_FAILED", "removedCounts must contain positive whole-item counts.")
+        if handling not in EVENT_HANDLING_VALUES:
+            return error_response(400, "VALIDATION_FAILED", "handling is not a supported value.")
+        if note is not None and (not isinstance(note, str) or len(note) > 500):
+            return error_response(400, "VALIDATION_FAILED", "note must be 500 characters or fewer.")
+        if event_id is not None and (not isinstance(event_id, str) or not event_id.strip() or len(event_id) > 100):
+            return error_response(400, "VALIDATION_FAILED", "eventId must be a valid event identifier.")
+        if not idempotency_key or len(idempotency_key) > 128:
+            return error_response(400, "VALIDATION_FAILED", "idempotencyKey is required and must be at most 128 characters.")
+        fingerprint_value = {
+            "targetReportId": target_report_id,
+            "removedCounts": dict(sorted(removed_counts.items())),
+            "handling": handling,
+            "note": note,
+            "eventId": event_id,
+        }
+        fingerprint = hashlib.sha256(json.dumps(fingerprint_value, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+        with engine.begin() as connection:
+            existing = connection.execute(select(cleanup_actions_table).where(
+                cleanup_actions_table.c.participant_id == request.current_user.id,
+                cleanup_actions_table.c.idempotency_key == idempotency_key,
+            )).first()
+            if existing is not None:
+                if existing.request_fingerprint != fingerprint:
+                    return error_response(409, "IDEMPOTENCY_CONFLICT", "This idempotency key was already used for a different cleanup.")
+                return jsonify(cleanup_action_dict(existing)), 200
+            target = connection.execute(
+                select(reports_table).where(reports_table.c.id == target_report_id).with_for_update()
+            ).first()
+            if target is None or target.status != "Counted" or not target.item_counts:
+                return error_response(404, "CLEANUP_TARGET_NOT_FOUND", "The cleanup target is no longer available.")
+            if event_id is not None:
+                event = connection.execute(select(events_table).where(events_table.c.id == event_id)).first()
+                member = connection.execute(select(event_members_table).where(
+                    event_members_table.c.event_id == event_id,
+                    event_members_table.c.participant_id == request.current_user.id,
+                )).first()
+                now = datetime.now(timezone.utc)
+                if event is None or event.beach_id != target.beach_id:
+                    return error_response(400, "VALIDATION_FAILED", "eventId must refer to an event at the target beach.")
+                if member is None or not member.location_passed:
+                    return error_response(409, "EVENT_CHECKIN_REQUIRED", "Join and check in to the event before linking this cleanup.")
+                if event.status != "Open" or not (utc_datetime(event.starts_at) <= now <= utc_datetime(event.ends_at)):
+                    return error_response(409, "EVENT_NOT_ACTIVE", "An event-linked cleanup must be recorded during the event.")
+            prior_actions = connection.execute(select(cleanup_actions_table).where(
+                cleanup_actions_table.c.target_report_id == target_report_id
+            )).all()
+            remaining = remaining_counts_for(target, prior_actions)
+            if not remaining:
+                return error_response(409, "CLEANUP_TARGET_COMPLETE", "This cleanup target has already been fully cleared.")
+            if any(category not in remaining or count > remaining[category] for category, count in removed_counts.items()):
+                return error_response(409, "REMOVED_COUNT_EXCEEDS_REMAINING", "Removed counts cannot exceed the target's remaining item counts.")
+            rows = []
+            for category in FRONTEND_CATEGORIES:
+                removed = removed_counts.get(category, 0)
+                if removed <= 0:
+                    continue
+                before = remaining[category]
+                rows.append({"category": category, "removed": removed, "before": before, "after": before - removed})
+            now = datetime.now(timezone.utc)
+            action_id = "c_" + secrets.token_hex(10)
+            try:
+                with connection.begin_nested():
+                    connection.execute(insert(cleanup_actions_table).values(
+                        id=action_id,
+                        target_report_id=target_report_id,
+                        participant_id=request.current_user.id,
+                        event_id=event_id,
+                        beach_id=target.beach_id,
+                        removed_counts=json.dumps(removed_counts, separators=(",", ":")),
+                        rows=json.dumps(rows, separators=(",", ":")),
+                        total_removed=sum(removed_counts.values()),
+                        handling=handling,
+                        note=note,
+                        idempotency_key=idempotency_key,
+                        request_fingerprint=fingerprint,
+                        created_at=now,
+                    ))
+                action = connection.execute(select(cleanup_actions_table).where(cleanup_actions_table.c.id == action_id)).first()
+                response_status = 201
+            except IntegrityError:
+                action = connection.execute(select(cleanup_actions_table).where(
+                    cleanup_actions_table.c.participant_id == request.current_user.id,
+                    cleanup_actions_table.c.idempotency_key == idempotency_key,
+                )).first()
+                if action is None or action.request_fingerprint != fingerprint:
+                    return error_response(409, "IDEMPOTENCY_CONFLICT", "This idempotency key was already used for a different cleanup.")
+                response_status = 200
+        return jsonify(cleanup_action_dict(action)), response_status
+
+    @application.get("/cleanups/mine")
+    @require_auth
+    def list_my_cleanup_actions():
+        with engine.connect() as connection:
+            actions = connection.execute(select(cleanup_actions_table).where(
+                cleanup_actions_table.c.participant_id == request.current_user.id
+            ).order_by(cleanup_actions_table.c.created_at.desc())).all()
+        return jsonify([cleanup_action_dict(action) for action in actions])
 
     @application.post("/geo/resolve-beach")
     @require_auth
@@ -1013,6 +1837,37 @@ def create_app(
         assert data is not None
         now = datetime.now(timezone.utc)
         report_id = "r_" + secrets.token_hex(10)
+        geo_secret = os.getenv("GEO_PRIVACY_HMAC_KEY", "").strip() or hmac.new(
+            jwt_secret.encode("utf-8"), b"radar-sampah-geo-key-v1", hashlib.sha256
+        ).hexdigest()
+        target_proximity_ref = None
+        if data["item_counts"] is not None and data["location_source"] == "gps":
+            assert data["lat"] is not None and data["lng"] is not None
+            with engine.begin() as connection:
+                targets = connection.execute(
+                    select(reports_table).where(
+                        reports_table.c.status == "Counted",
+                        reports_table.c.item_counts.is_not(None),
+                        reports_table.c.proximity_ref.is_not(None),
+                    )
+                ).all()
+                for target in targets:
+                    actions = connection.execute(
+                        select(cleanup_actions_table).where(cleanup_actions_table.c.target_report_id == target.id)
+                    ).all()
+                    if not remaining_counts_for(target, actions):
+                        continue
+                    candidate_refs = nearby_proximity_refs(data["lat"], data["lng"], target.id, geo_secret)
+                    if target.proximity_ref in candidate_refs:
+                        return error_response(409, "ACTIVE_CLEANUP_TARGET_NEARBY", "A cleanup target is already recorded within 10 metres.")
+            target_proximity_ref = proximity_ref(data["lat"], data["lng"], report_id, geo_secret)
+        if data["event_id"] is not None:
+            with engine.connect() as connection:
+                event = connection.execute(select(events_table).where(events_table.c.id == data["event_id"])).first()
+            if event is None or event.beach_id != data["beach"]["id"]:
+                return error_response(400, "VALIDATION_FAILED", "eventId must refer to an event on the selected beach.")
+            if not (utc_datetime(event.starts_at) <= now <= utc_datetime(event.ends_at)):
+                return error_response(400, "VALIDATION_FAILED", "The report timestamp must fall within the selected event.")
         with engine.begin() as connection:
             status = duplicate_status(connection, request.current_user.id, data["beach"]["id"], now)
             connection.execute(
@@ -1028,8 +1883,11 @@ def create_app(
                     photo_mime=data["photo_mime"] or "image/jpeg",
                     photo_stripped=bool(data["photo_stripped"]),
                     location_source=data["location_source"],
-                    lat=data["lat"],
-                    lng=data["lng"],
+                    lat=None if data["item_counts"] is not None else data["lat"],
+                    lng=None if data["item_counts"] is not None else data["lng"],
+                    item_counts=json.dumps(data["item_counts"], separators=(",", ":")) if data["item_counts"] is not None else None,
+                    proximity_ref=target_proximity_ref,
+                    event_id=data["event_id"],
                     status=status,
                     created_at=now,
                     updated_at=now,
@@ -1037,7 +1895,7 @@ def create_app(
                 )
             )
             row = connection.execute(select(reports_table).where(reports_table.c.id == report_id)).first()
-        return jsonify(report_dict(row, request.current_user.id, jwt_secret, directory, beach_names)), 201
+        return jsonify(report_dict(row, request.current_user.id, jwt_secret, directory, beach_names, engine)), 201
 
     @application.get("/reports/mine")
     @require_auth
@@ -1054,7 +1912,7 @@ def create_app(
             query = query.where(reports_table.c.status == status)
         with engine.connect() as connection:
             rows = connection.execute(query).all()
-        return jsonify([report_dict(row, request.current_user.id, jwt_secret, directory, beach_names) for row in rows])
+        return jsonify([report_dict(row, request.current_user.id, jwt_secret, directory, beach_names, engine) for row in rows])
 
     @application.get("/reports/mine/counts")
     @require_auth
@@ -1083,6 +1941,14 @@ def create_app(
             return error_response(404, "NOT_FOUND", "Report not found.")
         if old.reporter_id != request.current_user.id:
             return error_response(403, "NOT_OWNER", "You can only correct your own report.")
+        if getattr(old, "item_counts", None):
+            with engine.connect() as connection:
+                has_cleanup = connection.execute(
+                    select(cleanup_actions_table.c.id).where(cleanup_actions_table.c.target_report_id == report_id).limit(1)
+                ).first()
+            if has_cleanup:
+                return error_response(409, "REPORT_IMMUTABLE", "A report with cleanup history cannot be edited.")
+            return error_response(409, "REPORT_IMMUTABLE", "Iteration 2 model-confirmed counts are immutable after submission.")
 
         if "locationSource" in payload or "coords" in payload:
             location_source = payload.get("locationSource", old.location_source)
@@ -1136,7 +2002,7 @@ def create_app(
             row = connection.execute(select(reports_table).where(reports_table.c.id == report_id)).first()
         if old.photo_key != data["photo_key"]:
             delete_photo_if_unreferenced(engine, directory, old.photo_key)
-        return jsonify(report_dict(row, request.current_user.id, jwt_secret, directory, beach_names))
+        return jsonify(report_dict(row, request.current_user.id, jwt_secret, directory, beach_names, engine))
 
     return application
 

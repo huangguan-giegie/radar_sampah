@@ -86,24 +86,25 @@ A person receives a 4-digit number (e.g. `1637`) and their reports hang off it.
 // 201
 {
   "token": "eyJhbGciOi...",
+  "recoveryToken": "show once and store securely",
   "user": { "id": "u_01H...", "participantId": "1637", "role": "volunteer" }
 }
 ```
 
-**POST `/auth/restore`** — body `{ "participantId": "1637" }`, responds as above.
+**POST `/auth/restore`** — body `{ "participantId": "1637", "token": "<recoveryToken>" }`;
+responds with the session JWT and user. The recovery token is returned once at signup and only
+its SHA-256 digest is stored. The configured `DEMO_PARTICIPANT_ID` is the sole ID-only restore
+exception. Moderator accounts are provisioned server-side.
 
 **GET `/auth/me`** — returns `user`; 401 if the token is invalid.
 
 - `participantId` — 4 digits, **randomly assigned, never sequential**. A sequence would leak how
   many participants exist and who joined first.
-- `role` — `"volunteer" | "moderator"`. Iteration 1 only ever issues `volunteer`;
-  `moderator` is reserved for the later review flow. Create the value, leave it unused.
+- `role` — `"volunteer" | "moderator"`. In Iteration 2, `moderator` is the
+  activity administrator role for creating, editing and closing community
+  events. Report review remains out of scope. The backend provisions this role;
+  clients cannot promote themselves.
 - Token — JWT, 30-day expiry, no refresh flow.
-
-> **One thing to be aware of (does not block this iteration).** The number *is* the credential,
-> so anyone who types `1637` sees participant 1637's records. That is acceptable for an MVP
-> running on synthetic data. Before this holds real public submissions it needs a secret
-> alongside the number.
 
 ---
 
