@@ -1,6 +1,7 @@
+import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Check, Clock, Pin, Shield } from '../components/Icon';
-import { Callout, EmptyState, InfoChip, SectionLabel } from '../components/ds';
+import { Check, Clock, Pin } from '../components/Icon';
+import { EmptyState, InfoChip, SectionLabel } from '../components/ds';
 import { BackButton, GhostButton, PrimaryButton } from '../components/ui';
 import { useApp } from '../AppContext';
 import { cleanupTotal, eventCleanups, formatEventDate, getCleanupEvent, getCleanupTargetRecord } from '../iteration2';
@@ -10,6 +11,7 @@ export default function SharedEventScreen() {
   const { eventId = '' } = useParams();
   const nav = useNavigate();
   const { user, showToast } = useApp();
+  const [copied, setCopied] = useState(false);
   const event = getCleanupEvent(eventId);
   const target = event ? getCleanupTargetRecord(event.beachId) : null;
   const cleanups = eventCleanups(eventId);
@@ -23,8 +25,10 @@ export default function SharedEventScreen() {
   async function copyLink() {
     try {
       await navigator.clipboard.writeText(shareUrl);
+      setCopied(true);
       showToast('Link copied');
     } catch {
+      setCopied(false);
       showToast('Could not copy the link');
     }
   }
@@ -33,56 +37,56 @@ export default function SharedEventScreen() {
     <div className="screen scroll-y" style={{ zIndex: 27 }}>
       <div className="measure i2-page anim-fade-up" style={{ paddingBottom: 'calc(var(--safe-bottom) + 34px)' }}>
         <BackButton onClick={() => nav(`/events/${event.id}`)} />
-        <button type="button" onClick={copyLink} className="i2-field press" style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'center', textAlign: 'left' }}>
-          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: 11.5 }}>{shareUrl}</span>
-          <strong style={{ flex: 'none', color: C.navy, fontSize: 11 }}>Copy</strong>
+
+        <button type="button" onClick={copyLink} className={`i2-link-field press${copied ? ' is-copied' : ''}`}>
+          <span>{shareUrl}</span>
+          <strong>{copied ? 'Copied' : 'Copy'}</strong>
         </button>
-        <Callout title="Sharing is link-only" tone="quiet" icon={<Shield color={C.navy} />}>
-          No friends list and no messaging. This page shows only this activity and its selected litter target.
-        </Callout>
 
-        {user && <Callout title="Logged in · back on the shared page" tone="reassurance" icon={<Check color={C.green} />}>You can add a cleanup without losing this event link.</Callout>}
-
-        <div className="i2-hero">
-          <SectionLabel size="sm" tone="dark">RADAR SAMPAH · SHARED ACTIVITY</SectionLabel>
-          <h1 style={{ margin: '9px 0 0', fontSize: 27, letterSpacing: '-.7px' }}>{event.beachName}</h1>
-          <div style={{ display: 'grid', gap: 8, marginTop: 16, color: 'rgba(255,255,255,.82)', fontSize: 12.5 }}>
-            <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Clock color={C.lime} />{formatEventDate(event.date)} · {event.startsAt}–{event.endsAt}</span>
-            <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Pin color={C.lime} />{event.area}</span>
+        <div className="i2-hero i2-hero-compact">
+          <SectionLabel size="sm" tone="dark">SHARED CLEANUP EVENT</SectionLabel>
+          <h1 style={{ margin: '8px 0 0', fontSize: 25, letterSpacing: '-.6px' }}>{event.beachName}</h1>
+          <div className="i2-event-meta">
+            <span><Clock color={C.lime} />{formatEventDate(event.date)} · {event.startsAt}–{event.endsAt}</span>
+            <span><Pin color={C.lime} />{event.area}</span>
           </div>
-          <div style={{ display: 'flex', gap: 7, marginTop: 15, flexWrap: 'wrap' }}>
-            <InfoChip color={C.white} background="rgba(255,255,255,.12)">{event.participantCount} joined</InfoChip>
-            <InfoChip color={C.white} background="rgba(255,255,255,.12)">{event.attendanceBy.length} attendance recorded</InfoChip>
+          <div className="i2-stat-grid" style={{ marginTop: 15 }}>
+            <div className="i2-stat"><strong>{event.participantCount}</strong><span>PARTICIPANTS</span></div>
+            <div className="i2-stat"><strong>{event.attendanceBy.length}</strong><span>RECORDED</span></div>
+            <div className="i2-stat"><strong style={{ fontSize: 15 }}>{event.status}</strong><span>STATUS</span></div>
           </div>
         </div>
 
         {target && (
           <div className="i2-card">
-            <SectionLabel size="sm">SELECTED LITTER TARGET</SectionLabel>
-            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, marginTop: 10 }}>
-              <div><strong style={{ display: 'block', fontSize: 14 }}>Report {target.reportId}</strong><span style={{ display: 'block', marginTop: 4, fontSize: 11.5, color: C.muted }}>{cleanupTotal(target)} recorded items remain</span></div>
+            <SectionLabel size="sm">REPORT</SectionLabel>
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'flex-start', marginTop: 10 }}>
+              <div>
+                <strong style={{ display: 'block', color: C.ink2, fontSize: 14.5 }}>Report {target.reportId.toUpperCase()}</strong>
+                <span style={{ display: 'block', marginTop: 4, color: C.muted, fontSize: 11.5 }}>{cleanupTotal(target)} recorded items remain</span>
+              </div>
               <InfoChip color={C.green} background={C.greenBg}>Counted</InfoChip>
             </div>
           </div>
         )}
 
         {cleanups.length > 0 && (
-          <Callout title="Cleanup result available" tone="reassurance" icon={<Check color={C.green} />}>
-            {cleanups.reduce((sum, cleanup) => sum + cleanup.score, 0)} items were recorded as removed for this event.
-          </Callout>
+          <div className="i2-confirmed-row">
+            <Check size={15} color={C.green} />
+            <strong>{cleanups.reduce((sum, cleanup) => sum + cleanup.score, 0)} items recorded as removed</strong>
+          </div>
         )}
 
-        {cleanups.length > 0 ? (
-          <PrimaryButton onClick={() => nav(`/events/${event.id}/result`)}>View result</PrimaryButton>
-        ) : user ? (
-          <PrimaryButton onClick={() => nav(`/cleanup/${event.beachId}?event=${encodeURIComponent(event.id)}`)}>Add a Cleanup</PrimaryButton>
-        ) : (
-          <>
-            <Callout title="Anyone can view this page" tone="quiet">Log in to add a cleanup. No sign-up is needed; your participant ID and token work like a username and password.</Callout>
-            <PrimaryButton onClick={() => nav(`/identity?next=${encodeURIComponent(`/share/events/${event.id}`)}`)}>Log in to Add a Cleanup</PrimaryButton>
-          </>
-        )}
-        <GhostButton onClick={() => nav(`/events/${event.id}`)}>Back to the event page</GhostButton>
+        <div className="i2-action-stack">
+          {cleanups.length > 0 ? (
+            <PrimaryButton onClick={() => nav(`/events/${event.id}/result`)}>View cleanup result</PrimaryButton>
+          ) : user ? (
+            <PrimaryButton onClick={() => nav(`/cleanup/${event.beachId}?event=${encodeURIComponent(event.id)}`)}>Clean up this report</PrimaryButton>
+          ) : (
+            <PrimaryButton onClick={() => nav(`/identity?next=${encodeURIComponent(`/share/events/${event.id}`)}`)}>Join to clean up</PrimaryButton>
+          )}
+          <GhostButton onClick={() => nav(`/events/${event.id}`)}>Back to the event page</GhostButton>
+        </div>
       </div>
     </div>
   );

@@ -14,7 +14,13 @@ import type { ReportDraft } from './AppContext';
 import { CAME_FROM_DETAILS, backFromReview, buildReportSubmission, findExactDuplicateReport, finishReportSubmission, formatReportComposition, guardStep, hasDraftProgress, historicalPhotoUnavailable, orderByNeed, reachableStep, reportOutcome, safeNextPath } from './flowRules';
 import { markerHtml } from './components/BeachMarker';
 import type { BeachSummary } from './types';
-import { attentionStateFor } from './theme';
+import { attentionStateFor, formatDate } from './theme';
+
+describe('fixed date presentation', () => {
+  it('uses the exact date and weekday while preserving an unambiguous order', () => {
+    expect(formatDate('2026-09-16T04:00:00+08:00')).toBe('2026-09-16 (Wed)');
+  });
+});
 
 // A complete, valid draft. Each test passes in only the fields it wants to
 // break, so a test reads as "this one thing is wrong" rather than twelve lines

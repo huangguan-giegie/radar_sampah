@@ -3,6 +3,7 @@ import {
   analyseReportPhoto,
   completeCleanup,
   createAdminEvent,
+  formatEventDate,
   getCleanupEvent,
   getCleanupTarget,
   joinCleanupEvent,
@@ -23,6 +24,13 @@ const storage = new MemoryStorage();
 Object.defineProperty(globalThis, 'localStorage', { value: storage, configurable: true });
 
 beforeEach(() => storage.clear());
+
+describe('Iteration 2 date presentation', () => {
+  it('prints the exact date first and the verified weekday in brackets', () => {
+    expect(formatEventDate('2026-09-12')).toBe('2026-09-12 (Sat)');
+    expect(formatEventDate('2026-09-16')).toBe('2026-09-16 (Wed)');
+  });
+});
 
 describe('Iteration 2 activity and cleanup ledger', () => {
   it('generates four Saturday events per configured beach', () => {
