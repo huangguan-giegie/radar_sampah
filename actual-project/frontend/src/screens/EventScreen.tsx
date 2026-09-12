@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Check, ChevronRight, Clock, Pin } from '../components/Icon';
-import { Callout, EmptyState, InfoChip, SectionLabel } from '../components/ds';
+import { EmptyState, InfoChip, SectionLabel } from '../components/ds';
 import { BackButton, GhostButton, PrimaryButton, TextButton } from '../components/ui';
 import { useApp } from '../AppContext';
 import {
@@ -10,7 +10,7 @@ import {
   joinCleanupEvent,
   leaveCleanupEvent,
 } from '../iteration2';
-import { C, MONO } from '../theme';
+import { C } from '../theme';
 
 export default function EventScreen() {
   const { eventId = '' } = useParams();
@@ -18,6 +18,7 @@ export default function EventScreen() {
   const { user, showToast } = useApp();
   const [event, setEvent] = useState(() => getCleanupEvent(eventId));
   const [sharing, setSharing] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   if (!event) {
     return (
@@ -33,6 +34,7 @@ export default function EventScreen() {
   const participantId = user?.participantId;
   const joined = Boolean(participantId && event.joinedBy.includes(participantId));
   const checkIn = participantId ? event.checkIns[participantId] : undefined;
+  const checkedIn = checkIn === 'within_area';
   const attendanceRecorded = Boolean(participantId && event.attendanceBy.includes(participantId));
 
   function join() {
@@ -59,8 +61,10 @@ export default function EventScreen() {
   async function copyLink() {
     try {
       await navigator.clipboard.writeText(shareUrl);
+      setCopied(true);
       showToast('Link copied');
     } catch {
+      setCopied(false);
       showToast('Could not copy the link');
     }
   }
@@ -80,82 +84,51 @@ export default function EventScreen() {
     }
   }
 
+  const participation = [
+    { label: 'Join', done: joined },
+    { label: 'Check in on the day', done: checkedIn },
+    { label: 'Add a report or cleanup', done: attendanceRecorded },
+    { label: 'Attendance recorded automatically', done: attendanceRecorded },
+  ];
+
   return (
     <div className="screen scroll-y" style={{ zIndex: 24 }}>
       <div className="measure i2-page anim-fade-up" style={{ paddingBottom: 'calc(var(--safe-bottom) + 34px)' }}>
         <BackButton onClick={() => nav('/community')} />
 
-        <div className="i2-hero">
-          <SectionLabel size="sm" tone="dark">CLEANUP ACTIVITY · {event.status.toUpperCase()}</SectionLabel>
-          <h1 style={{ margin: '9px 0 0', fontSize: 28, lineHeight: 1.08, letterSpacing: '-.7px' }}>{event.beachName}</h1>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 17, color: 'rgba(255,255,255,.82)', fontSize: 12.5 }}>
-            <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Clock color={C.lime} />{formatEventDate(event.date)} · {event.startsAt}–{event.endsAt}</span>
-            <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}><Pin color={C.lime} />{event.area} · broad beach area</span>
+        <div className="i2-hero i2-hero-compact">
+          <SectionLabel size="sm" tone="dark">COMMUNITY CLEANUP</SectionLabel>
+          <h1 style={{ margin: '8px 0 0', fontSize: 25, lineHeight: 1.08, letterSpacing: '-.6px' }}>{event.beachName}</h1>
+          <div className="i2-event-meta">
+            <span><Clock color={C.lime} />{formatEventDate(event.date)} · {event.startsAt}–{event.endsAt}</span>
+            <span><Pin color={C.lime} />{event.area}</span>
           </div>
-          <div className="i2-stat-grid" style={{ marginTop: 19 }}>
-            <div className="i2-stat"><strong>{event.participantCount}</strong><span>JOINED</span></div>
-            <div className="i2-stat"><strong>{event.attendanceBy.length}</strong><span>ATTENDANCE RECORDED</span></div>
-            <div className="i2-stat"><strong>{event.cleanupIds.length}</strong><span>CLEANUPS RECORDED</span></div>
-          </div>
-        </div>
-
-        {joined ? (
-          <Callout
-            title={attendanceRecorded ? 'Attendance recorded' : checkIn === 'within_area' ? 'Checked in' : 'You joined this activity'}
-            tone={attendanceRecorded ? 'reassurance' : 'neutral'}
-            icon={<Check color={attendanceRecorded ? C.green : C.navy} />}
-          >
-            {attendanceRecorded
-              ? 'Your broad-area check-in and linked cleanup evidence are complete.'
-              : checkIn === 'within_area'
-                ? 'Add a report or cleanup for this event to record attendance.'
-                : 'Check in at the beach on the activity date. Location is requested only after you choose Check in.'}
-          </Callout>
-        ) : (
-          <Callout title="Public activity" tone="quiet">
-            Anyone can view these details. Joining and recording attendance require a participant session.
-          </Callout>
-        )}
-
-        <div className="i2-card">
-          <SectionLabel size="sm">WHAT TO BRING</SectionLabel>
-          <div style={{ display: 'grid', gap: 9, marginTop: 12, fontSize: 12.5, lineHeight: 1.45, color: C.slate }}>
-            <span>• Reusable gloves and closed shoes</span>
-            <span>• Drinking water and sun protection</span>
-            <span>• Do not handle sharp or hazardous items</span>
+          <div className="i2-stat-grid" style={{ marginTop: 15 }}>
+            <div className="i2-stat"><strong>{event.participantCount}</strong><span>PARTICIPANTS</span></div>
+            <div className="i2-stat"><strong>{event.attendanceBy.length}</strong><span>RECORDED</span></div>
+            <div className="i2-stat"><strong style={{ fontSize: 15 }}>{event.status}</strong><span>STATUS</span></div>
           </div>
         </div>
 
         <div className="i2-card">
-          <SectionLabel size="sm">SHARE</SectionLabel>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,minmax(0,1fr))', gap: 7, marginTop: 11 }}>
-            <a href={whatsapp} target="_blank" rel="noreferrer" className="btn-ghost press" style={{ minHeight: 44, borderRadius: 14, border: `1.5px solid ${C.line2}`, display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none', color: C.navy, fontWeight: 650, fontSize: 12 }}>WhatsApp</a>
-            <button type="button" className="btn-ghost press" onClick={systemShare} disabled={sharing} style={{ minHeight: 44, borderRadius: 14, border: `1.5px solid ${C.line2}`, color: C.navy, fontWeight: 650, fontSize: 12 }}>{sharing ? 'Opening…' : 'Share…'}</button>
-            <button type="button" className="btn-primary press" onClick={copyLink} style={{ minHeight: 44, borderRadius: 14, background: C.navy, color: C.white, fontWeight: 650, fontSize: 12 }}>Copy link</button>
+          <SectionLabel size="sm">YOUR PARTICIPATION</SectionLabel>
+          <div className="i2-step-list">
+            {participation.map((step, index) => (
+              <div className="i2-step" key={step.label}>
+                <span className="i2-step-index" data-done={step.done}>{step.done ? <Check size={13} /> : index + 1}</span>
+                <span>{step.label}</span>
+              </div>
+            ))}
           </div>
-          <p style={{ margin: '9px 0 0', color: C.muted, fontSize: 11, lineHeight: 1.5 }}>
-            The link opens only this event and its beach report. No friends list, messaging or contact import.
-          </p>
+          <InfoChip color={attendanceRecorded ? C.green : C.muted} background={attendanceRecorded ? C.greenBg : undefined} style={{ marginTop: 12 }}>
+            {attendanceRecorded ? 'Attendance recorded' : joined ? 'Attendance not recorded' : 'Not joined'}
+          </InfoChip>
         </div>
 
-        <div className="i2-card">
-          <SectionLabel size="sm">ATTENDANCE</SectionLabel>
-          <p style={{ margin: '8px 0 0', color: C.muted, fontSize: 12.5, lineHeight: 1.55 }}>
-            Join and Check-in are separate. Attendance is recorded only after a broad-area check and linked report or cleanup evidence for this beach.
-          </p>
-          <div style={{ display: 'flex', gap: 7, flexWrap: 'wrap', marginTop: 11 }}>
-            <InfoChip>{joined ? 'Joined' : 'Not joined'}</InfoChip>
-            <InfoChip>{checkIn === 'within_area' ? 'Checked in' : 'Not checked in'}</InfoChip>
-            <InfoChip color={attendanceRecorded ? C.green : C.muted} background={attendanceRecorded ? C.greenBg : undefined}>
-              {attendanceRecorded ? 'Recorded' : 'Not recorded'}
-            </InfoChip>
-          </div>
-        </div>
-
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
+        <div className="i2-action-stack">
           {!joined ? (
             <PrimaryButton onClick={join}>Join Cleanup</PrimaryButton>
-          ) : checkIn !== 'within_area' ? (
+          ) : !checkedIn ? (
             <PrimaryButton onClick={() => nav(`/events/${eventId}/check-in`)}>Check in</PrimaryButton>
           ) : (
             <PrimaryButton onClick={() => nav(`/cleanup/${event.beachId}?event=${encodeURIComponent(event.id)}`)}>
@@ -165,13 +138,33 @@ export default function EventScreen() {
           {event.cleanupIds.length > 0 && (
             <GhostButton onClick={() => nav(`/events/${event.id}/result`)}>View recorded result</GhostButton>
           )}
-          <GhostButton onClick={() => nav(`/share/events/${event.id}`)}>Open public sharing page</GhostButton>
-          {joined && !attendanceRecorded && <TextButton onClick={leave}>Leave activity</TextButton>}
         </div>
 
-        <div style={{ fontFamily: MONO, fontSize: 9, lineHeight: 1.55, letterSpacing: '.08em', color: C.faint, textAlign: 'center' }}>
-          EXACT GPS IS NEVER PUBLISHED OR RETAINED
+        <div className="i2-card">
+          <SectionLabel size="sm">BEACH CONTEXT</SectionLabel>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, marginTop: 10 }}>
+            <div>
+              <strong style={{ display: 'block', color: C.ink2, fontSize: 14.5 }}>{event.beachName}</strong>
+              <span style={{ display: 'block', marginTop: 4, color: C.muted, fontSize: 11.5 }}>{event.area}</span>
+            </div>
+            <InfoChip>{event.cleanupIds.length} cleanups</InfoChip>
+          </div>
+          <GhostButton onClick={() => nav(`/beach/${event.beachId}`)} style={{ marginTop: 12 }}>View beach</GhostButton>
         </div>
+
+        <div className="i2-card">
+          <SectionLabel size="sm">SHARE</SectionLabel>
+          <div className="i2-share-grid">
+            <a href={whatsapp} target="_blank" rel="noreferrer" className="btn-ghost press i2-share-button">WhatsApp</a>
+            <button type="button" className="btn-ghost press i2-share-button" onClick={systemShare} disabled={sharing}>{sharing ? 'Opening…' : 'Share…'}</button>
+            <button type="button" className={`btn-primary press i2-share-button${copied ? ' i2-copy-success' : ''}`} onClick={copyLink}>
+              {copied ? 'Copied' : 'Copy link'}
+            </button>
+          </div>
+        </div>
+
+        <GhostButton onClick={() => nav(`/share/events/${event.id}`)}>Open public sharing page</GhostButton>
+        {joined && !attendanceRecorded && <TextButton onClick={leave}>Leave activity</TextButton>}
       </div>
     </div>
   );

@@ -388,12 +388,11 @@ export async function analyseCleanupPhoto(
 }
 
 export function formatEventDate(date: string): string {
-  return new Date(`${date}T12:00:00+08:00`).toLocaleDateString('en-GB', {
+  const weekday = new Date(`${date}T12:00:00+08:00`).toLocaleDateString('en-GB', {
     weekday: 'short',
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
+    timeZone: 'Asia/Kuala_Lumpur',
   });
+  return `${date} (${weekday})`;
 }
 
 export function cleanupTotal(target: CleanupTarget): number {

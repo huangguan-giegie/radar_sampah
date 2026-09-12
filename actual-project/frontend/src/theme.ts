@@ -166,18 +166,26 @@ export function freshnessLabel(kind: FreshnessKind, iso: string | null): string 
   return `Reported ${d} days ago`;
 }
 
-/** A date a person can read: "Today", otherwise "5 Sep 2026". en-GB because
- *  the app is used in Malaysia, where 5/9 means 5 September - the US default
- *  would silently turn that into 9 May. */
+/** A fixed date follows the prototype's unambiguous `2026-09-12 (Sat)` rule.
+ *  "Today" stays relative because it describes freshness rather than a
+ *  calendar date. All comparisons use Malaysia time so a late-night report
+ *  cannot move to the wrong day on a device in another time zone. */
 export function formatDate(iso: string): string {
   const d = new Date(iso);
-  const today = new Date();
-  const sameDay =
-    d.getFullYear() === today.getFullYear() &&
-    d.getMonth() === today.getMonth() &&
-    d.getDate() === today.getDate();
-  if (sameDay) return 'Today';
-  return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+  if (Number.isNaN(d.getTime())) return iso;
+  const parts = (value: Date) => new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Kuala_Lumpur',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(value);
+  const exactDate = parts(d);
+  if (exactDate === parts(new Date())) return 'Today';
+  const weekday = d.toLocaleDateString('en-GB', {
+    weekday: 'short',
+    timeZone: 'Asia/Kuala_Lumpur',
+  });
+  return `${exactDate} (${weekday})`;
 }
 
 // Everyday descriptions of the four amounts, shown on the record screen. Two

@@ -60,7 +60,8 @@ export default function CommunityScreen() {
               </SectionLabel>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
                 {rows.map((event) => {
-                  const parts = formatEventDate(event.date).split(' ');
+                  const day = event.date.slice(8, 10);
+                  const weekday = formatEventDate(event.date).slice(-4, -1).toUpperCase();
                   const joined = Boolean(user && event.joinedBy.includes(user.participantId));
                   return (
                     <button
@@ -70,8 +71,8 @@ export default function CommunityScreen() {
                       onClick={() => nav(`/events/${event.id}`)}
                     >
                       <span className="i2-date" aria-hidden="true">
-                        <strong>{parts[1]}</strong>
-                        <span>{parts[2]?.toUpperCase()}</span>
+                        <strong>{day}</strong>
+                        <span>{weekday}</span>
                       </span>
                       <span style={{ minWidth: 0 }}>
                         <span style={{ display: 'block', fontSize: 15, fontWeight: 720, color: C.ink2 }}>{event.beachName}</span>
