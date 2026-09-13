@@ -2,17 +2,33 @@ import { C } from '../theme';
 import { ShieldCheck } from './Icon';
 import { GhostButton } from './ui';
 
+// The three things exact GPS is used for. All three are true and all three are
+// listed - including duplicate detection, which is the one a user would least
+// expect. A privacy explanation that leaves out the awkward use is worse than
+// none, because it is the one they would object to if they found out later.
 const POINTS = [
   'Suggest the correct beach',
   'Assign the report to a supported beach',
   'Detect duplicate reports',
 ];
 
-
+/**
+ * The sheet behind "Why do we need this?".
+ *
+ * It appears where the question is asked, not in a policy page nobody opens.
+ * It says what exact coordinates are used FOR, and what other people can see -
+ * which is only ever the beach or a broad area.
+ */
 export function PrivacySheet({ onClose }: { onClose: () => void }) {
   return (
-
+    /* Above Leaflet's own layers, which sit between 400 and 700. This sheet
+       opens on top of screens that have a map, and at a lower z-index the map
+       would simply cover it. */
     <div style={{ position: 'absolute', inset: 0, zIndex: 900 }}>
+      {/* The dark backdrop is a real <button>. Tapping outside to close is
+          what people expect from a sheet, and making it a button means the
+          keyboard and screen readers get that same way out - a div with an
+          onClick gives them nothing. */}
       <button
         type="button"
         aria-label="Close"
@@ -38,6 +54,8 @@ export function PrivacySheet({ onClose }: { onClose: () => void }) {
           padding: '14px 22px calc(var(--safe-bottom) + 32px)',
         }}
       >
+        {/* The grab handle. Purely a visual cue that this is a sheet which
+            came up from the bottom, so the way to dismiss it is obvious. */}
         <div
           style={{
             width: 40,
@@ -87,6 +105,9 @@ export function PrivacySheet({ onClose }: { onClose: () => void }) {
             lineHeight: 1.55,
           }}
         >
+          {/* The strongest claim on the sheet, so it gets the dark box. It is
+              also enforced in code: coordinates are rounded in GpsScreen and
+              are never returned by any public endpoint. */}
           Other users only ever see the <b style={{ color: C.bg }}>beach or broad area</b>.
           <br />
           Exact litter coordinates never appear on the public map.

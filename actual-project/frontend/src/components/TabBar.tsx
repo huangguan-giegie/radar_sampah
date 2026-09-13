@@ -1,11 +1,14 @@
 import { useLocation, useNavigate } from 'react-router-dom';
 import { C } from '../theme';
-import { BookmarkIcon, HomeIcon, Pin, UserIcon } from './Icon';
+import { BookmarkIcon, CommunityIcon, HomeIcon, Pin, UserIcon } from './Icon';
 
 
+// Iteration 2 adds Community as a first-class place rather than hiding cleanup
+// activities behind the map or account page.
 const TABS = [
   { to: '/home', label: 'Home', Icon: HomeIcon },
   { to: '/map', label: 'Map', Icon: Pin },
+  { to: '/community', label: 'Community', Icon: CommunityIcon },
   { to: '/reports', label: 'Reports', Icon: BookmarkIcon },
   { to: '/account', label: 'Account', Icon: UserIcon },
 ];
@@ -21,7 +24,11 @@ export function TabBar() {
         left: 14,
         right: 14,
 
-
+        // Do not stretch with the window. Left and right are both set, so
+        // adding auto margins centres it, and maxWidth lines it up with the
+        // reading column above. Without this, on a 1440px monitor the tab bar
+        // is a glass strip across the whole screen with four icons stranded in
+        // the corners.
         maxWidth: 'var(--measure)',
         marginInline: 'auto',
         bottom: 'var(--bottom-inset)',
@@ -39,6 +46,9 @@ export function TabBar() {
       {TABS.map(({ to, label, Icon }) => {
         const active = pathname === to;
         return (
+          // aria-current tells a screen reader which tab is the current page.
+          // On screen that is shown by colour alone, which is no use to
+          // someone who cannot see it.
           <button
             key={to}
             type="button"
@@ -51,6 +61,9 @@ export function TabBar() {
               alignItems: 'center',
               gap: 3,
               padding: '6px 0 2px',
+              // The icon below is drawn with color="currentColor", so it
+              // inherits this one colour. The active state is set in one place
+              // instead of the icon and the label drifting apart.
               color: active ? C.navy : '#8794AD',
             }}
           >

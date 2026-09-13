@@ -1,7 +1,16 @@
 
 
+// The route table: which URL shows which screen.
+//
+// This is the map of the whole app. Read it top to bottom and you can see
+// every page we have and what it takes to reach it. Pages that need a signed
+// in user are wrapped in <RequireAuth>; pages in the middle of the report flow
+// are also wrapped in <RequireStep>.
+//
+// It also keeps the browser tab title and a spoken page name in step with the
+// route, and shows the session-trouble banner. See pageTitle below.
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
-import { useEffect } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
 import { DeviceFrame } from './components/DeviceFrame';
 import { TabBar } from './components/TabBar';
 import { Toast } from './components/Toast';
@@ -22,15 +31,43 @@ import RecordScreen from './screens/RecordScreen';
 import ReviewScreen from './screens/ReviewScreen';
 import SubmittedScreen from './screens/SubmittedScreen';
 import MyReportsScreen from './screens/MyReportsScreen';
+import ReportDetailScreen from './screens/ReportDetailScreen';
 import AccountScreen from './screens/AccountScreen';
+import AdminAccessDeniedScreen from './screens/AdminAccessDeniedScreen';
+const CommunityScreen = lazy(() => import('./screens/CommunityScreen'));
+const EventScreen = lazy(() => import('./screens/EventScreen'));
+const CheckInScreen = lazy(() => import('./screens/CheckInScreen'));
+const CleanupScreen = lazy(() => import('./screens/CleanupScreen'));
+const CleanupResultScreen = lazy(() => import('./screens/CleanupResultScreen'));
+const EventResultScreen = lazy(() => import('./screens/EventResultScreen'));
+const SharedEventScreen = lazy(() => import('./screens/SharedEventScreen'));
+const AiSuggestionScreen = lazy(() => import('./screens/AiSuggestionScreen'));
+const AiMethodScreen = lazy(() => import('./screens/AiMethodScreen'));
+const AdminEventScreen = lazy(() => import('./screens/AdminEventScreen'));
 
 
-const TAB_ROUTES = ['/home', '/map', '/reports', '/account'];
+// The bottom tab bar appears on these four pages only.
+// It is hidden all through the report flow on purpose: while filing a report
+// the user has one job, and a tab bar is an invitation to wander off and lose
+// what they typed.
+const TAB_ROUTES = ['/home', '/map', '/community', '/reports', '/account'];
 
 
+/**
+ * Send anyone who is not signed in to the identity screen, and remember where
+ * they were going so we can put them back there afterwards.
+ *
+ * The "?next=" part matters in a web app: people arrive from a shared link or
+ * a bookmark, not always from our home page. Without it, signing in would
+ * always dump them on /home and they would have to find that beach again.
+ * The value is cleaned by safeNextPath() before it is used.
+ */
 function RequireAuth({ children }: { children: JSX.Element }) {
   const { user, authReady } = useApp();
   const { pathname, search } = useLocation();
+  // Render nothing until we know who the user is. Deciding earlier would
+  // redirect on the strength of a guess, and send people to the sign-in page
+  // they were about to be let past.
   if (!authReady) return null;
   if (!user) {
     return <Navigate to={`/identity?next=${encodeURIComponent(pathname + search)}`} replace />;
@@ -38,26 +75,84 @@ function RequireAuth({ children }: { children: JSX.Element }) {
   return children;
 }
 
+function RequireAdmin({ children }: { children: JSX.Element }) {
+  const { user, authReady } = useApp();
+  const { pathname, search } = useLocation();
+  if (!authReady) return null;
+  if (!user) return <Navigate to={`/identity?next=${encodeURIComponent(pathname + search)}`} replace />;
+  if (user.role !== 'moderator') return <AdminAccessDeniedScreen />;
+  return children;
+}
 
+
+/**
+ * The report-flow guard. If someone lands in the middle of the flow by typing
+ * a URL or opening a bookmark, send them to the step they can actually be on.
+ *
+ * It sits INSIDE RequireAuth, not outside: a signed-out deep link should first
+ * go to /identity?next=..., come back to the same URL, and only then be
+ * checked for how far the draft has got. The other order would decide the step
+ * for a user we have not identified yet. The rule itself is in flowRules.ts.
+ *
+ * One case is not sent back into the flow at all - see below.
+ */
 function RequireStep({ step, children }: { step: ReportStep; children: JSX.Element }) {
   const { draft, lastSavedReport } = useApp();
   const to = guardStep(step, draft);
+  // The user has just finished a report, so the draft is empty again. Sending
+  // them back to step 1 here would look like the app had started a fresh
+  // report on its own - which is what the back button from the confirmation
+  // screen, or an old report URL, would do. Their reports list is the honest
+  // place to land instead.
+  //
+  // This does not get in the way of filing another report: SubmittedScreen
+  // clears lastSavedReport before it sends the user to step 1.
   if (to && lastSavedReport) return <Navigate to="/reports" replace />;
   return to ? <Navigate to={to} replace /> : children;
 }
 
 export default function App() {
   const { pathname } = useLocation();
-  const { toast } = useApp();
+  const { toast, authSyncError, retryAuth } = useApp();
+  // A plain name for the page the user is on, worked out from the URL.
+  //
+  // Every screen sits inside the same phone-shaped frame, so nothing on the
+  // page itself tells a browser user which one they are on. This single string
+  // feeds both the tab title and the spoken announcement below, so the two can
+  // never drift apart.
+  //
+  // Order matters here: /report/saved is tested first because it also starts
+  // with /report/, and the wider test below would otherwise swallow it and
+  // call the confirmation page "Add a report".
   const pageTitle = pathname.startsWith('/report/saved')
     ? 'Report saved'
     : pathname.startsWith('/report/')
       ? 'Add a report'
-      : pathname.startsWith('/beach/')
+      : pathname.startsWith('/share/events/')
+        ? 'Shared cleanup activity'
+        : pathname.startsWith('/events/') && pathname.endsWith('/check-in')
+          ? 'Cleanup check-in'
+          : pathname.startsWith('/events/') && pathname.endsWith('/result')
+            ? 'Cleanup activity result'
+            : pathname.startsWith('/events/')
+              ? 'Cleanup activity'
+              : pathname === '/platform/events/new'
+                ? 'Create an activity'
+              : pathname.startsWith('/cleanup/result/')
+                ? 'Cleanup result'
+                : pathname.startsWith('/cleanup/')
+                  ? 'Add a cleanup'
+                  : pathname.startsWith('/beach/')
         ? 'Beach details'
+        : pathname === '/community'
+          ? 'Community cleanups'
+          : pathname === '/method/ai'
+            ? 'AI suggestion method'
         : pathname === '/map'
           ? 'Beach map'
-          : pathname === '/reports'
+          : pathname.startsWith('/reports/')
+            ? 'Report details'
+            : pathname === '/reports'
             ? 'My reports'
             : pathname === '/account'
               ? 'Account'
@@ -65,19 +160,38 @@ export default function App() {
                 ? 'Home'
                 : 'Radar Sampah';
 
+  // Keep the browser tab title in step with the route.
+  //
+  // This is one page as far as the browser is concerned, so the title never
+  // changes by itself. Without this, every open tab, every bookmark and every
+  // history entry would read "Radar Sampah" and none could be told apart.
   useEffect(() => {
     document.title = `${pageTitle} · Radar Sampah`;
   }, [pageTitle]);
 
   return (
     <DeviceFrame>
+      {/* Says the new page name out loud for screen reader users.
+
+          Moving between routes does not reload the page, so a screen reader
+          announces nothing on its own and the user is left guessing whether
+          the tap did anything. A polite live region speaks the new name after
+          whatever it is already reading, without cutting the user off.
+
+          The style hides the text from sight but keeps it in the page.
+          display:none or visibility:hidden would hide it from screen readers
+          too, and then it would say nothing at all. */}
       <div
         aria-live="polite"
         style={{ position: 'absolute', width: 1, height: 1, padding: 0, margin: -1, overflow: 'hidden', clip: 'rect(0 0 0 0)', whiteSpace: 'nowrap', border: 0 }}
       >
         {pageTitle}
       </div>
+      <Suspense fallback={null}>
       <Routes>
+        {/* Public pages. Anyone can look at beach data without an account -
+            that is the point of the project, and it is what makes the map
+            worth sharing. Only FILING a report needs an identity. */}
         <Route path="/" element={<SplashScreen />} />
         <Route path="/welcome" element={<WelcomeScreen />} />
         <Route path="/identity" element={<IdentityScreen />} />
@@ -86,7 +200,20 @@ export default function App() {
         <Route path="/map" element={<MapScreen />} />
         <Route path="/beach/:beachId" element={<BeachScreen />} />
         <Route path="/method" element={<MethodScreen />} />
+        <Route path="/method/ai" element={<AiMethodScreen />} />
 
+        <Route path="/community" element={<CommunityScreen />} />
+        <Route path="/events/:eventId" element={<EventScreen />} />
+        <Route path="/events/:eventId/result" element={<EventResultScreen />} />
+        <Route path="/share/events/:eventId" element={<SharedEventScreen />} />
+        <Route path="/events/:eventId/check-in" element={<RequireAuth><CheckInScreen /></RequireAuth>} />
+        <Route path="/cleanup/:beachId" element={<RequireAuth><CleanupScreen /></RequireAuth>} />
+        <Route path="/cleanup/result/:cleanupId" element={<RequireAuth><CleanupResultScreen /></RequireAuth>} />
+        <Route path="/platform/events/new" element={<RequireAdmin><AdminEventScreen /></RequireAdmin>} />
+
+        {/* The report flow, in order. Two wrappers on each one:
+            RequireAuth  - you must be identified to file a report
+            RequireStep  - you must have finished the earlier steps */}
         <Route path="/report/photo" element={
           <RequireAuth><RequireStep step="photo"><PhotoScreen /></RequireStep></RequireAuth>
         } />
@@ -99,16 +226,60 @@ export default function App() {
         <Route path="/report/details" element={
           <RequireAuth><RequireStep step="details"><RecordScreen /></RequireStep></RequireAuth>
         } />
+        <Route path="/report/suggestions" element={
+          <RequireAuth><RequireStep step="suggestions"><AiSuggestionScreen /></RequireStep></RequireAuth>
+        } />
         <Route path="/report/review" element={
           <RequireAuth><RequireStep step="review"><ReviewScreen /></RequireStep></RequireAuth>
         } />
+        {/* The result page has no RequireStep. By the time we get here the
+            draft has been cleared, so a step check would look at an empty
+            draft and bounce the user off the confirmation they just earned. */}
         <Route path="/report/saved" element={<RequireAuth><SubmittedScreen /></RequireAuth>} />
 
         <Route path="/reports" element={<RequireAuth><MyReportsScreen /></RequireAuth>} />
+        <Route path="/reports/:reportId" element={<RequireAuth><ReportDetailScreen /></RequireAuth>} />
         <Route path="/account" element={<RequireAuth><AccountScreen /></RequireAuth>} />
 
+        {/* Anything we do not recognise goes home rather than showing a blank
+            page. replace, so the broken URL does not sit in the history and
+            trap the user on the back button. */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+      </Suspense>
+
+      {/* We could not refresh the session, but the old one still looks valid,
+          so the user stays where they are and gets a quiet strip instead of
+          being thrown out. role="status" so a screen reader mentions it after
+          the current sentence rather than interrupting. Retry asks again -
+          usually all that is needed once the network is back. */}
+      {authSyncError && (
+        <div
+          role="status"
+          style={{
+            position: 'fixed',
+            left: 16,
+            right: 16,
+            bottom: 'calc(var(--safe-bottom) + 14px)',
+            zIndex: 100,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 12,
+            padding: '10px 12px',
+            borderRadius: 14,
+            background: '#FFF8E8',
+            border: '1px solid rgba(154,106,20,.25)',
+            color: '#6B4A14',
+            fontSize: 12,
+          }}
+        >
+          <span>{authSyncError}</span>
+          <button type="button" onClick={() => void retryAuth()} style={{ border: 0, background: 'transparent', color: '#6B4A14', fontWeight: 700, padding: 0 }}>
+            Retry
+          </button>
+        </div>
+      )}
 
       {TAB_ROUTES.includes(pathname) && <TabBar />}
       {toast && <Toast message={toast} />}

@@ -6,6 +6,7 @@ import io
 import os
 import re
 import sqlite3
+import threading
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from types import SimpleNamespace
@@ -13,8 +14,8 @@ from urllib.parse import urlsplit
 
 import pytest
 from PIL import Image
-from sqlalchemy import inspect as sqlalchemy_inspect
-from sqlalchemy import insert, select
+from sqlalchemy import event, inspect as sqlalchemy_inspect
+from sqlalchemy import insert, select, text
 
 os.environ.setdefault("AUTH_JWT_SECRET", "test-only-secret-not-for-production")
 
@@ -23,9 +24,12 @@ from app import (
     create_app,
     event_members_table,
     events_table,
+    issue_recovery_token,
+    load_beaches,
     photo_file_path,
     read_photo_metadata,
     reports_table,
+    seed_reference_data,
     sweep_orphan_photos,
     users_table,
     write_photo_metadata,
@@ -41,6 +45,40 @@ def api(tmp_path):
         photo_storage_dir=tmp_path / "private-photos",
     )
     return application, application.test_client()
+
+
+def test_startup_creates_all_six_contract_tables(tmp_path):
+    application = create_app(
+        database_url=f"sqlite:///{tmp_path / 'six-tables.db'}",
+        testing=True,
+        photo_storage_dir=tmp_path / "photos",
+    )
+    names = set(sqlalchemy_inspect(application.extensions["marine_engine"]).get_table_names())
+    assert {"users", "beaches", "dim_threat", "dim_species", "area_species", "reports"} <= names
+
+
+def test_startup_seeds_reference_tables_idempotently(tmp_path):
+    database_url = f"sqlite:///{tmp_path / 'reference.db'}"
+    create_app(database_url=database_url, testing=True, photo_storage_dir=tmp_path / "photos")
+    second = create_app(database_url=database_url, testing=True, photo_storage_dir=tmp_path / "photos")
+    engine = second.extensions["marine_engine"]
+    with engine.connect() as connection:
+        assert connection.execute(text("SELECT COUNT(*) FROM beaches")).scalar_one() == 4
+        assert connection.execute(text("SELECT COUNT(*) FROM area_species")).scalar_one() == 11
+        assert connection.execute(text("SELECT COUNT(*) FROM reports")).scalar_one() == 0
+
+
+def test_startup_repairs_partial_reference_seed_without_touching_reports(tmp_path):
+    database_url = f"sqlite:///{tmp_path / 'partial-reference.db'}"
+    first = create_app(database_url=database_url, testing=True, photo_storage_dir=tmp_path / "photos")
+    with first.extensions["marine_engine"].begin() as connection:
+        connection.execute(text("DELETE FROM area_species WHERE area_id <> 'morib'"))
+        connection.execute(text("DELETE FROM beaches WHERE id <> 'morib'"))
+    second = create_app(database_url=database_url, testing=True, photo_storage_dir=tmp_path / "photos")
+    with second.extensions["marine_engine"].connect() as connection:
+        assert connection.execute(text("SELECT COUNT(*) FROM beaches")).scalar_one() == 4
+        assert connection.execute(text("SELECT COUNT(*) FROM area_species")).scalar_one() == 11
+        assert connection.execute(text("SELECT COUNT(*) FROM reports")).scalar_one() == 0
 
 
 def signup(client):
@@ -60,7 +98,8 @@ def test_demo_participant_1637_is_seeded_idempotently(tmp_path, monkeypatch):
     )
     client = application.test_client()
 
-    restored = client.post("/auth/restore", json={"participantId": "1637"})
+    recovery_token = issue_recovery_token("u_demo_1637", os.environ["AUTH_JWT_SECRET"])
+    restored = client.post("/auth/restore", json={"participantId": "1637", "token": recovery_token})
 
     assert restored.status_code == 200
     assert restored.get_json()["user"] == {
@@ -75,7 +114,7 @@ def test_demo_participant_1637_is_seeded_idempotently(tmp_path, monkeypatch):
         photo_storage_dir=tmp_path / "private-photos",
     )
     second_response = second_application.test_client().post(
-        "/auth/restore", json={"participantId": "1637"}
+        "/auth/restore", json={"participantId": "1637", "token": recovery_token}
     )
     assert second_response.status_code == 200
     assert second_response.get_json()["user"]["id"] == "u_demo_1637"
@@ -100,7 +139,13 @@ def test_demo_participant_runs_report_flow(tmp_path, monkeypatch):
         photo_storage_dir=tmp_path / "private-photos",
     )
     client = application.test_client()
-    restored = client.post("/auth/restore", json={"participantId": "1637"})
+    restored = client.post(
+        "/auth/restore",
+        json={
+            "participantId": "1637",
+            "token": issue_recovery_token("u_demo_1637", os.environ["AUTH_JWT_SECRET"]),
+        },
+    )
     headers = {"Authorization": "Bearer " + restored.get_json()["token"]}
 
     photo = upload(client, headers)
@@ -114,6 +159,65 @@ def test_demo_participant_runs_report_flow(tmp_path, monkeypatch):
     assert created.get_json()["status"] == "Counted"
     assert client.get("/reports/mine", headers=headers).status_code == 200
     assert client.get("/reports/mine/counts", headers=headers).get_json()["counted"] == 1
+
+
+def test_species_distribution_predicts_from_packaged_models(api):
+    _application, client = api
+    response = client.post(
+        "/api/species-distribution/predict",
+        json={"latitude": 2.746, "longitude": 101.44},
+    )
+
+    assert response.status_code == 200
+    payload = response.get_json()
+    assert payload["insideMalaysianEez"] is True
+    assert payload["scoreType"] == "relative_occurrence"
+    assert payload["calibratedProbability"] is False
+    assert {prediction["speciesSlug"] for prediction in payload["predictions"]} == {
+        "green_sea_turtle",
+        "ocellaris_clownfish",
+        "irrawaddy_dolphin",
+        "moorish_idol",
+    }
+
+
+def test_species_distribution_rejects_coordinates_outside_model_area(api):
+    _application, client = api
+    response = client.post(
+        "/api/species-distribution/predict",
+        json={"latitude": 0, "longitude": 0},
+    )
+
+    assert response.status_code == 422
+    assert response.get_json() == {
+        "code": "OUTSIDE_MODEL_AREA",
+        "message": "The coordinate is outside the supported Malaysian EEZ.",
+    }
+
+
+def test_species_distribution_rejects_malformed_coordinates(api):
+    _application, client = api
+    response = client.post("/api/species-distribution/predict", json={"latitude": "north", "longitude": 101.44})
+    assert response.status_code == 400
+    assert response.get_json() == {
+        "code": "VALIDATION_FAILED",
+        "message": "latitude and longitude must be numbers.",
+    }
+
+
+def test_species_distribution_does_not_write_to_database(api):
+    application, client = api
+    engine = application.extensions["marine_engine"]
+    with engine.connect() as connection:
+        before_users = connection.execute(select(users_table)).all()
+        before_reports = connection.execute(select(reports_table)).all()
+
+    response = client.post("/api/species-distribution/predict", json={"latitude": 2.746, "longitude": 101.44})
+    assert response.status_code == 200
+
+    with engine.connect() as connection:
+        assert connection.execute(select(users_table)).all() == before_users
+        assert connection.execute(select(reports_table)).all() == before_reports
 
 
 def jpeg_bytes(size=(40, 30), with_metadata=False):
@@ -200,14 +304,125 @@ def test_partial_main_database_is_migrated_to_contract_rules(tmp_path):
         photo_storage_dir=tmp_path / "photos",
     )
     engine = application.extensions["marine_engine"]
+    assert {"users", "beaches", "dim_threat", "dim_species", "area_species", "reports"} <= set(
+        sqlalchemy_inspect(engine).get_table_names()
+    )
     assert {"photo_mime", "photo_stripped", "lat", "lng", "updated_at", "qty_plastic", "qty_fishing_gear"} <= {
         column["name"] for column in sqlalchemy_inspect(engine).get_columns("reports")
     }
     with engine.connect() as db_connection:
         rows = db_connection.execute(select(reports_table).order_by(reports_table.c.created_at)).all()
     assert (rows[0].category, rows[0].quantity, rows[0].status) == ("Plastic", "Very Large", "Counted")
-    assert (rows[0].qty_plastic, rows[0].qty_fishing_gear) == (4, 1)
+    assert (rows[0].qty_plastic, rows[0].qty_fishing_gear) == ("Very Large", "Small")
     assert rows[1].status == "Duplicate"
+
+
+def test_standard_schema_database_gets_runtime_compatibility_columns(tmp_path):
+    database_path = tmp_path / "standard-schema.db"
+    connection = sqlite3.connect(database_path)
+    connection.executescript(
+        """
+        CREATE TABLE users (
+          id TEXT PRIMARY KEY, participant_id TEXT NOT NULL UNIQUE,
+          role TEXT NOT NULL, created_at TIMESTAMP NOT NULL
+        );
+        CREATE TABLE beaches (
+          id TEXT PRIMARY KEY, name TEXT NOT NULL, area TEXT NOT NULL,
+          lat REAL NOT NULL, lng REAL NOT NULL, habitat TEXT NOT NULL,
+          habitat_tag TEXT NOT NULL, sensitivity TEXT NOT NULL,
+          primary_species_glyph TEXT NOT NULL, cover_image_url TEXT,
+          scene TEXT NOT NULL, ecological_note TEXT NOT NULL,
+          created_at TIMESTAMP NOT NULL
+        );
+        CREATE TABLE reports (
+          id TEXT PRIMARY KEY, reporter_id TEXT NOT NULL, beach_id TEXT NOT NULL,
+          location_source TEXT NOT NULL, photo_key TEXT NOT NULL,
+          photo_mime TEXT NOT NULL, photo_stripped BOOLEAN NOT NULL,
+          qty_plastic TEXT, qty_fishing_gear TEXT, qty_glass TEXT,
+          qty_metal TEXT, qty_paper TEXT, qty_other TEXT,
+          category TEXT NOT NULL, quantity TEXT NOT NULL,
+          lat NUMERIC, lng NUMERIC, status TEXT NOT NULL, status_note TEXT,
+          created_at TIMESTAMP NOT NULL, updated_at TIMESTAMP NOT NULL,
+          deleted_at TIMESTAMP
+        );
+        INSERT INTO users VALUES ('u_standard', '1637', 'volunteer', '2026-08-31 00:00:00');
+        INSERT INTO beaches VALUES
+          ('morib', 'Pantai Morib', 'Banting, Selangor', 2.746, 101.44,
+           'Intertidal mudflat & sandy shore', 'MUDFLAT', 'Migratory feeding ground',
+           'turtle', NULL, 'scene', 'note', '2026-08-31 00:00:00');
+        """
+    )
+    connection.close()
+
+    application = create_app(
+        database_url=f"sqlite:///{database_path}",
+        testing=True,
+        photo_storage_dir=tmp_path / "photos",
+    )
+    report_columns = {column["name"] for column in sqlalchemy_inspect(application.extensions["marine_engine"]).get_columns("reports")}
+    assert {"beach_name", "quantities"} <= report_columns
+    assert application.test_client().get("/beaches").status_code == 200
+
+
+def test_new_contract_schema_rejects_invalid_reference_values(tmp_path):
+    application = create_app(
+        database_url=f"sqlite:///{tmp_path / 'constraints.db'}",
+        testing=True,
+        photo_storage_dir=tmp_path / "photos",
+    )
+    engine = application.extensions["marine_engine"]
+    with pytest.raises(Exception, match="CHECK constraint failed"):
+        with engine.begin() as connection:
+            connection.execute(
+                text(
+                    "INSERT INTO dim_species "
+                    "(species_id, scientific_name, common_name, threat_id, glyph, picture_url, created_at) "
+                    "VALUES ('bad', 'Bad species', 'Bad', NULL, 'invalid', NULL, CURRENT_TIMESTAMP)"
+                )
+            )
+
+
+def test_reference_seed_is_safe_for_concurrent_startups(tmp_path):
+    database_url = f"sqlite:///{tmp_path / 'concurrent-seed.db'}"
+    application = create_app(database_url=database_url, testing=True, photo_storage_dir=tmp_path / "photos")
+    engine = application.extensions["marine_engine"]
+    with engine.begin() as connection:
+        connection.execute(text("DELETE FROM area_species"))
+        connection.execute(text("DELETE FROM dim_species"))
+        connection.execute(text("DELETE FROM beaches"))
+
+    barrier = threading.Barrier(2)
+    lock = threading.Lock()
+    first_beach_selects = 0
+
+    def pause_first_selects(_connection, _cursor, statement, _parameters, _context, _executemany):
+        nonlocal first_beach_selects
+        if "FROM beaches" not in statement or not statement.lstrip().upper().startswith("SELECT"):
+            return
+        with lock:
+            first_beach_selects += 1
+            should_wait = first_beach_selects <= 2
+        if should_wait:
+            barrier.wait(timeout=5)
+
+    event.listen(engine, "before_cursor_execute", pause_first_selects)
+    errors = []
+
+    def seed():
+        try:
+            seed_reference_data(engine, load_beaches())
+        except Exception as error:  # pragma: no cover - assertion reports the concrete backend error
+            errors.append(error)
+
+    workers = [threading.Thread(target=seed) for _ in range(2)]
+    for worker in workers:
+        worker.start()
+    for worker in workers:
+        worker.join(timeout=10)
+    event.remove(engine, "before_cursor_execute", pause_first_selects)
+
+    assert all(not worker.is_alive() for worker in workers)
+    assert errors == []
 
 
 def test_report_creation_keeps_legacy_required_columns_compatible(tmp_path):
@@ -246,6 +461,7 @@ def test_anonymous_auth_restore_and_me(api):
     _application, client = api
     session, headers = signup(client)
     assert re.fullmatch(r"\d{4}", session["user"]["participantId"])
+    assert re.fullmatch(r"RS-(?:[A-Z2-7]{4}-){5}[A-Z2-7]{4}", session["recoveryToken"])
     assert session["user"]["role"] == "volunteer"
     assert client.get("/auth/me", headers=headers).get_json() == session["user"]
 
@@ -256,6 +472,18 @@ def test_anonymous_auth_restore_and_me(api):
     assert restored.status_code == 200
     assert restored.get_json()["user"] == session["user"]
     assert client.post("/auth/logout", headers=headers).status_code == 204
+
+
+def test_restore_accepts_current_id_only_contract_and_rejects_wrong_optional_token(api):
+    _application, client = api
+    session, _headers = signup(client)
+    participant_id = session["user"]["participantId"]
+
+    id_only = client.post("/auth/restore", json={"participantId": participant_id})
+    assert id_only.status_code == 200
+    wrong = client.post("/auth/restore", json={"participantId": participant_id, "token": "RS-WRONG-TOKEN"})
+    assert wrong.status_code == 401
+    assert wrong.get_json()["code"] == "INVALID_RECOVERY_TOKEN"
 
 
 @pytest.mark.parametrize("participant_id", ["123", "abcd", "00000", None])
@@ -524,7 +752,7 @@ def test_create_report_returns_full_contract_and_hides_private_fields(api):
         row = connection.execute(select(reports_table)).one()
     assert row.lat == 2.746
     assert row.lng == 101.44
-    assert (row.qty_plastic, row.qty_fishing_gear, row.qty_paper) == (4, 1, 3)
+    assert (row.qty_plastic, row.qty_fishing_gear, row.qty_paper) == ("Very Large", "Small", "Large")
 
 
 def test_duplicate_rule_and_counts(api):
@@ -662,9 +890,10 @@ def test_beach_attention_uses_median_report_scores_and_latest_composition(api):
 
     detail = client.get("/beaches/morib").get_json()
     assert detail["composition"] == [
-        {"category": "Fishing gear", "quantity": "Large"},
+        {"category": "Fishing gear", "percentage": 100},
     ]
     assert detail["compositionSource"]["reportId"] == report_ids[-1]
+    assert detail["compositionSource"]["method"] == "reported_quantity_estimate"
 
 
 def test_beach_attention_uses_median_for_even_count(api):
@@ -743,7 +972,7 @@ def test_report_rate_limit_is_per_user(api):
     assert limited.get_json()["code"] == "RATE_LIMITED"
 
 
-def test_recovery_token_is_required_for_normal_participants(api):
+def test_id_only_restore_matches_current_main_and_optional_token_is_checked(api):
     _application, client = api
     session, _headers = signup(client)
     participant_id = session["user"]["participantId"]
@@ -752,7 +981,7 @@ def test_recovery_token_is_required_for_normal_participants(api):
     wrong = client.post("/auth/restore", json={"participantId": participant_id, "token": "wrong-token"})
     restored = client.post("/auth/restore", json={"participantId": participant_id, "token": session["recoveryToken"]})
 
-    assert missing.status_code == 401
+    assert missing.status_code == 200
     assert wrong.status_code == 401
     assert restored.status_code == 200
     assert restored.get_json()["user"] == session["user"]
@@ -960,6 +1189,18 @@ def test_events_require_join_location_and_evidence_for_attendance(api):
     assert session["user"]["participantId"] in attended["checkIns"]
     assert attended["checkIns"][session["user"]["participantId"]] == "within_area"
     assert session["user"]["participantId"] in attended["attendanceBy"]
+    cleanup = client.post("/cleanup-actions", headers=headers, json={
+        "targetReportId": report.get_json()["id"],
+        "eventId": event["id"],
+        "removed": {"Plastic": 1},
+        "handling": "Collected for disposal",
+        "idempotencyKey": "event-cleanup-result-test",
+    })
+    assert cleanup.status_code == 201
+    event_cleanups = client.get(f"/events/{event['id']}/cleanups").get_json()
+    assert [item["id"] for item in event_cleanups] == [cleanup.get_json()["id"]]
+    assert event_cleanups[0]["rows"] == [{"category": "Plastic", "removed": 1, "before": 1, "after": 0}]
+    assert "lat" not in event_cleanups[0] and "lng" not in event_cleanups[0]
     with application.extensions["marine_engine"].connect() as connection:
         membership = connection.execute(select(event_members_table).where(
             event_members_table.c.event_id == event["id"],

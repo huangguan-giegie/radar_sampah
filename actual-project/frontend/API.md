@@ -63,8 +63,8 @@
 
 ## 1. 认证 —— 匿名参与者编号
 
-**团队决议：Iteration 1 不收集任何真实个人数据。** 没有姓名、没有邮箱、没有密码。
-用户领一个 4 位编号（例如 `1637`），记录就挂在这个编号下面。
+**团队决议：不收集任何真实个人数据。** 没有姓名、没有邮箱、没有手机号。
+用户会得到一个 4 位编号（例如 `1637`）。当前主线通过编号恢复；支持 Iteration 2 扩展的后端可额外返回一次恢复 token。
 
 | 方法 | 路径 | 鉴权 | 说明 |
 | --- | --- | --- | --- |
@@ -79,7 +79,7 @@
 // 201
 {
   "token": "eyJhbGciOi...",
-  "recoveryToken": "show once and store securely",
+  "recoveryToken": "RS-ABCD-EFGH-JKLM-NPQR-STUV-WXYZ",
   "user": { "id": "u_01H...", "participantId": "1637", "role": "volunteer" }
 }
 ```
@@ -88,17 +88,21 @@
 
 ```json
 // 请求
-{ "participantId": "1637", "token": "<recoveryToken>" }
+{ "participantId": "1637" }
+// 旧版客户端可以额外提供 token；服务端会校验，但当前契约不要求它。
 // 200 —— 同上
 ```
 
 **GET `/auth/me`** 返回 `user`；token 无效返回 401。
 
+前端只在明确的 401 时清除 token。超时、网络错误或 5xx 会保留匿名会话快照并显示可重试
+提示，不会把已经登录的参与者错误显示成 Guest。
+
 - `participantId`：4 位数字，随机生成，不重复
 - `role`：`"volunteer"｜"moderator"`。Iteration 2 的 `moderator` 是活动管理员，负责创建、修改和关闭活动；举报审核不在本迭代范围内。账号由后端配置，不允许客户端自行提升权限
 - token 用 JWT 就行，有效期给长一点（30 天），不用做 refresh
 
-恢复令牌只在创建参与者时返回一次，服务端只存 SHA-256 摘要。恢复时必须同时提供编号和令牌；只有受控演示账号 `DEMO_PARTICIPANT_ID` 可以仅用编号恢复。Moderator 账号通过后端脚本创建，不能从客户端升级。
+当前契约用参与者编号恢复。兼容的后端还会为新账号返回一次恢复令牌并仅保存 SHA-256 摘要；旧客户端提供令牌时服务端会校验。Moderator 账号通过后端脚本创建，不能从客户端升级。
 
 ## 2. 海滩
 
@@ -188,12 +192,12 @@
 
 ---
 
-## 2b. 生物出现分数（Epic 5 · Su）
+## 2b. 生物出现分数（离线 contextual baseline）
 
-> ⚠️ **这不是「出现概率」。** Su 确认过：Iteration 1 的模型只用了 OBIS 的出现记录、
-> 生成的背景点和经纬度，输出的是**相对出现分数**，没有经过校准。
-> 所以界面上不能显示成百分号，文案里也不能说「有多大可能出现在这里」。
-> 原来卡片上那两个百分比（绿海龟 38%、海岸鸟类 76%）已经全部撤掉。
+> ⚠️ **这不是「出现概率」。** Iteration 1 基线使用打包的 OBIS 快照、生成的背景点和经纬度，
+> 输出的是**未经校准的相对出现分数**。它不是实时 OBIS 查询，不能显示成百分号，也绝不参与
+> litter severity。静态 biodiversity 卡片仍是 contextual reference content，只有科学名完全匹配
+> 时才可以显示模型分数。
 
 模型目前覆盖四个物种：**绿海龟、公子小丑鱼、伊洛瓦底海豚、镰鳍角蝶鱼**。
 不在这四个里的卡片（比如「海岸鸟类」这种统称）**不会有分数**，这一版也不会有。
@@ -219,7 +223,7 @@
 | state | 什么意思 | 界面显示 |
 | --- | --- | --- |
 | `ready` | 模型接上了，`score` 有值 | 分数 + `RELATIVE OCCURRENCE SCORE · NOT A PROBABILITY` |
-| `pending` | 这个物种在覆盖范围内，但后端还没接上 | `OCCURRENCE MODEL · RESULT PENDING` |
+| `pending` | 静态卡片还没有已取得的出现数据 | `SOURCE PENDING · NOT YET FROM FISHBASE / OBIS` |
 | `unavailable` | 这个物种不在那四个里 | `OCCURRENCE MODEL · NO DATA FOR THIS CARD` |
 
 **`pending` 和 `unavailable` 必须分开**：一个是「还没做」，一个是「做不了」。
@@ -241,8 +245,17 @@
 > 这三条不是洁癖 —— 产品对用户的核心承诺就是「数据可信、规则透明」。
 > 一个说成概率的相对分数，会把 Epic 4 辛苦建立的可信度一起赔进去。
 
-**待 Su 确认**：`basis` 要不要带模型版本号？有没有置信区间要展示？
-定了前端跟着调，改动只在 `types.ts` 一处。
+实时模型接口与静态卡片的 `likelihood` 字段分开。界面显示模型版本，但不虚构置信区间。
+
+### `POST /api/species-distribution/predict`
+
+接口在 API 启动时一次性加载四个训练模型，接受海滩广域坐标；请求时不查询 OBIS，
+也不把坐标或预测结果写入数据库。坐标必须位于支持的马来西亚 EEZ 内。
+
+响应包含 `insideMalaysianEez`、`scoreType: "relative_occurrence"`、
+`calibratedProbability: false`、四个带 `speciesSlug`、`scientificName`、
+`commonNameEn`、`relativeOccurrenceScore`、`selectedModel` 的预测，以及 `modelVersion`。
+非法坐标返回 `400 VALIDATION_FAILED`，EEZ 外坐标返回 `422 OUTSIDE_MODEL_AREA`。
 
 ## 2c. 生物数据的出处（DMP §2 / §9 强制）
 
@@ -371,8 +384,8 @@ likelihood 两列必须同生同死。
 > **两处待办**：
 > ① 表里写的是 `area_id REFERENCES beaches(id)` —— DMP 管这个概念叫 `areas`，
 >   契约叫 `beaches`。同一个东西两个名字，改名是单独一步，不在这次改动里。
-> ② `origin` 默认 `curated`。接上 OBIS 之后，落在区域地理框内的 occurrence
->   可以自动生成 `derived` 行，那时不用改表结构。
+> ② 静态卡片的 `origin` 仍是 `curated`。当前离线模型接口单独返回 contextual prediction，
+>   不会生成 `derived` 数据库行。
 
 ---
 

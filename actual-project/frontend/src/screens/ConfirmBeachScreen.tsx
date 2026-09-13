@@ -1,3 +1,9 @@
+// Confirm which beach this report is about.
+//
+// Two faces, picked at render time: GPS worked, so offer that one beach to
+// accept; anything else, so show a searchable list of every supported beach.
+// A person always confirms, GPS only suggests. A wrong beach does not just
+// spoil one report - it feeds the litter status we publish for that beach.
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getBeaches } from '../api';
@@ -10,7 +16,12 @@ import { useApp } from '../AppContext';
 import type { BeachSummary } from '../types';
 import type { ReportDraft } from '../AppContext';
 
-
+/**
+ * What to say when locating did not work out. Six causes get six sentences:
+ * one shared "permission was declined" line used to send people who had
+ * refused nothing hunting through their browser settings. Every line names the
+ * problem and then points at the list, so nobody is left at a dead end.
+ */
 const GPS_MESSAGE: Record<NonNullable<ReportDraft['gpsIssue']>, string> = {
   denied: 'Location permission was declined — choose your beach below.',
   unavailable: "Your device couldn't provide a location — choose your beach below.",
@@ -39,11 +50,17 @@ export default function ConfirmBeachScreen() {
   useEffect(loadBeaches, []);
   const [query, setQuery] = useState('');
 
+  // The beach GPS suggested, looked up in the list we just loaded. It can be
+  // null even after a good fix - a failed list leaves no name to show.
   const suggested = beaches.find((b) => b.id === draft.beachId) || null;
 
+  // Which face to show. The `|| !suggested` earns its keep: with nothing to
+  // display we fall back to the list instead of an empty confirmation card.
   const manual = draft.locationSource !== 'gps' || !suggested;
 
-
+  // Search by name or by area, because a volunteer may know "Banting" without
+  // knowing which beach sits there. Filtering stays in the browser - with four
+  // beaches a server round trip is slower and dies with the connection.
   const q = query.trim().toLowerCase();
   const filtered = q
     ? beaches.filter(
@@ -55,8 +72,12 @@ export default function ConfirmBeachScreen() {
 
   return (
     <div className="screen" style={{ zIndex: 26, background: C.cloud, overflow: 'hidden' }}>
+      {/* Zoom follows how much we know. 12 when GPS gave us a spot, so the user
+          can recognise the place; 9 when picking by hand, so the whole coast
+          and every option is in view. */}
       <MiniMap lat={center.lat} lng={center.lng} zoom={manual ? 9 : 12} />
 
+      {/* Above Leaflet's own layers, which occupy 400 to 700. */}
       <div style={{ position: 'absolute', inset: 0, zIndex: 800, background: 'linear-gradient(180deg,rgba(221,227,236,.3) 0%,transparent 30%,rgba(12,28,58,.4) 100%)', pointerEvents: 'none' }} />
 
       <BackButton
@@ -67,6 +88,8 @@ export default function ConfirmBeachScreen() {
         tone="light"
         style={{ position: 'absolute', top: 'var(--top-inset)', left: '50%', transform: 'translateX(-50%)', zIndex: 820 }}
       >
+        {/* Says how this report was located. The same wording turns up on the
+            review screen, so the user always knows what they are attesting to. */}
         {manual ? 'MANUAL BEACH SELECTION' : 'GPS USED ONCE · PRIVATE'}
       </OverlayChip>
 
@@ -131,6 +154,11 @@ export default function ConfirmBeachScreen() {
                   <div style={{ fontSize: 16.5, fontWeight: 650 }}>{suggested.name}</div>
                   <div style={{ fontSize: 12, color: C.dim, marginTop: 3 }}>{suggested.area}</div>
                 </div>
+                {/* Never show a band we have not earned. attentionStateFor
+                    hands one back only once a beach has enough counted reports;
+                    below that the badge reads "Insufficient data". The map and
+                    the beach page call the same function, so a beach cannot
+                    look rated here and unrated there. */}
                 <SeverityBadge
                   band={attentionStateFor(suggested.severity, suggested.insufficientData, suggested.validReports).hasBand ? suggested.severity : null}
                   label={attentionStateFor(suggested.severity, suggested.insufficientData, suggested.validReports).pageLabel}
@@ -141,6 +169,12 @@ export default function ConfirmBeachScreen() {
                   <Check />
                   Yes, Confirm
                 </PrimaryButton>
+                {/* Rejecting the suggestion drops the coordinates as well as
+                    the beach: if the GPS answer was wrong, the fix behind it
+                    proves nothing and would only confuse the backend's
+                    duplicate check. It does not navigate - clearing beachId
+                    re-renders this screen as the list, which is why the flow
+                    guard reads a missing beach as 'confirm' and not 'location'. */}
                 <TextButton
                   onClick={() =>
                     patchDraft({ locationSource: 'manual', coords: null, beachId: null, beachName: null })
@@ -166,6 +200,9 @@ export default function ConfirmBeachScreen() {
                 }}
               >
                 <Search />
+                {/* The placeholder doubles as a status line: four beaches, not
+                    every beach in Malaysia, so an empty result is explained
+                    before the user types. */}
                 <input
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
@@ -173,6 +210,8 @@ export default function ConfirmBeachScreen() {
                   style={{ flex: 1, border: 'none', background: 'transparent', fontSize: 13.5, color: C.ink }}
                 />
               </div>
+              {/* The list scrolls inside the card. The cap is in vh as well as
+                  px so the sheet still fits on a short screen. */}
               <div className="scroll-y" style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 10, maxHeight: 'min(340px, 42vh)' }}>
                 {loading && <Skeleton h={58} r={16} />}
                 {filtered.map((b) => (
@@ -207,6 +246,9 @@ export default function ConfirmBeachScreen() {
                     />
                   </button>
                 ))}
+                {/* "Your photo is safe" is the sentence that matters here. The
+                    photo is already uploaded, and the first fear on seeing an
+                    error is having to shoot it again. */}
                 {!loading && failed && (
                   <ErrorNote
                     title="Couldn't load the beach list"
@@ -214,6 +256,8 @@ export default function ConfirmBeachScreen() {
                     onRetry={loadBeaches}
                   />
                 )}
+                {/* Empty because the search matched nothing, or because there is
+                    genuinely nothing to show - two different messages. */}
                 {!loading && !failed && filtered.length === 0 && (
                   <div style={{ fontSize: 12.5, color: C.dim, padding: '10px 4px' }}>
                     {q ? `No supported beach matches “${query}”.` : 'No beaches available right now.'}

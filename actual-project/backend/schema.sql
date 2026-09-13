@@ -1,7 +1,7 @@
 -- ============================================================================
 -- Radar Sampah — schema.sql
 --
--- Snapshot of the live PostgreSQL `app` schema, inspected on 2026-09-11.
+-- Latest main contract plus additive Iteration 2 fields and tables.
 --
 -- Keep this file aligned with the deployed database. The API uses
 -- DATABASE_SCHEMA=app in production; run this file with `app` as the active
@@ -157,13 +157,13 @@ CREATE TABLE reports (
   photo_stripped  boolean     NOT NULL DEFAULT false,  -- EXIF location removed by the server
 
   -- One report, up to six categories. NULL means "this category was not seen",
-  -- not "seen, amount zero". The numeric scale is Small=1 through Very Large=4.
-  qty_plastic      integer,
-  qty_fishing_gear integer,
-  qty_glass        integer,
-  qty_metal        integer,
-  qty_paper        integer,
-  qty_other        integer,
+  -- not "seen, amount zero". Actual item counts live separately in item_counts.
+  qty_plastic      text CHECK (qty_plastic      IN ('Small','Medium','Large','Very Large')),
+  qty_fishing_gear text CHECK (qty_fishing_gear IN ('Small','Medium','Large','Very Large')),
+  qty_glass        text CHECK (qty_glass        IN ('Small','Medium','Large','Very Large')),
+  qty_metal        text CHECK (qty_metal        IN ('Small','Medium','Large','Very Large')),
+  qty_paper        text CHECK (qty_paper        IN ('Small','Medium','Large','Very Large')),
+  qty_other        text CHECK (qty_other        IN ('Small','Medium','Large','Very Large')),
 
   -- Derived from the six columns above: the highest-scoring non-null category
   -- and its band. Kept so existing responses keep working (API.md §2d).
@@ -195,6 +195,10 @@ CREATE TABLE reports (
   updated_at      timestamptz NOT NULL DEFAULT now(),
   deleted_at      timestamptz,                         -- soft delete
 
+  -- Compatibility columns retained by the running API during migration.
+  beach_name      varchar(160),
+  quantities      text,
+
   -- Retained for compatibility with reports created by the earlier API.
   beach_name      varchar(160),
   quantities      text,
@@ -219,16 +223,6 @@ CREATE TABLE reports (
 -- Two indexes carry the whole application (API.md §9).
 CREATE INDEX reports_severity_window  ON reports (beach_id, status, created_at);
 CREATE INDEX reports_duplicate_check  ON reports (reporter_id, beach_id, created_at);
-
--- ---------------------------------------------------------------------------
--- community_cleanup — a cleanup event at one beach, recorded for one cleaner.
--- ---------------------------------------------------------------------------
-CREATE TABLE community_cleanup (
-  id             text        PRIMARY KEY,
-  beach_id       text        NOT NULL REFERENCES beaches(id),
-  cleaner_id     text        NOT NULL REFERENCES users(id),
-  community_date timestamptz NOT NULL
-);
 
 -- ---------------------------------------------------------------------------
 -- community_events — scheduled Saturday beach cleanups and moderator-created

@@ -1,5 +1,19 @@
 import { C } from '../theme';
 
+/**
+ * The small message bar at the bottom of the screen.
+ *
+ * role="status" makes a screen reader announce it when it appears, without
+ * stealing focus. A message that only exists as pixels is invisible to anyone
+ * not looking at that corner of the screen.
+ *
+ * pointerEvents: 'none' lets taps pass straight through it. It floats over the
+ * page, and it must never swallow a press meant for the button underneath.
+ *
+ * It is for confirmations only. Anything the user has to act on gets a real
+ * error panel that stays put - a message that vanishes after two seconds is no
+ * place to explain something that needs fixing.
+ */
 export function Toast({ message }: { message: string }) {
   return (
     <div

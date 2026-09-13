@@ -1,30 +1,44 @@
+// Tests for the report-flow rules, and for the small helpers the map, the home
+// list and the beach pages lean on.
+//
+// WHY THESE AND NOT THE SCREENS. Everything under test here is a pure
+// function: give it a draft, or a handful of values, and it returns a
+// decision, with no React and no browser involved. That makes these cases
+// cheap to write and cheap to trust. The same logic buried inside a component
+// would need a rendered page and a fake router before one case could be run.
+//
+// Two blocks below exist because of bugs that actually shipped: the photo
+// guard for corrections, and the way back from the review screen.
 import { describe, expect, it } from 'vitest';
 import type { ReportDraft } from './AppContext';
-import {
-  backFromReview,
-  CAME_FROM_DETAILS,
-  buildReportSubmission,
-  finishReportSubmission,
-  guardStep,
-  reachableStep,
-  reportOutcome,
-  safeNextPath,
-  hasDraftProgress,
-} from './flowRules';
+import { CAME_FROM_DETAILS, backFromReview, buildReportSubmission, findExactDuplicateReport, finishReportSubmission, formatReportComposition, guardStep, hasDraftProgress, historicalPhotoUnavailable, orderByNeed, reachableStep, reportOutcome, safeNextPath } from './flowRules';
 import { markerHtml } from './components/BeachMarker';
 import type { BeachSummary } from './types';
-import { attentionStateFor } from './theme';
+import { attentionStateFor, formatDate } from './theme';
 
+describe('fixed date presentation', () => {
+  it('uses the exact date and weekday while preserving an unambiguous order', () => {
+    expect(formatDate('2026-09-16T04:00:00+08:00')).toBe('2026-09-16 (Wed)');
+  });
+});
+
+// A complete, valid draft. Each test passes in only the fields it wants to
+// break, so a test reads as "this one thing is wrong" rather than twelve lines
+// of setup that hide which field the case is actually about.
 function draft(changes: Partial<ReportDraft> = {}): ReportDraft {
   return {
     photo: { photoKey: 'mock/test.jpg', previewUrl: 'blob:test', metadataStripped: true },
     existingPhotoUrl: null,
     existingPhotoKey: null,
+    existingPhotoUnavailable: false,
     beachId: 'morib',
     beachName: 'Pantai Morib',
     locationSource: 'manual',
     coords: null,
     quantities: { Plastic: 'Small' },
+    itemCounts: null,
+    aiDecision: 'manual',
+    aiModelVersion: null,
     gpsIssue: null,
     editingReportId: null,
     editingStatus: null,
@@ -33,6 +47,11 @@ function draft(changes: Partial<ReportDraft> = {}): ReportDraft {
   };
 }
 
+// A beach with one or two reports gets no severity band at all. Three counted
+// reports is the minimum the scoring method asks for, and printing "High" off
+// a single report would be a claim the data cannot support. These tests hold
+// that line, including the sentence that tells the reader why there is no band
+// yet.
 describe('attentionStateFor', () => {
   it.each([0, 1, 2])('keeps %s counted reports in a neutral insufficient-data state', (validReports) => {
     const reportWord = validReports === 1 ? 'report' : 'reports';
@@ -58,6 +77,9 @@ describe('attentionStateFor', () => {
   });
 });
 
+// safeNextPath cleans the "?next=" value we redirect to after login. That
+// value comes from the URL, so anyone can put anything in it - these tests are
+// the guard against an open redirect off our own site.
 describe('safeNextPath', () => {
   it('keeps valid internal paths', () => {
     expect(safeNextPath('/report/photo?from=home')).toBe('/report/photo?from=home');
@@ -71,7 +93,42 @@ describe('safeNextPath', () => {
   );
 });
 
+describe('findExactDuplicateReport', () => {
+  const existing = {
+    id: 'R-2041',
+    beachId: 'morib',
+    beachName: 'Pantai Morib',
+    quantities: { Plastic: 'Small' as const, Glass: 'Medium' as const },
+    category: 'Glass' as const,
+    quantity: 'Medium' as const,
+    categoryScores: {},
+    reportScore: 1,
+    createdAt: '2026-09-10T03:00:00.000Z',
+    status: 'Counted' as const,
+  };
+
+  it('finds a same-day exact match regardless of category key order', () => {
+    expect(findExactDuplicateReport(
+      draft({ quantities: { Glass: 'Medium', Plastic: 'Small' } }),
+      [existing],
+      new Date('2026-09-10T12:00:00+08:00'),
+    )?.id).toBe('R-2041');
+  });
+
+  it('does not warn when one confirmed quantity differs', () => {
+    expect(findExactDuplicateReport(
+      draft({ quantities: { Glass: 'Large', Plastic: 'Small' } }),
+      [existing],
+      new Date('2026-09-10T12:00:00+08:00'),
+    )).toBeNull();
+  });
+});
+
 describe('buildReportSubmission', () => {
+  it('refuses unconfirmed AI or manual values', () => {
+    expect(() => buildReportSubmission(draft({ aiDecision: null }))).toThrow(/Confirm the AI suggestion/);
+  });
+
   it('includes coordinates only for a GPS report', () => {
     const result = buildReportSubmission(
       draft({ locationSource: 'gps', coords: { lat: 2.95, lng: 101.42 } }),
@@ -105,6 +162,19 @@ describe('buildReportSubmission', () => {
         'Fishing gear': 'Medium',
         Glass: 'Small',
       });
+    }
+  });
+
+  it('sends model-confirmed item counts separately from the compatible quantity bands', () => {
+    const result = buildReportSubmission(draft({
+      quantities: { Plastic: 'Medium', Other: 'Small' },
+      itemCounts: { Plastic: 8, Other: 2 },
+      aiDecision: 'confirmed',
+    }));
+    expect(result.kind).toBe('create');
+    if (result.kind === 'create') {
+      expect(result.payload.quantities).toEqual({ Plastic: 'Medium', Other: 'Small' });
+      expect(result.payload.itemCounts).toEqual({ Plastic: 8, Other: 2 });
     }
   });
 
@@ -152,6 +222,31 @@ describe('buildReportSubmission', () => {
     });
   });
 
+  it('reuses the existing photo key when its preview is unavailable', () => {
+    const result = buildReportSubmission(
+      draft({
+        editingReportId: 'report-1',
+        photo: null,
+        existingPhotoUrl: null,
+        existingPhotoKey: 'seed/r1.jpg',
+        existingPhotoUnavailable: true,
+      }),
+    );
+    expect(result).toEqual({
+      kind: 'update',
+      reportId: 'report-1',
+      changes: {
+        beachId: 'morib',
+        quantities: { Plastic: 'Small' },
+        locationSource: 'manual',
+        photoKey: 'seed/r1.jpg',
+      },
+    });
+  });
+
+  // Correcting a report must not quietly change how its location was found.
+  // There are no fresh coordinates in the draft, so neither field is sent, and
+  // the report keeps the GPS source it was filed with.
   it('preserves the original GPS source when correcting without new coordinates', () => {
     const result = buildReportSubmission(
       draft({
@@ -170,6 +265,31 @@ describe('buildReportSubmission', () => {
   });
 });
 
+// The one-line summary that stands in for the findings table on the saved
+// screen and in the report list. The order must not follow whatever order the
+// user happened to tick the boxes in.
+describe('report composition display', () => {
+  it('shows every selected category and quantity in a stable order', () => {
+    expect(formatReportComposition({ Glass: 'Small', Plastic: 'Large', 'Fishing gear': 'Medium' }))
+      .toBe('Plastic — Large · Fishing gear — Medium · Glass — Small');
+  });
+
+  it('returns a neutral value when no category is available', () => {
+    expect(formatReportComposition({})).toBe('No categories recorded');
+  });
+});
+
+// A report can have a photo on file and still have nothing to show for it -
+// a key with no URL. The correction draft has to carry that fact, or the
+// review page promises a photo the user cannot see.
+describe('Historical correction draft photo state', () => {
+  it('marks a keyed report without a preview as unavailable on entry', () => {
+    expect(historicalPhotoUnavailable(null, 'seed/r1.jpg')).toBe(true);
+    expect(historicalPhotoUnavailable('/photo.jpg', 'seed/r1.jpg')).toBe(false);
+    expect(historicalPhotoUnavailable(null, null)).toBe(false);
+  });
+});
+
 describe('reportOutcome', () => {
   it('returns truthful outcomes for every report status', () => {
     expect(reportOutcome('Counted').badge).toContain('COUNTED');
@@ -178,6 +298,9 @@ describe('reportOutcome', () => {
   });
 });
 
+// What happens when somebody types a URL straight into the middle of the
+// report flow, or opens an old bookmark. This is a web-only problem: a phone
+// app has no address bar.
 describe('Flow guards for direct URLs into the reporting flow', () => {
   const blank = draft({ photo: null, beachId: null, beachName: null, quantities: {} });
 
@@ -210,15 +333,31 @@ describe('Flow guards for direct URLs into the reporting flow', () => {
 
   it('allows a complete draft to access every step after refresh', () => {
     const d = draft();
-    for (const step of ['photo', 'location', 'confirm', 'details', 'review'] as const) {
+    for (const step of ['photo', 'location', 'confirm', 'details', 'suggestions', 'review'] as const) {
       expect(guardStep(step, d)).toBeNull();
     }
   });
 
-  it('allows editing to re-enter the photo step without a new photo', () => {
+  it('requires an AI or manual decision before Review', () => {
+    const d = draft({ aiDecision: null });
+    expect(reachableStep(d)).toBe('suggestions');
+    expect(guardStep('review', d)).toBe('/report/suggestions');
+    expect(guardStep('suggestions', d)).toBeNull();
+  });
 
+  // This used to assert the opposite - that a correction with NO photo could
+  // reach review - which is how the one report the feature exists for, the one
+  // excluded because its photo is unusable, could be submitted and counted with
+  // the photo still missing. Correcting a report that HAS a photo is covered by
+  // the next test, through existingPhotoUrl.
+  it('sends a correction with no photo at all back to the photo step', () => {
+    const d = draft({ photo: null, existingPhotoUrl: null, existingPhotoKey: null, editingReportId: 'r4' });
+    expect(reachableStep(d)).toBe('photo');
+    expect(guardStep('review', d)).toBe('/report/photo');
+  });
 
-    const d = draft({ photo: null, editingReportId: 'r3' });
+  it('lets a correction keep a photo it was stored with, by key alone', () => {
+    const d = draft({ photo: null, existingPhotoKey: 'mock/1.jpg', editingReportId: 'r3' });
     expect(reachableStep(d)).toBe('review');
     expect(guardStep('photo', d)).toBeNull();
   });
@@ -229,6 +368,9 @@ describe('Flow guards for direct URLs into the reporting flow', () => {
   });
 });
 
+// Whether the app should offer "carry on with your report" when the user comes
+// back. An empty draft must not set that off, or someone who has never started
+// a report is asked to resume one that does not exist.
 describe('Report draft entry', () => {
   it('recognises a draft that should be offered for resume', () => {
     const blank = draft({
@@ -245,6 +387,11 @@ describe('Report draft entry', () => {
   });
 });
 
+// The map pins are built as plain HTML, not as React, so nothing else checks
+// them. A pin has to carry a spoken label and be reachable by keyboard, or the
+// map cannot be used with a screen reader or without a mouse. The rest of the
+// case proves a pin with too few reports never announces a band it does not
+// have, and that the compact pin keeps both of those properties.
 describe('Map marker accessibility', () => {
   it('includes a readable beach label and keyboard target', () => {
     const beach: BeachSummary = {
@@ -323,6 +470,9 @@ describe('Returning from review to details', () => {
   });
 });
 
+// Proves the navigation is committed with flushSync, before the draft is
+// cleared. Without it the review page's guard sees an empty draft mid-update
+// and bounces the user back to step 1 instead of showing their confirmation.
 describe('Completing a report submission', () => {
   it('navigates to the saved screen before clearing the review draft', () => {
     const events: string[] = [];
@@ -331,5 +481,53 @@ describe('Completing a report submission', () => {
     );
 
     expect(events).toEqual(['navigate:/report/saved:true:true']);
+  });
+});
+
+describe('orderByNeed', () => {
+  const beach = (name: string, o: Partial<{ severity: string | null; insufficientData: boolean; validReports: number; attentionScore: number | null }> = {}) => ({
+    name,
+    severity: o.severity ?? 'Moderate',
+    insufficientData: o.insufficientData ?? false,
+    validReports: o.validReports ?? 5,
+    attentionScore: o.attentionScore ?? 2,
+  });
+
+  it('puts the highest attention score first', () => {
+    const out = orderByNeed([
+      beach('Low one', { attentionScore: 1.2 }),
+      beach('High one', { attentionScore: 3.1 }),
+      beach('Middle', { attentionScore: 2.0 }),
+    ]);
+    expect(out.map((b) => b.name)).toEqual(['High one', 'Middle', 'Low one']);
+  });
+
+  it('puts every unrated beach after every rated one, however high its count', () => {
+    const out = orderByNeed([
+      beach('No band', { insufficientData: true, severity: null, attentionScore: null, validReports: 2 }),
+      beach('Rated low', { attentionScore: 0.4 }),
+    ]);
+    expect(out.map((b) => b.name)).toEqual(['Rated low', 'No band']);
+  });
+
+  it('orders unrated beaches by how close they are to the threshold', () => {
+    const out = orderByNeed([
+      beach('Never reported', { insufficientData: true, severity: null, attentionScore: null, validReports: 0 }),
+      beach('Nearly there', { insufficientData: true, severity: null, attentionScore: null, validReports: 2 }),
+    ]);
+    expect(out.map((b) => b.name)).toEqual(['Nearly there', 'Never reported']);
+  });
+
+  it('breaks ties on name so the order cannot wobble between fetches', () => {
+    const same = { attentionScore: 2.0 };
+    expect(orderByNeed([beach('Zeta', same), beach('Alpha', same)]).map((b) => b.name))
+      .toEqual(['Alpha', 'Zeta']);
+  });
+
+  it('does not mutate the array it was given', () => {
+    const input = [beach('B', { attentionScore: 1 }), beach('A', { attentionScore: 9 })];
+    const before = input.map((b) => b.name);
+    orderByNeed(input);
+    expect(input.map((b) => b.name)).toEqual(before);
   });
 });

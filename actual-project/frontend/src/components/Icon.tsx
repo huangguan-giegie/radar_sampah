@@ -1,5 +1,13 @@
-
-
+// Every icon in the app, written by hand as SVG.
+//
+// WHY NO ICON LIBRARY. A package would ship hundreds of icons to download so
+// we could use fifteen, and it would be one more licence to check for a
+// university submission. Written here they are a few hundred bytes, they all
+// share one stroke weight, and none of them can change under us in a version
+// bump.
+//
+// Every icon takes size, color and strokeWidth, so the same drawing works in a
+// tab bar, on a dark photo and inside a button without a second copy.
 import type { CSSProperties } from 'react';
 import type { SpeciesGlyph } from '../types';
 
@@ -10,7 +18,10 @@ type Props = {
   style?: CSSProperties;
 };
 
-
+// The attributes shared by nearly every icon. Pulled out so the drawings
+// below are just their path data - and so a change to the stroke style is one
+// edit rather than fifteen. The round caps and joins are what make them look
+// like one family instead of fifteen separate drawings.
 function base(size: number, color: string, strokeWidth: number, style?: CSSProperties) {
   return {
     width: size,
@@ -149,6 +160,14 @@ export const UserIcon = ({ size = 21, color = 'currentColor', strokeWidth = 1.7,
   </svg>
 );
 
+export const CommunityIcon = ({ size = 21, color = 'currentColor', strokeWidth = 1.7, style }: Props) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" style={style} aria-hidden="true">
+    <circle cx="9" cy="8" r="3" />
+    <circle cx="17" cy="9" r="2.3" />
+    <path d="M3.8 19.2c.5-3.4 2.2-5.2 5.2-5.2s4.7 1.8 5.2 5.2M14.5 14.2c2.9-.7 4.9.8 5.5 3.8" />
+  </svg>
+);
+
 const GLYPH_PATHS: Record<SpeciesGlyph, JSX.Element> = {
   turtle: (
     <>
@@ -189,7 +208,7 @@ export const SpeciesIcon = ({
   <svg {...base(size, color, 1.5)}>{GLYPH_PATHS[glyph] ?? GLYPH_PATHS.bird}</svg>
 );
 
-
+/** The radar mark used on the splash screen - the app's own logo. */
 export const RadarMark = ({ size = 30 }: { size?: number }) => (
   <svg width={size} height={size} viewBox="0 0 30 30" fill="none">
     <circle cx="15" cy="15" r="13" stroke="#B8FF36" strokeOpacity=".5" strokeWidth="1.4" />

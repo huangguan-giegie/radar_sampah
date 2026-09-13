@@ -1,7 +1,15 @@
+// The opening screen: the logo, then straight on to /welcome.
+//
+// It is a screen, not a loading screen. Nothing is being fetched here. It
+// exists so the app opens with its name and its purpose instead of dropping a
+// first-time visitor into a map of dots with no explanation.
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { C, MONO } from '../theme';
 
+// One expanding circle of the radar animation. Written as a function so the
+// three rings differ only in when they start and how strong they are - the
+// staggered delays are what make it read as a pulse going outwards.
 const ring = (delay: string, opacity: number): React.CSSProperties => ({
   position: 'absolute',
   inset: 0,
@@ -15,10 +23,17 @@ export default function SplashScreen() {
 
   useEffect(() => {
     const t = window.setTimeout(() => nav('/welcome', { replace: true }), 2600);
+    // Clearing the timer on unmount matters: if the user taps through first,
+    // this would otherwise fire later and yank them off whatever page they had
+    // reached by then.
     return () => window.clearTimeout(t);
   }, [nav]);
 
   return (
+    // The whole screen is a <button>, not a <div> with onClick. That gives
+    // us keyboard focus and Enter for free, so a returning user does not have
+    // to sit through the animation. replace: true keeps the splash out of the
+    // history, or Back from /welcome would land on it again and again.
     <button
       type="button"
       onClick={() => nav('/welcome', { replace: true })}

@@ -1,3 +1,15 @@
+// The welcome screen. Its one job is to offer two doors:
+//
+//   "See What's Out There"  -> the map, with no account at all
+//   "Count Me In"           -> get a participant number, then the home page
+//
+// Looking comes first on purpose. Asking a stranger to sign up before they
+// have seen anything is the fastest way to lose them, and browsing genuinely
+// needs no identity in this app - only filing a report does.
+//
+// The small line under the two buttons says the same thing in plain words.
+// People hesitate at a sign up button because they expect to be asked for an
+// email; that line answers it before they have to worry about it.
 import { useNavigate } from 'react-router-dom';
 import { C, MONO, NOISE } from '../theme';
 import { Pin } from '../components/Icon';
@@ -13,6 +25,9 @@ export default function WelcomeScreen() {
         background:
           'linear-gradient(172deg,#7FC4DE 0%,#4E9EC936 30%,transparent 60%),radial-gradient(110% 55% at 72% 20%,rgba(221,227,236,.35),transparent 58%),linear-gradient(180deg,#8FD0E8 0%,#4E9EC9 34%,#2E6EA8 52%,#1C4A85 76%,#102E5C 100%)',
       }}
+      /* Three stacked layers make the background: a horizon line, a grain
+         texture, then a dark wash at the bottom. The wash is not decoration -
+         it is what keeps the white text readable over a light sky. */
     >
       <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg,transparent 42%,rgba(221,227,236,.22) 47%,rgba(156,174,168,.12) 51%,transparent 60%)' }} />
       <div style={{ position: 'absolute', inset: 0, opacity: 0.35, backgroundImage: NOISE }} />
@@ -37,6 +52,10 @@ export default function WelcomeScreen() {
       </div>
 
       <div
+        /* className="measure" caps the text column at 640px and centres it.
+           On a phone nothing changes; on a laptop it stops the headline from
+           stretching across the whole window, which is unreadable. This one
+           class is how the same code serves both, with no separate web build. */
         className="measure"
         style={{
           position: 'absolute',

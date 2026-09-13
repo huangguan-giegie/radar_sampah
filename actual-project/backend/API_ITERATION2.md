@@ -6,8 +6,7 @@
 
 - `moderator` 是活动管理员，可以创建、修改和关闭社区活动；举报审核仍不在本迭代范围内。普通匿名参与者是 `volunteer`。
 - 清理目标只从 `Counted` 报告产生。`Duplicate`、`Incomplete` 报告不产生目标。
-- 模型输出和人工确认的实际件数用 `itemCounts` 保存；旧版 `quantities` 仍是四档数量，用于与 Iteration 1 前端兼容。两者不能互相替代。
-- 数据库 `qty_*` 列按 `schema.sql` 存整数档位码 `Small=1`、`Medium=2`、`Large=3`、`Very Large=4`；API 仍只传前端既有的档位字符串。
+- 模型输出和人工确认的实际件数用 `itemCounts` 保存；`qty_*` 数据库列及 API 的 `quantities` 保持主线约定的档位文本，用于与 Iteration 1 前端兼容。两者不能互相替代。
 - 模型类别映射：`plastic → Plastic`、`metal → Metal`、`glass → Glass`、`paper_cardboard → Paper`、`styrofoam → Other`、`fishing_gear → Fishing gear`。
 - 由实际件数导出旧版档位：1–5 件 `Small`，6–20 件 `Medium`，21–50 件 `Large`，51 件及以上 `Very Large`。例如 8 件塑料对应 `itemCounts: {"Plastic": 8}`，兼容字段为 `quantities: {"Plastic": "Medium"}`。`styrofoam` 不会新增前端类别，而会计入 `Other`。
 - 部分清理可针对同一报告重复提交，直到剩余件数为零；每次是独立、不可覆盖的清理流水。只有相同请求重试才复用同一个 `idempotencyKey`。
@@ -37,7 +36,7 @@
 
 ### `POST /auth/restore`
 
-请求 `{ "participantId": "1637", "token": "<recoveryToken>" }`。返回 `{ "token": "<session JWT>", "user": {…} }`。错误恢复令牌返回 `401 INVALID_RECOVERY_TOKEN`。只有显式配置的演示账号 `DEMO_PARTICIPANT_ID` 可继续使用仅编号恢复。
+当前主线契约请求 `{ "participantId": "1637" }`，返回 `{ "token": "<session JWT>", "user": {…} }`。兼容后端也接受旧客户端附带的 `token`，若提供则验证并在不匹配时返回 `401 INVALID_RECOVERY_TOKEN`。新注册仍可额外返回一次恢复令牌；编号恢复不要求它。
 
 ### Moderator 账号
 
@@ -162,6 +161,10 @@
 ### `GET /events/{id}`
 
 公开读取单个活动。
+
+### `GET /events/{id}/cleanups`
+
+公开读取该活动关联的清理流水，用于活动结果页汇总件数；不会返回报告照片或精确位置。
 
 ### `POST /events`（moderator）
 

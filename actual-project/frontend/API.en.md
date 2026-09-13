@@ -9,8 +9,9 @@
 > | [`API.md`](./API.md) | 中文 | Qian Jiang (frontend) |
 > | [`openapi.yaml`](./openapi.yaml) | English | tooling — Swagger UI, server stubs |
 
-> **This is a contract, not a discussion draft.** The frontend is fully built against it and
-> passes end-to-end on mock data. Implement to this and the two sides meet.
+> **This is a contract, not a discussion draft.** The frontend supports both the real API and a
+> mock fallback. The deployed compatibility API is `team04-marine-observation-api.onrender.com`;
+> the newer `radar-sampah-api.onrender.com` hostname is not enabled.
 > If something here is impractical, say so before changing it — the frontend then adjusts
 > in one file, `src/api.ts`.
 >
@@ -26,9 +27,9 @@
 > Contract coverage is kept in `backend/tests/test_api.py`.
 >
 > **Runtime modes:** leave `VITE_API_BASE_URL` empty for the local mock mode (the app uses the
-> seed data in `src/mockData.ts` and stores mock records in local storage). For the deployed
-> frontend, Render sets `VITE_API_BASE_URL=https://radar-sampah-api.onrender.com`; this selects
-> the real API and sends the bearer token on authenticated requests.
+> seed data in `src/mockData.ts` and stores mock records in local storage). The deployed
+> frontend selects the real API at `https://team04-marine-observation-api.onrender.com` and sends
+> the bearer token on authenticated requests.
 
 | Item | Convention |
 | --- | --- |
@@ -70,8 +71,8 @@ rewrite or template it.
 
 ## 1. Auth — anonymous participant numbers
 
-**Team decision: Iteration 1 collects no personal data.** No name, no email, no password.
-A person receives a 4-digit number (e.g. `1637`) and their reports hang off it.
+**Team decision: the app collects no personal data.** No name, email or phone number.
+A person receives a 4-digit ID. The current main contract restores by ID; a backend supporting the Iteration 2 extension may also return a one-time recovery token.
 
 | Method | Path | Auth | |
 | --- | --- | --- | --- |
@@ -86,17 +87,21 @@ A person receives a 4-digit number (e.g. `1637`) and their reports hang off it.
 // 201
 {
   "token": "eyJhbGciOi...",
-  "recoveryToken": "show once and store securely",
+  "recoveryToken": "RS-ABCD-EFGH-JKLM-NPQR-STUV-WXYZ",
   "user": { "id": "u_01H...", "participantId": "1637", "role": "volunteer" }
 }
 ```
 
-**POST `/auth/restore`** — body `{ "participantId": "1637", "token": "<recoveryToken>" }`;
-responds with the session JWT and user. The recovery token is returned once at signup and only
-its SHA-256 digest is stored. The configured `DEMO_PARTICIPANT_ID` is the sole ID-only restore
-exception. Moderator accounts are provisioned server-side.
+**POST `/auth/restore`** — body `{ "participantId": "1637" }`; responds with the session JWT and
+user. Older clients may also send `token`; the backend validates it when present. The compatible
+Iteration 2 backend returns a recovery token once at signup and stores only its SHA-256 digest.
+Moderator accounts are provisioned server-side.
 
 **GET `/auth/me`** — returns `user`; 401 if the token is invalid.
+
+The frontend clears the stored token only for this explicit 401 response. A timeout, network
+failure or 5xx response keeps the anonymous session snapshot and shows a retry notice instead of
+turning the participant into Guest.
 
 - `participantId` — 4 digits, **randomly assigned, never sequential**. A sequence would leak how
   many participants exist and who joined first.
@@ -193,13 +198,13 @@ exception. Moderator accounts are provisioned server-side.
 
 ---
 
-## 2b. Species occurrence score (Epic 5 · Su)
+## 2b. Species occurrence score (offline contextual baseline)
 
-> ⚠️ **This is not a probability of occurrence.** Su confirmed it: the Iteration 1 model uses only
-> OBIS occurrence records, generated background points and coordinates, and what it outputs is a
-> **relative occurrence score** that has not been calibrated. So it must not be rendered with a
-> percent sign, and the copy must not say how likely a species is to be present. The two
-> percentages that used to sit on the cards (green sea turtle 38%, coastal birds 76%) are gone.
+> ⚠️ **This is not a probability of occurrence.** The Iteration 1 baseline uses a packaged OBIS
+> snapshot, generated background points and coordinates. It returns a **relative occurrence
+> score** that has not been calibrated. It is not a real-time OBIS query, must not be shown with a
+> percent sign, and never contributes to litter severity. The static biodiversity cards remain
+> contextual reference content; only an exact scientific-name match may show a model score.
 
 The model currently covers four species: **green sea turtle, clown anemonefish, Irrawaddy dolphin
 and sicklefin Moorish idol**. A card outside those four — a group name like "Coastal Birds" —
@@ -226,7 +231,7 @@ and sicklefin Moorish idol**. A card outside those four — a group name like "C
 | state | Meaning | On screen |
 | --- | --- | --- |
 | `ready` | connected, `score` is set | the score plus `RELATIVE OCCURRENCE SCORE · NOT A PROBABILITY` |
-| `pending` | the species is covered, the backend is not connected yet | `OCCURRENCE MODEL · RESULT PENDING` |
+| `pending` | the static card has no sourced occurrence result | `SOURCE PENDING · NOT YET FROM FISHBASE / OBIS` |
 | `unavailable` | the species is not one of the four | `OCCURRENCE MODEL · NO DATA FOR THIS CARD` |
 
 **`pending` and `unavailable` must stay apart**: one means not built yet, the other means it
@@ -252,8 +257,23 @@ cannot be built. Collapsed into one sentence, a reader waits for something that 
 > are visible. A relative score presented as a probability spends the credibility Epic 4 was built
 > to earn.
 
-**For Su to confirm:** should `basis` carry a model version? Is there a confidence interval to
-show? Once decided the frontend follows in one file, `types.ts`.
+The live model route is separate from the static card `likelihood` field. The UI labels its output
+as modelled context and includes the model version; it does not invent a confidence interval.
+
+### `POST /api/species-distribution/predict`
+
+This endpoint loads four trained models once at API startup and accepts a public beach broad-area
+coordinate. It does not query OBIS at request time and does not persist the coordinate or result.
+
+```json
+{ "latitude": 2.746, "longitude": 101.44 }
+```
+
+The response contains `insideMalaysianEez`, `scoreType: "relative_occurrence"`,
+`calibratedProbability: false`, four predictions with `speciesSlug`, `scientificName`,
+`commonNameEn`, `relativeOccurrenceScore` and `selectedModel`, plus `modelVersion`.
+Coordinates outside the supported Malaysian EEZ return `422 OUTSIDE_MODEL_AREA`; malformed
+coordinates return `400 VALIDATION_FAILED`.
 
 ## 2c. Where biodiversity data comes from (required by DMP §2 and §9)
 
@@ -391,8 +411,8 @@ the existing `species[]` array — no frontend code changes.
 > **Two open items:**
 > ① The DDL says `area_id REFERENCES beaches(id)`. The DMP calls this concept `areas`, the contract
 >   calls it `beaches` — same thing, two names. Renaming is a separate step, not part of this change.
-> ② `origin` defaults to `curated`. Once OBIS is wired up, occurrences falling inside an area's
->   bounding box can generate `derived` rows without a schema change.
+> ② `origin` remains `curated` for the static cards. The current offline model route returns
+>   contextual predictions separately and does not generate `derived` database rows.
 
 ---
 
@@ -859,7 +879,7 @@ area_species     id(PK), area_id(FK→beaches), species_id(FK→dim_species, nul
                  source_dataset, source_citation, source_url, source_accessed_at,
                  occurrence_state, occurrence_score(nullable), occurrence_basis(nullable)
                  ← a relative score, not a probability; state separates
-                   "not connected yet" from "no data for this card"
+                   a static source-pending card from "no data for this card"
                  ← area×species junction; habitats and groups have a null species_id
 
 reports          id, reporter_id, beach_id, location_source,

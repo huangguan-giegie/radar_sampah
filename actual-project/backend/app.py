@@ -7,9 +7,10 @@ server-side data and are deliberately excluded from response serializers.
 
 from __future__ import annotations
 
-import json
+import base64
 import hashlib
 import hmac
+import json
 import math
 import os
 import re
@@ -18,6 +19,7 @@ from statistics import median
 import tempfile
 import threading
 import time
+import uuid
 from collections import defaultdict, deque
 from datetime import datetime, timedelta, timezone
 from functools import lru_cache, wraps
@@ -33,7 +35,9 @@ from PIL import Image, ImageOps, UnidentifiedImageError
 from dotenv import load_dotenv
 from sqlalchemy import (
     Boolean,
+    CheckConstraint,
     Column,
+    Date,
     DateTime,
     Float,
     ForeignKey,
@@ -72,7 +76,6 @@ LOCAL_DATABASE_URL = "sqlite:///radar_sampah.db"
 KUALA_LUMPUR = timezone(timedelta(hours=8))
 AUTH_JWT_ALGORITHM = "HS256"
 AUTH_TOKEN_TTL_DAYS = 30
-RECOVERY_TOKEN_BYTES = 32
 PHOTO_URL_TTL_MINUTES = 15
 PHOTO_MAX_BYTES = 10 * 1024 * 1024
 PHOTO_MAX_EDGE = 2048
@@ -150,9 +153,106 @@ users_table = Table(
     Column("created_at", DateTime(timezone=True), nullable=False),
 )
 
-# The database contract stores each quantity band as its numeric code
-# (Small=1 through Very Large=4). Keep the conversion at the API boundary so
-# clients continue to send and receive the published string labels.
+beaches_table = Table(
+    "beaches",
+    metadata,
+    Column("id", String(80), primary_key=True),
+    Column("name", String(160), nullable=False),
+    Column("area", String(160), nullable=False),
+    Column("lat", Float, nullable=False),
+    Column("lng", Float, nullable=False),
+    Column("habitat", String(200), nullable=False),
+    Column("habitat_tag", String(40), nullable=False),
+    Column("sensitivity", String(200), nullable=False),
+    Column("primary_species_glyph", String(20), nullable=False),
+    Column("cover_image_url", String(500)),
+    Column("scene", Text, nullable=False),
+    Column("ecological_note", Text, nullable=False),
+    Column("created_at", DateTime(timezone=True), nullable=False),
+    CheckConstraint(
+        "primary_species_glyph IN ('turtle','bird','mangrove','grass','crab','fish')",
+        name="beaches_primary_species_glyph_check",
+    ),
+)
+
+dim_threat_table = Table(
+    "dim_threat",
+    metadata,
+    Column("threat_id", Integer, primary_key=True, autoincrement=True),
+    Column("threat_name", String(120), nullable=False, unique=True),
+)
+
+dim_species_table = Table(
+    "dim_species",
+    metadata,
+    Column("species_id", String(36), primary_key=True),
+    Column("scientific_name", String(200), nullable=False, unique=True),
+    Column("common_name", String(160)),
+    Column("threat_id", ForeignKey("dim_threat.threat_id")),
+    Column("glyph", String(20), nullable=False),
+    Column("picture_url", String(500)),
+    Column("created_at", DateTime(timezone=True), nullable=False),
+    CheckConstraint(
+        "glyph IN ('turtle','bird','mangrove','grass','crab','fish')",
+        name="dim_species_glyph_check",
+    ),
+)
+
+area_species_table = Table(
+    "area_species",
+    metadata,
+    Column("id", String(36), primary_key=True),
+    Column("area_id", ForeignKey("beaches.id", ondelete="CASCADE"), nullable=False),
+    Column("species_id", ForeignKey("dim_species.species_id")),
+    Column("kind", String(20), nullable=False),
+    Column("display_name", String(160), nullable=False),
+    Column("glyph", String(20), nullable=False),
+    Column("text", Text, nullable=False),
+    Column("sort_order", Integer, nullable=False, default=0),
+    Column("origin", String(20), nullable=False, default="curated"),
+    Column("source_dataset", String(20), nullable=False, default="pending"),
+    Column("source_citation", Text, nullable=False),
+    Column("source_url", String(500)),
+    Column("source_accessed_at", Date),
+    Column("occurrence_state", String(20), nullable=False, default="unavailable"),
+    Column("occurrence_score", Integer),
+    Column("occurrence_basis", Text),
+    UniqueConstraint("area_id", "species_id", name="area_species_area_species_key"),
+    CheckConstraint("kind IN ('species','habitat','group')", name="area_species_kind_check"),
+    CheckConstraint(
+        "glyph IN ('turtle','bird','mangrove','grass','crab','fish')",
+        name="area_species_glyph_check",
+    ),
+    CheckConstraint("origin IN ('curated','derived')", name="area_species_origin_check"),
+    CheckConstraint(
+        "source_dataset IN ('FishBase','OBIS','other','pending')",
+        name="area_species_source_dataset_check",
+    ),
+    CheckConstraint(
+        "occurrence_state IN ('ready','pending','unavailable')",
+        name="area_species_occurrence_state_check",
+    ),
+    CheckConstraint(
+        "occurrence_score IS NULL OR occurrence_score BETWEEN 0 AND 100",
+        name="area_species_occurrence_score_check",
+    ),
+    CheckConstraint(
+        "(kind = 'species') = (species_id IS NOT NULL)",
+        name="area_species_kind_species_check",
+    ),
+    CheckConstraint(
+        "(occurrence_score IS NULL) = (occurrence_state <> 'ready')",
+        name="area_species_occurrence_state_score_check",
+    ),
+    CheckConstraint(
+        "occurrence_score IS NULL OR occurrence_basis IS NOT NULL",
+        name="area_species_occurrence_basis_check",
+    ),
+)
+
+# The database contract in schema.sql stores one nullable column per litter
+# category. Keep this mapping at the boundary so the API can continue to use
+# the frontend's compact `{category: quantity}` shape.
 QUANTITY_COLUMNS = {
     "Plastic": "qty_plastic",
     "Fishing gear": "qty_fishing_gear",
@@ -167,7 +267,7 @@ reports_table = Table(
     metadata,
     Column("id", String(40), primary_key=True),
     Column("reporter_id", ForeignKey("users.id"), nullable=False),
-    Column("beach_id", String(80), nullable=False),
+    Column("beach_id", ForeignKey("beaches.id"), nullable=False),
     # Legacy PR #13 columns. Existing Render tables may still require these
     # fields, so new writes keep both representations in sync during migration.
     Column("beach_name", String(160)),
@@ -176,7 +276,7 @@ reports_table = Table(
     Column("photo_key", String(500), nullable=False),
     Column("photo_mime", String(64), nullable=False),
     Column("photo_stripped", Boolean, nullable=False, default=False),
-    *(Column(column, Integer) for column in QUANTITY_COLUMNS.values()),
+    *(Column(column, String(20)) for column in QUANTITY_COLUMNS.values()),
     Column("category", String(40), nullable=False),
     Column("quantity", String(20), nullable=False),
     Column("lat", Float),
@@ -189,6 +289,41 @@ reports_table = Table(
     Column("created_at", DateTime(timezone=True), nullable=False),
     Column("updated_at", DateTime(timezone=True), nullable=False),
     Column("deleted_at", DateTime(timezone=True)),
+    CheckConstraint("location_source IN ('gps','manual')", name="reports_location_source_check"),
+    CheckConstraint(
+        "photo_mime IN ('image/jpeg','image/png','image/heic')",
+        name="reports_photo_mime_check",
+    ),
+    *(
+        CheckConstraint(
+            f"{column} IN ('Small','Medium','Large','Very Large')",
+            name=f"reports_{column}_check",
+        )
+        for column in QUANTITY_COLUMNS.values()
+    ),
+    CheckConstraint(
+        "category IN ('Plastic','Fishing gear','Glass','Metal','Paper','Other')",
+        name="reports_category_check",
+    ),
+    CheckConstraint("quantity IN ('Small','Medium','Large','Very Large')", name="reports_quantity_check"),
+    CheckConstraint("status IN ('Counted','Duplicate','Incomplete')", name="reports_status_check"),
+    CheckConstraint(
+        "((CASE WHEN qty_plastic IS NOT NULL THEN 1 ELSE 0 END) + "
+        "(CASE WHEN qty_fishing_gear IS NOT NULL THEN 1 ELSE 0 END) + "
+        "(CASE WHEN qty_glass IS NOT NULL THEN 1 ELSE 0 END) + "
+        "(CASE WHEN qty_metal IS NOT NULL THEN 1 ELSE 0 END) + "
+        "(CASE WHEN qty_paper IS NOT NULL THEN 1 ELSE 0 END) + "
+        "(CASE WHEN qty_other IS NOT NULL THEN 1 ELSE 0 END)) >= 1",
+        name="reports_at_least_one_category_check",
+    ),
+    CheckConstraint(
+        "location_source = 'gps' OR (lat IS NULL AND lng IS NULL)",
+        name="reports_manual_has_no_coords_check",
+    ),
+    CheckConstraint(
+        "status <> 'Counted' OR status_note IS NULL",
+        name="reports_note_only_when_excluded_check",
+    ),
 )
 
 i2_metadata = MetaData()
@@ -235,6 +370,8 @@ cleanup_actions_table = Table(
 )
 Index("cleanup_actions_target", cleanup_actions_table.c.target_report_id)
 Index("community_events_window", events_table.c.beach_id, events_table.c.starts_at)
+Index("reports_severity_window", reports_table.c.beach_id, reports_table.c.status, reports_table.c.created_at)
+Index("reports_duplicate_check", reports_table.c.reporter_id, reports_table.c.beach_id, reports_table.c.created_at)
 
 
 def normalise_database_url(database_url: str | None) -> str:
@@ -345,9 +482,11 @@ def ensure_report_columns(engine: Engine) -> None:
         return
     existing = {column["name"] for column in inspect(engine).get_columns("reports", schema=schema)}
     additions = {
+        "beach_name": "VARCHAR(160)",
+        "quantities": "TEXT",
         "photo_mime": "VARCHAR(64)",
         "photo_stripped": "BOOLEAN",
-        **{column: "INTEGER" for column in QUANTITY_COLUMNS.values()},
+        **{column: "VARCHAR(20)" for column in QUANTITY_COLUMNS.values()},
         "lat": "DOUBLE PRECISION",
         "lng": "DOUBLE PRECISION",
         "item_counts": "TEXT",
@@ -362,6 +501,18 @@ def ensure_report_columns(engine: Engine) -> None:
         for name, sql_type in additions.items():
             if name not in existing:
                 connection.execute(text(f"ALTER TABLE {report_table} ADD COLUMN {name} {sql_type}"))
+        if engine.dialect.name == "postgresql":
+            column_types = {
+                column["name"]: column["type"].__class__.__name__.lower()
+                for column in inspect(engine).get_columns("reports", schema=schema)
+            }
+            for column in QUANTITY_COLUMNS.values():
+                if "int" in column_types.get(column, ""):
+                    connection.execute(text(
+                        f"ALTER TABLE {report_table} ALTER COLUMN {column} TYPE VARCHAR(20) "
+                        f"USING CASE {column} WHEN 1 THEN 'Small' WHEN 2 THEN 'Medium' "
+                        f"WHEN 3 THEN 'Large' WHEN 4 THEN 'Very Large' ELSE NULL END"
+                    ))
 
 
 def repair_existing_reports(engine: Engine) -> None:
@@ -437,6 +588,123 @@ def load_beaches(engine: Engine | None = None) -> list[dict[str, Any]]:
     return beaches
 
 
+def seed_reference_data(engine: Engine, beaches: list[dict[str, Any]]) -> None:
+    """Insert fixed beach and biodiversity reference rows without overwriting data."""
+
+    now = datetime.now(timezone.utc)
+
+    def insert_if_missing(connection: Any, table: Table, values: dict[str, Any], conflict_columns: list[str]) -> None:
+        if engine.dialect.name == "sqlite":
+            from sqlalchemy.dialects.sqlite import insert as dialect_insert
+        elif engine.dialect.name == "postgresql":
+            from sqlalchemy.dialects.postgresql import insert as dialect_insert
+        else:
+            dialect_insert = None
+
+        if dialect_insert is not None:
+            statement = dialect_insert(table).values(**values).on_conflict_do_nothing(
+                index_elements=[table.c[column] for column in conflict_columns]
+            )
+            connection.execute(statement)
+            return
+
+        exists = connection.execute(
+            select(*[table.c[column] for column in conflict_columns]).where(
+                *[table.c[column] == values[column] for column in conflict_columns]
+            )
+        ).first()
+        if exists is None:
+            connection.execute(insert(table).values(**values))
+
+    with engine.begin() as connection:
+        for beach in beaches:
+            insert_if_missing(
+                connection,
+                beaches_table,
+                {
+                    "id": beach["id"],
+                    "name": beach["name"],
+                    "area": beach["area"],
+                    "lat": beach["lat"],
+                    "lng": beach["lng"],
+                    "habitat": beach["habitat"],
+                    "habitat_tag": beach["habitatTag"],
+                    "sensitivity": beach["sensitivity"],
+                    "primary_species_glyph": beach["primarySpeciesGlyph"],
+                    "cover_image_url": beach.get("coverImageUrl"),
+                    "scene": beach["scene"],
+                    "ecological_note": beach.get("ecologicalNote", ""),
+                    "created_at": now,
+                },
+                ["id"],
+            )
+
+        for beach in beaches:
+            for position, card in enumerate(beach.get("species", []), start=1):
+                scientific_name = str(card.get("scientificName") or "").strip() or None
+                species_id = None
+                if scientific_name:
+                    deterministic_species_id = str(
+                        uuid.uuid5(uuid.NAMESPACE_URL, f"radar-sampah:species:{scientific_name}")
+                    )
+                    insert_if_missing(
+                        connection,
+                        dim_species_table,
+                        {
+                            "species_id": deterministic_species_id,
+                            "scientific_name": scientific_name,
+                            "common_name": card.get("name"),
+                            "threat_id": None,
+                            "glyph": card["glyph"],
+                            "picture_url": None,
+                            "created_at": now,
+                        },
+                        ["scientific_name"],
+                    )
+                    species = connection.execute(
+                        select(dim_species_table.c.species_id).where(
+                            dim_species_table.c.scientific_name == scientific_name
+                        )
+                    ).first()
+                    species_id = species.species_id if species is not None else deterministic_species_id
+
+                existing_card = connection.execute(
+                    select(area_species_table.c.id).where(
+                        area_species_table.c.area_id == beach["id"],
+                        area_species_table.c.display_name == card["name"],
+                    )
+                ).first()
+                if existing_card is not None:
+                    continue
+
+                source = card.get("source") or {}
+                likelihood = card.get("likelihood") or {}
+                accessed_at = source.get("accessedAt")
+                insert_if_missing(
+                    connection,
+                    area_species_table,
+                    {
+                        "id": str(uuid.uuid5(uuid.NAMESPACE_URL, f"radar-sampah:card:{beach['id']}:{card['name']}")),
+                        "area_id": beach["id"],
+                        "species_id": species_id,
+                        "kind": card["kind"],
+                        "display_name": card["name"],
+                        "glyph": card["glyph"],
+                        "text": card["text"],
+                        "sort_order": position,
+                        "origin": "curated",
+                        "source_dataset": source.get("dataset", "pending"),
+                        "source_citation": source.get("citation", "Source not recorded."),
+                        "source_url": source.get("url"),
+                        "source_accessed_at": datetime.fromisoformat(accessed_at).date() if accessed_at else None,
+                        "occurrence_state": likelihood.get("state", "unavailable"),
+                        "occurrence_score": None,
+                        "occurrence_basis": likelihood.get("basis"),
+                    },
+                    ["id"],
+                )
+
+
 def error_response(status: int, code: str, message: str):
     return jsonify({"code": code, "message": message}), status
 
@@ -480,6 +748,23 @@ def decode_token_subject(token: str, jwt_secret: str) -> str | None:
         return None
     subject = payload.get("sub")
     return subject if isinstance(subject, str) else None
+
+
+def issue_recovery_token(user_id: str, jwt_secret: str) -> str:
+    """Create the stable, non-session secret shown once to a new participant."""
+
+    digest = hmac.new(
+        jwt_secret.encode("utf-8"),
+        f"radar-sampah-recovery:{user_id}".encode("utf-8"),
+        hashlib.sha256,
+    ).digest()
+    raw = base64.b32encode(digest).decode("ascii").rstrip("=")[:24]
+    return "RS-" + "-".join(raw[index:index + 4] for index in range(0, len(raw), 4))
+
+
+def recovery_token_matches(user_id: str, supplied_token: str, jwt_secret: str) -> bool:
+    expected = issue_recovery_token(user_id, jwt_secret)
+    return hmac.compare_digest(expected, supplied_token.strip().upper())
 
 
 def user_dict(row: Any) -> dict[str, Any]:
@@ -575,7 +860,8 @@ def recovery_token_digest(recovery_token: str) -> str:
 
 
 def create_recovery_token() -> str:
-    return secrets.token_urlsafe(RECOVERY_TOKEN_BYTES)
+    raw = base64.b32encode(secrets.token_bytes(15)).decode("ascii").rstrip("=")
+    return "RS-" + "-".join(raw[index:index + 4] for index in range(0, len(raw), 4))
 
 
 def projected_grid(lat: float, lng: float) -> tuple[int, int]:
@@ -641,13 +927,36 @@ def quantities_from_row(row: Any) -> dict[str, str]:
     return quantities
 
 
-def quantity_values(quantities: dict[str, str]) -> dict[str, int | None]:
-    return {column: QUANTITY_WEIGHTS.get(quantities.get(category)) for category, column in QUANTITY_COLUMNS.items()}
+def quantity_values(quantities: dict[str, str]) -> dict[str, str | None]:
+    return {column: quantities.get(category) for category, column in QUANTITY_COLUMNS.items()}
 
 
 def is_json_number(value: Any) -> bool:
     """JSON coordinates are numbers; reject booleans and numeric strings."""
     return isinstance(value, (int, float)) and not isinstance(value, bool)
+
+
+def composition_percentages(quantities: dict[str, str]) -> list[dict[str, Any]]:
+    """Convert the newest report's category weights into whole percentages.
+
+    The largest-remainder method keeps every response at exactly 100, avoiding
+    a chart whose labels visibly add up to 99 or 101 because of rounding.
+    """
+
+    weighted = [
+        (category, QUANTITY_WEIGHTS[quantities[category]])
+        for category in FRONTEND_CATEGORIES
+        if category in quantities
+    ]
+    total = sum(weight for _, weight in weighted)
+    if total <= 0:
+        return []
+    exact = [(category, weight * 100 / total) for category, weight in weighted]
+    whole = {category: math.floor(value) for category, value in exact}
+    remainder = 100 - sum(whole.values())
+    for category, _ in sorted(exact, key=lambda item: item[1] - math.floor(item[1]), reverse=True)[:remainder]:
+        whole[category] += 1
+    return [{"category": category, "percentage": whole[category]} for category, _ in weighted]
 
 
 def attention_score_for(rows: list[Any]) -> float | None:
@@ -1029,10 +1338,14 @@ def create_app(
     recognizer = LitterRecognizer.load()
     species_distribution_model = load_species_distribution_model()
     directory = photo_storage_path(photo_storage_dir)
+    seed_reference_data(engine, load_beaches())
     beaches = load_beaches(engine)
     beach_names = {beach["id"]: beach["name"] for beach in beaches}
     application.extensions["marine_engine"] = engine
     application.extensions["photo_storage_dir"] = directory
+    # Load the four validated offline models once at startup. Prediction never
+    # queries OBIS and does not write coordinates or scores to the database.
+    application.extensions["species_distribution_model"] = SpeciesDistributionModel()
     application.extensions["photo_cleanup_timers"] = []
     application.extensions["litter_recognizer"] = recognizer
     application.extensions["species_distribution_model"] = species_distribution_model
@@ -1351,15 +1664,20 @@ def create_app(
             row = connection.execute(select(users_table).where(users_table.c.participant_id == participant_id)).first()
         if row is None:
             return error_response(404, "UNKNOWN_PARTICIPANT", "That participant ID was not found.")
-        configured_demo_id = os.getenv("DEMO_PARTICIPANT_ID", "").strip()
-        demo_restore = (
-            participant_id == configured_demo_id
-            and row.id == f"u_demo_{participant_id}"
-            and not supplied_recovery_token
-        )
-        supplied_digest = recovery_token_digest(supplied_recovery_token) if supplied_recovery_token else ""
-        if not demo_restore and (not row.user_token or not hmac.compare_digest(row.user_token, supplied_digest)):
-            return error_response(401, "INVALID_RECOVERY_TOKEN", "The recovery token is invalid.")
+        # Latest main restores by participant ID only. Older Iteration 2
+        # clients may still send a recovery token; validate it when present.
+        if supplied_recovery_token:
+            stored_digest = getattr(row, "user_token", None)
+            legacy_match = bool(
+                stored_digest
+                and hmac.compare_digest(stored_digest, recovery_token_digest(supplied_recovery_token))
+            )
+            if not legacy_match and not recovery_token_matches(row.id, supplied_recovery_token, jwt_secret):
+                return error_response(
+                    401,
+                    "INVALID_RECOVERY_TOKEN",
+                    "That participant ID and recovery token do not match.",
+                )
         return jsonify({"token": issue_token(row.id, jwt_secret), "user": user_dict(row)})
 
     @application.post("/auth/logout")
@@ -1405,12 +1723,12 @@ def create_app(
                 quantities = quantity_bands_for_counts(remaining_counts_for(row, actions))
             detail.update(
                 {
-                    "composition": [
-                        {"category": category, "quantity": quantities[category]}
-                        for category in FRONTEND_CATEGORIES
-                        if category in quantities
-                    ],
-                    "compositionSource": {"reportId": row.id, "createdAt": contract_timestamp(row.created_at)},
+                    "composition": composition_percentages(quantities),
+                    "compositionSource": {
+                        "reportId": row.id,
+                        "createdAt": contract_timestamp(row.created_at),
+                        "method": "reported_quantity_estimate",
+                    },
                 }
             )
         return jsonify(detail)
@@ -1528,6 +1846,19 @@ def create_app(
             return error_response(404, "NOT_FOUND", "Event not found.")
         viewer = optional_current_user()
         return jsonify(event_dict(event, viewer.id if viewer else None))
+
+    @application.get("/events/<event_id>/cleanups")
+    def list_event_cleanups(event_id: str):
+        with engine.connect() as connection:
+            event = connection.execute(select(events_table.c.id).where(events_table.c.id == event_id)).first()
+            if event is None:
+                return error_response(404, "NOT_FOUND", "Event not found.")
+            actions = connection.execute(
+                select(cleanup_actions_table)
+                .where(cleanup_actions_table.c.event_id == event_id)
+                .order_by(cleanup_actions_table.c.created_at)
+            ).all()
+        return jsonify([cleanup_action_dict(action) for action in actions])
 
     @application.post("/events")
     @require_moderator

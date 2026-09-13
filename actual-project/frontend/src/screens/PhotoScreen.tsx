@@ -1,3 +1,9 @@
+// Step 1 of the report: the photo.
+//
+// The photo comes first because it is the evidence, and because the volunteer
+// is standing in front of the litter right now. Asking for it last would mean
+// asking them to walk back. Nothing here guesses what the litter is - the user
+// picks that on the next screen, so no machine guess is stored as a human one.
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { photoPreviewUrl, refreshPhotoPreview, uploadPhoto, USE_MOCK } from '../api';
@@ -25,7 +31,15 @@ function decodesToPixels(url: string): Promise<boolean> {
   });
 }
 
-const ACCEPTED_TYPES = ['image/jpeg', 'image/png', 'image/heic'];
+// HEIC is deliberately absent, and that is what makes an iPhone work.
+//
+// iOS Safari CAN decode HEIC; desktop browsers cannot. But when accept does not
+// list HEIC, iOS transcodes the picked photo to JPEG on its way into the input.
+// Listing it did the opposite: the picker handed over the raw HEIC, and the app
+// then refused it - after the hint and the wrong-type error had both told the
+// user HEIC was fine. Leaving it out is what actually accepts an iPhone photo.
+const ACCEPTED_TYPES = ['image/jpeg', 'image/png'];
+// 10 MB, the ceiling written down in API.md section 5.
 const MAX_PHOTO_BYTES = 10 * 1024 * 1024;
 
 export default function PhotoScreen() {
@@ -36,6 +50,11 @@ export default function PhotoScreen() {
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
 
+  // Preview links from the real backend expire, so a draft opened again later
+  // has a live photo key but a dead link. Ask for a fresh one. If that fails
+  // for a report being corrected, flag the photo unavailable and let the panel
+  // below offer a way out; a photo picked in this session is simply dropped,
+  // because a blank grey box with no words reads as a bug. Mock links persist.
   useEffect(() => {
     const photoKey = draft.photo?.photoKey ?? draft.existingPhotoKey;
     if (!photoKey || draft.photo?.previewUrl || USE_MOCK) return;
@@ -43,14 +62,18 @@ export default function PhotoScreen() {
     refreshPhotoPreview(photoKey)
       .then((previewUrl) => {
         if (active && previewUrl) {
-          if (draft.photo) patchDraft({ photo: { ...draft.photo, previewUrl } });
-          else patchDraft({ existingPhotoUrl: previewUrl });
+          if (draft.photo) patchDraft({ photo: { ...draft.photo, previewUrl }, existingPhotoUnavailable: false });
+          else patchDraft({ existingPhotoUrl: previewUrl, existingPhotoUnavailable: false });
         }
       })
       .catch(() => {
         if (active) {
-          patchDraft({ photo: null, existingPhotoUrl: null, existingPhotoKey: null });
-          setUploadError('That photo preview has expired. Please choose the photo again.');
+          if (!draft.photo && draft.existingPhotoKey) {
+            patchDraft({ existingPhotoUrl: null, existingPhotoUnavailable: true });
+          } else {
+            patchDraft({ photo: null, existingPhotoUrl: null, existingPhotoKey: null, aiDecision: null, aiModelVersion: null });
+            setUploadError('That photo preview has expired. Please choose the photo again.');
+          }
         }
       });
     return () => {
@@ -58,13 +81,22 @@ export default function PhotoScreen() {
     };
   }, [draft.photo?.photoKey, draft.existingPhotoKey]);
 
+  // Guard the file before we spend an upload on it. The accept attribute is
+  // only a hint to the picker, and with the mock running the backend checks
+  // nothing at all. Zero bytes earns its own case: it uploads happily and only
+  // shows up later as a broken picture. Every failure uses the same red panel.
   async function handleFile(file: File | undefined) {
     if (!file) return;
 
 
 
-    if (!ACCEPTED_TYPES.includes(file.type) && !/\.heic$/i.test(file.name)) {
-      setUploadError('That file is not a photo we can read. Use JPG, PNG or HEIC.');
+    // The `|| /\.heic$/` escape hatch that used to be here let a HEIC through
+    // this gate so it could fail further along, with a vaguer message. Now it
+    // is refused where the reason is clearest, and consistently with the accept
+    // attribute and the hint - which is the whole point: one answer about HEIC,
+    // not three.
+    if (!ACCEPTED_TYPES.includes(file.type)) {
+      setUploadError('That file is not a photo we can read. Use JPG or PNG.');
       return;
     }
     if (file.size > MAX_PHOTO_BYTES) {
@@ -90,13 +122,18 @@ export default function PhotoScreen() {
           'This browser could not open that photo. HEIC photos often only open on an iPhone — please choose a JPG or PNG.',
         );
       }
+      // Refuse the photo if the location is still baked into it. Phone photos
+      // carry the exact spot they were taken, and publishing that would break
+      // the promise made two screens earlier.
       if (!photo.metadataStripped) {
         throw new Error('Location metadata could not be removed. Please choose another photo.');
       }
-      patchDraft({ photo });
+      patchDraft({ photo, existingPhotoUnavailable: false, aiDecision: null, aiModelVersion: null });
     } catch (error) {
       setUploadError(error instanceof Error ? error.message : 'Please try again.');
-      patchDraft({ photo: null });
+      // Clear the photo as well as showing the error. A half-failed upload left
+      // in the draft would let Continue submit a report pointing at nothing.
+      patchDraft({ photo: null, aiDecision: null, aiModelVersion: null });
     } finally {
       setUploading(false);
     }
@@ -104,13 +141,17 @@ export default function PhotoScreen() {
 
   const photo = draft.photo;
 
+  // Two hidden inputs below, one visible pair of buttons. capture="environment"
+  // opens the back camera straight away on a phone; a laptop has no such
+  // camera, so the browser ignores it and shows the normal file picker. That
+  // one attribute is how a single code path serves both, with no device sniff.
   return (
     <div className="screen scroll-y" style={{ zIndex: 26 }}>
 
       <input
         ref={cameraRef}
         type="file"
-        accept="image/jpeg,image/png,image/heic,.heic"
+        accept="image/jpeg,image/png"
         capture="environment"
         hidden
         onChange={(e) => handleFile(e.target.files?.[0])}
@@ -118,7 +159,7 @@ export default function PhotoScreen() {
       <input
         ref={libraryRef}
         type="file"
-        accept="image/jpeg,image/png,image/heic,.heic"
+        accept="image/jpeg,image/png"
         hidden
         onChange={(e) => handleFile(e.target.files?.[0])}
       />
@@ -135,16 +176,34 @@ export default function PhotoScreen() {
         <div>
           <div style={{ fontSize: 30, fontWeight: 640, letterSpacing: '-.8px' }}>Show us what you found</div>
           <div style={{ fontSize: 14, color: C.muted, marginTop: 7, lineHeight: 1.5 }}>
-            You'll pick what it is yourself — no AI guessing on your behalf.
+            You can review an editable AI suggestion later, or keep your own manual values.
           </div>
         </div>
 
         {uploadError && (
+          // Retry reopens whichever picker fits the failure: an expired preview
+          // means the photo is already in their library, anything else is fresh.
           <ErrorNote
             title="Photo upload failed"
             body={uploadError}
             onRetry={() => (uploadError.includes('expired') ? libraryRef.current?.click() : cameraRef.current?.click())}
           />
+        )}
+
+        {/* The stored photo of a report being corrected would not load. Offer
+            both ways out, rather than blocking the correction on a lost file. */}
+        {draft.existingPhotoUnavailable && !photo && (
+          <div style={{ background: C.tint, border: `1px solid ${C.line}`, borderRadius: 16, padding: '13px 14px', color: C.slate, fontSize: 12, lineHeight: 1.5 }}>
+            <div>Existing photo unavailable. You can keep this report or choose a replacement photo.</div>
+            <div style={{ display: 'flex', gap: 10, marginTop: 10 }}>
+              <button type="button" onClick={() => nav('/report/details')} style={{ color: C.navy, fontWeight: 700, fontSize: 12 }}>
+                Keep existing record
+              </button>
+              <button type="button" onClick={() => libraryRef.current?.click()} style={{ color: C.navy, fontWeight: 700, fontSize: 12 }}>
+                Choose replacement photo
+              </button>
+            </div>
+          </div>
         )}
 
         {!photo ? (
@@ -210,7 +269,7 @@ export default function PhotoScreen() {
               </div>
               <div style={{ flex: 1 }}>
                 <div style={{ fontSize: 15, fontWeight: 640 }}>Upload Photo</div>
-                <div style={{ fontSize: 12, color: C.dim, marginTop: 3 }}>JPG, PNG or HEIC</div>
+                <div style={{ fontSize: 12, color: C.dim, marginTop: 3 }}>JPG or PNG · up to 10 MB</div>
               </div>
               <ChevronRight size={14} />
             </button>
@@ -219,6 +278,9 @@ export default function PhotoScreen() {
         ) : (
           <>
             <div style={{ position: 'relative', height: 280, borderRadius: 26, overflow: 'hidden', background: '#87847B' }}>
+              {/* previewUrl first, then look the key up. AppContext strips the
+                  preview before saving the draft, so after a reload the key is
+                  what brings the picture back instead of a broken image. */}
               <img
                 src={photo.previewUrl || photoPreviewUrl(photo.photoKey) || undefined}
                 alt="Litter you photographed"
@@ -230,7 +292,7 @@ export default function PhotoScreen() {
               <button
                 type="button"
                 onClick={() => {
-                  patchDraft({ photo: null });
+                  patchDraft({ photo: null, aiDecision: null, aiModelVersion: null });
                   cameraRef.current?.click();
                 }}
                 style={{ position: 'absolute', top: 14, right: 14, fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,.9)', background: 'rgba(30,36,44,.45)', backdropFilter: 'blur(6px)', padding: '6px 11px', borderRadius: 999 }}
@@ -238,6 +300,8 @@ export default function PhotoScreen() {
                 Retake
               </button>
               {photo.metadataStripped && (
+                // Say out loud that we removed the location. A privacy step
+                // nobody can see is one nobody can trust.
                 <OverlayChip style={{ position: 'absolute', left: 14, bottom: 14 }}>
                   <Shield size={11} />
                   LOCATION METADATA REMOVED
