@@ -8,6 +8,7 @@ import re
 import sqlite3
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+from types import SimpleNamespace
 from urllib.parse import urlsplit
 
 import pytest
@@ -29,6 +30,7 @@ from app import (
     users_table,
     write_photo_metadata,
 )
+from recognition import LitterRecognizer
 
 
 @pytest.fixture
@@ -204,7 +206,7 @@ def test_partial_main_database_is_migrated_to_contract_rules(tmp_path):
     with engine.connect() as db_connection:
         rows = db_connection.execute(select(reports_table).order_by(reports_table.c.created_at)).all()
     assert (rows[0].category, rows[0].quantity, rows[0].status) == ("Plastic", "Very Large", "Counted")
-    assert (rows[0].qty_plastic, rows[0].qty_fishing_gear) == ("Very Large", "Small")
+    assert (rows[0].qty_plastic, rows[0].qty_fishing_gear) == (4, 1)
     assert rows[1].status == "Duplicate"
 
 
@@ -323,6 +325,81 @@ def test_scoring_method_matches_published_contract(api):
     assert body["reportAggregation"] == "max"
     assert body["beachAggregation"] == "median"
     assert body["ruleVersion"] == "radar-sampah-scoring-v2"
+
+
+def test_species_distribution_predicts_from_packaged_models(api):
+    _application, client = api
+    response = client.post(
+        "/api/species-distribution/predict",
+        json={"latitude": 2.746, "longitude": 101.44},
+    )
+
+    assert response.status_code == 200
+    payload = response.get_json()
+    assert payload["insideMalaysianEez"] is True
+    assert payload["scoreType"] == "relative_occurrence"
+    assert payload["calibratedProbability"] is False
+    assert {prediction["speciesSlug"] for prediction in payload["predictions"]} == {
+        "green_sea_turtle",
+        "ocellaris_clownfish",
+        "irrawaddy_dolphin",
+        "moorish_idol",
+    }
+
+
+def test_species_distribution_rejects_coordinates_outside_model_area(api):
+    _application, client = api
+    response = client.post(
+        "/api/species-distribution/predict",
+        json={"latitude": 0, "longitude": 0},
+    )
+
+    assert response.status_code == 422
+    assert response.get_json() == {
+        "code": "OUTSIDE_MODEL_AREA",
+        "message": "The coordinate is outside the supported Malaysian EEZ.",
+    }
+
+
+def test_species_distribution_rejects_malformed_coordinates(api):
+    _application, client = api
+    response = client.post(
+        "/api/species-distribution/predict",
+        json={"latitude": "north", "longitude": 101.44},
+    )
+    assert response.status_code == 400
+    assert response.get_json() == {
+        "code": "VALIDATION_FAILED",
+        "message": "latitude and longitude must be numbers.",
+    }
+
+
+def test_species_distribution_rejects_boolean_coordinates(api):
+    _application, client = api
+    response = client.post(
+        "/api/species-distribution/predict",
+        json={"latitude": True, "longitude": 101.44},
+    )
+    assert response.status_code == 400
+    assert response.get_json()["code"] == "VALIDATION_FAILED"
+
+
+def test_species_distribution_does_not_write_to_database(api):
+    application, client = api
+    engine = application.extensions["marine_engine"]
+    with engine.connect() as connection:
+        before_users = connection.execute(select(users_table)).all()
+        before_reports = connection.execute(select(reports_table)).all()
+
+    response = client.post(
+        "/api/species-distribution/predict",
+        json={"latitude": 2.746, "longitude": 101.44},
+    )
+    assert response.status_code == 200
+
+    with engine.connect() as connection:
+        assert connection.execute(select(users_table)).all() == before_users
+        assert connection.execute(select(reports_table)).all() == before_reports
 
 
 def test_photo_upload_strips_metadata_resizes_and_uses_signed_url(api):
@@ -447,6 +524,7 @@ def test_create_report_returns_full_contract_and_hides_private_fields(api):
         row = connection.execute(select(reports_table)).one()
     assert row.lat == 2.746
     assert row.lng == 101.44
+    assert (row.qty_plastic, row.qty_fishing_gear, row.qty_paper) == (4, 1, 3)
 
 
 def test_duplicate_rule_and_counts(api):
@@ -554,6 +632,8 @@ def test_patch_enforces_ownership_and_rechecks_status(api):
         connection.execute(
             reports_table.update().where(reports_table.c.id == report["id"]).values(status="Incomplete")
         )
+    incomplete = client.get("/reports/mine", headers=owner_headers).get_json()[0]
+    assert incomplete["statusNote"] == "Photo unreadable — excluded until you correct and save the record."
     corrected = client.patch("/reports/" + report["id"], headers=owner_headers, json={"quantities": {"Glass": "Small"}})
     assert corrected.status_code == 200
     assert corrected.get_json()["status"] == "Counted"
@@ -688,9 +768,65 @@ def test_model_recognition_falls_back_to_manual_when_weights_are_unavailable(api
     assert response.status_code == 200
     result = response.get_json()
     assert result["state"] == "unavailable"
+    assert result["modelState"] == "unavailable"
     assert result["modelVersion"]
     assert result["manualEntryRequired"] is True
     assert result["quantityBands"] == {}
+    assert result["suggestions"] == {}
+    assert set(result["supportedClasses"]) == {
+        "plastic", "metal", "glass", "paper_cardboard", "styrofoam", "fishing_gear",
+    }
+
+
+def test_litter_recognizer_maps_styrofoam_and_counts_each_detection():
+    class Values(list):
+        def tolist(self):
+            return list(self)
+
+    class FakeModel:
+        names = {0: "plastic", 1: "styrofoam"}
+
+        def predict(self, **_kwargs):
+            boxes = SimpleNamespace(
+                cls=Values([1.0, 0.0, 1.0]),
+                conf=Values([0.91, 0.88, 0.76]),
+                xyxy=Values([[1, 2, 10, 12], [3, 4, 11, 14], [5, 6, 12, 16]]),
+            )
+            return [SimpleNamespace(boxes=boxes, names=self.names)]
+
+    result = LitterRecognizer(FakeModel(), "test-model/1").recognise(jpeg_bytes())
+
+    assert result["state"] == "ready"
+    assert result["counts"]["Other"] == 2
+    assert result["counts"]["Plastic"] == 1
+    assert [item["modelClass"] for item in result["detections"]] == ["styrofoam", "plastic", "styrofoam"]
+
+
+def test_recognition_endpoint_returns_frontend_band_suggestions(api):
+    application, client = api
+    _session, headers = signup(client)
+    photo = upload(client, headers)
+
+    class FakeRecognizer:
+        def recognise(self, _image_bytes):
+            return {
+                "state": "ready",
+                "modelVersion": "test-model/1",
+                "counts": {"Fishing gear": 0, "Plastic": 8, "Glass": 0, "Metal": 0, "Other": 2, "Paper": 0},
+                "detections": [],
+                "reason": None,
+            }
+
+    application.extensions["litter_recognizer"] = FakeRecognizer()
+    response = client.post("/recognitions", headers=headers, json={"photoKey": photo["photoKey"]})
+
+    assert response.status_code == 200
+    result = response.get_json()
+    assert result["counts"]["Plastic"] == 8
+    assert result["quantityBands"] == {"Plastic": "Medium", "Other": "Small"}
+    assert result["modelState"] == "ready"
+    assert result["suggestions"] == result["quantityBands"]
+    assert result["manualEntryRequired"] is False
 
 
 def test_iteration2_report_supports_repeated_partial_cleanup_and_private_location(api):
@@ -710,7 +846,11 @@ def test_iteration2_report_supports_repeated_partial_cleanup_and_private_locatio
     assert report["quantities"] == {"Plastic": "Medium", "Other": "Small"}
     assert report["itemCounts"] == {"Plastic": 8, "Other": 2}
     assert report["remainingItemCounts"] == report["itemCounts"]
-    assert client.get("/cleanup-targets?beachId=morib").get_json()[0]["remaining"] == report["itemCounts"]
+    target = client.get("/cleanup-targets?beachId=morib").get_json()[0]
+    assert target["itemCounts"] == report["itemCounts"]
+    assert target["remaining"] == report["itemCounts"]
+    assert target["reportedAt"] == report["createdAt"]
+    assert target["beachName"] == "Pantai Morib"
 
     engine = application.extensions["marine_engine"]
     with engine.connect() as connection:
@@ -727,6 +867,11 @@ def test_iteration2_report_supports_repeated_partial_cleanup_and_private_locatio
     first = client.post("/cleanup-actions", headers=headers, json=first_payload)
     assert first.status_code == 201
     assert first.get_json()["rows"] == [{"category": "Plastic", "removed": 3, "before": 8, "after": 5}]
+    assert first.get_json()["beachName"] == "Pantai Morib"
+    assert first.get_json()["note"] == ""
+    updated_target = client.get("/cleanup-targets?beachId=morib").get_json()[0]
+    assert updated_target["itemCounts"] == {"Plastic": 8, "Other": 2}
+    assert updated_target["remaining"] == {"Plastic": 5, "Other": 2}
     retry = client.post("/cleanup-actions", headers=headers, json=first_payload)
     assert retry.status_code == 200
     assert retry.get_json()["id"] == first.get_json()["id"]
@@ -739,7 +884,7 @@ def test_iteration2_report_supports_repeated_partial_cleanup_and_private_locatio
 
     second = client.post("/cleanup-actions", headers=headers, json={
         "targetReportId": report["id"],
-        "removedCounts": {"Plastic": 5, "Other": 2},
+        "removed": {"Plastic": 5, "Other": 2},
         "handling": "Collected for disposal",
         "idempotencyKey": "iteration2-cleanup-2",
     })
@@ -780,6 +925,11 @@ def test_events_require_join_location_and_evidence_for_attendance(api):
     application, client = api
     session, headers = signup(client)
     event = next(item for item in client.get("/events?beachId=morib").get_json() if item["beachId"] == "morib")
+    assert event["source"] == "weekly"
+    assert event["area"]
+    assert event["startsAt"] == "09:00"
+    assert event["endsAt"] == "12:00"
+    assert isinstance(event["checkIns"], dict)
     now = datetime.now(timezone.utc)
     with application.extensions["marine_engine"].begin() as connection:
         connection.execute(events_table.update().where(events_table.c.id == event["id"]).values(
@@ -808,6 +958,7 @@ def test_events_require_join_location_and_evidence_for_attendance(api):
     assert attended["attendanceConfirmed"] is True
     assert session["user"]["participantId"] in attended["joinedBy"]
     assert session["user"]["participantId"] in attended["checkIns"]
+    assert attended["checkIns"][session["user"]["participantId"]] == "within_area"
     assert session["user"]["participantId"] in attended["attendanceBy"]
     with application.extensions["marine_engine"].connect() as connection:
         membership = connection.execute(select(event_members_table).where(
@@ -816,6 +967,10 @@ def test_events_require_join_location_and_evidence_for_attendance(api):
         )).one()
     assert membership.location_passed is True
     assert membership.checked_in_at is not None
+    left = client.delete(f"/events/{event['id']}/join", headers=headers)
+    assert left.status_code == 200
+    assert session["user"]["participantId"] not in left.get_json()["joinedBy"]
+    assert session["user"]["participantId"] not in left.get_json()["checkIns"]
 
 
 def test_only_moderator_can_manage_events(api):
@@ -834,4 +989,33 @@ def test_only_moderator_can_manage_events(api):
         connection.execute(users_table.update().where(users_table.c.id == _session["user"]["id"]).values(role="moderator"))
     created = client.post("/events", headers=headers, json=payload)
     assert created.status_code == 201
-    assert created.get_json()["source"] == "moderator"
+    assert created.get_json()["source"] == "admin"
+
+
+def test_moderator_can_create_frontend_date_shaped_event(api):
+    application, client = api
+    session, headers = signup(client)
+    with application.extensions["marine_engine"].begin() as connection:
+        connection.execute(users_table.update().where(users_table.c.id == session["user"]["id"]).values(role="moderator"))
+    response = client.post("/events", headers=headers, json={"beachId": "morib", "date": "2031-10-15"})
+    assert response.status_code == 201
+    event = response.get_json()
+    assert event["id"] == "morib-2031-10-15"
+    assert event["date"] == "2031-10-15"
+    assert event["startsAt"] == "09:00"
+    assert event["endsAt"] == "12:00"
+    assert event["source"] == "admin"
+    duplicate = client.post("/events", headers=headers, json={"beachId": "morib", "date": "2031-10-15"})
+    assert duplicate.status_code == 200
+    assert duplicate.get_json()["id"] == event["id"]
+    malformed = client.post("/events", headers=headers, json={"beachId": "morib", "date": "2031-1-5"})
+    assert malformed.status_code == 400
+
+    later = client.post("/events", headers=headers, json={"beachId": "morib", "date": "2031-10-22"})
+    assert later.status_code == 201
+    collision = client.patch(f"/events/{later.get_json()['id']}", headers=headers, json={
+        "startsAt": "2031-10-15T09:00:00+08:00",
+        "endsAt": "2031-10-15T12:00:00+08:00",
+    })
+    assert collision.status_code == 409
+    assert collision.get_json()["code"] == "EVENT_SLOT_TAKEN"

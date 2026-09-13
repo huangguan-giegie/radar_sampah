@@ -1,4 +1,4 @@
-"""Radar Sampah Iteration 1 API.
+"""Radar Sampah API for the Iteration 1 frontend and Iteration 2 services.
 
 The routes and response shapes in this module follow frontend/API.md and
 frontend/API.en.md. Report coordinates and photo storage keys are private
@@ -20,7 +20,7 @@ import threading
 import time
 from collections import defaultdict, deque
 from datetime import datetime, timedelta, timezone
-from functools import wraps
+from functools import lru_cache, wraps
 from io import BytesIO
 from pathlib import Path
 from typing import Any, Callable
@@ -54,6 +54,7 @@ from sqlalchemy.engine import Engine
 from sqlalchemy.exc import IntegrityError
 from werkzeug.exceptions import HTTPException
 from werkzeug.exceptions import RequestEntityTooLarge
+from species_distribution import ModelAreaError, ModelInputError, SpeciesDistributionModel
 
 try:
     from pillow_heif import register_heif_opener
@@ -110,7 +111,7 @@ QUANTITY_WEIGHTS = {"Small": 1, "Medium": 2, "Large": 3, "Very Large": 4}
 REPORT_STATUSES = {"Counted", "Duplicate", "Incomplete"}
 REPORT_STATUS_NOTES = {
     "Duplicate": "Same participant, beach and local day as an existing counted report. Saved here but excluded from the beach score.",
-    "Incomplete": "Photo unreadable — excluded until you correct and save the report.",
+    "Incomplete": "Photo unreadable — excluded until you correct and save the record.",
 }
 SCORING_BANDS = (
     {"band": "Low", "range": "below 1.5", "color": "#7CA98B"},
@@ -149,9 +150,9 @@ users_table = Table(
     Column("created_at", DateTime(timezone=True), nullable=False),
 )
 
-# The database contract in schema.sql stores one nullable column per litter
-# category.  Keep this mapping at the boundary so the API can continue to use
-# the frontend's compact `{category: quantity}` shape.
+# The database contract stores each quantity band as its numeric code
+# (Small=1 through Very Large=4). Keep the conversion at the API boundary so
+# clients continue to send and receive the published string labels.
 QUANTITY_COLUMNS = {
     "Plastic": "qty_plastic",
     "Fishing gear": "qty_fishing_gear",
@@ -175,7 +176,7 @@ reports_table = Table(
     Column("photo_key", String(500), nullable=False),
     Column("photo_mime", String(64), nullable=False),
     Column("photo_stripped", Boolean, nullable=False, default=False),
-    *(Column(column, String(20)) for column in QUANTITY_COLUMNS.values()),
+    *(Column(column, Integer) for column in QUANTITY_COLUMNS.values()),
     Column("category", String(40), nullable=False),
     Column("quantity", String(20), nullable=False),
     Column("lat", Float),
@@ -346,7 +347,7 @@ def ensure_report_columns(engine: Engine) -> None:
     additions = {
         "photo_mime": "VARCHAR(64)",
         "photo_stripped": "BOOLEAN",
-        **{column: "VARCHAR(20)" for column in QUANTITY_COLUMNS.values()},
+        **{column: "INTEGER" for column in QUANTITY_COLUMNS.values()},
         "lat": "DOUBLE PRECISION",
         "lng": "DOUBLE PRECISION",
         "item_counts": "TEXT",
@@ -447,6 +448,12 @@ def auth_jwt_secret(testing: bool) -> str:
     if testing:
         return "test-only-secret-not-for-production"
     raise RuntimeError("AUTH_JWT_SECRET must be configured outside tests")
+
+
+@lru_cache(maxsize=1)
+def load_species_distribution_model() -> SpeciesDistributionModel:
+    """Load the packaged offline species models once per API process."""
+    return SpeciesDistributionModel()
 
 
 def generate_participant_id(connection: Any) -> str:
@@ -611,16 +618,36 @@ def distance_km(lat1: float, lng1: float, lat2: float, lng2: float) -> float:
     return 6371.0088 * 2 * math.asin(math.sqrt(min(1.0, haversine)))
 
 
+def quantity_band_from_storage(value: Any) -> str | None:
+    """Read schema band codes and legacy text labels into the API vocabulary."""
+    if isinstance(value, str):
+        value = value.strip()
+        if value in QUANTITY_WEIGHTS:
+            return value
+        if not value.isdecimal():
+            return None
+        value = int(value)
+    if isinstance(value, int) and not isinstance(value, bool):
+        return next((band for band, code in QUANTITY_WEIGHTS.items() if code == value), None)
+    return None
+
+
 def quantities_from_row(row: Any) -> dict[str, str]:
-    return {
-        category: getattr(row, column)
-        for category, column in QUANTITY_COLUMNS.items()
-        if getattr(row, column) is not None
-    }
+    quantities: dict[str, str] = {}
+    for category, column in QUANTITY_COLUMNS.items():
+        band = quantity_band_from_storage(getattr(row, column))
+        if band is not None:
+            quantities[category] = band
+    return quantities
 
 
-def quantity_values(quantities: dict[str, str]) -> dict[str, str | None]:
-    return {column: quantities.get(category) for category, column in QUANTITY_COLUMNS.items()}
+def quantity_values(quantities: dict[str, str]) -> dict[str, int | None]:
+    return {column: QUANTITY_WEIGHTS.get(quantities.get(category)) for category, column in QUANTITY_COLUMNS.items()}
+
+
+def is_json_number(value: Any) -> bool:
+    """JSON coordinates are numbers; reject booleans and numeric strings."""
+    return isinstance(value, (int, float)) and not isinstance(value, bool)
 
 
 def attention_score_for(rows: list[Any]) -> float | None:
@@ -929,6 +956,8 @@ def validate_report_payload(
     if location_source == "gps":
         if not isinstance(coords, dict) or set(coords) != {"lat", "lng"}:
             return None, report_problem(400, "VALIDATION_FAILED", "GPS reports require lat and lng.")
+        if not is_json_number(coords["lat"]) or not is_json_number(coords["lng"]):
+            return None, report_problem(400, "VALIDATION_FAILED", "lat and lng must be numbers.")
         try:
             raw_lat, raw_lng = float(coords["lat"]), float(coords["lng"])
         except (TypeError, ValueError):
@@ -998,6 +1027,7 @@ def create_app(
     from recognition import LitterRecognizer
 
     recognizer = LitterRecognizer.load()
+    species_distribution_model = load_species_distribution_model()
     directory = photo_storage_path(photo_storage_dir)
     beaches = load_beaches(engine)
     beach_names = {beach["id"]: beach["name"] for beach in beaches}
@@ -1005,6 +1035,7 @@ def create_app(
     application.extensions["photo_storage_dir"] = directory
     application.extensions["photo_cleanup_timers"] = []
     application.extensions["litter_recognizer"] = recognizer
+    application.extensions["species_distribution_model"] = species_distribution_model
     sweep_orphan_photos(engine, directory)
     for metadata_path in directory.glob("*.jpg.meta.json"):
         photo_key = metadata_path.name.removesuffix(".meta.json")
@@ -1143,13 +1174,20 @@ def create_app(
     def event_dict(event: Any, viewer_id: str | None = None) -> dict[str, Any]:
         with engine.connect() as connection:
             members = connection.execute(
-                select(event_members_table).where(event_members_table.c.event_id == event.id)
+                select(event_members_table)
+                .where(event_members_table.c.event_id == event.id)
+                .order_by(event_members_table.c.joined_at)
             ).all()
             user_ids = [member.participant_id for member in members]
             user_rows = connection.execute(select(users_table.c.id, users_table.c.participant_id).where(users_table.c.id.in_(user_ids))).all() if user_ids else []
             participant_numbers = {row.id: row.participant_id for row in user_rows}
             joined_by = [participant_numbers[member.participant_id] for member in members if member.participant_id in participant_numbers]
-            check_ins = [participant_numbers[member.participant_id] for member in members if member.location_passed and member.participant_id in participant_numbers]
+            check_ins = {
+                participant_numbers[member.participant_id]: "within_area" if member.location_passed else "idle"
+                for member in members
+                if member.participant_id in participant_numbers
+            }
+            checked_in_numbers = [participant_id for participant_id, state in check_ins.items() if state == "within_area"]
             attendance_by = [
                 participant_numbers[member.participant_id]
                 for member in members
@@ -1167,25 +1205,25 @@ def create_app(
                 and event_has_evidence(connection, event, viewer_id)
             ) if viewer_id else False
         beach_name = beach_names.get(event.beach_id, event.beach_id)
+        beach = next((item for item in beaches if item["id"] == event.beach_id), None)
         local_start = utc_datetime(event.starts_at).astimezone(KUALA_LUMPUR)
         local_end = utc_datetime(event.ends_at).astimezone(KUALA_LUMPUR)
         return {
             "id": event.id,
             "beachId": event.beach_id,
             "beachName": beach_name,
+            "area": beach["area"] if beach else beach_name,
             "date": local_start.date().isoformat(),
-            "start": local_start.strftime("%H:%M"),
-            "end": local_end.strftime("%H:%M"),
-            "startsAt": contract_timestamp(event.starts_at),
-            "endsAt": contract_timestamp(event.ends_at),
+            "startsAt": local_start.strftime("%H:%M"),
+            "endsAt": local_end.strftime("%H:%M"),
             "status": event.status,
-            "source": event.source,
+            "source": "weekly" if event.source == "scheduled" else "admin",
             "participantCount": len(joined_by),
             "joinedBy": joined_by,
             "checkIns": check_ins,
             "attendanceBy": attendance_by,
             "cleanupIds": cleanup_ids,
-            "checkedInCount": len(check_ins),
+            "checkedInCount": len(checked_in_numbers),
             "attendanceCount": len(attendance_by),
             "joined": bool(viewer_member),
             "checkedIn": bool(viewer_member and viewer_member.location_passed),
@@ -1196,14 +1234,18 @@ def create_app(
         remaining = remaining_counts_for(report, actions)
         if report.status != "Counted" or not remaining:
             return None
+        try:
+            original = json.loads(report.item_counts or "{}")
+        except (TypeError, ValueError):
+            original = {}
         return {
             "reportId": report.id,
             "targetReportId": report.id,
             "beachId": report.beach_id,
-            "beach": report.beach_id,
             "beachName": beach_names.get(report.beach_id, report.beach_id),
+            "reportedAt": contract_timestamp(report.created_at),
             "createdAt": contract_timestamp(report.created_at),
-            "itemCounts": remaining,
+            "itemCounts": original,
             "remaining": remaining,
             "remainingTotal": sum(remaining.values()),
         }
@@ -1219,13 +1261,31 @@ def create_app(
             "targetReportId": action.target_report_id,
             "eventId": action.event_id,
             "beachId": action.beach_id,
-            "beach": action.beach_id,
+            "beachName": beach_names.get(action.beach_id, action.beach_id),
             "createdAt": contract_timestamp(action.created_at),
             "rows": json.loads(action.rows),
             "score": action.total_removed,
             "handling": action.handling,
-            "note": action.note,
+            "note": action.note or "",
             "status": "Cleanup recorded — awaiting follow-up",
+        }
+
+    def recognition_payload(result: dict[str, Any]) -> dict[str, Any]:
+        counts = validate_item_counts(result.get("counts"))
+        quantity_bands = quantity_bands_for_counts(counts) if counts else {}
+        state = result.get("state")
+        model_state = "empty" if state == "ready" and not counts else state
+        if model_state not in {"ready", "unavailable", "empty"}:
+            model_state = "unavailable"
+        return {
+            **result,
+            "quantityBands": quantity_bands,
+            "manualEntryRequired": model_state != "ready",
+            # Iteration 2 UI contract: counts remain the auditable detector output,
+            # while suggestions retain the frontend's four quantity-band shape.
+            "modelState": model_state,
+            "suggestions": quantity_bands,
+            "supportedClasses": list(ITERATION2_CATEGORIES),
         }
 
     @application.errorhandler(RequestEntityTooLarge)
@@ -1370,6 +1430,25 @@ def create_app(
             }
         )
 
+    @application.post("/api/species-distribution/predict")
+    def predict_species_distribution():
+        payload = request.get_json(silent=True)
+        if not isinstance(payload, dict) or set(payload) != {"latitude", "longitude"}:
+            return error_response(400, "VALIDATION_FAILED", "latitude and longitude are required.")
+        if not is_json_number(payload["latitude"]) or not is_json_number(payload["longitude"]):
+            return error_response(400, "VALIDATION_FAILED", "latitude and longitude must be numbers.")
+        try:
+            latitude, longitude = float(payload["latitude"]), float(payload["longitude"])
+        except (TypeError, ValueError):
+            return error_response(400, "VALIDATION_FAILED", "latitude and longitude must be numbers.")
+        try:
+            result = application.extensions["species_distribution_model"].predict(latitude, longitude)
+        except ModelInputError as error:
+            return error_response(400, "VALIDATION_FAILED", str(error))
+        except ModelAreaError as error:
+            return error_response(422, "OUTSIDE_MODEL_AREA", str(error))
+        return jsonify(result)
+
     @application.get("/scoring-method/iteration2")
     def get_iteration2_scoring_method():
         return jsonify({
@@ -1401,11 +1480,8 @@ def create_app(
         photo_path = photo_file_path(directory, photo_key) if photo_key else None
         if metadata_value is None or metadata_value.get("ownerId") != request.current_user.id or photo_path is None or not photo_path.is_file():
             return error_response(404, "NOT_FOUND", "Photo not found.")
-        result = recognizer.recognise(photo_path.read_bytes())
-        counts = validate_item_counts(result["counts"])
-        result["quantityBands"] = quantity_bands_for_counts(counts) if counts else {}
-        result["manualEntryRequired"] = result["state"] != "ready" or not counts
-        return jsonify(result)
+        result = application.extensions["litter_recognizer"].recognise(photo_path.read_bytes())
+        return jsonify(recognition_payload(result))
 
     @application.post("/recognitions/cleanup-photo")
     @require_auth
@@ -1424,12 +1500,9 @@ def create_app(
             processed = process_photo(raw)
         except ValueError as error:
             return error_response(400, "VALIDATION_FAILED", str(error))
-        result = recognizer.recognise(processed)
-        counts = validate_item_counts(result["counts"])
-        result["quantityBands"] = quantity_bands_for_counts(counts) if counts else {}
-        result["manualEntryRequired"] = result["state"] != "ready" or not counts
+        result = application.extensions["litter_recognizer"].recognise(processed)
         # The after-cleanup photo is passed to inference from memory and is never persisted.
-        return jsonify(result)
+        return jsonify(recognition_payload(result))
 
     @application.get("/events")
     def list_events():
@@ -1460,30 +1533,47 @@ def create_app(
     @require_moderator
     def create_moderator_event():
         payload = request.get_json(silent=True)
-        if not isinstance(payload, dict) or set(payload) != {"beachId", "startsAt", "endsAt"}:
-            return error_response(400, "VALIDATION_FAILED", "beachId, startsAt and endsAt are required.")
+        if not isinstance(payload, dict):
+            return error_response(400, "VALIDATION_FAILED", "An event object is required.")
+        fields = set(payload)
+        date_only = fields == {"beachId", "date"}
+        explicit_times = fields == {"beachId", "startsAt", "endsAt"}
+        if not date_only and not explicit_times:
+            return error_response(400, "VALIDATION_FAILED", "Send beachId and date, or beachId with startsAt and endsAt.")
         beach_id = str(payload.get("beachId") or "").strip()
         if not any(beach["id"] == beach_id for beach in beaches):
             return error_response(404, "NOT_FOUND", "Beach not found.")
-        try:
-            starts_at = datetime.fromisoformat(str(payload["startsAt"]))
-            ends_at = datetime.fromisoformat(str(payload["endsAt"]))
-        except (TypeError, ValueError):
-            return error_response(400, "VALIDATION_FAILED", "startsAt and endsAt must be ISO 8601 timestamps with a timezone.")
-        if starts_at.tzinfo is None or ends_at.tzinfo is None:
-            return error_response(400, "VALIDATION_FAILED", "Event timestamps must include a timezone.")
+        event_date: str | None = None
+        if date_only:
+            raw_date = payload["date"]
+            if not isinstance(raw_date, str) or not re.fullmatch(r"\d{4}-\d{2}-\d{2}", raw_date):
+                return error_response(400, "VALIDATION_FAILED", "date must use YYYY-MM-DD format.")
+            try:
+                event_date = datetime.strptime(raw_date, "%Y-%m-%d").date().isoformat()
+            except ValueError:
+                return error_response(400, "VALIDATION_FAILED", "date must use YYYY-MM-DD format.")
+            starts_at = datetime.fromisoformat(f"{event_date}T{EVENT_START_LOCAL_HOUR:02}:00:00+08:00")
+            ends_at = datetime.fromisoformat(f"{event_date}T{EVENT_END_LOCAL_HOUR:02}:00:00+08:00")
+        else:
+            try:
+                starts_at = datetime.fromisoformat(str(payload["startsAt"]))
+                ends_at = datetime.fromisoformat(str(payload["endsAt"]))
+            except (TypeError, ValueError):
+                return error_response(400, "VALIDATION_FAILED", "startsAt and endsAt must be ISO 8601 timestamps with a timezone.")
+            if starts_at.tzinfo is None or ends_at.tzinfo is None:
+                return error_response(400, "VALIDATION_FAILED", "Event timestamps must include a timezone.")
         starts_at, ends_at = utc_datetime(starts_at), utc_datetime(ends_at)
         if ends_at <= starts_at or ends_at - starts_at > timedelta(hours=12):
             return error_response(400, "VALIDATION_FAILED", "An event must last between 0 and 12 hours.")
         now = datetime.now(timezone.utc)
-        event_id = "ev_" + secrets.token_hex(10)
+        event_id = f"{beach_id}-{event_date}" if event_date else "ev_" + secrets.token_hex(10)
         with engine.begin() as connection:
-            conflict = connection.execute(select(events_table.c.id).where(
+            conflict = connection.execute(select(events_table).where(
                 events_table.c.beach_id == beach_id,
                 events_table.c.starts_at == starts_at,
             )).first()
             if conflict is not None:
-                return error_response(409, "EVENT_SLOT_TAKEN", "An event is already scheduled for that beach and start time.")
+                return (jsonify(event_dict(conflict, request.current_user.id)), 200)
             try:
                 with connection.begin_nested():
                     connection.execute(insert(events_table).values(
@@ -1535,9 +1625,13 @@ def create_app(
             if payload["status"] == "Open" and ends_at <= datetime.now(timezone.utc):
                 return error_response(409, "EVENT_ENDED", "An ended event cannot be reopened.")
             values["status"] = payload["status"]
-        with engine.begin() as connection:
-            connection.execute(events_table.update().where(events_table.c.id == event_id).values(**values))
-            updated = connection.execute(select(events_table).where(events_table.c.id == event_id)).first()
+        try:
+            with engine.begin() as connection:
+                with connection.begin_nested():
+                    connection.execute(events_table.update().where(events_table.c.id == event_id).values(**values))
+                updated = connection.execute(select(events_table).where(events_table.c.id == event_id)).first()
+        except IntegrityError:
+            return error_response(409, "EVENT_SLOT_TAKEN", "An event is already scheduled for that beach and start time.")
         return jsonify(event_dict(updated, request.current_user.id))
 
     @application.post("/events/<event_id>/join")
@@ -1565,12 +1659,30 @@ def create_app(
             event = connection.execute(select(events_table).where(events_table.c.id == event_id)).first()
         return jsonify(event_dict(event, request.current_user.id))
 
+    @application.delete("/events/<event_id>/join")
+    @require_auth
+    def leave_event(event_id: str):
+        with engine.begin() as connection:
+            event = connection.execute(select(events_table).where(events_table.c.id == event_id)).first()
+            if event is None:
+                return error_response(404, "NOT_FOUND", "Event not found.")
+            connection.execute(
+                event_members_table.delete().where(
+                    event_members_table.c.event_id == event_id,
+                    event_members_table.c.participant_id == request.current_user.id,
+                )
+            )
+            event = connection.execute(select(events_table).where(events_table.c.id == event_id)).first()
+        return jsonify(event_dict(event, request.current_user.id))
+
     @application.post("/events/<event_id>/check-in")
     @require_auth
     def check_in_event(event_id: str):
         payload = request.get_json(silent=True)
         if not isinstance(payload, dict) or set(payload) != {"lat", "lng"}:
             return error_response(400, "VALIDATION_FAILED", "lat and lng are required for check-in.")
+        if not is_json_number(payload["lat"]) or not is_json_number(payload["lng"]):
+            return error_response(400, "VALIDATION_FAILED", "lat and lng must be numbers.")
         try:
             lat, lng = float(payload["lat"]), float(payload["lng"])
         except (TypeError, ValueError):
@@ -1628,16 +1740,25 @@ def create_app(
     @rate_limited("cleanup-create", 60)
     def create_cleanup_action():
         payload = request.get_json(silent=True)
-        required = {"targetReportId", "removedCounts", "handling"}
-        allowed = required | {"eventId", "note", "idempotencyKey"}
-        if not isinstance(payload, dict) or not required <= set(payload) or set(payload) - allowed:
-            return error_response(400, "VALIDATION_FAILED", "targetReportId, removedCounts and handling are required.")
+        required = {"targetReportId", "handling"}
+        allowed = required | {"removed", "removedCounts", "eventId", "note", "idempotencyKey"}
+        if (
+            not isinstance(payload, dict)
+            or not required <= set(payload)
+            or set(payload) - allowed
+            or ("removed" in payload) == ("removedCounts" in payload)
+        ):
+            return error_response(400, "VALIDATION_FAILED", "targetReportId, removed and handling are required.")
         target_report_id = str(payload.get("targetReportId") or "").strip()
         handling = payload.get("handling")
-        removed_counts = validate_item_counts(payload.get("removedCounts"))
+        removed_counts = validate_item_counts(payload.get("removed", payload.get("removedCounts")))
         note = payload.get("note")
         event_id = payload.get("eventId")
-        idempotency_key = str(payload.get("idempotencyKey") or request.headers.get("Idempotency-Key") or "").strip()
+        idempotency_key = str(
+            payload.get("idempotencyKey")
+            or request.headers.get("Idempotency-Key")
+            or secrets.token_urlsafe(24)
+        ).strip()
         if not target_report_id or not removed_counts:
             return error_response(400, "VALIDATION_FAILED", "removedCounts must contain positive whole-item counts.")
         if handling not in EVENT_HANDLING_VALUES:
@@ -1646,8 +1767,8 @@ def create_app(
             return error_response(400, "VALIDATION_FAILED", "note must be 500 characters or fewer.")
         if event_id is not None and (not isinstance(event_id, str) or not event_id.strip() or len(event_id) > 100):
             return error_response(400, "VALIDATION_FAILED", "eventId must be a valid event identifier.")
-        if not idempotency_key or len(idempotency_key) > 128:
-            return error_response(400, "VALIDATION_FAILED", "idempotencyKey is required and must be at most 128 characters.")
+        if len(idempotency_key) > 128:
+            return error_response(400, "VALIDATION_FAILED", "idempotencyKey must be at most 128 characters.")
         fingerprint_value = {
             "targetReportId": target_report_id,
             "removedCounts": dict(sorted(removed_counts.items())),
@@ -1744,6 +1865,8 @@ def create_app(
         payload = request.get_json(silent=True)
         if not isinstance(payload, dict) or set(payload) != {"lat", "lng"}:
             return error_response(400, "VALIDATION_FAILED", "lat and lng are required.")
+        if not is_json_number(payload["lat"]) or not is_json_number(payload["lng"]):
+            return error_response(400, "VALIDATION_FAILED", "lat and lng must be numbers.")
         try:
             lat, lng = float(payload["lat"]), float(payload["lng"])
         except (TypeError, ValueError):

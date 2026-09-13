@@ -1,12 +1,13 @@
 # Radar Sampah 后端接口约定（Iteration 2）
 
-本文补足 Iteration 1 `frontend/API.md` 尚未定义的模型识别、清理目标、社区活动和管理员接口。现有海滩、照片、报告列表等接口保持兼容；新增接口均以 HTTPS、JSON 为准，照片上传使用 `multipart/form-data`。所有时间在响应中使用带时区的 ISO 8601，业务时区为 `Asia/Kuala_Lumpur`。
+本文补足前端 commit `1a113fbb1f900192e4cf0ec0d1620abc7cba309f` 与 Iteration 2 原型尚未定义的后端接口。现有海滩、照片、报告列表等接口保持兼容；新增 JSON 接口使用 HTTPS，照片上传使用 `multipart/form-data`。时间戳用带时区的 ISO 8601；活动卡片的 `date`、`startsAt`、`endsAt` 按前端契约分别返回本地日期和 `HH:mm` 时刻（业务时区 `Asia/Kuala_Lumpur`）。
 
 ## Iteration 2 决议
 
 - `moderator` 是活动管理员，可以创建、修改和关闭社区活动；举报审核仍不在本迭代范围内。普通匿名参与者是 `volunteer`。
 - 清理目标只从 `Counted` 报告产生。`Duplicate`、`Incomplete` 报告不产生目标。
 - 模型输出和人工确认的实际件数用 `itemCounts` 保存；旧版 `quantities` 仍是四档数量，用于与 Iteration 1 前端兼容。两者不能互相替代。
+- 数据库 `qty_*` 列按 `schema.sql` 存整数档位码 `Small=1`、`Medium=2`、`Large=3`、`Very Large=4`；API 仍只传前端既有的档位字符串。
 - 模型类别映射：`plastic → Plastic`、`metal → Metal`、`glass → Glass`、`paper_cardboard → Paper`、`styrofoam → Other`、`fishing_gear → Fishing gear`。
 - 由实际件数导出旧版档位：1–5 件 `Small`，6–20 件 `Medium`，21–50 件 `Large`，51 件及以上 `Very Large`。例如 8 件塑料对应 `itemCounts: {"Plastic": 8}`，兼容字段为 `quantities: {"Plastic": "Medium"}`。`styrofoam` 不会新增前端类别，而会计入 `Other`。
 - 部分清理可针对同一报告重复提交，直到剩余件数为零；每次是独立、不可覆盖的清理流水。只有相同请求重试才复用同一个 `idempotencyKey`。
@@ -42,11 +43,17 @@
 
 使用 `python scripts/provision_moderator.py` 创建 moderator。命令只显示一次恢复令牌；通过可信的私下渠道交给活动管理员。不要用普通注册接口提升角色，也不要把恢复令牌写入仓库。
 
+## 物种分布（前端既有接口）
+
+### `POST /api/species-distribution/predict`
+
+请求 `{ "latitude": 2.746, "longitude": 101.44 }`。位置必须在模型支持的马来西亚 EEZ 内。四个随仓库提供的 OBIS 模型只在 API 进程启动时加载；请求坐标和预测结果不写入数据库，也不参与垃圾严重度。成功响应字段为 `insideMalaysianEez: true`、`scoreType: "relative_occurrence"`、`calibratedProbability: false`、四项 `predictions` 和 `modelVersion`。模型分数是相对出现分数，不是校准概率。格式错误返回 `400 VALIDATION_FAILED`，范围外返回 `422 OUTSIDE_MODEL_AREA`。
+
 ## AI 识别
 
 ### `POST /recognitions`
 
-对当前用户已上传的报告照片运行一次识别。请求 `{ "photoKey": "<owned photo key>" }`。响应：
+对当前用户已上传的报告照片运行一次识别。请求 `{ "photoKey": "<owned photo key>" }`。`counts` 是实际检测件数，`quantityBands` 和前端兼容字段 `suggestions` 是按件数换算的数量档。响应：
 
 ```json
 {
@@ -54,6 +61,9 @@
   "modelVersion": "sea-taco-yolo11m-best/1",
   "counts": {"Fishing gear": 0, "Plastic": 2, "Glass": 0, "Metal": 0, "Other": 1, "Paper": 0},
   "quantityBands": {"Plastic": "Small", "Other": "Small"},
+  "modelState": "ready",
+  "suggestions": {"Plastic": "Small", "Other": "Small"},
+  "supportedClasses": ["plastic", "metal", "glass", "paper_cardboard", "styrofoam", "fishing_gear"],
   "detections": [{"modelClass": "styrofoam", "category": "Other", "confidence": 0.91, "box": [12, 20, 90, 130]}],
   "manualEntryRequired": false,
   "reason": null
@@ -100,13 +110,13 @@
 
 ### `GET /cleanup-targets?beachId=morib`
 
-公开返回仍有剩余件数的 `Counted` 报告：
+公开返回仍有剩余件数的 `Counted` 报告；`reportedAt`、`remaining` 的命名与前端 `CleanupTarget` 一致：
 
 ```json
-[{"reportId":"r_…","targetReportId":"r_…","beachId":"morib","beachName":"Pantai Morib","createdAt":"…+08:00","itemCounts":{"Plastic":5},"remaining":{"Plastic":5},"remainingTotal":5}]
+[{"reportId":"r_…","beachId":"morib","beachName":"Pantai Morib","reportedAt":"…+08:00","itemCounts":{"Plastic":8},"remaining":{"Plastic":5},"remainingTotal":5}]
 ```
 
-已清零的目标不再返回。没有 `itemCounts` 的旧版报告因缺少实际件数，不会成为可清理目标。
+已清零的目标不再返回。没有 `itemCounts` 的旧版报告因缺少实际件数，不会成为可清理目标。`itemCounts` 是报告原始件数，清理变化只体现在 `remaining`。
 
 ### `POST /cleanup-actions`
 
@@ -115,22 +125,22 @@
 ```json
 {
   "targetReportId": "r_…",
-  "removedCounts": {"Plastic": 3},
+  "removed": {"Plastic": 3},
   "handling": "Recycled / handled",
   "note": "Optional, at most 500 characters",
   "eventId": "morib-2026-09-19",
-  "idempotencyKey": "a unique UUID for this cleanup submission"
+  "idempotencyKey": "optional unique UUID for safe retries"
 }
 ```
 
-`eventId`、`note` 可省略。`handling` 只能是 `Collected for disposal`、`Recycled / handled`、`Not recorded`。移除件数不能超过当前剩余件数。重复部分清理使用新的 `idempotencyKey`；同一个 key + 同一请求安全重试，key 被用于不同请求时返回 `409 IDEMPOTENCY_CONFLICT`。提交成功返回 `201`；相同请求重试返回 `200`：
+`eventId`、`note`、`idempotencyKey` 可省略；为安全重试，前端应在同一逻辑请求中复用 key，也可通过 `Idempotency-Key` 请求头提供。`removedCounts` 可作为 `removed` 的旧版别名，但不能同时传两者。`handling` 只能是 `Collected for disposal`、`Recycled / handled`、`Not recorded`。移除件数不能超过当前剩余件数。重复部分清理使用新的 `idempotencyKey`；同一个 key + 同一请求安全重试，key 被用于不同请求时返回 `409 IDEMPOTENCY_CONFLICT`。提交成功返回 `201`；相同请求重试返回 `200`：
 
 ```json
 {
   "id":"c_…","participantId":"u_…","targetReportId":"r_…","eventId":null,
-  "beachId":"morib","createdAt":"…+08:00",
+  "beachId":"morib","beachName":"Pantai Morib","createdAt":"…+08:00",
   "rows":[{"category":"Plastic","removed":3,"before":8,"after":5}],
-  "score":3,"handling":"Recycled / handled","note":null,
+  "score":3,"handling":"Recycled / handled","note":"",
   "status":"Cleanup recorded — awaiting follow-up"
 }
 ```
@@ -143,11 +153,11 @@
 
 ## 社区活动
 
-活动对象包含原型字段 `id`、`beachId`、`date`、`start`、`end`、`status`、`source`、`participantCount`、`joinedBy`、`checkIns`、`attendanceBy`、`cleanupIds`，以及便于审计的 `startsAt`、`endsAt`、`beachName`、`checkedInCount`、`attendanceCount`。`joinedBy`、`checkIns`、`attendanceBy` 是参与者编号列表，不包含姓名等个人信息；另有当前登录者的 `joined`、`checkedIn`、`attendanceConfirmed`，匿名浏览时后三项均为 `false`。
+活动对象遵循前端 `CleanupEvent`：`id`、`beachId`、`beachName`、`area`、`date`、`startsAt`、`endsAt`、`status`、`source`、`participantCount`、`joinedBy`、`checkIns`、`attendanceBy`、`cleanupIds`。`date` 为 `YYYY-MM-DD`，开始/结束为 `HH:mm`；`source` 是 `weekly` 或 `admin`。参与者集合只含匿名参与者编号；`checkIns` 是编号到 `idle` / `within_area` 的对象映射。另有当前登录者的 `joined`、`checkedIn`、`attendanceConfirmed` 和计数摘要字段。
 
 ### `GET /events?beachId=morib`
 
-公开列出最近和未来活动；读取时为每片海滩补齐未来四个周六的活动。可选按海滩筛选。状态为 `Open` 或 `Closed`，来源为 `scheduled` 或 `moderator`。
+公开列出最近和未来活动；读取时为每片海滩补齐未来四个周六的活动。可选按海滩筛选。状态为 `Open` 或 `Closed`，来源为 `weekly` 或 `admin`。
 
 ### `GET /events/{id}`
 
@@ -155,15 +165,19 @@
 
 ### `POST /events`（moderator）
 
-创建额外活动，请求 `{ "beachId": "morib", "startsAt": "2026-09-19T09:00:00+08:00", "endsAt": "2026-09-19T12:00:00+08:00" }`。时间必须带时区，活动时长不能超过 12 小时。
+创建活动。前端日期表单请求 `{ "beachId": "morib", "date": "2026-09-19" }`，默认 09:00–12:00（马来西亚时间）；也支持管理端传带时区的 `startsAt`、`endsAt` 时间戳。活动时长不能超过 12 小时；相同海滩和开始时间的重复创建返回已有活动。
 
 ### `PATCH /events/{id}`（moderator）
 
-修改 `startsAt`、`endsAt` 和/或 `status` (`Open`/`Closed`)。不能重新开放已结束的活动。
+修改 `startsAt`、`endsAt` 和/或 `status` (`Open`/`Closed`)。不能重新开放已结束的活动；若时间与同一海滩的另一场活动冲突，返回 `409 EVENT_SLOT_TAKEN`。
 
 ### `POST /events/{id}/join`（登录）
 
 加入未关闭活动。重复调用幂等。
+
+### `DELETE /events/{id}/join`（登录）
+
+退出活动。重复调用幂等；成功后该参与者的签到状态从活动对象中移除。
 
 ### `POST /events/{id}/check-in`（登录）
 
@@ -195,4 +209,5 @@
 - `LITTER_MODEL_PATH`：可选，默认指向 `actual-project/ml-model/models/sea_taco_yolo11m_best.pt`。
 - `LITTER_MODEL_VERSION`：可选，默认 `sea-taco-yolo11m-best/1`。
 - `requirements-ml.txt` 安装 YOLO 依赖。当前仓库权重用 Git LFS 管理；需要先取回 LFS 文件。权重缺失或依赖未安装时 API 仍启动，但识别返回 `unavailable`，前端应让参与者人工录入。
+- `POST /api/species-distribution/predict` 使用随仓库提供的四个 OBIS 离线模型；`requirements.txt` 安装其运行依赖。该预测只返回相对出现分数，不写入数据库，也不参与垃圾严重度。
 - `MODERATOR` 通过 `scripts/provision_moderator.py` 创建，普通用户不能自行更改 `role`。

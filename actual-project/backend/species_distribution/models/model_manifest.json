@@ -1,0 +1,63 @@
+{
+  "trained_at_utc": "2026-08-29T09:27:37.403471+00:00",
+  "features": [
+    "latitude",
+    "longitude"
+  ],
+  "species": [
+    {
+      "slug": "green_sea_turtle",
+      "scientific_name": "Chelonia mydas",
+      "common_name_en": "Green sea turtle",
+      "common_name_zh": "绿海龟",
+      "selected_model": "random_forest",
+      "selected_model_path": "models/green_sea_turtle.joblib",
+      "selection_metric_pr_auc": 0.441303950896233,
+      "selection_metric_roc_auc": 0.7519121831519044,
+      "heatmap_grid_path": "artifacts/heatmaps/green_sea_turtle_probability_grid.csv",
+      "heatmap_svg_path": "artifacts/heatmaps/green_sea_turtle_heatmap.svg"
+    },
+    {
+      "slug": "ocellaris_clownfish",
+      "scientific_name": "Amphiprion ocellaris",
+      "common_name_en": "Ocellaris clownfish",
+      "common_name_zh": "公子小丑鱼",
+      "selected_model": "random_forest",
+      "selected_model_path": "models/ocellaris_clownfish.joblib",
+      "selection_metric_pr_auc": 0.42008922229722606,
+      "selection_metric_roc_auc": 0.6857330703484549,
+      "heatmap_grid_path": "artifacts/heatmaps/ocellaris_clownfish_probability_grid.csv",
+      "heatmap_svg_path": "artifacts/heatmaps/ocellaris_clownfish_heatmap.svg"
+    },
+    {
+      "slug": "irrawaddy_dolphin",
+      "scientific_name": "Orcaella brevirostris",
+      "common_name_en": "Irrawaddy dolphin",
+      "common_name_zh": "伊洛瓦底海豚",
+      "selected_model": "logistic_regression",
+      "selected_model_path": "models/irrawaddy_dolphin.joblib",
+      "selection_metric_pr_auc": 0.4289268391541119,
+      "selection_metric_roc_auc": 0.7548209366391184,
+      "heatmap_grid_path": "artifacts/heatmaps/irrawaddy_dolphin_probability_grid.csv",
+      "heatmap_svg_path": "artifacts/heatmaps/irrawaddy_dolphin_heatmap.svg"
+    },
+    {
+      "slug": "moorish_idol",
+      "scientific_name": "Zanclus cornutus",
+      "common_name_en": "Moorish idol",
+      "common_name_zh": "镰鳍角蝶鱼",
+      "selected_model": "random_forest",
+      "selected_model_path": "models/moorish_idol.joblib",
+      "selection_metric_pr_auc": 0.5167570382012876,
+      "selection_metric_roc_auc": 0.8010380622837369,
+      "heatmap_grid_path": "artifacts/heatmaps/moorish_idol_probability_grid.csv",
+      "heatmap_svg_path": "artifacts/heatmaps/moorish_idol_heatmap.svg"
+    }
+  ],
+  "evaluation": {
+    "method": "stratified spatial-block cross-validation (up to 5 folds)",
+    "spatial_block_degrees": 1.0,
+    "selection_rule": "highest spatial-CV PR-AUC, then ROC-AUC"
+  },
+  "probability_warning": "Scores depend on OBIS sampling and generated backgrounds. They are not calibrated probabilities of real-world presence."
+}

@@ -1,6 +1,6 @@
 # Radar Sampah API
 
-This Flask API keeps the Iteration 1 contract in
+This Flask API keeps the frontend contract from commit `1a113fbb1f900192e4cf0ec0d1620abc7cba309f` in
 [`../frontend/API.en.md`](../frontend/API.en.md) and adds Iteration 2 endpoints
 specified in [`API_ITERATION2.md`](API_ITERATION2.md): local litter recognition,
 remaining-count cleanup targets, append-only partial cleanup actions, community
@@ -52,6 +52,9 @@ The development server listens on `http://localhost:5000` by default.
   `sea_taco_yolo11m_best.pt` file, and the backend deployment must install
   `requirements-ml.txt` to enable YOLO. If either is missing, the API remains
   available and the recognition response requests manual counts.
+- Four packaged OBIS species-distribution models load once per process. Their
+  endpoint needs the scientific Python dependencies in `requirements.txt`; it
+  returns relative occurrence context and never persists coordinates or scores.
 
 ## Render settings
 
@@ -79,6 +82,7 @@ The development server listens on `http://localhost:5000` by default.
 - `GET /beaches`
 - `GET /beaches/<id>`
 - `GET /scoring-method`
+- `POST /api/species-distribution/predict`
 - `POST /geo/resolve-beach`
 - `POST /uploads/photos`
 - `POST /reports`
