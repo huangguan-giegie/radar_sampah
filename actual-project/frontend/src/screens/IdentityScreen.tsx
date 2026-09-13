@@ -14,13 +14,30 @@ import { BackButton, ErrorNote, GhostButton, PrimaryButton, TextButton } from '.
 import { useApp } from '../AppContext';
 import { safeNextPath } from '../flowRules';
 
+function needsParticipantIdentity(path: string) {
+  const pathname = path.split('?')[0];
+  return pathname === '/reports'
+    || pathname.startsWith('/reports/')
+    || pathname === '/account'
+    || pathname.startsWith('/report/')
+    || pathname.startsWith('/cleanup/')
+    || pathname === '/platform/events/new'
+    || /^\/events\/[^/]+\/check-in$/.test(pathname);
+}
+
 export default function IdentityScreen() {
   const nav = useNavigate();
   const [params] = useSearchParams();
   const next = safeNextPath(params.get('next'));
   const { createId, restore } = useApp();
 
-  const [mode, setMode] = useState<'new' | 'existing'>('new');
+  // A visit to My Reports usually means the participant already has an ID.
+  // Start with the restore form there so it does not look like the only way
+  // forward is to create a new account. People without an ID can still switch
+  // to Get an ID.
+  const [mode, setMode] = useState<'new' | 'existing'>(() =>
+    next === '/reports' || next.startsWith('/reports/') ? 'existing' : 'new',
+  );
   const [typedId, setTypedId] = useState('');
   const [typedToken, setTypedToken] = useState('');
   const [busy, setBusy] = useState(false);
@@ -50,6 +67,16 @@ export default function IdentityScreen() {
 
   function goBack() {
     if (newSession?.recoveryToken && !savedRecovery && !window.confirm('Leave without saving your recovery token?')) return;
+    // RequireAuth replaces a protected tab's URL with this page. Going to
+    // `next` here would immediately hit RequireAuth again. Return to the
+    // actual previous app page when one exists; a directly opened protected
+    // link falls back to the public map.
+    if (needsParticipantIdentity(next)) {
+      const historyIndex = window.history.state?.idx;
+      if (Number.isInteger(historyIndex) && historyIndex > 0) nav(-1);
+      else nav('/map');
+      return;
+    }
     nav(next === '/home' ? '/welcome' : next);
   }
 
@@ -113,7 +140,7 @@ export default function IdentityScreen() {
             {newSession
               ? newSession.recoveryToken ? "You won't see this token again after leaving this screen." : 'Keep your participant ID to restore this account.'
               : mode === 'existing'
-                ? 'Use your participant ID. A recovery token is optional for older accounts.'
+                ? 'Use your participant ID to view your reports. A recovery token is optional for older accounts.'
                 : 'No name, email or phone number required.'}
           </div>
         </div>
