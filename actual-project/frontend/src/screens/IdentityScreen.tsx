@@ -49,6 +49,7 @@ export default function IdentityScreen() {
   const [newSession, setNewSession] = useState<{ participantId: string; recoveryToken?: string } | null>(null);
   const [copied, setCopied] = useState(false);
   const [savedRecovery, setSavedRecovery] = useState(false);
+  const [downloadRequested, setDownloadRequested] = useState(false);
 
   const recoveryKitText = newSession
     ? `Radar Sampah recovery details\nParticipant ID: ${newSession.participantId}${newSession.recoveryToken ? `\nRecovery token: ${newSession.recoveryToken}\n\nKeep this file private. The token works like a password.` : ''}`
@@ -60,9 +61,13 @@ export default function IdentityScreen() {
     const link = document.createElement('a');
     link.href = url;
     link.download = `radar-sampah-recovery-${newSession.participantId}.txt`;
+    link.style.display = 'none';
+    document.body.appendChild(link);
     link.click();
-    URL.revokeObjectURL(url);
-    setSavedRecovery(true);
+    link.remove();
+    // Let the browser start consuming the Blob before releasing its URL.
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+    setDownloadRequested(true);
   }
 
   function goBack() {
@@ -183,8 +188,12 @@ export default function IdentityScreen() {
               >
                 {copied ? 'Copied' : 'Copy details'}
               </GhostButton>
-              <GhostButton onClick={downloadRecoveryKit}>Download</GhostButton>
+              <GhostButton onClick={downloadRecoveryKit}>{downloadRequested ? 'Download again' : 'Download'}</GhostButton>
             </div>}
+
+            {downloadRequested && <p role="status" style={{ margin: '-8px 2px 0', color: C.muted, fontSize: 12, lineHeight: 1.5 }}>
+              Check your downloads for the recovery file. If it is not there, try again or use Copy details.
+            </p>}
 
             {newSession.recoveryToken && <label style={{ display: 'flex', gap: 11, alignItems: 'center', padding: '13px 14px', borderRadius: 16, background: C.tint, color: C.ink2, fontSize: 13.5, fontWeight: 620 }}>
               <input
