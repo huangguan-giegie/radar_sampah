@@ -58,14 +58,15 @@ The development server listens on `http://localhost:5000` by default.
   stable random secret in production.
 - Photo bytes live outside the public web root. `PHOTO_STORAGE_DIR` selects that
   private directory; the default is an OS temporary directory for local demos.
-- Photos are re-encoded without EXIF, resized to a maximum 2048 px edge and
-  returned only through owner-scoped links that expire after 15 minutes.
+- Photos are re-encoded without EXIF and resized to a maximum 2048 px edge.
+  Original reports stay private except when their owner creates a scoped public
+  share link; owner-only photo URLs expire after 15 minutes.
 - The original report photo remains private for audit. Optional after-cleanup
   photos are sent to inference from memory and are not retained.
 - Anonymous signup returns a `recoveryToken` once. The database stores only its
   SHA-256 digest. Use `scripts/provision_moderator.py` to create an activity
-  administrator; the moderator role can manage events but does not review
-  reports in this iteration.
+  administrator; the moderator role can add event dates but cannot edit or
+  cancel events and does not review reports in this iteration.
 - Model weights are Git LFS-managed. The checkout must include the real
   `sea_taco_yolo11m_best.pt` file, and the backend deployment must install
   `requirements-ml.txt` to enable YOLO. If either is missing, the API remains
@@ -111,10 +112,11 @@ The development server listens on `http://localhost:5000` by default.
 - `POST /recognitions`
 - `POST /recognitions/cleanup-photo`
 - `GET /cleanup-targets`
+- `GET /share-links`, `GET /share-links/{token}`, `GET /share-links/{token}/photo`
 - `POST /cleanup-actions`
 - `GET /cleanups/mine`
 - `GET /events`, `GET /events/<id>`, `GET /events/<id>/cleanups`
-- `POST /events`, `PATCH /events/<id>` (moderator)
+- `POST /events` (moderator; event creation only)
 - `POST /events/<id>/join`, `POST /events/<id>/check-in`
 
 Read `../frontend/API.en.md` for the existing Iteration 1 contract,

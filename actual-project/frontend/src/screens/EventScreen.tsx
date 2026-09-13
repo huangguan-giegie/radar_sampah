@@ -6,6 +6,7 @@ import { BackButton, GhostButton, PrimaryButton, TextButton } from '../component
 import { useApp } from '../AppContext';
 import {
   formatEventDate,
+  createSharePath,
   getCleanupEvent,
   joinCleanupEvent,
   leaveCleanupEvent,
@@ -20,12 +21,22 @@ export default function EventScreen() {
   const [loading, setLoading] = useState(true);
   const [sharing, setSharing] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [sharePath, setSharePath] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
     setLoading(true);
     getCleanupEvent(eventId).then((row) => { if (active) setEvent(row); })
       .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
+  }, [eventId]);
+
+  useEffect(() => {
+    let active = true;
+    setSharePath(null);
+    createSharePath({ eventId })
+      .then((path) => { if (active) setSharePath(path); })
+      .catch(() => { if (active) setSharePath(null); });
     return () => { active = false; };
   }, [eventId]);
 
@@ -71,11 +82,15 @@ export default function EventScreen() {
     }
   }
 
-  const shareUrl = `${window.location.origin}/share/events/${event.id}`;
+  const shareUrl = sharePath ? `${window.location.origin}${sharePath}` : '';
   const shareText = `${event.beachName} cleanup · ${formatEventDate(event.date)}`;
-  const whatsapp = `https://wa.me/?text=${encodeURIComponent(`${shareText}\n${shareUrl}`)}`;
+  const whatsapp = shareUrl ? `https://wa.me/?text=${encodeURIComponent(`${shareText}\n${shareUrl}`)}` : '';
 
   async function copyLink() {
+    if (!shareUrl) {
+      showToast('Secure share link is still loading');
+      return;
+    }
     try {
       await navigator.clipboard.writeText(shareUrl);
       setCopied(true);
@@ -87,6 +102,10 @@ export default function EventScreen() {
   }
 
   async function systemShare() {
+    if (!shareUrl) {
+      showToast('Secure share link is still loading');
+      return;
+    }
     if (!navigator.share) {
       await copyLink();
       return;
@@ -99,6 +118,10 @@ export default function EventScreen() {
     } finally {
       setSharing(false);
     }
+  }
+
+  function shareOnWhatsApp() {
+    if (whatsapp) window.open(whatsapp, '_blank', 'noopener,noreferrer');
   }
 
   const participation = [
@@ -172,15 +195,16 @@ export default function EventScreen() {
         <div className="i2-card">
           <SectionLabel size="sm">SHARE</SectionLabel>
           <div className="i2-share-grid">
-            <a href={whatsapp} target="_blank" rel="noreferrer" className="btn-ghost press i2-share-button">WhatsApp</a>
-            <button type="button" className="btn-ghost press i2-share-button" onClick={systemShare} disabled={sharing}>{sharing ? 'Opening…' : 'Share…'}</button>
-            <button type="button" className={`btn-primary press i2-share-button${copied ? ' i2-copy-success' : ''}`} onClick={copyLink}>
+            <button type="button" className="btn-ghost press i2-share-button" onClick={shareOnWhatsApp} disabled={!sharePath}>WhatsApp</button>
+            <button type="button" className="btn-ghost press i2-share-button" onClick={systemShare} disabled={sharing || !sharePath}>{sharing ? 'Opening…' : 'Share…'}</button>
+            <button type="button" className={`btn-primary press i2-share-button${copied ? ' i2-copy-success' : ''}`} onClick={copyLink} disabled={!sharePath}>
               {copied ? 'Copied' : 'Copy link'}
             </button>
           </div>
+          {!sharePath && <p style={{ margin: '8px 0 0', color: C.muted, fontSize: 11 }}>Preparing a secure event link…</p>}
         </div>
 
-        <GhostButton onClick={() => nav(`/share/events/${event.id}`)}>Open public sharing page</GhostButton>
+        <GhostButton onClick={() => { if (sharePath) nav(sharePath); }} disabled={!sharePath}>Open public sharing page</GhostButton>
         {joined && !attendanceRecorded && <TextButton onClick={leave}>Leave activity</TextButton>}
       </div>
     </div>

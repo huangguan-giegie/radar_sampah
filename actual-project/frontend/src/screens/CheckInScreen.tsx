@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Check, Pin } from '../components/Icon';
 import { Alert, InfoChip, SectionLabel } from '../components/ds';
 import { BackButton, GhostButton, PrimaryButton } from '../components/ui';
@@ -7,6 +7,7 @@ import { useApp } from '../AppContext';
 import { formatEventDate, getCleanupEvent, recordCheckIn, type CheckInState } from '../iteration2';
 import { USE_MOCK } from '../api';
 import { C } from '../theme';
+import { safeNextPath } from '../flowRules';
 
 const BEACH_COORDS: Record<string, { lat: number; lng: number }> = {
   morib: { lat: 2.746, lng: 101.443 },
@@ -25,8 +26,11 @@ function distanceKm(a: { lat: number; lng: number }, b: { lat: number; lng: numb
 
 export default function CheckInScreen() {
   const { eventId = '' } = useParams();
+  const [params] = useSearchParams();
+  const nextPath = safeNextPath(params.get('next'));
+  const hasReturnPath = params.has('next') && nextPath !== '/home';
   const nav = useNavigate();
-  const { user } = useApp();
+  const { user, resetDraft, patchDraft, setLastSavedReport } = useApp();
   const [event, setEvent] = useState<Awaited<ReturnType<typeof getCleanupEvent>>>(null);
   const [state, setState] = useState<CheckInState>('idle');
   const [message, setMessage] = useState<string | null>(null);
@@ -83,6 +87,19 @@ export default function CheckInScreen() {
     );
   }
 
+  function reportAtThisEvent() {
+    if (!event) return;
+    resetDraft();
+    setLastSavedReport(null);
+    patchDraft({
+      beachId: event.beachId,
+      beachName: event.beachName,
+      locationSource: 'manual',
+      eventId: event.id,
+    });
+    nav('/report/photo');
+  }
+
   if (!event || !user) return null;
   const joined = event.joinedBy.includes(user.participantId);
   const attendanceRecorded = event.attendanceBy.includes(user.participantId);
@@ -108,7 +125,7 @@ export default function CheckInScreen() {
   return (
     <div className="screen scroll-y" style={{ zIndex: 26 }}>
       <div className="measure i2-page anim-fade-up" style={{ paddingBottom: 'calc(var(--safe-bottom) + 34px)' }}>
-        <BackButton onClick={() => nav(`/events/${event.id}`)} />
+        <BackButton onClick={() => nav(hasReturnPath ? nextPath : `/events/${event.id}`)} />
         <div>
           <SectionLabel size="sm">CHECK IN</SectionLabel>
           <h1 className="i2-title" style={{ marginTop: 7 }}>Check in</h1>
@@ -160,23 +177,23 @@ export default function CheckInScreen() {
         <div className="i2-action-stack">
           {withinArea && !attendanceRecorded ? (
             <>
-              <PrimaryButton onClick={() => nav(`/cleanup/${event.beachId}?event=${encodeURIComponent(event.id)}`)}>Add a Cleanup</PrimaryButton>
-              <GhostButton onClick={() => nav(`/beach/${event.beachId}`)}>Report litter here instead</GhostButton>
+              <PrimaryButton onClick={() => nav(hasReturnPath ? nextPath : `/cleanup/${event.beachId}?event=${encodeURIComponent(event.id)}`)}>{hasReturnPath ? 'Continue' : 'Add a Cleanup'}</PrimaryButton>
+              <GhostButton onClick={reportAtThisEvent}>Report litter here instead</GhostButton>
             </>
           ) : attendanceRecorded ? (
-            <PrimaryButton onClick={() => nav(`/events/${event.id}`)}>Back to event</PrimaryButton>
+            <PrimaryButton onClick={() => nav(hasReturnPath ? nextPath : `/events/${event.id}`)}>{hasReturnPath ? 'Continue' : 'Back to event'}</PrimaryButton>
           ) : (
             <>
               <PrimaryButton onClick={checkIn} disabled={state === 'checking'}>{state === 'checking' ? 'Checking…' : state === 'idle' ? 'Check in — use my location' : 'Retry location'}</PrimaryButton>
               {locationFailed && (
                 <>
-                  <GhostButton onClick={() => nav(`/cleanup/${event.beachId}?event=${encodeURIComponent(event.id)}`)}>Add a Cleanup</GhostButton>
-                  <GhostButton onClick={() => nav(`/beach/${event.beachId}`)}>Report litter here instead</GhostButton>
+                  <GhostButton onClick={() => nav(hasReturnPath ? nextPath : `/cleanup/${event.beachId}?event=${encodeURIComponent(event.id)}`)}>{hasReturnPath ? 'Continue' : 'Add a Cleanup'}</GhostButton>
+                  <GhostButton onClick={reportAtThisEvent}>Report litter here instead</GhostButton>
                 </>
               )}
             </>
           )}
-          {!attendanceRecorded && <GhostButton onClick={() => nav(`/events/${event.id}`)}>Back to activity</GhostButton>}
+          {!attendanceRecorded && <GhostButton onClick={() => nav(hasReturnPath ? nextPath : `/events/${event.id}`)}>{hasReturnPath ? 'Return to shared link' : 'Back to activity'}</GhostButton>}
         </div>
         <p style={{ margin: 0, textAlign: 'center', color: C.dim, fontSize: 11 }}>Being nearby is not proof of a cleanup.</p>
       </div>

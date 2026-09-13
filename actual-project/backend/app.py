@@ -26,7 +26,7 @@ from functools import lru_cache, wraps
 from io import BytesIO
 from pathlib import Path
 from typing import Any, Callable
-from urllib.parse import urlencode
+from urllib.parse import quote, urlencode
 
 import jwt
 from flask import Flask, jsonify, request, send_file
@@ -859,6 +859,31 @@ def recovery_token_digest(recovery_token: str) -> str:
     return hashlib.sha256(recovery_token.encode("utf-8")).hexdigest()
 
 
+def create_share_token(event_id: str | None, report_id: str | None, jwt_secret: str) -> str:
+    """Create a stable, signed token scoped to one public event and optional report."""
+    return jwt.encode(
+        {"purpose": "iteration2-share", "eventId": event_id, "reportId": report_id},
+        jwt_secret,
+        algorithm=AUTH_JWT_ALGORITHM,
+    )
+
+
+def decode_share_token(token: str, jwt_secret: str) -> dict[str, Any] | None:
+    try:
+        claims = jwt.decode(token, jwt_secret, algorithms=[AUTH_JWT_ALGORITHM])
+    except jwt.PyJWTError:
+        return None
+    event_id, report_id = claims.get("eventId"), claims.get("reportId")
+    if (
+        claims.get("purpose") != "iteration2-share"
+        or (event_id is not None and not isinstance(event_id, str))
+        or (report_id is not None and not isinstance(report_id, str))
+        or (event_id is None and report_id is None)
+    ):
+        return None
+    return claims
+
+
 def create_recovery_token() -> str:
     raw = base64.b32encode(secrets.token_bytes(15)).decode("ascii").rstrip("=")
     return "RS-" + "-".join(raw[index:index + 4] for index in range(0, len(raw), 4))
@@ -1466,6 +1491,7 @@ def create_app(
         report = connection.execute(
             select(reports_table.c.id).where(
                 reports_table.c.reporter_id == participant_id,
+                reports_table.c.event_id == event.id,
                 reports_table.c.beach_id == event.beach_id,
                 reports_table.c.status == "Counted",
                 reports_table.c.created_at >= start,
@@ -1847,6 +1873,87 @@ def create_app(
         viewer = optional_current_user()
         return jsonify(event_dict(event, viewer.id if viewer else None))
 
+    @application.get("/share-links")
+    def issue_share_link():
+        event_id = request.args.get("eventId")
+        report_id = request.args.get("reportId")
+        if not event_id and not report_id:
+            return error_response(400, "VALIDATION_FAILED", "eventId or reportId is required.")
+        with engine.connect() as connection:
+            event = connection.execute(select(events_table).where(events_table.c.id == event_id)).first() if event_id else None
+            report = connection.execute(select(reports_table).where(reports_table.c.id == report_id)).first() if report_id else None
+        if event_id and event is None:
+            return error_response(404, "NOT_FOUND", "Event not found.")
+        if report_id and (report is None or report.status != "Counted" or not report.item_counts):
+            return error_response(404, "NOT_FOUND", "Shareable report not found.")
+        viewer = optional_current_user()
+        if report is not None and (viewer is None or viewer.id != report.reporter_id):
+            return error_response(404, "NOT_FOUND", "Shareable report not found.")
+        if event is not None and report is not None and event.beach_id != report.beach_id:
+            return error_response(400, "VALIDATION_FAILED", "The report and event must refer to the same beach.")
+        token = create_share_token(event_id, report_id, jwt_secret)
+        return jsonify({"token": token, "path": "/share/" + quote(token, safe="")})
+
+    @application.get("/share-links/<token>")
+    def read_share_link(token: str):
+        claims = decode_share_token(token, jwt_secret)
+        if claims is None:
+            return error_response(404, "NOT_FOUND", "Shared item not found.")
+        event_id, report_id = claims["eventId"], claims["reportId"]
+        with engine.connect() as connection:
+            event = connection.execute(select(events_table).where(events_table.c.id == event_id)).first() if event_id else None
+            report = connection.execute(select(reports_table).where(reports_table.c.id == report_id)).first() if report_id else None
+            actions = connection.execute(
+                select(cleanup_actions_table).where(cleanup_actions_table.c.target_report_id == report_id)
+            ).all() if report_id else []
+        if event_id and event is None:
+            return error_response(404, "NOT_FOUND", "Shared item not found.")
+        if report_id and (report is None or report.status != "Counted" or not report.item_counts):
+            return error_response(404, "NOT_FOUND", "Shared item not found.")
+        if event is not None and report is not None and event.beach_id != report.beach_id:
+            return error_response(404, "NOT_FOUND", "Shared item not found.")
+        shared_report = None
+        if report is not None:
+            try:
+                item_counts = json.loads(report.item_counts or "{}")
+            except (TypeError, ValueError):
+                item_counts = {}
+            remaining = remaining_counts_for(report, actions)
+            shared_report = {
+                "id": report.id,
+                "beachId": report.beach_id,
+                "beachName": beach_names.get(report.beach_id, report.beach_id),
+                "reportedAt": contract_timestamp(report.created_at),
+                "status": report.status,
+                "quantities": quantities_from_row(report),
+                "itemCounts": item_counts,
+                "remainingItemCounts": remaining,
+                "remainingTotal": sum(remaining.values()),
+                "photoAvailable": photo_file_path(directory, report.photo_key) is not None,
+            }
+        return jsonify({
+            "event": event_dict(event) if event is not None else None,
+            "report": shared_report,
+        })
+
+    @application.get("/share-links/<token>/photo")
+    def read_shared_report_photo(token: str):
+        claims = decode_share_token(token, jwt_secret)
+        report_id = claims.get("reportId") if claims else None
+        if not report_id:
+            return error_response(404, "NOT_FOUND", "Shared photo not found.")
+        with engine.connect() as connection:
+            report = connection.execute(select(reports_table).where(reports_table.c.id == report_id)).first()
+        if report is None or report.status != "Counted" or not report.item_counts:
+            return error_response(404, "NOT_FOUND", "Shared photo not found.")
+        metadata_value = read_photo_metadata(directory, report.photo_key)
+        photo_path = photo_file_path(directory, report.photo_key)
+        if metadata_value is None or metadata_value.get("ownerId") != report.reporter_id or photo_path is None or not photo_path.is_file():
+            return error_response(404, "NOT_FOUND", "Shared photo not found.")
+        response = send_file(photo_path, mimetype="image/jpeg", max_age=0, conditional=True)
+        response.headers["Cache-Control"] = "private, no-store"
+        return response
+
     @application.get("/events/<event_id>/cleanups")
     def list_event_cleanups(event_id: str):
         with engine.connect() as connection:
@@ -1922,48 +2029,6 @@ def create_app(
                 return error_response(409, "EVENT_SLOT_TAKEN", "An event is already scheduled for that beach and start time.")
             event = connection.execute(select(events_table).where(events_table.c.id == event_id)).first()
         return jsonify(event_dict(event, request.current_user.id)), 201
-
-    @application.patch("/events/<event_id>")
-    @require_moderator
-    def update_event(event_id: str):
-        payload = request.get_json(silent=True)
-        if not isinstance(payload, dict) or not payload or set(payload) - {"startsAt", "endsAt", "status"}:
-            return error_response(400, "VALIDATION_FAILED", "Send startsAt, endsAt, or status.")
-        with engine.connect() as connection:
-            event = connection.execute(select(events_table).where(events_table.c.id == event_id)).first()
-        if event is None:
-            return error_response(404, "NOT_FOUND", "Event not found.")
-        starts_at, ends_at = utc_datetime(event.starts_at), utc_datetime(event.ends_at)
-        try:
-            if "startsAt" in payload:
-                starts_at = datetime.fromisoformat(str(payload["startsAt"]))
-                if starts_at.tzinfo is None:
-                    raise ValueError("timezone required")
-                starts_at = utc_datetime(starts_at)
-            if "endsAt" in payload:
-                ends_at = datetime.fromisoformat(str(payload["endsAt"]))
-                if ends_at.tzinfo is None:
-                    raise ValueError("timezone required")
-                ends_at = utc_datetime(ends_at)
-        except (TypeError, ValueError):
-            return error_response(400, "VALIDATION_FAILED", "Event timestamps must be ISO 8601 timestamps with a timezone.")
-        if ends_at <= starts_at or ends_at - starts_at > timedelta(hours=12):
-            return error_response(400, "VALIDATION_FAILED", "An event must last between 0 and 12 hours.")
-        values: dict[str, Any] = {"starts_at": starts_at, "ends_at": ends_at, "updated_at": datetime.now(timezone.utc)}
-        if "status" in payload:
-            if payload["status"] not in {"Open", "Closed"}:
-                return error_response(400, "VALIDATION_FAILED", "status must be Open or Closed.")
-            if payload["status"] == "Open" and ends_at <= datetime.now(timezone.utc):
-                return error_response(409, "EVENT_ENDED", "An ended event cannot be reopened.")
-            values["status"] = payload["status"]
-        try:
-            with engine.begin() as connection:
-                with connection.begin_nested():
-                    connection.execute(events_table.update().where(events_table.c.id == event_id).values(**values))
-                updated = connection.execute(select(events_table).where(events_table.c.id == event_id)).first()
-        except IntegrityError:
-            return error_response(409, "EVENT_SLOT_TAKEN", "An event is already scheduled for that beach and start time.")
-        return jsonify(event_dict(updated, request.current_user.id))
 
     @application.post("/events/<event_id>/join")
     @require_auth
@@ -2046,6 +2111,7 @@ def create_app(
     @application.get("/cleanup-targets")
     def list_cleanup_targets():
         beach_id = request.args.get("beachId")
+        report_id = request.args.get("reportId")
         if beach_id and not any(beach["id"] == beach_id for beach in beaches):
             return error_response(404, "NOT_FOUND", "Beach not found.")
         query = select(reports_table).where(
@@ -2054,6 +2120,8 @@ def create_app(
         ).order_by(reports_table.c.created_at.desc())
         if beach_id:
             query = query.where(reports_table.c.beach_id == beach_id)
+        if report_id:
+            query = query.where(reports_table.c.id == report_id)
         with engine.connect() as connection:
             reports = connection.execute(query).all()
             targets: list[dict[str, Any]] = []

@@ -37,6 +37,7 @@ function draft(changes: Partial<ReportDraft> = {}): ReportDraft {
     coords: null,
     quantities: { Plastic: 'Small' },
     itemCounts: null,
+    eventId: null,
     aiDecision: 'manual',
     aiModelVersion: null,
     gpsIssue: null,

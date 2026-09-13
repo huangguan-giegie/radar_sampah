@@ -180,8 +180,11 @@ export function checkInIteration2Event(eventId: string, coords: { lat: number; l
   return request(`/events/${encodeURIComponent(eventId)}/check-in`, 'POST', coords);
 }
 
-export function getIteration2Targets(beachId?: string): Promise<any[]> {
-  const query = beachId ? `?beachId=${encodeURIComponent(beachId)}` : '';
+export function getIteration2Targets(beachId?: string, reportId?: string): Promise<any[]> {
+  const params = new URLSearchParams();
+  if (beachId) params.set('beachId', beachId);
+  if (reportId) params.set('reportId', reportId);
+  const query = params.size ? `?${params.toString()}` : '';
   return request(`/cleanup-targets${query}`);
 }
 
@@ -202,6 +205,21 @@ export function getIteration2MyCleanups(): Promise<any[]> {
 
 export function getIteration2EventCleanups(eventId: string): Promise<any[]> {
   return request(`/events/${encodeURIComponent(eventId)}/cleanups`);
+}
+
+export function createIteration2ShareLink(input: { eventId?: string; reportId?: string }): Promise<{ token: string; path: string }> {
+  const query = new URLSearchParams();
+  if (input.eventId) query.set('eventId', input.eventId);
+  if (input.reportId) query.set('reportId', input.reportId);
+  return request(`/share-links?${query.toString()}`);
+}
+
+export function getIteration2SharedItems(token: string): Promise<{ event: any | null; report: any | null }> {
+  return request(`/share-links/${encodeURIComponent(token)}`);
+}
+
+export function iteration2SharedPhotoUrl(token: string): string {
+  return BASE_URL + `/share-links/${encodeURIComponent(token)}/photo`;
 }
 
 export function createIteration2Event(input: { beachId: string; date: string }): Promise<any> {

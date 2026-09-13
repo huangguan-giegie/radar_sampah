@@ -1125,6 +1125,56 @@ def test_iteration2_report_supports_repeated_partial_cleanup_and_private_locatio
     assert len(client.get("/cleanups/mine", headers=headers).get_json()) == 2
 
 
+def test_share_links_are_stable_and_scoped_to_one_event_and_report(api):
+    _application, client = api
+    _session, headers = signup(client)
+    event = next(item for item in client.get("/events?beachId=morib").get_json() if item["beachId"] == "morib")
+    first_photo = upload(client, headers)
+    first_payload = report_payload(first_photo["photoKey"], quantities={"Plastic": "Small"})
+    first_payload["itemCounts"] = {"Plastic": 3}
+    first_report = client.post("/reports", headers=headers, json=first_payload)
+    assert first_report.status_code == 201
+    first_id = first_report.get_json()["id"]
+    assert client.get(f"/share-links?reportId={first_id}").status_code == 404
+    _other_session, other_headers = signup(client)
+    assert client.get(f"/share-links?reportId={first_id}", headers=other_headers).status_code == 404
+
+    second_photo = upload(client, headers)
+    second_payload = report_payload(second_photo["photoKey"], beach_id="remis", quantities={"Glass": "Small"})
+    second_payload["itemCounts"] = {"Glass": 2}
+    second_report = client.post("/reports", headers=headers, json=second_payload)
+    assert second_report.status_code == 201
+    second_id = second_report.get_json()["id"]
+
+    query = f"/share-links?eventId={event['id']}&reportId={first_id}"
+    first_link = client.get(query, headers=headers)
+    retry_link = client.get(query, headers=headers)
+    assert first_link.status_code == retry_link.status_code == 200
+    share = first_link.get_json()
+    assert share["token"] == retry_link.get_json()["token"]
+    assert share["path"] == f"/share/{share['token']}"
+
+    shared = client.get(f"/share-links/{share['token']}")
+    assert shared.status_code == 200
+    body = shared.get_json()
+    assert body["event"]["id"] == event["id"]
+    assert body["report"]["id"] == first_id
+    assert body["report"]["remainingItemCounts"] == {"Plastic": 3}
+    assert body["report"]["photoAvailable"] is True
+    assert second_id not in shared.get_data(as_text=True)
+
+    photo_response = client.get(f"/share-links/{share['token']}/photo")
+    assert photo_response.status_code == 200
+    assert photo_response.mimetype == "image/jpeg"
+    assert photo_response.headers["Cache-Control"] == "private, no-store"
+
+    token = share["token"]
+    forged = token[:-1] + ("A" if token[-1] != "A" else "B")
+    assert client.get(f"/share-links/{forged}").status_code == 404
+    mismatch = client.get(f"/share-links?eventId={event['id']}&reportId={second_id}", headers=headers)
+    assert mismatch.status_code == 400
+
+
 def test_iteration2_gps_rejects_a_report_near_an_active_target(api):
     _application, client = api
     _first, first_headers = signup(client)
@@ -1214,6 +1264,34 @@ def test_events_require_join_location_and_evidence_for_attendance(api):
     assert session["user"]["participantId"] not in left.get_json()["checkIns"]
 
 
+def test_unlinked_counted_report_does_not_confirm_event_attendance(api):
+    application, client = api
+    _session, headers = signup(client)
+    event = next(item for item in client.get("/events?beachId=morib").get_json() if item["beachId"] == "morib")
+    now = datetime.now(timezone.utc)
+    with application.extensions["marine_engine"].begin() as connection:
+        connection.execute(events_table.update().where(events_table.c.id == event["id"]).values(
+            starts_at=now - timedelta(minutes=1),
+            ends_at=now + timedelta(hours=2),
+            status="Open",
+        ))
+
+    assert client.post(f"/events/{event['id']}/join", headers=headers).status_code == 200
+    checked_in = client.post(
+        f"/events/{event['id']}/check-in",
+        headers=headers,
+        json={"lat": 2.746, "lng": 101.440},
+    )
+    assert checked_in.status_code == 200
+    photo = upload(client, headers)
+    report = client.post("/reports", headers=headers, json=report_payload(photo["photoKey"]))
+    assert report.status_code == 201
+    assert report.get_json()["status"] == "Counted"
+    event_view = client.get(f"/events/{event['id']}", headers=headers).get_json()
+    assert event_view["attendanceConfirmed"] is False
+    assert event_view["attendanceBy"] == []
+
+
 def test_only_moderator_can_manage_events(api):
     application, client = api
     _session, headers = signup(client)
@@ -1254,9 +1332,3 @@ def test_moderator_can_create_frontend_date_shaped_event(api):
 
     later = client.post("/events", headers=headers, json={"beachId": "morib", "date": "2031-10-22"})
     assert later.status_code == 201
-    collision = client.patch(f"/events/{later.get_json()['id']}", headers=headers, json={
-        "startsAt": "2031-10-15T09:00:00+08:00",
-        "endsAt": "2031-10-15T12:00:00+08:00",
-    })
-    assert collision.status_code == 409
-    assert collision.get_json()["code"] == "EVENT_SLOT_TAKEN"

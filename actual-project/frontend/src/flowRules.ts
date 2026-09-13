@@ -305,6 +305,7 @@ export function buildReportSubmission(draft: ReportDraft): ReportSubmission {
       photoKey: draft.photo.photoKey,
       locationSource: usesGps ? 'gps' : 'manual',
       ...(draft.itemCounts ? { itemCounts: draft.itemCounts } : {}),
+      ...(draft.eventId ? { eventId: draft.eventId } : {}),
       ...(usesGps ? { coords: draft.coords! } : {}),
     },
   };

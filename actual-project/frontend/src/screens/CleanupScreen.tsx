@@ -22,6 +22,7 @@ export default function CleanupScreen() {
   const { beachId = '' } = useParams();
   const [params] = useSearchParams();
   const eventId = params.get('event');
+  const targetReportId = params.get('target') ?? undefined;
   const nav = useNavigate();
   const { user, showToast } = useApp();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -41,7 +42,7 @@ export default function CleanupScreen() {
   useEffect(() => {
     let active = true;
     setLoading(true);
-    Promise.all([getCleanupTarget(beachId), eventId ? getCleanupEvent(eventId) : Promise.resolve(null)])
+    Promise.all([getCleanupTarget(beachId, targetReportId), eventId ? getCleanupEvent(eventId) : Promise.resolve(null)])
       .then(([targetResult, eventResult]) => {
         if (!active) return;
         setTarget(targetResult);
@@ -50,7 +51,7 @@ export default function CleanupScreen() {
       .catch((reason) => { if (active) setError(reason instanceof Error ? reason.message : 'Could not load cleanup details.'); })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
-  }, [beachId, eventId]);
+  }, [beachId, eventId, targetReportId]);
   const categories = useMemo(
     () => target ? (Object.keys(target.remaining) as LitterCategory[]).filter((category) => (target.remaining[category] ?? 0) > 0) : [],
     [target],

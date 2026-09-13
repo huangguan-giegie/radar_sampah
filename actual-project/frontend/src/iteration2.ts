@@ -6,6 +6,8 @@ import {
   getIteration2Event,
   getIteration2EventCleanups,
   getIteration2Events,
+  createIteration2ShareLink,
+  getIteration2SharedItems,
   getIteration2MyCleanups,
   getIteration2Targets,
   joinIteration2Event,
@@ -252,18 +254,19 @@ export async function recordCheckIn(
   });
 }
 
-export async function getCleanupTarget(beachId: string): Promise<CleanupTarget | null> {
-  return (await listCleanupTargets(beachId))[0] ?? null;
+export async function getCleanupTarget(beachId: string, reportId?: string): Promise<CleanupTarget | null> {
+  return (await listCleanupTargets(beachId, reportId))[0] ?? null;
 }
 
-export async function getCleanupTargetRecord(beachId: string): Promise<CleanupTarget | null> {
-  return getCleanupTarget(beachId);
+export async function getCleanupTargetRecord(beachId: string, reportId?: string): Promise<CleanupTarget | null> {
+  return getCleanupTarget(beachId, reportId);
 }
 
-export async function listCleanupTargets(beachId?: string): Promise<CleanupTarget[]> {
-  if (!USE_MOCK) return getIteration2Targets(beachId);
+export async function listCleanupTargets(beachId?: string, reportId?: string): Promise<CleanupTarget[]> {
+  if (!USE_MOCK) return getIteration2Targets(beachId, reportId);
   return readStore().targets
     .filter((target) => !beachId || target.beachId === beachId)
+    .filter((target) => !reportId || target.reportId === reportId)
     .filter((target) => cleanupTotal(target) > 0);
 }
 
@@ -321,7 +324,7 @@ export async function completeCleanup(input: {
     .filter((row): row is CleanupRow => row !== null);
   if (rows.length === 0) throw new Error('Enter at least one item you removed.');
   const action: CleanupAction = {
-    id: `cleanup-${Date.now()}`,
+    id: `cleanup-${Date.now()}-${crypto.randomUUID()}`,
     participantId: input.participantId,
     targetReportId: input.targetReportId,
     eventId: input.eventId ?? null,
@@ -348,6 +351,37 @@ export async function eventCleanups(eventId: string): Promise<CleanupAction[]> {
   return USE_MOCK
     ? readStore().cleanups.filter((cleanup) => cleanup.eventId === eventId)
     : getIteration2EventCleanups(eventId);
+}
+
+export async function createSharePath(input: { eventId?: string; reportId?: string }): Promise<string> {
+  if (!USE_MOCK) return (await createIteration2ShareLink(input)).path;
+  if (input.eventId) return `/share/events/${encodeURIComponent(input.eventId)}`;
+  return `/share/reports/${encodeURIComponent(input.reportId ?? '')}`;
+}
+
+export async function getSharedItems(token: string): Promise<{ event: CleanupEvent | null; report: any | null }> {
+  if (!USE_MOCK) return getIteration2SharedItems(token);
+  const store = readStore();
+  const event = store.events.find((row) => row.id === token);
+  if (event) return { event, report: null };
+  const target = store.targets.find((row) => row.reportId === token && cleanupTotal(row) > 0);
+  if (!target) return { event: null, report: null };
+  const remaining = { ...target.remaining };
+  return {
+    event: null,
+    report: {
+      id: target.reportId,
+      beachId: target.beachId,
+      beachName: target.beachName,
+      reportedAt: target.reportedAt,
+      status: 'Counted',
+      quantities: {},
+      itemCounts: remaining,
+      remainingItemCounts: remaining,
+      remainingTotal: cleanupTotal(target),
+      photoAvailable: false,
+    },
+  };
 }
 
 export async function createAdminEvent(input: { beachId: string; date: string }): Promise<CleanupEvent> {

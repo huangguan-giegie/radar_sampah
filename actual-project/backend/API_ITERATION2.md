@@ -4,7 +4,7 @@
 
 ## Iteration 2 决议
 
-- `moderator` 是活动管理员，可以创建、修改和关闭社区活动；举报审核仍不在本迭代范围内。普通匿名参与者是 `volunteer`。
+- `moderator` 是活动管理员，可以为已有海滩创建额外日期的社区活动；本迭代不实现取消、改期或完整管理后台。举报审核仍不在本迭代范围内。普通匿名参与者是 `volunteer`。
 - 清理目标只从 `Counted` 报告产生。`Duplicate`、`Incomplete` 报告不产生目标。
 - 模型输出和人工确认的实际件数用 `itemCounts` 保存；`qty_*` 数据库列及 API 的 `quantities` 保持主线约定的档位文本，用于与 Iteration 1 前端兼容。两者不能互相替代。
 - 模型类别映射：`plastic → Plastic`、`metal → Metal`、`glass → Glass`、`paper_cardboard → Paper`、`styrofoam → Other`、`fishing_gear → Fishing gear`。
@@ -13,6 +13,7 @@
 - 清理记录的 `score` 是移除件数总和，不是积分；不发放积分。
 - 自动活动为每片海滩未来四个周六的 09:00–12:00（马来西亚时间），读取 `/events` 时幂等补齐。管理员也可创建其他日期的活动。
 - 出席由三项共同确认：加入该活动、签到位置通过、活动时段内在该海滩有 `Counted` 报告或带该活动 ID 的清理记录。位置通过阈值为海滩中心 25 km，和迭代二界面原型一致。
+- 本项目决定继续兼容最新 `main` 的 Participant ID-only 恢复流程。注意：Google Doc 的 AC9.1.1 写明 Participant ID 不能单独作为凭证；该条与已确认的 main 接口选择冲突，后续应在项目需求文档中同步决议。
 - GPS 坐标只用于请求时的海滩签到与 10 米重复目标检查。迭代二报告不保存原始坐标；只保存带服务端密钥的目标专属 1 米网格 HMAC。它不是加密坐标，不能还原坐标。签到只保存“通过/时间”，不保存坐标。
 - 清理后的照片仅在服务器内存中做识别，不写入照片目录或数据库。初始报告照片保留原来的私有审计存储规则。
 
@@ -107,9 +108,9 @@
 
 报告件数和照片是原始审计记录。发生清理后 `itemCounts` 保持原值，`remainingItemCounts` 由后端根据不可变清理流水实时计算。
 
-### `GET /cleanup-targets?beachId=morib`
+### `GET /cleanup-targets?beachId=morib&reportId=r_…`
 
-公开返回仍有剩余件数的 `Counted` 报告；`reportedAt`、`remaining` 的命名与前端 `CleanupTarget` 一致：
+公开返回仍有剩余件数的 `Counted` 报告。可选 `reportId` 将结果限制到单个报告，供分享链接打开指定目标；`reportedAt`、`remaining` 的命名与前端 `CleanupTarget` 一致：
 
 ```json
 [{"reportId":"r_…","beachId":"morib","beachName":"Pantai Morib","reportedAt":"…+08:00","itemCounts":{"Plastic":8},"remaining":{"Plastic":5},"remainingTotal":5}]
@@ -170,10 +171,6 @@
 
 创建活动。前端日期表单请求 `{ "beachId": "morib", "date": "2026-09-19" }`，默认 09:00–12:00（马来西亚时间）；也支持管理端传带时区的 `startsAt`、`endsAt` 时间戳。活动时长不能超过 12 小时；相同海滩和开始时间的重复创建返回已有活动。
 
-### `PATCH /events/{id}`（moderator）
-
-修改 `startsAt`、`endsAt` 和/或 `status` (`Open`/`Closed`)。不能重新开放已结束的活动；若时间与同一海滩的另一场活动冲突，返回 `409 EVENT_SLOT_TAKEN`。
-
 ### `POST /events/{id}/join`（登录）
 
 加入未关闭活动。重复调用幂等。
@@ -181,6 +178,24 @@
 ### `DELETE /events/{id}/join`（登录）
 
 退出活动。重复调用幂等；成功后该参与者的签到状态从活动对象中移除。
+
+### `POST /events/{id}/check-in`（登录）
+
+请求 `{ "lat": 2.746, "lng": 101.443 }`。仅在活动时间段内接受签到；服务器检查距海滩中心 25 km 内后，只保存通过状态和时间，不保存坐标。未加入活动返回 `409 JOIN_REQUIRED`。
+
+## 分享
+
+### `GET /share-links?eventId=…&reportId=…`
+
+为活动、已计数且含实际件数的报告，或二者的组合生成签名分享 token。至少提供一个 ID；同时提供时必须是同一海滩。报告链接只能由报告所有者创建；活动链接可公开创建。成功响应 `{ "token": "…", "path": "/share/…" }`。相同范围生成稳定链接。前端通过 `/share/{token}` 展示链接范围内的内容，登录、加入、签到后会回到同一链接；报告分享只展示被选中的报告目标，不会把海滩上的其他目标加入页面。
+
+### `GET /share-links/{token}`
+
+公开读取 token 授权的活动和/或单个报告。报告包括原始件数、剩余件数及照片可用状态；目标清零后仍可查看报告和清理结果，但不能再创建清理记录。无效、越权或不存在的范围统一返回 `404 NOT_FOUND`。
+
+### `GET /share-links/{token}/photo`
+
+仅当 token 包含可分享报告时返回该报告原始照片；活动 token 或无效 token 返回 `404`。响应禁用缓存。分享不会公开精确坐标或报告人的账号资料。
 
 ### `POST /events/{id}/check-in`（登录）
 

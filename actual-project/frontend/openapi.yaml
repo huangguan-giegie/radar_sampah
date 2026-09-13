@@ -380,6 +380,7 @@ paths:
       summary: List counted reports with remaining confirmed item counts
       parameters:
         - { name: beachId, in: query, required: false, schema: { type: string } }
+        - { name: reportId, in: query, required: false, schema: { type: string }, description: Limit results to one selected cleanup target }
       responses:
         "200":
           description: remaining cleanup targets
@@ -473,6 +474,51 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/CleanupEvent" }
+        "404": { $ref: "#/components/responses/Error" }
+
+  /share-links:
+    get:
+      tags: [Iteration2]
+      security: []
+      summary: Create a stable, scope-limited public share link
+      description: Event links can be created publicly. A report link requires the authenticated report owner.
+      parameters:
+        - { name: eventId, in: query, required: false, schema: { type: string } }
+        - { name: reportId, in: query, required: false, schema: { type: string } }
+      responses:
+        "200":
+          description: Signed share token and frontend path
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [token, path]
+                properties:
+                  token: { type: string }
+                  path: { type: string }
+        "400": { $ref: "#/components/responses/Error" }
+        "404": { $ref: "#/components/responses/Error" }
+
+  /share-links/{token}:
+    get:
+      tags: [Iteration2]
+      security: []
+      summary: Read only the event and report authorized by a share token
+      parameters:
+        - { name: token, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { description: Scoped shared event and optional report }
+        "404": { $ref: "#/components/responses/Error" }
+
+  /share-links/{token}/photo:
+    get:
+      tags: [Iteration2]
+      security: []
+      summary: Read the original photo for the report in a share token
+      parameters:
+        - { name: token, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { description: Scoped report photo }
         "404": { $ref: "#/components/responses/Error" }
 
   /events/{eventId}/cleanups:

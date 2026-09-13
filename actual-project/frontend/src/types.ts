@@ -265,6 +265,10 @@ export interface LitterReport {
    *  the report we refill the form from this; without it, any category they
    *  did not touch would be wiped. */
   quantities: QuantityByCategory;
+  /** Exact confirmed counts, present on Iteration 2 reports that can be shared or cleaned. */
+  itemCounts?: Partial<Record<LitterCategory, number>>;
+  remainingItemCounts?: Partial<Record<LitterCategory, number>>;
+  eventId?: string | null;
   /** Derived: the heaviest category in quantities. */
   category: LitterCategory;
   /** Derived: the band recorded for that heaviest category. */
@@ -313,6 +317,8 @@ export interface CreateReportInput {
   quantities: QuantityByCategory;
   /** Exact model-confirmed counts for Iteration 2 cleanup targets. */
   itemCounts?: Partial<Record<LitterCategory, number>>;
+  /** Event linkage is preserved when reporting from an event check-in flow. */
+  eventId?: string;
   /** The storage key returned by the upload endpoint. */
   photoKey: string;
   /** 'gps' = worked out from the device location, 'manual' = the user picked. */

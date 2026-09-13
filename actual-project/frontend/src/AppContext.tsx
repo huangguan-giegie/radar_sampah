@@ -53,6 +53,7 @@ export type ReportDraft = {
   coords: { lat: number; lng: number } | null;
   quantities: QuantityByCategory;
   itemCounts: Partial<Record<LitterCategory, number>> | null;
+  eventId: string | null;
 
   /**
    * Iteration 2 keeps AI output separate from the participant's final report.
@@ -101,6 +102,7 @@ function emptyDraft(): ReportDraft {
     coords: null,
     quantities: {},
     itemCounts: null,
+    eventId: null,
     aiDecision: null,
     aiModelVersion: null,
     gpsIssue: null,

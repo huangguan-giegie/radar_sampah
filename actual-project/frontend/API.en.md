@@ -106,9 +106,9 @@ turning the participant into Guest.
 - `participantId` — 4 digits, **randomly assigned, never sequential**. A sequence would leak how
   many participants exist and who joined first.
 - `role` — `"volunteer" | "moderator"`. In Iteration 2, `moderator` is the
-  activity administrator role for creating, editing and closing community
-  events. Report review remains out of scope. The backend provisions this role;
-  clients cannot promote themselves.
+  activity administrator role and may create additional event dates for a
+  monitored beach. Editing or cancelling events and report review remain out
+  of scope. The backend provisions this role; clients cannot promote themselves.
 - Token — JWT, 30-day expiry, no refresh flow.
 
 ---
