@@ -10,7 +10,12 @@ from __future__ import annotations
 
 import importlib.util
 from pathlib import Path
+import sys
 
+
+_backend_dir = Path(__file__).resolve().parents[1]
+if str(_backend_dir) not in sys.path:
+    sys.path.insert(0, str(_backend_dir))
 
 _core_path = Path(__file__).with_name("api_tests_core.py")
 _spec = importlib.util.spec_from_file_location("radar_sampah_api_tests_core", _core_path)
