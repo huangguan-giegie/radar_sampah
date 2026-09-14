@@ -16,4 +16,5 @@ actual-project/ml-model/.venv/
 actual-project/ml-model/models/epoch*.pt
 actual-project/ml-model/models/last.pt
 actual-project/ml-model/models/*.onnx
+!actual-project/ml-model/models/sea_taco_yolo11m_best.onnx
 actual-project/ml-model/models/*.engine
