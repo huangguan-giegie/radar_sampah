@@ -1456,35 +1456,38 @@ def create_app(
     def ensure_scheduled_events(now: datetime | None = None) -> None:
         current = now or datetime.now(timezone.utc)
         starts = upcoming_saturdays(current)
+        scheduled = [
+            (beach, starts_at, f"{beach['id']}-{starts_at.astimezone(KUALA_LUMPUR).date().isoformat()}")
+            for beach in beaches
+            for starts_at in starts
+        ]
         with engine.begin() as connection:
-            for beach in beaches:
-                for starts_at in starts:
-                    local_date = starts_at.astimezone(KUALA_LUMPUR).date().isoformat()
-                    event_id = f"{beach['id']}-{local_date}"
-                    existing = connection.execute(select(events_table.c.id).where(events_table.c.id == event_id)).first()
-                    if existing is not None:
-                        continue
-                    ends_at = starts_at + timedelta(hours=EVENT_END_LOCAL_HOUR - EVENT_START_LOCAL_HOUR)
-                    try:
-                        with connection.begin_nested():
-                            connection.execute(insert(events_table).values(
-                                id=event_id,
-                                beach_id=beach["id"],
-                                starts_at=starts_at,
-                                ends_at=ends_at,
-                                status="Open",
-                                source="scheduled",
-                                created_by=None,
-                                created_at=current,
-                                updated_at=current,
-                            ))
-                    except IntegrityError:
-                        # Another worker may have inserted this deterministic slot first.
-                        continue
-            stale = connection.execute(select(events_table).where(events_table.c.status == "Open")).all()
-            for event in stale:
-                if utc_datetime(event.ends_at) < current:
-                    connection.execute(events_table.update().where(events_table.c.id == event.id).values(status="Closed", updated_at=current))
+            existing_ids = set(connection.execute(
+                select(events_table.c.id).where(events_table.c.id.in_(event_id for _, _, event_id in scheduled))
+            ).scalars())
+            for beach, starts_at, event_id in scheduled:
+                if event_id in existing_ids:
+                    continue
+                try:
+                    with connection.begin_nested():
+                        connection.execute(insert(events_table).values(
+                            id=event_id,
+                            beach_id=beach["id"],
+                            starts_at=starts_at,
+                            ends_at=starts_at + timedelta(hours=EVENT_END_LOCAL_HOUR - EVENT_START_LOCAL_HOUR),
+                            status="Open",
+                            source="scheduled",
+                            created_by=None,
+                            created_at=current,
+                            updated_at=current,
+                        ))
+                except IntegrityError:
+                    # Another worker may have inserted this deterministic slot first.
+                    continue
+            connection.execute(events_table.update().where(
+                events_table.c.status == "Open",
+                events_table.c.ends_at < current,
+            ).values(status="Closed", updated_at=current))
 
     def event_has_evidence(connection: Any, event: Any, participant_id: str) -> bool:
         start, end = utc_datetime(event.starts_at), utc_datetime(event.ends_at)
@@ -1510,64 +1513,95 @@ def create_app(
         ).first()
         return cleanup is not None
 
-    def event_dict(event: Any, viewer_id: str | None = None) -> dict[str, Any]:
+    def event_dicts(event_rows: list[Any], viewer_id: str | None = None) -> list[dict[str, Any]]:
+        if not event_rows:
+            return []
+        event_ids = [event.id for event in event_rows]
         with engine.connect() as connection:
             members = connection.execute(
                 select(event_members_table)
-                .where(event_members_table.c.event_id == event.id)
+                .where(event_members_table.c.event_id.in_(event_ids))
                 .order_by(event_members_table.c.joined_at)
             ).all()
-            user_ids = [member.participant_id for member in members]
+            user_ids = {member.participant_id for member in members}
             user_rows = connection.execute(select(users_table.c.id, users_table.c.participant_id).where(users_table.c.id.in_(user_ids))).all() if user_ids else []
             participant_numbers = {row.id: row.participant_id for row in user_rows}
-            joined_by = [participant_numbers[member.participant_id] for member in members if member.participant_id in participant_numbers]
+            reports = connection.execute(select(
+                reports_table.c.event_id,
+                reports_table.c.reporter_id,
+                reports_table.c.created_at,
+            ).where(
+                reports_table.c.event_id.in_(event_ids),
+                reports_table.c.status == "Counted",
+            )).all()
+            cleanups = connection.execute(select(
+                cleanup_actions_table.c.id,
+                cleanup_actions_table.c.event_id,
+                cleanup_actions_table.c.participant_id,
+                cleanup_actions_table.c.created_at,
+            ).where(cleanup_actions_table.c.event_id.in_(event_ids)).order_by(cleanup_actions_table.c.created_at)).all()
+
+        members_by_event: defaultdict[str, list[Any]] = defaultdict(list)
+        cleanups_by_event: defaultdict[str, list[str]] = defaultdict(list)
+        evidence_by_event: defaultdict[str, set[str]] = defaultdict(set)
+        events_by_id = {event.id: event for event in event_rows}
+        for member in members:
+            members_by_event[member.event_id].append(member)
+        for report in reports:
+            event = events_by_id[report.event_id]
+            if utc_datetime(event.starts_at) <= utc_datetime(report.created_at) <= utc_datetime(event.ends_at):
+                evidence_by_event[event.id].add(report.reporter_id)
+        for cleanup in cleanups:
+            cleanups_by_event[cleanup.event_id].append(cleanup.id)
+            event = events_by_id[cleanup.event_id]
+            if utc_datetime(event.starts_at) <= utc_datetime(cleanup.created_at) <= utc_datetime(event.ends_at):
+                evidence_by_event[event.id].add(cleanup.participant_id)
+
+        payloads = []
+        for event in event_rows:
+            event_members = members_by_event[event.id]
+            evidence = evidence_by_event[event.id]
+            joined_by = [participant_numbers[member.participant_id] for member in event_members if member.participant_id in participant_numbers]
             check_ins = {
                 participant_numbers[member.participant_id]: "within_area" if member.location_passed else "idle"
-                for member in members
+                for member in event_members
                 if member.participant_id in participant_numbers
             }
-            checked_in_numbers = [participant_id for participant_id, state in check_ins.items() if state == "within_area"]
             attendance_by = [
                 participant_numbers[member.participant_id]
-                for member in members
-                if member.location_passed
-                and member.participant_id in participant_numbers
-                and event_has_evidence(connection, event, member.participant_id)
+                for member in event_members
+                if member.location_passed and member.participant_id in participant_numbers and member.participant_id in evidence
             ]
-            viewer_member = next((member for member in members if member.participant_id == viewer_id), None)
-            cleanup_ids = connection.execute(select(cleanup_actions_table.c.id).where(
-                cleanup_actions_table.c.event_id == event.id
-            ).order_by(cleanup_actions_table.c.created_at)).scalars().all()
-            viewer_attended = bool(
-                viewer_member
-                and viewer_member.location_passed
-                and event_has_evidence(connection, event, viewer_id)
-            ) if viewer_id else False
-        beach_name = beach_names.get(event.beach_id, event.beach_id)
-        beach = next((item for item in beaches if item["id"] == event.beach_id), None)
-        local_start = utc_datetime(event.starts_at).astimezone(KUALA_LUMPUR)
-        local_end = utc_datetime(event.ends_at).astimezone(KUALA_LUMPUR)
-        return {
-            "id": event.id,
-            "beachId": event.beach_id,
-            "beachName": beach_name,
-            "area": beach["area"] if beach else beach_name,
-            "date": local_start.date().isoformat(),
-            "startsAt": local_start.strftime("%H:%M"),
-            "endsAt": local_end.strftime("%H:%M"),
-            "status": event.status,
-            "source": "weekly" if event.source == "scheduled" else "admin",
-            "participantCount": len(joined_by),
-            "joinedBy": joined_by,
-            "checkIns": check_ins,
-            "attendanceBy": attendance_by,
-            "cleanupIds": cleanup_ids,
-            "checkedInCount": len(checked_in_numbers),
-            "attendanceCount": len(attendance_by),
-            "joined": bool(viewer_member),
-            "checkedIn": bool(viewer_member and viewer_member.location_passed),
-            "attendanceConfirmed": viewer_attended,
-        }
+            viewer_member = next((member for member in event_members if member.participant_id == viewer_id), None)
+            beach_name = beach_names.get(event.beach_id, event.beach_id)
+            beach = next((item for item in beaches if item["id"] == event.beach_id), None)
+            local_start = utc_datetime(event.starts_at).astimezone(KUALA_LUMPUR)
+            local_end = utc_datetime(event.ends_at).astimezone(KUALA_LUMPUR)
+            payloads.append({
+                "id": event.id,
+                "beachId": event.beach_id,
+                "beachName": beach_name,
+                "area": beach["area"] if beach else beach_name,
+                "date": local_start.date().isoformat(),
+                "startsAt": local_start.strftime("%H:%M"),
+                "endsAt": local_end.strftime("%H:%M"),
+                "status": event.status,
+                "source": "weekly" if event.source == "scheduled" else "admin",
+                "participantCount": len(joined_by),
+                "joinedBy": joined_by,
+                "checkIns": check_ins,
+                "attendanceBy": attendance_by,
+                "cleanupIds": cleanups_by_event[event.id],
+                "checkedInCount": sum(state == "within_area" for state in check_ins.values()),
+                "attendanceCount": len(attendance_by),
+                "joined": bool(viewer_member),
+                "checkedIn": bool(viewer_member and viewer_member.location_passed),
+                "attendanceConfirmed": bool(viewer_member and viewer_member.location_passed and viewer_id in evidence),
+            })
+        return payloads
+
+    def event_dict(event: Any, viewer_id: str | None = None) -> dict[str, Any]:
+        return event_dicts([event], viewer_id)[0]
 
     def cleanup_target_dict(report: Any, actions: list[Any]) -> dict[str, Any] | None:
         remaining = remaining_counts_for(report, actions)
@@ -1861,7 +1895,7 @@ def create_app(
         with engine.connect() as connection:
             rows = connection.execute(query).all()
         viewer = optional_current_user()
-        return jsonify([event_dict(row, viewer.id if viewer else None) for row in rows])
+        return jsonify(event_dicts(rows, viewer.id if viewer else None))
 
     @application.get("/events/<event_id>")
     def get_event(event_id: str):

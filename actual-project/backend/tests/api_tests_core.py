@@ -1264,6 +1264,24 @@ def test_events_require_join_location_and_evidence_for_attendance(api):
     assert session["user"]["participantId"] not in left.get_json()["checkIns"]
 
 
+def test_listing_seeded_events_does_not_query_each_slot(api):
+    application, client = api
+    assert client.get("/events").status_code == 200
+    statements = []
+    engine = application.extensions["marine_engine"]
+
+    def record_statement(_connection, _cursor, statement, _parameters, _context, _executemany):
+        statements.append(statement)
+
+    event.listen(engine, "before_cursor_execute", record_statement)
+    try:
+        assert client.get("/events").status_code == 200
+    finally:
+        event.remove(engine, "before_cursor_execute", record_statement)
+
+    assert len(statements) <= 6
+
+
 def test_unlinked_counted_report_does_not_confirm_event_attendance(api):
     application, client = api
     _session, headers = signup(client)

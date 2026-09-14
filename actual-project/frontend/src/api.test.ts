@@ -152,6 +152,16 @@ describe('真实 API contract', () => {
     expect(fetchMock.mock.calls[0][1].headers).toEqual({ Accept: 'application/json' });
   });
 
+  it('does not send auth headers for a public beach detail request', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response('{}', { status: 200 }));
+    vi.stubGlobal('fetch', fetchMock);
+    const { getBeach } = await import('./api');
+
+    await getBeach('morib');
+
+    expect(fetchMock.mock.calls[0][1].headers).toEqual({ Accept: 'application/json' });
+  });
+
   // Only a 401 means the token is dead. Then getMe throws it away and reports
   // nobody signed in, so a stale token cannot sit there failing every later
   // call. Any other failure leaves the token alone.

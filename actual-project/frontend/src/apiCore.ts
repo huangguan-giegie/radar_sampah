@@ -653,7 +653,7 @@ export async function getBeach(id: string): Promise<BeachDetail> {
     if (!beach) throw new Error('That beach could not be found.');
     return beach;
   }
-  return request('/beaches/' + id);
+  return request('/beaches/' + id, 'GET', undefined, 60_000, false);
 }
 
 // ============================================================
