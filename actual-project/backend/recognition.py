@@ -7,10 +7,10 @@ manual-confirmation state instead of preventing the backend from starting.
 
 from __future__ import annotations
 
+from io import BytesIO
 import os
 from pathlib import Path
 from typing import Any
-from io import BytesIO
 
 from PIL import Image
 
@@ -25,29 +25,57 @@ MODEL_CLASSES = {
 }
 FRONTEND_CATEGORIES = ("Fishing gear", "Plastic", "Glass", "Metal", "Other", "Paper")
 DEFAULT_MODEL_PATH = Path(__file__).resolve().parent.parent / "ml-model" / "models" / "sea_taco_yolo11m_best.pt"
+DEFAULT_INFERENCE_SIZE = 320
 
 
 class LitterRecognizer:
-    def __init__(self, model: Any | None, version: str, unavailable_reason: str | None = None):
+    def __init__(
+        self,
+        model: Any | None,
+        version: str,
+        unavailable_reason: str | None = None,
+        inference_size: int = DEFAULT_INFERENCE_SIZE,
+    ):
         self.model = model
         self.version = version
         self.unavailable_reason = unavailable_reason
+        self.inference_size = inference_size
 
     @classmethod
     def load(cls) -> "LitterRecognizer":
         model_path = Path(os.getenv("LITTER_MODEL_PATH", str(DEFAULT_MODEL_PATH))).expanduser()
         version = os.getenv("LITTER_MODEL_VERSION", "sea-taco-yolo11m-best/1")
         try:
+            inference_size = int(os.getenv("LITTER_INFERENCE_SIZE", str(DEFAULT_INFERENCE_SIZE)))
+            if inference_size <= 0:
+                raise ValueError("LITTER_INFERENCE_SIZE must be positive")
             if not model_path.is_file():
-                return cls(None, version, "weights_missing")
+                return cls(None, version, "weights_missing", inference_size=inference_size)
             with model_path.open("rb") as model_file:
                 if model_file.read(64).startswith(b"version https://git-lfs.github.com/spec/v1"):
-                    return cls(None, version, "git_lfs_weights_not_downloaded")
+                    return cls(None, version, "git_lfs_weights_not_downloaded", inference_size=inference_size)
             from ultralytics import YOLO
 
-            return cls(YOLO(str(model_path)), version)
+            recognizer = cls(YOLO(str(model_path)), version, inference_size=inference_size)
+            warmup_source = Image.new("RGB", (inference_size, inference_size), "black")
+            try:
+                recognizer._predict(warmup_source)
+            finally:
+                warmup_source.close()
+            return recognizer
         except Exception as error:  # startup must remain available for manual entry
             return cls(None, version, f"model_load_failed:{type(error).__name__}")
+
+    def _predict(self, source: Image.Image) -> Any:
+        return self.model.predict(
+            source=source,
+            conf=0.25,
+            iou=0.7,
+            imgsz=self.inference_size,
+            device="cpu",
+            batch=1,
+            verbose=False,
+        )
 
     def recognise(self, image_bytes: bytes) -> dict[str, Any]:
         if self.model is None:
@@ -61,7 +89,7 @@ class LitterRecognizer:
         try:
             with Image.open(BytesIO(image_bytes)) as image:
                 source = image.convert("RGB")
-                results = self.model.predict(source=source, conf=0.25, iou=0.7, verbose=False)
+                results = self._predict(source)
             counts = {category: 0 for category in FRONTEND_CATEGORIES}
             detections: list[dict[str, Any]] = []
             for result in results:
