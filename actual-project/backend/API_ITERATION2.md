@@ -77,11 +77,12 @@ The original scoring structure is retained in Iteration 2:
 
 1. convert each report's current category quantities to category scores using category weight × quantity weight;
 2. the report score is the maximum category score within that report;
-3. use eligible `Counted` reports from the latest 90 days;
-4. fewer than 3 eligible reports → insufficient data;
-5. otherwise the beach Attention Score is the **median of the eligible report scores**.
+3. use active `Counted` reports from the latest 90 days;
+4. fully cleared count-backed reports are excluded from the active set (but the original report and cleanup ledger remain in history);
+5. fewer than 3 active reports → insufficient data (`score`, `severity` and `band` are null);
+6. otherwise the beach Attention Score is the **median of the active report scores**.
 
-For a report with Iteration 2 `itemCounts`, cleanup actions first reduce that report's remaining counts. The remaining counts are converted back to quantity bands, that report is rescored, and only then is the beach median recomputed. A fully cleared report contributes a current score of `0` rather than causing unrelated legacy reports to disappear from the calculation.
+For a report with Iteration 2 `itemCounts`, cleanup actions first reduce that report's remaining counts. The remaining counts are converted back to quantity bands, that report is rescored, and only then is the beach median recomputed. A fully cleared report contributes no score to the current median and does not count toward the active minimum; the original report and cleanup ledger remain available for history and audit.
 
 Cleanup does not add points to Attention Score.
 
@@ -89,7 +90,7 @@ Cleanup does not add points to Attention Score.
 
 - `remainingCountAggregation: per-report-after-cleanup`
 - `reportAggregation: max-category-score`
-- `beachAggregation: median`
+- `beachAggregation: median-of-active-reports`
 
 ## 5. Cleanup targets and actions
 

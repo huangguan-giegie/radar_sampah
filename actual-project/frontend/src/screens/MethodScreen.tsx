@@ -147,7 +147,7 @@ export default function MethodScreen() {
                  single extreme day cannot drag a beach up. */
               { of: 'ONE CATEGORY', is: 'category weight × quantity level' },
               { of: 'ONE REPORT', is: 'highest category score (Max)' },
-              { of: 'ONE BEACH', is: `median of eligible report scores, last ${m.windowDays} days` },
+              { of: 'ONE BEACH', is: `median of active report scores after cleanup, last ${m.windowDays} days` },
             ].map((f) => (
               <div key={f.of} style={{ background: C.tint, borderRadius: 14, padding: '11px 14px' }}>
                 <div style={{ fontFamily: MONO, fontSize: 8.5, letterSpacing: '.14em', color: C.dim }}>{f.of}</div>

@@ -209,8 +209,32 @@ def test_cleanup_recomputes_each_report_then_keeps_beach_median(api):
     assert cleanup.status_code == 201
 
     after = next(item for item in client.get("/beaches").get_json() if item["id"] == "morib")
-    assert after["attentionScore"] == 0.85
-    assert after["severity"] == "Low"
+    assert after["attentionScore"] is None
+    assert after["severity"] is None
+    assert after["band"] is None
+    assert after["eligibleReportCount"] == 2
+    assert after["validReports"] == 2
+
+
+def test_beach_attention_uses_median_for_five_active_reports(api):
+    _application, client = api
+    for quantities in (
+        {"Fishing gear": "Small"},
+        {"Fishing gear": "Small"},
+        {"Fishing gear": "Medium"},
+        {"Fishing gear": "Very Large"},
+        {"Fishing gear": "Very Large"},
+    ):
+        _session, headers = signup(client)
+        photo = upload(client, headers)
+        assert client.post(
+            "/reports", headers=headers,
+            json=report_payload(photo["photoKey"], quantities=quantities),
+        ).status_code == 201
+
+    morib = next(item for item in client.get("/beaches").get_json() if item["id"] == "morib")
+    assert morib["eligibleReportCount"] == 5
+    assert morib["attentionScore"] == 2.0
 
 
 def _submit_gps_item_count_report(client, headers, *, lat, lng, item_counts):

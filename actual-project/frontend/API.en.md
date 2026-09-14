@@ -816,7 +816,9 @@ Body is any subset of the POST body (`beachId` / `quantities` / `photoKey`).
 ```
 For one beach:
 
-eligible = that beach's reports where status = 'Counted'
+eligible = that beach's `Counted` reports from the latest 90 days that still have
+           remaining litter after cleanup; fully cleared reports are excluded from
+           the current score/count but retained for historical audit
            and created_at falls within the last 90 days
 
 if count(eligible) < 3:
@@ -824,7 +826,7 @@ if count(eligible) < 3:
 else:
     category_score[category] = category_weight[category] × quantity_weight[quantity]
     record_score  = max(category_score for every category in the report)
-    beach_score   = median(record_score across eligible)
+    beach_score   = median(record_score across active eligible reports)
     severity      = < 1.5 → Low | < 2.5 → Moderate | < 3.5 → High | else Severe
     band          = Low=1, Moderate=2, High=3, Severe=4
 

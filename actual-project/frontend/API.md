@@ -767,7 +767,8 @@ ALTER TABLE reports
 ```
 对某个海滩：
 
-eligible = 该海滩所有 status = 'Counted' 且 created_at 在最近 90 天内的记录
+eligible = 该海滩所有 status = 'Counted' 且 created_at 在最近 90 天内、清理后仍有 remaining litter 的 active 记录
+           （完全清理的 Counted 报告不参与当前评分，但原始报告和清理流水仍保留用于历史审计）
 
 if count(eligible) < 3:
     severity = null;  band = null;  insufficientData = true
@@ -776,7 +777,7 @@ else:
                     ← 一条记录有多个类别时取哪一个：见下面的「待定」
      category_score[category] = category_weight[category] × quantity_weight[quantity]
      record_score  = max(category_score for every category in the report)
-     beach_score   = median(record_score for eligible)
+     beach_score   = median(record_score for eligible active reports)
     severity      = < 1.5 → Low | < 2.5 → Moderate | < 3.5 → High | else Severe
     band          = Low=1, Moderate=2, High=3, Severe=4
 

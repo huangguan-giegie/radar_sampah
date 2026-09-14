@@ -1004,12 +1004,9 @@ def severity_for(rows: list[Any]) -> tuple[str | None, int | None]:
     return "Severe", 4
 
 
-def remaining_count_attention(engine: Engine, rows: list[Any]) -> float | None:
-    if len(rows) < 3:
-        return None
-    counted_rows = [row for row in rows if getattr(row, "item_counts", None)]
-    if not counted_rows:
-        return attention_score_for(rows)
+def active_attention_rows(engine: Engine, rows: list[Any]) -> list[tuple[Any, dict[str, str]]]:
+    """Return recent Counted reports that still have litter to attend to."""
+    counted_rows = [row for row in rows if getattr(row, "item_counts", None) is not None]
     report_ids = [row.id for row in counted_rows]
     with engine.connect() as connection:
         actions = connection.execute(
@@ -1018,13 +1015,25 @@ def remaining_count_attention(engine: Engine, rows: list[Any]) -> float | None:
     actions_by_report: defaultdict[str, list[Any]] = defaultdict(list)
     for action in actions:
         actions_by_report[action.target_report_id].append(action)
-    aggregate = {category: 0 for category in CATEGORY_WEIGHTS}
-    for row in counted_rows:
-        for category, count in remaining_counts_for(row, actions_by_report[row.id]).items():
-            aggregate[category] += count
-    scores = [CATEGORY_WEIGHTS[category] * QUANTITY_WEIGHTS[band_for_item_count(count)] for category, count in aggregate.items() if count > 0]
-    # A zero means the whole recent count-backed backlog has been cleared.
-    return max(scores, default=0.0)
+    active: list[tuple[Any, dict[str, str]]] = []
+    for row in rows:
+        if getattr(row, "item_counts", None) is not None:
+            remaining = remaining_counts_for(row, actions_by_report[row.id])
+            if not remaining:
+                continue
+            quantities = quantity_bands_for_counts(remaining)
+        else:
+            quantities = quantities_from_row(row)
+        if quantities:
+            active.append((row, quantities))
+    return active
+
+
+def remaining_count_attention(engine: Engine, rows: list[Any]) -> float | None:
+    active = active_attention_rows(engine, rows)
+    if len(active) < 3:
+        return None
+    return float(median(report_score_for(quantities) for _, quantities in active))
 
 
 def severity_from_score(score: float | None) -> tuple[str | None, int | None]:
@@ -1050,6 +1059,7 @@ def beach_summary(engine: Engine, beach: dict[str, Any], now: datetime | None = 
             )
         ).all()
     eligible = [row for row in all_counted if utc_datetime(row.created_at) >= cutoff]
+    active_rows = active_attention_rows(engine, eligible)
     attention_score = remaining_count_attention(engine, eligible)
     severity, band = severity_from_score(attention_score)
     newest = max(all_counted, key=lambda row: utc_datetime(row.created_at), default=None)
@@ -1065,9 +1075,9 @@ def beach_summary(engine: Engine, beach: dict[str, Any], now: datetime | None = 
             "severity": severity,
             "band": band,
             "insufficientData": severity is None,
-            "validReports": len(eligible),
+            "validReports": len(active_rows),
             "attentionScore": round(attention_score, 2) if attention_score is not None else None,
-            "eligibleReportCount": len(eligible),
+            "eligibleReportCount": len(active_rows),
             "lastReportedAt": contract_timestamp(newest.created_at) if newest else None,
             "freshnessKind": freshness,
         }
@@ -1802,8 +1812,9 @@ def create_app(
                 "bands": list(SCORING_BANDS),
                 "windowDays": 90,
                 "minReports": 3,
+                "reportEligibility": "Counted reports in the latest 90 days with remaining litter after cleanup; fully cleared count-backed reports are excluded from the active count but retained in history",
                 "reportAggregation": "max",
-                "beachAggregation": "median",
+                "beachAggregation": "median-of-active-reports",
                 "ruleVersion": "radar-sampah-scoring-v2",
             }
         )

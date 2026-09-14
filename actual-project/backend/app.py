@@ -326,36 +326,12 @@ def _duplicate_status(
 
 
 def _remaining_count_attention(engine: Any, rows: list[Any]) -> float | None:
-    """Apply cleanup per report, then keep the existing beach median rule."""
+    """Apply cleanup per report and take the median of active reports only."""
 
-    if len(rows) < 3:
+    active = _impl.active_attention_rows(engine, rows)
+    if len(active) < 3:
         return None
-
-    count_backed_ids = [row.id for row in rows if getattr(row, "item_counts", None)]
-    actions_by_report: dict[str, list[Any]] = {report_id: [] for report_id in count_backed_ids}
-    if count_backed_ids:
-        with engine.connect() as connection:
-            actions = connection.execute(
-                select(_impl.cleanup_actions_table).where(
-                    _impl.cleanup_actions_table.c.target_report_id.in_(count_backed_ids)
-                )
-            ).all()
-        for action in actions:
-            actions_by_report.setdefault(action.target_report_id, []).append(action)
-
-    scores: list[float] = []
-    for row in rows:
-        if getattr(row, "item_counts", None):
-            remaining = _impl.remaining_counts_for(row, actions_by_report.get(row.id, []))
-            if not remaining:
-                scores.append(0.0)
-                continue
-            quantities = _impl.quantity_bands_for_counts(remaining)
-        else:
-            quantities = _impl.quantities_from_row(row)
-        scores.append(_impl.report_score_for(quantities) if quantities else 0.0)
-
-    return float(median(scores))
+    return float(median(_impl.report_score_for(quantities) for _, quantities in active))
 
 
 _impl.initialise_database = _initialise_database
@@ -425,9 +401,10 @@ def create_app(
             ],
             "windowDays": 90,
             "minReports": 3,
+            "reportEligibility": "Counted reports in the latest 90 days with remaining litter after cleanup; fully cleared count-backed reports are excluded from the active count but retained in history",
             "remainingCountAggregation": "per-report-after-cleanup",
             "reportAggregation": "max-category-score",
-            "beachAggregation": "median",
+            "beachAggregation": "median-of-active-reports",
             "modelClassMapping": [
                 {"modelClass": model_class, "category": category}
                 for model_class, category in _impl.ITERATION2_CATEGORIES.items()
