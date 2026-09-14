@@ -8,6 +8,7 @@ from types import SimpleNamespace
 import numpy as np
 from PIL import Image
 
+import recognition
 from recognition import DEFAULT_MODEL_PATH, LitterRecognizer
 
 
@@ -15,6 +16,23 @@ def jpeg_bytes(size: tuple[int, int] = (320, 320)) -> bytes:
     output = BytesIO()
     Image.new("RGB", size, "white").save(output, format="JPEG")
     return output.getvalue()
+
+
+class RecordingModel:
+    names = {0: "plastic", 1: "metal"}
+
+    def __init__(self, detections=None):
+        self.sources: list[tuple[int, int]] = []
+        self.detections = detections or []
+
+    def predict(self, *, source, **_kwargs):
+        self.sources.append(source.size)
+        boxes = SimpleNamespace(
+            cls=np.asarray([item[0] for item in self.detections], dtype=np.float32),
+            conf=np.asarray([item[1] for item in self.detections], dtype=np.float32),
+            xyxy=np.asarray([item[2] for item in self.detections], dtype=np.float32).reshape(-1, 4),
+        )
+        return [SimpleNamespace(boxes=boxes, names=self.names)]
 
 
 def fake_onnxruntime(model_path: Path):
@@ -100,6 +118,55 @@ def test_onnx_recognition_preserves_six_class_mapping(tmp_path, monkeypatch):
     assert result["detections"][0]["modelClass"] == "plastic"
     assert result["detections"][0]["box"] == [10.0, 20.0, 100.0, 120.0]
     assert len(sessions[0].calls) == 2
+
+
+def test_scene_photo_uses_bounded_sequential_regions():
+    model = RecordingModel()
+    recognizer = LitterRecognizer(model, "test", inference_size=320)
+
+    result = recognizer.recognise(jpeg_bytes((500, 635)))
+
+    assert 2 <= len(model.sources) <= 5
+    assert all(width <= 500 and height <= 635 for width, height in model.sources)
+    assert result["state"] == "ready"
+
+
+def test_crop_detections_are_translated_to_original_coordinates():
+    class SecondRegionModel(RecordingModel):
+        def predict(self, *, source, **_kwargs):
+            self.sources.append(source.size)
+            detections = [] if len(self.sources) != 3 else [(0, 0.9, [10, 20, 100, 120])]
+            boxes = SimpleNamespace(
+                cls=np.asarray([item[0] for item in detections], dtype=np.float32),
+                conf=np.asarray([item[1] for item in detections], dtype=np.float32),
+                xyxy=np.asarray([item[2] for item in detections], dtype=np.float32).reshape(-1, 4),
+            )
+            return [SimpleNamespace(boxes=boxes, names=self.names)]
+
+    model = SecondRegionModel()
+    recognizer = LitterRecognizer(model, "test", inference_size=320)
+
+    result = recognizer.recognise(jpeg_bytes((500, 635)))
+
+    assert result["detections"] == [{
+        "modelClass": "plastic",
+        "category": "Plastic",
+        "confidence": 0.9,
+        "box": [235.0, 20.0, 325.0, 120.0],
+    }]
+
+
+def test_overlapping_detections_are_deduplicated_per_class():
+    deduplicate = getattr(recognition, "_deduplicate_detections", None)
+    assert callable(deduplicate)
+    merged = deduplicate([
+        {"classId": 0, "confidence": 0.90, "box": [100, 100, 160, 160]},
+        {"classId": 0, "confidence": 0.80, "box": [104, 104, 158, 158]},
+        {"classId": 1, "confidence": 0.70, "box": [104, 104, 158, 158]},
+    ])
+
+    assert len(merged) == 2
+    assert {d["classId"] for d in merged} == {0, 1}
 
 
 def test_runtime_requirements_exclude_torch_and_use_onnxruntime():

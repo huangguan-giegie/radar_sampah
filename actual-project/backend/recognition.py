@@ -38,6 +38,57 @@ DEFAULT_MODEL_PATH = Path(__file__).resolve().parent.parent / "ml-model" / "mode
 DEFAULT_INFERENCE_SIZE = 320
 
 
+def _inference_regions(source: Image.Image, minimum_size: int = DEFAULT_INFERENCE_SIZE):
+    """Yield the full image and at most four overlapping image regions."""
+    yield 0, 0, source
+    width, height = source.size
+    if max(width, height) <= minimum_size:
+        return
+
+    x_split = max(1, width // 2)
+    y_split = max(1, height // 2)
+    overlap_x = max(1, width // 20)
+    overlap_y = max(1, height // 20)
+    boxes = (
+        (0, 0, min(width, x_split + overlap_x), min(height, y_split + overlap_y)),
+        (max(0, x_split - overlap_x), 0, width, min(height, y_split + overlap_y)),
+        (0, max(0, y_split - overlap_y), min(width, x_split + overlap_x), height),
+        (max(0, x_split - overlap_x), max(0, y_split - overlap_y), width, height),
+    )
+    for left, top, right, bottom in boxes:
+        yield left, top, source.crop((left, top, right, bottom))
+
+
+def _box_iou(first: list[float], second: list[float]) -> float:
+    left = max(first[0], second[0])
+    top = max(first[1], second[1])
+    right = min(first[2], second[2])
+    bottom = min(first[3], second[3])
+    intersection = max(0.0, right - left) * max(0.0, bottom - top)
+    first_area = max(0.0, first[2] - first[0]) * max(0.0, first[3] - first[1])
+    second_area = max(0.0, second[2] - second[0]) * max(0.0, second[3] - second[1])
+    union = first_area + second_area - intersection
+    return intersection / union if union > 0.0 else 0.0
+
+
+def _deduplicate_detections(detections: list[dict[str, Any]], iou_threshold: float = 0.5):
+    """Keep the highest-confidence box when overlapping detections share a class."""
+    ordered = sorted(detections, key=lambda item: float(item.get("confidence") or 0.0), reverse=True)
+    kept: list[dict[str, Any]] = []
+    for detection in ordered:
+        box = detection.get("box")
+        class_key = detection.get("classId", detection.get("modelClass", detection.get("category")))
+        if box is not None and any(
+            class_key == other.get("classId", other.get("modelClass", other.get("category")))
+            and other.get("box") is not None
+            and _box_iou(box, other["box"]) > iou_threshold
+            for other in kept
+        ):
+            continue
+        kept.append(detection)
+    return kept
+
+
 class OnnxYoloModel:
     """Small adapter that preserves the result shape expected by LitterRecognizer."""
 
@@ -194,32 +245,57 @@ class LitterRecognizer:
             with Image.open(BytesIO(image_bytes)) as image:
                 source = image.convert("RGB")
             try:
-                results = self._predict(source)
+                candidates: list[dict[str, Any]] = []
+                source_width, source_height = source.size
+                for left, top, region in _inference_regions(source, self.inference_size):
+                    try:
+                        results = self._predict(region)
+                        for result in results:
+                            boxes = getattr(result, "boxes", None)
+                            if boxes is None:
+                                continue
+                            names = getattr(result, "names", getattr(self.model, "names", {}))
+                            class_ids = boxes.cls.tolist() if getattr(boxes, "cls", None) is not None else []
+                            confidences = boxes.conf.tolist() if getattr(boxes, "conf", None) is not None else []
+                            coordinates = boxes.xyxy.tolist() if getattr(boxes, "xyxy", None) is not None else []
+                            for index, class_id in enumerate(class_ids):
+                                label = names.get(int(class_id), str(class_id)) if isinstance(names, dict) else str(class_id)
+                                model_class = str(label).strip().lower().replace(" ", "_")
+                                category = MODEL_CLASSES.get(model_class)
+                                if category is None:
+                                    continue
+                                box = coordinates[index] if index < len(coordinates) else None
+                                if box is not None and len(box) >= 4:
+                                    box = [
+                                        min(max(float(box[0]) + left, 0.0), float(source_width)),
+                                        min(max(float(box[1]) + top, 0.0), float(source_height)),
+                                        min(max(float(box[2]) + left, 0.0), float(source_width)),
+                                        min(max(float(box[3]) + top, 0.0), float(source_height)),
+                                    ]
+                                candidates.append({
+                                    "classId": int(class_id),
+                                    "modelClass": model_class,
+                                    "category": category,
+                                    "confidence": float(confidences[index]) if index < len(confidences) else None,
+                                    "box": box,
+                                })
+                    finally:
+                        if region is not source:
+                            region.close()
             finally:
                 source.close()
+            candidates = _deduplicate_detections(candidates)
             counts = {category: 0 for category in FRONTEND_CATEGORIES}
             detections: list[dict[str, Any]] = []
-            for result in results:
-                boxes = getattr(result, "boxes", None)
-                if boxes is None:
-                    continue
-                names = getattr(result, "names", getattr(self.model, "names", {}))
-                class_ids = boxes.cls.tolist() if getattr(boxes, "cls", None) is not None else []
-                confidences = boxes.conf.tolist() if getattr(boxes, "conf", None) is not None else []
-                coordinates = boxes.xyxy.tolist() if getattr(boxes, "xyxy", None) is not None else []
-                for index, class_id in enumerate(class_ids):
-                    label = names.get(int(class_id), str(class_id)) if isinstance(names, dict) else str(class_id)
-                    model_class = str(label).strip().lower().replace(" ", "_")
-                    category = MODEL_CLASSES.get(model_class)
-                    if category is None:
-                        continue
-                    counts[category] += 1
-                    detections.append({
-                        "modelClass": model_class,
-                        "category": category,
-                        "confidence": round(float(confidences[index]), 4) if index < len(confidences) else None,
-                        "box": [round(float(value), 2) for value in coordinates[index]] if index < len(coordinates) else None,
-                    })
+            for candidate in candidates:
+                category = candidate["category"]
+                counts[category] += 1
+                detections.append({
+                    "modelClass": candidate["modelClass"],
+                    "category": category,
+                    "confidence": round(float(candidate["confidence"]), 4) if candidate["confidence"] is not None else None,
+                    "box": [round(float(value), 2) for value in candidate["box"]] if candidate["box"] is not None else None,
+                })
             return {
                 "state": "ready",
                 "modelVersion": self.version,
