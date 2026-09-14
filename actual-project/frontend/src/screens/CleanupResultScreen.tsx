@@ -22,6 +22,8 @@ export default function CleanupResultScreen() {
     );
   }
 
+  const linkedToReport = Boolean(cleanup.targetReportId);
+
   return (
     <div className="screen scroll-y" style={{ zIndex: 28 }}>
       <div className="measure i2-page anim-fade-up" style={{ paddingBottom: 'calc(var(--safe-bottom) + 34px)' }}>
@@ -47,7 +49,14 @@ export default function CleanupResultScreen() {
           <div className="i2-divider" style={{ margin: '14px 0 4px' }} />
           {cleanup.rows.map((row) => (
             <div key={row.category} className="i2-quantity-row" style={{ gridTemplateColumns: 'minmax(0,1fr) auto' }}>
-              <span><strong style={{ display: 'block', fontSize: 13 }}>{row.category}</strong><span style={{ display: 'block', marginTop: 3, fontSize: 10.5, color: C.dim }}>{row.before} recorded → {row.after} remaining</span></span>
+              <span>
+                <strong style={{ display: 'block', fontSize: 13 }}>{row.category}</strong>
+                <span style={{ display: 'block', marginTop: 3, fontSize: 10.5, color: C.dim }}>
+                  {row.before === null || row.after === null
+                    ? `${row.removed} items recorded as removed`
+                    : `${row.before} recorded → ${row.after} remaining`}
+                </span>
+              </span>
               <InfoChip color={C.green} background={C.greenBg}>−{row.removed}</InfoChip>
             </div>
           ))}
@@ -57,7 +66,9 @@ export default function CleanupResultScreen() {
         <div className="i2-card">
           <SectionLabel size="sm">WHAT CHANGES NOW</SectionLabel>
           <p style={{ margin: '8px 0 0', color: C.muted, fontSize: 12.5, lineHeight: 1.55 }}>
-            What you removed comes off the beach's reported total. The beach rating is worked out separately and never drops below zero.
+            {linkedToReport
+              ? "What you removed comes off that report's remaining litter. The beach rating is worked out separately and never drops below zero."
+              : 'This cleanup is recorded as standalone evidence for the beach. Because it is not linked to a prior litter report, it does not subtract from an unrelated report or change its remaining count.'}
           </p>
           <TextButton onClick={() => nav('/method')}>How it’s rated</TextButton>
         </div>

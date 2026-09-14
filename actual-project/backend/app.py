@@ -25,7 +25,12 @@ from sqlalchemy import inspect, select, text
 
 import app_core as _impl
 from app_core import *  # noqa: F401,F403 - preserve the public module contract
+from standalone_cleanup import configure_cleanup_schema, install_cleanup_route
 
+
+# Iteration 2 originally required every cleanup to point at a counted report.
+# The reviewed product rule now also allows a beach-level standalone cleanup.
+configure_cleanup_schema(_impl)
 
 _original_create_app = _impl.create_app
 _original_initialise_database = _impl.initialise_database
@@ -92,6 +97,12 @@ def _ensure_postgres_iteration2_contract(engine: Any) -> None:
     ]
 
     with engine.begin() as connection:
+        connection.execute(
+            text(
+                f"ALTER TABLE {q('cleanup_actions')} "
+                "ALTER COLUMN target_report_id DROP NOT NULL"
+            )
+        )
         for table_name, constraint_name, definition in definitions:
             if _constraint_exists(connection, table_name, constraint_name):
                 continue
@@ -445,6 +456,7 @@ def create_app(
                 response.set_data(_impl.json.dumps(payload, separators=(",", ":")))
         return response
 
+    install_cleanup_route(application, engine, jwt_secret, _impl)
     application.view_functions["restore_anonymous_participant"] = restore_anonymous_participant_strict
     application.view_functions["get_iteration2_scoring_method"] = get_iteration2_scoring_method_reviewed
     return application
