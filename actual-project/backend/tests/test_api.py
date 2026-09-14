@@ -1,9 +1,8 @@
 """Iteration 2 API test suite with reviewed contract corrections.
 
 The teammate's full suite is kept byte-for-byte in ``api_tests_core.py``. We
-load it here, remove only the two obsolete ID-only recovery expectations, and
-add regression coverage for strict recovery, exact duplicates, restart repair,
-and cleanup-aware median scoring.
+load it here, remove the obsolete ID-only recovery and broad duplicate
+expectations, then add regression coverage for the reviewed contracts.
 """
 
 from __future__ import annotations
@@ -29,6 +28,7 @@ for _name, _value in vars(_core).items():
 
 globals().pop("test_restore_accepts_current_id_only_contract_and_rejects_wrong_optional_token", None)
 globals().pop("test_id_only_restore_matches_current_main_and_optional_token_is_checked", None)
+globals().pop("test_partial_main_database_is_migrated_to_contract_rules", None)
 
 
 def test_restore_requires_recovery_token(api):
@@ -75,6 +75,56 @@ def test_duplicate_requires_exact_same_categories_and_quantities(api):
     assert first["status"] == "Counted"
     assert different_quantity["status"] == "Counted"
     assert exact_repeat["status"] == "Duplicate"
+
+
+def test_partial_main_database_migrates_without_broad_duplicate_reclassification(tmp_path):
+    database_path = tmp_path / "partial-main-exact.db"
+    connection = sqlite3.connect(database_path)
+    connection.executescript(
+        """
+        CREATE TABLE users (
+          id VARCHAR(80) PRIMARY KEY, participant_id VARCHAR(4) NOT NULL UNIQUE,
+          role VARCHAR(20) NOT NULL, created_at DATETIME NOT NULL
+        );
+        CREATE TABLE frontend_reports (
+          id VARCHAR(40) PRIMARY KEY, reporter_id VARCHAR(80) NOT NULL,
+          beach_id VARCHAR(80) NOT NULL, beach_name VARCHAR(160) NOT NULL,
+          quantities TEXT NOT NULL, category VARCHAR(40) NOT NULL,
+          quantity VARCHAR(20) NOT NULL, photo_key VARCHAR(500) NOT NULL,
+          location_source VARCHAR(20) NOT NULL, status VARCHAR(20) NOT NULL,
+          created_at DATETIME NOT NULL
+        );
+        INSERT INTO users VALUES ('u_legacy', '1637', 'volunteer', '2026-08-31 00:00:00');
+        INSERT INTO frontend_reports VALUES
+          ('r_first', 'u_legacy', 'morib', 'Pantai Morib',
+           '{"Plastic":"Very Large","Fishing gear":"Small"}', 'Plastic', 'Very Large',
+           'old-one', 'manual', 'Counted', '2026-08-31 01:00:00'),
+          ('r_second', 'u_legacy', 'morib', 'Pantai Morib',
+           '{"Plastic":"Small"}', 'Plastic', 'Small',
+           'old-two', 'manual', 'Counted', '2026-08-31 02:00:00');
+        """
+    )
+    connection.close()
+
+    application = create_app(
+        database_url=f"sqlite:///{database_path}",
+        testing=True,
+        photo_storage_dir=tmp_path / "photos",
+    )
+    engine = application.extensions["marine_engine"]
+    assert {"users", "beaches", "dim_threat", "dim_species", "area_species", "reports"} <= set(
+        sqlalchemy_inspect(engine).get_table_names()
+    )
+    assert {"photo_mime", "photo_stripped", "lat", "lng", "updated_at", "qty_plastic", "qty_fishing_gear"} <= {
+        column["name"] for column in sqlalchemy_inspect(engine).get_columns("reports")
+    }
+    with engine.connect() as db_connection:
+        rows = db_connection.execute(select(reports_table).order_by(reports_table.c.created_at)).all()
+
+    assert (rows[0].category, rows[0].quantity, rows[0].status) == ("Plastic", "Very Large", "Counted")
+    assert (rows[0].qty_plastic, rows[0].qty_fishing_gear) == ("Very Large", "Small")
+    assert rows[1].status == "Counted"
+    assert rows[1].qty_plastic == "Small"
 
 
 def test_restart_preserves_non_exact_same_day_reports(tmp_path):
