@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Camera, Check, Upload } from '../components/Icon';
-import { Alert, Callout, EmptyState, InfoChip, SectionLabel } from '../components/ds';
+import { Alert, Callout, InfoChip, SectionLabel } from '../components/ds';
 import { BackButton, PrimaryButton, TextButton } from '../components/ui';
 import { useApp } from '../AppContext';
 import {
@@ -17,6 +17,7 @@ import { C, MONO, formatDate } from '../theme';
 import type { LitterCategory } from '../types';
 
 const HANDLING: CleanupHandling[] = ['Collected for disposal', 'Recycled / handled', 'Not recorded'];
+const CLEANUP_CATEGORIES: LitterCategory[] = ['Fishing gear', 'Plastic', 'Glass', 'Metal', 'Other', 'Paper'];
 
 export default function CleanupScreen() {
   const { beachId = '' } = useParams();
@@ -39,6 +40,7 @@ export default function CleanupScreen() {
   const [photoUsed, setPhotoUsed] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const photoName = photoFile?.name ?? null;
+
   useEffect(() => {
     let active = true;
     setLoading(true);
@@ -52,32 +54,17 @@ export default function CleanupScreen() {
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
   }, [beachId, eventId, targetReportId]);
+
   const categories = useMemo(
-    () => target ? (Object.keys(target.remaining) as LitterCategory[]).filter((category) => (target.remaining[category] ?? 0) > 0) : [],
+    () => target
+      ? (Object.keys(target.remaining) as LitterCategory[]).filter((category) => (target.remaining[category] ?? 0) > 0)
+      : CLEANUP_CATEGORIES,
     [target],
   );
 
   if (loading) {
-    return <div className="screen scroll-y"><div className="measure i2-page"><BackButton onClick={() => nav(eventId ? `/events/${eventId}` : `/beach/${beachId}`)} /><SectionLabel size="sm">Loading cleanup target…</SectionLabel></div></div>;
+    return <div className="screen scroll-y"><div className="measure i2-page"><BackButton onClick={() => nav(eventId ? `/events/${eventId}` : `/beach/${beachId}`)} /><SectionLabel size="sm">Loading cleanup…</SectionLabel></div></div>;
   }
-
-  if (!target) {
-    return (
-      <div className="screen scroll-y">
-        <div className="measure i2-page">
-          <BackButton onClick={() => nav(event ? `/events/${event.id}` : `/beach/${beachId}`)} />
-          <EmptyState
-            title="No cleanup target available"
-            body="A cleanup can start only from recorded litter with items still remaining."
-            action="Back to beach"
-            onAction={() => nav(`/beach/${beachId}`)}
-          />
-        </div>
-      </div>
-    );
-  }
-
-  const cleanupTarget = target;
 
   async function usePhotoSuggestion() {
     if (!photoFile) {
@@ -87,7 +74,7 @@ export default function CleanupScreen() {
     setAnalysing(true);
     setError(null);
     try {
-      const suggestion = await analyseCleanupPhoto(photoFile, cleanupTarget);
+      const suggestion = await analyseCleanupPhoto(photoFile, target);
       setRemoved(suggestion);
       setPhotoUsed(true);
       setPhotoFile(null);
@@ -108,7 +95,8 @@ export default function CleanupScreen() {
       idempotencyKey.current ??= crypto.randomUUID();
       const cleanup = await completeCleanup({
         participantId: user.participantId,
-        targetReportId: cleanupTarget.reportId,
+        beachId,
+        targetReportId: target?.reportId,
         eventId,
         removed,
         handling,
@@ -125,8 +113,9 @@ export default function CleanupScreen() {
   }
 
   function removeEverything() {
+    if (!target) return;
     const all: Partial<Record<LitterCategory, number>> = {};
-    categories.forEach((category) => { all[category] = cleanupTarget.remaining[category] ?? 0; });
+    categories.forEach((category) => { all[category] = target.remaining[category] ?? 0; });
     setRemoved(all);
     setError(null);
   }
@@ -158,19 +147,25 @@ export default function CleanupScreen() {
           <p className="i2-subtitle">Enter item counts or start from an AI suggestion.</p>
         </div>
 
-        <div className="i2-card">
-          <SectionLabel size="sm">REPORTED LITTER AT THIS BEACH</SectionLabel>
-          <div style={{ display: 'flex', justifyContent: 'space-between', gap: 14, marginTop: 10 }}>
-            <div>
-              <div style={{ fontSize: 16, fontWeight: 720, color: C.ink2 }}>{target.beachName}</div>
-              <div style={{ marginTop: 4, fontSize: 11.5, color: C.muted }}>Report {target.reportId} · {formatDate(target.reportedAt)}</div>
+        {target ? (
+          <div className="i2-card">
+            <SectionLabel size="sm">REPORTED LITTER AT THIS BEACH</SectionLabel>
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 14, marginTop: 10 }}>
+              <div>
+                <div style={{ fontSize: 16, fontWeight: 720, color: C.ink2 }}>{target.beachName}</div>
+                <div style={{ marginTop: 4, fontSize: 11.5, color: C.muted }}>Report {target.reportId} · {formatDate(target.reportedAt)}</div>
+              </div>
+              <InfoChip color={C.green} background={C.greenBg}>Linked report</InfoChip>
             </div>
-            <InfoChip color={C.green} background={C.greenBg}>Eligible</InfoChip>
+            <div style={{ marginTop: 12, paddingTop: 11, borderTop: `1px solid ${C.line}`, display: 'flex', justifyContent: 'space-between', fontFamily: MONO, fontSize: 10, color: C.muted }}>
+              <span>WHAT YOU CONFIRM COMES OFF THIS TOTAL</span><strong style={{ color: C.navy }}>{cleanupTotal(target)} UNITS</strong>
+            </div>
           </div>
-          <div style={{ marginTop: 12, paddingTop: 11, borderTop: `1px solid ${C.line}`, display: 'flex', justifyContent: 'space-between', fontFamily: MONO, fontSize: 10, color: C.muted }}>
-            <span>WHAT YOU CONFIRM COMES OFF THIS TOTAL</span><strong style={{ color: C.navy }}>{cleanupTotal(target)} UNITS</strong>
-          </div>
-        </div>
+        ) : (
+          <Callout title="No prior report required" tone="reassurance">
+            You can record a cleanup at this beach at any time. Enter only the litter you actually removed; this standalone cleanup will not alter an unrelated report.
+          </Callout>
+        )}
 
         {event && (
           <Callout title="Linked activity" tone="quiet">
@@ -199,32 +194,39 @@ export default function CleanupScreen() {
         <div className="i2-card">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12 }}>
             <SectionLabel size="sm">ITEMS REMOVED</SectionLabel>
-            <button type="button" onClick={removeEverything} style={{ fontSize: 11, fontWeight: 720, color: C.navy }}>Removed all</button>
+            {target && <button type="button" onClick={removeEverything} style={{ fontSize: 11, fontWeight: 720, color: C.navy }}>Removed all</button>}
           </div>
           <div style={{ marginTop: 8 }}>
-            {categories.map((category) => (
-              <label key={category} className="i2-quantity-row">
-                <span>
-                  <strong style={{ display: 'block', fontSize: 13.5, color: C.ink2 }}>{category}</strong>
-                  <span style={{ display: 'block', marginTop: 3, fontSize: 10.5, color: C.dim }}>{target.remaining[category]} recorded</span>
-                </span>
-                <input
-                  className="i2-field"
-                  type="number"
-                  min={0}
-                  max={target.remaining[category] ?? 0}
-                  step={1}
-                  inputMode="numeric"
-                  aria-label={`${category} items removed`}
-                  value={removed[category] ?? 0}
-                  onChange={(event) => {
-                    const value = Math.max(0, Math.min(target.remaining[category] ?? 0, Number(event.target.value)));
-                    setRemoved((current) => ({ ...current, [category]: Number.isFinite(value) ? Math.trunc(value) : 0 }));
-                    setError(null);
-                  }}
-                />
-              </label>
-            ))}
+            {categories.map((category) => {
+              const remaining = target?.remaining[category] ?? null;
+              return (
+                <label key={category} className="i2-quantity-row">
+                  <span>
+                    <strong style={{ display: 'block', fontSize: 13.5, color: C.ink2 }}>{category}</strong>
+                    <span style={{ display: 'block', marginTop: 3, fontSize: 10.5, color: C.dim }}>
+                      {remaining === null ? 'Enter actual items removed' : `${remaining} recorded`}
+                    </span>
+                  </span>
+                  <input
+                    className="i2-field"
+                    type="number"
+                    min={0}
+                    max={remaining ?? 100000}
+                    step={1}
+                    inputMode="numeric"
+                    aria-label={`${category} items removed`}
+                    value={removed[category] ?? 0}
+                    onChange={(event) => {
+                      const raw = Number(event.target.value);
+                      const upper = remaining ?? 100000;
+                      const value = Math.max(0, Math.min(upper, raw));
+                      setRemoved((current) => ({ ...current, [category]: Number.isFinite(value) ? Math.trunc(value) : 0 }));
+                      setError(null);
+                    }}
+                  />
+                </label>
+              );
+            })}
           </div>
         </div>
 
