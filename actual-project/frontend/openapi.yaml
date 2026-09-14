@@ -14,7 +14,7 @@ info:
     documented in backend/API_ITERATION2.md.
 
     The points that get missed:
-    - Under 3 eligible reports, severity and band MUST be null — never fall back to Low
+    - Under 3 active reports, severity and band MUST be null — never fall back to Low
     - A duplicate returns 201 with status=Duplicate. It is a result, not an error
     - Duplicate means either an exact same-participant/day/signature match, or a same-beach/day GPS match within about 10 m; the GPS rule applies across participants
     - Coordinates are used only to match a beach. No response may ever return them
@@ -692,7 +692,7 @@ components:
           type: number
           format: float
           nullable: true
-          description: median eligible report score over the latest 90 days; null when fewer than three reports qualify
+          description: median active report score after cleanup over the latest 90 days; null when fewer than three active reports qualify
         eligibleReportCount:
           type: integer
           minimum: 0
@@ -883,7 +883,7 @@ components:
           description: median of eligible Report Scores in the latest 90-day window
         ruleVersion:
           type: string
-          example: radar-sampah-scoring-v2
+          example: radar-sampah-scoring-v3
 
     UploadedPhoto:
       type: object

@@ -388,7 +388,7 @@ def create_app(
 
     def get_iteration2_scoring_method_reviewed():
         return jsonify({
-            "ruleVersion": "radar-sampah-scoring-i2-v2",
+            "ruleVersion": "radar-sampah-scoring-i2-v3",
             "categoryWeights": [
                 {"category": category, "weight": _impl.CATEGORY_WEIGHTS[category]}
                 for category in _impl.FRONTEND_CATEGORIES

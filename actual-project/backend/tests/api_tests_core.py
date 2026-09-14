@@ -553,7 +553,7 @@ def test_scoring_method_matches_published_contract(api):
     assert body["reportAggregation"] == "max"
     assert body["beachAggregation"] == "median-of-active-reports"
     assert "fully cleared count-backed reports are excluded" in body["reportEligibility"]
-    assert body["ruleVersion"] == "radar-sampah-scoring-v2"
+    assert body["ruleVersion"] == "radar-sampah-scoring-v3"
 
 
 def test_species_distribution_predicts_from_packaged_models(api):

@@ -502,8 +502,8 @@ quantity  = 该类别对应那列的值
   "windowDays": 90,
   "minReports": 3,
   "reportAggregation": "max",
-  "beachAggregation": "median",
-  "ruleVersion": "radar-sampah-scoring-v2"
+  "beachAggregation": "median-of-active-reports",
+  "ruleVersion": "radar-sampah-scoring-v3"
 }
 ```
 

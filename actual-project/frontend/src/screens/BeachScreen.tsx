@@ -243,7 +243,7 @@ export default function BeachScreen() {
               ) : (
                 <Info size={11} color={C.slate} strokeWidth={2.2} />
               )}
-              {b.validReports} counted {reportWord(b.validReports)}
+              {b.validReports} active {reportWord(b.validReports)}
             </InfoChip>
             {/* The raw attention score is deliberately NOT shown. Epic 4's
                 call: the public sees the band, not the number behind it. The

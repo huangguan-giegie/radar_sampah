@@ -529,7 +529,7 @@ function SelectedCard({
                 ) : (
                   <Info size={12} color={C.slate} strokeWidth={2} />
                 )}
-                {beach.validReports} counted {reportWord(beach.validReports)}
+                {beach.validReports} active {reportWord(beach.validReports)}
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 11px', borderRadius: 999, background: fs.bg, fontSize: 11.5, fontWeight: 600, color: fs.c }}>
                 <i style={{ width: 6, height: 6, borderRadius: 3, background: fs.dot, display: 'block' }} />

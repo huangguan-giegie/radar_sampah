@@ -92,17 +92,17 @@ describe('exact count compatibility rules', () => {
 // that line, including the sentence that tells the reader why there is no band
 // yet.
 describe('attentionStateFor', () => {
-  it.each([0, 1, 2])('keeps %s counted reports in a neutral insufficient-data state', (validReports) => {
+  it.each([0, 1, 2])('keeps %s active reports in a neutral insufficient-data state', (validReports) => {
     const reportWord = validReports === 1 ? 'report' : 'reports';
     expect(attentionStateFor(null, true, validReports)).toEqual({
       markerLabel: 'NO DATA',
       pageLabel: 'Insufficient data',
-      detail: `${validReports} counted ${reportWord} · At least 3 counted reports are required for a band`,
+      detail: `${validReports} active ${reportWord} · At least 3 active reports are required for a band`,
       hasBand: false,
     });
   });
 
-  it('shows the severity label once the beach has enough counted reports', () => {
+  it('shows the severity label once the beach has enough active reports', () => {
     expect(attentionStateFor('High', false, 3)).toEqual({
       markerLabel: 'HIGH',
       pageLabel: 'High',

@@ -91,7 +91,7 @@ function BeachRow({ b, last, onClick }: { b: BeachSummary; last: boolean; onClic
         {/* reportWord picks report/reports, so a beach with one report does
             not read "1 counted reports". */}
         <div style={{ fontSize: 11.5, color: C.dim, marginTop: 3 }}>
-          {b.validReports} counted {reportWord(b.validReports)} · {lastReportedLabel(b.lastReportedAt).toLowerCase()}
+          {b.validReports} active {reportWord(b.validReports)} · {lastReportedLabel(b.lastReportedAt).toLowerCase()}
         </div>
       </div>
       <SeverityBadge band={attention.hasBand ? b.severity : null} label={attention.pageLabel} block />

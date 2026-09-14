@@ -68,7 +68,7 @@ export function severityLabel(band: SeverityBand): string {
 /**
  * Whether a beach may show a band at all, and what to say when it may not.
  *
- * Below SCORING_METHOD.minReports counted reports the answer is "Insufficient
+ * Below SCORING_METHOD.minReports active reports the answer is "Insufficient
  * data" plus the count so far, because a band drawn from one report looks just
  * as confident as one drawn from fifty. Two labels come back because pins
  * shout and pages do not. Every screen asks this one function, so a beach
@@ -85,7 +85,7 @@ export function attentionStateFor(
     return {
       markerLabel: 'NO DATA',
       pageLabel: 'Insufficient data',
-      detail: `${validReports} counted ${word} · At least ${minimum} counted reports are required for a band`,
+      detail: `${validReports} active ${word} · At least ${minimum} active reports are required for a band`,
       hasBand: false,
     } as const;
   }

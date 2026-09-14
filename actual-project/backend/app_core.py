@@ -1060,7 +1060,11 @@ def beach_summary(engine: Engine, beach: dict[str, Any], now: datetime | None = 
         ).all()
     eligible = [row for row in all_counted if utc_datetime(row.created_at) >= cutoff]
     active_rows = active_attention_rows(engine, eligible)
-    attention_score = remaining_count_attention(engine, eligible)
+    attention_score = (
+        float(median(report_score_for(quantities) for _, quantities in active_rows))
+        if len(active_rows) >= 3
+        else None
+    )
     severity, band = severity_from_score(attention_score)
     newest = max(all_counted, key=lambda row: utc_datetime(row.created_at), default=None)
     newest_at = utc_datetime(newest.created_at) if newest else None
@@ -1815,7 +1819,7 @@ def create_app(
                 "reportEligibility": "Counted reports in the latest 90 days with remaining litter after cleanup; fully cleared count-backed reports are excluded from the active count but retained in history",
                 "reportAggregation": "max",
                 "beachAggregation": "median-of-active-reports",
-                "ruleVersion": "radar-sampah-scoring-v2",
+                "ruleVersion": "radar-sampah-scoring-v3",
             }
         )
 

@@ -64,17 +64,18 @@ export const SCORING_METHOD: ScoringMethod = {
   // Under 3 valid reports we show "not enough evidence" instead of a band.
   // One angry volunteer should not be able to paint a beach red on their own.
   minReports: 3,
+  reportEligibility: 'Counted reports in the latest 90 days with remaining litter after cleanup; fully cleared reports are retained in history but excluded from the active score and count',
   // Inside ONE report: the worst category wins (see reportScoreFor below).
   reportAggregation: 'max',
   // Across a beach's reports: the median, not the mean. The median is what
   // stops a single extreme day from dragging a whole beach up, and anyone can
   // file a report, so that protection matters. The backend must use the same
   // two rules - these fields exist so it cannot quietly use different ones.
-  beachAggregation: 'median',
+  beachAggregation: 'median-of-active-reports',
   // Names this exact rule set. When the weights or the aggregation change,
   // this string changes too, so an old score can be identified as old rather
   // than compared against numbers produced a different way.
-  ruleVersion: 'radar-sampah-scoring-v2',
+  ruleVersion: 'radar-sampah-scoring-v3',
 };
 
 /**

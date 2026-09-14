@@ -531,8 +531,8 @@ the live response when a real API is configured.
   "windowDays": 90,
   "minReports": 3,
   "reportAggregation": "max",
-  "beachAggregation": "median",
-  "ruleVersion": "radar-sampah-scoring-v2"
+  "beachAggregation": "median-of-active-reports",
+  "ruleVersion": "radar-sampah-scoring-v3"
 }
 ```
 

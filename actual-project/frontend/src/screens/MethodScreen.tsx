@@ -144,7 +144,8 @@ export default function MethodScreen() {
                  one is a decision we can be asked about. Category: weight x
                  amount. Report: the HIGHEST of those, so one very bad category
                  is not averaged away. Beach: the MEDIAN of its reports, so a
-                 single extreme day cannot drag a beach up. */
+                 single extreme day cannot drag a beach up. Fully cleared reports
+                 are excluded from the active median. */
               { of: 'ONE CATEGORY', is: 'category weight × quantity level' },
               { of: 'ONE REPORT', is: 'highest category score (Max)' },
               { of: 'ONE BEACH', is: `median of active report scores after cleanup, last ${m.windowDays} days` },
@@ -222,7 +223,7 @@ export default function MethodScreen() {
           <Label style={{ marginBottom: 11 }}>WHEN NO BAND IS SHOWN</Label>
           <div style={{ background: C.white, border: `1px solid ${C.line}`, borderRadius: 22, padding: 18, display: 'flex', flexDirection: 'column', gap: 9 }}>
             {[
-              [`Under ${m.minReports} reports`, 'Insufficient data'],
+              [`Under ${m.minReports} active reports`, 'Insufficient data'],
               [`Nothing in ${m.windowDays} days`, 'Not recently reported'],
               ['Duplicate or incomplete', 'Never counted at all'],
             ].map(([when, then]) => (

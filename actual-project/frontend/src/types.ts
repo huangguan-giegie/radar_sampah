@@ -236,6 +236,8 @@ export interface ScoringMethod {
   windowDays: number;
   /** Valid reports needed before we show a band - the "fewer than three". */
   minReports: number;
+  /** Which recent Counted reports are active inputs to the score. */
+  reportEligibility: string;
   /**
    * How the six category scores inside ONE report become one number: the
    * worst category wins. A report of "a mountain of fishing gear and one
@@ -250,7 +252,7 @@ export interface ScoringMethod {
    * These two are typed as literals, not as string, so the compiler rejects a
    * backend payload that quietly switches to a different rule.
    */
-  beachAggregation: 'median';
+  beachAggregation: 'median-of-active-reports';
   /** Names the exact rule set a score was produced under. When the rules
    *  change, old scores can still be identified as old rather than silently
    *  compared against numbers computed a different way. */
