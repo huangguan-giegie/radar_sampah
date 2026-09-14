@@ -72,7 +72,7 @@ rewrite or template it.
 ## 1. Auth — anonymous participant numbers
 
 **Team decision: the app collects no personal data.** No name, email or phone number.
-A person receives a 4-digit ID. The current main contract restores by ID; a backend supporting the Iteration 2 extension may also return a one-time recovery token.
+A person receives a 4-digit ID plus a system-generated recovery token. The token works like a password.
 
 | Method | Path | Auth | |
 | --- | --- | --- | --- |
@@ -92,10 +92,7 @@ A person receives a 4-digit ID. The current main contract restores by ID; a back
 }
 ```
 
-**POST `/auth/restore`** — body `{ "participantId": "1637" }`; responds with the session JWT and
-user. Older clients may also send `token`; the backend validates it when present. The compatible
-Iteration 2 backend returns a recovery token once at signup and stores only its SHA-256 digest.
-Moderator accounts are provisioned server-side.
+**POST `/auth/restore`** — body `{ "participantId": "1637", "token": "RS-..." }`. The recovery token is required and verified before a new session JWT is returned.
 
 **GET `/auth/me`** — returns `user`; 401 if the token is invalid.
 
@@ -105,11 +102,14 @@ turning the participant into Guest.
 
 - `participantId` — 4 digits, **randomly assigned, never sequential**. A sequence would leak how
   many participants exist and who joined first.
-- `role` — `"volunteer" | "moderator"`. In Iteration 2, `moderator` is the
-  activity administrator role and may create additional event dates for a
-  monitored beach. Editing or cancelling events and report review remain out
-  of scope. The backend provisions this role; clients cannot promote themselves.
+- `role` — `"volunteer" | "moderator"`. Iteration 1 only ever issues `volunteer`;
+  `moderator` is reserved for the later review flow. Create the value, leave it unused.
 - Token — JWT, 30-day expiry, no refresh flow.
+
+> **One thing to be aware of (does not block this iteration).** The number *is* the credential,
+> so anyone who types `1637` sees participant 1637's records. That is acceptable for an MVP
+> running on synthetic data. Before this holds real public submissions it needs a secret
+> alongside the number.
 
 ---
 
