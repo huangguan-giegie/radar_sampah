@@ -1,0 +1,69 @@
+name: Sync Iteration 2 contract
+
+on:
+  push:
+    branches:
+      - fix/iteration2-backend-review-20260914
+
+permissions:
+  contents: write
+
+jobs:
+  sync-contract:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Sync reviewed auth and duplicate rules
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          openapi = Path('actual-project/frontend/openapi.yaml')
+          text = openapi.read_text(encoding='utf-8')
+          replacements = [
+              (
+                  '      description: No personal details are collected. Returns a random 4-digit ID. A backend may also return the compatible one-time recoveryToken extension.\n',
+                  '      description: No personal details are collected. Returns a random 4-digit ID and a recovery token shown once.\n',
+              ),
+              (
+                  '              required: [participantId]\n              properties:\n                participantId: { type: string, example: "1637" }\n                token: { type: string, description: "Optional for clients using the compatible recovery-token extension" }\n',
+                  '              required: [participantId, token]\n              properties:\n                participantId: { type: string, example: "1637" }\n                token: { type: string, description: "System-generated recovery token; required together with participantId" }\n',
+              ),
+              (
+                  '        "401":\n          $ref: "#/components/responses/Error"\n        "404":\n          $ref: "#/components/responses/Error"\n        "401":\n          $ref: "#/components/responses/Error"\n',
+                  '        "401":\n          $ref: "#/components/responses/Error"\n        "404":\n          $ref: "#/components/responses/Error"\n',
+              ),
+              (
+                  '    - A duplicate returns 201 with status=Duplicate. It is a result, not an error\n',
+                  '    - A duplicate returns 201 with status=Duplicate. It is a result, not an error\n    - Duplicate means either an exact same-participant/day/signature match, or a same-beach/day GPS match within about 10 m; the GPS rule applies across participants\n',
+              ),
+              (
+                  '            Saved. Note that status may be Duplicate — that is a normal outcome, not an error.\n',
+                  '            Saved. status may be Duplicate either from the exact signature rule or from a same-beach, same-Malaysia-day privacy-preserving GPS match within about 10 m. The GPS rule applies across participants.\n',
+              ),
+          ]
+          for old, new in replacements:
+              if old not in text:
+                  raise SystemExit(f'Expected OpenAPI text not found: {old[:90]!r}')
+              text = text.replace(old, new, 1)
+          openapi.write_text(text, encoding='utf-8')
+
+          contract = Path('actual-project/backend/API_ITERATION2.md')
+          text = contract.read_text(encoding='utf-8')
+          old = '''## 3. Duplicate rule\n\nA report is a duplicate only when all of the following match an existing `Counted` report:\n\n1. same participant;\n2. same beach;\n3. same Malaysia local calendar day;\n4. exactly the same category/quantity signature.\n\nDifferent categories or different quantity bands on the same day are not duplicates. Duplicate submissions are still saved with status `Duplicate`; they are excluded from the beach score.\n\nThe same exact rule is applied during startup repair/migration so a database restart must not reclassify non-identical reports as duplicates.\n'''
+          new = '''## 3. Duplicate rule\n\nA report is saved with status `Duplicate` when **either** of these rules matches an existing `Counted` report:\n\n1. **Exact-signature rule:** same participant, same beach, same Malaysia local calendar day, and exactly the same category/quantity signature.\n2. **Privacy-proximity rule:** same beach, same Malaysia local calendar day, both reports use GPS-backed Iteration 2 location matching, and the privacy-preserving location comparison places them within approximately 10 metres. This rule applies **across participants** and does not require matching categories or quantities.\n\nDifferent categories or quantity bands remain independent reports unless the privacy-proximity rule matches. Duplicate submissions are still saved with HTTP `201` and status `Duplicate`; they are excluded from the beach score.\n\nFor Iteration 2 GPS reports, raw coordinates are not persisted. The backend stores a target-scoped HMAC over a one-metre projected grid and checks neighbouring grid cells for the approximately 10 m rule. A same-day proximity match is saved as `Duplicate` rather than returning the active-target conflict. A nearby active target from an earlier local day still returns `409 ACTIVE_CLEANUP_TARGET_NEARBY` until it is cleared.\n\nStartup repair continues to correct legacy broad same-day duplicate classifications while preserving privacy-proximity duplicates that were explicitly recorded by the reviewed rule.\n'''
+          if old not in text:
+              raise SystemExit('Expected duplicate-rule section not found in API_ITERATION2.md')
+          contract.write_text(text.replace(old, new, 1), encoding='utf-8')
+          PY
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add actual-project/frontend/openapi.yaml actual-project/backend/API_ITERATION2.md
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git commit -m "Sync Iteration 2 auth and duplicate contracts"
+          git push
