@@ -1,227 +1,201 @@
-# Radar Sampah 后端接口约定（Iteration 2）
+# Radar Sampah Backend Contract — Iteration 2
 
-本文补足前端 commit `1a113fbb1f900192e4cf0ec0d1620abc7cba309f` 与 Iteration 2 原型尚未定义的后端接口。现有海滩、照片、报告列表等接口保持兼容；新增 JSON 接口使用 HTTPS，照片上传使用 `multipart/form-data`。时间戳用带时区的 ISO 8601；活动卡片的 `date`、`startsAt`、`endsAt` 按前端契约分别返回本地日期和 `HH:mm` 时刻（业务时区 `Asia/Kuala_Lumpur`）。
+This document is the reviewed Iteration 2 backend contract. It supplements the existing frontend API documentation and records the integration decisions that must remain aligned across frontend, backend and database code.
 
-## Iteration 2 决议
+Business timezone: `Asia/Kuala_Lumpur`. JSON timestamps use ISO 8601 with timezone information. Event cards expose local `date`, `startsAt` and `endsAt` values.
 
-- `moderator` 是活动管理员，可以为已有海滩创建额外日期的社区活动；本迭代不实现取消、改期或完整管理后台。举报审核仍不在本迭代范围内。普通匿名参与者是 `volunteer`。
-- 清理目标只从 `Counted` 报告产生。`Duplicate`、`Incomplete` 报告不产生目标。
-- 模型输出和人工确认的实际件数用 `itemCounts` 保存；`qty_*` 数据库列及 API 的 `quantities` 保持主线约定的档位文本，用于与 Iteration 1 前端兼容。两者不能互相替代。
-- 模型类别映射：`plastic → Plastic`、`metal → Metal`、`glass → Glass`、`paper_cardboard → Paper`、`styrofoam → Other`、`fishing_gear → Fishing gear`。
-- 由实际件数导出旧版档位：1–5 件 `Small`，6–20 件 `Medium`，21–50 件 `Large`，51 件及以上 `Very Large`。例如 8 件塑料对应 `itemCounts: {"Plastic": 8}`，兼容字段为 `quantities: {"Plastic": "Medium"}`。`styrofoam` 不会新增前端类别，而会计入 `Other`。
-- 部分清理可针对同一报告重复提交，直到剩余件数为零；每次是独立、不可覆盖的清理流水。只有相同请求重试才复用同一个 `idempotencyKey`。
-- 清理记录的 `score` 是移除件数总和，不是积分；不发放积分。
-- 自动活动为每片海滩未来四个周六的 09:00–12:00（马来西亚时间），读取 `/events` 时幂等补齐。管理员也可创建其他日期的活动。
-- 出席由三项共同确认：加入该活动、签到位置通过、活动时段内在该海滩有 `Counted` 报告或带该活动 ID 的清理记录。位置通过阈值为海滩中心 25 km，和迭代二界面原型一致。
-- 本项目决定继续兼容最新 `main` 的 Participant ID-only 恢复流程。注意：Google Doc 的 AC9.1.1 写明 Participant ID 不能单独作为凭证；该条与已确认的 main 接口选择冲突，后续应在项目需求文档中同步决议。
-- GPS 坐标只用于请求时的海滩签到与 10 米重复目标检查。迭代二报告不保存原始坐标；只保存带服务端密钥的目标专属 1 米网格 HMAC。它不是加密坐标，不能还原坐标。签到只保存“通过/时间”，不保存坐标。
-- 清理后的照片仅在服务器内存中做识别，不写入照片目录或数据库。初始报告照片保留原来的私有审计存储规则。
+## 1. Authentication and participant recovery
 
-## 认证
+The app does not collect a participant name, email address or phone number.
 
-所有需要登录的接口使用 `Authorization: Bearer <token>`。
+A new anonymous participant receives:
 
-### `POST /auth/anonymous`
+- a random 4-digit `participantId`;
+- a session JWT in `token`;
+- a one-time `recoveryToken` that must be saved by the participant.
 
-创建匿名志愿者。响应 `201`：
+`POST /auth/restore` requires **both** the participant ID and the recovery token:
 
 ```json
 {
-  "token": "<session JWT>",
-  "recoveryToken": "<show once and store securely>",
-  "user": {"id": "u_…", "participantId": "1637", "role": "volunteer"}
+  "participantId": "1637",
+  "token": "RS-..."
 }
 ```
 
-服务端仅保存恢复令牌的 SHA-256 摘要。
+The 4-digit participant ID is an identifier, **not a credential by itself**. Missing or incorrect recovery tokens return `401 INVALID_RECOVERY_TOKEN`. A successful restore returns a new session JWT.
 
-### `POST /auth/restore`
+Protected mutations require a valid bearer/session token. Participant ID alone must never authorize a mutation or expose a participant's private reports.
 
-当前主线契约请求 `{ "participantId": "1637" }`，返回 `{ "token": "<session JWT>", "user": {…} }`。兼容后端也接受旧客户端附带的 `token`，若提供则验证并在不匹配时返回 `401 INVALID_RECOVERY_TOKEN`。新注册仍可额外返回一次恢复令牌；编号恢复不要求它。
+## 2. Reports, exact item counts and YOLO
 
-### Moderator 账号
+Iteration 1 quantity bands remain available through `quantities` and the six `qty_*` database columns:
 
-使用 `python scripts/provision_moderator.py` 创建 moderator。命令只显示一次恢复令牌；通过可信的私下渠道交给活动管理员。不要用普通注册接口提升角色，也不要把恢复令牌写入仓库。
+- `Small = 1`
+- `Medium = 2`
+- `Large = 3`
+- `Very Large = 4`
 
-## 物种分布（前端既有接口）
+Iteration 2 additionally stores confirmed whole-item counts in `itemCounts`. These counts come from a YOLO suggestion that the user confirms/edits, or from manual fallback when recognition is unavailable.
 
-### `POST /api/species-distribution/predict`
+Item-count-to-band compatibility mapping:
 
-请求 `{ "latitude": 2.746, "longitude": 101.44 }`。位置必须在模型支持的马来西亚 EEZ 内。四个随仓库提供的 OBIS 模型只在 API 进程启动时加载；请求坐标和预测结果不写入数据库，也不参与垃圾严重度。成功响应字段为 `insideMalaysianEez: true`、`scoreType: "relative_occurrence"`、`calibratedProbability: false`、四项 `predictions` 和 `modelVersion`。模型分数是相对出现分数，不是校准概率。格式错误返回 `400 VALIDATION_FAILED`，范围外返回 `422 OUTSIDE_MODEL_AREA`。
+- 1–5 items → `Small`
+- 6–20 items → `Medium`
+- 21–50 items → `Large`
+- 51+ items → `Very Large`
 
-## AI 识别
+Model class mapping:
 
-### `POST /recognitions`
+- `plastic → Plastic`
+- `metal → Metal`
+- `glass → Glass`
+- `paper_cardboard → Paper`
+- `styrofoam → Other`
+- `fishing_gear → Fishing gear`
 
-对当前用户已上传的报告照片运行一次识别。请求 `{ "photoKey": "<owned photo key>" }`。`counts` 是实际检测件数，`quantityBands` 和前端兼容字段 `suggestions` 是按件数换算的数量档。响应：
+`POST /recognitions` analyses an already-owned report photo. `POST /recognitions/cleanup-photo` accepts a temporary after-cleanup photo, performs inference in memory and does **not** persist that photo.
 
-```json
-{
-  "state": "ready",
-  "modelVersion": "sea-taco-yolo11m-best/1",
-  "counts": {"Fishing gear": 0, "Plastic": 2, "Glass": 0, "Metal": 0, "Other": 1, "Paper": 0},
-  "quantityBands": {"Plastic": "Small", "Other": "Small"},
-  "modelState": "ready",
-  "suggestions": {"Plastic": "Small", "Other": "Small"},
-  "supportedClasses": ["plastic", "metal", "glass", "paper_cardboard", "styrofoam", "fishing_gear"],
-  "detections": [{"modelClass": "styrofoam", "category": "Other", "confidence": 0.91, "box": [12, 20, 90, 130]}],
-  "manualEntryRequired": false,
-  "reason": null
-}
-```
+If model weights are unavailable or inference fails, the recognition response must request manual entry instead of pretending a model result exists.
 
-`state` 为 `ready`、`unavailable` 或 `failed`。模型不可用、推理失败或识别结果为空时，返回空/零件数并设置 `manualEntryRequired: true`，前端允许人工录入和确认，不把识别失败解释为“没有垃圾”。响应包含模型版本。置信度阈值 0.25、IoU 阈值 0.7。
+## 3. Duplicate rule
 
-### `POST /recognitions/cleanup-photo`
+A report is a duplicate only when all of the following match an existing `Counted` report:
 
-可选清理后照片的识别接口，`multipart/form-data`，字段 `photo`。最多 10 MB，仅接受 JPEG、PNG、HEIC。响应结构与 `/recognitions` 相同；照片只在内存中处理后即丢弃。
+1. same participant;
+2. same beach;
+3. same Malaysia local calendar day;
+4. exactly the same category/quantity signature.
 
-## 报告和清理目标
+Different categories or different quantity bands on the same day are not duplicates. Duplicate submissions are still saved with status `Duplicate`; they are excluded from the beach score.
 
-### `POST /reports`
+The same exact rule is applied during startup repair/migration so a database restart must not reclassify non-identical reports as duplicates.
 
-保留 Iteration 1 字段，并为 Iteration 2 增加可选 `itemCounts` 和 `eventId`：
+## 4. Beach Attention Score after cleanup
 
-```json
-{
-  "beachId": "morib",
-  "photoKey": "<uploaded key>",
-  "locationSource": "gps",
-  "coords": {"lat": 2.74614, "lng": 101.44024},
-  "itemCounts": {"Plastic": 8, "Other": 2},
-  "quantities": {"Plastic": "Medium", "Other": "Small"},
-  "eventId": "morib-2026-09-19"
-}
-```
+The original scoring structure is retained in Iteration 2:
 
-`itemCounts` 可由模型识别后经参与者确认，也可在模型不可用时人工录入。至少有一个正整数类别，单类上限 100,000。若同时传 `quantities`，必须与件数档位一致；也可以省略，由服务端生成兼容档位。GPS 模式仍需在请求里带精确坐标，但迭代二报告不会持久化原坐标。若坐标与未清空目标相距约 10 米以内，返回 `409 ACTIVE_CLEANUP_TARGET_NEARBY`。显式提供的 `eventId` 必须与海滩相同，且提交时间落在活动时段内。
+1. convert each report's current category quantities to category scores using category weight × quantity weight;
+2. the report score is the maximum category score within that report;
+3. use eligible `Counted` reports from the latest 90 days;
+4. fewer than 3 eligible reports → insufficient data;
+5. otherwise the beach Attention Score is the **median of the eligible report scores**.
 
-响应沿用 `LitterReport`，另外包含：
+For a report with Iteration 2 `itemCounts`, cleanup actions first reduce that report's remaining counts. The remaining counts are converted back to quantity bands, that report is rescored, and only then is the beach median recomputed. A fully cleared report contributes a current score of `0` rather than causing unrelated legacy reports to disappear from the calculation.
 
-```json
-{
-  "itemCounts": {"Plastic": 8, "Other": 2},
-  "remainingItemCounts": {"Plastic": 8, "Other": 2},
-  "eventId": "morib-2026-09-19"
-}
-```
+Cleanup does not add points to Attention Score.
 
-报告件数和照片是原始审计记录。发生清理后 `itemCounts` 保持原值，`remainingItemCounts` 由后端根据不可变清理流水实时计算。
+`GET /scoring-method/iteration2` publishes this as:
 
-### `GET /cleanup-targets?beachId=morib&reportId=r_…`
+- `remainingCountAggregation: per-report-after-cleanup`
+- `reportAggregation: max-category-score`
+- `beachAggregation: median`
 
-公开返回仍有剩余件数的 `Counted` 报告。可选 `reportId` 将结果限制到单个报告，供分享链接打开指定目标；`reportedAt`、`remaining` 的命名与前端 `CleanupTarget` 一致：
+## 5. Cleanup targets and actions
 
-```json
-[{"reportId":"r_…","beachId":"morib","beachName":"Pantai Morib","reportedAt":"…+08:00","itemCounts":{"Plastic":8},"remaining":{"Plastic":5},"remainingTotal":5}]
-```
+Only `Counted` reports with confirmed `itemCounts` and a positive remaining quantity can become cleanup targets.
 
-已清零的目标不再返回。没有 `itemCounts` 的旧版报告因缺少实际件数，不会成为可清理目标。`itemCounts` 是报告原始件数，清理变化只体现在 `remaining`。
+`GET /cleanup-targets?beachId=morib` returns current targets. Optional `reportId` limits the response to one shared target.
 
-### `POST /cleanup-actions`
+`POST /cleanup-actions` appends a cleanup action. A cleanup action:
 
-请求：
+- targets one report;
+- cannot remove more than the current remaining count in any category;
+- is idempotent for the same participant + `idempotencyKey` + request fingerprint;
+- stores the removal ledger but does not overwrite the original audit report;
+- may be partial, allowing later cleanup actions until remaining counts reach zero.
 
-```json
-{
-  "targetReportId": "r_…",
-  "removed": {"Plastic": 3},
-  "handling": "Recycled / handled",
-  "note": "Optional, at most 500 characters",
-  "eventId": "morib-2026-09-19",
-  "idempotencyKey": "optional unique UUID for safe retries"
-}
-```
+Cleanup `score` means **number of items removed**. It is not a personal point score, badge or leaderboard value.
 
-`eventId`、`note`、`idempotencyKey` 可省略；为安全重试，前端应在同一逻辑请求中复用 key，也可通过 `Idempotency-Key` 请求头提供。`removedCounts` 可作为 `removed` 的旧版别名，但不能同时传两者。`handling` 只能是 `Collected for disposal`、`Recycled / handled`、`Not recorded`。移除件数不能超过当前剩余件数。重复部分清理使用新的 `idempotencyKey`；同一个 key + 同一请求安全重试，key 被用于不同请求时返回 `409 IDEMPOTENCY_CONFLICT`。提交成功返回 `201`；相同请求重试返回 `200`：
+## 6. Community events and attendance
 
-```json
-{
-  "id":"c_…","participantId":"u_…","targetReportId":"r_…","eventId":null,
-  "beachId":"morib","beachName":"Pantai Morib","createdAt":"…+08:00",
-  "rows":[{"category":"Plastic","removed":3,"before":8,"after":5}],
-  "score":3,"handling":"Recycled / handled","note":"",
-  "status":"Cleanup recorded — awaiting follow-up"
-}
-```
+`GET /events` idempotently ensures four upcoming Saturday activities per supported beach, normally 09:00–12:00 Malaysia time. A moderator may add another event date through `POST /events`; Iteration 2 does not require a full edit/cancel management console.
 
-允许后续对同一 `targetReportId` 再提交，例如剩 5 件时再清 5 件。超过剩余量返回 `409 REMOVED_COUNT_EXCEEDS_REMAINING`；目标清零后再次提交返回 `409 CLEANUP_TARGET_COMPLETE`。报告和旧清理流水不更新、不删除。
+Join, Check-in and Attendance are separate states.
 
-### `GET /cleanups/mine`
+Attendance is recorded only when all of these are true:
 
-当前参与者自己的清理记录，按时间倒序，元素结构同上。
+1. participant joined the event;
+2. participant successfully checked in within the broad beach area during the event;
+3. participant produced same-event evidence at the same beach: either a photo-backed `Counted` report linked to the event or a cleanup action linked to the event.
 
-## 社区活动
+Check-in uses the requested GPS coordinates only for the proximity decision. Exact check-in coordinates are not stored.
 
-活动对象遵循前端 `CleanupEvent`：`id`、`beachId`、`beachName`、`area`、`date`、`startsAt`、`endsAt`、`status`、`source`、`participantCount`、`joinedBy`、`checkIns`、`attendanceBy`、`cleanupIds`。`date` 为 `YYYY-MM-DD`，开始/结束为 `HH:mm`；`source` 是 `weekly` 或 `admin`。参与者集合只含匿名参与者编号；`checkIns` 是编号到 `idle` / `within_area` 的对象映射。另有当前登录者的 `joined`、`checkedIn`、`attendanceConfirmed` 和计数摘要字段。
+Relevant endpoints:
 
-### `GET /events?beachId=morib`
+- `GET /events`
+- `GET /events/{id}`
+- `POST /events/{id}/join`
+- `DELETE /events/{id}/join`
+- `POST /events/{id}/check-in`
+- `GET /events/{id}/cleanups`
+- `POST /events` (moderator)
 
-公开列出最近和未来活动；读取时为每片海滩补齐未来四个周六的活动。可选按海滩筛选。状态为 `Open` 或 `Closed`，来源为 `weekly` 或 `admin`。
+## 7. Location privacy
 
-### `GET /events/{id}`
+Iteration 2 does not persist raw report GPS coordinates for the new count-backed flow.
 
-公开读取单个活动。
+For the active-target proximity check, the server stores a target-scoped HMAC of an approximately one-metre projected grid cell. It is used to detect another active cleanup target within roughly 10 metres. The HMAC is not an encrypted coordinate and cannot be reversed into latitude/longitude without the original coordinate search space and server key.
 
-### `GET /events/{id}/cleanups`
+Check-in stores only the pass result and timestamp. No public response serializes exact report or check-in coordinates.
 
-公开读取该活动关联的清理流水，用于活动结果页汇总件数；不会返回报告照片或精确位置。
+`GEO_PRIVACY_HMAC_KEY` must be a stable private production secret.
 
-### `POST /events`（moderator）
+## 8. Sharing
 
-创建活动。前端日期表单请求 `{ "beachId": "morib", "date": "2026-09-19" }`，默认 09:00–12:00（马来西亚时间）；也支持管理端传带时区的 `startsAt`、`endsAt` 时间戳。活动时长不能超过 12 小时；相同海滩和开始时间的重复创建返回已有活动。
+Sharing is target-scoped and does not create a social graph.
 
-### `POST /events/{id}/join`（登录）
+`GET /share-links?eventId=...&reportId=...` creates a stable signed share scope. At least one ID is required. When both IDs are supplied they must refer to the same beach.
 
-加入未关闭活动。重复调用幂等。
+- Event-only links may be created publicly.
+- Report links require the authenticated report owner.
+- Shared report pages expose only the selected report/target, its current remaining counts and the scoped photo endpoint.
+- Sharing never exposes account details or exact coordinates.
 
-### `DELETE /events/{id}/join`（登录）
+Public read endpoints:
 
-退出活动。重复调用幂等；成功后该参与者的签到状态从活动对象中移除。
+- `GET /share-links/{token}`
+- `GET /share-links/{token}/photo`
 
-## 分享
+Invalid or out-of-scope tokens return `404`.
 
-### `GET /share-links?eventId=…&reportId=…`
+## 9. Database integration
 
-为活动、已计数且含实际件数的报告，或二者的组合生成签名分享 token。至少提供一个 ID；同时提供时必须是同一海滩。报告链接只能由报告所有者创建；活动链接可公开创建。成功响应 `{ "token": "…", "path": "/share/…" }`。相同范围生成稳定链接。前端通过 `/share/{token}` 展示链接范围内的内容，登录、加入、签到后会回到同一链接；报告分享只展示被选中的报告目标，不会把海滩上的其他目标加入页面。
+Production uses PostgreSQL through `DATABASE_URL`; local development may use SQLite. `DATABASE_SCHEMA` may select an existing PostgreSQL schema.
 
-### `GET /share-links/{token}`
+For an existing database:
 
-公开读取 token 授权的活动和/或单个报告。报告包括原始件数、剩余件数及照片可用状态；目标清零后仍可查看报告和清理结果，但不能再创建清理记录。无效、越权或不存在的范围统一返回 `404 NOT_FOUND`。
+1. apply `migrations/001_rename_frontend_reports_to_reports.sql` when the legacy `frontend_reports` table still exists;
+2. apply `migrations/002_add_iteration2.sql` before deploying the Iteration 2 backend;
+3. deploy the application with the same schema selected by `DATABASE_SCHEMA`.
 
-### `GET /share-links/{token}/photo`
+Migration 002 adds:
 
-仅当 token 包含可分享报告时返回该报告原始照片；活动 token 或无效 token 返回 `404`。响应禁用缓存。分享不会公开精确坐标或报告人的账号资料。
+- `users.user_token`;
+- report `item_counts`, `proximity_ref`, `event_id` and compatibility fields;
+- `community_events`;
+- `community_event_members`;
+- `cleanup_actions`;
+- foreign keys, CHECK constraints and indexes required by the Iteration 2 contract.
 
-### `POST /events/{id}/check-in`（登录）
+The application startup path is idempotent and also repairs missing Iteration 2 constraints if an application process created the tables before the release migration was applied. Existing report rows are preserved.
 
-请求 `{ "lat": 2.74614, "lng": 101.44024 }`。必须先加入，并在活动时段内签到。距离活动海滩中心不超过 25 km 即通过；精确坐标只用于这次请求，不保存。没有加入返回 `409 JOIN_REQUIRED`，不在范围返回 `403 LOCATION_OUT_OF_RANGE`。
+`schema.sql` is the clean-new-database definition. It must stay aligned with migration 002 and the SQLAlchemy runtime tables.
 
-## 错误码
+## 10. Moderator provisioning
 
-新增错误均继续使用 `{ "code": "…", "message": "English sentence for display" }`：
+Normal anonymous signup creates `volunteer` users only. Use `scripts/provision_moderator.py` for a controlled moderator account. The moderator role can create event dates but does not gain report-review powers in this iteration.
 
-| HTTP | code | 含义 |
-| --- | --- | --- |
-| 401 | `INVALID_RECOVERY_TOKEN` | 恢复令牌错误 |
-| 403 | `MODERATOR_REQUIRED` | 活动管理接口需要 moderator |
-| 403 | `LOCATION_OUT_OF_RANGE` | 签到位置不在范围内 |
-| 409 | `ACTIVE_CLEANUP_TARGET_NEARBY` | 已有约 10 米内的活动清理目标 |
-| 409 | `REMOVED_COUNT_EXCEEDS_REMAINING` | 移除件数大于目标剩余件数 |
-| 409 | `CLEANUP_TARGET_COMPLETE` | 目标已经清零 |
-| 409 | `IDEMPOTENCY_CONFLICT` | 幂等键与已提交的不同请求冲突 |
-| 409 | `JOIN_REQUIRED` / `EVENT_CHECKIN_REQUIRED` | 活动相关操作未先加入/签到 |
-| 409 | `EVENT_NOT_ACTIVE` / `EVENT_CLOSED` | 活动当前不接受签到或清理关联 |
+## 11. Deployment configuration
 
-## 海滩注意度
+Required or recommended production settings:
 
-`GET /beaches` 和 `GET /beaches/{id}` 保持原响应字段。Iteration 2 有至少三条最近 90 天 `Counted` 报告时，注意度改为：按类别加总**所有仍未清理的件数**，每个类别依上述阈值转档，套用现有类别权重和档位权重，再取最高类别分数。清理后这个值会即时下降；所有计数目标清零时为 0（Low）。不足三条时仍返回 `severity: null`、`band: null`、`attentionScore: null`。只有旧版档位、没有真实件数的历史数据仍使用 Iteration 1 的中位数算法；有真实件数时不将未知历史档位伪造成件数。
+- `DATABASE_URL`
+- `DATABASE_SCHEMA` when using a non-default schema
+- `AUTH_JWT_SECRET`
+- `FRONTEND_ORIGINS`
+- `PHOTO_STORAGE_DIR` on persistent private storage
+- `GEO_PRIVACY_HMAC_KEY`
+- `LITTER_MODEL_PATH` and `LITTER_MODEL_VERSION` when YOLO inference is enabled
 
-## 部署配置
-
-- `GEO_PRIVACY_HMAC_KEY`：生产必须配置的随机服务端密钥，保持稳定；数据库只保存 HMAC 网格引用。未配置时本地开发回退到 JWT 密钥派生值。
-- `LITTER_MODEL_PATH`：可选，默认指向 `actual-project/ml-model/models/sea_taco_yolo11m_best.pt`。
-- `LITTER_MODEL_VERSION`：可选，默认 `sea-taco-yolo11m-best/1`。
-- `requirements-ml.txt` 安装 YOLO 依赖。当前仓库权重用 Git LFS 管理；需要先取回 LFS 文件。权重缺失或依赖未安装时 API 仍启动，但识别返回 `unavailable`，前端应让参与者人工录入。
-- `POST /api/species-distribution/predict` 使用随仓库提供的四个 OBIS 离线模型；`requirements.txt` 安装其运行依赖。该预测只返回相对出现分数，不写入数据库，也不参与垃圾严重度。
-- `MODERATOR` 通过 `scripts/provision_moderator.py` 创建，普通用户不能自行更改 `role`。
+The original report photo is retained in private audit storage. After-cleanup recognition photos are temporary and are discarded after inference.
