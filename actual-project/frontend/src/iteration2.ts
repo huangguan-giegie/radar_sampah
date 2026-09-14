@@ -76,6 +76,21 @@ export interface AiSuggestion {
   supportedClasses: string[];
 }
 
+export function normalizeSuggestedCounts(
+  counts: Partial<Record<LitterCategory, number>>,
+): Partial<Record<LitterCategory, number>> {
+  return Object.fromEntries(
+    Object.entries(counts).filter(([, count]) => Number.isInteger(count) && Number(count) > 0),
+  ) as Partial<Record<LitterCategory, number>>;
+}
+
+export function effectiveAiModelState(
+  state: AiSuggestion['modelState'],
+  counts: Partial<Record<LitterCategory, number>>,
+): AiSuggestion['modelState'] {
+  return state === 'ready' && Object.keys(normalizeSuggestedCounts(counts)).length === 0 ? 'empty' : state;
+}
+
 type Iteration2Store = {
   version: 3;
   events: CleanupEvent[];
@@ -437,11 +452,12 @@ export async function analyseReportPhoto(photoKey: string, forceFailure = false)
   if (!USE_MOCK) {
     if (forceFailure) return { modelState: 'unavailable', modelVersion: 'unavailable', suggestions: {}, counts: {}, supportedClasses: MODEL_CLASSES };
     const result = await recognizeReportPhoto(photoKey);
+    const counts = normalizeSuggestedCounts(result.counts);
     return {
-      modelState: result.modelState,
+      modelState: effectiveAiModelState(result.modelState, counts),
       modelVersion: result.modelVersion,
       suggestions: result.suggestions,
-      counts: result.counts,
+      counts,
       supportedClasses: result.supportedClasses,
     };
   }
@@ -453,11 +469,12 @@ export async function analyseReportPhoto(photoKey: string, forceFailure = false)
   const primary: LitterCategory = number % 3 === 0 ? 'Fishing gear' : number % 3 === 1 ? 'Plastic' : 'Glass';
   const quantity: QuantityBand = number % 2 === 0 ? 'Medium' : 'Small';
   const count = quantity === 'Medium' ? 8 : 3;
+  const counts = { [primary]: count } as Partial<Record<LitterCategory, number>>;
   return {
-    modelState: 'ready',
+    modelState: effectiveAiModelState('ready', counts),
     modelVersion: 'sea-taco-yolo11m-best',
     suggestions: { [primary]: quantity },
-    counts: { [primary]: count },
+    counts,
     supportedClasses: MODEL_CLASSES,
   };
 }

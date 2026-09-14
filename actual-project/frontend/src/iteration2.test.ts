@@ -8,6 +8,8 @@ import {
   getCleanupTarget,
   joinCleanupEvent,
   listCleanupEvents,
+  normalizeSuggestedCounts,
+  effectiveAiModelState,
 } from './iteration2';
 
 class MemoryStorage implements Storage {
@@ -33,6 +35,14 @@ describe('Iteration 2 date presentation', () => {
 });
 
 describe('Iteration 2 activity and cleanup ledger', () => {
+  it('keeps only positive whole AI counts', () => {
+    expect(normalizeSuggestedCounts({ Plastic: 8, Glass: 0, Metal: 2.8 })).toEqual({ Plastic: 8 });
+  });
+
+  it('treats a ready response with no detections as empty', () => {
+    expect(effectiveAiModelState('ready', {})).toBe('empty');
+  });
+
   it('generates four Saturday events per configured beach', async () => {
     expect(await listCleanupEvents()).toHaveLength(16);
   });
