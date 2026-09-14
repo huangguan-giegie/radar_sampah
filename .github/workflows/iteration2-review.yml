@@ -4,8 +4,10 @@ on:
   push:
     branches:
       - fix/iteration2-backend-review-20260914
+      - fix/standalone-cleanup-ai-prod-20260914
   pull_request:
     branches:
+      - main
       - iteration-2-dev
 
 jobs:
