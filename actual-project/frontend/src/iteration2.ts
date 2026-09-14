@@ -199,8 +199,8 @@ function updateEvent(eventId: string, change: (event: CleanupEvent) => CleanupEv
   return updated;
 }
 
-export async function listCleanupEvents(participantId?: string, joinedOnly = false): Promise<CleanupEvent[]> {
-  const events = USE_MOCK ? readStore().events : await getIteration2Events();
+export async function listCleanupEvents(participantId?: string, joinedOnly = false, includeAuth = true): Promise<CleanupEvent[]> {
+  const events = USE_MOCK ? readStore().events : await getIteration2Events(undefined, includeAuth);
   return events
     .filter((event) => event.status === 'Open')
     .filter((event) => !joinedOnly || Boolean(participantId && event.joinedBy.includes(participantId)))
@@ -262,8 +262,8 @@ export async function getCleanupTargetRecord(beachId: string, reportId?: string)
   return getCleanupTarget(beachId, reportId);
 }
 
-export async function listCleanupTargets(beachId?: string, reportId?: string): Promise<CleanupTarget[]> {
-  if (!USE_MOCK) return getIteration2Targets(beachId, reportId);
+export async function listCleanupTargets(beachId?: string, reportId?: string, includeAuth = true): Promise<CleanupTarget[]> {
+  if (!USE_MOCK) return getIteration2Targets(beachId, reportId, includeAuth);
   return readStore().targets
     .filter((target) => !beachId || target.beachId === beachId)
     .filter((target) => !reportId || target.reportId === reportId)

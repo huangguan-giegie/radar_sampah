@@ -141,9 +141,9 @@ function retryDelayMs(response: Response, attempt: number) {
  * One JSON request. Every real-backend call goes through here: it attaches the
  * token, parses the body, and turns any non-2xx answer into an ApiError.
  */
-async function request(path: string, method = 'GET', body?: unknown, timeoutMs = 15_000) {
+async function request(path: string, method = 'GET', body?: unknown, timeoutMs = 15_000, includeAuth = true) {
   const headers: Record<string, string> = { Accept: 'application/json' };
-  const token = getToken();
+  const token = includeAuth ? getToken() : null;
   if (token) headers.Authorization = 'Bearer ' + token;
   if (body) headers['Content-Type'] = 'application/json';
 
@@ -194,9 +194,9 @@ async function request(path: string, method = 'GET', body?: unknown, timeoutMs =
 
 // Iteration 2 endpoints live here alongside the original API so they share
 // bearer-token handling, timeouts and server error messages with every screen.
-export function getIteration2Events(beachId?: string): Promise<any[]> {
+export function getIteration2Events(beachId?: string, includeAuth = true): Promise<any[]> {
   const query = beachId ? `?beachId=${encodeURIComponent(beachId)}` : '';
-  return request(`/events${query}`);
+  return request(`/events${query}`, 'GET', undefined, 15_000, includeAuth);
 }
 
 export function getIteration2Event(eventId: string): Promise<any> {
@@ -215,12 +215,12 @@ export function checkInIteration2Event(eventId: string, coords: { lat: number; l
   return request(`/events/${encodeURIComponent(eventId)}/check-in`, 'POST', coords);
 }
 
-export function getIteration2Targets(beachId?: string, reportId?: string): Promise<any[]> {
+export function getIteration2Targets(beachId?: string, reportId?: string, includeAuth = true): Promise<any[]> {
   const params = new URLSearchParams();
   if (beachId) params.set('beachId', beachId);
   if (reportId) params.set('reportId', reportId);
   const query = params.size ? `?${params.toString()}` : '';
-  return request(`/cleanup-targets${query}`);
+  return request(`/cleanup-targets${query}`, 'GET', undefined, 15_000, includeAuth);
 }
 
 export function createIteration2Cleanup(input: {
@@ -643,7 +643,7 @@ export async function getBeaches(): Promise<BeachSummary[]> {
   // Render's free instance can take longer than the normal JSON timeout to
   // wake up. Keep the public map request alive so a cold start does not look
   // like an empty beach list.
-  return request('/beaches', 'GET', undefined, 60_000);
+  return request('/beaches', 'GET', undefined, 60_000, false);
 }
 
 export async function getBeach(id: string): Promise<BeachDetail> {

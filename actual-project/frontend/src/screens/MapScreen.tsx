@@ -116,9 +116,9 @@ export default function MapScreen() {
     // Supporting layers are useful but must not hide the beach markers when
     // one of their requests is unavailable.
     try {
-      const eventRows = await listCleanupEvents();
+      const eventRows = await listCleanupEvents(undefined, false, false);
       setEvents(eventRows);
-      const targets = await listCleanupTargets();
+      const targets = await listCleanupTargets(undefined, undefined, false);
       setCleanupTargets(Object.fromEntries(targets.map((target) => [target.beachId, target])));
     } catch {
       // The beach layer remains usable without events or cleanup targets.
