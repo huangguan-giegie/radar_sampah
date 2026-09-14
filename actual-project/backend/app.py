@@ -96,17 +96,52 @@ def _ensure_postgres_iteration2_contract(engine: Any) -> None:
             )
 
         schema = _impl.database_schema()
-        index_name = f'"{schema}".cleanup_actions_target_created_at' if schema else "cleanup_actions_target_created_at"
+        index_name = f'"{schema}".cleanup_actions_target' if schema else "cleanup_actions_target"
+        connection.execute(text(f"DROP INDEX IF EXISTS {index_name}"))
         connection.execute(
             text(
-                f"CREATE INDEX IF NOT EXISTS {index_name} "
+                f"CREATE INDEX cleanup_actions_target "
                 f"ON {q('cleanup_actions')} (target_report_id, created_at)"
             )
         )
 
 
+def _repair_exact_duplicate_statuses(engine: Any) -> None:
+    """Undo the legacy same-day-only repair and apply the agreed exact rule."""
+
+    with engine.begin() as connection:
+        rows = connection.execute(
+            select(_impl.reports_table)
+            .where(_impl.reports_table.c.status != "Incomplete")
+            .order_by(_impl.reports_table.c.created_at, _impl.reports_table.c.id)
+        ).all()
+        seen: set[tuple[str, str, Any, tuple[tuple[str, str], ...]]] = set()
+        for row in rows:
+            quantities = _impl.quantities_from_row(row)
+            signature = tuple(
+                (category, quantities[category])
+                for category in _impl.FRONTEND_CATEGORIES
+                if category in quantities
+            )
+            local_day = _impl.utc_datetime(row.created_at).astimezone(_impl.KUALA_LUMPUR).date()
+            key = (row.reporter_id, row.beach_id, local_day, signature)
+            desired = "Duplicate" if key in seen else "Counted"
+            seen.add(key)
+            if row.status == desired:
+                continue
+            values: dict[str, Any] = {"status": desired}
+            if desired == "Counted":
+                values["status_note"] = None
+            connection.execute(
+                _impl.reports_table.update()
+                .where(_impl.reports_table.c.id == row.id)
+                .values(**values)
+            )
+
+
 def _initialise_database(engine: Any) -> None:
     _original_initialise_database(engine)
+    _repair_exact_duplicate_statuses(engine)
     _ensure_postgres_iteration2_contract(engine)
 
 
