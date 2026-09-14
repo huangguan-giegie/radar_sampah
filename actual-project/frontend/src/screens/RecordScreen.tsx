@@ -66,7 +66,7 @@ export default function RecordScreen() {
     // answered" visible. Guessing "Small" would invent a measurement.
     if (cat in next) delete next[cat];
     else next[cat] = undefined;
-    patchDraft({ quantities: next });
+    patchDraft({ quantities: next, itemCounts: null, aiDecision: null, aiModelVersion: null });
     setShowErrors(false);
   }
 
@@ -77,7 +77,7 @@ export default function RecordScreen() {
     const next = { ...draft.quantities };
     if (next[cat] === q) delete next[cat];
     else next[cat] = q;
-    patchDraft({ quantities: next });
+    patchDraft({ quantities: next, itemCounts: null, aiDecision: null, aiModelVersion: null });
     setShowErrors(false);
   }
 
@@ -91,7 +91,7 @@ export default function RecordScreen() {
     setShowErrors(false);
     // Stamp the navigation so the review screen knows the details screen is
     // genuinely the previous history entry, and its back button can pop.
-    nav('/report/review', { state: { from: CAME_FROM_DETAILS } });
+    nav('/report/suggestions', { state: { from: CAME_FROM_DETAILS } });
   }
 
   // Built in layers. The user's own photo is the background, so the evidence

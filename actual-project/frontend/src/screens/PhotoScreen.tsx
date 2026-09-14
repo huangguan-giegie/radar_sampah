@@ -71,7 +71,7 @@ export default function PhotoScreen() {
           if (!draft.photo && draft.existingPhotoKey) {
             patchDraft({ existingPhotoUrl: null, existingPhotoUnavailable: true });
           } else {
-            patchDraft({ photo: null, existingPhotoUrl: null, existingPhotoKey: null });
+            patchDraft({ photo: null, existingPhotoUrl: null, existingPhotoKey: null, aiDecision: null, aiModelVersion: null });
             setUploadError('That photo preview has expired. Please choose the photo again.');
           }
         }
@@ -128,12 +128,12 @@ export default function PhotoScreen() {
       if (!photo.metadataStripped) {
         throw new Error('Location metadata could not be removed. Please choose another photo.');
       }
-      patchDraft({ photo, existingPhotoUnavailable: false });
+      patchDraft({ photo, existingPhotoUnavailable: false, aiDecision: null, aiModelVersion: null });
     } catch (error) {
       setUploadError(error instanceof Error ? error.message : 'Please try again.');
       // Clear the photo as well as showing the error. A half-failed upload left
       // in the draft would let Continue submit a report pointing at nothing.
-      patchDraft({ photo: null });
+      patchDraft({ photo: null, aiDecision: null, aiModelVersion: null });
     } finally {
       setUploading(false);
     }
@@ -176,7 +176,7 @@ export default function PhotoScreen() {
         <div>
           <div style={{ fontSize: 30, fontWeight: 640, letterSpacing: '-.8px' }}>Show us what you found</div>
           <div style={{ fontSize: 14, color: C.muted, marginTop: 7, lineHeight: 1.5 }}>
-            You'll pick what it is yourself — no AI guessing on your behalf.
+            You can review an editable AI suggestion later, or keep your own manual values.
           </div>
         </div>
 
@@ -292,7 +292,7 @@ export default function PhotoScreen() {
               <button
                 type="button"
                 onClick={() => {
-                  patchDraft({ photo: null });
+                  patchDraft({ photo: null, aiDecision: null, aiModelVersion: null });
                   cameraRef.current?.click();
                 }}
                 style={{ position: 'absolute', top: 14, right: 14, fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,.9)', background: 'rgba(30,36,44,.45)', backdropFilter: 'blur(6px)', padding: '6px 11px', borderRadius: 999 }}

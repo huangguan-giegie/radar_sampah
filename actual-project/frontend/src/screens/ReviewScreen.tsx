@@ -6,14 +6,14 @@
 // flowRules.ts decides which, so this screen never has to branch on it.
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import { createReport, getBeaches, photoPreviewUrl, updateReport } from '../api';
+import { createReport, getBeaches, getMyReports, photoPreviewUrl, updateReport } from '../api';
 import { ArrowRight, Info, Shield } from '../components/Icon';
 import { BackButton, ErrorNote, PrimaryButton, StepBadge, TextButton } from '../components/ui';
 import { C } from '../theme';
-import { OverlayChip, StatusBadge } from '../components/ds';
+import { Alert, InfoChip, OverlayChip, StatusBadge } from '../components/ds';
 import { useApp } from '../AppContext';
-import type { BeachSummary, LitterCategory, QuantityBand } from '../types';
-import { backFromReview, buildReportSubmission, finishReportSubmission } from '../flowRules';
+import type { BeachSummary, LitterCategory, LitterReport, QuantityBand } from '../types';
+import { backFromReview, buildReportSubmission, findExactDuplicateReport, finishReportSubmission } from '../flowRules';
 
 export default function ReviewScreen() {
   const nav = useNavigate();
@@ -24,12 +24,25 @@ export default function ReviewScreen() {
   // place a disabled button is right, since a second tap would file twice.
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [duplicateMatch, setDuplicateMatch] = useState<LitterReport | null>(null);
 
   useEffect(() => {
     getBeaches()
       .then((list) => setBeaches(list))
       .catch(() => setBeaches([]));
   }, []);
+
+  useEffect(() => {
+    let active = true;
+    getMyReports()
+      .then((reports) => {
+        if (active) setDuplicateMatch(findExactDuplicateReport(draft, reports));
+      })
+      .catch(() => {
+        if (active) setDuplicateMatch(null);
+      });
+    return () => { active = false; };
+  }, [draft]);
 
   const beach = beaches.find((b) => b.id === draft.beachId);
 
@@ -167,6 +180,12 @@ export default function ReviewScreen() {
 
         <div style={{ background: C.white, border: `1px solid ${C.line}`, borderRadius: 24, overflow: 'hidden' }}>
           {row('Beach', draft.beachName ?? beach?.name ?? 'Not selected', () => nav('/report/confirm', { replace: true }))}
+          {row(
+            'Entry',
+            draft.aiDecision === 'confirmed' ? 'AI suggestion confirmed' : 'Manual values confirmed',
+            undefined,
+            draft.aiDecision === 'confirmed' ? 'USER CONFIRMED' : 'MANUAL',
+          )}
           {(Object.keys(draft.quantities) as LitterCategory[]).length === 0
             ? row('Litter', 'Not selected', () => backToDetails())
             : (Object.entries(draft.quantities) as [LitterCategory, QuantityBand][]).map(([cat, q]) =>
@@ -176,6 +195,21 @@ export default function ReviewScreen() {
             ? row('Location', 'Beach area confirmed', undefined, 'GPS PRIVATE')
             : row('Location', 'Selected manually', undefined, 'NO GPS STORED')}
         </div>
+
+        {duplicateMatch && (
+          <Alert title="You already filed this one" tone="caution">
+            <div>Report {duplicateMatch.id} looks the same as this one. If it really is a new find, you can still submit it.</div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 10 }}>
+              <InfoChip>Same participant</InfoChip>
+              <InfoChip>{duplicateMatch.beachName}</InfoChip>
+              <InfoChip>Same local day</InfoChip>
+              {(Object.entries(duplicateMatch.quantities) as [LitterCategory, QuantityBand][]).map(([category, quantity]) => (
+                <InfoChip key={category}>{category} · {quantity}</InfoChip>
+              ))}
+            </div>
+            <div style={{ marginTop: 9 }}>This is a warning only, not a rejection.</div>
+          </Alert>
+        )}
 
         {error && <ErrorNote title="Could not save" body={error} />}
 
@@ -189,7 +223,7 @@ export default function ReviewScreen() {
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
           <PrimaryButton onClick={submit} disabled={busy}>
-            {busy ? 'Saving…' : 'Submit Report'}
+            {busy ? 'Saving…' : duplicateMatch ? 'Submit anyway — new observation' : 'Submit Report'}
             {!busy && <ArrowRight />}
           </PrimaryButton>
           <TextButton onClick={() => backToDetails()}>Back to details</TextButton>

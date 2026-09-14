@@ -11,10 +11,16 @@
 // guard for corrections, and the way back from the review screen.
 import { describe, expect, it } from 'vitest';
 import type { ReportDraft } from './AppContext';
-import { CAME_FROM_DETAILS, backFromReview, buildReportSubmission, finishReportSubmission, formatReportComposition, guardStep, hasDraftProgress, historicalPhotoUnavailable, orderByNeed, reachableStep, reportOutcome, safeNextPath } from './flowRules';
+import { CAME_FROM_DETAILS, backFromReview, buildReportSubmission, findExactDuplicateReport, finishReportSubmission, formatReportComposition, guardStep, hasDraftProgress, historicalPhotoUnavailable, orderByNeed, reachableStep, reportOutcome, safeNextPath } from './flowRules';
 import { markerHtml } from './components/BeachMarker';
 import type { BeachSummary } from './types';
-import { attentionStateFor } from './theme';
+import { attentionStateFor, formatDate } from './theme';
+
+describe('fixed date presentation', () => {
+  it('uses the exact date and weekday while preserving an unambiguous order', () => {
+    expect(formatDate('2026-09-16T04:00:00+08:00')).toBe('2026-09-16 (Wed)');
+  });
+});
 
 // A complete, valid draft. Each test passes in only the fields it wants to
 // break, so a test reads as "this one thing is wrong" rather than twelve lines
@@ -30,6 +36,10 @@ function draft(changes: Partial<ReportDraft> = {}): ReportDraft {
     locationSource: 'manual',
     coords: null,
     quantities: { Plastic: 'Small' },
+    itemCounts: null,
+    eventId: null,
+    aiDecision: 'manual',
+    aiModelVersion: null,
     gpsIssue: null,
     editingReportId: null,
     editingStatus: null,
@@ -84,7 +94,42 @@ describe('safeNextPath', () => {
   );
 });
 
+describe('findExactDuplicateReport', () => {
+  const existing = {
+    id: 'R-2041',
+    beachId: 'morib',
+    beachName: 'Pantai Morib',
+    quantities: { Plastic: 'Small' as const, Glass: 'Medium' as const },
+    category: 'Glass' as const,
+    quantity: 'Medium' as const,
+    categoryScores: {},
+    reportScore: 1,
+    createdAt: '2026-09-10T03:00:00.000Z',
+    status: 'Counted' as const,
+  };
+
+  it('finds a same-day exact match regardless of category key order', () => {
+    expect(findExactDuplicateReport(
+      draft({ quantities: { Glass: 'Medium', Plastic: 'Small' } }),
+      [existing],
+      new Date('2026-09-10T12:00:00+08:00'),
+    )?.id).toBe('R-2041');
+  });
+
+  it('does not warn when one confirmed quantity differs', () => {
+    expect(findExactDuplicateReport(
+      draft({ quantities: { Glass: 'Large', Plastic: 'Small' } }),
+      [existing],
+      new Date('2026-09-10T12:00:00+08:00'),
+    )).toBeNull();
+  });
+});
+
 describe('buildReportSubmission', () => {
+  it('refuses unconfirmed AI or manual values', () => {
+    expect(() => buildReportSubmission(draft({ aiDecision: null }))).toThrow(/Confirm the AI suggestion/);
+  });
+
   it('includes coordinates only for a GPS report', () => {
     const result = buildReportSubmission(
       draft({ locationSource: 'gps', coords: { lat: 2.95, lng: 101.42 } }),
@@ -118,6 +163,19 @@ describe('buildReportSubmission', () => {
         'Fishing gear': 'Medium',
         Glass: 'Small',
       });
+    }
+  });
+
+  it('sends model-confirmed item counts separately from the compatible quantity bands', () => {
+    const result = buildReportSubmission(draft({
+      quantities: { Plastic: 'Medium', Other: 'Small' },
+      itemCounts: { Plastic: 8, Other: 2 },
+      aiDecision: 'confirmed',
+    }));
+    expect(result.kind).toBe('create');
+    if (result.kind === 'create') {
+      expect(result.payload.quantities).toEqual({ Plastic: 'Medium', Other: 'Small' });
+      expect(result.payload.itemCounts).toEqual({ Plastic: 8, Other: 2 });
     }
   });
 
@@ -276,9 +334,16 @@ describe('Flow guards for direct URLs into the reporting flow', () => {
 
   it('allows a complete draft to access every step after refresh', () => {
     const d = draft();
-    for (const step of ['photo', 'location', 'confirm', 'details', 'review'] as const) {
+    for (const step of ['photo', 'location', 'confirm', 'details', 'suggestions', 'review'] as const) {
       expect(guardStep(step, d)).toBeNull();
     }
+  });
+
+  it('requires an AI or manual decision before Review', () => {
+    const d = draft({ aiDecision: null });
+    expect(reachableStep(d)).toBe('suggestions');
+    expect(guardStep('review', d)).toBe('/report/suggestions');
+    expect(guardStep('suggestions', d)).toBeNull();
   });
 
   // This used to assert the opposite - that a correction with NO photo could

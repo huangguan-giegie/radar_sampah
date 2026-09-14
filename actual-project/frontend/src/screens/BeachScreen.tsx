@@ -11,15 +11,16 @@
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useEffect, useRef, useState } from 'react';
 import { getBeach, getSpeciesDistribution, USE_MOCK } from '../api';
-import { pendingSourceLabel } from '../sources';
 import { BeachCover } from '../components/BeachCover';
 import { Camera, Check, ChevronRight, Clock, Info, SpeciesIcon } from '../components/Icon';
 import { BackButton, GhostButton, Label, PrimaryButton, Skeleton } from '../components/ui';
 import { attentionStateFor, C, formatDate, freshnessLabel, freshStyle, MONO, NOISE, reportWord, SEVERITY, severityLabel } from '../theme';
-import { BandMeter, GlassPanel, InfoChip } from '../components/ds';
+import { BandMeter, Callout, GlassPanel, InfoChip } from '../components/ds';
 import { useApp } from '../AppContext';
 import type { BeachDetail, SpeciesDistributionResult } from '../types';
 import { hasDraftProgress, resumePath } from '../flowRules';
+import { cleanupTotal, getCleanupTarget, getLatestCleanupForBeach, type CleanupAction, type CleanupTarget } from '../iteration2';
+import { MODEL_SPECIES_MEDIA } from '../speciesMedia';
 
 /*
  * relativeOccurrenceScore is shown exactly as the API sends it, on a 0..1 scale.
@@ -46,7 +47,8 @@ export default function BeachScreen() {
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
   const [modelResult, setModelResult] = useState<SpeciesDistributionResult | null>(null);
-  const [modelFailed, setModelFailed] = useState(false);
+  const [latestCleanup, setLatestCleanup] = useState<CleanupAction | null>(null);
+  const [cleanupTarget, setCleanupTarget] = useState<CleanupTarget | null>(null);
 
   // beachId is in the dependency list, so moving between beaches refetches.
   // Without it React would show the previous beach under the new name. Model
@@ -55,18 +57,27 @@ export default function BeachScreen() {
   useEffect(() => {
     setLoading(true);
     setModelResult(null);
-    setModelFailed(false);
     getBeach(beachId)
       .then((data) => {
         setB(data);
         if (!USE_MOCK) {
           getSpeciesDistribution(data.lat, data.lng)
             .then(setModelResult)
-            .catch(() => setModelFailed(true));
+            .catch(() => setModelResult(null));
         }
       })
       .catch(() => setFailed(true))
       .finally(() => setLoading(false));
+  }, [beachId]);
+
+  useEffect(() => {
+    let active = true;
+    Promise.all([getLatestCleanupForBeach(beachId), getCleanupTarget(beachId)]).then(([cleanup, target]) => {
+      if (!active) return;
+      setLatestCleanup(cleanup);
+      setCleanupTarget(target);
+    }).catch(() => undefined);
+    return () => { active = false; };
   }, [beachId]);
 
   // Scroll once the beach has loaded - before that the section does not exist
@@ -135,13 +146,6 @@ export default function BeachScreen() {
   const modelByScientificName = new Map(
     (modelResult?.predictions ?? []).map((prediction) => [prediction.scientificName, prediction]),
   );
-
-  // Bar width comes from the quantity band, not from a percentage. There are
-  // only four bands and they do not add up to 100 - drawing them as shares of a
-  // whole would invent precision the data does not have.
-  const BAND_WIDTH: Record<string, string> = {
-    Small: '25%', Medium: '50%', Large: '75%', 'Very Large': '100%',
-  };
 
   return (
     <div className="screen scroll-y" style={{ zIndex: 20 }}>
@@ -268,8 +272,8 @@ export default function BeachScreen() {
             <div style={{ flex: 1, fontSize: 12, lineHeight: 1.5, color: C.muted }}>
 
               {b.lastReportedAt
-                ? 'The most recent counted report is older than 90\u00a0days. Conditions may have changed in either direction.'
-                : 'No counted report has ever been filed for this beach. That is missing evidence, not a finding.'}
+                ? 'Last reported over 90 days ago. That means unchecked, not clean.'
+                : 'No counted report yet. That means unchecked, not clean.'}
             </div>
           </div>
         )}
@@ -277,10 +281,28 @@ export default function BeachScreen() {
 
       <div className="measure" style={{ padding: '20px 16px calc(var(--safe-bottom) + 36px)', display: 'flex', flexDirection: 'column', gap: 22 }}>
 
+        {cleanupTarget && (
+          <div className="i2-card">
+            <Label style={{ marginBottom: 8 }}>CLEANUP CHECK</Label>
+            <div style={{ fontSize: 17, fontWeight: 680, color: C.ink2 }}>Does this litter need clearing?</div>
+            <div style={{ marginTop: 5, fontSize: 12.5, lineHeight: 1.5, color: C.muted }}>
+              If you removed any of it, record what changed.
+            </div>
+            <div style={{ marginTop: 9, fontFamily: MONO, fontSize: 9, color: C.dim }}>
+              REPORT {cleanupTarget.reportId.toUpperCase()} · {cleanupTotal(cleanupTarget)} ITEMS REMAIN
+            </div>
+            <PrimaryButton onClick={() => nav(user ? `/cleanup/${beachId}` : `/identity?next=${encodeURIComponent(`/cleanup/${beachId}`)}`)} style={{ marginTop: 13 }}>
+              Add a Cleanup <ChevronRight size={13} color={C.lime} />
+            </PrimaryButton>
+          </div>
+        )}
+
         <div>
           <Label style={{ marginBottom: 12 }}>LITTER COMPOSITION</Label>
           <div style={{ fontSize: 12, lineHeight: 1.5, color: C.muted, margin: '-4px 0 12px' }}>
-            Latest reported litter categories and quantity bands. Litter status above uses the median of eligible reports from the last 90 days.
+            {b.compositionSource?.method === 'yolo'
+              ? 'Latest report photo · YOLO + backend percentages'
+              : 'Latest report · backend percentage estimate'}
           </div>
           {/* What the litter is made of. This comes from the single most recent
               counted report, and that report's date is printed under the bars -
@@ -296,22 +318,22 @@ export default function BeachScreen() {
                   <div style={{ flex: 1, height: 14, borderRadius: 7, background: 'rgba(11,33,97,.05)', overflow: 'hidden' }}>
                     <div
                       style={{
-                        width: BAND_WIDTH[c.quantity] ?? '25%',
+                        width: `${Math.max(0, Math.min(100, c.percentage))}%`,
                         height: '100%',
                         borderRadius: 7,
                         background: COMP_COLORS[i % COMP_COLORS.length],
                       }}
                     />
                   </div>
-                  <span style={{ width: 62, flex: 'none', textAlign: 'right', fontFamily: MONO, fontSize: 9.5, color: C.muted }}>
-                    {c.quantity}
+                  <span style={{ width: 44, flex: 'none', textAlign: 'right', fontFamily: MONO, fontSize: 12, fontWeight: 700, color: C.ink2 }}>
+                    {c.percentage}%
                   </span>
                 </div>
               ))}
               <div style={{ fontFamily: MONO, fontSize: 8.5, letterSpacing: '.1em', color: C.faint, marginTop: 4 }}>
                 {b.compositionSource
-                  ? `REPORT ${formatDate(b.compositionSource.createdAt).toUpperCase()} · BROAD CATEGORIES`
-                  : 'BROAD CATEGORIES'}
+                  ? `REPORT ${formatDate(b.compositionSource.createdAt).toUpperCase()} · ${b.compositionSource.method === 'yolo' ? 'YOLO + BACKEND' : 'BACKEND ESTIMATE'}`
+                  : 'BACKEND CALCULATED'}
               </div>
             </div>
           ) : (
@@ -325,6 +347,12 @@ export default function BeachScreen() {
             </div>
           )}
         </div>
+
+        {latestCleanup && (
+          <Callout title="Cleanup recorded — awaiting follow-up" tone="reassurance" icon={<Check color={C.green} />}>
+            {latestCleanup.score} items removed on {formatDate(latestCleanup.createdAt)}. A new report will confirm the change.
+          </Callout>
+        )}
 
 
         {/* The whole card is the link. It carries the three lines that matter
@@ -350,19 +378,7 @@ export default function BeachScreen() {
           <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '.16em', color: C.dim }}>
             HOW THIS BAND IS CALCULATED
           </div>
-          <div style={{ fontSize: 15.5, fontWeight: 650, marginTop: 9 }}>Same rule for every beach</div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 7, marginTop: 11 }}>
-            {[
-              'Duplicates and incomplete reports are excluded.',
-              'Each report uses the highest category score; the beach uses the median over 90 days.',
-              'Four fixed bands: Low · Moderate · High · Very high.',
-            ].map((t) => (
-              <div key={t} style={{ display: 'flex', gap: 9, alignItems: 'flex-start', fontSize: 12.5, lineHeight: 1.5, color: C.mist }}>
-                <i style={{ width: 5, height: 5, borderRadius: 3, background: C.lime, display: 'block', flex: 'none', marginTop: 6 }} />
-                {t}
-              </div>
-            ))}
-          </div>
+          <div style={{ fontSize: 15.5, fontWeight: 650, marginTop: 9 }}>One consistent 90-day rule</div>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, borderTop: '1px solid rgba(255,255,255,.1)', marginTop: 13, paddingTop: 11 }}>
 
             <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 650, color: C.lime, whiteSpace: 'nowrap' }}>
@@ -372,232 +388,145 @@ export default function BeachScreen() {
         </button>
 
 
-        <div ref={speciesRef}>
-          <Label style={{ marginBottom: 12 }}>BIODIVERSITY NEARBY · {b.habitat}</Label>
-          <div style={{ fontSize: 12, lineHeight: 1.5, color: C.muted, margin: '-4px 0 12px' }}>
-            Contextual information only — it does not contribute to litter severity.
+        <div ref={speciesRef} id="species-model">
+          <Label style={{ marginBottom: 12 }}>BIODIVERSITY NEAR THIS BEACH</Label>
+          <div style={{ fontSize: 12.5, lineHeight: 1.5, color: C.muted, margin: '-4px 0 12px' }}>
+            Habitat · {b.habitat}
           </div>
-          <div className="scroll-x" style={{ display: 'flex', gap: 12, paddingBottom: 6, margin: '0 -16px', paddingLeft: 16, paddingRight: 16 }}>
-            {/* Biodiversity. A separate section with its own heading, its own
-                colours and its own sources - it is context for why litter here
-                matters, and never an input to the litter status. */}
-            {b.species.map((sp) => (
-              <div key={sp.name} style={{ width: 196, flex: 'none', background: C.white, border: `1px solid ${C.line}`, borderRadius: 22, overflow: 'hidden' }}>
-
-                {/* The species' own photo, or just the gradient. This used to
-                    fall back to the beach cover, which made every card on a
-                    beach show the same picture - and each one read as "this is
-                    what that animal looks like". */}
-                <BeachCover coverImageUrl={sp.pictureUrl ?? null} scene={b.scene} style={{ height: 88 }}>
-                  <div style={{ position: 'absolute', inset: 0, background: 'rgba(12,24,52,.25)' }} />
-                  <div
-                    style={{
-                      position: 'absolute',
-                      left: 14,
-                      bottom: -16,
-                      width: 40,
-                      height: 40,
-                      borderRadius: 20,
-                      background: C.bg,
-                      border: '1px solid rgba(11,33,97,.1)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      boxShadow: '0 6px 14px -6px rgba(14,30,64,.4)',
-                    }}
-                  >
-                    <SpeciesIcon glyph={sp.glyph} />
-                  </div>
-                </BeachCover>
-                <div style={{ padding: '24px 14px 14px' }}>
-                  <div style={{ fontSize: 14, fontWeight: 650, letterSpacing: '-.1px' }}>{sp.name}</div>
-                  {sp.scientificName && (
-                    <div style={{ fontSize: 11, fontStyle: 'italic', color: C.dim, marginTop: 3 }}>
-                      {sp.scientificName}
-                      {sp.threatCategory ? ` · ${sp.threatCategory}` : ''}
-                    </div>
-                  )}
-                  {/* Live model context, printed as a plain labelled line so it
-                      is never mistaken for the card's sourced content. */}
-                  {sp.scientificName && modelByScientificName.has(sp.scientificName) && (
-                    <div style={{ marginTop: 7, fontFamily: MONO, fontSize: 8, letterSpacing: '.07em', color: '#855A10' }}>
-                      MODELLED CONTEXT · RELATIVE SCORE {modelByScientificName.get(sp.scientificName)?.relativeOccurrenceScore}
-                    </div>
-                  )}
-                  <div style={{ fontSize: 11.5, lineHeight: 1.5, color: C.muted, marginTop: 3 }}>{sp.text}</div>
-
-                  {/* The occurrence box appears only once there is a score in
-                      it. It used to render for 'pending' and 'unavailable' too,
-                      and the basis text it printed comes straight from the API:
-                      "Green sea turtle is one of the four modelled species.
-                      Backend not connected yet." That is a sentence about our
-                      wiring, shown on a public page to somebody who came to
-                      look at a beach - and it is live on the deployed site,
-                      because the real API returns it as well.
-
-                      Static cards remain source-pending. The live model result is
-                      shown in the separate contextual panel below, so a modelled
-                      score is never mistaken for a sourced card or a severity band. */}
-                  {sp.likelihood?.state === 'ready' && (
-
-                    <div
+          <div
+            className="scroll-x"
+            style={{
+              display: 'flex',
+              gap: 12,
+              paddingBottom: 6,
+              margin: '0 -16px',
+              paddingLeft: 16,
+              paddingRight: 16,
+              scrollSnapType: 'x proximity',
+            }}
+          >
+            {MODEL_SPECIES_MEDIA.map((species) => {
+              const prediction = modelByScientificName.get(species.scientificName);
+              return (
+                <article
+                  key={species.scientificName}
+                  style={{
+                    width: 226,
+                    flex: 'none',
+                    background: C.white,
+                    border: `1px solid ${C.line}`,
+                    borderRadius: 22,
+                    overflow: 'hidden',
+                    scrollSnapAlign: 'start',
+                    boxShadow: '0 10px 26px -24px rgba(11,33,97,.7)',
+                  }}
+                >
+                  <div style={{ height: 132, position: 'relative', overflow: 'hidden', background: b.scene }}>
+                    <img
+                      src={species.imageUrl}
+                      alt={species.imageAlt}
+                      loading="lazy"
                       style={{
-                        marginTop: 10,
-                        padding: '9px 10px',
-                        borderRadius: 12,
-                        background: 'rgba(154,106,20,.07)',
-                        border: '1px dashed rgba(154,106,20,.32)',
+                        width: '100%',
+                        height: '100%',
+                        display: 'block',
+                        objectFit: 'cover',
+                        objectPosition: species.imageObjectPosition ?? 'center',
                       }}
-                    >
-                      {/* Amber and dashed, never the severity colours and never
-                          a bar: this is a different kind of measure. It is a
-                          relative score rather than a probability, so no % sign
-                          - the label says so and "/ 100" gives the scale. */}
-                      <div style={{ fontFamily: MONO, fontSize: 7.5, letterSpacing: '.1em', color: '#855A10' }}>
-                        RELATIVE OCCURRENCE SCORE · NOT A PROBABILITY
-                      </div>
-                      {sp.likelihood.score !== undefined && (
-                        <div style={{ fontFamily: MONO, fontSize: 15, fontWeight: 650, color: '#855A10', marginTop: 3 }}>
-                          {sp.likelihood.score}
-                          <span style={{ fontSize: 9, marginLeft: 4, letterSpacing: '.08em' }}>/ 100</span>
-                        </div>
-                      )}
-                      <div style={{ fontSize: 10, lineHeight: 1.45, color: C.muted, marginTop: 3 }}>
-                        {sp.likelihood.basis}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Show the gap when there is no real source yet. An amber
-                      badge is embarrassing; an invented citation in a marked
-                      assignment is misconduct. The wording comes from
-                      sources.ts, because habitat and group cards are team
-                      descriptions and were never coming from FishBase or OBIS -
-                      calling those "source pending" promised a source that was
-                      never going to arrive. */}
-                  {sp.source.dataset === 'pending' ? (
-
+                    />
                     <div
                       style={{
-                        marginTop: 9,
+                        position: 'absolute',
+                        inset: 0,
+                        background: 'linear-gradient(180deg,transparent 48%,rgba(7,22,50,.66) 100%)',
+                        pointerEvents: 'none',
+                      }}
+                    />
+                    <div
+                      style={{
+                        position: 'absolute',
+                        right: 10,
+                        bottom: 10,
+                        minHeight: 26,
                         display: 'inline-flex',
                         alignItems: 'center',
-                        gap: 5,
-                        background: 'rgba(217,162,75,.14)',
-                        border: '1px solid rgba(217,162,75,.35)',
-                        borderRadius: 6,
-                        padding: '4px 7px',
+                        padding: '5px 9px',
+                        borderRadius: 999,
+                        background: 'rgba(7,22,50,.82)',
+                        color: C.bg,
                         fontFamily: MONO,
-                        fontSize: 7.5,
-                        letterSpacing: '.08em',
-                        color: '#8A6420',
+                        fontSize: 9.5,
+                        fontWeight: 700,
+                        letterSpacing: '.06em',
+                        backdropFilter: 'blur(8px)',
                       }}
                     >
-                      <i style={{ width: 4, height: 4, borderRadius: 2, background: '#D9A24B', display: 'block' }} />
-                      {pendingSourceLabel(sp.kind)}
+                      {prediction ? `RELATIVE SCORE ${prediction.relativeOccurrenceScore}` : 'SCORE PENDING'}
                     </div>
-                  ) : (
-                    /* The credit line, printed on every card. CC BY-NC requires
-                       attribution and DMP section 9 requires the access date, so
-                       both are shown rather than stored and forgotten. */
-                    <div style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '.08em', color: C.faint, marginTop: 9, lineHeight: 1.5 }}>
-                      SOURCE · {sp.source.citation}
-                      {sp.source.accessedAt ? ` · accessed ${sp.source.accessedAt}` : ''}
+                  </div>
+                  <div style={{ padding: '14px 14px 15px' }}>
+                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 9 }}>
+                      <div
+                        aria-hidden="true"
+                        style={{
+                          width: 34,
+                          height: 34,
+                          flex: 'none',
+                          borderRadius: 17,
+                          background: C.tint,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
+                      >
+                        <SpeciesIcon glyph={species.glyph} />
+                      </div>
+                      <div style={{ minWidth: 0, paddingTop: 1 }}>
+                        <div style={{ fontSize: 14.5, fontWeight: 680, lineHeight: 1.25, color: C.ink2 }}>
+                          {species.commonName}
+                        </div>
+                        <div style={{ fontSize: 11.5, fontStyle: 'italic', lineHeight: 1.35, color: C.dim, marginTop: 3 }}>
+                          {species.scientificName}
+                        </div>
+                      </div>
                     </div>
-                  )}
-                </div>
-              </div>
-            ))}
+                    <div style={{ fontSize: 11.5, lineHeight: 1.45, color: C.muted, marginTop: 11 }}>
+                      Photo:{' '}
+                      <a
+                        href={species.imageSourceUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        style={{ color: C.slate, textDecoration: 'underline', textUnderlineOffset: 2 }}
+                      >
+                        {species.imageAuthor}
+                      </a>
+                      {' · '}
+                      <a
+                        href={species.imageLicenseUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        style={{ color: C.slate, textDecoration: 'underline', textUnderlineOffset: 2 }}
+                      >
+                        {species.imageLicense}
+                      </a>
+                    </div>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+          <div style={{ fontSize: 11.5, color: C.muted, marginTop: 8, lineHeight: 1.5 }}>
+            Relative model scores · not probabilities or confirmed sightings · OBIS snapshot, CC BY-NC
           </div>
 
-          <div style={{ marginTop: 14, background: C.tint, borderRadius: 20, padding: '16px 17px' }}>
+          <div style={{ marginTop: 16, background: C.tint, borderRadius: 20, padding: '16px 17px' }}>
             <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '.14em', color: C.slate }}>
-              WHY LITTER MAY MATTER HERE
+              WHY LITTER MATTERS HERE
             </div>
             <div style={{ fontSize: 13, lineHeight: 1.6, color: C.ink2, marginTop: 7 }}>
               {b.ecologicalNote}
             </div>
-            {/* This line is the AC5.2.3 promise, so it is the last thing that
-                should be hard to read. It used to be C.dim, which is 3.11:1 on
-                this tint - under the 4.5:1 AA floor for text this size. C.muted
-                measures 5.11:1 on the same background.
-
-                The model sentence is ADDED to it, never swapped in for it: the
-                beaches showing actual numbers must not be the ones that drop
-                the warning that those numbers are not sightings.
-
-                It now waits for state 'ready' rather than for the field to
-                merely exist. The sentence is there to qualify a number, and
-                until the model is connected there is no number on screen - so
-                46 words describing how a score is built were sitting on a page
-                that shows no score, on every beach that has a modelled species.
-                When Su's output lands, the sentence comes back with it. */}
-            <div style={{ fontSize: 10.5, color: C.muted, marginTop: 8, lineHeight: 1.5 }}>
-              Context only — never a confirmed sighting, never proof of current presence or of
-              ecological recovery.
-              {b.species.some((sp) => sp.likelihood?.state === 'ready') ? (
-                <>
-                  {' '}The relative occurrence score is built from OBIS records and background
-                  samples at coordinate level. It is not a calibrated probability of presence,
-                  never a confirmed sighting, and never a measure of litter severity or of
-                  ecological recovery.
-                </>
-              ) : null}
-            </div>
-            {/* AC5.1.3 - the datasets and their licence, shown to the user
-                rather than only recorded in the DMP.
-
-                FUTURE TENSE, deliberately. The long form said "REFERENCE
-                DATASETS · FISHBASE ... OBIS" in the present tense directly
-                under three badges reading "NOT YET FROM FISHBASE / OBIS" - the
-                same page asserting both that we use these datasets and that we
-                do not. No extract has run, so "will come from" is the true one,
-                and it stops contradicting the badges.
-
-                It was also the least legible text on the page: 8.5px at C.faint
-                is 2.16:1, less than half the AA floor, which is a strange way
-                to satisfy a licence whose whole point is visible attribution.
-                One line at 10px/C.muted measures 5.11:1.
-
-                When the extract lands: switch to the present tense, restore the
-                full citations from sources.ts, and bring back the
-                NON_COMMERCIAL_NOTICE sentence about image copyright - there are
-                no species images on these cards yet, so it currently warns
-                about something that is not on screen. */}
-            <div style={{ fontSize: 10, color: C.muted, marginTop: 10, lineHeight: 1.55 }}>
-              Biodiversity cards are contextual; modelled occurrence uses a packaged OBIS snapshot · CC BY-NC, non-commercial academic use
-            </div>
           </div>
-        </div>
-
-        {/* The model result on its own, apart from the sourced cards. Mock mode
-            runs no model, so it says that outright instead of showing an empty
-            panel or a simulated score. */}
-        <div style={{ background: C.white, border: `1px solid ${C.line}`, borderRadius: 22, padding: '16px 17px' }}>
-          <Label style={{ marginBottom: 9 }}>MODELLED SPECIES CONTEXT</Label>
-          <div style={{ fontSize: 12, lineHeight: 1.5, color: C.muted }}>
-            {USE_MOCK
-              ? 'The offline species model is not enabled in mock mode. No model result is being simulated.'
-              : 'Packaged OBIS snapshot baseline for the beach broad-area coordinate. Context only — it does not contribute to litter severity.'}
-          </div>
-          {!USE_MOCK && modelResult && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 12 }}>
-              {modelResult.predictions.map((prediction) => (
-                <div key={prediction.speciesSlug} style={{ display: 'flex', justifyContent: 'space-between', gap: 12, fontSize: 12, color: C.ink2 }}>
-                  <span>{prediction.commonNameEn}</span>
-                  <span style={{ fontFamily: MONO, color: '#855A10' }}>{prediction.relativeOccurrenceScore}</span>
-                </div>
-              ))}
-              <div style={{ fontSize: 10.5, lineHeight: 1.45, color: C.muted, marginTop: 3 }}>
-                Not a calibrated probability or a real-time OBIS query. Model version {modelResult.modelVersion}.
-              </div>
-            </div>
-          )}
-          {!USE_MOCK && !modelResult && (
-            <div style={{ fontSize: 11, color: modelFailed ? C.muted : C.dim, marginTop: 10 }}>
-              {modelFailed ? 'Model context is unavailable for this beach; the biodiversity cards remain contextual.' : 'Loading model context…'}
-            </div>
-          )}
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
@@ -605,6 +534,10 @@ export default function BeachScreen() {
             <Camera size={16} strokeWidth={1.9} />
             Report Litter Here
           </PrimaryButton>
+          <GhostButton onClick={() => nav(user ? `/cleanup/${beachId}` : `/identity?next=${encodeURIComponent(`/cleanup/${beachId}`)}`)}>
+            Add a Cleanup
+          </GhostButton>
+          <GhostButton onClick={() => nav('/community')}>Community Cleanups</GhostButton>
           <GhostButton onClick={() => nav('/map')}>Back to Map</GhostButton>
         </div>
       </div>

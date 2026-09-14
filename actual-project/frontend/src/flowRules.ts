@@ -6,7 +6,7 @@
 // back a decision. That is what makes it testable, and it is also why the same
 // rules cannot drift apart between the five report screens.
 import type { ReportDraft } from './AppContext';
-import type { CreateReportInput, LitterCategory, QuantityByCategory, ReportStatus } from './types';
+import type { CreateReportInput, LitterCategory, LitterReport, QuantityByCategory, ReportStatus } from './types';
 
 /**
  * Clean a "?next=..." value before we redirect to it.
@@ -45,15 +45,16 @@ export function safeNextPath(value: string | null): string {
  * is still there, so the user can carry on from where they were. Storing
  * visited-page flags would fight the saved draft instead of working with it.
  */
-export type ReportStep = 'photo' | 'location' | 'confirm' | 'details' | 'review';
+export type ReportStep = 'photo' | 'location' | 'confirm' | 'details' | 'suggestions' | 'review';
 
-const STEP_ORDER: ReportStep[] = ['photo', 'location', 'confirm', 'details', 'review'];
+const STEP_ORDER: ReportStep[] = ['photo', 'location', 'confirm', 'details', 'suggestions', 'review'];
 
 const STEP_PATH: Record<ReportStep, string> = {
   photo: '/report/photo',
   location: '/report/location',
   confirm: '/report/confirm',
   details: '/report/details',
+  suggestions: '/report/suggestions',
   review: '/report/review',
 };
 
@@ -129,7 +130,46 @@ export function reachableStep(draft: ReportDraft): ReportStep {
   // amount yet would be sent to the backend as an incomplete report.
   const picked = Object.keys(draft.quantities) as LitterCategory[];
   if (picked.length === 0 || picked.some((c) => !draft.quantities[c])) return 'details';
-  return 'review';
+  return draft.aiDecision ? 'review' : 'suggestions';
+}
+
+function malaysiaLocalDay(value: string | Date): string {
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Kuala_Lumpur',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(typeof value === 'string' ? new Date(value) : value);
+}
+
+function normalizedQuantities(quantities: QuantityByCategory): string {
+  return Object.entries(quantities)
+    .filter((entry): entry is [LitterCategory, NonNullable<QuantityByCategory[LitterCategory]>] => Boolean(entry[1]))
+    .sort(([left], [right]) => left.localeCompare(right))
+    .map(([category, quantity]) => `${category}:${quantity}`)
+    .join('|');
+}
+
+/**
+ * Iteration 2 warns before an exact repeat but never blocks it. The match is
+ * deliberately stricter than the older post-submit duplicate status: beach,
+ * Kuala Lumpur day, normalized category set and every confirmed quantity must
+ * all agree. A correction never warns about the report currently being edited.
+ */
+export function findExactDuplicateReport(
+  draft: ReportDraft,
+  reports: LitterReport[],
+  now: Date = new Date(),
+): LitterReport | null {
+  if (!draft.beachId || Object.keys(draft.quantities).length === 0) return null;
+  const today = malaysiaLocalDay(now);
+  const signature = normalizedQuantities(draft.quantities);
+  return reports.find((report) =>
+    report.id !== draft.editingReportId
+    && report.beachId === draft.beachId
+    && malaysiaLocalDay(report.createdAt) === today
+    && normalizedQuantities(report.quantities) === signature,
+  ) ?? null;
 }
 
 
@@ -173,6 +213,9 @@ export type ReportSubmission =
  * without ever passing the buttons.
  */
 export function buildReportSubmission(draft: ReportDraft): ReportSubmission {
+  if (!draft.aiDecision) {
+    throw new Error('Confirm the AI suggestion or your manual values before submitting.');
+  }
   const picked = Object.keys(draft.quantities) as LitterCategory[];
   if (!draft.beachId || picked.length === 0) {
     throw new Error('This report is missing a required field. Go back and complete it.');
@@ -183,6 +226,21 @@ export function buildReportSubmission(draft: ReportDraft): ReportSubmission {
   const noBand = picked.filter((c) => !draft.quantities[c]);
   if (noBand.length > 0) {
     throw new Error(`Pick how much for: ${noBand.join(', ')}.`);
+  }
+  if (draft.itemCounts) {
+    const countCategories = Object.keys(draft.itemCounts).sort();
+    if (
+      countCategories.length !== picked.length
+      || countCategories.some((category) => !picked.includes(category as LitterCategory))
+      || Object.values(draft.itemCounts).some((count) => !Number.isInteger(count) || count! < 1 || count! > 100_000)
+    ) {
+      throw new Error('The confirmed item counts no longer match the selected categories. Review the AI counts again.');
+    }
+    const expectedBand = (count: number): QuantityByCategory[LitterCategory] =>
+      count <= 5 ? 'Small' : count <= 20 ? 'Medium' : count <= 50 ? 'Large' : 'Very Large';
+    if (countCategories.some((category) => draft.quantities[category as LitterCategory] !== expectedBand(draft.itemCounts![category as LitterCategory]!))) {
+      throw new Error('The quantity bands must match the confirmed item counts. Review the AI counts again.');
+    }
   }
 
   // Only claim 'gps' when we really do have coordinates. Saying 'gps' with no
@@ -246,6 +304,8 @@ export function buildReportSubmission(draft: ReportDraft): ReportSubmission {
       ...common,
       photoKey: draft.photo.photoKey,
       locationSource: usesGps ? 'gps' : 'manual',
+      ...(draft.itemCounts ? { itemCounts: draft.itemCounts } : {}),
+      ...(draft.eventId ? { eventId: draft.eventId } : {}),
       ...(usesGps ? { coords: draft.coords! } : {}),
     },
   };

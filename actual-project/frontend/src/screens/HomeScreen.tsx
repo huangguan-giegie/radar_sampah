@@ -16,6 +16,13 @@ import { useApp } from '../AppContext';
 import type { BeachSummary, ReportCounts } from '../types';
 import { hasDraftProgress, orderByNeed, resumePath } from '../flowRules';
 
+const HOME_BEACH_PHOTO = {
+  src: 'https://images.unsplash.com/photo-1542132232-f7c389572a90?auto=format&fit=crop&q=86&w=1600',
+  page: 'https://unsplash.com/photos/a-sandy-beach-with-palm-trees-and-a-cloudy-sky-zRKCciEFuL8?utm_source=radar_sampah&utm_medium=referral',
+  photographer: 'Engin Akyurt',
+  photographerUrl: 'https://unsplash.com/@enginakyurt?utm_source=radar_sampah&utm_medium=referral',
+};
+
 // Morning / afternoon / evening, from the device clock. The date is a
 // parameter with a default so this can be tested without faking the clock.
 function greeting(d = new Date()) {
@@ -232,9 +239,29 @@ export default function HomeScreen() {
             width: '100%',
           }}
         >
-          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg,transparent 40%,rgba(221,227,236,.18) 46%,transparent 54%)' }} />
+          <img
+            src={HOME_BEACH_PHOTO.src}
+            alt=""
+            aria-hidden="true"
+            draggable={false}
+            fetchPriority="high"
+            style={{
+              position: 'absolute',
+              inset: 0,
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+              objectPosition: 'center 56%',
+            }}
+          />
           <div style={{ position: 'absolute', inset: 0, opacity: 0.3, backgroundImage: NOISE }} />
-          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg,transparent 30%,rgba(9,22,48,.78) 100%)' }} />
+          <div
+            style={{
+              position: 'absolute',
+              inset: 0,
+              background: 'linear-gradient(180deg,rgba(6,19,42,.08) 10%,rgba(6,19,42,.2) 42%,rgba(6,19,42,.9) 100%)',
+            }}
+          />
           {/* `|| 4` keeps the chip sensible while the list is still loading -
               it would otherwise flash "0 BEACHES" for a moment, which reads
               as "there is nothing here". */}
@@ -269,7 +296,18 @@ export default function HomeScreen() {
           </div>
         </button>
 
-        <div style={{ display: 'flex', gap: 12, marginTop: 14 }}>
+        <div style={{ marginTop: 7, paddingInline: 4, fontSize: 9.5, color: C.dim, textAlign: 'right' }}>
+          Photo by{' '}
+          <a href={HOME_BEACH_PHOTO.photographerUrl} target="_blank" rel="noreferrer" style={{ color: 'inherit', textDecoration: 'underline' }}>
+            {HOME_BEACH_PHOTO.photographer}
+          </a>{' '}
+          on{' '}
+          <a href={HOME_BEACH_PHOTO.page} target="_blank" rel="noreferrer" style={{ color: 'inherit', textDecoration: 'underline' }}>
+            Unsplash
+          </a>
+        </div>
+
+        <div style={{ display: 'flex', gap: 12, marginTop: 10 }}>
           <button
             type="button"
             onClick={startReport}
@@ -282,6 +320,8 @@ export default function HomeScreen() {
               color: C.bg,
               display: 'flex',
               flexDirection: 'column',
+              alignItems: 'flex-start',
+              textAlign: 'left',
               gap: 26,
               boxShadow: '0 18px 38px -18px rgba(11,33,97,.6)',
             }}
@@ -378,17 +418,15 @@ export default function HomeScreen() {
             border: '1px solid rgba(11,33,97,.07)',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontFamily: MONO, fontSize: 8.5, letterSpacing: '.14em', color: C.dim }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontFamily: MONO, fontSize: 9.5, letterSpacing: '.12em', color: C.dim }}>
             <Info size={11} color={C.dim} strokeWidth={2} />
             READING THE MAP
           </div>
           {/* The last sentence is the whole point of this box. Both labels
               mean "we do not know", and a user who reads them as "this beach
               is fine" would take away the opposite of what the data says. */}
-          <div style={{ fontSize: 11, lineHeight: 1.6, color: C.muted, marginTop: 6 }}>
-            <b style={{ color: C.muted }}>Insufficient data</b> — fewer than three counted reports.{' '}
-            <b style={{ color: C.muted }}>Not recently reported</b> — nothing counted in 90 days.
-            Neither means the beach is clean.
+          <div style={{ fontSize: 12, lineHeight: 1.5, color: C.muted, marginTop: 6 }}>
+            Not enough or recent data means <b>unchecked</b>, not clean.
           </div>
         </div>
       </div>

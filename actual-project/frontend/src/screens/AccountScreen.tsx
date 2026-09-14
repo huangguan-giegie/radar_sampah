@@ -190,16 +190,7 @@ export default function AccountScreen() {
             destructive here, but without the number the user cannot get back
             in - so the warning has to come before the tap, not after. */}
         <div style={{ fontSize: 11, lineHeight: 1.5, color: C.dim, textAlign: 'center', marginTop: -10 }}>
-          Signing out just forgets your ID on this device. Write the number down first.
-        </div>
-
-        {/* Says which iteration this build is, and what is deliberately not in
-            it yet. A user who has read about AI recognition in our proposal
-            should not be left hunting for a feature that was never shipped. */}
-        <div style={{ fontFamily: MONO, fontSize: 9, lineHeight: 1.7, letterSpacing: '.06em', color: C.faint, textAlign: 'center' }}>
-          ITERATION 1 · CORE MVP
-          <br />
-          AI, REVIEW AND RECOGNITION COME LATER
+          Before signing out, make sure you saved your ID and recovery token.
         </div>
       </div>
 

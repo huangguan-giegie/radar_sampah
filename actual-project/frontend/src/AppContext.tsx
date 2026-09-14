@@ -21,7 +21,7 @@ import {
   type ReactNode,
 } from 'react';
 import { createAnonymousId, getMe, logout } from './api';
-import type { LitterReport, QuantityByCategory, ReportStatus, UploadedPhoto, User } from './types';
+import type { LitterCategory, LitterReport, QuantityByCategory, ReportStatus, UploadedPhoto, User } from './types';
 import { restoreId as apiRestoreId } from './api';
 import { authFailureAction } from './authPolicy';
 
@@ -52,6 +52,16 @@ export type ReportDraft = {
   locationSource: 'gps' | 'manual' | null;
   coords: { lat: number; lng: number } | null;
   quantities: QuantityByCategory;
+  itemCounts: Partial<Record<LitterCategory, number>> | null;
+  eventId: string | null;
+
+  /**
+   * Iteration 2 keeps AI output separate from the participant's final report.
+   * A report can move to Review only after the participant either confirms an
+   * AI suggestion or explicitly keeps the manual values they entered.
+   */
+  aiDecision: 'confirmed' | 'manual' | null;
+  aiModelVersion: string | null;
 
   /**
    * Why finding the location failed, so the confirm screen can say something
@@ -91,6 +101,10 @@ function emptyDraft(): ReportDraft {
     locationSource: null,
     coords: null,
     quantities: {},
+    itemCounts: null,
+    eventId: null,
+    aiDecision: null,
+    aiModelVersion: null,
     gpsIssue: null,
     editingReportId: null,
     editingStatus: null,
@@ -215,8 +229,8 @@ type AppState = {
   // button; null means there is nothing to tell the user.
   authSyncError: string | null;
   retryAuth: () => Promise<void>;
-  createId: () => Promise<string>;
-  restore: (participantId: string) => Promise<void>;
+  createId: () => Promise<{ participantId: string; recoveryToken?: string }>;
+  restore: (participantId: string, token?: string) => Promise<void>;
   signOut: () => Promise<void>;
 
   draft: ReportDraft;
@@ -381,13 +395,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setUser(session.user);
       saveUserSnapshot(session.user);
       setAuthSyncError(null);
-      return session.user.participantId;
+      return {
+        participantId: session.user.participantId,
+        recoveryToken: session.recoveryToken,
+      };
     },
 
 
     // Continue with a number the user already has.
-    async restore(participantId) {
-      const session = await apiRestoreId(participantId);
+    async restore(participantId, token) {
+      const session = await apiRestoreId(participantId, token);
       setUser(session.user);
       saveUserSnapshot(session.user);
       setAuthSyncError(null);
