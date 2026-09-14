@@ -1,6 +1,6 @@
 """Reviewed Radar Sampah API entry point.
 
-The Iteration 2 backend implementation lives in ``app_core.py``.  This thin
+The Iteration 2 backend implementation lives in ``app_core.py``. This thin
 entry point keeps that implementation intact while enforcing the reviewed
 Iteration 2 contracts that must not regress during integration:
 
@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import hashlib
 import hmac
+from pathlib import Path
 from statistics import median
 from typing import Any
 
@@ -95,11 +96,10 @@ def _ensure_postgres_iteration2_contract(engine: Any) -> None:
             )
 
         schema = _impl.database_schema()
-        index_name = f'"{schema}".cleanup_actions_target' if schema else "cleanup_actions_target"
-        connection.execute(text(f"DROP INDEX IF EXISTS {index_name}"))
+        index_name = f'"{schema}".cleanup_actions_target_created_at' if schema else "cleanup_actions_target_created_at"
         connection.execute(
             text(
-                f"CREATE INDEX cleanup_actions_target "
+                f"CREATE INDEX IF NOT EXISTS {index_name} "
                 f"ON {q('cleanup_actions')} (target_report_id, created_at)"
             )
         )
@@ -118,7 +118,7 @@ def _candidate_quantities(connection: Any, exclude_report_id: str | None) -> dic
             normalised = {
                 str(category): str(quantity)
                 for category, quantity in quantities.items()
-                if category in _impl.QUANTITY_WEIGHTS and quantity in _impl.QUANTITY_WEIGHTS
+                if category in _impl.CATEGORY_WEIGHTS and quantity in _impl.QUANTITY_WEIGHTS
             }
             if len(normalised) == len(quantities):
                 return normalised
@@ -209,7 +209,7 @@ _impl.remaining_count_attention = _remaining_count_attention
 def create_app(
     database_url: str | None = None,
     testing: bool = False,
-    photo_storage_dir: str | Any | None = None,
+    photo_storage_dir: str | Path | None = None,
 ):
     application = _original_create_app(
         database_url=database_url,
