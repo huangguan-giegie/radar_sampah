@@ -67,7 +67,7 @@ export default function CleanupResultScreen() {
           <SectionLabel size="sm">WHAT CHANGES NOW</SectionLabel>
           <p style={{ margin: '8px 0 0', color: C.muted, fontSize: 12.5, lineHeight: 1.55 }}>
             {linkedToReport
-              ? "What you removed comes off that report's remaining litter. The beach rating is worked out separately and never drops below zero."
+              ? "What you removed comes off that report's remaining litter. Once fully cleared, it leaves the current beach rating and active report count, while the original report stays in history."
               : 'This cleanup is recorded as standalone evidence for the beach. Because it is not linked to a prior litter report, it does not subtract from an unrelated report or change its remaining count.'}
           </p>
           <TextButton onClick={() => nav('/method')}>How it’s rated</TextButton>

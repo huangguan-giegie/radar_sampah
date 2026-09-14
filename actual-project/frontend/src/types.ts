@@ -141,19 +141,19 @@ export interface BeachSummary {
   area: string;
   lat: number;
   lng: number;
-  /** null when there are fewer than 3 valid reports. null does NOT mean
+  /** null when there are fewer than 3 active reports. null does NOT mean
    *  "clean" - it means "not enough evidence". The UI must say so. */
   severity: SeverityBand | null;
   /** 1-4, used to draw the severity bars. null whenever severity is null. */
   band: number | null;
   insufficientData: boolean;
   validReports: number;
-  /** The median of this beach's eligible report scores - the raw number the
+  /** The median of this beach's active report scores - the raw number the
    *  band was derived from. null exactly when severity is null. It still
    *  arrives, and the home list sorts by it, but no screen prints the number
    *  any more: the public sees the band, and /method publishes the rule. */
   attentionScore: number | null;
-  /** How many reports actually went into that median. Sent separately from
+  /** How many active reports actually went into that median. Sent separately from
    *  validReports so the two can never silently disagree about the window. */
   eligibleReportCount: number;
   /** ISO 8601. Used to work out "reported 5 days ago". */

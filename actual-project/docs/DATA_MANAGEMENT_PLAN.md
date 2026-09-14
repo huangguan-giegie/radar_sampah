@@ -96,7 +96,7 @@ Data minimisation: In the current baseline, only synthetic/public data is writte
 
 User enters or corrects beach, litter category and quantity (manual). Required fields are validated before acceptance (AC2.2.3).
 
-Severity is derived from submitted type/quantity via `radar-sampah-scoring-v2`: category weight × quantity level, maximum category score per report, and median eligible report score per beach over 90 days. Past scores remain explainable through the published rule version.
+Severity is derived from submitted type/quantity via `radar-sampah-scoring-v3`: category weight × quantity level, maximum category score per report, and median active report score per beach over 90 days. A fully cleared target leaves the current median and active count while its original report and cleanup ledger remain historical evidence. Past scores remain explainable through the published rule version.
 
 Counted reports update area-level aggregates and feed the litter severity map. Incomplete and duplicate reports do not invent “zero litter” (AC4.2.3).
 
@@ -166,7 +166,7 @@ ERD Diagram
 
 ### 7.1 Severity scoring design
 
-Severity and cleanup-priority scores are produced by a fixed, deterministic rule set applied to complete counted litter type/quantity. Each report uses the maximum category score; each beach uses the median of eligible reports from the latest 90 days. Four severity bands are displayed on the map. Biodiversity context from OBIS/FishBase is shown separately as historical occurrence context, not as a real-time abundance claim or score input. Language on the UI remains cautious (US5.2).
+Severity and cleanup-priority scores are produced by a fixed, deterministic rule set applied to complete counted litter type/quantity. Each report uses the maximum category score; each beach uses the median of active reports from the latest 90 days. Fully cleared targets are retained for audit but excluded from the current median and active count; fewer than three active reports produces Insufficient Data. Four severity bands are displayed on the map. Biodiversity context from OBIS/FishBase is shown separately as historical occurrence context, not as a real-time abundance claim or score input. Language on the UI remains cautious (US5.2).
 
 ### 7.2 Validation, limitations and monitoring
 
@@ -227,7 +227,7 @@ Do not expose raw database credentials, private keys or non-public logs through 
 | Source freshness | User reports timestamped on confirmation. Biodiversity loaded at deployment/refresh. | Automated freshness dashboard for last litter score and last verified report per area (later). |
 | Completeness & validity | Required fields checked; invalid coordinates/species rows skipped; DB constraints on keys and non-null critical columns. | Persist rejected-row counts and reason codes for ingestion jobs. |
 | Duplicates | Species unique on scientific_name; community_users composite PK; basic report dedup and exclusion of duplicates from public map (US3.1 / US3.2). | Source-specific duplicate exception reports for OBIS; richer moderator tools (Iteration 2). |
-| Severity scoring | Fixed `radar-sampah-scoring-v2` rule with Max report score and Median beach score; incomplete/duplicate records excluded from map. | Full calibration, sensitivity analysis and limitation documentation (Iteration 2). |
+| Severity scoring | Fixed `radar-sampah-scoring-v3` rule with Max report score and Median active-report beach score; incomplete, duplicate and fully cleared records are excluded from the current score, while cleared reports remain in history. | Full calibration, sensitivity analysis and limitation documentation (Iteration 2). |
 | AI/model release | Not applicable — no AI model in Iteration 1. | Manual promotion, metrics review, model cards when AI is introduced (Iteration 2). |
 | Schema evolution | SQL migrations version database structure; API queries select explicit fields. | Migration rollback runbook and automated schema tests. |
 | Plan review | This report is scoped to Iteration 1 only. Update at the end of the iteration and file with project governance materials. | Record approvals, source access dates and changed assumptions; produce Iteration 2 DMP when AI and full moderation are introduced. |

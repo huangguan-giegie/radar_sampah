@@ -155,7 +155,7 @@ export default function ConfirmBeachScreen() {
                   <div style={{ fontSize: 12, color: C.dim, marginTop: 3 }}>{suggested.area}</div>
                 </div>
                 {/* Never show a band we have not earned. attentionStateFor
-                    hands one back only once a beach has enough counted reports;
+                    hands one back only once a beach has enough active reports;
                     below that the badge reads "Insufficient data". The map and
                     the beach page call the same function, so a beach cannot
                     look rated here and unrated there. */}

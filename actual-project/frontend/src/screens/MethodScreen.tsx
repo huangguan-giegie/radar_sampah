@@ -126,7 +126,7 @@ export default function MethodScreen() {
           </div>
           <div style={{ fontSize: 14.5, lineHeight: 1.65, color: C.cloud, marginTop: 10 }}>
             No model and no judgement call in the litter score — the same arithmetic runs on
-            every eligible report. The species occurrence score on a beach page is a separate,
+            every active report. The species occurrence score on a beach page is a separate,
             modelled figure, and it never enters this calculation.
           </div>
         </div>

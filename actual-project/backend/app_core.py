@@ -1845,7 +1845,7 @@ def create_app(
     @application.get("/scoring-method/iteration2")
     def get_iteration2_scoring_method():
         return jsonify({
-            "ruleVersion": "radar-sampah-scoring-i2-v1",
+            "ruleVersion": "radar-sampah-scoring-i2-v3",
             "categoryWeights": [{"category": category, "weight": CATEGORY_WEIGHTS[category]} for category in FRONTEND_CATEGORIES],
             "itemCountBands": [
                 {"minimum": 1, "maximum": 5, "quantity": "Small", "weight": 1},
@@ -1855,9 +1855,10 @@ def create_app(
             ],
             "windowDays": 90,
             "minReports": 3,
-            "remainingCountAggregation": "sum-by-category-after-cleanup",
+            "reportEligibility": "Counted reports in the latest 90 days with remaining litter after cleanup; fully cleared count-backed reports are excluded from the active count but retained in history",
+            "remainingCountAggregation": "per-report-after-cleanup",
             "reportAggregation": "max-category-score",
-            "beachAggregation": "remaining-counts",
+            "beachAggregation": "median-of-active-reports",
             "modelClassMapping": [{"modelClass": model_class, "category": category} for model_class, category in ITERATION2_CATEGORIES.items()],
             "cleanupScore": "number-of-items-removed",
             "cleanupPoints": 0,

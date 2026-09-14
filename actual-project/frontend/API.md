@@ -146,12 +146,12 @@
 
 | 字段 | 类型 | 说明 |
 | --- | --- | --- |
-| `severity` | `"Low"｜"Moderate"｜"High"｜"Severe"｜null` | **有效记录 < 3 条时必须是 `null`**，不要给 `"Low"` 兜底 |
+| `severity` | `"Low"｜"Moderate"｜"High"｜"Severe"｜null` | **active 记录 < 3 条时必须是 `null`**，不要给 `"Low"` 兜底 |
 | `band` | `1｜2｜3｜4｜null` | 和 `severity` 一一对应，同时为 null。前端画那 4 根竖条用它 |
 | `insufficientData` | boolean | `severity === null` 时为 true |
-| `validReports` | int | **只数 `Counted` 的**，Duplicate / Incomplete 不算 |
-| `attentionScore` | number｜null | 最近 90 天合格报告分数的中位数，保留两位；不足 3 条时为 null |
-| `eligibleReportCount` | int | 最近 90 天评分窗口内的 `Counted` 报告数 |
+| `validReports` | int | 最近 90 天内、清理后仍有垃圾的 active `Counted` 报告数；完全清理的报告只保留在历史中，不计入此处 |
+| `attentionScore` | number｜null | active 报告分数的中位数，保留两位；active 报告不足 3 条时为 null |
+| `eligibleReportCount` | int | 实际参与中位数及最少证据判断的 active 报告数 |
 | `lastReportedAt` | string｜null | 最近一条 **Counted** 记录的时间。前端自己算「几天前」，后端不要给现成文案 |
 | `freshnessKind` | `"ok"｜"aging"｜"stale"` | < 30 天 / 30–90 天 / > 90 天或从无记录 |
 | `primarySpeciesGlyph` | `"turtle"｜"bird"｜"mangrove"｜"grass"｜"crab"｜"fish"` | 生物图层的地图标记图标 |
@@ -781,7 +781,7 @@ else:
     severity      = < 1.5 → Low | < 2.5 → Moderate | < 3.5 → High | else Severe
     band          = Low=1, Moderate=2, High=3, Severe=4
 
-validReports    = count(eligible)
+validReports    = count(eligible)  # 只含 active 报告；完全清理的报告仍保留在历史中
 lastReportedAt  = max(created_at) over 该海滩所有 Counted 记录（不限 90 天窗口）
 freshnessKind   = now - lastReportedAt: < 30d → 'ok' | ≤ 90d → 'aging' | else 'stale'
 

@@ -89,7 +89,7 @@ function BeachRow({ b, last, onClick }: { b: BeachSummary; last: boolean; onClic
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontSize: 14, fontWeight: 620 }}>{b.name}</div>
         {/* reportWord picks report/reports, so a beach with one report does
-            not read "1 counted reports". */}
+            not read "1 active reports". */}
         <div style={{ fontSize: 11.5, color: C.dim, marginTop: 3 }}>
           {b.validReports} active {reportWord(b.validReports)} · {lastReportedLabel(b.lastReportedAt).toLowerCase()}
         </div>

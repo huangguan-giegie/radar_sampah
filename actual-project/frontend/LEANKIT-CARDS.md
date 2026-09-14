@@ -130,7 +130,7 @@
 | 1 | 三个状态只有 `Counted` / `Duplicate` / `Incomplete`，没有第四个 | API.md §6 |
 | 2 | 查重规则：同一人 + 同一海滩 + 同一自然日（吉隆坡时区） | API.md §6 |
 | 3 | 重复记录返回 **201 + status=Duplicate**，不是报错 | API.md §0 |
-| 4 | `validReports` 只数 Counted，Duplicate / Incomplete 不进计数、不进计算、不上地图 | API.md §7 |
+| 4 | `validReports` 只数最近 90 天内清理后仍有垃圾的 active Counted；Duplicate / Incomplete / 已完全清理目标不进当前计数和中位数，但已清理报告保留在历史中 | API.md §7 |
 | 5 | 排除原因由后端下发英文成句，前端原样显示 | `statusNote` |
 | 6 | 精确坐标存独立私有表，**任何响应都不返回** | API.md §6 隐私 |
 | 7 | 照片 EXIF 定位信息由后端剥离，剥净才返回 `metadataStripped: true` | API.md §5 |

@@ -61,7 +61,7 @@ export const SCORING_METHOD: ScoringMethod = {
   // Only reports from the last 90 days count. Litter is cleaned up and washed
   // back in, so a report from last year says nothing about today.
   windowDays: 90,
-  // Under 3 valid reports we show "not enough evidence" instead of a band.
+  // Under 3 active reports we show "not enough evidence" instead of a band.
   // One angry volunteer should not be able to paint a beach red on their own.
   minReports: 3,
   reportEligibility: 'Counted reports in the latest 90 days with remaining litter after cleanup; fully cleared reports are retained in history but excluded from the active score and count',

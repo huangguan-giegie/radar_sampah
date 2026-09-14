@@ -213,7 +213,7 @@ COMMIT;
 -- are hand-written display values in mockData.ts, not something the four seed
 -- reports produce.
 --
--- Counting Counted reports inside the 90-day window, as API.md §7 requires:
+-- Counting active Counted reports inside the 90-day window, as API.md §7 requires:
 --
 --   morib     1  →  Insufficient data   (prototype shows High, 8 valid)
 --   remis     1  →  Insufficient data   (prototype shows Moderate, 6 valid)
@@ -231,8 +231,8 @@ COMMIT;
 --      say. Nothing has to be invented.
 --
 --   2. Add more demo reports so the map has colour for the presentation. Each
---      beach needs at least 3 Counted reports inside the last 90 days, and the
---      median of eligible report scores decides which colour. Mark any
+--      beach needs at least 3 active Counted reports inside the last 90 days,
+--      and the median of active report scores decides which colour. Mark any
 --      such rows clearly as demo padding — they are not in the frontend and not
 --      in this file for a reason.
 --

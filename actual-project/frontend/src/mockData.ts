@@ -178,7 +178,7 @@ export const BEACHES: BeachDetail[] = [
     insufficientData: true,
 
 
-    // 0, not 2. validReports counts Counted reports inside the 90 day window,
+    // 0, not 2. validReports counts active reports inside the 90 day window,
     // and this beach's newest report is older than that - so nothing falls
     // inside it. With 2 here the page would show "2 valid reports" next to
     // "Not recently reported", which the contract makes impossible. Mock data

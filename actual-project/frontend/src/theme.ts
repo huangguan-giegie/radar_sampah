@@ -113,7 +113,7 @@ export function freshStyle(k: FreshnessKind) {
  * "report" or "reports" for a count. One shared helper, because the same
  * sentence is built on the home list, the map card and the beach page, and
  * three hand-written copies drifted - the live site was showing
- * "1 counted reports".
+ * "1 active reports".
  */
 export function reportWord(count: number): string {
   return count === 1 ? 'report' : 'reports';

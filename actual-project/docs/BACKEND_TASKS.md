@@ -166,11 +166,12 @@ that needs one implementation, server-side and auditable.
 
 The full algorithm is in API.md §7. Four things people get wrong:
 
-- **Fewer than 3 eligible reports → `severity` and `band` are `null`, not `"Low"`.** The app
+- **Fewer than 3 active reports → `severity` and `band` are `null`, not `"Low"`.** The app
   shows a dedicated "not enough data" state and keys it off null.
 - **`lastReportedAt` ignores the 90-day window.** "Nothing reported recently" is itself the
   finding; an empty window is not the same as no history.
-- **Only `Counted` reports are eligible.** `Duplicate` and `Incomplete` never count.
+- **Only active `Counted` reports are eligible.** `Duplicate`, `Incomplete` and fully cleared
+  targets never enter the current median or active count. Cleared reports remain in history.
 - **`composition` is not an aggregate.** See §6.
 
 `GET /scoring-method` publishes the weights and thresholds. It is **optional** — the frontend
@@ -247,8 +248,9 @@ recognition, US5.3 and US5.4. No endpoint is reserved for them.
 ## 10. Historical decisions — no longer blocked
 
 1. **Multi-category severity.** The current decision is Max (Category Score) per report and
-   Median (eligible Report Score) per beach over the latest 90 days. The rule is published as
-   `radar-sampah-scoring-v2` and covered by backend contract tests.
+   Median (active Report Score) per beach over the latest 90 days. Fully cleared targets remain
+   historical evidence but leave the current median and active count. The rule is published as
+   `radar-sampah-scoring-v3` and covered by backend contract tests.
 2. **`DECISIONS.md` (2026-08-19) describes a different severity formula** — with recency and an
    "area sensitivity" multiplier of 1.0/1.25/1.5. That is not the published rule, and area
    sensitivity in particular folds biodiversity into the litter score, which API.md §2b

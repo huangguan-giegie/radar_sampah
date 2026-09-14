@@ -7,7 +7,8 @@ Iteration 2 contracts that must not regress during integration:
 * account recovery always requires the recovery token;
 * duplicate detection accepts either an exact participant/category signature
   or a same-beach, same-day privacy-preserving GPS match within 10 metres;
-* cleanup changes each report's current score before the beach median is taken;
+* cleanup changes each report's current score before the active-report beach median is taken;
+* fully cleared reports stay in history but leave the current score and active count;
 * PostgreSQL Iteration 2 tables receive the same integrity constraints as the
   release migration, even if an application process creates them first.
 """

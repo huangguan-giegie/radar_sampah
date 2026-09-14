@@ -154,12 +154,12 @@ turning the participant into Guest.
 
 | Field | Type | Notes |
 | --- | --- | --- |
-| `severity` | `"Low"｜"Moderate"｜"High"｜"Severe"｜null` | **Must be `null` when fewer than 3 valid reports qualify.** Never fall back to `"Low"` |
+| `severity` | `"Low"｜"Moderate"｜"High"｜"Severe"｜null` | **Must be `null` when fewer than 3 active reports qualify.** Never fall back to `"Low"` |
 | `band` | `1｜2｜3｜4｜null` | Paired with `severity`; null together. Drives the four-bar marker |
 | `insufficientData` | boolean | True exactly when `severity === null` |
-| `validReports` | int | **Counts `Counted` rows only.** Duplicate and Incomplete never counted |
-| `attentionScore` | number｜null | Median of eligible Report Scores, rounded to two decimals; null when fewer than 3 qualify |
-| `eligibleReportCount` | int | Number of `Counted` reports in the latest 90-day scoring window |
+| `validReports` | int | Number of active `Counted` reports in the 90-day window that still have litter after cleanup. Fully cleared reports remain historical but are excluded |
+| `attentionScore` | number｜null | Median of active Report Scores, rounded to two decimals; null when fewer than 3 active reports qualify |
+| `eligibleReportCount` | int | Same active report count used by the median and minimum-evidence rule |
 | `lastReportedAt` | string｜null | Newest **Counted** report. The frontend renders "6 days ago" itself — do not send prose |
 | `freshnessKind` | `"ok"｜"aging"｜"stale"` | Under 30 days / 30–90 / over 90 or never |
 | `primarySpeciesGlyph` | `"turtle"｜"bird"｜"mangrove"｜"grass"｜"crab"｜"fish"` | Icon for the biodiversity map marker |
@@ -488,11 +488,11 @@ place — the beach detail page. That page's "LITTER COMPOSITION" block changes 
 | Where | Today | Has to become |
 | --- | --- | --- |
 | `RecordScreen.tsx` | Single-select category (`patchDraft({ category: cat })`) | A quantity band per category, several selectable |
-| Severity formula (§7) | `category weight × quantity level` | Report Score is the maximum category score; Beach Attention Score is the median of eligible report scores |
+| Severity formula (§7) | `category weight × quantity level` | Report Score is the maximum category score; Beach Attention Score is the median of active report scores |
 | `BeachScreen.tsx` caption | `SHARE OF n VERIFIED REPORTS` | Point at the specific report and its date |
 
 The scoring choice is now fixed for the current MVP: a multi-category report uses the maximum
-category score, and a beach uses the median of eligible report scores from the latest 90 days.
+category score, and a beach uses the median of active report scores from the latest 90 days.
 
 ---
 
@@ -830,7 +830,7 @@ else:
     severity      = < 1.5 → Low | < 2.5 → Moderate | < 3.5 → High | else Severe
     band          = Low=1, Moderate=2, High=3, Severe=4
 
-validReports    = count(eligible)
+validReports    = count(eligible)  # active reports only; fully cleared reports stay in history
 lastReportedAt  = max(created_at) across ALL that beach's Counted reports (window ignored)
 freshnessKind   = now - lastReportedAt: < 30d → 'ok' | ≤ 90d → 'aging' | else 'stale'
 

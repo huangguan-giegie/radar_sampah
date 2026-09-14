@@ -677,7 +677,7 @@ components:
         severity:
           allOf: [{ $ref: "#/components/schemas/SeverityBand" }]
           nullable: true
-          description: must be null when there are fewer than 3 eligible reports
+          description: must be null when there are fewer than 3 active reports
         band:
           type: integer
           nullable: true
@@ -687,7 +687,7 @@ components:
         insufficientData: { type: boolean }
         validReports:
           type: integer
-          description: counts Counted reports only
+          description: active Counted reports in the latest 90 days that still have litter after cleanup; fully cleared reports remain historical but are excluded
         attentionScore:
           type: number
           format: float
@@ -696,7 +696,7 @@ components:
         eligibleReportCount:
           type: integer
           minimum: 0
-          description: Counted, complete and non-duplicate reports in the latest 90-day scoring window
+          description: active report count used by the median and minimum-evidence rule
         lastReportedAt:
           type: string
           format: date-time
@@ -844,7 +844,7 @@ components:
     ScoringMethod:
       type: object
       required: [categoryWeights, quantityWeights, bands, windowDays, minReports,
-                 reportAggregation, beachAggregation, ruleVersion]
+                 reportEligibility, reportAggregation, beachAggregation, ruleVersion]
       properties:
         categoryWeights:
           type: array
@@ -873,14 +873,17 @@ components:
               color: { type: string, example: "#D9A24B" }
         windowDays: { type: integer, example: 90 }
         minReports: { type: integer, example: 3 }
+        reportEligibility:
+          type: string
+          description: active Counted reports in the latest 90 days with remaining litter after cleanup; fully cleared reports remain historical but are excluded
         reportAggregation:
           type: string
           enum: [max]
           description: maximum Category Score in the report
         beachAggregation:
           type: string
-          enum: [median]
-          description: median of eligible Report Scores in the latest 90-day window
+          enum: [median-of-active-reports]
+          description: median of active Report Scores in the latest 90-day window
         ruleVersion:
           type: string
           example: radar-sampah-scoring-v3

@@ -32,6 +32,17 @@ globals().pop("test_partial_main_database_is_migrated_to_contract_rules", None)
 globals().pop("test_iteration2_gps_rejects_a_report_near_an_active_target", None)
 
 
+def test_iteration2_scoring_metadata_publishes_active_report_rule(api):
+    _application, client = api
+
+    body = client.get("/scoring-method/iteration2").get_json()
+
+    assert body["ruleVersion"] == "radar-sampah-scoring-i2-v3"
+    assert body["remainingCountAggregation"] == "per-report-after-cleanup"
+    assert body["beachAggregation"] == "median-of-active-reports"
+    assert "fully cleared count-backed reports are excluded" in body["reportEligibility"]
+
+
 def test_restore_requires_recovery_token(api):
     _application, client = api
     session, _headers = signup(client)
@@ -216,25 +227,51 @@ def test_cleanup_recomputes_each_report_then_keeps_beach_median(api):
     assert after["validReports"] == 2
 
 
-def test_beach_attention_uses_median_for_five_active_reports(api):
+def test_fully_cleared_reports_are_excluded_from_five_report_median(api):
     _application, client = api
-    for quantities in (
-        {"Fishing gear": "Small"},
-        {"Fishing gear": "Small"},
-        {"Fishing gear": "Medium"},
-        {"Fishing gear": "Very Large"},
-        {"Fishing gear": "Very Large"},
+    created = []
+    headers_by_report = []
+    for counts in (
+        {"Plastic": 1},
+        {"Fishing gear": 1},
+        {"Plastic": 6},
+        {"Fishing gear": 8},
+        {"Fishing gear": 21},
     ):
         _session, headers = signup(client)
         photo = upload(client, headers)
-        assert client.post(
-            "/reports", headers=headers,
-            json=report_payload(photo["photoKey"], quantities=quantities),
-        ).status_code == 201
+        response = client.post(
+            "/reports",
+            headers=headers,
+            json={
+                "beachId": "morib",
+                "photoKey": photo["photoKey"],
+                "locationSource": "manual",
+                "itemCounts": counts,
+            },
+        )
+        assert response.status_code == 201
+        created.append(response.get_json())
+        headers_by_report.append(headers)
+
+    for index, removed in enumerate(({"Plastic": 1}, {"Fishing gear": 1})):
+        response = client.post(
+            "/cleanup-actions",
+            headers=headers_by_report[index],
+            json={
+                "targetReportId": created[index]["id"],
+                "removed": removed,
+                "handling": "Collected for disposal",
+                "idempotencyKey": f"five-report-cleared-{index}",
+            },
+        )
+        assert response.status_code == 201
 
     morib = next(item for item in client.get("/beaches").get_json() if item["id"] == "morib")
-    assert morib["eligibleReportCount"] == 5
+    assert morib["eligibleReportCount"] == 3
+    assert morib["validReports"] == 3
     assert morib["attentionScore"] == 2.0
+    assert morib["severity"] == "Moderate"
 
 
 def _submit_gps_item_count_report(client, headers, *, lat, lng, item_counts):

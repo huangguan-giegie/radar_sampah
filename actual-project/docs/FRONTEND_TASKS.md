@@ -40,8 +40,9 @@ Keep `category` / `quantity` on the draft for now — responses still return the
 the correction flow (`SubmittedScreen.tsx:154`, `MyReportsScreen.tsx:115`) seeds from it.
 
 The severity formula is now fixed: calculate Category Score for every selected category, use the
-maximum as Report Score, then use the median of eligible Report Scores from the latest 90 days for
-the beach band. The frontend mirrors this rule in `src/scoring.ts` for mock/offline mode.
+maximum as Report Score, then use the median of active Report Scores from the latest 90 days for
+the beach band. Fully cleared targets remain historical evidence but leave the current median and
+active count. The frontend mirrors this rule in `src/scoring.ts` for mock/offline mode.
 
 ---
 
