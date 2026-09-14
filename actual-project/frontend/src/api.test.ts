@@ -95,6 +95,34 @@ describe('真实 API contract', () => {
     } satisfies Partial<InstanceType<typeof ApiError>>);
   });
 
+  it('keeps the beach request alive through a Render cold start', async () => {
+    vi.useFakeTimers();
+    try {
+      let resolveResponse!: (response: Response) => void;
+      const fetchMock = vi.fn((_url: string, init: RequestInit) => new Promise<Response>((resolve, reject) => {
+        resolveResponse = resolve;
+        init.signal?.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')));
+      }));
+      vi.stubGlobal('fetch', fetchMock);
+      const { getBeaches } = await import('./api');
+
+      let settled = false;
+      const result = getBeaches().then(
+        () => { settled = true; },
+        () => { settled = true; },
+      );
+
+      await vi.advanceTimersByTimeAsync(15_001);
+      expect(settled).toBe(false);
+
+      resolveResponse(new Response('[]', { status: 200 }));
+      await result;
+      expect(settled).toBe(true);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   // Only a 401 means the token is dead. Then getMe throws it away and reports
   // nobody signed in, so a stale token cannot sit there failing every later
   // call. Any other failure leaves the token alone.

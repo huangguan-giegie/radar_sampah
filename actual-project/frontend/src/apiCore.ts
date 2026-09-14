@@ -126,7 +126,7 @@ async function fetchWithTimeout(url: string, init: RequestInit, ms: number) {
  * One JSON request. Every real-backend call goes through here: it attaches the
  * token, parses the body, and turns any non-2xx answer into an ApiError.
  */
-async function request(path: string, method = 'GET', body?: unknown) {
+async function request(path: string, method = 'GET', body?: unknown, timeoutMs = 15_000) {
   const headers: Record<string, string> = { Accept: 'application/json' };
   const token = getToken();
   if (token) headers.Authorization = 'Bearer ' + token;
@@ -135,7 +135,7 @@ async function request(path: string, method = 'GET', body?: unknown) {
   const res = await fetchWithTimeout(
     BASE_URL + path,
     { method, headers, body: body ? JSON.stringify(body) : undefined },
-    15_000,
+    timeoutMs,
   );
 
   // 204 means "done, nothing to send back" - logout, for example. Calling
@@ -605,7 +605,10 @@ export async function getBeaches(): Promise<BeachSummary[]> {
     await delay();
     return BEACHES.map(toSummary);
   }
-  return request('/beaches');
+  // Render's free instance can take longer than the normal JSON timeout to
+  // wake up. Keep the public map request alive so a cold start does not look
+  // like an empty beach list.
+  return request('/beaches', 'GET', undefined, 60_000);
 }
 
 export async function getBeach(id: string): Promise<BeachDetail> {
