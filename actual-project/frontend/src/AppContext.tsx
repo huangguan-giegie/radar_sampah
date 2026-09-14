@@ -61,6 +61,7 @@ export type ReportDraft = {
    * AI suggestion or explicitly keeps the manual values they entered.
    */
   aiDecision: 'confirmed' | 'manual' | null;
+  aiModelState: 'ready' | 'empty' | 'unavailable' | null;
   aiModelVersion: string | null;
 
   /**
@@ -104,6 +105,7 @@ function emptyDraft(): ReportDraft {
     itemCounts: null,
     eventId: null,
     aiDecision: null,
+    aiModelState: null,
     aiModelVersion: null,
     gpsIssue: null,
     editingReportId: null,
@@ -420,7 +422,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
     draft,
     patchDraft(changes) {
-      setDraft((old) => ({ ...old, ...changes }));
+      setDraft((old) => {
+        const next = { ...old, ...changes };
+        if ('photo' in changes && changes.photo?.photoKey !== old.photo?.photoKey) {
+          next.aiDecision = null;
+          next.aiModelState = null;
+          next.aiModelVersion = null;
+          next.itemCounts = null;
+        }
+        return next;
+      });
     },
     resetDraft() {
       clearDraft();

@@ -11,7 +11,7 @@
 // guard for corrections, and the way back from the review screen.
 import { describe, expect, it } from 'vitest';
 import type { ReportDraft } from './AppContext';
-import { CAME_FROM_DETAILS, backFromReview, buildReportSubmission, findExactDuplicateReport, finishReportSubmission, formatReportComposition, guardStep, hasDraftProgress, historicalPhotoUnavailable, orderByNeed, reachableStep, reportOutcome, safeNextPath } from './flowRules';
+import { CAME_FROM_DETAILS, backFromReview, buildReportSubmission, findExactDuplicateReport, finishReportSubmission, formatReportComposition, guardStep, hasDraftProgress, historicalPhotoUnavailable, orderByNeed, quantityBandForCount, quantityBandsForCounts, reachableStep, reportOutcome, safeNextPath } from './flowRules';
 import { markerHtml } from './components/BeachMarker';
 import type { BeachSummary } from './types';
 import { attentionStateFor, formatDate } from './theme';
@@ -39,6 +39,7 @@ function draft(changes: Partial<ReportDraft> = {}): ReportDraft {
     itemCounts: null,
     eventId: null,
     aiDecision: 'manual',
+    aiModelState: null,
     aiModelVersion: null,
     gpsIssue: null,
     editingReportId: null,
@@ -47,6 +48,43 @@ function draft(changes: Partial<ReportDraft> = {}): ReportDraft {
     ...changes,
   };
 }
+
+describe('exact count compatibility rules', () => {
+  it.each([
+    [1, 'Small'], [5, 'Small'], [6, 'Medium'], [20, 'Medium'],
+    [21, 'Large'], [50, 'Large'], [51, 'Very Large'],
+  ] as const)('derives the internal band for %s exact items', (count, band) => {
+    expect(quantityBandForCount(count)).toBe(band);
+  });
+
+  it('derives bands only for positive whole counts', () => {
+    expect(quantityBandsForCounts({ Plastic: 8, Other: 2, Glass: 0, Metal: 2.8 }))
+      .toEqual({ Plastic: 'Medium', Other: 'Small' });
+  });
+
+  it('runs AI before exact count confirmation', () => {
+    const beforeAi = draft({ quantities: {}, itemCounts: null, aiDecision: null, aiModelState: null });
+    expect(reachableStep(beforeAi)).toBe('suggestions');
+
+    const afterEmptyAi = draft({ quantities: {}, itemCounts: {}, aiDecision: null, aiModelState: 'empty' });
+    expect(reachableStep(afterEmptyAi)).toBe('details');
+    expect(guardStep('review', afterEmptyAi)).toBe('/report/details');
+  });
+
+  it('submits exact counts with derived internal bands', () => {
+    const result = buildReportSubmission(draft({
+      quantities: {},
+      itemCounts: { Plastic: 8, Other: 2 },
+      aiDecision: 'confirmed',
+      aiModelState: 'ready',
+    }));
+    expect(result.kind).toBe('create');
+    if (result.kind === 'create') {
+      expect(result.payload.itemCounts).toEqual({ Plastic: 8, Other: 2 });
+      expect(result.payload.quantities).toEqual({ Plastic: 'Medium', Other: 'Small' });
+    }
+  });
+});
 
 // A beach with one or two reports gets no severity band at all. Three counted
 // reports is the minimum the scoring method asks for, and printing "High" off
@@ -321,15 +359,15 @@ describe('Flow guards for direct URLs into the reporting flow', () => {
     expect(guardStep('location', d)).toBeNull();
   });
 
-  it('stops at details when a photo and beach have no category', () => {
+  it('stops at AI suggestions when a photo and beach have no category', () => {
     const d = draft({ quantities: {} });
-    expect(guardStep('review', d)).toBe('/report/details');
-    expect(guardStep('details', d)).toBeNull();
+    expect(guardStep('review', d)).toBe('/report/suggestions');
+    expect(guardStep('suggestions', d)).toBeNull();
   });
 
   it('treats a category without a quantity band as incomplete', () => {
     const d = draft({ quantities: { Plastic: undefined } });
-    expect(guardStep('review', d)).toBe('/report/details');
+    expect(guardStep('review', d)).toBe('/report/suggestions');
   });
 
   it('allows a complete draft to access every step after refresh', () => {

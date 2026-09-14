@@ -6,7 +6,7 @@
 // back a decision. That is what makes it testable, and it is also why the same
 // rules cannot drift apart between the five report screens.
 import type { ReportDraft } from './AppContext';
-import type { CreateReportInput, LitterCategory, LitterReport, QuantityByCategory, ReportStatus } from './types';
+import type { CreateReportInput, LitterCategory, LitterReport, QuantityBand, QuantityByCategory, ReportStatus } from './types';
 
 /**
  * Clean a "?next=..." value before we redirect to it.
@@ -47,7 +47,7 @@ export function safeNextPath(value: string | null): string {
  */
 export type ReportStep = 'photo' | 'location' | 'confirm' | 'details' | 'suggestions' | 'review';
 
-const STEP_ORDER: ReportStep[] = ['photo', 'location', 'confirm', 'details', 'suggestions', 'review'];
+const STEP_ORDER: ReportStep[] = ['photo', 'location', 'confirm', 'suggestions', 'details', 'review'];
 
 const STEP_PATH: Record<ReportStep, string> = {
   photo: '/report/photo',
@@ -75,6 +75,23 @@ export function hasDraftProgress(draft: ReportDraft): boolean {
     draft.editingReportId ||
     Object.keys(draft.quantities).length > 0,
   );
+}
+
+export function quantityBandForCount(count: number): QuantityBand {
+  if (count <= 5) return 'Small';
+  if (count <= 20) return 'Medium';
+  if (count <= 50) return 'Large';
+  return 'Very Large';
+}
+
+export function quantityBandsForCounts(
+  counts: Partial<Record<LitterCategory, number>>,
+): QuantityByCategory {
+  return Object.fromEntries(
+    Object.entries(counts)
+      .filter(([, count]) => Number.isInteger(count) && Number(count) > 0)
+      .map(([category, count]) => [category, quantityBandForCount(Number(count))]),
+  ) as QuantityByCategory;
 }
 
 /**
@@ -128,8 +145,14 @@ export function reachableStep(draft: ReportDraft): ReportStep {
   if (!draft.beachId) return 'confirm';
   // Half-filled counts as not filled: a category that was ticked but has no
   // amount yet would be sent to the backend as an incomplete report.
+  if (draft.aiModelState !== null) {
+    const counts = draft.itemCounts ?? {};
+    const countValues = Object.values(counts);
+    const hasValidCounts = countValues.length > 0 && countValues.every((count) => Number.isInteger(count) && count > 0);
+    return draft.aiDecision && hasValidCounts ? 'review' : 'details';
+  }
   const picked = Object.keys(draft.quantities) as LitterCategory[];
-  if (picked.length === 0 || picked.some((c) => !draft.quantities[c])) return 'details';
+  if (picked.length === 0 || picked.some((c) => !draft.quantities[c])) return 'suggestions';
   return draft.aiDecision ? 'review' : 'suggestions';
 }
 
@@ -216,14 +239,15 @@ export function buildReportSubmission(draft: ReportDraft): ReportSubmission {
   if (!draft.aiDecision) {
     throw new Error('Confirm the AI suggestion or your manual values before submitting.');
   }
-  const picked = Object.keys(draft.quantities) as LitterCategory[];
+  const derivedQuantities = draft.itemCounts ? quantityBandsForCounts(draft.itemCounts) : draft.quantities;
+  const picked = Object.keys(derivedQuantities) as LitterCategory[];
   if (!draft.beachId || picked.length === 0) {
     throw new Error('This report is missing a required field. Go back and complete it.');
   }
 
   // A category with no amount is a half-filled row. Name the offending
   // categories in the error, so the user knows which row to go and fix.
-  const noBand = picked.filter((c) => !draft.quantities[c]);
+  const noBand = picked.filter((c) => !derivedQuantities[c]);
   if (noBand.length > 0) {
     throw new Error(`Pick how much for: ${noBand.join(', ')}.`);
   }
@@ -235,11 +259,6 @@ export function buildReportSubmission(draft: ReportDraft): ReportSubmission {
       || Object.values(draft.itemCounts).some((count) => !Number.isInteger(count) || count! < 1 || count! > 100_000)
     ) {
       throw new Error('The confirmed item counts no longer match the selected categories. Review the AI counts again.');
-    }
-    const expectedBand = (count: number): QuantityByCategory[LitterCategory] =>
-      count <= 5 ? 'Small' : count <= 20 ? 'Medium' : count <= 50 ? 'Large' : 'Very Large';
-    if (countCategories.some((category) => draft.quantities[category as LitterCategory] !== expectedBand(draft.itemCounts![category as LitterCategory]!))) {
-      throw new Error('The quantity bands must match the confirmed item counts. Review the AI counts again.');
     }
   }
 
@@ -255,7 +274,7 @@ export function buildReportSubmission(draft: ReportDraft): ReportSubmission {
   const usesGps = draft.locationSource === 'gps' && draft.coords !== null;
   const common = {
     beachId: draft.beachId,
-    quantities: draft.quantities,
+    quantities: derivedQuantities,
     ...(draft.editingReportId && draft.locationSource === 'gps' && draft.coords === null
       ? {}
       : { locationSource: usesGps ? ('gps' as const) : ('manual' as const) }),
