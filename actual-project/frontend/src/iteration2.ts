@@ -49,14 +49,14 @@ export interface CleanupTarget {
 export interface CleanupRow {
   category: LitterCategory;
   removed: number;
-  before: number;
-  after: number;
+  before: number | null;
+  after: number | null;
 }
 
 export interface CleanupAction {
   id: string;
   participantId: string;
-  targetReportId: string;
+  targetReportId: string | null;
   eventId: string | null;
   beachId: string;
   beachName: string;
@@ -93,6 +93,7 @@ const BEACHES = [
 ] as const;
 
 const MODEL_CLASSES = ['plastic', 'metal', 'glass', 'paper_cardboard', 'styrofoam', 'fishing_gear'];
+const CLEANUP_CATEGORIES: LitterCategory[] = ['Fishing gear', 'Plastic', 'Glass', 'Metal', 'Other', 'Paper'];
 
 function malaysiaDate(date: Date): string {
   return new Intl.DateTimeFormat('en-CA', {
@@ -290,7 +291,8 @@ export async function getCleanupForTarget(targetReportId: string): Promise<Clean
 
 export async function completeCleanup(input: {
   participantId: string;
-  targetReportId: string;
+  beachId?: string;
+  targetReportId?: string;
   eventId?: string | null;
   removed: Partial<Record<LitterCategory, number>>;
   handling: CleanupHandling;
@@ -298,38 +300,62 @@ export async function completeCleanup(input: {
   idempotencyKey?: string;
 }): Promise<CleanupAction> {
   const idempotencyKey = input.idempotencyKey ?? crypto.randomUUID();
+  if (!input.targetReportId && !input.beachId) throw new Error('Choose a beach for this cleanup.');
   if (!USE_MOCK) {
-    return createIteration2Cleanup({
+    const payload: any = {
+      beachId: input.beachId,
       targetReportId: input.targetReportId,
       eventId: input.eventId,
       removed: input.removed,
       handling: input.handling,
       note: input.note,
       idempotencyKey,
-    });
+    };
+    if (!payload.targetReportId) delete payload.targetReportId;
+    if (!payload.beachId) delete payload.beachId;
+    return createIteration2Cleanup(payload);
   }
+
   const store = readStore();
-  const target = store.targets.find((item) => item.reportId === input.targetReportId);
-  if (!target) throw new Error('This report is not eligible for a cleanup.');
-  const rows = (Object.keys(target.remaining) as LitterCategory[])
-    .map((category): CleanupRow | null => {
-      const before = target.remaining[category] ?? 0;
-      const removed = input.removed[category] ?? 0;
-      if (!Number.isInteger(removed) || removed < 0) throw new Error('Removed quantities must be whole numbers.');
-      if (removed > before) throw new Error('Removed quantities cannot exceed the remaining count.');
-      if (removed === 0) return null;
-      target.remaining[category] = before - removed;
-      return { category, before, removed, after: before - removed };
-    })
-    .filter((row): row is CleanupRow => row !== null);
+  const target = input.targetReportId
+    ? store.targets.find((item) => item.reportId === input.targetReportId)
+    : undefined;
+  if (input.targetReportId && !target) throw new Error('This report is not eligible for a cleanup.');
+  const beachId = target?.beachId ?? input.beachId!;
+  const beach = BEACHES.find((item) => item.id === beachId);
+  if (!beach) throw new Error('Choose a monitored beach.');
+
+  let rows: CleanupRow[];
+  if (target) {
+    rows = (Object.keys(target.remaining) as LitterCategory[])
+      .map((category): CleanupRow | null => {
+        const before = target.remaining[category] ?? 0;
+        const removed = input.removed[category] ?? 0;
+        if (!Number.isInteger(removed) || removed < 0) throw new Error('Removed quantities must be whole numbers.');
+        if (removed > before) throw new Error('Removed quantities cannot exceed the remaining count.');
+        if (removed === 0) return null;
+        target.remaining[category] = before - removed;
+        return { category, before, removed, after: before - removed };
+      })
+      .filter((row): row is CleanupRow => row !== null);
+  } else {
+    rows = CLEANUP_CATEGORIES
+      .map((category): CleanupRow | null => {
+        const removed = input.removed[category] ?? 0;
+        if (!Number.isInteger(removed) || removed < 0) throw new Error('Removed quantities must be whole numbers.');
+        return removed > 0 ? { category, before: null, removed, after: null } : null;
+      })
+      .filter((row): row is CleanupRow => row !== null);
+  }
+
   if (rows.length === 0) throw new Error('Enter at least one item you removed.');
   const action: CleanupAction = {
     id: `cleanup-${Date.now()}-${crypto.randomUUID()}`,
     participantId: input.participantId,
-    targetReportId: input.targetReportId,
+    targetReportId: target?.reportId ?? null,
     eventId: input.eventId ?? null,
-    beachId: target.beachId,
-    beachName: target.beachName,
+    beachId,
+    beachName: beach.name,
     createdAt: new Date().toISOString(),
     rows,
     score: rows.reduce((sum, row) => sum + row.removed, 0),
@@ -438,11 +464,16 @@ export async function analyseReportPhoto(photoKey: string, forceFailure = false)
 
 export async function analyseCleanupPhoto(
   photo: File,
-  target: CleanupTarget,
+  target?: CleanupTarget | null,
 ): Promise<Partial<Record<LitterCategory, number>>> {
   if (!USE_MOCK) {
     const result = await recognizeCleanupPhoto(photo);
     const suggested = result.counts as Partial<Record<LitterCategory, number>>;
+    if (!target) {
+      return Object.fromEntries(
+        Object.entries(suggested).filter(([, count]) => Number(count) > 0),
+      ) as Partial<Record<LitterCategory, number>>;
+    }
     return Object.fromEntries(Object.entries(suggested).flatMap(([category, count]) => {
       const remaining = target.remaining[category as LitterCategory] ?? 0;
       const confirmed = Math.min(remaining, Number(count) || 0);
@@ -451,6 +482,11 @@ export async function analyseCleanupPhoto(
   }
   await new Promise((resolve) => setTimeout(resolve, 650));
   if (!photo) throw new Error('Choose a JPG or PNG photo first.');
+  if (!target) {
+    const seed = [...photo.name].reduce((sum, character) => sum + character.charCodeAt(0), 0);
+    const category = CLEANUP_CATEGORIES[seed % CLEANUP_CATEGORIES.length];
+    return { [category]: 1 + (seed % 6) };
+  }
   if (target.beachId === 'morib') {
     return {
       Plastic: Math.min(26, target.remaining.Plastic ?? 0),
