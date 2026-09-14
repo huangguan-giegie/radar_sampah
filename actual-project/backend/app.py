@@ -21,7 +21,7 @@ from statistics import median
 from typing import Any
 
 from flask import current_app, g, jsonify, request
-from sqlalchemy import select, text
+from sqlalchemy import inspect, select, text
 
 import app_core as _impl
 from app_core import *  # noqa: F401,F403 - preserve the public module contract
@@ -150,8 +150,56 @@ def _repair_exact_duplicate_statuses(engine: Any) -> None:
             )
 
 
+def _ensure_report_columns_single_connection(engine: Any) -> None:
+    """Apply startup report DDL without reflecting through a second pooled connection."""
+
+    schema = _impl.database_schema() if engine.dialect.name != "sqlite" else None
+    inspector = inspect(engine)
+    if "reports" not in inspector.get_table_names(schema=schema):
+        return
+    column_info = inspector.get_columns("reports", schema=schema)
+    existing = {column["name"] for column in column_info}
+    column_types = {
+        column["name"]: column["type"].__class__.__name__.lower()
+        for column in column_info
+    }
+    additions = {
+        "beach_name": "VARCHAR(160)",
+        "quantities": "TEXT",
+        "photo_mime": "VARCHAR(64)",
+        "photo_stripped": "BOOLEAN",
+        **{column: "VARCHAR(20)" for column in _impl.QUANTITY_COLUMNS.values()},
+        "lat": "DOUBLE PRECISION",
+        "lng": "DOUBLE PRECISION",
+        "item_counts": "TEXT",
+        "proximity_ref": "VARCHAR(64)",
+        "event_id": "VARCHAR(100)",
+        "status_note": "TEXT",
+        "updated_at": "TIMESTAMP WITH TIME ZONE",
+        "deleted_at": "TIMESTAMP WITH TIME ZONE",
+    }
+    report_table = "reports" if schema is None else f'"{schema}".reports'
+    with engine.begin() as connection:
+        for name, sql_type in additions.items():
+            if name not in existing:
+                connection.execute(text(f"ALTER TABLE {report_table} ADD COLUMN {name} {sql_type}"))
+        if engine.dialect.name == "postgresql":
+            for column in _impl.QUANTITY_COLUMNS.values():
+                if "int" in column_types.get(column, ""):
+                    connection.execute(text(
+                        f"ALTER TABLE {report_table} ALTER COLUMN {column} TYPE VARCHAR(20) "
+                        f"USING CASE {column} WHEN 1 THEN 'Small' WHEN 2 THEN 'Medium' "
+                        f"WHEN 3 THEN 'Large' WHEN 4 THEN 'Very Large' ELSE NULL END"
+                    ))
+
+
 def _initialise_database(engine: Any) -> None:
-    _original_initialise_database(engine)
+    original_ensure_report_columns = _impl.ensure_report_columns
+    _impl.ensure_report_columns = _ensure_report_columns_single_connection
+    try:
+        _original_initialise_database(engine)
+    finally:
+        _impl.ensure_report_columns = original_ensure_report_columns
     _repair_exact_duplicate_statuses(engine)
     _ensure_postgres_iteration2_contract(engine)
 
