@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Check, Info } from '../components/Icon';
 import { Callout, EmptyState, InfoChip, SectionLabel } from '../components/ds';
@@ -10,8 +10,17 @@ import type { LitterCategory } from '../types';
 export default function EventResultScreen() {
   const { eventId = '' } = useParams();
   const nav = useNavigate();
-  const event = getCleanupEvent(eventId);
-  const cleanups = eventCleanups(eventId);
+  const [event, setEvent] = useState<Awaited<ReturnType<typeof getCleanupEvent>>>(null);
+  const [cleanups, setCleanups] = useState<Awaited<ReturnType<typeof eventCleanups>>>([]);
+  useEffect(() => {
+    let active = true;
+    Promise.all([getCleanupEvent(eventId), eventCleanups(eventId)]).then(([eventResult, cleanupRows]) => {
+      if (!active) return;
+      setEvent(eventResult);
+      setCleanups(cleanupRows);
+    });
+    return () => { active = false; };
+  }, [eventId]);
   const totals = useMemo(() => {
     const result: Partial<Record<LitterCategory, number>> = {};
     cleanups.flatMap((cleanup) => cleanup.rows).forEach((row) => { result[row.category] = (result[row.category] ?? 0) + row.removed; });

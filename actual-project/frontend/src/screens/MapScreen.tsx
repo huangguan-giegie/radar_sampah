@@ -17,7 +17,7 @@ import { attentionStateFor, C, freshnessLabel, freshStyle, MONO, reportWord, sev
 import { GlassPanel, SeverityBadge } from '../components/ds';
 import { useApp } from '../AppContext';
 import type { BeachSummary, MapLayer } from '../types';
-import { cleanupTotal, formatEventDate, getCleanupTarget, listCleanupEvents, type CleanupEvent } from '../iteration2';
+import { cleanupTotal, formatEventDate, listCleanupEvents, listCleanupTargets, type CleanupEvent, type CleanupTarget } from '../iteration2';
 
 
 // The opening view. Zoom 9 fits all four beaches at once, so the user sees the
@@ -92,6 +92,8 @@ export default function MapScreen() {
   const [compact, setCompact] = useState(false);
 
   const [beaches, setBeaches] = useState<BeachSummary[]>([]);
+  const [events, setEvents] = useState<CleanupEvent[]>([]);
+  const [cleanupTargets, setCleanupTargets] = useState<Record<string, CleanupTarget>>({});
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
 
@@ -107,6 +109,15 @@ export default function MapScreen() {
   }
 
   useEffect(loadBeaches, []);
+  useEffect(() => {
+    let active = true;
+    Promise.all([listCleanupEvents(), listCleanupTargets()]).then(([eventRows, targets]) => {
+      if (!active) return;
+      setEvents(eventRows);
+      setCleanupTargets(Object.fromEntries(targets.map((target) => [target.beachId, target])));
+    }).catch(() => undefined);
+    return () => { active = false; };
+  }, []);
   // Leaflet itself is set up in useLeafletMap - see that file for why the map
   // object lives in a ref instead of state.
   const { elRef, mapRef, ready } = useLeafletMap({ center: CENTER, zoom: ZOOM });
@@ -116,7 +127,7 @@ export default function MapScreen() {
   const markersRef = useRef<Record<string, L.Marker>>({});
 
   const selected = beaches.find((b) => b.id === selectedId) || null;
-  const selectedEvent = selected ? listCleanupEvents().find((event) => event.beachId === selected.id) ?? null : null;
+  const selectedEvent = selected ? events.find((event) => event.beachId === selected.id) ?? null : null;
 
 
   // Redraw every pin when the data, the layer, the selection or the compact
@@ -389,6 +400,7 @@ export default function MapScreen() {
           beach={selected}
           layer={layer}
           event={selectedEvent}
+          cleanupTarget={cleanupTargets[selected.id] ?? null}
           onClose={() => setSelectedId(null)}
           // From the biodiversity layer the button says Learn More, so it has
           // to land on the species cards. It used to open the beach at the top
@@ -415,6 +427,7 @@ function SelectedCard({
   beach,
   layer,
   event,
+  cleanupTarget,
   onClose,
   onOpen,
   onCleanup,
@@ -423,6 +436,7 @@ function SelectedCard({
   beach: BeachSummary;
   layer: MapLayer;
   event: CleanupEvent | null;
+  cleanupTarget: CleanupTarget | null;
   onClose: () => void;
   onOpen: () => void;
   onCleanup: () => void;
@@ -433,8 +447,6 @@ function SelectedCard({
   // below. One source, so the card cannot show a status band in one place and
   // say "Insufficient data" in another.
   const attention = attentionStateFor(beach.severity, beach.insufficientData, beach.validReports);
-  const cleanupTarget = getCleanupTarget(beach.id);
-
   // A small label/value row. Written once as a function so the labels line up
   // in one column - a fixed 78px label width, rather than each row guessing.
   const metaRow = (k: string, v: string, color: string = C.ink2, weight = 400) => (

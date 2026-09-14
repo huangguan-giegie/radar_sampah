@@ -36,6 +36,8 @@ function draft(changes: Partial<ReportDraft> = {}): ReportDraft {
     locationSource: 'manual',
     coords: null,
     quantities: { Plastic: 'Small' },
+    itemCounts: null,
+    eventId: null,
     aiDecision: 'manual',
     aiModelVersion: null,
     gpsIssue: null,
@@ -161,6 +163,19 @@ describe('buildReportSubmission', () => {
         'Fishing gear': 'Medium',
         Glass: 'Small',
       });
+    }
+  });
+
+  it('sends model-confirmed item counts separately from the compatible quantity bands', () => {
+    const result = buildReportSubmission(draft({
+      quantities: { Plastic: 'Medium', Other: 'Small' },
+      itemCounts: { Plastic: 8, Other: 2 },
+      aiDecision: 'confirmed',
+    }));
+    expect(result.kind).toBe('create');
+    if (result.kind === 'create') {
+      expect(result.payload.quantities).toEqual({ Plastic: 'Medium', Other: 'Small' });
+      expect(result.payload.itemCounts).toEqual({ Plastic: 8, Other: 2 });
     }
   });
 

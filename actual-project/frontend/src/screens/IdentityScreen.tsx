@@ -1,10 +1,6 @@
-
-// The anonymous participant number - this app's whole idea of an account.
-// No name, no email, no password. The user gets a four digit number and their
-// reports hang off it. Data we never collect cannot leak, and a volunteer
-// standing on a beach in the sun will not stop to verify an email address.
-// The cost is real, so the screen says it twice: lose the number and the old
-// reports still count for their beach, but nobody can reopen them.
+// Anonymous participant access without personal data.
+// A participant ID is public-ish account metadata; the recovery token is the
+// secret credential. Both are required to restore an existing account.
 
 import { useState, type FormEvent } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -14,27 +10,37 @@ import { BackButton, ErrorNote, GhostButton, PrimaryButton, TextButton } from '.
 import { useApp } from '../AppContext';
 import { safeNextPath } from '../flowRules';
 
+function needsParticipantIdentity(path: string) {
+  const pathname = path.split('?')[0];
+  return pathname === '/reports'
+    || pathname.startsWith('/reports/')
+    || pathname === '/account'
+    || pathname.startsWith('/report/')
+    || pathname.startsWith('/cleanup/')
+    || pathname === '/platform/events/new'
+    || /^\/events\/[^/]+\/check-in$/.test(pathname);
+}
+
 export default function IdentityScreen() {
   const nav = useNavigate();
   const [params] = useSearchParams();
   const next = safeNextPath(params.get('next'));
   const { createId, restore } = useApp();
 
-  const [mode, setMode] = useState<'new' | 'existing'>('new');
+  const [mode, setMode] = useState<'new' | 'existing'>(() =>
+    next === '/reports' || next.startsWith('/reports/') ? 'existing' : 'new',
+  );
   const [typedId, setTypedId] = useState('');
   const [typedToken, setTypedToken] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  // The number we have just issued. Null means show the two choices; set means
-  // show the number and nothing else. State rather than its own route on
-  // purpose - Back must not bring "here is your number" up a second time, when
-  // the number on screen would no longer be the one they were given.
-  const [newSession, setNewSession] = useState<{ participantId: string; token: string } | null>(null);
+  const [newSession, setNewSession] = useState<{ participantId: string; recoveryToken?: string } | null>(null);
   const [copied, setCopied] = useState(false);
   const [savedRecovery, setSavedRecovery] = useState(false);
+  const [downloadRequested, setDownloadRequested] = useState(false);
 
   const recoveryKitText = newSession
-    ? `Radar Sampah recovery details\nParticipant ID: ${newSession.participantId}\nRecovery token: ${newSession.token}\n\nKeep this file private. The token works like a password.`
+    ? `Radar Sampah recovery details\nParticipant ID: ${newSession.participantId}${newSession.recoveryToken ? `\nRecovery token: ${newSession.recoveryToken}\n\nKeep this file private. The token works like a password.` : ''}`
     : '';
 
   function downloadRecoveryKit() {
@@ -43,25 +49,30 @@ export default function IdentityScreen() {
     const link = document.createElement('a');
     link.href = url;
     link.download = `radar-sampah-recovery-${newSession.participantId}.txt`;
+    link.style.display = 'none';
+    document.body.appendChild(link);
     link.click();
-    URL.revokeObjectURL(url);
-    setSavedRecovery(true);
+    link.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+    setDownloadRequested(true);
   }
 
   function goBack() {
-    if (newSession && !savedRecovery && !window.confirm('Leave without saving your recovery token?')) return;
+    if (newSession?.recoveryToken && !savedRecovery && !window.confirm('Leave without saving your recovery token?')) return;
+    if (needsParticipantIdentity(next)) {
+      const historyIndex = window.history.state?.idx;
+      if (Number.isInteger(historyIndex) && historyIndex > 0) nav(-1);
+      else nav('/map');
+      return;
+    }
     nav(next === '/home' ? '/welcome' : next);
   }
 
-
-  // Ask for a new number.
   async function getNewId() {
     setBusy(true);
     setError(null);
     try {
       const session = await createId();
-      // Deliberately no navigation here. The user has to see the number and
-      // save it first - moving straight on would lose it before they read it.
       setNewSession(session);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not get an ID. Please try again.');
@@ -69,24 +80,21 @@ export default function IdentityScreen() {
     setBusy(false);
   }
 
-
-  // Continue with a number the user already has.
-  //
-  // The field feeding this is inputMode="numeric", not type="number". A number
-  // input silently drops a leading zero, which would send a different ID.
   async function useExistingId(e: FormEvent) {
     e.preventDefault();
+    const participantId = typedId.trim();
+    const recoveryToken = typedToken.trim();
+    if (!participantId || !recoveryToken) {
+      setError('Enter both your participant ID and recovery token.');
+      return;
+    }
     setBusy(true);
     setError(null);
     try {
-      await restore(typedId.trim(), typedToken.trim());
-      // On to wherever they were heading before we asked for an ID. Replace,
-      // so Back does not drop them onto this screen again.
+      await restore(participantId, recoveryToken);
       nav(next, { replace: true });
     } catch (err) {
-      // A server fault or a dead connection lands here too, so we must not
-      // blame the user's typing every time. Prefer the message from the API.
-      setError(err instanceof Error ? err.message : 'Could not use that ID. Please check the number.');
+      setError(err instanceof Error ? err.message : 'Could not log in. Check your ID and recovery token.');
     }
     setBusy(false);
   }
@@ -107,21 +115,18 @@ export default function IdentityScreen() {
 
         <div>
           <div style={{ fontSize: 31, fontWeight: 640, letterSpacing: '-.8px' }}>
-            {newSession ? 'Save your recovery token' : mode === 'existing' ? 'Log in' : 'Join without sharing your name'}
+            {newSession ? (newSession.recoveryToken ? 'Save your recovery token' : 'Your participant ID is ready') : mode === 'existing' ? 'Log in' : 'Join without sharing your name'}
           </div>
           <div style={{ fontSize: 14, color: C.muted, marginTop: 8, lineHeight: 1.5 }}>
             {newSession
-              ? "You won't see this token again after leaving this screen."
+              ? newSession.recoveryToken ? "You won't see this token again after leaving this screen." : 'Keep your participant ID to restore this account.'
               : mode === 'existing'
-                ? 'Use your participant ID and recovery token.'
+                ? 'Use your participant ID and recovery token to access your reports.'
                 : 'No name, email or phone number required.'}
           </div>
         </div>
 
         {newSession ? (
-          // The number is issued: show it big, offer a one-tap copy, and press
-          // the user to save it. That warning is the honest price of having no
-          // password, and the Account page repeats it.
           <>
             <div style={{ background: C.white, border: `1px solid ${C.line}`, borderRadius: 24, overflow: 'hidden' }}>
               <div style={{ padding: '14px 18px', borderBottom: `1px solid ${C.line}`, color: '#9C4237', fontFamily: MONO, fontSize: 10, fontWeight: 700, letterSpacing: '.14em' }}>
@@ -132,14 +137,16 @@ export default function IdentityScreen() {
                 <div style={{ fontFamily: MONO, fontSize: 34, fontWeight: 700, color: C.navy, marginTop: 5, userSelect: 'all' }}>
                   {newSession.participantId}
                 </div>
-                <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: '.12em', color: C.dim, marginTop: 18 }}>RECOVERY TOKEN</div>
-                <div style={{ fontFamily: MONO, fontSize: 15, lineHeight: 1.65, color: C.ink2, marginTop: 5, wordBreak: 'break-word', userSelect: 'all' }}>
-                  {newSession.token}
-                </div>
+                {newSession.recoveryToken && <>
+                  <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: '.12em', color: C.dim, marginTop: 18 }}>RECOVERY TOKEN</div>
+                  <div style={{ fontFamily: MONO, fontSize: 15, lineHeight: 1.65, color: C.ink2, marginTop: 5, wordBreak: 'break-word', userSelect: 'all' }}>
+                    {newSession.recoveryToken}
+                  </div>
+                </>}
               </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+            {newSession.recoveryToken && <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
               <GhostButton
                 onClick={async () => {
                   if (!navigator.clipboard) return;
@@ -154,10 +161,14 @@ export default function IdentityScreen() {
               >
                 {copied ? 'Copied' : 'Copy details'}
               </GhostButton>
-              <GhostButton onClick={downloadRecoveryKit}>Download</GhostButton>
-            </div>
+              <GhostButton onClick={downloadRecoveryKit}>{downloadRequested ? 'Download again' : 'Download'}</GhostButton>
+            </div>}
 
-            <label style={{ display: 'flex', gap: 11, alignItems: 'center', padding: '13px 14px', borderRadius: 16, background: C.tint, color: C.ink2, fontSize: 13.5, fontWeight: 620 }}>
+            {downloadRequested && <p role="status" style={{ margin: '-8px 2px 0', color: C.muted, fontSize: 12, lineHeight: 1.5 }}>
+              Check your downloads for the recovery file. If it is not there, try again or use Copy details.
+            </p>}
+
+            {newSession.recoveryToken && <label style={{ display: 'flex', gap: 11, alignItems: 'center', padding: '13px 14px', borderRadius: 16, background: C.tint, color: C.ink2, fontSize: 13.5, fontWeight: 620 }}>
               <input
                 type="checkbox"
                 checked={savedRecovery}
@@ -165,17 +176,12 @@ export default function IdentityScreen() {
                 style={{ width: 20, height: 20, accentColor: C.navy }}
               />
               I have saved my recovery token
-            </label>
+            </label>}
 
-            <PrimaryButton disabled={!savedRecovery} onClick={() => nav(next, { replace: true })}>Continue</PrimaryButton>
+            <PrimaryButton disabled={Boolean(newSession.recoveryToken && !savedRecovery)} onClick={() => nav(next, { replace: true })}>Continue</PrimaryButton>
           </>
         ) : (
-          // No number yet. A segmented control instead of two separate pages,
-          // so someone who picked the wrong side can switch back without losing
-          // what they typed. It ends with a way out for people who only want to
-          // look around.
           <>
-
             <div
               style={{
                 display: 'flex',
@@ -223,11 +229,9 @@ export default function IdentityScreen() {
             {error && <ErrorNote title="Could not continue" body={error} />}
 
             {mode === 'new' ? (
-              <>
-                <PrimaryButton onClick={getNewId} disabled={busy}>
-                  {busy ? 'Creating your ID…' : 'Create participant ID'}
-                </PrimaryButton>
-              </>
+              <PrimaryButton onClick={getNewId} disabled={busy}>
+                {busy ? 'Creating your ID…' : 'Create participant ID'}
+              </PrimaryButton>
             ) : (
               <form onSubmit={useExistingId} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                 <label style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
@@ -263,7 +267,7 @@ export default function IdentityScreen() {
                     autoComplete="current-password"
                     value={typedToken}
                     onChange={(e) => setTypedToken(e.target.value)}
-                    placeholder="Enter your recovery token"
+                    placeholder="RS-..."
                     style={{
                       background: C.white,
                       border: `1.5px solid ${C.cloud}`,
@@ -279,13 +283,9 @@ export default function IdentityScreen() {
                 <PrimaryButton type="submit" disabled={busy || !typedId.trim() || !typedToken.trim()}>
                   {busy ? 'Checking…' : 'Log in'}
                 </PrimaryButton>
-
               </form>
             )}
 
-            {/* A rule, not a slogan: flowRules drops the coordinates and the
-                backend strips EXIF. Said here, where we ask for an identity,
-                rather than buried in a policy page. */}
             <div
               style={{
                 display: 'flex',

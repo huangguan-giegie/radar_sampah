@@ -1,12 +1,11 @@
 # Radar Sampah API
 
-This Flask API implements the Iteration 1 contract in
-[`../frontend/API.en.md`](../frontend/API.en.md): anonymous participant access,
-beach summaries, private photo uploads and multi-category litter reports.
-It does not collect names, email addresses, phone numbers or passwords.
-
-The active API does not expose the earlier sample routes. The old runtime can
-still be recovered from the repository rollback tags when needed.
+This Flask API keeps the frontend contract from commit `1a113fbb1f900192e4cf0ec0d1620abc7cba309f` in
+[`../frontend/API.en.md`](../frontend/API.en.md) and adds Iteration 2 endpoints
+specified in [`API_ITERATION2.md`](API_ITERATION2.md): local litter recognition,
+remaining-count cleanup targets, append-only partial cleanup actions, community
+events, moderator event creation and attendance checks. It does not collect
+names, email addresses or phone numbers.
 
 ## Local setup
 
@@ -19,46 +18,72 @@ python app.py
 
 The development server listens on `http://localhost:5000` by default.
 
-## Storage
+## Storage and database rollout
 
 - `DATABASE_URL` selects PostgreSQL; absent means the local SQLite fallback.
   PostgreSQL tables use the database's default schema unless an already-created
-  schema is explicitly selected with `DATABASE_SCHEMA`.
-- Schema setup is idempotent. On startup the API creates the six contract tables
-  (`users`, `beaches`, `dim_threat`, `dim_species`, `area_species`, and
-  `reports`), safely renames a legacy `frontend_reports` table to `reports`,
-  backfills the contract fields (including the legacy `beach_name` and
-  `quantities` compatibility columns) and quantity columns, and inserts the
-  fixed beach/biodiversity reference rows when they are missing. Existing
-  report rows are never deleted or overwritten.
-- New databases receive the value checks, foreign keys and indexes defined in
-  `schema.sql`. Reference inserts use database-native conflict handling, so
-  concurrent application starts remain safe and repeatable.
-- `seeds.sql` remains a manual PostgreSQL fixture for the optional demo user and
-  report rows. It is intentionally not run during application startup, so a
-  deploy cannot add synthetic reports to an existing database.
-- For a controlled PostgreSQL release, run
-  [`migrations/001_rename_frontend_reports_to_reports.sql`](migrations/001_rename_frontend_reports_to_reports.sql).
-  Its commented **DOWN** block is the rollback plan: first roll back the app,
-  then rename `reports` back only when `frontend_reports` does not exist.
-- GPS reports store only coordinates rounded to three decimal places. No API
-  response serialises report `lat` or `lng`.
-- Photo bytes live outside the public web root. `PHOTO_STORAGE_DIR` selects that
-  private directory; the default is an OS temporary directory for local demos.
-- Photos are re-encoded without EXIF, resized to a maximum 2048 px edge and
-  returned only through owner-scoped links that expire after 15 minutes.
+  schema is selected with `DATABASE_SCHEMA`.
+- Schema setup is idempotent. Startup creates the contract tables, safely
+  renames a legacy `frontend_reports` table to `reports`, backfills compatible
+  report fields and quantity columns, inserts missing fixed reference rows, and
+  repairs missing Iteration 2 PostgreSQL constraints when necessary.
+- Existing report rows are preserved. Startup does not run `seeds.sql`, so a
+  production deploy cannot silently add synthetic reports.
+- For an existing PostgreSQL database, apply
+  `migrations/001_rename_frontend_reports_to_reports.sql` when the legacy table
+  still exists, then apply `migrations/002_add_iteration2.sql` before deploying
+  the Iteration 2 backend.
+- Migration 002 adds actual item counts, privacy-preserving proximity
+  references, event links, community events/members, cleanup actions, foreign
+  keys, CHECK constraints and indexes. Legacy numeric quantity codes are
+  converted to the current text bands (`Small` through `Very Large`).
+- `schema.sql` is the clean-new-database PostgreSQL definition and is kept
+  aligned with the runtime schema and migration 002.
+- Legacy reports may contain coordinates rounded to three decimal places. New
+  Iteration 2 count-backed reports do not persist raw coordinates; the active
+  target proximity check stores a target-scoped HMAC of an approximately
+  one-metre grid cell instead. No API response serialises report `lat` or `lng`.
+- Photo bytes live outside the public web root. `PHOTO_STORAGE_DIR` selects the
+  private directory; production should use persistent private storage.
+- Original report photos are retained for audit. Optional after-cleanup photos
+  are passed to inference in memory and are not retained.
 
-## Render settings
+## Authentication
+
+Anonymous signup returns a random 4-digit `participantId`, a session JWT and a
+one-time `recoveryToken`. The database stores only the recovery-token digest.
+
+`POST /auth/restore` requires **both** the participant ID and recovery token.
+The participant ID alone is not a credential. Missing or incorrect recovery
+tokens return `401 INVALID_RECOVERY_TOKEN`.
+
+Use `scripts/provision_moderator.py` to create a controlled activity moderator.
+Normal anonymous signup creates `volunteer` accounts only.
+
+## Model integration
+
+- Model weights are Git LFS-managed. The checkout must include the real
+  `sea_taco_yolo11m_best.pt` file, and the backend deployment must install
+  `requirements-ml.txt` to enable YOLO. If the weights or ML dependencies are
+  unavailable, recognition falls back to manual counts instead of inventing a
+  model result.
+- Four packaged OBIS species-distribution models load once per process. Their
+  scores are relative occurrence/suitability context, not calibrated
+  probabilities or real-time OBIS results, and they do not affect litter
+  severity or report status.
+
+## Production settings
 
 - `FRONTEND_ORIGINS`: deployed frontend URL.
-- `DATABASE_URL`: private Render database connection string.
-- `AUTH_JWT_SECRET`: required private signing secret for anonymous demo tokens.
-- `DEMO_PARTICIPANT_ID`: optional private deployment setting for a controlled
-  demo account (for example `1637`). When set, startup creates that empty
-  volunteer row only if it is missing; normal anonymous registration remains
-  random. This is for synthetic mentor-check data only.
-- `PHOTO_STORAGE_DIR`: optional private, persistent photo directory. Production
-  must point this at persistent storage outside the public web root.
+- `DATABASE_URL`: PostgreSQL connection string.
+- `DATABASE_SCHEMA`: optional non-default PostgreSQL schema.
+- `AUTH_JWT_SECRET`: private signing secret for session/share tokens.
+- `DEMO_PARTICIPANT_ID`: optional controlled demo participant ID. It does not
+  bypass Recovery Token authentication.
+- `PHOTO_STORAGE_DIR`: persistent private photo directory.
+- `GEO_PRIVACY_HMAC_KEY`: stable private key for proximity references.
+- `LITTER_MODEL_PATH`, `LITTER_MODEL_VERSION`: optional recognition model
+  overrides.
 
 ## Active endpoints
 
@@ -70,6 +95,7 @@ The development server listens on `http://localhost:5000` by default.
 - `GET /beaches`
 - `GET /beaches/<id>`
 - `GET /scoring-method`
+- `GET /scoring-method/iteration2`
 - `POST /api/species-distribution/predict`
 - `POST /geo/resolve-beach`
 - `POST /uploads/photos`
@@ -77,17 +103,17 @@ The development server listens on `http://localhost:5000` by default.
 - `GET /reports/mine`
 - `GET /reports/mine/counts`
 - `PATCH /reports/<id>`
+- `POST /recognitions`
+- `POST /recognitions/cleanup-photo`
+- `GET /cleanup-targets`
+- `POST /cleanup-actions`
+- `GET /cleanups/mine`
+- `GET /events`, `GET /events/<id>`, `GET /events/<id>/cleanups`
+- `POST /events` (moderator; event creation only)
+- `POST /events/<id>/join`, `DELETE /events/<id>/join`
+- `POST /events/<id>/check-in`
+- `GET /share-links`, `GET /share-links/{token}`, `GET /share-links/{token}/photo`
 
-Read `../frontend/API.en.md` for the full contract and privacy boundary.
-
-The species-distribution endpoint serves a four-model offline OBIS snapshot baseline. Its scores
-are relative occurrence/suitability context, not calibrated probabilities or real-time OBIS
-results, and they do not affect litter severity or report status.
-
-Anonymous access uses a four-digit participant number for this small demo only.
-It is not a full account system. Logout removes the token on the client; the
-server does not maintain a revocation list.
-
-When `DEMO_PARTICIPANT_ID` is configured, the configured number is a public demo
-credential: anyone who knows it can restore that anonymous identity. Do not use
-it with personal or production data.
+Read `../frontend/API.en.md` for the base frontend contract and
+`API_ITERATION2.md` for the reviewed Iteration 2 integration, scoring, privacy
+and database rules.

@@ -9,14 +9,12 @@ import { C, MONO } from '../theme';
 import type { LitterCategory, QuantityBand, QuantityByCategory } from '../types';
 
 const CATEGORIES: LitterCategory[] = ['Plastic', 'Fishing gear', 'Glass', 'Metal', 'Paper', 'Other'];
-const QUANTITIES: QuantityBand[] = ['Small', 'Medium', 'Large', 'Very Large'];
-
 export default function AiSuggestionScreen() {
   const nav = useNavigate();
   const [params] = useSearchParams();
   const { draft, patchDraft } = useApp();
   const [result, setResult] = useState<AiSuggestion | null>(null);
-  const [editable, setEditable] = useState<QuantityByCategory>({});
+  const [editable, setEditable] = useState<Partial<Record<LitterCategory, number>>>({});
   const [loading, setLoading] = useState(true);
   const started = useRef(false);
 
@@ -27,19 +25,24 @@ export default function AiSuggestionScreen() {
     analyseReportPhoto(photoKey, params.get('ai') === 'fail')
       .then((suggestion) => {
         setResult(suggestion);
-        setEditable(suggestion.suggestions);
+        setEditable(Object.fromEntries(Object.entries(suggestion.counts).filter(([, count]) => Number(count) > 0)));
       })
       .finally(() => setLoading(false));
   }, [draft.photo?.photoKey, draft.existingPhotoKey, params]);
 
   function confirm() {
-    if (Object.keys(editable).length === 0) return;
-    patchDraft({ quantities: editable, aiDecision: 'confirmed', aiModelVersion: result?.modelVersion ?? null });
+    const counts = Object.fromEntries(Object.entries(editable).filter(([, count]) => Number(count) > 0)) as Partial<Record<LitterCategory, number>>;
+    if (Object.keys(counts).length === 0) return;
+    const quantities: QuantityByCategory = Object.fromEntries(Object.entries(counts).map(([category, count]) => {
+      const band: QuantityBand = count <= 5 ? 'Small' : count <= 20 ? 'Medium' : count <= 50 ? 'Large' : 'Very Large';
+      return [category, band];
+    })) as QuantityByCategory;
+    patchDraft({ quantities, itemCounts: counts, aiDecision: 'confirmed', aiModelVersion: result?.modelVersion ?? null });
     nav('/report/review', { state: { from: 'suggestions' } });
   }
 
   function keepManual() {
-    patchDraft({ aiDecision: 'manual', aiModelVersion: result?.modelVersion ?? null });
+    patchDraft({ itemCounts: null, aiDecision: 'manual', aiModelVersion: result?.modelVersion ?? null });
     nav('/report/review', { state: { from: 'suggestions' } });
   }
 
@@ -47,7 +50,7 @@ export default function AiSuggestionScreen() {
     setEditable((current) => {
       const next = { ...current };
       if (category in next) delete next[category];
-      else next[category] = 'Small';
+      else next[category] = 1;
       return next;
     });
   }
@@ -72,7 +75,7 @@ export default function AiSuggestionScreen() {
         ) : result?.modelState === 'ready' ? (
           <>
             <Callout title="Suggestion ready" tone="reassurance" icon={<Check color={C.green} />}>
-              Check each selected category and change any amount that does not match what you saw.
+              Check each selected category and correct its item count before submitting.
             </Callout>
 
             <div className="i2-card">
@@ -86,16 +89,14 @@ export default function AiSuggestionScreen() {
                 {(Object.keys(editable) as LitterCategory[]).map((category) => (
                   <label key={category} className="i2-quantity-row">
                     <span style={{ fontSize: 13.5, fontWeight: 700 }}>{category}</span>
-                    <select className="i2-field" aria-label={`${category} suggested amount`} value={editable[category]} onChange={(event) => setEditable((current) => ({ ...current, [category]: event.target.value as QuantityBand }))}>
-                      {QUANTITIES.map((quantity) => <option key={quantity}>{quantity}</option>)}
-                    </select>
+                    <input className="i2-field" aria-label={`${category} detected item count`} type="number" min={1} max={100000} step={1} inputMode="numeric" value={editable[category] ?? 1} onChange={(event) => setEditable((current) => ({ ...current, [category]: Math.max(1, Math.min(100000, Math.trunc(Number(event.target.value) || 1))) }))} />
                   </label>
                 ))}
               </div>
             </div>
 
             {Object.keys(editable).length === 0 && <Alert title="Choose at least one category" tone="caution">Or keep the manual values you entered on the previous page.</Alert>}
-            <PrimaryButton onClick={confirm} disabled={Object.keys(editable).length === 0}>Confirm suggestions</PrimaryButton>
+            <PrimaryButton onClick={confirm} disabled={Object.keys(editable).length === 0}>Confirm item counts</PrimaryButton>
             <GhostButton onClick={keepManual}>Keep my manual entries</GhostButton>
           </>
         ) : (

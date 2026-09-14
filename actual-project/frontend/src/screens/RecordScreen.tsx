@@ -66,7 +66,7 @@ export default function RecordScreen() {
     // answered" visible. Guessing "Small" would invent a measurement.
     if (cat in next) delete next[cat];
     else next[cat] = undefined;
-    patchDraft({ quantities: next, aiDecision: null, aiModelVersion: null });
+    patchDraft({ quantities: next, itemCounts: null, aiDecision: null, aiModelVersion: null });
     setShowErrors(false);
   }
 
@@ -77,7 +77,7 @@ export default function RecordScreen() {
     const next = { ...draft.quantities };
     if (next[cat] === q) delete next[cat];
     else next[cat] = q;
-    patchDraft({ quantities: next, aiDecision: null, aiModelVersion: null });
+    patchDraft({ quantities: next, itemCounts: null, aiDecision: null, aiModelVersion: null });
     setShowErrors(false);
   }
 

@@ -3,20 +3,20 @@ info:
   title: Radar Sampah API
   version: "1.0.0"
   description: |
-    The Iteration 1 (Core MVP) backend.
+    The current main contract with additive Iteration 2 cleanup and community-event operations.
 
     This is one of three copies of the same contract — change one, change all three:
-      openapi.yaml (this file, English)  for tooling
+    openapi.yaml (this file, English)  for tooling
       API.en.md    (English)             for LiHanXia and Keith, with the reasoning
       API.md       (Chinese)             for Qian Jiang
 
-    backend/app.py implements this contract. The earlier /api/* recognition, heatmap and
-    cleanup-mission routes are not active Iteration 1 endpoints; the offline species context
-    route below is the current exception.
+    backend/app.py implements this contract. Iteration 2 details and privacy rules are also
+    documented in backend/API_ITERATION2.md.
 
     The points that get missed:
     - Under 3 eligible reports, severity and band MUST be null — never fall back to Low
     - A duplicate returns 201 with status=Duplicate. It is a result, not an error
+    - Duplicate means either an exact same-participant/day/signature match, or a same-beach/day GPS match within about 10 m; the GPS rule applies across participants
     - Coordinates are used only to match a beach. No response may ever return them
     - EXIF location data must actually be stripped from every photo
     - /scoring-method is optional (US4.3 ships from the frontend), but §7's calculation must
@@ -35,6 +35,7 @@ tags:
   - name: Geo
   - name: Uploads
   - name: Reports
+  - name: Iteration2
 
 security:
   - bearerAuth: []
@@ -67,16 +68,16 @@ paths:
               required: [participantId, token]
               properties:
                 participantId: { type: string, example: "1637" }
-                token: { type: string, description: "System-generated recovery token" }
+                token: { type: string, description: "System-generated recovery token; required together with participantId" }
       responses:
         "200":
           description: session
           content:
             application/json:
               schema: { $ref: "#/components/schemas/AuthSession" }
-        "404":
-          $ref: "#/components/responses/Error"
         "401":
+          $ref: "#/components/responses/Error"
+        "404":
           $ref: "#/components/responses/Error"
 
   /auth/logout:
@@ -264,7 +265,7 @@ paths:
       responses:
         "201":
           description: |
-            Saved. Note that status may be Duplicate — that is a normal outcome, not an error.
+            Saved. status may be Duplicate either from the exact signature rule or from a same-beach, same-Malaysia-day privacy-preserving GPS match within about 10 m. The GPS rule applies across participants.
           content:
             application/json:
               schema: { $ref: "#/components/schemas/LitterReport" }
@@ -333,6 +334,245 @@ paths:
           $ref: "#/components/responses/Error"
         "404":
           $ref: "#/components/responses/Error"
+
+  /recognitions:
+    post:
+      tags: [Iteration2]
+      summary: Recognise litter in an owned report photo
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [photoKey]
+              properties:
+                photoKey: { type: string }
+      responses:
+        "200":
+          description: detected counts and compatible quantity bands
+          content:
+            application/json:
+              schema: { type: object }
+        "401": { $ref: "#/components/responses/Error" }
+
+  /recognitions/cleanup-photo:
+    post:
+      tags: [Iteration2]
+      summary: Recognise a cleanup photo in memory, then discard it
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [photo]
+              properties:
+                photo: { type: string, format: binary }
+      responses:
+        "200": { description: detected counts and compatible quantity bands }
+
+  /cleanup-targets:
+    get:
+      tags: [Iteration2]
+      security: []
+      summary: List counted reports with remaining confirmed item counts
+      parameters:
+        - { name: beachId, in: query, required: false, schema: { type: string } }
+        - { name: reportId, in: query, required: false, schema: { type: string }, description: Limit results to one selected cleanup target }
+      responses:
+        "200":
+          description: remaining cleanup targets
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/CleanupTarget" }
+
+  /cleanup-actions:
+    post:
+      tags: [Iteration2]
+      summary: Append a partial cleanup action
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [targetReportId, removed, handling]
+              properties:
+                targetReportId: { type: string }
+                eventId: { type: string, nullable: true }
+                removed: { type: object, additionalProperties: { type: integer, minimum: 1 } }
+                handling: { type: string, enum: [Collected for disposal, Recycled / handled, Not recorded] }
+                note: { type: string, maxLength: 500 }
+                idempotencyKey: { type: string, maxLength: 128 }
+      responses:
+        "201":
+          description: cleanup action recorded
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CleanupAction" }
+        "409": { $ref: "#/components/responses/Error" }
+
+  /cleanups/mine:
+    get:
+      tags: [Iteration2]
+      summary: List the current participant's cleanup actions
+      responses:
+        "200":
+          description: current participant's actions
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/CleanupAction" }
+
+  /events:
+    get:
+      tags: [Iteration2]
+      security: []
+      summary: List scheduled and moderator-created events
+      parameters:
+        - { name: beachId, in: query, required: false, schema: { type: string } }
+      responses:
+        "200":
+          description: events
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/CleanupEvent" }
+    post:
+      tags: [Iteration2]
+      summary: Create a community event (moderator)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [beachId, date]
+              properties:
+                beachId: { type: string }
+                date: { type: string, format: date }
+      responses:
+        "201": { description: event created }
+        "403": { $ref: "#/components/responses/Error" }
+
+  /events/{eventId}:
+    get:
+      tags: [Iteration2]
+      security: []
+      summary: Read an event
+      parameters:
+        - { name: eventId, in: path, required: true, schema: { type: string } }
+      responses:
+        "200":
+          description: event
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CleanupEvent" }
+        "404": { $ref: "#/components/responses/Error" }
+
+  /share-links:
+    get:
+      tags: [Iteration2]
+      security: []
+      summary: Create a stable, scope-limited public share link
+      description: Event links can be created publicly. A report link requires the authenticated report owner.
+      parameters:
+        - { name: eventId, in: query, required: false, schema: { type: string } }
+        - { name: reportId, in: query, required: false, schema: { type: string } }
+      responses:
+        "200":
+          description: Signed share token and frontend path
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [token, path]
+                properties:
+                  token: { type: string }
+                  path: { type: string }
+        "400": { $ref: "#/components/responses/Error" }
+        "404": { $ref: "#/components/responses/Error" }
+
+  /share-links/{token}:
+    get:
+      tags: [Iteration2]
+      security: []
+      summary: Read only the event and report authorized by a share token
+      parameters:
+        - { name: token, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { description: Scoped shared event and optional report }
+        "404": { $ref: "#/components/responses/Error" }
+
+  /share-links/{token}/photo:
+    get:
+      tags: [Iteration2]
+      security: []
+      summary: Read the original photo for the report in a share token
+      parameters:
+        - { name: token, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { description: Scoped report photo }
+        "404": { $ref: "#/components/responses/Error" }
+
+  /events/{eventId}/cleanups:
+    get:
+      tags: [Iteration2]
+      security: []
+      summary: Read the cleanup actions linked to an event
+      parameters:
+        - { name: eventId, in: path, required: true, schema: { type: string } }
+      responses:
+        "200":
+          description: event cleanup actions
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/CleanupAction" }
+
+  /events/{eventId}/join:
+    post:
+      tags: [Iteration2]
+      summary: Join an open event
+      parameters:
+        - { name: eventId, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { description: joined event }
+        "409": { $ref: "#/components/responses/Error" }
+    delete:
+      tags: [Iteration2]
+      summary: Leave an event
+      parameters:
+        - { name: eventId, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { description: updated event }
+
+  /events/{eventId}/check-in:
+    post:
+      tags: [Iteration2]
+      summary: Check in using request-only GPS coordinates
+      parameters:
+        - { name: eventId, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [lat, lng]
+              properties:
+                lat: { type: number }
+                lng: { type: number }
+      responses:
+        "200": { description: checked-in event }
+        "403": { $ref: "#/components/responses/Error" }
+        "409": { $ref: "#/components/responses/Error" }
 components:
   securitySchemes:
     bearerAuth:
@@ -366,6 +606,17 @@ components:
             - UNKNOWN_PARTICIPANT
             - PAYLOAD_TOO_LARGE
             - RATE_LIMITED
+            - INVALID_RECOVERY_TOKEN
+            - MODERATOR_REQUIRED
+            - LOCATION_OUT_OF_RANGE
+            - ACTIVE_CLEANUP_TARGET_NEARBY
+            - REMOVED_COUNT_EXCEEDS_REMAINING
+            - CLEANUP_TARGET_COMPLETE
+            - IDEMPOTENCY_CONFLICT
+            - JOIN_REQUIRED
+            - EVENT_CHECKIN_REQUIRED
+            - EVENT_NOT_ACTIVE
+            - EVENT_CLOSED
             - INTERNAL_ERROR
         message:
           type: string
@@ -387,7 +638,7 @@ components:
       required: [token, user]
       properties:
         token: { type: string, description: "JWT, valid for 30 days" }
-        recoveryToken: { type: string, description: "Returned only when the participant is created; save it like a password" }
+        recoveryToken: { type: string, description: "Optional extension; returned once when supported by the backend" }
         user: { $ref: "#/components/schemas/User" }
 
     SeverityBand:
@@ -666,6 +917,12 @@ components:
             and derives category / quantity from it.
           additionalProperties: { $ref: "#/components/schemas/QuantityBand" }
           example: { Plastic: Large, "Fishing gear": Medium }
+        itemCounts:
+          type: object
+          description: Optional exact confirmed item counts for Iteration 2; the backend derives matching quantity bands.
+          additionalProperties: { type: integer, minimum: 1, maximum: 100000 }
+          example: { Plastic: 8, Other: 2 }
+        eventId: { type: string, nullable: true, description: Optional event link for an in-event report }
         photoKey: { type: string, description: 上传接口返回的存储键 }
         locationSource:
           type: string
@@ -699,6 +956,13 @@ components:
             the correction flow reads it back into the form and PATCHes the whole set, so
             sending only the derived pair below would clear every other category.
           additionalProperties: { $ref: "#/components/schemas/QuantityBand" }
+        itemCounts:
+          type: object
+          additionalProperties: { type: integer, minimum: 1, maximum: 100000 }
+        remainingItemCounts:
+          type: object
+          additionalProperties: { type: integer, minimum: 1, maximum: 100000 }
+        eventId: { type: string, nullable: true }
         category:
           description: derived — the category with the maximum category score (weight × quantity weight)
           allOf: [{ $ref: "#/components/schemas/LitterCategory" }]
@@ -735,3 +999,60 @@ components:
         counted: { type: integer }
         duplicate: { type: integer }
         incomplete: { type: integer }
+
+    CleanupTarget:
+      type: object
+      required: [reportId, beachId, beachName, reportedAt, remaining, remainingTotal]
+      properties:
+        reportId: { type: string }
+        beachId: { type: string }
+        beachName: { type: string }
+        reportedAt: { type: string, format: date-time }
+        itemCounts: { type: object, additionalProperties: { type: integer } }
+        remaining: { type: object, additionalProperties: { type: integer, minimum: 1 } }
+        remainingTotal: { type: integer, minimum: 1 }
+
+    CleanupAction:
+      type: object
+      required: [id, participantId, targetReportId, eventId, beachId, beachName, createdAt, rows, score, handling, note, status]
+      properties:
+        id: { type: string }
+        participantId: { type: string }
+        targetReportId: { type: string }
+        eventId: { type: string, nullable: true }
+        beachId: { type: string }
+        beachName: { type: string }
+        createdAt: { type: string, format: date-time }
+        rows:
+          type: array
+          items:
+            type: object
+            required: [category, removed, before, after]
+            properties:
+              category: { $ref: "#/components/schemas/LitterCategory" }
+              removed: { type: integer, minimum: 1 }
+              before: { type: integer, minimum: 1 }
+              after: { type: integer, minimum: 0 }
+        score: { type: integer, minimum: 1, description: Total items removed, not points }
+        handling: { type: string, enum: [Collected for disposal, Recycled / handled, Not recorded] }
+        note: { type: string }
+        status: { type: string }
+
+    CleanupEvent:
+      type: object
+      required: [id, beachId, beachName, area, date, startsAt, endsAt, status, source, participantCount, joinedBy, checkIns, attendanceBy, cleanupIds]
+      properties:
+        id: { type: string }
+        beachId: { type: string }
+        beachName: { type: string }
+        area: { type: string }
+        date: { type: string, format: date }
+        startsAt: { type: string, example: "09:00" }
+        endsAt: { type: string, example: "12:00" }
+        status: { type: string, enum: [Open, Closed] }
+        source: { type: string, enum: [weekly, admin] }
+        participantCount: { type: integer, minimum: 0 }
+        joinedBy: { type: array, items: { type: string } }
+        checkIns: { type: object, additionalProperties: { type: string, enum: [idle, within_area] } }
+        attendanceBy: { type: array, items: { type: string } }
+        cleanupIds: { type: array, items: { type: string } }

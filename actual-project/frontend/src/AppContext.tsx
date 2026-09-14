@@ -21,7 +21,7 @@ import {
   type ReactNode,
 } from 'react';
 import { createAnonymousId, getMe, logout } from './api';
-import type { LitterReport, QuantityByCategory, ReportStatus, UploadedPhoto, User } from './types';
+import type { LitterCategory, LitterReport, QuantityByCategory, ReportStatus, UploadedPhoto, User } from './types';
 import { restoreId as apiRestoreId } from './api';
 import { authFailureAction } from './authPolicy';
 
@@ -52,6 +52,8 @@ export type ReportDraft = {
   locationSource: 'gps' | 'manual' | null;
   coords: { lat: number; lng: number } | null;
   quantities: QuantityByCategory;
+  itemCounts: Partial<Record<LitterCategory, number>> | null;
+  eventId: string | null;
 
   /**
    * Iteration 2 keeps AI output separate from the participant's final report.
@@ -99,6 +101,8 @@ function emptyDraft(): ReportDraft {
     locationSource: null,
     coords: null,
     quantities: {},
+    itemCounts: null,
+    eventId: null,
     aiDecision: null,
     aiModelVersion: null,
     gpsIssue: null,
@@ -225,8 +229,8 @@ type AppState = {
   // button; null means there is nothing to tell the user.
   authSyncError: string | null;
   retryAuth: () => Promise<void>;
-  createId: () => Promise<{ participantId: string; token: string }>;
-  restore: (participantId: string, token: string) => Promise<void>;
+  createId: () => Promise<{ participantId: string; recoveryToken?: string }>;
+  restore: (participantId: string, token?: string) => Promise<void>;
   signOut: () => Promise<void>;
 
   draft: ReportDraft;
@@ -393,7 +397,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setAuthSyncError(null);
       return {
         participantId: session.user.participantId,
-        token: session.recoveryToken ?? session.token,
+        recoveryToken: session.recoveryToken,
       };
     },
 

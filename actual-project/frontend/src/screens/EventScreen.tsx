@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Check, ChevronRight, Clock, Pin } from '../components/Icon';
 import { EmptyState, InfoChip, SectionLabel } from '../components/ds';
@@ -6,6 +6,7 @@ import { BackButton, GhostButton, PrimaryButton, TextButton } from '../component
 import { useApp } from '../AppContext';
 import {
   formatEventDate,
+  createSharePath,
   getCleanupEvent,
   joinCleanupEvent,
   leaveCleanupEvent,
@@ -16,16 +17,35 @@ export default function EventScreen() {
   const { eventId = '' } = useParams();
   const nav = useNavigate();
   const { user, showToast } = useApp();
-  const [event, setEvent] = useState(() => getCleanupEvent(eventId));
+  const [event, setEvent] = useState<Awaited<ReturnType<typeof getCleanupEvent>>>(null);
+  const [loading, setLoading] = useState(true);
   const [sharing, setSharing] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [sharePath, setSharePath] = useState<string | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    setLoading(true);
+    getCleanupEvent(eventId).then((row) => { if (active) setEvent(row); })
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
+  }, [eventId]);
+
+  useEffect(() => {
+    let active = true;
+    setSharePath(null);
+    createSharePath({ eventId })
+      .then((path) => { if (active) setSharePath(path); })
+      .catch(() => { if (active) setSharePath(null); });
+    return () => { active = false; };
+  }, [eventId]);
 
   if (!event) {
     return (
       <div className="screen scroll-y">
         <div className="measure i2-page">
           <BackButton onClick={() => nav('/community')} />
-          <EmptyState title="Activity not found" body="This cleanup date may have changed or is no longer listed." action="View activities" onAction={() => nav('/community')} />
+          <EmptyState title={loading ? 'Loading activity' : 'Activity not found'} body={loading ? 'Fetching the latest activity details.' : 'This cleanup date may have changed or is no longer listed.'} action={loading ? undefined : 'View activities'} onAction={loading ? undefined : () => nav('/community')} />
         </div>
       </div>
     );
@@ -37,28 +57,40 @@ export default function EventScreen() {
   const checkedIn = checkIn === 'within_area';
   const attendanceRecorded = Boolean(participantId && event.attendanceBy.includes(participantId));
 
-  function join() {
+  async function join() {
     if (!participantId) {
       nav(`/identity?next=${encodeURIComponent(`/events/${eventId}`)}`);
       return;
     }
-    const updated = joinCleanupEvent(eventId, participantId);
-    setEvent(updated);
-    showToast('Activity joined');
+    try {
+      const updated = await joinCleanupEvent(eventId, participantId);
+      setEvent(updated);
+      showToast('Activity joined');
+    } catch (reason) {
+      showToast(reason instanceof Error ? reason.message : 'Could not join this activity.');
+    }
   }
 
-  function leave() {
+  async function leave() {
     if (!participantId) return;
-    const updated = leaveCleanupEvent(eventId, participantId);
-    setEvent(updated);
-    showToast('You left this activity');
+    try {
+      const updated = await leaveCleanupEvent(eventId, participantId);
+      setEvent(updated);
+      showToast('You left this activity');
+    } catch (reason) {
+      showToast(reason instanceof Error ? reason.message : 'Could not leave this activity.');
+    }
   }
 
-  const shareUrl = `${window.location.origin}/share/events/${event.id}`;
+  const shareUrl = sharePath ? `${window.location.origin}${sharePath}` : '';
   const shareText = `${event.beachName} cleanup · ${formatEventDate(event.date)}`;
-  const whatsapp = `https://wa.me/?text=${encodeURIComponent(`${shareText}\n${shareUrl}`)}`;
+  const whatsapp = shareUrl ? `https://wa.me/?text=${encodeURIComponent(`${shareText}\n${shareUrl}`)}` : '';
 
   async function copyLink() {
+    if (!shareUrl) {
+      showToast('Secure share link is still loading');
+      return;
+    }
     try {
       await navigator.clipboard.writeText(shareUrl);
       setCopied(true);
@@ -70,6 +102,10 @@ export default function EventScreen() {
   }
 
   async function systemShare() {
+    if (!shareUrl) {
+      showToast('Secure share link is still loading');
+      return;
+    }
     if (!navigator.share) {
       await copyLink();
       return;
@@ -82,6 +118,10 @@ export default function EventScreen() {
     } finally {
       setSharing(false);
     }
+  }
+
+  function shareOnWhatsApp() {
+    if (whatsapp) window.open(whatsapp, '_blank', 'noopener,noreferrer');
   }
 
   const participation = [
@@ -155,15 +195,16 @@ export default function EventScreen() {
         <div className="i2-card">
           <SectionLabel size="sm">SHARE</SectionLabel>
           <div className="i2-share-grid">
-            <a href={whatsapp} target="_blank" rel="noreferrer" className="btn-ghost press i2-share-button">WhatsApp</a>
-            <button type="button" className="btn-ghost press i2-share-button" onClick={systemShare} disabled={sharing}>{sharing ? 'Opening…' : 'Share…'}</button>
-            <button type="button" className={`btn-primary press i2-share-button${copied ? ' i2-copy-success' : ''}`} onClick={copyLink}>
+            <button type="button" className="btn-ghost press i2-share-button" onClick={shareOnWhatsApp} disabled={!sharePath}>WhatsApp</button>
+            <button type="button" className="btn-ghost press i2-share-button" onClick={systemShare} disabled={sharing || !sharePath}>{sharing ? 'Opening…' : 'Share…'}</button>
+            <button type="button" className={`btn-primary press i2-share-button${copied ? ' i2-copy-success' : ''}`} onClick={copyLink} disabled={!sharePath}>
               {copied ? 'Copied' : 'Copy link'}
             </button>
           </div>
+          {!sharePath && <p style={{ margin: '8px 0 0', color: C.muted, fontSize: 11 }}>Preparing a secure event link…</p>}
         </div>
 
-        <GhostButton onClick={() => nav(`/share/events/${event.id}`)}>Open public sharing page</GhostButton>
+        <GhostButton onClick={() => { if (sharePath) nav(sharePath); }} disabled={!sharePath}>Open public sharing page</GhostButton>
         {joined && !attendanceRecorded && <TextButton onClick={leave}>Leave activity</TextButton>}
       </div>
     </div>

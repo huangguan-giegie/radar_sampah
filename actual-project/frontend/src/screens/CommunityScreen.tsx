@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronRight } from '../components/Icon';
 import { EmptyState, InfoChip, SectionLabel } from '../components/ds';
@@ -10,7 +10,14 @@ export default function CommunityScreen() {
   const nav = useNavigate();
   const { user } = useApp();
   const [filter, setFilter] = useState<'All' | 'Joined'>('All');
-  const events = listCleanupEvents(user?.participantId, filter === 'Joined');
+  const [events, setEvents] = useState<Awaited<ReturnType<typeof listCleanupEvents>>>([]);
+  useEffect(() => {
+    let active = true;
+    listCleanupEvents(user?.participantId, filter === 'Joined')
+      .then((rows) => { if (active) setEvents(rows); })
+      .catch(() => { if (active) setEvents([]); });
+    return () => { active = false; };
+  }, [user?.participantId, filter]);
   const grouped = useMemo(() => {
     return events.reduce<Record<string, typeof events>>((groups, event) => {
       (groups[event.date] ??= []).push(event);

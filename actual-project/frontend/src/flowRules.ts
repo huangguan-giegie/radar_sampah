@@ -227,6 +227,21 @@ export function buildReportSubmission(draft: ReportDraft): ReportSubmission {
   if (noBand.length > 0) {
     throw new Error(`Pick how much for: ${noBand.join(', ')}.`);
   }
+  if (draft.itemCounts) {
+    const countCategories = Object.keys(draft.itemCounts).sort();
+    if (
+      countCategories.length !== picked.length
+      || countCategories.some((category) => !picked.includes(category as LitterCategory))
+      || Object.values(draft.itemCounts).some((count) => !Number.isInteger(count) || count! < 1 || count! > 100_000)
+    ) {
+      throw new Error('The confirmed item counts no longer match the selected categories. Review the AI counts again.');
+    }
+    const expectedBand = (count: number): QuantityByCategory[LitterCategory] =>
+      count <= 5 ? 'Small' : count <= 20 ? 'Medium' : count <= 50 ? 'Large' : 'Very Large';
+    if (countCategories.some((category) => draft.quantities[category as LitterCategory] !== expectedBand(draft.itemCounts![category as LitterCategory]!))) {
+      throw new Error('The quantity bands must match the confirmed item counts. Review the AI counts again.');
+    }
+  }
 
   // Only claim 'gps' when we really do have coordinates. Saying 'gps' with no
   // coords would tell the backend the beach was measured when it was guessed,
@@ -289,6 +304,8 @@ export function buildReportSubmission(draft: ReportDraft): ReportSubmission {
       ...common,
       photoKey: draft.photo.photoKey,
       locationSource: usesGps ? 'gps' : 'manual',
+      ...(draft.itemCounts ? { itemCounts: draft.itemCounts } : {}),
+      ...(draft.eventId ? { eventId: draft.eventId } : {}),
       ...(usesGps ? { coords: draft.coords! } : {}),
     },
   };

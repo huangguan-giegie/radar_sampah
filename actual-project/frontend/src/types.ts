@@ -265,6 +265,10 @@ export interface LitterReport {
    *  the report we refill the form from this; without it, any category they
    *  did not touch would be wiped. */
   quantities: QuantityByCategory;
+  /** Exact confirmed counts, present on Iteration 2 reports that can be shared or cleaned. */
+  itemCounts?: Partial<Record<LitterCategory, number>>;
+  remainingItemCounts?: Partial<Record<LitterCategory, number>>;
+  eventId?: string | null;
   /** Derived: the heaviest category in quantities. */
   category: LitterCategory;
   /** Derived: the band recorded for that heaviest category. */
@@ -311,6 +315,10 @@ export interface CreateReportInput {
   /** At least one entry. The backend derives category, quantity and the scores
    *  from this, so the frontend does not send them - one source of truth. */
   quantities: QuantityByCategory;
+  /** Exact model-confirmed counts for Iteration 2 cleanup targets. */
+  itemCounts?: Partial<Record<LitterCategory, number>>;
+  /** Event linkage is preserved when reporting from an event check-in flow. */
+  eventId?: string;
   /** The storage key returned by the upload endpoint. */
   photoKey: string;
   /** 'gps' = worked out from the device location, 'manual' = the user picked. */
@@ -332,8 +340,7 @@ export interface User {
 export interface AuthSession {
   /** Short-lived session JWT used for authenticated API calls. */
   token: string;
-  /** Shown once when a participant is created. It is required to restore the
-   * account on another device and must never be used as the bearer token. */
+  /** Optional compatible extension; the current main contract restores by ID. */
   recoveryToken?: string;
   user: User;
 }

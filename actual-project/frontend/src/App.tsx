@@ -130,6 +130,8 @@ export default function App() {
       ? 'Add a report'
       : pathname.startsWith('/share/events/')
         ? 'Shared cleanup activity'
+        : pathname.startsWith('/share/')
+          ? 'Shared cleanup report'
         : pathname.startsWith('/events/') && pathname.endsWith('/check-in')
           ? 'Cleanup check-in'
           : pathname.startsWith('/events/') && pathname.endsWith('/result')
@@ -206,6 +208,8 @@ export default function App() {
         <Route path="/events/:eventId" element={<EventScreen />} />
         <Route path="/events/:eventId/result" element={<EventResultScreen />} />
         <Route path="/share/events/:eventId" element={<SharedEventScreen />} />
+        <Route path="/share/reports/:reportId" element={<SharedEventScreen />} />
+        <Route path="/share/:shareToken" element={<SharedEventScreen />} />
         <Route path="/events/:eventId/check-in" element={<RequireAuth><CheckInScreen /></RequireAuth>} />
         <Route path="/cleanup/:beachId" element={<RequireAuth><CleanupScreen /></RequireAuth>} />
         <Route path="/cleanup/result/:cleanupId" element={<RequireAuth><CleanupResultScreen /></RequireAuth>} />

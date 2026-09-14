@@ -81,24 +81,29 @@ export function GhostButton({
   children,
   onClick,
   height = 54,
+  disabled = false,
   style,
 }: {
   children: ReactNode;
   onClick?: () => void;
   height?: number;
+  disabled?: boolean;
   style?: CSSProperties;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
+      disabled={disabled}
       className="btn-ghost press"
       style={{
         minHeight: height,
         borderRadius: 18,
         background: C.white,
         border: `1.5px solid ${C.line2}`,
-        color: C.navy,
+        color: disabled ? C.dim : C.navy,
+        cursor: disabled ? 'not-allowed' : 'pointer',
+        opacity: disabled ? 0.65 : 1,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',

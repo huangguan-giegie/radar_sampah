@@ -1,4 +1,21 @@
 import type { LitterCategory, QuantityBand, QuantityByCategory } from './types';
+import {
+  checkInIteration2Event,
+  createIteration2Cleanup,
+  createIteration2Event,
+  getIteration2Event,
+  getIteration2EventCleanups,
+  getIteration2Events,
+  createIteration2ShareLink,
+  getIteration2SharedItems,
+  getIteration2MyCleanups,
+  getIteration2Targets,
+  joinIteration2Event,
+  leaveIteration2Event,
+  recognizeCleanupPhoto,
+  recognizeReportPhoto,
+  USE_MOCK,
+} from './api';
 
 export type EventStatus = 'Open' | 'Closed';
 export type CleanupHandling = 'Collected for disposal' | 'Recycled / handled' | 'Not recorded';
@@ -55,6 +72,7 @@ export interface AiSuggestion {
   modelState: 'ready' | 'unavailable' | 'empty';
   modelVersion: string;
   suggestions: QuantityByCategory;
+  counts: Partial<Record<LitterCategory, number>>;
   supportedClasses: string[];
 }
 
@@ -181,30 +199,31 @@ function updateEvent(eventId: string, change: (event: CleanupEvent) => CleanupEv
   return updated;
 }
 
-export function listCleanupEvents(participantId?: string, joinedOnly = false): CleanupEvent[] {
-  const events = readStore().events
+export async function listCleanupEvents(participantId?: string, joinedOnly = false): Promise<CleanupEvent[]> {
+  const events = USE_MOCK ? readStore().events : await getIteration2Events();
+  return events
     .filter((event) => event.status === 'Open')
     .filter((event) => !joinedOnly || Boolean(participantId && event.joinedBy.includes(participantId)))
     .sort((a, b) => a.date.localeCompare(b.date) || a.beachName.localeCompare(b.beachName));
-  return events;
 }
 
-export function getCleanupEvent(eventId: string): CleanupEvent | null {
+export async function getCleanupEvent(eventId: string): Promise<CleanupEvent | null> {
+  if (!USE_MOCK) {
+    try { return await getIteration2Event(eventId); } catch { return null; }
+  }
   return readStore().events.find((event) => event.id === eventId) ?? null;
 }
 
-export function joinCleanupEvent(eventId: string, participantId: string): CleanupEvent {
+export async function joinCleanupEvent(eventId: string, participantId: string): Promise<CleanupEvent> {
+  if (!USE_MOCK) return joinIteration2Event(eventId);
   return updateEvent(eventId, (event) => {
     if (event.joinedBy.includes(participantId)) return event;
-    return {
-      ...event,
-      joinedBy: [...event.joinedBy, participantId],
-      participantCount: event.participantCount + 1,
-    };
+    return { ...event, joinedBy: [...event.joinedBy, participantId], participantCount: event.participantCount + 1 };
   });
 }
 
-export function leaveCleanupEvent(eventId: string, participantId: string): CleanupEvent {
+export async function leaveCleanupEvent(eventId: string, participantId: string): Promise<CleanupEvent> {
+  if (!USE_MOCK) return leaveIteration2Event(eventId);
   return updateEvent(eventId, (event) => {
     if (!event.joinedBy.includes(participantId)) return event;
     const checkIns = { ...event.checkIns };
@@ -219,70 +238,93 @@ export function leaveCleanupEvent(eventId: string, participantId: string): Clean
   });
 }
 
-export function recordCheckIn(eventId: string, participantId: string, state: CheckInState): CleanupEvent {
+export async function recordCheckIn(
+  eventId: string,
+  participantId: string,
+  result: CheckInState | { lat: number; lng: number },
+): Promise<CleanupEvent> {
+  if (!USE_MOCK) {
+    if (typeof result === 'string') throw new Error('Location coordinates are required for check-in.');
+    return checkInIteration2Event(eventId, result);
+  }
+  if (typeof result !== 'string') throw new Error('Mock check-in requires a check-in result.');
   return updateEvent(eventId, (event) => {
     if (!event.joinedBy.includes(participantId)) throw new Error('Join this activity before checking in.');
-    return { ...event, checkIns: { ...event.checkIns, [participantId]: state } };
+    return { ...event, checkIns: { ...event.checkIns, [participantId]: result } };
   });
 }
 
-export function getCleanupTarget(beachId: string): CleanupTarget | null {
-  const target = getCleanupTargetRecord(beachId);
-  if (!target) return null;
-  const total = Object.values(target.remaining).reduce((sum, value) => sum + (value ?? 0), 0);
-  return total > 0 ? target : null;
+export async function getCleanupTarget(beachId: string, reportId?: string): Promise<CleanupTarget | null> {
+  return (await listCleanupTargets(beachId, reportId))[0] ?? null;
 }
 
-export function getCleanupTargetRecord(beachId: string): CleanupTarget | null {
-  return readStore().targets.find((item) => item.beachId === beachId) ?? null;
+export async function getCleanupTargetRecord(beachId: string, reportId?: string): Promise<CleanupTarget | null> {
+  return getCleanupTarget(beachId, reportId);
 }
 
-export function getCleanup(cleanupId: string): CleanupAction | null {
+export async function listCleanupTargets(beachId?: string, reportId?: string): Promise<CleanupTarget[]> {
+  if (!USE_MOCK) return getIteration2Targets(beachId, reportId);
+  return readStore().targets
+    .filter((target) => !beachId || target.beachId === beachId)
+    .filter((target) => !reportId || target.reportId === reportId)
+    .filter((target) => cleanupTotal(target) > 0);
+}
+
+export async function getCleanup(cleanupId: string): Promise<CleanupAction | null> {
+  if (!USE_MOCK) return (await getIteration2MyCleanups()).find((action: CleanupAction) => action.id === cleanupId) ?? null;
   return readStore().cleanups.find((cleanup) => cleanup.id === cleanupId) ?? null;
 }
 
-export function getLatestCleanupForBeach(beachId: string): CleanupAction | null {
-  return readStore().cleanups
-    .filter((cleanup) => cleanup.beachId === beachId)
+export async function getLatestCleanupForBeach(beachId: string): Promise<CleanupAction | null> {
+  const cleanups = USE_MOCK
+    ? readStore().cleanups
+    : await getIteration2MyCleanups();
+  return cleanups.filter((cleanup) => cleanup.beachId === beachId)
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0] ?? null;
 }
 
-export function getCleanupForTarget(targetReportId: string): CleanupAction | null {
-  return readStore().cleanups.find((cleanup) => cleanup.targetReportId === targetReportId) ?? null;
+export async function getCleanupForTarget(targetReportId: string): Promise<CleanupAction | null> {
+  const cleanups = USE_MOCK ? readStore().cleanups : await getIteration2MyCleanups();
+  return cleanups.find((cleanup) => cleanup.targetReportId === targetReportId) ?? null;
 }
 
-export function completeCleanup(input: {
+export async function completeCleanup(input: {
   participantId: string;
   targetReportId: string;
   eventId?: string | null;
   removed: Partial<Record<LitterCategory, number>>;
   handling: CleanupHandling;
   note?: string;
-}): CleanupAction {
+  idempotencyKey?: string;
+}): Promise<CleanupAction> {
+  const idempotencyKey = input.idempotencyKey ?? crypto.randomUUID();
+  if (!USE_MOCK) {
+    return createIteration2Cleanup({
+      targetReportId: input.targetReportId,
+      eventId: input.eventId,
+      removed: input.removed,
+      handling: input.handling,
+      note: input.note,
+      idempotencyKey,
+    });
+  }
   const store = readStore();
-  const existing = store.cleanups.find((cleanup) => cleanup.targetReportId === input.targetReportId);
-  if (existing) return existing;
-
   const target = store.targets.find((item) => item.reportId === input.targetReportId);
   if (!target) throw new Error('This report is not eligible for a cleanup.');
-
   const rows = (Object.keys(target.remaining) as LitterCategory[])
     .map((category): CleanupRow | null => {
       const before = target.remaining[category] ?? 0;
-      const requested = input.removed[category] ?? 0;
-      if (!Number.isInteger(requested) || requested < 0) throw new Error('Removed quantities must be whole numbers.');
-      const removed = Math.min(before, requested);
+      const removed = input.removed[category] ?? 0;
+      if (!Number.isInteger(removed) || removed < 0) throw new Error('Removed quantities must be whole numbers.');
+      if (removed > before) throw new Error('Removed quantities cannot exceed the remaining count.');
       if (removed === 0) return null;
-      const after = Math.max(0, before - removed);
-      target.remaining[category] = after;
-      return { category, before, removed, after };
+      target.remaining[category] = before - removed;
+      return { category, before, removed, after: before - removed };
     })
     .filter((row): row is CleanupRow => row !== null);
-
   if (rows.length === 0) throw new Error('Enter at least one item you removed.');
-
   const action: CleanupAction = {
-    id: `cleanup-${Date.now()}`,
+    id: `cleanup-${Date.now()}-${crypto.randomUUID()}`,
     participantId: input.participantId,
     targetReportId: input.targetReportId,
     eventId: input.eventId ?? null,
@@ -295,27 +337,55 @@ export function completeCleanup(input: {
     note: input.note?.trim() ?? '',
     status: 'Cleanup recorded — awaiting follow-up',
   };
-
   store.cleanups.push(action);
   if (action.eventId) {
-    store.events = store.events.map((event) => {
-      if (event.id !== action.eventId) return event;
-      const attendanceBy =
-        event.checkIns[input.participantId] === 'within_area' && !event.attendanceBy.includes(input.participantId)
-          ? [...event.attendanceBy, input.participantId]
-          : event.attendanceBy;
-      return { ...event, cleanupIds: [...event.cleanupIds, action.id], attendanceBy };
-    });
+    store.events = store.events.map((event) => event.id === action.eventId
+      ? { ...event, cleanupIds: [...event.cleanupIds, action.id] }
+      : event);
   }
   writeStore(store);
   return action;
 }
 
-export function eventCleanups(eventId: string): CleanupAction[] {
-  return readStore().cleanups.filter((cleanup) => cleanup.eventId === eventId);
+export async function eventCleanups(eventId: string): Promise<CleanupAction[]> {
+  return USE_MOCK
+    ? readStore().cleanups.filter((cleanup) => cleanup.eventId === eventId)
+    : getIteration2EventCleanups(eventId);
 }
 
-export function createAdminEvent(input: { beachId: string; date: string }): CleanupEvent {
+export async function createSharePath(input: { eventId?: string; reportId?: string }): Promise<string> {
+  if (!USE_MOCK) return (await createIteration2ShareLink(input)).path;
+  if (input.eventId) return `/share/events/${encodeURIComponent(input.eventId)}`;
+  return `/share/reports/${encodeURIComponent(input.reportId ?? '')}`;
+}
+
+export async function getSharedItems(token: string): Promise<{ event: CleanupEvent | null; report: any | null }> {
+  if (!USE_MOCK) return getIteration2SharedItems(token);
+  const store = readStore();
+  const event = store.events.find((row) => row.id === token);
+  if (event) return { event, report: null };
+  const target = store.targets.find((row) => row.reportId === token && cleanupTotal(row) > 0);
+  if (!target) return { event: null, report: null };
+  const remaining = { ...target.remaining };
+  return {
+    event: null,
+    report: {
+      id: target.reportId,
+      beachId: target.beachId,
+      beachName: target.beachName,
+      reportedAt: target.reportedAt,
+      status: 'Counted',
+      quantities: {},
+      itemCounts: remaining,
+      remainingItemCounts: remaining,
+      remainingTotal: cleanupTotal(target),
+      photoAvailable: false,
+    },
+  };
+}
+
+export async function createAdminEvent(input: { beachId: string; date: string }): Promise<CleanupEvent> {
+  if (!USE_MOCK) return createIteration2Event(input);
   const store = readStore();
   const beach = BEACHES.find((item) => item.id === input.beachId);
   if (!beach) throw new Error('Choose a monitored beach.');
@@ -324,20 +394,9 @@ export function createAdminEvent(input: { beachId: string; date: string }): Clea
   const existing = store.events.find((event) => event.id === id);
   if (existing) return existing;
   const event: CleanupEvent = {
-    id,
-    beachId: beach.id,
-    beachName: beach.name,
-    area: beach.area,
-    date: input.date,
-    startsAt: '09:00',
-    endsAt: '12:00',
-    status: 'Open',
-    source: 'admin',
-    participantCount: 0,
-    joinedBy: [],
-    checkIns: {},
-    attendanceBy: [],
-    cleanupIds: [],
+    id, beachId: beach.id, beachName: beach.name, area: beach.area, date: input.date,
+    startsAt: '09:00', endsAt: '12:00', status: 'Open', source: 'admin', participantCount: 0,
+    joinedBy: [], checkIns: {}, attendanceBy: [], cleanupIds: [],
   };
   store.events.push(event);
   writeStore(store);
@@ -349,34 +408,56 @@ export function monitoredBeaches() {
 }
 
 export async function analyseReportPhoto(photoKey: string, forceFailure = false): Promise<AiSuggestion> {
+  if (!USE_MOCK) {
+    if (forceFailure) return { modelState: 'unavailable', modelVersion: 'unavailable', suggestions: {}, counts: {}, supportedClasses: MODEL_CLASSES };
+    const result = await recognizeReportPhoto(photoKey);
+    return {
+      modelState: result.modelState,
+      modelVersion: result.modelVersion,
+      suggestions: result.suggestions,
+      counts: result.counts,
+      supportedClasses: result.supportedClasses,
+    };
+  }
   await new Promise((resolve) => setTimeout(resolve, 650));
   if (forceFailure || !photoKey) {
-    return { modelState: 'unavailable', modelVersion: 'sea-taco-yolo11m-best', suggestions: {}, supportedClasses: MODEL_CLASSES };
+    return { modelState: 'unavailable', modelVersion: 'sea-taco-yolo11m-best', suggestions: {}, counts: {}, supportedClasses: MODEL_CLASSES };
   }
   const number = [...photoKey].reduce((sum, character) => sum + character.charCodeAt(0), 0);
   const primary: LitterCategory = number % 3 === 0 ? 'Fishing gear' : number % 3 === 1 ? 'Plastic' : 'Glass';
   const quantity: QuantityBand = number % 2 === 0 ? 'Medium' : 'Small';
+  const count = quantity === 'Medium' ? 8 : 3;
   return {
     modelState: 'ready',
     modelVersion: 'sea-taco-yolo11m-best',
     suggestions: { [primary]: quantity },
+    counts: { [primary]: count },
     supportedClasses: MODEL_CLASSES,
   };
 }
 
 export async function analyseCleanupPhoto(
-  photoName: string,
+  photo: File,
   target: CleanupTarget,
 ): Promise<Partial<Record<LitterCategory, number>>> {
+  if (!USE_MOCK) {
+    const result = await recognizeCleanupPhoto(photo);
+    const suggested = result.counts as Partial<Record<LitterCategory, number>>;
+    return Object.fromEntries(Object.entries(suggested).flatMap(([category, count]) => {
+      const remaining = target.remaining[category as LitterCategory] ?? 0;
+      const confirmed = Math.min(remaining, Number(count) || 0);
+      return confirmed > 0 ? [[category, confirmed]] : [];
+    })) as Partial<Record<LitterCategory, number>>;
+  }
   await new Promise((resolve) => setTimeout(resolve, 650));
-  if (!photoName) throw new Error('Choose a JPG or PNG photo first.');
+  if (!photo) throw new Error('Choose a JPG or PNG photo first.');
   if (target.beachId === 'morib') {
     return {
       Plastic: Math.min(26, target.remaining.Plastic ?? 0),
       'Fishing gear': Math.min(9, target.remaining['Fishing gear'] ?? 0),
     };
   }
-  const seed = [...photoName].reduce((sum, character) => sum + character.charCodeAt(0), 0);
+  const seed = [...photo.name].reduce((sum, character) => sum + character.charCodeAt(0), 0);
   const result: Partial<Record<LitterCategory, number>> = {};
   (Object.keys(target.remaining) as LitterCategory[]).forEach((category, index) => {
     const available = target.remaining[category] ?? 0;

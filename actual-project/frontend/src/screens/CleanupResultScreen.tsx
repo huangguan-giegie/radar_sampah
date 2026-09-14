@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Check, ChevronRight, Info } from '../components/Icon';
 import { Callout, EmptyState, InfoChip, SectionLabel } from '../components/ds';
@@ -8,7 +9,12 @@ import { C, formatDate } from '../theme';
 export default function CleanupResultScreen() {
   const { cleanupId = '' } = useParams();
   const nav = useNavigate();
-  const cleanup = getCleanup(cleanupId);
+  const [cleanup, setCleanup] = useState<Awaited<ReturnType<typeof getCleanup>>>(null);
+  useEffect(() => {
+    let active = true;
+    getCleanup(cleanupId).then((row) => { if (active) setCleanup(row); });
+    return () => { active = false; };
+  }, [cleanupId]);
 
   if (!cleanup) {
     return (

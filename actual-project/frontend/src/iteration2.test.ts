@@ -33,37 +33,39 @@ describe('Iteration 2 date presentation', () => {
 });
 
 describe('Iteration 2 activity and cleanup ledger', () => {
-  it('generates four Saturday events per configured beach', () => {
-    expect(listCleanupEvents()).toHaveLength(16);
+  it('generates four Saturday events per configured beach', async () => {
+    expect(await listCleanupEvents()).toHaveLength(16);
   });
 
-  it('makes Join idempotent for the same participant and event', () => {
-    const event = listCleanupEvents().find((item) => item.beachId === 'morib')!;
-    const first = joinCleanupEvent(event.id, '1637');
-    const second = joinCleanupEvent(event.id, '1637');
+  it('makes Join idempotent for the same participant and event', async () => {
+    const event = (await listCleanupEvents()).find((item) => item.beachId === 'morib')!;
+    const first = await joinCleanupEvent(event.id, '1637');
+    const second = await joinCleanupEvent(event.id, '1637');
     expect(second.participantCount).toBe(first.participantCount);
     expect(second.joinedBy).toEqual(['1637']);
   });
 
-  it('creates at most one admin event for a beach and date', () => {
-    const first = createAdminEvent({ beachId: 'morib', date: '2030-01-02' });
-    const second = createAdminEvent({ beachId: 'morib', date: '2030-01-02' });
+  it('creates at most one admin event for a beach and date', async () => {
+    const first = await createAdminEvent({ beachId: 'morib', date: '2030-01-02' });
+    const second = await createAdminEvent({ beachId: 'morib', date: '2030-01-02' });
     expect(second.id).toBe(first.id);
-    expect(getCleanupEvent(first.id)?.source).toBe('admin');
+    expect((await getCleanupEvent(first.id))?.source).toBe('admin');
   });
 
-  it('subtracts confirmed whole-item counts without going below zero', () => {
-    const target = getCleanupTarget('morib')!;
-    const cleanup = completeCleanup({
+  it('subtracts partial cleanup actions repeatedly without going below zero', async () => {
+    const target = (await getCleanupTarget('morib'))!;
+    const cleanup = await completeCleanup({
       participantId: '1637',
       targetReportId: target.reportId,
-      removed: { Plastic: 100, Glass: 2 },
+      removed: { Plastic: 62, Glass: 2 },
       handling: 'Collected for disposal',
     });
     expect(cleanup.score).toBe(64);
     expect(cleanup.rows.find((row) => row.category === 'Plastic')).toMatchObject({ before: 62, removed: 62, after: 0 });
-    expect(getCleanupTarget('morib')?.remaining.Glass).toBe(13);
-    expect(completeCleanup({ participantId: '1637', targetReportId: target.reportId, removed: { Glass: 1 }, handling: 'Not recorded' }).id).toBe(cleanup.id);
+    expect((await getCleanupTarget('morib'))?.remaining.Glass).toBe(13);
+    const next = await completeCleanup({ participantId: '1637', targetReportId: target.reportId, removed: { Glass: 1 }, handling: 'Not recorded' });
+    expect(next.id).not.toBe(cleanup.id);
+    expect((await getCleanupTarget('morib'))?.remaining.Glass).toBe(12);
   });
 
   it('keeps manual reporting available when AI is unavailable', async () => {

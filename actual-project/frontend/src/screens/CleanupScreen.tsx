@@ -1,8 +1,8 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Camera, Check, Upload } from '../components/Icon';
 import { Alert, Callout, EmptyState, InfoChip, SectionLabel } from '../components/ds';
-import { BackButton, GhostButton, PrimaryButton, TextButton } from '../components/ui';
+import { BackButton, PrimaryButton, TextButton } from '../components/ui';
 import { useApp } from '../AppContext';
 import {
   analyseCleanupPhoto,
@@ -10,9 +10,7 @@ import {
   completeCleanup,
   formatEventDate,
   getCleanupEvent,
-  getCleanupForTarget,
   getCleanupTarget,
-  getCleanupTargetRecord,
   type CleanupHandling,
 } from '../iteration2';
 import { C, MONO, formatDate } from '../theme';
@@ -24,43 +22,43 @@ export default function CleanupScreen() {
   const { beachId = '' } = useParams();
   const [params] = useSearchParams();
   const eventId = params.get('event');
-  const event = eventId ? getCleanupEvent(eventId) : null;
-  const targetRecord = getCleanupTargetRecord(beachId);
-  const target = getCleanupTarget(beachId);
-  const existing = targetRecord ? getCleanupForTarget(targetRecord.reportId) : null;
+  const targetReportId = params.get('target') ?? undefined;
   const nav = useNavigate();
   const { user, showToast } = useApp();
   const inputRef = useRef<HTMLInputElement>(null);
+  const idempotencyKey = useRef<string | null>(null);
+  const [event, setEvent] = useState<Awaited<ReturnType<typeof getCleanupEvent>>>(null);
+  const [target, setTarget] = useState<Awaited<ReturnType<typeof getCleanupTarget>>>(null);
+  const [loading, setLoading] = useState(true);
   const [removed, setRemoved] = useState<Partial<Record<LitterCategory, number>>>({});
   const [handling, setHandling] = useState<CleanupHandling>('Collected for disposal');
   const [note, setNote] = useState('');
-  const [photoName, setPhotoName] = useState<string | null>(null);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [analysing, setAnalysing] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [photoUsed, setPhotoUsed] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const photoName = photoFile?.name ?? null;
+  useEffect(() => {
+    let active = true;
+    setLoading(true);
+    Promise.all([getCleanupTarget(beachId, targetReportId), eventId ? getCleanupEvent(eventId) : Promise.resolve(null)])
+      .then(([targetResult, eventResult]) => {
+        if (!active) return;
+        setTarget(targetResult);
+        setEvent(eventResult);
+      })
+      .catch((reason) => { if (active) setError(reason instanceof Error ? reason.message : 'Could not load cleanup details.'); })
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
+  }, [beachId, eventId, targetReportId]);
   const categories = useMemo(
     () => target ? (Object.keys(target.remaining) as LitterCategory[]).filter((category) => (target.remaining[category] ?? 0) > 0) : [],
     [target],
   );
 
-  if (existing) {
-    return (
-      <div className="screen scroll-y">
-        <div className="measure i2-page anim-fade-up" style={{ paddingBottom: 'calc(var(--safe-bottom) + 34px)' }}>
-          <BackButton onClick={() => nav(event ? `/events/${event.id}` : `/beach/${beachId}`)} />
-          <Alert title="Already cleaned up" tone="caution">
-            This recorded-litter target already has a cleanup. Nothing new was saved.
-          </Alert>
-          <div className="i2-card">
-            <SectionLabel size="sm">EXISTING CLEANUP</SectionLabel>
-            <h1 style={{ margin: '8px 0 0', fontSize: 22 }}>{existing.beachName}</h1>
-            <p className="i2-subtitle">{formatDate(existing.createdAt)} · {existing.score} items recorded</p>
-          </div>
-          <PrimaryButton onClick={() => nav(`/cleanup/result/${existing.id}`)}>View cleanup result</PrimaryButton>
-          <GhostButton onClick={() => nav(`/beach/${beachId}`)}>Back to beach</GhostButton>
-        </div>
-      </div>
-    );
+  if (loading) {
+    return <div className="screen scroll-y"><div className="measure i2-page"><BackButton onClick={() => nav(eventId ? `/events/${eventId}` : `/beach/${beachId}`)} /><SectionLabel size="sm">Loading cleanup target…</SectionLabel></div></div>;
   }
 
   if (!target) {
@@ -82,17 +80,17 @@ export default function CleanupScreen() {
   const cleanupTarget = target;
 
   async function usePhotoSuggestion() {
-    if (!photoName) {
+    if (!photoFile) {
       inputRef.current?.click();
       return;
     }
     setAnalysing(true);
     setError(null);
     try {
-      const suggestion = await analyseCleanupPhoto(photoName, cleanupTarget);
+      const suggestion = await analyseCleanupPhoto(photoFile, cleanupTarget);
       setRemoved(suggestion);
       setPhotoUsed(true);
-      setPhotoName(null);
+      setPhotoFile(null);
       if (inputRef.current) inputRef.current.value = '';
       showToast('AI suggestions added — please confirm them');
     } catch (reason) {
@@ -102,21 +100,27 @@ export default function CleanupScreen() {
     }
   }
 
-  function submit() {
+  async function submit() {
     if (!user) return;
     setError(null);
+    setSubmitting(true);
     try {
-      const cleanup = completeCleanup({
+      idempotencyKey.current ??= crypto.randomUUID();
+      const cleanup = await completeCleanup({
         participantId: user.participantId,
         targetReportId: cleanupTarget.reportId,
         eventId,
         removed,
         handling,
         note,
+        idempotencyKey: idempotencyKey.current,
       });
+      idempotencyKey.current = null;
       nav(`/cleanup/result/${cleanup.id}`, { replace: true });
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : 'Could not record this cleanup.');
+    } finally {
+      setSubmitting(false);
     }
   }
 
@@ -141,7 +145,7 @@ export default function CleanupScreen() {
             setError('Use a JPG or PNG image.');
             return;
           }
-          setPhotoName(file.name);
+          setPhotoFile(file);
           setPhotoUsed(false);
           setError(null);
         }}
@@ -240,7 +244,7 @@ export default function CleanupScreen() {
 
         {error && <Alert title="Cleanup not saved" tone="error">{error}</Alert>}
 
-        <PrimaryButton onClick={submit}>Record cleanup</PrimaryButton>
+        <PrimaryButton onClick={submit} disabled={submitting}>{submitting ? 'Recording…' : 'Record cleanup'}</PrimaryButton>
         <TextButton onClick={() => nav(event ? `/events/${event.id}` : `/beach/${beachId}`)}>Cancel</TextButton>
       </div>
     </div>

@@ -19,7 +19,7 @@ import { BandMeter, Callout, GlassPanel, InfoChip } from '../components/ds';
 import { useApp } from '../AppContext';
 import type { BeachDetail, SpeciesDistributionResult } from '../types';
 import { hasDraftProgress, resumePath } from '../flowRules';
-import { cleanupTotal, getCleanupTarget, getLatestCleanupForBeach } from '../iteration2';
+import { cleanupTotal, getCleanupTarget, getLatestCleanupForBeach, type CleanupAction, type CleanupTarget } from '../iteration2';
 import { MODEL_SPECIES_MEDIA } from '../speciesMedia';
 
 /*
@@ -47,8 +47,8 @@ export default function BeachScreen() {
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
   const [modelResult, setModelResult] = useState<SpeciesDistributionResult | null>(null);
-  const latestCleanup = getLatestCleanupForBeach(beachId);
-  const cleanupTarget = getCleanupTarget(beachId);
+  const [latestCleanup, setLatestCleanup] = useState<CleanupAction | null>(null);
+  const [cleanupTarget, setCleanupTarget] = useState<CleanupTarget | null>(null);
 
   // beachId is in the dependency list, so moving between beaches refetches.
   // Without it React would show the previous beach under the new name. Model
@@ -68,6 +68,16 @@ export default function BeachScreen() {
       })
       .catch(() => setFailed(true))
       .finally(() => setLoading(false));
+  }, [beachId]);
+
+  useEffect(() => {
+    let active = true;
+    Promise.all([getLatestCleanupForBeach(beachId), getCleanupTarget(beachId)]).then(([cleanup, target]) => {
+      if (!active) return;
+      setLatestCleanup(cleanup);
+      setCleanupTarget(target);
+    }).catch(() => undefined);
+    return () => { active = false; };
   }, [beachId]);
 
   // Scroll once the beach has loaded - before that the section does not exist
