@@ -10,9 +10,8 @@ ALTER TABLE reports ADD COLUMN IF NOT EXISTS event_id text;
 ALTER TABLE reports ADD COLUMN IF NOT EXISTS beach_name varchar(160);
 ALTER TABLE reports ADD COLUMN IF NOT EXISTS quantities text;
 
--- Older Iteration 2 drafts stored 1–4 in qty_*; the main contract stores the
--- corresponding text labels. This expression also leaves already migrated
--- labels unchanged.
+-- Older Iteration 2 drafts stored 1–4 in qty_*; the current contract stores
+-- the corresponding text labels. Already migrated labels are left unchanged.
 ALTER TABLE reports ALTER COLUMN qty_plastic TYPE text USING CASE qty_plastic::text
   WHEN '1' THEN 'Small' WHEN '2' THEN 'Medium' WHEN '3' THEN 'Large' WHEN '4' THEN 'Very Large'
   ELSE qty_plastic::text END;
@@ -73,6 +72,62 @@ CREATE TABLE IF NOT EXISTS cleanup_actions (
   created_at timestamptz NOT NULL DEFAULT now(),
   UNIQUE (participant_id, idempotency_key)
 );
-CREATE INDEX IF NOT EXISTS cleanup_actions_target ON cleanup_actions (target_report_id, created_at);
+
+-- If an application process created the Iteration 2 tables before this
+-- migration ran, CREATE TABLE IF NOT EXISTS above cannot add the missing FKs
+-- and CHECK constraints. Add the named constraints idempotently here too.
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'community_events_beach_fk') THEN
+    ALTER TABLE community_events ADD CONSTRAINT community_events_beach_fk FOREIGN KEY (beach_id) REFERENCES beaches(id);
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'community_events_created_by_fk') THEN
+    ALTER TABLE community_events ADD CONSTRAINT community_events_created_by_fk FOREIGN KEY (created_by) REFERENCES users(id);
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'community_events_status_check') THEN
+    ALTER TABLE community_events ADD CONSTRAINT community_events_status_check CHECK (status IN ('Open','Closed'));
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'community_events_source_check') THEN
+    ALTER TABLE community_events ADD CONSTRAINT community_events_source_check CHECK (source IN ('scheduled','moderator'));
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'community_events_time_check') THEN
+    ALTER TABLE community_events ADD CONSTRAINT community_events_time_check CHECK (ends_at > starts_at);
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'community_event_members_event_fk') THEN
+    ALTER TABLE community_event_members ADD CONSTRAINT community_event_members_event_fk FOREIGN KEY (event_id) REFERENCES community_events(id) ON DELETE CASCADE;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'community_event_members_participant_fk') THEN
+    ALTER TABLE community_event_members ADD CONSTRAINT community_event_members_participant_fk FOREIGN KEY (participant_id) REFERENCES users(id);
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'community_event_members_location_check') THEN
+    ALTER TABLE community_event_members ADD CONSTRAINT community_event_members_location_check CHECK (location_passed = (checked_in_at IS NOT NULL));
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'cleanup_actions_target_report_fk') THEN
+    ALTER TABLE cleanup_actions ADD CONSTRAINT cleanup_actions_target_report_fk FOREIGN KEY (target_report_id) REFERENCES reports(id);
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'cleanup_actions_participant_fk') THEN
+    ALTER TABLE cleanup_actions ADD CONSTRAINT cleanup_actions_participant_fk FOREIGN KEY (participant_id) REFERENCES users(id);
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'cleanup_actions_event_fk') THEN
+    ALTER TABLE cleanup_actions ADD CONSTRAINT cleanup_actions_event_fk FOREIGN KEY (event_id) REFERENCES community_events(id);
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'cleanup_actions_beach_fk') THEN
+    ALTER TABLE cleanup_actions ADD CONSTRAINT cleanup_actions_beach_fk FOREIGN KEY (beach_id) REFERENCES beaches(id);
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'cleanup_actions_total_removed_check') THEN
+    ALTER TABLE cleanup_actions ADD CONSTRAINT cleanup_actions_total_removed_check CHECK (total_removed > 0);
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'cleanup_actions_handling_check') THEN
+    ALTER TABLE cleanup_actions ADD CONSTRAINT cleanup_actions_handling_check CHECK (handling IN ('Collected for disposal','Recycled / handled','Not recorded'));
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'reports_event_fk') THEN
+    ALTER TABLE reports ADD CONSTRAINT reports_event_fk FOREIGN KEY (event_id) REFERENCES community_events(id);
+  END IF;
+END $$;
+
+DROP INDEX IF EXISTS cleanup_actions_target;
+CREATE INDEX cleanup_actions_target ON cleanup_actions (target_report_id, created_at);
 
 COMMIT;
