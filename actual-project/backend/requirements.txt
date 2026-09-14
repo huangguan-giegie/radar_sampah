@@ -1,3 +1,4 @@
+--extra-index-url https://download.pytorch.org/whl/cpu
 Flask==3.1.1
 Flask-Cors==6.0.1
 gunicorn==23.0.0
@@ -13,4 +14,6 @@ joblib==1.6.0
 numpy==2.4.6
 pandas==3.0.5
 scikit-learn==1.8.0
+torch==2.14.0+cpu
+torchvision==0.29.0+cpu
 ultralytics>=8.3,<9
