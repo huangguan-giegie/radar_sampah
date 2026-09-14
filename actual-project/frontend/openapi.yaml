@@ -16,6 +16,7 @@ info:
     The points that get missed:
     - Under 3 eligible reports, severity and band MUST be null — never fall back to Low
     - A duplicate returns 201 with status=Duplicate. It is a result, not an error
+    - Duplicate means either an exact same-participant/day/signature match, or a same-beach/day GPS match within about 10 m; the GPS rule applies across participants
     - Coordinates are used only to match a beach. No response may ever return them
     - EXIF location data must actually be stripped from every photo
     - /scoring-method is optional (US4.3 ships from the frontend), but §7's calculation must
@@ -45,7 +46,7 @@ paths:
       tags: [Auth]
       security: []
       summary: Issue an anonymous participant number
-      description: No personal details are collected. Returns a random 4-digit ID. A backend may also return the compatible one-time recoveryToken extension.
+      description: No personal details are collected. Returns a random 4-digit ID and a recovery token shown once.
       responses:
         "201":
           description: the new participant
@@ -64,10 +65,10 @@ paths:
           application/json:
             schema:
               type: object
-              required: [participantId]
+              required: [participantId, token]
               properties:
                 participantId: { type: string, example: "1637" }
-                token: { type: string, description: "Optional for clients using the compatible recovery-token extension" }
+                token: { type: string, description: "System-generated recovery token; required together with participantId" }
       responses:
         "200":
           description: session
@@ -77,8 +78,6 @@ paths:
         "401":
           $ref: "#/components/responses/Error"
         "404":
-          $ref: "#/components/responses/Error"
-        "401":
           $ref: "#/components/responses/Error"
 
   /auth/logout:
@@ -266,7 +265,7 @@ paths:
       responses:
         "201":
           description: |
-            Saved. Note that status may be Duplicate — that is a normal outcome, not an error.
+            Saved. status may be Duplicate either from the exact signature rule or from a same-beach, same-Malaysia-day privacy-preserving GPS match within about 10 m. The GPS rule applies across participants.
           content:
             application/json:
               schema: { $ref: "#/components/schemas/LitterReport" }

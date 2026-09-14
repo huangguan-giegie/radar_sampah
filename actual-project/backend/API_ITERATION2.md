@@ -60,16 +60,16 @@ If model weights are unavailable or inference fails, the recognition response mu
 
 ## 3. Duplicate rule
 
-A report is a duplicate only when all of the following match an existing `Counted` report:
+A report is saved with status `Duplicate` when **either** of these rules matches an existing `Counted` report:
 
-1. same participant;
-2. same beach;
-3. same Malaysia local calendar day;
-4. exactly the same category/quantity signature.
+1. **Exact-signature rule:** same participant, same beach, same Malaysia local calendar day, and exactly the same category/quantity signature.
+2. **Privacy-proximity rule:** same beach, same Malaysia local calendar day, both reports use GPS-backed Iteration 2 location matching, and the privacy-preserving location comparison places them within approximately 10 metres. This rule applies **across participants** and does not require matching categories or quantities.
 
-Different categories or different quantity bands on the same day are not duplicates. Duplicate submissions are still saved with status `Duplicate`; they are excluded from the beach score.
+Different categories or quantity bands remain independent reports unless the privacy-proximity rule matches. Duplicate submissions are still saved with HTTP `201` and status `Duplicate`; they are excluded from the beach score.
 
-The same exact rule is applied during startup repair/migration so a database restart must not reclassify non-identical reports as duplicates.
+For Iteration 2 GPS reports, raw coordinates are not persisted. The backend stores a target-scoped HMAC over a one-metre projected grid and checks neighbouring grid cells for the approximately 10 m rule. A same-day proximity match is saved as `Duplicate` rather than returning the active-target conflict. A nearby active target from an earlier local day still returns `409 ACTIVE_CLEANUP_TARGET_NEARBY` until it is cleared.
+
+Startup repair continues to correct legacy broad same-day duplicate classifications while preserving privacy-proximity duplicates that were explicitly recorded by the reviewed rule.
 
 ## 4. Beach Attention Score after cleanup
 
