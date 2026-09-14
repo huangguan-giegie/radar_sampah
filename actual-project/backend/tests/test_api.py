@@ -1,8 +1,9 @@
 """Iteration 2 API test suite with reviewed contract corrections.
 
-The teammate's full suite is kept byte-for-byte in ``api_tests_core.py``.  We
+The teammate's full suite is kept byte-for-byte in ``api_tests_core.py``. We
 load it here, remove only the two obsolete ID-only recovery expectations, and
-add regression coverage for strict recovery plus the exact duplicate rule.
+add regression coverage for strict recovery, exact duplicates, restart repair,
+and cleanup-aware median scoring.
 """
 
 from __future__ import annotations
@@ -69,3 +70,88 @@ def test_duplicate_requires_exact_same_categories_and_quantities(api):
     assert first["status"] == "Counted"
     assert different_quantity["status"] == "Counted"
     assert exact_repeat["status"] == "Duplicate"
+
+
+def test_restart_preserves_non_exact_same_day_reports(tmp_path):
+    database_path = tmp_path / "restart-exact-duplicates.db"
+    photo_dir = tmp_path / "photos"
+    application = create_app(
+        database_url=f"sqlite:///{database_path}",
+        testing=True,
+        photo_storage_dir=photo_dir,
+    )
+    client = application.test_client()
+    _session, headers = signup(client)
+
+    first_photo = upload(client, headers)
+    second_photo = upload(client, headers)
+    first = client.post(
+        "/reports",
+        headers=headers,
+        json=report_payload(first_photo["photoKey"], quantities={"Plastic": "Small"}),
+    )
+    second = client.post(
+        "/reports",
+        headers=headers,
+        json=report_payload(second_photo["photoKey"], quantities={"Plastic": "Medium"}),
+    )
+    assert first.get_json()["status"] == "Counted"
+    assert second.get_json()["status"] == "Counted"
+
+    restarted = create_app(
+        database_url=f"sqlite:///{database_path}",
+        testing=True,
+        photo_storage_dir=photo_dir,
+    )
+    restarted_client = restarted.test_client()
+    statuses = [
+        report["status"]
+        for report in restarted_client.get("/reports/mine", headers=headers).get_json()
+    ]
+    assert statuses == ["Counted", "Counted"]
+
+
+def test_cleanup_recomputes_each_report_then_keeps_beach_median(api):
+    _application, client = api
+    created = []
+    headers_by_report = []
+    for counts in (
+        {"Plastic": 1},
+        {"Fishing gear": 8},
+        {"Fishing gear": 60},
+    ):
+        _session, headers = signup(client)
+        photo = upload(client, headers)
+        response = client.post(
+            "/reports",
+            headers=headers,
+            json={
+                "beachId": "morib",
+                "photoKey": photo["photoKey"],
+                "locationSource": "manual",
+                "itemCounts": counts,
+            },
+        )
+        assert response.status_code == 201
+        created.append(response.get_json())
+        headers_by_report.append(headers)
+
+    before = next(item for item in client.get("/beaches").get_json() if item["id"] == "morib")
+    assert before["attentionScore"] == 2.0
+    assert before["severity"] == "Moderate"
+
+    cleanup = client.post(
+        "/cleanup-actions",
+        headers=headers_by_report[0],
+        json={
+            "targetReportId": created[1]["id"],
+            "removed": {"Fishing gear": 8},
+            "handling": "Collected for disposal",
+            "idempotencyKey": "median-regression-cleanup",
+        },
+    )
+    assert cleanup.status_code == 201
+
+    after = next(item for item in client.get("/beaches").get_json() if item["id"] == "morib")
+    assert after["attentionScore"] == 0.85
+    assert after["severity"] == "Low"
