@@ -210,3 +210,78 @@ def test_cleanup_recomputes_each_report_then_keeps_beach_median(api):
     after = next(item for item in client.get("/beaches").get_json() if item["id"] == "morib")
     assert after["attentionScore"] == 0.85
     assert after["severity"] == "Low"
+
+
+def _submit_gps_item_count_report(client, headers, *, lat, lng, item_counts):
+    photo = upload(client, headers)
+    return client.post(
+        "/reports",
+        headers=headers,
+        json={
+            "beachId": "morib",
+            "photoKey": photo["photoKey"],
+            "locationSource": "gps",
+            "coords": {"lat": lat, "lng": lng},
+            "itemCounts": item_counts,
+        },
+    )
+
+
+def test_same_day_nearby_gps_reports_are_duplicate_across_users(api):
+    _application, client = api
+    _first_session, first_headers = signup(client)
+    _second_session, second_headers = signup(client)
+
+    first = _submit_gps_item_count_report(
+        client,
+        first_headers,
+        lat=2.74614,
+        lng=101.44024,
+        item_counts={"Plastic": 2},
+    )
+    second = _submit_gps_item_count_report(
+        client,
+        second_headers,
+        lat=2.74620,
+        lng=101.44024,
+        item_counts={"Metal": 7},
+    )
+
+    assert first.status_code == 201
+    assert first.get_json()["status"] == "Counted"
+    assert second.status_code == 201
+    assert second.get_json()["status"] == "Duplicate"
+
+
+def test_prior_day_nearby_active_target_still_conflicts(api):
+    application, client = api
+    _first_session, first_headers = signup(client)
+    _second_session, second_headers = signup(client)
+
+    first = _submit_gps_item_count_report(
+        client,
+        first_headers,
+        lat=2.74614,
+        lng=101.44024,
+        item_counts={"Plastic": 2},
+    )
+    assert first.status_code == 201
+
+    prior_day = datetime.now(timezone.utc) - timedelta(days=1)
+    with application.extensions["marine_engine"].begin() as connection:
+        connection.execute(
+            reports_table.update()
+            .where(reports_table.c.id == first.get_json()["id"])
+            .values(created_at=prior_day, updated_at=prior_day)
+        )
+
+    second = _submit_gps_item_count_report(
+        client,
+        second_headers,
+        lat=2.74620,
+        lng=101.44024,
+        item_counts={"Metal": 7},
+    )
+
+    assert second.status_code == 409
+    assert second.get_json()["code"] == "ACTIVE_CLEANUP_TARGET_NEARBY"
