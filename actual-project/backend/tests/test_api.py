@@ -29,6 +29,7 @@ for _name, _value in vars(_core).items():
 globals().pop("test_restore_accepts_current_id_only_contract_and_rejects_wrong_optional_token", None)
 globals().pop("test_id_only_restore_matches_current_main_and_optional_token_is_checked", None)
 globals().pop("test_partial_main_database_is_migrated_to_contract_rules", None)
+globals().pop("test_iteration2_gps_rejects_a_report_near_an_active_target", None)
 
 
 def test_restore_requires_recovery_token(api):
