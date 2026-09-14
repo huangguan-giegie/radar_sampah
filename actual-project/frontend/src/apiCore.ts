@@ -122,6 +122,21 @@ async function fetchWithTimeout(url: string, init: RequestInit, ms: number) {
   }
 }
 
+const RETRYABLE_READ_STATUSES = new Set([429, 502, 503, 504]);
+const RETRY_DELAYS_MS = [500, 1_000, 2_000];
+
+function isRetryableRead(method: string) {
+  return method === 'GET' || method === 'HEAD';
+}
+
+function retryDelayMs(response: Response, attempt: number) {
+  const retryAfter = Number(response.headers.get('Retry-After'));
+  if (Number.isFinite(retryAfter) && retryAfter >= 0) {
+    return Math.min(retryAfter * 1_000, 4_000);
+  }
+  return RETRY_DELAYS_MS[attempt] ?? RETRY_DELAYS_MS[RETRY_DELAYS_MS.length - 1];
+}
+
 /**
  * One JSON request. Every real-backend call goes through here: it attaches the
  * token, parses the body, and turns any non-2xx answer into an ApiError.
@@ -132,11 +147,31 @@ async function request(path: string, method = 'GET', body?: unknown, timeoutMs =
   if (token) headers.Authorization = 'Bearer ' + token;
   if (body) headers['Content-Type'] = 'application/json';
 
-  const res = await fetchWithTimeout(
-    BASE_URL + path,
-    { method, headers, body: body ? JSON.stringify(body) : undefined },
-    timeoutMs,
-  );
+  const init = { method, headers, body: body ? JSON.stringify(body) : undefined };
+  const maxAttempts = isRetryableRead(method) ? RETRY_DELAYS_MS.length + 1 : 1;
+  let res: Response | null = null;
+  let lastNetworkError: Error | null = null;
+
+  for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+    try {
+      res = await fetchWithTimeout(BASE_URL + path, init, timeoutMs);
+      if (!isRetryableRead(method) || !RETRYABLE_READ_STATUSES.has(res.status) || attempt === maxAttempts - 1) {
+        break;
+      }
+      await delay(retryDelayMs(res, attempt));
+    } catch (error) {
+      lastNetworkError = error instanceof Error
+        ? error
+        : new Error('Could not reach the server. Check your connection and try again.');
+      // A timeout needs the full cold-start window; retry only fast network/CORS failures.
+      if (!isRetryableRead(method) || lastNetworkError.message.includes('server did not respond') || attempt === maxAttempts - 1) {
+        throw lastNetworkError;
+      }
+      await delay(RETRY_DELAYS_MS[attempt] ?? RETRY_DELAYS_MS[RETRY_DELAYS_MS.length - 1]);
+    }
+  }
+
+  if (!res) throw lastNetworkError ?? new Error('Could not reach the server. Check your connection and try again.');
 
   // 204 means "done, nothing to send back" - logout, for example. Calling
   // res.json() on an empty body throws, so return before we try.

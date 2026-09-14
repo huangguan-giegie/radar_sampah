@@ -98,26 +98,34 @@ export default function MapScreen() {
   const [failed, setFailed] = useState(false);
 
 
-  // Named, because the Retry button in the offline bar calls the same code.
-  function loadBeaches() {
+  // Load public map data one request at a time. This avoids a burst of three
+  // cross-origin requests, which is more likely to trigger edge protection.
+  async function loadMapData() {
     setLoading(true);
     setFailed(false);
-    getBeaches()
-      .then((list) => setBeaches(list))
-      .catch(() => setFailed(true))
-      .finally(() => setLoading(false));
+    try {
+      const list = await getBeaches();
+      setBeaches(list);
+      setLoading(false);
+    } catch {
+      setFailed(true);
+      setLoading(false);
+      return;
+    }
+
+    // Supporting layers are useful but must not hide the beach markers when
+    // one of their requests is unavailable.
+    try {
+      const eventRows = await listCleanupEvents();
+      setEvents(eventRows);
+      const targets = await listCleanupTargets();
+      setCleanupTargets(Object.fromEntries(targets.map((target) => [target.beachId, target])));
+    } catch {
+      // The beach layer remains usable without events or cleanup targets.
+    }
   }
 
-  useEffect(loadBeaches, []);
-  useEffect(() => {
-    let active = true;
-    Promise.all([listCleanupEvents(), listCleanupTargets()]).then(([eventRows, targets]) => {
-      if (!active) return;
-      setEvents(eventRows);
-      setCleanupTargets(Object.fromEntries(targets.map((target) => [target.beachId, target])));
-    }).catch(() => undefined);
-    return () => { active = false; };
-  }, []);
+  useEffect(() => { void loadMapData(); }, []);
   // Leaflet itself is set up in useLeafletMap - see that file for why the map
   // object lives in a ref instead of state.
   const { elRef, mapRef, ready } = useLeafletMap({ center: CENTER, zoom: ZOOM });
@@ -363,7 +371,7 @@ export default function MapScreen() {
             type="button"
             onClick={() => {
               setOffline(false);
-              loadBeaches();
+              void loadMapData();
             }}
             style={{ fontSize: 11, color: C.lime, fontWeight: 600 }}
           >

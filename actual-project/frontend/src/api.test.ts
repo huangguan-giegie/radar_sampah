@@ -123,6 +123,25 @@ describe('真实 API contract', () => {
     }
   });
 
+  it('retries a transient edge challenge for read requests', async () => {
+    vi.useFakeTimers();
+    try {
+      const fetchMock = vi.fn()
+        .mockResolvedValueOnce(new Response('<html>challenge</html>', { status: 429 }))
+        .mockResolvedValueOnce(new Response('[]', { status: 200 }));
+      vi.stubGlobal('fetch', fetchMock);
+      const { getBeaches } = await import('./api');
+
+      const result = getBeaches();
+      await vi.advanceTimersByTimeAsync(500);
+
+      await expect(result).resolves.toEqual([]);
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   // Only a 401 means the token is dead. Then getMe throws it away and reports
   // nobody signed in, so a stale token cannot sit there failing every later
   // call. Any other failure leaves the token alone.
