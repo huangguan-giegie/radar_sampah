@@ -76,10 +76,12 @@ export default function CleanupScreen() {
     try {
       const suggestion = await analyseCleanupPhoto(photoFile, target);
       setRemoved(suggestion);
-      setPhotoUsed(true);
+      const hasSuggestion = Object.keys(suggestion).length > 0;
+      setPhotoUsed(hasSuggestion);
       setPhotoFile(null);
       if (inputRef.current) inputRef.current.value = '';
-      showToast('AI suggestions added — please confirm them');
+      if (hasSuggestion) showToast('AI suggestions added — please confirm them');
+      else setError('No litter was detected. Enter the item counts manually.');
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : 'AI suggestion is unavailable. Enter the item counts manually.');
     } finally {

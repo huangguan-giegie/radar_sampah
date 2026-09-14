@@ -110,10 +110,19 @@ const REPORT_CATEGORY_ORDER: LitterCategory[] = ['Plastic', 'Fishing gear', 'Gla
  * table would not fit. The order is fixed, so the same report always reads the
  * same way.
  */
-export function formatReportComposition(quantities: QuantityByCategory): string {
+export function formatReportComposition(
+  quantities: QuantityByCategory,
+  itemCounts?: Partial<Record<LitterCategory, number>>,
+): string {
   const items = REPORT_CATEGORY_ORDER
     .filter((category) => quantities[category])
-    .map((category) => `${category} — ${quantities[category]}`);
+    .map((category) => {
+      const count = itemCounts?.[category];
+      if (typeof count === 'number' && Number.isInteger(count) && count > 0) {
+        return `${category} — ${count} ${count === 1 ? 'item' : 'items'}`;
+      }
+      return `${category} — ${quantities[category]}`;
+    });
   return items.length > 0 ? items.join(' · ') : 'No categories recorded';
 }
 

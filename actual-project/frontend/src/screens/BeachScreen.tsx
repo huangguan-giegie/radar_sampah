@@ -292,7 +292,9 @@ export default function BeachScreen() {
               REPORT {cleanupTarget.reportId.toUpperCase()} · {cleanupTotal(cleanupTarget)} ITEMS REMAIN
             </div>
             <PrimaryButton onClick={() => nav(user ? `/cleanup/${beachId}` : `/identity?next=${encodeURIComponent(`/cleanup/${beachId}`)}`)} style={{ marginTop: 13 }}>
-              Add a Cleanup <ChevronRight size={13} color={C.lime} />
+              <span>Add a Cleanup</span>
+              <small style={{ marginLeft: 6, fontSize: '0.72em', fontWeight: 500 }}>(commit to cleaning it)</small>
+              <ChevronRight size={13} color={C.lime} />
             </PrimaryButton>
           </div>
         )}
@@ -535,7 +537,8 @@ export default function BeachScreen() {
             Report Litter Here
           </PrimaryButton>
           <GhostButton onClick={() => nav(user ? `/cleanup/${beachId}` : `/identity?next=${encodeURIComponent(`/cleanup/${beachId}`)}`)}>
-            Add a Cleanup
+            <span>Add a Cleanup</span>
+            <small style={{ marginLeft: 6, fontSize: '0.72em', fontWeight: 500 }}>(commit to cleaning it)</small>
           </GhostButton>
           <GhostButton onClick={() => nav('/community')}>Community Cleanups</GhostButton>
           <GhostButton onClick={() => nav('/map')}>Back to Map</GhostButton>

@@ -83,4 +83,8 @@ describe('Iteration 2 activity and cleanup ledger', () => {
     expect(result.modelState).toBe('unavailable');
     expect(result.suggestions).toEqual({});
   });
+
+  it('returns no cleanup suggestion when recognition has zero counts', () => {
+    expect(normalizeSuggestedCounts({ Plastic: 0, Glass: 0 })).toEqual({});
+  });
 });

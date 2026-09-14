@@ -125,7 +125,7 @@ export default function SubmittedScreen() {
           {row('Beach', saved.beachName)}
           {/* One Findings row, not a Category row and a Quantity row: a single
               report can hold several categories at once. */}
-          {row('Findings', formatReportComposition(saved.quantities))}
+          {row('Findings', formatReportComposition(saved.quantities, saved.itemCounts))}
           {/* The actual number this report contributed. Showing it lets a
               volunteer follow their own report through to the beach's score
               instead of taking it on trust. Two decimals, because the weights

@@ -186,10 +186,16 @@ export default function ReviewScreen() {
             undefined,
             draft.aiDecision === 'confirmed' ? 'USER CONFIRMED' : 'MANUAL',
           )}
-          {(Object.keys(draft.quantities) as LitterCategory[]).length === 0
+          {(Object.keys(draft.itemCounts ?? draft.quantities) as LitterCategory[]).length === 0
             ? row('Litter', 'Not selected', () => backToDetails())
-            : (Object.entries(draft.quantities) as [LitterCategory, QuantityBand][]).map(([cat, q]) =>
-                row(cat, q ?? 'Not selected', () => backToDetails()),
+            : (Object.keys(draft.itemCounts ?? draft.quantities) as LitterCategory[]).map((cat) =>
+                row(
+                  cat,
+                  draft.itemCounts?.[cat]
+                    ? `${draft.itemCounts[cat]} ${draft.itemCounts[cat] === 1 ? 'item' : 'items'}`
+                    : draft.quantities[cat] ?? 'Not selected',
+                  () => backToDetails(),
+                ),
               )}
           {draft.locationSource === 'gps'
             ? row('Location', 'Beach area confirmed', undefined, 'GPS PRIVATE')

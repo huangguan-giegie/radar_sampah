@@ -316,6 +316,21 @@ describe('report composition display', () => {
   it('returns a neutral value when no category is available', () => {
     expect(formatReportComposition({})).toBe('No categories recorded');
   });
+
+  it('shows exact item counts when they are available', () => {
+    expect(formatReportComposition(
+      { Plastic: 'Medium', Glass: 'Small' },
+      { Plastic: 8, Glass: 2 },
+    )).toBe('Plastic — 8 items · Glass — 2 items');
+  });
+
+  it('keeps legacy bands when exact counts are unavailable', () => {
+    expect(formatReportComposition({ Plastic: 'Medium' })).toBe('Plastic — Medium');
+  });
+
+  it('uses singular item for an exact count of one', () => {
+    expect(formatReportComposition({ Plastic: 'Small' }, { Plastic: 1 })).toBe('Plastic — 1 item');
+  });
 });
 
 // A report can have a photo on file and still have nothing to show for it -

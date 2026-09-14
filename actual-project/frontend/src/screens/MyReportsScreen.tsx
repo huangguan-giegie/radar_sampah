@@ -182,7 +182,7 @@ export default function MyReportsScreen() {
                       needs the shared formatter to fold the whole findings
                       table into one line that always reads the same way. */}
                   <div style={{ fontSize: 12, color: C.muted, marginTop: 3, lineHeight: 1.45 }}>
-                    {formatReportComposition(r.quantities)}
+                    {formatReportComposition(r.quantities, r.itemCounts)}
                   </div>
                   <div style={{ fontFamily: MONO, fontSize: 9, color: C.faint, marginTop: 3 }}>
                     {formatDate(r.createdAt)}

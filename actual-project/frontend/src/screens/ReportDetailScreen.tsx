@@ -52,6 +52,7 @@ export default function ReportDetailScreen() {
       beachId: report.beachId,
       beachName: report.beachName,
       quantities: { ...report.quantities },
+      itemCounts: report.itemCounts ? { ...report.itemCounts } : null,
       locationSource: report.locationSource ?? 'manual',
       coords: null,
       existingPhotoUrl: report.photoUrl ?? null,
@@ -166,7 +167,11 @@ export default function ReportDetailScreen() {
             {findings.map(([category, quantity]) => (
               <div key={category} style={{ display: 'flex', justifyContent: 'space-between', gap: 16, padding: '12px 0', borderBottom: `1px solid ${C.line}` }}>
                 <span style={{ fontSize: 14, fontWeight: 650, color: C.ink2 }}>{category}</span>
-                <span style={{ fontFamily: MONO, fontSize: 12, color: C.muted }}>{quantity}</span>
+                <span style={{ fontFamily: MONO, fontSize: 12, color: C.muted }}>
+                  {Number.isInteger(report.itemCounts?.[category]) && (report.itemCounts?.[category] ?? 0) > 0
+                    ? `${report.itemCounts?.[category]} ${report.itemCounts?.[category] === 1 ? 'item' : 'items'}`
+                    : quantity}
+                </span>
               </div>
             ))}
           </div>
