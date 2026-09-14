@@ -4,9 +4,16 @@ on:
   push:
     branches:
       - fix/onnx-runtime-prod-20260914
+    paths:
+      - .github/workflows/export-onnx.yml
+      - actual-project/ml-model/models/sea_taco_yolo11m_best.pt
 
 permissions:
   contents: write
+
+concurrency:
+  group: export-production-onnx
+  cancel-in-progress: true
 
 jobs:
   export:
