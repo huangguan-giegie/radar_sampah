@@ -35,11 +35,6 @@ GEO_DUPLICATE_NOTE = (
     GEO_DUPLICATE_NOTE_PREFIX
     + " another Counted GPS report exists at the same beach, on the same Malaysia-local day, within 10 metres."
 )
-_impl.REPORT_STATUS_NOTES["Duplicate"] = (
-    "Matches an existing report: either the same participant, beach and Malaysia-local day with "
-    "identical categories and quantities, or the same beach and day with a privacy-preserving GPS "
-    "location within 10 metres. Saved here but excluded from the beach score."
-)
 
 
 def _qualified_table(name: str) -> str:
@@ -398,6 +393,8 @@ def create_app(
                         .where(_impl.reports_table.c.id == report_id)
                         .values(status_note=GEO_DUPLICATE_NOTE)
                     )
+                payload["statusNote"] = GEO_DUPLICATE_NOTE
+                response.set_data(_impl.json.dumps(payload, separators=(",", ":")))
         return response
 
     application.view_functions["restore_anonymous_participant"] = restore_anonymous_participant_strict
