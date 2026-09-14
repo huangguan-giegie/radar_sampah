@@ -12,10 +12,18 @@ LNG = 101.440
 MARKER = "PROD_SMOKE_20260914_A7F3"
 
 PNG = base64.b64decode(
-    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Y9Zl1sAAAAASUVORK5CYII="
+    "iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAFklEQVR4nGP8//8/AwMDEwMDAwMDAwAkBgMB/DXemwAAAABJRU5ErkJggg=="
 )
 
 summary = {"marker": MARKER, "eventId": EVENT_ID, "steps": []}
+
+def _redact(value):
+    if isinstance(value, dict):
+        return {k: ("<redacted>" if k in {"token", "recoveryToken"} else _redact(v)) for k, v in value.items()}
+    if isinstance(value, list):
+        return [_redact(v) for v in value]
+    return value
+
 
 def record(name, response):
     item = {"step": name, "status": response.status_code}
@@ -23,7 +31,7 @@ def record(name, response):
         body = response.json()
     except Exception:
         body = response.text[:500]
-    item["body"] = body
+    item["body"] = _redact(body)
     summary["steps"].append(item)
     print("SMOKE_STEP", json.dumps(item, default=str), flush=True)
     return body
@@ -36,7 +44,7 @@ def req(method, path, token=None, expected=(200,), **kwargs):
     r = requests.request(method, BASE + path, headers=headers, timeout=40, **kwargs)
     body = record(f"{method} {path}", r)
     if r.status_code not in expected:
-        raise RuntimeError(f"Unexpected {r.status_code} for {method} {path}: {body}")
+        raise RuntimeError(f"Unexpected {r.status_code} for {method} {path}: {_redact(body)}")
     return r, body
 
 
@@ -173,7 +181,7 @@ except Exception as exc:
     summary["error"] = repr(exc)
     print("SMOKE_ERROR", repr(exc), flush=True)
 finally:
-    print("SMOKE_SUMMARY", json.dumps(summary, default=str), flush=True)
+    print("SMOKE_SUMMARY", json.dumps(_redact(summary), default=str), flush=True)
 
 class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
