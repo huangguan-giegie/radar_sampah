@@ -9,6 +9,7 @@ Iteration 2 contracts that must not regress during integration:
   the privacy-preserving 10 metre boundary;
 * cleanup changes each report's current score before the active-report beach median is taken;
 * fully cleared reports stay in history but leave the current score and active count;
+* automatic weekly events are created only for Moderate, High, or Severe beaches;
 * PostgreSQL Iteration 2 tables receive the same integrity constraints as the
   release migration, even if an application process creates them first.
 """
@@ -44,6 +45,7 @@ GEO_DUPLICATE_NOTE = (
     GEO_DUPLICATE_NOTE_PREFIX
     + " an active unresolved report within 10 metres has the same non-Small category and quantity-band map."
 )
+WEEKLY_EVENT_SEVERITIES = {"Moderate", "High", "Severe"}
 
 
 def _qualified_table(name: str) -> str:
@@ -389,6 +391,95 @@ def _repair_gps_privacy_rows(engine: Any, secret: str) -> None:
             )
 
 
+def _upcoming_saturdays_reviewed(now: Any) -> list[Any]:
+    local_now = _impl.utc_datetime(now).astimezone(_impl.KUALA_LUMPUR)
+    first_date = local_now.date() + _impl.timedelta(days=(5 - local_now.weekday()) % 7)
+    first_start = _impl.datetime.combine(
+        first_date,
+        _impl.datetime.min.time(),
+        tzinfo=_impl.KUALA_LUMPUR,
+    ).replace(hour=_impl.EVENT_START_LOCAL_HOUR)
+    if first_date == local_now.date() and local_now >= first_start.replace(hour=_impl.EVENT_END_LOCAL_HOUR):
+        first_date += _impl.timedelta(days=7)
+    return [
+        _impl.datetime.combine(
+            first_date + _impl.timedelta(days=7 * offset),
+            _impl.datetime.min.time(),
+            tzinfo=_impl.KUALA_LUMPUR,
+        )
+        .replace(hour=_impl.EVENT_START_LOCAL_HOUR)
+        .astimezone(_impl.timezone.utc)
+        for offset in range(_impl.EVENTS_PER_BEACH)
+    ]
+
+
+def _reviewed_event_scheduler(engine: Any):
+    """Build the scheduler used by the existing event routes with an attention gate."""
+    beaches = _impl.load_beaches(engine)
+
+    def ensure_scheduled_events(now: Any | None = None) -> None:
+        current = now or _impl.datetime.now(_impl.timezone.utc)
+        starts = _upcoming_saturdays_reviewed(current)
+        eligible_beaches = [
+            beach
+            for beach in beaches
+            if _impl.beach_summary(engine, beach, current).get("severity") in WEEKLY_EVENT_SEVERITIES
+        ]
+        scheduled = [
+            (
+                beach,
+                starts_at,
+                f"{beach['id']}-{starts_at.astimezone(_impl.KUALA_LUMPUR).date().isoformat()}",
+            )
+            for beach in eligible_beaches
+            for starts_at in starts
+        ]
+        with engine.begin() as connection:
+            existing_ids = set()
+            if scheduled:
+                existing_ids = set(connection.execute(
+                    select(_impl.events_table.c.id).where(
+                        _impl.events_table.c.id.in_(event_id for _, _, event_id in scheduled)
+                    )
+                ).scalars())
+            for beach, starts_at, event_id in scheduled:
+                if event_id in existing_ids:
+                    continue
+                try:
+                    with connection.begin_nested():
+                        connection.execute(_impl.insert(_impl.events_table).values(
+                            id=event_id,
+                            beach_id=beach["id"],
+                            starts_at=starts_at,
+                            ends_at=starts_at + _impl.timedelta(
+                                hours=_impl.EVENT_END_LOCAL_HOUR - _impl.EVENT_START_LOCAL_HOUR
+                            ),
+                            status="Open",
+                            source="scheduled",
+                            created_by=None,
+                            created_at=current,
+                            updated_at=current,
+                        ))
+                except _impl.IntegrityError:
+                    continue
+            connection.execute(_impl.events_table.update().where(
+                _impl.events_table.c.status == "Open",
+                _impl.events_table.c.ends_at < current,
+            ).values(status="Closed", updated_at=current))
+
+    return ensure_scheduled_events
+
+
+def _replace_freevar(function: Any, name: str, replacement: Any) -> bool:
+    """Replace one captured helper while preserving the route's existing serializer."""
+    closure = function.__closure__ or ()
+    for freevar, cell in zip(function.__code__.co_freevars, closure):
+        if freevar == name:
+            cell.cell_contents = replacement
+            return True
+    return False
+
+
 _impl.initialise_database = _initialise_database
 _impl.duplicate_status = _duplicate_status
 _impl.remaining_count_attention = _remaining_count_attention
@@ -479,6 +570,12 @@ def create_app(
         return response
 
     install_cleanup_route(application, engine, jwt_secret, _impl)
+
+    reviewed_scheduler = _reviewed_event_scheduler(engine)
+    for endpoint in ("list_events", "get_event"):
+        route = application.view_functions.get(endpoint)
+        if route is None or not _replace_freevar(route, "ensure_scheduled_events", reviewed_scheduler):
+            raise RuntimeError(f"Could not install reviewed weekly-event scheduler for {endpoint}.")
 
     original_create_report = application.view_functions["create_report"]
 
