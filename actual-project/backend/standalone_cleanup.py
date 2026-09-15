@@ -54,6 +54,62 @@ def install_cleanup_route(application: Any, engine: Any, jwt_secret: str, impl: 
             "status": "Cleanup recorded — awaiting follow-up",
         }
 
+    def active_composition_percentages(active_rows: list[tuple[Any, dict[str, str]]]) -> list[dict[str, Any]]:
+        aggregate = {
+            category: sum(
+                impl.QUANTITY_WEIGHTS[quantities[category]]
+                for _row, quantities in active_rows
+                if category in quantities
+            )
+            for category in impl.FRONTEND_CATEGORIES
+        }
+        weighted = [(category, aggregate[category]) for category in impl.FRONTEND_CATEGORIES if aggregate[category] > 0]
+        total = sum(weight for _category, weight in weighted)
+        if total <= 0:
+            return []
+        exact = [(category, weight * 100 / total) for category, weight in weighted]
+        whole = {category: impl.math.floor(value) for category, value in exact}
+        remainder = 100 - sum(whole.values())
+        for category, _value in sorted(
+            exact,
+            key=lambda item: item[1] - impl.math.floor(item[1]),
+            reverse=True,
+        )[:remainder]:
+            whole[category] += 1
+        return [{"category": category, "percentage": whole[category]} for category, _weight in weighted]
+
+    original_get_beach = application.view_functions["get_beach"]
+
+    def get_beach_with_active_composition(beach_id: str):
+        response = application.make_response(original_get_beach(beach_id))
+        if response.status_code != 200:
+            return response
+
+        detail = response.get_json()
+        current_time = datetime.now(timezone.utc)
+        cutoff = current_time - impl.timedelta(days=90)
+        with engine.connect() as connection:
+            all_counted = connection.execute(
+                select(impl.reports_table).where(
+                    impl.reports_table.c.beach_id == beach_id,
+                    impl.reports_table.c.status == "Counted",
+                )
+            ).all()
+        eligible = [row for row in all_counted if impl.utc_datetime(row.created_at) >= cutoff]
+        active_rows = impl.active_attention_rows(engine, eligible)
+
+        if not active_rows:
+            detail["composition"] = None
+            detail["compositionSource"] = None
+        else:
+            detail["composition"] = active_composition_percentages(active_rows)
+            detail["compositionSource"] = {
+                "method": "active_report_estimate",
+                "activeReportCount": len(active_rows),
+                "windowDays": 90,
+            }
+        return jsonify(detail)
+
     def create_cleanup_action_reviewed():
         user = current_user()
         if user is None:
@@ -289,4 +345,5 @@ def install_cleanup_route(application: Any, engine: Any, jwt_secret: str, impl: 
 
         return jsonify(cleanup_action_dict(action)), response_status
 
+    application.view_functions["get_beach"] = get_beach_with_active_composition
     application.view_functions["create_cleanup_action"] = create_cleanup_action_reviewed

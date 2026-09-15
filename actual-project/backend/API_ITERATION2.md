@@ -82,7 +82,7 @@ The original scoring structure is retained in Iteration 2:
 5. fewer than 3 active reports → insufficient data (`score`, `severity` and `band` are null);
 6. otherwise the beach Attention Score is the **median of the active report scores**.
 
-For a report with Iteration 2 `itemCounts`, cleanup actions first reduce that report's remaining counts. The remaining counts are converted back to quantity bands, that report is rescored, and only then is the beach median recomputed. A fully cleared report contributes no score to the current median and does not count toward the active minimum; the original report and cleanup ledger remain available for history and audit.
+For a report with Iteration 2 `itemCounts`, linked cleanup actions first reduce that report's remaining counts. The remaining counts are converted back to quantity bands, that report is rescored, and only then is the beach median recomputed. A fully cleared report contributes no score to the current median and does not count toward the active minimum; the original report and cleanup ledger remain available for history and audit.
 
 Cleanup does not add points to Attention Score.
 
@@ -92,23 +92,66 @@ Cleanup does not add points to Attention Score.
 - `reportAggregation: max-category-score`
 - `beachAggregation: median-of-active-reports`
 
-## 5. Cleanup targets and actions
+## 5. Current unresolved litter composition
 
-Only `Counted` reports with confirmed `itemCounts` and a positive remaining quantity can become cleanup targets.
+The beach composition panel represents the **current reported unresolved litter estimate**, not the single newest historical report.
 
-`GET /cleanup-targets?beachId=morib` returns current targets. Optional `reportId` limits the response to one shared target.
+It uses the same active eligible report set as Beach Attention:
 
-`POST /cleanup-actions` appends a cleanup action. A cleanup action:
+- status must be `Counted`;
+- report must be within the latest 90 days;
+- a count-backed report must still have positive remaining litter after linked cleanup actions;
+- a fully cleared target is excluded;
+- a partial cleanup uses the report's remaining item counts, re-derived into the current internal quantity bands;
+- a legacy report with quantity bands but no exact item counts remains usable without inventing exact counts.
 
-- targets one report;
-- cannot remove more than the current remaining count in any category;
-- is idempotent for the same participant + `idempotencyKey` + request fingerprint;
+To keep legacy and Iteration 2 reports comparable, composition aggregates the **internal quantity-level weights** (`Small=1`, `Medium=2`, `Large=3`, `Very Large=4`) for each category across the active set, then normalises those category totals to whole percentages that sum to 100. It does **not** mix raw exact counts with invented legacy counts and it is not a direct raw-item-count percentage.
+
+Standalone cleanup actions have no `targetReportId`; they remain separate cleanup evidence and do not subtract from any report or directly alter composition. Linked cleanup actions do affect the linked report's remaining state.
+
+The three-report evidence threshold applies to the public Beach Attention band, **not** to composition. Composition may still be shown when one or two active unresolved reports remain, with its active report count disclosed.
+
+When composition is available, `GET /beaches/{id}` returns:
+
+```json
+{
+  "compositionSource": {
+    "method": "active_report_estimate",
+    "activeReportCount": 2,
+    "windowDays": 90
+  }
+}
+```
+
+When no active unresolved report remains, both `composition` and `compositionSource` are `null`.
+
+## 6. Cleanup targets and actions
+
+Only `Counted` reports with confirmed `itemCounts` and a positive remaining quantity can become linked cleanup targets.
+
+`GET /cleanup-targets?beachId=morib` returns current linked targets. Optional `reportId` limits the response to one shared target.
+
+`POST /cleanup-actions` appends either a linked cleanup action or a standalone beach-level cleanup action.
+
+A **linked cleanup**:
+
+- includes `targetReportId`;
+- cannot remove more than the target's current remaining count in any category;
 - stores the removal ledger but does not overwrite the original audit report;
-- may be partial, allowing later cleanup actions until remaining counts reach zero.
+- may be partial, allowing later linked cleanup actions until remaining counts reach zero;
+- changes the linked report's current remaining state used by Beach Attention and current composition.
+
+A **standalone cleanup**:
+
+- omits `targetReportId` and supplies `beachId`;
+- records what was cleaned without assuming it belongs to an existing report;
+- does not subtract from an unrelated report and therefore does not directly change Beach Attention or current report-based composition.
+
+Both forms are idempotent for the same participant + `idempotencyKey` + request fingerprint.
 
 Cleanup `score` means **number of items removed**. It is not a personal point score, badge or leaderboard value.
 
-## 6. Community events and attendance
+## 7. Community events and attendance
 
 `GET /events` idempotently ensures four upcoming Saturday activities per supported beach, normally 09:00–12:00 Malaysia time. A moderator may add another event date through `POST /events`; Iteration 2 does not require a full edit/cancel management console.
 
@@ -132,7 +175,7 @@ Relevant endpoints:
 - `GET /events/{id}/cleanups`
 - `POST /events` (moderator)
 
-## 7. Location privacy
+## 8. Location privacy
 
 Iteration 2 does not persist raw report GPS coordinates for the new count-backed flow.
 
@@ -142,7 +185,7 @@ Check-in stores only the pass result and timestamp. No public response serialize
 
 `GEO_PRIVACY_HMAC_KEY` must be a stable private production secret.
 
-## 8. Sharing
+## 9. Sharing
 
 Sharing is target-scoped and does not create a social graph.
 
@@ -160,7 +203,7 @@ Public read endpoints:
 
 Invalid or out-of-scope tokens return `404`.
 
-## 9. Database integration
+## 10. Database integration
 
 Production uses PostgreSQL through `DATABASE_URL`; local development may use SQLite. `DATABASE_SCHEMA` may select an existing PostgreSQL schema.
 
@@ -183,11 +226,11 @@ The application startup path is idempotent and also repairs missing Iteration 2 
 
 `schema.sql` is the clean-new-database definition. It must stay aligned with migration 002 and the SQLAlchemy runtime tables.
 
-## 10. Moderator provisioning
+## 11. Moderator provisioning
 
 Normal anonymous signup creates `volunteer` users only. Use `scripts/provision_moderator.py` for a controlled moderator account. The moderator role can create event dates but does not gain report-review powers in this iteration.
 
-## 11. Deployment configuration
+## 12. Deployment configuration
 
 Required or recommended production settings:
 
