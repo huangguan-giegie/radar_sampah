@@ -40,7 +40,7 @@ def test_composition_uses_same_non_small_active_evidence_as_attention(api):
     _application, client = api
 
     plastic, plastic_headers = _submit_count_report(client, {"Plastic": 6})      # Medium
-    _metal, metal_headers = _submit_count_report(client, {"Metal": 1})           # Small: inactive
+    _standalone_session, standalone_headers = signup(client)
     glass, glass_headers = _submit_count_report(client, {"Glass": 21})           # Large
 
     detail, composition = _composition_by_category(client)
@@ -54,7 +54,7 @@ def test_composition_uses_same_non_small_active_evidence_as_attention(api):
     # A standalone cleanup never subtracts from unrelated report evidence.
     standalone = client.post(
         "/cleanup-actions",
-        headers=metal_headers,
+        headers=standalone_headers,
         json={
             "beachId": "morib",
             "removed": {"Plastic": 50},
