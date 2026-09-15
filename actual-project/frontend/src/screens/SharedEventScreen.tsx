@@ -14,6 +14,8 @@ import {
 } from '../iteration2';
 import { iteration2SharedPhotoUrl } from '../api';
 import { C } from '../theme';
+import type { QuantityByCategory } from '../types';
+import { hasActiveCleanupBands, sharedBandRows } from '../sharedReportPresentation';
 
 type SharedReport = {
   id: string;
@@ -21,10 +23,8 @@ type SharedReport = {
   beachName: string;
   reportedAt: string;
   status: string;
-  quantities: Record<string, string>;
-  itemCounts: Record<string, number>;
-  remainingItemCounts: Record<string, number>;
-  remainingTotal: number;
+  quantities: QuantityByCategory;
+  remainingQuantities: QuantityByCategory;
   photoAvailable: boolean;
 };
 
@@ -68,7 +68,7 @@ export default function SharedEventScreen() {
   const participantId = user?.participantId;
   const joined = Boolean(participantId && event?.joinedBy.includes(participantId));
   const checkedIn = Boolean(participantId && event?.checkIns[participantId] === 'within_area');
-  const canClean = Boolean(report && report.remainingTotal > 0);
+  const canClean = Boolean(report && hasActiveCleanupBands(report.remainingQuantities));
 
   async function copyLink() {
     try {
@@ -116,7 +116,7 @@ export default function SharedEventScreen() {
   const beachName = report?.beachName ?? event?.beachName ?? 'Cleanup activity';
   const eventPath = event ? `/events/${event.id}` : '/community';
   const sharePath = shareToken ? `/share/${encodeURIComponent(shareToken)}` : reportId ? `/share/reports/${encodeURIComponent(reportId)}` : `/share/events/${encodeURIComponent(eventId)}`;
-  const cleanedCounts = report?.remainingItemCounts ?? {};
+  const bandRows = report ? sharedBandRows(report.quantities, report.remainingQuantities) : [];
 
   return (
     <div className="screen scroll-y" style={{ zIndex: 27 }}>
@@ -150,7 +150,7 @@ export default function SharedEventScreen() {
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'flex-start', marginTop: 10 }}>
               <div>
                 <strong style={{ display: 'block', color: C.ink2, fontSize: 14.5 }}>Report {report.id.toUpperCase()}</strong>
-                <span style={{ display: 'block', marginTop: 4, color: C.muted, fontSize: 11.5 }}>{report.beachName} · {report.remainingTotal} items remain</span>
+                <span style={{ display: 'block', marginTop: 4, color: C.muted, fontSize: 11.5 }}>{report.beachName} · current quantity bands</span>
               </div>
               <InfoChip color={C.green} background={C.greenBg}>{report.status}</InfoChip>
             </div>
@@ -158,10 +158,10 @@ export default function SharedEventScreen() {
               <img src={iteration2SharedPhotoUrl(shareToken)} alt="Original litter report photo" style={{ display: 'block', width: '100%', maxHeight: 260, objectFit: 'cover', borderRadius: 16, marginTop: 12 }} />
             )}
             <div style={{ display: 'grid', gap: 7, marginTop: 12 }}>
-              {Object.entries(report.itemCounts).map(([category, count]) => (
-                <div key={category} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
+              {bandRows.map(({ category, reported, current }) => (
+                <div key={category} style={{ display: 'flex', justifyContent: 'space-between', gap: 12, fontSize: 12 }}>
                   <span style={{ color: C.muted }}>{category}</span>
-                  <strong>{count} reported · {cleanedCounts[category] ?? 0} remaining</strong>
+                  <strong>{reported} reported · {current ?? 'Cleared'} current</strong>
                 </div>
               ))}
             </div>
