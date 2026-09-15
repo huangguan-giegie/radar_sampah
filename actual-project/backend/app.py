@@ -5,8 +5,8 @@ entry point keeps that implementation intact while enforcing the reviewed
 Iteration 2 contracts that must not regress during integration:
 
 * account recovery always requires the recovery token;
-* duplicate detection accepts either an exact participant/category signature
-  or a same-beach, same-day privacy-preserving GPS match within 10 metres;
+* GPS duplicate detection compares active unresolved category/band state inside
+  the privacy-preserving 10 metre boundary;
 * cleanup changes each report's current score before the active-report beach median is taken;
 * fully cleared reports stay in history but leave the current score and active count;
 * PostgreSQL Iteration 2 tables receive the same integrity constraints as the
@@ -21,12 +21,17 @@ from pathlib import Path
 from statistics import median
 from typing import Any
 
-from flask import current_app, g, jsonify, request
+from flask import g, jsonify, request
 from sqlalchemy import inspect, select, text
 
 import app_core as _impl
 from app_core import *  # noqa: F401,F403 - preserve the public module contract
-from standalone_cleanup import configure_cleanup_schema, install_cleanup_route
+from standalone_cleanup import (
+    _active_quantities,
+    _current_band_state,
+    configure_cleanup_schema,
+    install_cleanup_route,
+)
 
 
 # Iteration 2 originally required every cleanup to point at a counted report.
@@ -39,7 +44,7 @@ _original_nearby_proximity_refs = _impl.nearby_proximity_refs
 GEO_DUPLICATE_NOTE_PREFIX = "Privacy-proximity duplicate:"
 GEO_DUPLICATE_NOTE = (
     GEO_DUPLICATE_NOTE_PREFIX
-    + " another Counted GPS report exists at the same beach, on the same Malaysia-local day, within 10 metres."
+    + " an active unresolved report within 10 metres has the same non-Small category and quantity-band map."
 )
 
 
@@ -126,7 +131,7 @@ def _ensure_postgres_iteration2_contract(engine: Any) -> None:
 
 
 def _repair_exact_duplicate_statuses(engine: Any) -> None:
-    """Repair legacy broad duplicates while preserving reviewed GPS duplicates."""
+    """Keep the existing legacy repair until old rows are retired."""
 
     with engine.begin() as connection:
         rows = connection.execute(
@@ -243,53 +248,12 @@ def _candidate_quantities(connection: Any, exclude_report_id: str | None) -> dic
     return None
 
 
-def _same_day_nearby_gps_duplicate(lat: float, lng: float, secret: str) -> bool:
-    """Detect a same-beach, same-local-day report within the protected 10 m grid."""
-
-    if request.endpoint != "create_report":
-        return False
-    cached = getattr(g, "same_day_nearby_gps_duplicate", None)
-    if cached is not None:
-        return bool(cached)
-
-    payload = request.get_json(silent=True)
-    beach_id = str(payload.get("beachId") or "").strip() if isinstance(payload, dict) else ""
-    if not beach_id:
-        g.same_day_nearby_gps_duplicate = False
-        return False
-
-    candidate_day = _impl.datetime.now(_impl.timezone.utc).astimezone(_impl.KUALA_LUMPUR).date()
-    engine = current_app.extensions["marine_engine"]
-    with engine.connect() as connection:
-        rows = connection.execute(
-            select(_impl.reports_table).where(
-                _impl.reports_table.c.beach_id == beach_id,
-                _impl.reports_table.c.status == "Counted",
-                _impl.reports_table.c.item_counts.is_not(None),
-                _impl.reports_table.c.proximity_ref.is_not(None),
-            )
-        ).all()
-
-    for row in rows:
-        if _impl.utc_datetime(row.created_at).astimezone(_impl.KUALA_LUMPUR).date() != candidate_day:
-            continue
-        candidate_refs = _original_nearby_proximity_refs(lat, lng, row.id, secret)
-        if row.proximity_ref in candidate_refs:
-            g.same_day_nearby_gps_duplicate = True
-            g.nearby_duplicate_report_id = row.id
-            return True
-
-    g.same_day_nearby_gps_duplicate = False
-    return False
-
-
 def _nearby_proximity_refs_reviewed(lat: float, lng: float, target_id: str, secret: str) -> set[str]:
-    """Let same-day nearby reports save as Duplicate instead of returning 409."""
+    """The reviewed create flow handles nearby active targets itself."""
 
-    refs = _original_nearby_proximity_refs(lat, lng, target_id, secret)
-    if _same_day_nearby_gps_duplicate(lat, lng, secret):
+    if request.endpoint == "create_report":
         return set()
-    return refs
+    return _original_nearby_proximity_refs(lat, lng, target_id, secret)
 
 
 def _duplicate_status(
@@ -299,10 +263,7 @@ def _duplicate_status(
     created_at: Any,
     exclude_report_id: str | None = None,
 ) -> str:
-    """Apply either reviewed duplicate rule without treating participant ID as location identity."""
-
-    if request.endpoint == "create_report" and getattr(g, "same_day_nearby_gps_duplicate", False):
-        return "Duplicate"
+    """Retain exact-signature duplicate handling for non-GPS legacy/manual flows."""
 
     candidate = _candidate_quantities(connection, exclude_report_id)
     if not candidate:
@@ -335,6 +296,134 @@ def _remaining_count_attention(engine: Any, rows: list[Any]) -> float | None:
     return float(median(_impl.report_score_for(quantities) for _, quantities in active))
 
 
+def _geo_secret(jwt_secret: str) -> str:
+    return _impl.os.getenv("GEO_PRIVACY_HMAC_KEY", "").strip() or hmac.new(
+        jwt_secret.encode("utf-8"), b"radar-sampah-geo-key-v1", hashlib.sha256
+    ).hexdigest()
+
+
+def _normalised_active_payload(payload: Any) -> dict[str, str]:
+    if not isinstance(payload, dict):
+        return {}
+    quantities = payload.get("quantities")
+    if isinstance(quantities, dict) and quantities:
+        valid = {
+            str(category): str(band)
+            for category, band in quantities.items()
+            if category in _impl.FRONTEND_CATEGORIES and band in _impl.QUANTITY_WEIGHTS
+        }
+        if len(valid) == len(quantities):
+            return _active_quantities(valid)
+    if "itemCounts" in payload:
+        counts = _impl.validate_item_counts(payload.get("itemCounts"))
+        if counts:
+            return _active_quantities(_impl.quantity_bands_for_counts(counts))
+    return {}
+
+
+def _projected_xy(lat: float, lng: float) -> tuple[float, float]:
+    latitude = min(85.05112878, max(-85.05112878, lat))
+    radius = 6_378_137.0
+    x = radius * _impl.math.radians(lng)
+    y = radius * _impl.math.log(_impl.math.tan(_impl.math.pi / 4 + _impl.math.radians(latitude) / 2))
+    return x, y
+
+
+def _distance_to_stored_cell(
+    lat: float,
+    lng: float,
+    target_id: str,
+    stored_ref: str,
+    secret: str,
+) -> float | None:
+    """Match an HMAC cell without recovering or persisting the target coordinate."""
+
+    x, y = _projected_xy(lat, lng)
+    grid = float(_impl.GEO_GRID_METRES)
+    base_x = _impl.math.floor(x / grid)
+    base_y = _impl.math.floor(y / grid)
+    cells = int(_impl.math.ceil(10.0 / grid)) + 1
+    for offset_x in range(-cells, cells + 1):
+        for offset_y in range(-cells, cells + 1):
+            cell_x, cell_y = base_x + offset_x, base_y + offset_y
+            candidate_ref = _impl.proximity_ref_for_cell(cell_x, cell_y, target_id, secret)
+            if not hmac.compare_digest(candidate_ref, stored_ref):
+                continue
+            min_x, max_x = cell_x * grid, (cell_x + 1) * grid
+            min_y, max_y = cell_y * grid, (cell_y + 1) * grid
+            dx = min_x - x if x < min_x else x - max_x if x > max_x else 0.0
+            dy = min_y - y if y < min_y else y - max_y if y > max_y else 0.0
+            return _impl.math.hypot(dx, dy)
+    return None
+
+
+def _gps_proximity_decision(engine: Any, payload: Any, secret: str) -> tuple[str, str | None]:
+    """Return desired status and optional active target whose reference moves."""
+
+    if not isinstance(payload, dict) or payload.get("locationSource") != "gps":
+        return "Counted", None
+    coords = payload.get("coords")
+    if not isinstance(coords, dict):
+        return "Counted", None
+    try:
+        lat, lng = float(coords["lat"]), float(coords["lng"])
+    except (KeyError, TypeError, ValueError):
+        return "Counted", None
+    beach_id = str(payload.get("beachId") or "").strip()
+    candidate = _normalised_active_payload(payload)
+    if not beach_id or not candidate:
+        return "Counted", None
+
+    changed_targets: list[tuple[float, str]] = []
+    with engine.connect() as connection:
+        targets = connection.execute(
+            select(_impl.reports_table).where(
+                _impl.reports_table.c.beach_id == beach_id,
+                _impl.reports_table.c.status == "Counted",
+                _impl.reports_table.c.proximity_ref.is_not(None),
+            )
+        ).all()
+        for target in targets:
+            distance = _distance_to_stored_cell(lat, lng, target.id, target.proximity_ref, secret)
+            if distance is None or distance > 10.0:
+                continue
+            actions = connection.execute(
+                select(_impl.cleanup_actions_table)
+                .where(_impl.cleanup_actions_table.c.target_report_id == target.id)
+                .order_by(_impl.cleanup_actions_table.c.created_at)
+            ).all()
+            active = _active_quantities(_current_band_state(_impl, target, actions))
+            if not active:
+                continue
+            if active == candidate:
+                return "Duplicate", None
+            changed_targets.append((distance, target.id))
+    if not changed_targets:
+        return "Counted", None
+    changed_targets.sort(key=lambda item: (item[0], item[1]))
+    return "Counted", changed_targets[0][1]
+
+
+def _repair_gps_privacy_rows(engine: Any, secret: str) -> None:
+    """Convert any transient/raw GPS rows to a privacy reference and clear raw coordinates."""
+
+    with engine.begin() as connection:
+        rows = connection.execute(
+            select(_impl.reports_table).where(
+                _impl.reports_table.c.location_source == "gps",
+                _impl.reports_table.c.lat.is_not(None),
+                _impl.reports_table.c.lng.is_not(None),
+            )
+        ).all()
+        for row in rows:
+            reference = row.proximity_ref or _impl.proximity_ref(float(row.lat), float(row.lng), row.id, secret)
+            connection.execute(
+                _impl.reports_table.update()
+                .where(_impl.reports_table.c.id == row.id)
+                .values(lat=None, lng=None, proximity_ref=reference)
+            )
+
+
 _impl.initialise_database = _initialise_database
 _impl.duplicate_status = _duplicate_status
 _impl.remaining_count_attention = _remaining_count_attention
@@ -353,6 +442,8 @@ def create_app(
     )
     engine = application.extensions["marine_engine"]
     jwt_secret = _impl.auth_jwt_secret(testing)
+    geo_secret = _geo_secret(jwt_secret)
+    _repair_gps_privacy_rows(engine, geo_secret)
 
     def restore_anonymous_participant_strict():
         payload = request.get_json(silent=True)
@@ -402,7 +493,7 @@ def create_app(
             ],
             "windowDays": 90,
             "minReports": 3,
-            "reportEligibility": "Counted reports in the latest 90 days with remaining litter after cleanup; fully cleared count-backed reports are excluded from the active count but retained in history",
+            "reportEligibility": "Counted reports in the latest 90 days with active non-Small litter after cleanup; resolved reports remain in history",
             "remainingCountAggregation": "per-report-after-cleanup",
             "reportAggregation": "max-category-score",
             "beachAggregation": "median-of-active-reports",
@@ -410,12 +501,14 @@ def create_app(
                 {"modelClass": model_class, "category": category}
                 for model_class, category in _impl.ITERATION2_CATEGORIES.items()
             ],
-            "cleanupScore": "number-of-items-removed",
+            "cleanupScore": "quantity-band-unit-reduction",
             "cleanupPoints": 0,
         })
 
     @application.after_request
     def persist_location_duplicate_note(response):
+        # Retained for old pre-band requests. New GPS duplicate status/note is
+        # set atomically by the reviewed wrapper below.
         if (
             request.endpoint == "create_report"
             and response.status_code == 201
@@ -435,6 +528,54 @@ def create_app(
         return response
 
     install_cleanup_route(application, engine, jwt_secret, _impl)
+
+    original_create_report = application.view_functions["create_report"]
+
+    def create_report_with_reviewed_proximity():
+        payload = request.get_json(silent=True)
+        decision = _gps_proximity_decision(engine, payload, geo_secret)
+        response = application.make_response(original_create_report())
+        if response.status_code != 201 or not isinstance(payload, dict) or payload.get("locationSource") != "gps":
+            return response
+        coords = payload.get("coords")
+        body = response.get_json(silent=True)
+        if not isinstance(coords, dict) or not isinstance(body, dict) or not body.get("id"):
+            return response
+        try:
+            lat, lng = float(coords["lat"]), float(coords["lng"])
+        except (KeyError, TypeError, ValueError):
+            return response
+        report_id = str(body["id"])
+        desired_status, refresh_target_id = decision
+        new_reference = _impl.proximity_ref(lat, lng, report_id, geo_secret)
+        values: dict[str, Any] = {
+            "lat": None,
+            "lng": None,
+            "proximity_ref": new_reference,
+            "status": desired_status,
+            "status_note": GEO_DUPLICATE_NOTE if desired_status == "Duplicate" else None,
+        }
+        with engine.begin() as connection:
+            connection.execute(
+                _impl.reports_table.update()
+                .where(_impl.reports_table.c.id == report_id)
+                .values(**values)
+            )
+            if refresh_target_id and desired_status == "Counted":
+                connection.execute(
+                    _impl.reports_table.update()
+                    .where(_impl.reports_table.c.id == refresh_target_id)
+                    .values(proximity_ref=_impl.proximity_ref(lat, lng, refresh_target_id, geo_secret))
+                )
+        body["status"] = desired_status
+        if desired_status == "Duplicate":
+            body["statusNote"] = GEO_DUPLICATE_NOTE
+        else:
+            body.pop("statusNote", None)
+        response.set_data(_impl.json.dumps(body, separators=(",", ":")))
+        return response
+
+    application.view_functions["create_report"] = create_report_with_reviewed_proximity
     application.view_functions["restore_anonymous_participant"] = restore_anonymous_participant_strict
     application.view_functions["get_iteration2_scoring_method"] = get_iteration2_scoring_method_reviewed
     return application
