@@ -1,27 +1,19 @@
 openapi: 3.0.3
 info:
   title: Radar Sampah API
-  version: "1.0.0"
+  version: "2.0.0"
   description: |
-    The current main contract with additive Iteration 2 cleanup and community-event operations.
+    Reviewed Iteration 2 contract after the final Manual Remarks review.
 
-    This is one of three copies of the same contract — change one, change all three:
-    openapi.yaml (this file, English)  for tooling
-      API.en.md    (English)             for LiHanXia and Keith, with the reasoning
-      API.md       (Chinese)             for Qian Jiang
-
-    backend/app.py implements this contract. Iteration 2 details and privacy rules are also
-    documented in backend/API_ITERATION2.md.
-
-    The points that get missed:
-    - Under 3 active reports, severity and band MUST be null — never fall back to Low
-    - A duplicate returns 201 with status=Duplicate. It is a result, not an error
-    - Duplicate means either an exact same-participant/day/signature match, or a same-beach/day GPS match within about 10 m; the GPS rule applies across participants
-    - Coordinates are used only to match a beach. No response may ever return them
-    - EXIF location data must actually be stripped from every photo
-    - /scoring-method is optional (US4.3 ships from the frontend), but §7's calculation must
-      use the same numbers
-    - Auth is an anonymous participant number: no name, no email, no password
+    Key rules:
+    - New reports and cleanup actions use quantity bands: Small, Medium, Large, Very Large.
+    - New participant-facing writes do not require exact item counts.
+    - Small-only new reports are rejected and do not become Counted evidence.
+    - GPS duplicate matching is target-aware: within 10 m plus the same active non-Small category/band map is Duplicate; changed content is independent Counted evidence.
+    - Raw report/check-in GPS is never returned and new GPS report coordinates are not persisted.
+    - Automatic weekly events are created only for Moderate, High, or Severe beaches.
+    - Cleanup AI photos are temporary; public gallery media comes only from ordinary Counted report photos.
+    - AI output is an editable suggestion, not verification.
 
 servers:
   - url: https://api.example.com
@@ -46,10 +38,9 @@ paths:
       tags: [Auth]
       security: []
       summary: Issue an anonymous participant number
-      description: No personal details are collected. Returns a random 4-digit ID and a recovery token shown once.
       responses:
         "201":
-          description: the new participant
+          description: New anonymous session and recovery token
           content:
             application/json:
               schema: { $ref: "#/components/schemas/AuthSession" }
@@ -58,7 +49,7 @@ paths:
     post:
       tags: [Auth]
       security: []
-      summary: Continue on another device with an existing number
+      summary: Restore an anonymous participant using ID plus recovery token
       requestBody:
         required: true
         content:
@@ -66,48 +57,46 @@ paths:
             schema:
               type: object
               required: [participantId, token]
+              additionalProperties: false
               properties:
                 participantId: { type: string, example: "1637" }
-                token: { type: string, description: "System-generated recovery token; required together with participantId" }
+                token: { type: string, example: "RS-..." }
       responses:
         "200":
-          description: session
+          description: Restored session
           content:
             application/json:
               schema: { $ref: "#/components/schemas/AuthSession" }
-        "401":
-          $ref: "#/components/responses/Error"
-        "404":
-          $ref: "#/components/responses/Error"
+        "401": { $ref: "#/components/responses/Error" }
+        "404": { $ref: "#/components/responses/Error" }
 
   /auth/logout:
     post:
       tags: [Auth]
       summary: Sign out
       responses:
-        "204": { description: signed out }
+        "204": { description: Signed out }
 
   /auth/me:
     get:
       tags: [Auth]
-      summary: The signed-in participant
+      summary: Read the signed-in participant
       responses:
         "200":
-          description: participant
+          description: Participant
           content:
             application/json:
               schema: { $ref: "#/components/schemas/User" }
-        "401":
-          $ref: "#/components/responses/Error"
+        "401": { $ref: "#/components/responses/Error" }
 
   /beaches:
     get:
       tags: [Beaches]
       security: []
-      summary: Every beach, for the map and the home list
+      summary: List supported beaches
       responses:
         "200":
-          description: all supported beaches
+          description: Beach summaries
           content:
             application/json:
               schema:
@@ -118,47 +107,81 @@ paths:
     get:
       tags: [Beaches]
       security: []
-      summary: One beach in detail
+      summary: Read one beach including current unresolved composition
       parameters:
-        - { name: beachId, in: path, required: true, schema: { type: string }, example: morib }
+        - $ref: "#/components/parameters/BeachId"
       responses:
         "200":
-          description: detail
+          description: Beach detail
           content:
             application/json:
               schema: { $ref: "#/components/schemas/BeachDetail" }
-        "404":
-          $ref: "#/components/responses/Error"
+        "404": { $ref: "#/components/responses/Error" }
+
+  /beaches/{beachId}/litter-gallery:
+    get:
+      tags: [Beaches, Iteration2]
+      security: []
+      summary: List historical ordinary Counted report photos for one beach
+      description: |
+        Returns beach-scoped historical gallery entries only. Duplicate reports are excluded.
+        A logically resolved historical Counted report may remain in the gallery. No reporter
+        identity, raw photo key, exact GPS or proximity reference is returned.
+      parameters:
+        - $ref: "#/components/parameters/BeachId"
+      responses:
+        "200":
+          description: Gallery entries
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/LitterGalleryEntry" }
+        "404": { $ref: "#/components/responses/Error" }
+
+  /beaches/{beachId}/litter-gallery/{reportId}/photo:
+    get:
+      tags: [Beaches, Iteration2]
+      security: []
+      summary: Read one short-lived signed gallery photo
+      parameters:
+        - $ref: "#/components/parameters/BeachId"
+        - { name: reportId, in: path, required: true, schema: { type: string } }
+        - { name: token, in: query, required: true, schema: { type: string } }
+      responses:
+        "200": { description: Report photo bytes }
+        "404": { $ref: "#/components/responses/Error" }
 
   /scoring-method:
     get:
       tags: [Scoring]
       security: []
-      summary: "[Optional] The published scoring rule — weights, thresholds, window"
-      description: |
-        US4.3 is a non-blocking stretch and the rule ships from the frontend
-        (src/scoring.ts), so leaving this endpoint unimplemented breaks nothing.
-
-        But severity MUST be computed with the weights and thresholds in §3. A published rule
-        that differs from the one actually applied defeats the point of US4.3. If this endpoint
-        is implemented and disagrees with the frontend, the backend wins and the frontend warns
-        in development.
+      summary: Published scoring rule
       responses:
         "200":
-          description: the rule
+          description: Scoring method
           content:
             application/json:
               schema: { $ref: "#/components/schemas/ScoringMethod" }
+
+  /scoring-method/iteration2:
+    get:
+      tags: [Scoring, Iteration2]
+      security: []
+      summary: Published Iteration 2 scoring and cleanup semantics
+      responses:
+        "200":
+          description: Iteration 2 scoring method
+          content:
+            application/json:
+              schema: { type: object, additionalProperties: true }
 
   /api/species-distribution/predict:
     post:
       tags: [Biodiversity]
       security: []
       summary: Predict contextual species occurrence from the offline baseline
-      description: |
-        Uses four models trained from a packaged OBIS snapshot. It is not a real-time OBIS query,
-        does not store coordinates or predictions, and the relative scores do not contribute to
-        litter severity. Coordinates must be inside the supported Malaysian EEZ.
+      description: Relative occurrence context only; never contributes to litter score.
       requestBody:
         required: true
         content:
@@ -168,43 +191,21 @@ paths:
               required: [latitude, longitude]
               additionalProperties: false
               properties:
-                latitude: { type: number, format: double, example: 2.746 }
-                longitude: { type: number, format: double, example: 101.44 }
+                latitude: { type: number, format: double }
+                longitude: { type: number, format: double }
       responses:
         "200":
-          description: four relative occurrence predictions
+          description: Relative occurrence predictions
           content:
             application/json:
-              schema:
-                type: object
-                required: [insideMalaysianEez, scoreType, calibratedProbability, predictions, modelVersion]
-                properties:
-                  insideMalaysianEez: { type: boolean, example: true }
-                  scoreType: { type: string, enum: [relative_occurrence] }
-                  calibratedProbability: { type: boolean, example: false }
-                  modelVersion: { type: string, example: "2026-08-29" }
-                  predictions:
-                    type: array
-                    minItems: 4
-                    maxItems: 4
-                    items:
-                      type: object
-                      required: [speciesSlug, scientificName, commonNameEn, relativeOccurrenceScore, selectedModel]
-                      properties:
-                        speciesSlug: { type: string }
-                        scientificName: { type: string }
-                        commonNameEn: { type: string }
-                        relativeOccurrenceScore: { type: number, minimum: 0, maximum: 1 }
-                        selectedModel: { type: string }
-        "400":
-          $ref: "#/components/responses/Error"
-        "422":
-          $ref: "#/components/responses/Error"
+              schema: { type: object, additionalProperties: true }
+        "400": { $ref: "#/components/responses/Error" }
+        "422": { $ref: "#/components/responses/Error" }
 
   /geo/resolve-beach:
     post:
       tags: [Geo]
-      summary: Resolve one set of coordinates to a beach (the coordinates are not stored here)
+      summary: Resolve request-only coordinates to a supported beach
       requestBody:
         required: true
         content:
@@ -212,23 +213,23 @@ paths:
             schema:
               type: object
               required: [lat, lng]
+              additionalProperties: false
               properties:
-                lat: { type: number, format: double, example: 2.7461 }
-                lng: { type: number, format: double, example: 101.4402 }
+                lat: { type: number, format: double }
+                lng: { type: number, format: double }
       responses:
         "200":
-          description: the beach, or null when no supported beach lies within 25 km
+          description: Nearest supported beach or null
           content:
             application/json:
               schema:
-                oneOf:
-                  - { $ref: "#/components/schemas/BeachSummary" }
-                  - { type: "null" }
+                nullable: true
+                allOf: [{ $ref: "#/components/schemas/BeachSummary" }]
 
   /uploads/photos:
     post:
       tags: [Uploads]
-      summary: Upload a photo (the server must strip its EXIF location data)
+      summary: Upload a private report photo after EXIF stripping
       requestBody:
         required: true
         content:
@@ -237,26 +238,24 @@ paths:
               type: object
               required: [photo]
               properties:
-                photo:
-                  type: string
-                  format: binary
-                  description: JPEG / PNG / HEIC，≤ 10 MB
+                photo: { type: string, format: binary }
       responses:
         "201":
-          description: uploaded
+          description: Uploaded private photo
           content:
             application/json:
               schema: { $ref: "#/components/schemas/UploadedPhoto" }
-        "400":
-          $ref: "#/components/responses/Error"
-        "413":
-          $ref: "#/components/responses/Error"
-
+        "400": { $ref: "#/components/responses/Error" }
+        "413": { $ref: "#/components/responses/Error" }
 
   /reports:
     post:
       tags: [Reports]
-      summary: Submit a report (its status is decided inside this request)
+      summary: Submit a quantity-band report
+      description: |
+        quantities is authoritative for new Iteration 2 writes. A Small-only report is rejected.
+        Legacy itemCounts may be accepted only as a backward-compatibility adapter; participant-facing
+        new writes must not depend on it.
       requestBody:
         required: true
         content:
@@ -264,18 +263,17 @@ paths:
             schema: { $ref: "#/components/schemas/CreateReport" }
       responses:
         "201":
-          description: |
-            Saved. status may be Duplicate either from the exact signature rule or from a same-beach, same-Malaysia-day privacy-preserving GPS match within about 10 m. The GPS rule applies across participants.
+          description: Saved. status may be Counted or Duplicate.
           content:
             application/json:
               schema: { $ref: "#/components/schemas/LitterReport" }
-        "400":
-          $ref: "#/components/responses/Error"
+        "400": { $ref: "#/components/responses/Error" }
+        "422": { $ref: "#/components/responses/Error" }
 
   /reports/mine:
     get:
       tags: [Reports]
-      summary: My reports, newest first
+      summary: List the current participant's reports
       parameters:
         - name: status
           in: query
@@ -283,7 +281,7 @@ paths:
           schema: { $ref: "#/components/schemas/ReportStatus" }
       responses:
         "200":
-          description: the list
+          description: Reports
           content:
             application/json:
               schema:
@@ -293,10 +291,10 @@ paths:
   /reports/mine/counts:
     get:
       tags: [Reports]
-      summary: Counts for the three statuses
+      summary: Count reports by status
       responses:
         "200":
-          description: counts
+          description: Counts
           content:
             application/json:
               schema: { $ref: "#/components/schemas/ReportCounts" }
@@ -304,7 +302,7 @@ paths:
   /reports/{reportId}:
     patch:
       tags: [Reports]
-      summary: Correct a report (re-run the status rules afterwards)
+      summary: Correct an owned report using the full quantity-band map
       parameters:
         - { name: reportId, in: path, required: true, schema: { type: string } }
       requestBody:
@@ -315,30 +313,22 @@ paths:
               type: object
               properties:
                 beachId: { type: string }
-                quantities:
-                  type: object
-                  minProperties: 1
-                  description: |
-                    Replaces the whole set; it is not a per-key merge. A category left out is
-                    a column cleared, so a correction must first read the response's quantities
-                    back into the form and send the complete set.
-                  additionalProperties: { $ref: "#/components/schemas/QuantityBand" }
-                photoKey: { type: string, description: 上传接口返回的存储键 }
+                quantities: { $ref: "#/components/schemas/QuantityByCategory" }
+                photoKey: { type: string }
       responses:
         "200":
-          description: the updated report
+          description: Updated report
           content:
             application/json:
               schema: { $ref: "#/components/schemas/LitterReport" }
-        "403":
-          $ref: "#/components/responses/Error"
-        "404":
-          $ref: "#/components/responses/Error"
+        "403": { $ref: "#/components/responses/Error" }
+        "404": { $ref: "#/components/responses/Error" }
 
   /recognitions:
     post:
       tags: [Iteration2]
-      summary: Recognise litter in an owned report photo
+      summary: Suggest editable categories and quantity bands from an owned report photo
+      description: AI output is a suggestion, not verification. Empty/failed recognition falls back to manual band entry.
       requestBody:
         required: true
         content:
@@ -350,16 +340,17 @@ paths:
                 photoKey: { type: string }
       responses:
         "200":
-          description: detected counts and compatible quantity bands
+          description: Recognition state and editable band suggestions
           content:
             application/json:
-              schema: { type: object }
+              schema: { $ref: "#/components/schemas/AiSuggestion" }
         "401": { $ref: "#/components/responses/Error" }
 
   /recognitions/cleanup-photo:
     post:
       tags: [Iteration2]
-      summary: Recognise a cleanup photo in memory, then discard it
+      summary: Suggest cleanup quantity bands from an ephemeral photo
+      description: The uploaded cleanup image is processed in memory and discarded; it is not gallery media.
       requestBody:
         required: true
         content:
@@ -370,19 +361,23 @@ paths:
               properties:
                 photo: { type: string, format: binary }
       responses:
-        "200": { description: detected counts and compatible quantity bands }
+        "200":
+          description: Recognition state and editable band suggestions
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AiSuggestion" }
 
   /cleanup-targets:
     get:
       tags: [Iteration2]
       security: []
-      summary: List counted reports with remaining confirmed item counts
+      summary: List active Counted reports that can receive linked cleanup
       parameters:
         - { name: beachId, in: query, required: false, schema: { type: string } }
-        - { name: reportId, in: query, required: false, schema: { type: string }, description: Limit results to one selected cleanup target }
+        - { name: reportId, in: query, required: false, schema: { type: string } }
       responses:
         "200":
-          description: remaining cleanup targets
+          description: Active cleanup targets
           content:
             application/json:
               schema:
@@ -392,27 +387,22 @@ paths:
   /cleanup-actions:
     post:
       tags: [Iteration2]
-      summary: Append a partial cleanup action
+      summary: Record a linked or standalone band-based cleanup action
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              type: object
-              required: [targetReportId, removed, handling]
-              properties:
-                targetReportId: { type: string }
-                eventId: { type: string, nullable: true }
-                removed: { type: object, additionalProperties: { type: integer, minimum: 1 } }
-                handling: { type: string, enum: [Collected for disposal, Recycled / handled, Not recorded] }
-                note: { type: string, maxLength: 500 }
-                idempotencyKey: { type: string, maxLength: 128 }
+              oneOf:
+                - $ref: "#/components/schemas/LinkedCleanupInput"
+                - $ref: "#/components/schemas/StandaloneCleanupInput"
       responses:
         "201":
-          description: cleanup action recorded
+          description: Cleanup action recorded
           content:
             application/json:
               schema: { $ref: "#/components/schemas/CleanupAction" }
+        "400": { $ref: "#/components/responses/Error" }
         "409": { $ref: "#/components/responses/Error" }
 
   /cleanups/mine:
@@ -421,7 +411,7 @@ paths:
       summary: List the current participant's cleanup actions
       responses:
         "200":
-          description: current participant's actions
+          description: Cleanup actions
           content:
             application/json:
               schema:
@@ -432,12 +422,16 @@ paths:
     get:
       tags: [Iteration2]
       security: []
-      summary: List scheduled and moderator-created events
+      summary: List community cleanup events
+      description: |
+        Automatic weekly events are created only while the beach is Moderate, High or Severe.
+        Low and insufficient-data beaches receive no new automatic events. Existing scheduled
+        events are preserved if the Attention state later drops.
       parameters:
         - { name: beachId, in: query, required: false, schema: { type: string } }
       responses:
         "200":
-          description: events
+          description: Events
           content:
             application/json:
               schema:
@@ -445,7 +439,7 @@ paths:
                 items: { $ref: "#/components/schemas/CleanupEvent" }
     post:
       tags: [Iteration2]
-      summary: Create a community event (moderator)
+      summary: Create a moderator event
       requestBody:
         required: true
         content:
@@ -457,36 +451,89 @@ paths:
                 beachId: { type: string }
                 date: { type: string, format: date }
       responses:
-        "201": { description: event created }
+        "201": { description: Event created }
         "403": { $ref: "#/components/responses/Error" }
 
   /events/{eventId}:
     get:
       tags: [Iteration2]
       security: []
-      summary: Read an event
+      summary: Read one event
       parameters:
-        - { name: eventId, in: path, required: true, schema: { type: string } }
+        - $ref: "#/components/parameters/EventId"
       responses:
         "200":
-          description: event
+          description: Event
           content:
             application/json:
               schema: { $ref: "#/components/schemas/CleanupEvent" }
         "404": { $ref: "#/components/responses/Error" }
 
+  /events/{eventId}/join:
+    post:
+      tags: [Iteration2]
+      summary: Join an open event
+      parameters:
+        - $ref: "#/components/parameters/EventId"
+      responses:
+        "200": { description: Joined event }
+        "409": { $ref: "#/components/responses/Error" }
+    delete:
+      tags: [Iteration2]
+      summary: Leave an event
+      parameters:
+        - $ref: "#/components/parameters/EventId"
+      responses:
+        "200": { description: Updated event }
+
+  /events/{eventId}/check-in:
+    post:
+      tags: [Iteration2]
+      summary: Check in using request-only broad-area GPS
+      parameters:
+        - $ref: "#/components/parameters/EventId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [lat, lng]
+              properties:
+                lat: { type: number }
+                lng: { type: number }
+      responses:
+        "200": { description: Check-in accepted }
+        "403": { $ref: "#/components/responses/Error" }
+        "409": { $ref: "#/components/responses/Error" }
+
+  /events/{eventId}/cleanups:
+    get:
+      tags: [Iteration2]
+      security: []
+      summary: Read cleanup actions linked to one event
+      parameters:
+        - $ref: "#/components/parameters/EventId"
+      responses:
+        "200":
+          description: Event cleanup actions
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/CleanupAction" }
+
   /share-links:
     get:
       tags: [Iteration2]
       security: []
-      summary: Create a stable, scope-limited public share link
-      description: Event links can be created publicly. A report link requires the authenticated report owner.
+      summary: Create a signed scope-limited public share link
       parameters:
         - { name: eventId, in: query, required: false, schema: { type: string } }
         - { name: reportId, in: query, required: false, schema: { type: string } }
       responses:
         "200":
-          description: Signed share token and frontend path
+          description: Share token and frontend path
           content:
             application/json:
               schema:
@@ -502,77 +549,24 @@ paths:
     get:
       tags: [Iteration2]
       security: []
-      summary: Read only the event and report authorized by a share token
+      summary: Read only the event/report authorized by a share token
       parameters:
         - { name: token, in: path, required: true, schema: { type: string } }
       responses:
-        "200": { description: Scoped shared event and optional report }
+        "200": { description: Scoped shared data }
         "404": { $ref: "#/components/responses/Error" }
 
   /share-links/{token}/photo:
     get:
       tags: [Iteration2]
       security: []
-      summary: Read the original photo for the report in a share token
+      summary: Read the original report photo authorized by a share token
       parameters:
         - { name: token, in: path, required: true, schema: { type: string } }
       responses:
         "200": { description: Scoped report photo }
         "404": { $ref: "#/components/responses/Error" }
 
-  /events/{eventId}/cleanups:
-    get:
-      tags: [Iteration2]
-      security: []
-      summary: Read the cleanup actions linked to an event
-      parameters:
-        - { name: eventId, in: path, required: true, schema: { type: string } }
-      responses:
-        "200":
-          description: event cleanup actions
-          content:
-            application/json:
-              schema:
-                type: array
-                items: { $ref: "#/components/schemas/CleanupAction" }
-
-  /events/{eventId}/join:
-    post:
-      tags: [Iteration2]
-      summary: Join an open event
-      parameters:
-        - { name: eventId, in: path, required: true, schema: { type: string } }
-      responses:
-        "200": { description: joined event }
-        "409": { $ref: "#/components/responses/Error" }
-    delete:
-      tags: [Iteration2]
-      summary: Leave an event
-      parameters:
-        - { name: eventId, in: path, required: true, schema: { type: string } }
-      responses:
-        "200": { description: updated event }
-
-  /events/{eventId}/check-in:
-    post:
-      tags: [Iteration2]
-      summary: Check in using request-only GPS coordinates
-      parameters:
-        - { name: eventId, in: path, required: true, schema: { type: string } }
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [lat, lng]
-              properties:
-                lat: { type: number }
-                lng: { type: number }
-      responses:
-        "200": { description: checked-in event }
-        "403": { $ref: "#/components/responses/Error" }
-        "409": { $ref: "#/components/responses/Error" }
 components:
   securitySchemes:
     bearerAuth:
@@ -580,9 +574,22 @@ components:
       scheme: bearer
       bearerFormat: JWT
 
+  parameters:
+    BeachId:
+      name: beachId
+      in: path
+      required: true
+      schema: { type: string }
+      example: morib
+    EventId:
+      name: eventId
+      in: path
+      required: true
+      schema: { type: string }
+
   responses:
     Error:
-      description: error
+      description: Error
       content:
         application/json:
           schema: { $ref: "#/components/schemas/Error" }
@@ -594,51 +601,24 @@ components:
       properties:
         code:
           type: string
-          description: machine-readable error code
-          enum:
-            - VALIDATION_FAILED
-            - PHOTO_REQUIRED
-            - PHOTO_TOO_LARGE
-            - PHOTO_UNSUPPORTED_TYPE
-            - UNAUTHENTICATED
-            - NOT_OWNER
-            - NOT_FOUND
-            - UNKNOWN_PARTICIPANT
-            - PAYLOAD_TOO_LARGE
-            - RATE_LIMITED
-            - INVALID_RECOVERY_TOKEN
-            - MODERATOR_REQUIRED
-            - LOCATION_OUT_OF_RANGE
-            - ACTIVE_CLEANUP_TARGET_NEARBY
-            - REMOVED_COUNT_EXCEEDS_REMAINING
-            - CLEANUP_TARGET_COMPLETE
-            - IDEMPOTENCY_CONFLICT
-            - JOIN_REQUIRED
-            - EVENT_CHECKIN_REQUIRED
-            - EVENT_NOT_ACTIVE
-            - EVENT_CLOSED
-            - INTERNAL_ERROR
+          example: VALIDATION_FAILED
         message:
           type: string
-          description: a full English sentence shown to the user verbatim
 
     User:
       type: object
       required: [id, participantId, role]
       properties:
-        id: { type: string, example: u_01H8XK }
-        participantId:
-          type: string
-          example: "1637"
-          description: the 4-digit anonymous number — random, never sequential, unique
+        id: { type: string }
+        participantId: { type: string, example: "1637" }
         role: { type: string, enum: [volunteer, moderator] }
 
     AuthSession:
       type: object
       required: [token, user]
       properties:
-        token: { type: string, description: "JWT, valid for 30 days" }
-        recoveryToken: { type: string, description: "Optional extension; returned once when supported by the backend" }
+        token: { type: string }
+        recoveryToken: { type: string, nullable: true }
         user: { $ref: "#/components/schemas/User" }
 
     SeverityBand:
@@ -653,153 +633,40 @@ components:
       type: string
       enum: [Small, Medium, Large, Very Large]
 
+    QuantityByCategory:
+      type: object
+      minProperties: 1
+      additionalProperties: { $ref: "#/components/schemas/QuantityBand" }
+      example: { Plastic: Medium, Glass: Large }
+
     ReportStatus:
       type: string
       enum: [Counted, Duplicate, Incomplete]
 
-    SpeciesGlyph:
-      type: string
-      enum: [turtle, bird, mangrove, grass, crab, fish]
-
     BeachSummary:
       type: object
-      required:
-        [id, name, area, lat, lng, severity, band, insufficientData, validReports,
-         attentionScore, eligibleReportCount,
-         lastReportedAt, freshnessKind, habitat, habitatTag, sensitivity,
-         primarySpeciesGlyph, speciesNames, coverImageUrl, scene]
+      required: [id, name, area, lat, lng, severity, band, insufficientData, validReports, attentionScore, eligibleReportCount, lastReportedAt, freshnessKind]
       properties:
-        id: { type: string, example: morib }
-        name: { type: string, example: Pantai Morib }
-        area: { type: string, example: "Banting, Selangor" }
-        lat: { type: number, format: double }
-        lng: { type: number, format: double }
-        severity:
-          allOf: [{ $ref: "#/components/schemas/SeverityBand" }]
-          nullable: true
-          description: must be null when there are fewer than 3 active reports
-        band:
-          type: integer
-          nullable: true
-          minimum: 1
-          maximum: 4
-          description: matches severity one for one, and is null whenever severity is
+        id: { type: string }
+        name: { type: string }
+        area: { type: string }
+        lat: { type: number, format: double, description: Public beach reference coordinate, not a report coordinate }
+        lng: { type: number, format: double, description: Public beach reference coordinate, not a report coordinate }
+        severity: { allOf: [{ $ref: "#/components/schemas/SeverityBand" }], nullable: true }
+        band: { type: integer, minimum: 1, maximum: 4, nullable: true }
         insufficientData: { type: boolean }
-        validReports:
-          type: integer
-          description: active Counted reports in the latest 90 days that still have litter after cleanup; fully cleared reports remain historical but are excluded
-        attentionScore:
-          type: number
-          format: float
-          nullable: true
-          description: median active report score after cleanup over the latest 90 days; null when fewer than three active reports qualify
-        eligibleReportCount:
-          type: integer
-          minimum: 0
-          description: active report count used by the median and minimum-evidence rule
-        lastReportedAt:
-          type: string
-          format: date-time
-          nullable: true
-          description: the newest Counted report's time, ignoring the 90-day window
-        freshnessKind:
-          type: string
-          enum: [ok, aging, stale]
-          description: "under 30 days / 30-90 days / over 90 days or never reported"
-        habitat: { type: string, example: "Intertidal mudflat & sandy shore" }
-        habitatTag: { type: string, example: MUDFLAT }
-        sensitivity: { type: string, example: Migratory feeding ground }
-        primarySpeciesGlyph: { $ref: "#/components/schemas/SpeciesGlyph" }
-        speciesNames:
-          type: array
-          items: { type: string }
-          description: |
-            Names of this beach's biodiversity cards, in sort_order. The map's biodiversity
-            layer renders them directly; without it the layer carries habitat only and names
-            no species. Names only — full cards stay in BeachDetail.species.
-        coverImageUrl:
-          type: string
-          format: uri
-          nullable: true
-          description: null when there is no photo — the app falls back to the scene gradient
-        scene:
-          type: string
-          description: a CSS background used when there is no photo; already in the seed data
-
-    Species:
-      type: object
-      required: [name, kind, scientificName, threatCategory, glyph, text, source]
-      properties:
-        name: { type: string, example: Green Sea Turtle }
-        kind:
-          type: string
-          enum: [species, habitat, group]
-          description: only kind=species can carry a scientific name or a threat category
-        scientificName:
-          type: string
-          nullable: true
-          example: Chelonia mydas
-        threatCategory:
-          type: string
-          nullable: true
-          description: IUCN category. null when it could not be sourced — do not guess
-          example: Endangered
-        glyph: { $ref: "#/components/schemas/SpeciesGlyph" }
-        pictureUrl: { type: string, format: uri, nullable: true }
-        text: { type: string }
-        source: { $ref: "#/components/schemas/SpeciesSource" }
-        likelihood:
-          nullable: true
-          description: |
-            Epic 5's occurrence model. Omit it or send null and the card renders as pure
-            reference content. It must NEVER be folded into the litter severity score; the app
-            styles it separately in amber and never calls it a probability.
-          allOf: [{ $ref: "#/components/schemas/SpeciesLikelihood" }]
-
-    SpeciesSource:
-      type: object
-      required: [dataset, citation]
-      description: |
-        Provenance is part of the data, not a footnote. FishBase and OBIS are both CC BY-NC:
-        the citation has to be displayed, and the source URL and access date preserved.
-      properties:
-        dataset:
-          type: string
-          enum: [FishBase, OBIS, other, pending]
-          description: on 'pending' the app prints an amber SOURCE PENDING badge
-        citation: { type: string }
-        url: { type: string, format: uri, nullable: true }
-        accessedAt: { type: string, format: date, nullable: true }
-
-    SpeciesLikelihood:
-      type: object
-      required: [state, basis]
-      description: |
-        Epic 5's occurrence model output. NOT a probability — the model uses only OBIS occurrence
-        records, generated background points and coordinates, and its output is an uncalibrated
-        RELATIVE score. Never render it with a percent sign.
-        Covers four species: green sea turtle, clown anemonefish, Irrawaddy dolphin and sicklefin
-        Moorish idol. Any other card has no score and will not get one this iteration.
-      properties:
-        state:
-          type: string
-          enum: [ready, pending, unavailable]
-          description: |
-            ready       connected, score is set
-            pending     this static card has no sourced occurrence result
-            unavailable this species is not one of the four
-            pending and unavailable must stay apart on screen: one means not built yet,
-            the other means it cannot be built.
-        score:
-          type: integer
-          minimum: 0
-          maximum: 100
-          example: 38
-          description: relative occurrence score, NOT a probability. Sent only when state=ready
-        basis:
-          type: string
-          example: Coordinate model over OBIS occurrence records and background samples.
-          description: what the number is based on. Shown verbatim on screen and never empty
+        validReports: { type: integer, minimum: 0 }
+        attentionScore: { type: number, nullable: true }
+        eligibleReportCount: { type: integer, minimum: 0 }
+        lastReportedAt: { type: string, format: date-time, nullable: true }
+        freshnessKind: { type: string, enum: [ok, aging, stale] }
+        habitat: { type: string }
+        habitatTag: { type: string }
+        sensitivity: { type: string }
+        primarySpeciesGlyph: { type: string }
+        speciesNames: { type: array, items: { type: string } }
+        coverImageUrl: { type: string, nullable: true }
+        scene: { type: string }
 
     CompositionSlice:
       type: object
@@ -810,12 +677,12 @@ components:
 
     CompositionSource:
       type: object
-      required: [reportId, createdAt, method]
-      description: which report the composition came from. Required whenever composition is non-null
+      required: [method, activeReportCount, windowDays]
       properties:
-        reportId: { type: string }
-        createdAt: { type: string, format: date-time }
-        method: { type: string, enum: [yolo, reported_quantity_estimate] }
+        method: { type: string, enum: [active_report_estimate, yolo, reported_quantity_estimate] }
+        activeReportCount: { type: integer, minimum: 0 }
+        windowDays: { type: integer, example: 90 }
+        createdAt: { type: string, format: date-time, nullable: true }
 
     BeachDetail:
       allOf:
@@ -826,118 +693,61 @@ components:
             composition:
               type: array
               nullable: true
-              description: |
-                Category percentages for that beach's newest Counted report, calculated by
-                the backend for the model-ready UI. Rows add up to 100. Not an aggregate.
-                Null when the beach has no Counted report at all.
               items: { $ref: "#/components/schemas/CompositionSlice" }
             compositionSource:
               nullable: true
-              description: null exactly when composition is null
               allOf: [{ $ref: "#/components/schemas/CompositionSource" }]
             species:
               type: array
-              maxItems: 5
-              items: { $ref: "#/components/schemas/Species" }
+              items: { type: object, additionalProperties: true }
             ecologicalNote: { type: string }
+
+    LitterGalleryEntry:
+      type: object
+      required: [reportId, reportedAt, photoUrl]
+      additionalProperties: false
+      properties:
+        reportId: { type: string }
+        reportedAt: { type: string, format: date-time }
+        photoUrl: { type: string, description: Short-lived beach/report-scoped gallery URL }
 
     ScoringMethod:
       type: object
-      required: [categoryWeights, quantityWeights, bands, windowDays, minReports,
-                 reportEligibility, reportAggregation, beachAggregation, ruleVersion]
+      additionalProperties: true
       properties:
-        categoryWeights:
-          type: array
-          items:
-            type: object
-            required: [category, weight]
-            properties:
-              category: { $ref: "#/components/schemas/LitterCategory" }
-              weight: { type: number, format: float }
-        quantityWeights:
-          type: array
-          items:
-            type: object
-            required: [quantity, weight]
-            properties:
-              quantity: { $ref: "#/components/schemas/QuantityBand" }
-              weight: { type: number, format: float }
-        bands:
-          type: array
-          items:
-            type: object
-            required: [band, range, color]
-            properties:
-              band: { $ref: "#/components/schemas/SeverityBand" }
-              range: { type: string, example: "1.5 – <2.5" }
-              color: { type: string, example: "#D9A24B" }
         windowDays: { type: integer, example: 90 }
         minReports: { type: integer, example: 3 }
-        reportEligibility:
-          type: string
-          description: active Counted reports in the latest 90 days with remaining litter after cleanup; fully cleared reports remain historical but are excluded
-        reportAggregation:
-          type: string
-          enum: [max]
-          description: maximum Category Score in the report
-        beachAggregation:
-          type: string
-          enum: [median-of-active-reports]
-          description: median of active Report Scores in the latest 90-day window
-        ruleVersion:
-          type: string
-          example: radar-sampah-scoring-v3
+        reportAggregation: { type: string }
+        beachAggregation: { type: string }
+        ruleVersion: { type: string }
 
     UploadedPhoto:
       type: object
       required: [photoKey, previewUrl, metadataStripped]
       properties:
-        photoKey:
-          type: string
-          description: |
-            存储键，不是可访问地址。桶/目录在公开 Web 根目录之外且不可公开读。
-            提交记录时把它原样放进 POST /reports 的 photoKey。
-        previewUrl:
-          type: string
-          format: uri
-          description: short-lived owner-scoped preview URL for the just-uploaded photo
-        metadataStripped:
-          type: boolean
-          description: true only once the EXIF location data is really gone
+        photoKey: { type: string, description: Private storage key; never a public URL }
+        previewUrl: { type: string }
+        metadataStripped: { type: boolean }
 
     CreateReport:
       type: object
       required: [beachId, quantities, photoKey, locationSource]
+      additionalProperties: false
       properties:
-        beachId: { type: string, example: morib }
-        quantities:
-          type: object
-          minProperties: 1
-          description: |
-            One band per category. Keys are the category strings verbatim, values are one of
-            the four bands. At least one entry; a category that was not seen is simply absent —
-            do not send null and do not send 0. The backend maps this onto the six qty_* columns
-            and derives category / quantity from it.
-          additionalProperties: { $ref: "#/components/schemas/QuantityBand" }
-          example: { Plastic: Large, "Fishing gear": Medium }
+        beachId: { type: string }
+        quantities: { $ref: "#/components/schemas/QuantityByCategory" }
         itemCounts:
           type: object
-          description: Optional exact confirmed item counts for Iteration 2; the backend derives matching quantity bands.
-          additionalProperties: { type: integer, minimum: 1, maximum: 100000 }
-          example: { Plastic: 8, Other: 2 }
-        eventId: { type: string, nullable: true, description: Optional event link for an in-event report }
-        photoKey: { type: string, description: 上传接口返回的存储键 }
-        locationSource:
-          type: string
-          enum: [gps, manual]
+          deprecated: true
+          description: Legacy compatibility adapter only. New participant-facing writes use quantities.
+          additionalProperties: { type: integer, minimum: 1 }
+        eventId: { type: string, nullable: true }
+        photoKey: { type: string }
+        locationSource: { type: string, enum: [gps, manual] }
         coords:
           type: object
           nullable: true
-          description: |
-            Sent only when locationSource=gps. Stored on the report's own lat/lng columns,
-            already rounded to 3 decimals (~110 m), and used only to match a beach.
-            Never returned in any response — exclude both columns explicitly in the
-            serialiser rather than relying on remembering; a SELECT * will carry them out.
+          description: Request-only coordinates for GPS matching. New GPS reports do not persist raw lat/lng.
           required: [lat, lng]
           properties:
             lat: { type: number, format: double }
@@ -945,99 +755,95 @@ components:
 
     LitterReport:
       type: object
-      required: [id, beachId, beachName, quantities, category, quantity, categoryScores,
-                 reportScore, createdAt, status]
+      required: [id, beachId, beachName, quantities, category, quantity, categoryScores, reportScore, createdAt, status]
       properties:
         id: { type: string }
         beachId: { type: string }
         beachName: { type: string }
-        quantities:
-          type: object
-          minProperties: 1
-          description: |
-            Which categories this report actually recorded. The full map must be returned:
-            the correction flow reads it back into the form and PATCHes the whole set, so
-            sending only the derived pair below would clear every other category.
-          additionalProperties: { $ref: "#/components/schemas/QuantityBand" }
+        quantities: { $ref: "#/components/schemas/QuantityByCategory" }
         itemCounts:
           type: object
-          additionalProperties: { type: integer, minimum: 1, maximum: 100000 }
-        remainingItemCounts:
-          type: object
-          additionalProperties: { type: integer, minimum: 1, maximum: 100000 }
+          deprecated: true
+          description: Historical compatibility data when present; not authoritative for new writes.
+          additionalProperties: { type: integer, minimum: 1 }
         eventId: { type: string, nullable: true }
-        category:
-          description: derived — the category with the maximum category score (weight × quantity weight)
-          allOf: [{ $ref: "#/components/schemas/LitterCategory" }]
-        quantity:
-          description: derived — that category's band
-          allOf: [{ $ref: "#/components/schemas/QuantityBand" }]
-        categoryScores:
-          type: object
-          description: Category Score for each submitted category (category weight × quantity weight)
-          additionalProperties: { type: number, format: float }
-        reportScore:
-          type: number
-          format: float
-          description: maximum Category Score in this report
+        category: { $ref: "#/components/schemas/LitterCategory" }
+        quantity: { $ref: "#/components/schemas/QuantityBand" }
+        categoryScores: { type: object, additionalProperties: { type: number } }
+        reportScore: { type: number }
         createdAt: { type: string, format: date-time }
         status: { $ref: "#/components/schemas/ReportStatus" }
-        statusNote:
-          type: string
-          nullable: true
-          description: why it was excluded, a full English sentence shown verbatim; absent for Counted
-        photoUrl:
-          type: string
-          format: uri
-          nullable: true
-          description: |
-            短时效签名地址（≈15 分钟），按 photo_key 现签。
-            只有记录本人才会拿到；不是本人就不返回这个字段。
-            桶本身不可公开读 —— 见 API.md §5。
+        statusNote: { type: string, nullable: true }
+        photoUrl: { type: string, nullable: true, description: Owner-scoped short-lived URL when authorized }
 
-    ReportCounts:
+    AiSuggestion:
       type: object
-      required: [counted, duplicate, incomplete]
+      required: [modelState, suggestions]
       properties:
-        counted: { type: integer }
-        duplicate: { type: integer }
-        incomplete: { type: integer }
+        modelState: { type: string, enum: [ready, empty, unavailable] }
+        modelVersion: { type: string, nullable: true }
+        suggestions:
+          type: object
+          description: Editable category-to-band suggestions. This is not verification.
+          additionalProperties: { $ref: "#/components/schemas/QuantityBand" }
 
     CleanupTarget:
       type: object
-      required: [reportId, beachId, beachName, reportedAt, remaining, remainingTotal]
+      required: [reportId, beachId, beachName, reportedAt, remainingQuantities]
       properties:
         reportId: { type: string }
         beachId: { type: string }
         beachName: { type: string }
         reportedAt: { type: string, format: date-time }
-        itemCounts: { type: object, additionalProperties: { type: integer } }
-        remaining: { type: object, additionalProperties: { type: integer, minimum: 1 } }
-        remainingTotal: { type: integer, minimum: 1 }
+        remainingQuantities: { $ref: "#/components/schemas/QuantityByCategory" }
+
+    LinkedCleanupInput:
+      type: object
+      required: [targetReportId, remainingQuantities, handling, idempotencyKey]
+      additionalProperties: false
+      properties:
+        targetReportId: { type: string }
+        remainingQuantities:
+          type: object
+          description: Post-cleanup remaining band state. All-Small/empty resolves the target logically.
+          additionalProperties: { $ref: "#/components/schemas/QuantityBand" }
+        eventId: { type: string, nullable: true }
+        handling: { $ref: "#/components/schemas/CleanupHandling" }
+        note: { type: string, maxLength: 500 }
+        idempotencyKey: { type: string, maxLength: 128 }
+
+    StandaloneCleanupInput:
+      type: object
+      required: [beachId, removedQuantities, handling, idempotencyKey]
+      additionalProperties: false
+      properties:
+        beachId: { type: string }
+        removedQuantities: { $ref: "#/components/schemas/QuantityByCategory" }
+        eventId: { type: string, nullable: true }
+        handling: { $ref: "#/components/schemas/CleanupHandling" }
+        note: { type: string, maxLength: 500 }
+        idempotencyKey: { type: string, maxLength: 128 }
+
+    CleanupHandling:
+      type: string
+      enum: [Collected for disposal, Recycled / handled, Not recorded]
 
     CleanupAction:
       type: object
-      required: [id, participantId, targetReportId, eventId, beachId, beachName, createdAt, rows, score, handling, note, status]
+      required: [id, participantId, targetReportId, eventId, beachId, beachName, createdAt, score, handling, status]
       properties:
         id: { type: string }
         participantId: { type: string }
-        targetReportId: { type: string }
+        targetReportId: { type: string, nullable: true }
         eventId: { type: string, nullable: true }
         beachId: { type: string }
         beachName: { type: string }
         createdAt: { type: string, format: date-time }
-        rows:
-          type: array
-          items:
-            type: object
-            required: [category, removed, before, after]
-            properties:
-              category: { $ref: "#/components/schemas/LitterCategory" }
-              removed: { type: integer, minimum: 1 }
-              before: { type: integer, minimum: 1 }
-              after: { type: integer, minimum: 0 }
-        score: { type: integer, minimum: 1, description: Total items removed, not points }
-        handling: { type: string, enum: [Collected for disposal, Recycled / handled, Not recorded] }
+        remainingQuantities: { type: object, additionalProperties: { $ref: "#/components/schemas/QuantityBand" } }
+        removedQuantities: { type: object, additionalProperties: { $ref: "#/components/schemas/QuantityBand" } }
+        score: { type: integer, minimum: 0, description: Quantity-band units; not exact items and not personal points }
+        resolved: { type: boolean }
+        handling: { $ref: "#/components/schemas/CleanupHandling" }
         note: { type: string }
         status: { type: string }
 
@@ -1056,6 +862,14 @@ components:
         source: { type: string, enum: [weekly, admin] }
         participantCount: { type: integer, minimum: 0 }
         joinedBy: { type: array, items: { type: string } }
-        checkIns: { type: object, additionalProperties: { type: string, enum: [idle, within_area] } }
+        checkIns: { type: object, additionalProperties: { type: string } }
         attendanceBy: { type: array, items: { type: string } }
         cleanupIds: { type: array, items: { type: string } }
+
+    ReportCounts:
+      type: object
+      required: [counted, duplicate, incomplete]
+      properties:
+        counted: { type: integer }
+        duplicate: { type: integer }
+        incomplete: { type: integer }

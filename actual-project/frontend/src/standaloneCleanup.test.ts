@@ -20,11 +20,12 @@ it('records a cleanup even when the beach has no eligible report target', async 
   const cleanup = await completeCleanup({
     participantId: '1637',
     beachId: 'kelanang',
-    removed: { Plastic: 3 },
+    removedQuantities: { Plastic: 'Large' },
     handling: 'Collected for disposal',
   });
 
   expect(cleanup.beachId).toBe('kelanang');
   expect(cleanup.targetReportId).toBeNull();
+  expect(cleanup.removedQuantities).toEqual({ Plastic: 'Large' });
   expect(cleanup.score).toBe(3);
 });

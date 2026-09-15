@@ -58,13 +58,16 @@ CREATE TABLE IF NOT EXISTS community_event_members (
 
 CREATE TABLE IF NOT EXISTS cleanup_actions (
   id text PRIMARY KEY,
-  target_report_id text NOT NULL REFERENCES reports(id),
+  target_report_id text REFERENCES reports(id),
   participant_id text NOT NULL REFERENCES users(id),
   event_id text REFERENCES community_events(id),
   beach_id text NOT NULL REFERENCES beaches(id),
-  removed_counts text NOT NULL,
+  removed_counts text,
   rows text NOT NULL,
-  total_removed integer NOT NULL CHECK (total_removed > 0),
+  total_removed integer CHECK (total_removed > 0),
+  remaining_quantities text,
+  removed_quantities text,
+  cleanup_score integer CHECK (cleanup_score > 0),
   handling text NOT NULL CHECK (handling IN ('Collected for disposal','Recycled / handled','Not recorded')),
   note text,
   idempotency_key varchar(128) NOT NULL,
@@ -72,6 +75,15 @@ CREATE TABLE IF NOT EXISTS cleanup_actions (
   created_at timestamptz NOT NULL DEFAULT now(),
   UNIQUE (participant_id, idempotency_key)
 );
+
+-- Existing deployments may already have the legacy exact-count table. Upgrade
+-- it in place without rewriting historical rows.
+ALTER TABLE cleanup_actions ADD COLUMN IF NOT EXISTS remaining_quantities text;
+ALTER TABLE cleanup_actions ADD COLUMN IF NOT EXISTS removed_quantities text;
+ALTER TABLE cleanup_actions ADD COLUMN IF NOT EXISTS cleanup_score integer;
+ALTER TABLE cleanup_actions ALTER COLUMN target_report_id DROP NOT NULL;
+ALTER TABLE cleanup_actions ALTER COLUMN removed_counts DROP NOT NULL;
+ALTER TABLE cleanup_actions ALTER COLUMN total_removed DROP NOT NULL;
 
 -- If an application process created the Iteration 2 tables before this
 -- migration ran, CREATE TABLE IF NOT EXISTS above cannot add the missing FKs
@@ -118,6 +130,9 @@ BEGIN
   END IF;
   IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'cleanup_actions_total_removed_check') THEN
     ALTER TABLE cleanup_actions ADD CONSTRAINT cleanup_actions_total_removed_check CHECK (total_removed > 0);
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'cleanup_actions_cleanup_score_check') THEN
+    ALTER TABLE cleanup_actions ADD CONSTRAINT cleanup_actions_cleanup_score_check CHECK (cleanup_score > 0);
   END IF;
   IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'cleanup_actions_handling_check') THEN
     ALTER TABLE cleanup_actions ADD CONSTRAINT cleanup_actions_handling_check CHECK (handling IN ('Collected for disposal','Recycled / handled','Not recorded'));

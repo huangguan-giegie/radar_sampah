@@ -9,6 +9,7 @@ import { historicalPhotoUnavailable } from '../flowRules';
 import { C, MONO, formatDate } from '../theme';
 import type { LitterCategory, LitterReport, QuantityBand } from '../types';
 import { createSharePath } from '../iteration2';
+import { canShareCountedReport } from '../sharedReportPresentation';
 
 export default function ReportDetailScreen() {
   const { reportId = '' } = useParams();
@@ -32,7 +33,7 @@ export default function ReportDetailScreen() {
         if (!active) return;
         setReport(match);
         setFailed(!match);
-        if (match?.status === 'Counted' && match.itemCounts && Object.keys(match.itemCounts).length > 0) {
+        if (match && canShareCountedReport(match.status)) {
           createSharePath({ reportId: match.id })
             .then((path) => { if (active) setSharePath(path); })
             .catch(() => { if (active) setSharePath(null); });
@@ -167,11 +168,7 @@ export default function ReportDetailScreen() {
             {findings.map(([category, quantity]) => (
               <div key={category} style={{ display: 'flex', justifyContent: 'space-between', gap: 16, padding: '12px 0', borderBottom: `1px solid ${C.line}` }}>
                 <span style={{ fontSize: 14, fontWeight: 650, color: C.ink2 }}>{category}</span>
-                <span style={{ fontFamily: MONO, fontSize: 12, color: C.muted }}>
-                  {Number.isInteger(report.itemCounts?.[category]) && (report.itemCounts?.[category] ?? 0) > 0
-                    ? `${report.itemCounts?.[category]} ${report.itemCounts?.[category] === 1 ? 'item' : 'items'}`
-                    : quantity}
-                </span>
+                <span style={{ fontFamily: MONO, fontSize: 12, color: C.muted }}>{quantity}</span>
               </div>
             ))}
           </div>
@@ -190,7 +187,7 @@ export default function ReportDetailScreen() {
         )}
 
         <PrimaryButton onClick={() => nav(`/beach/${report.beachId}`)}>View beach</PrimaryButton>
-        {report.status === 'Counted' && report.itemCounts && Object.keys(report.itemCounts).length > 0 && (
+        {canShareCountedReport(report.status) && (
           <>
             <div className="i2-share-grid">
               <button type="button" className="btn-ghost press i2-share-button" onClick={shareOnWhatsApp} disabled={shareBusy || !sharePath}>WhatsApp</button>

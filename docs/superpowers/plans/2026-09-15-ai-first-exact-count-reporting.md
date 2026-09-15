@@ -1,3 +1,5 @@
+> **SUPERSEDED — do not execute this plan.** The final Iteration 2 contract uses participant-facing quantity bands, not exact item counts. Use `docs/superpowers/specs/2026-09-15-iteration2-manual-remarks-design.md` and `docs/superpowers/plans/2026-09-15-iteration2-manual-remarks.md` as the authoritative design and implementation plan. This file remains only as historical planning context.
+
 # AI First Exact Count Reporting Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.

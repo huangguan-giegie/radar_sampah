@@ -1,6 +1,6 @@
 # Radar Sampah Backend Contract — Iteration 2
 
-This document is the reviewed Iteration 2 backend contract. It supplements the existing frontend API documentation and records the integration decisions that must remain aligned across frontend, backend and database code.
+This document is the reviewed Iteration 2 backend contract after the final Manual Remarks review. It supplements the frontend API documentation and records the integration decisions that must remain aligned across frontend, backend and database code.
 
 Business timezone: `Asia/Kuala_Lumpur`. JSON timestamps use ISO 8601 with timezone information. Event cards expose local `date`, `startsAt` and `endsAt` values.
 
@@ -27,25 +27,36 @@ The 4-digit participant ID is an identifier, **not a credential by itself**. Mis
 
 Protected mutations require a valid bearer/session token. Participant ID alone must never authorize a mutation or expose a participant's private reports.
 
-## 2. Reports, exact item counts and YOLO
+## 2. Reports and quantity bands
 
-Iteration 1 quantity bands remain available through `quantities` and the six `qty_*` database columns:
+For new Iteration 2 participant-facing reports, the canonical quantity state is `quantities`: one editable band per selected litter category.
 
-- `Small = 1`
-- `Medium = 2`
-- `Large = 3`
-- `Very Large = 4`
+Allowed values are exactly:
 
-Iteration 2 additionally stores confirmed whole-item counts in `itemCounts`. These counts come from a YOLO suggestion that the user confirms/edits, or from manual fallback when recognition is unavailable.
+- `Small`
+- `Medium`
+- `Large`
+- `Very Large`
 
-Item-count-to-band compatibility mapping:
+Example new report payload:
 
-- 1–5 items → `Small`
-- 6–20 items → `Medium`
-- 21–50 items → `Large`
-- 51+ items → `Very Large`
+```json
+{
+  "beachId": "morib",
+  "photoKey": "private/report-photo.jpg",
+  "locationSource": "manual",
+  "quantities": {
+    "Plastic": "Medium",
+    "Glass": "Large"
+  }
+}
+```
 
-Model class mapping:
+The participant is not asked to enter exact item counts. New report writes do not require `itemCounts`. Historical `item_counts` / `itemCounts` remain readable only as a compatibility boundary for already-stored records and legacy callers.
+
+A new report whose selected categories are all `Small` is rejected with `422 SMALL_ONLY_REPORT` and is not persisted as active `Counted` evidence.
+
+Model class mapping remains:
 
 - `plastic → Plastic`
 - `metal → Metal`
@@ -54,181 +65,194 @@ Model class mapping:
 - `styrofoam → Other`
 - `fishing_gear → Fishing gear`
 
-`POST /recognitions` analyses an already-owned report photo. `POST /recognitions/cleanup-photo` accepts a temporary after-cleanup photo, performs inference in memory and does **not** persist that photo.
+`POST /recognitions` analyses an already-owned report photo. Recognition may count detections internally, but its participant-facing result is an editable category-to-band suggestion. `POST /recognitions/cleanup-photo` accepts a temporary after-cleanup photo, performs inference in memory and does **not** persist that photo.
 
-If model weights are unavailable or inference fails, the recognition response must request manual entry instead of pretending a model result exists.
+AI output is a suggestion, not verification. The participant confirms or edits the categories and bands. Empty, failed or unavailable recognition falls back to manual band entry and must not be presented as a successful suggestion.
 
 ## 3. Duplicate rule
 
-A report is saved with status `Duplicate` when **either** of these rules matches an existing `Counted` report:
+The reviewed duplicate rule distinguishes location proximity from report content.
 
-1. **Exact-signature rule:** same participant, same beach, same Malaysia local calendar day, and exactly the same category/quantity signature.
-2. **Privacy-proximity rule:** same beach, same Malaysia local calendar day, both reports use GPS-backed Iteration 2 location matching, and the privacy-preserving location comparison places them within approximately 10 metres. This rule applies **across participants** and does not require matching categories or quantities.
+For GPS-backed reports at the same beach, compare against active unresolved `Counted` targets using the privacy-preserving 10 metre reference:
 
-Different categories or quantity bands remain independent reports unless the privacy-proximity rule matches. Duplicate submissions are still saved with HTTP `201` and status `Duplicate`; they are excluded from the beach score.
+- within 10 m **and the same normalized non-Small category-to-band map** → save the new report as `Duplicate`;
+- within 10 m but category or band differs → save as independent `Counted` evidence and refresh the matched active target's privacy reference to the new observation location;
+- more than 10 m away → independent report;
+- a resolved target does not block or duplicate a new report.
 
-For Iteration 2 GPS reports, raw coordinates are not persisted. The backend stores a target-scoped HMAC over a one-metre projected grid and checks neighbouring grid cells for the approximately 10 m rule. A same-day proximity match is saved as `Duplicate` rather than returning the active-target conflict. A nearby active target from an earlier local day still returns `409 ACTIVE_CLEANUP_TARGET_NEARBY` until it is cleared.
+The location rule applies across participants. It is not a blanket same-day rule and it does not reject a changed report merely because an active target is nearby.
 
-Startup repair continues to correct legacy broad same-day duplicate classifications while preserving privacy-proximity duplicates that were explicitly recorded by the reviewed rule.
+For manual/legacy flows, the compatibility exact-signature rule may still mark a same-participant, same-beach, same-Malaysia-local-day report `Duplicate` when the complete category/band signature is identical.
 
-## 4. Beach Attention Score after cleanup
+Duplicate submissions are still saved with HTTP `201` and status `Duplicate`; they are excluded from Beach Attention. Startup migration/backfill must not reclassify historical report statuses.
 
-The original scoring structure is retained in Iteration 2:
+For GPS reports, raw coordinates are not persisted. The backend stores a target-scoped HMAC over an approximately one-metre projected grid and compares neighbouring cells during the request.
 
-1. convert each report's current category quantities to category scores using category weight × quantity weight;
-2. the report score is the maximum category score within that report;
-3. use active `Counted` reports from the latest 90 days;
-4. fully cleared count-backed reports are excluded from the active set (but the original report and cleanup ledger remain in history);
-5. fewer than 3 active reports → insufficient data (`score`, `severity` and `band` are null);
-6. otherwise the beach Attention Score is the **median of the active report scores**.
+## 4. Beach Attention after cleanup
 
-For a report with Iteration 2 `itemCounts`, linked cleanup actions first reduce that report's remaining counts. The remaining counts are converted back to quantity bands, that report is rescored, and only then is the beach median recomputed. A fully cleared report contributes no score to the current median and does not count toward the active minimum; the original report and cleanup ledger remain available for history and audit.
+The scoring structure remains band-based:
 
-Cleanup does not add points to Attention Score.
+1. Category Score = category weight × quantity-band weight.
+2. Report Score = the maximum Category Score within that report.
+3. Use active `Counted` reports from the latest 90 days.
+4. Apply linked cleanup state to each report before scoring it.
+5. A report whose current state has no non-Small category is resolved and excluded from the active set, while the original report, photo and cleanup ledger remain in history.
+6. Fewer than 3 active reports → insufficient data (`score`, `severity` and `band` are null).
+7. Otherwise Beach Attention is the **median of active Report Scores**.
 
-`GET /scoring-method/iteration2` publishes this as:
+Cleanup does not add personal points to Beach Attention.
 
-- `remainingCountAggregation: per-report-after-cleanup`
+`GET /scoring-method/iteration2` publishes the same concepts, including:
+
 - `reportAggregation: max-category-score`
 - `beachAggregation: median-of-active-reports`
+- cleanup score as quantity-band-unit reduction rather than an item count.
 
 ## 5. Current unresolved litter composition
 
-The beach composition panel represents the **current reported unresolved litter estimate**, not the single newest historical report.
+The beach composition panel represents the **current reported unresolved litter estimate**, not a raw item-count percentage and not only the newest historical report.
 
 It uses the same active eligible report set as Beach Attention:
 
 - status must be `Counted`;
 - report must be within the latest 90 days;
-- a count-backed report must still have positive remaining litter after linked cleanup actions;
-- a fully cleared target is excluded;
-- a partial cleanup uses the report's remaining item counts, re-derived into the current internal quantity bands;
-- a legacy report with quantity bands but no exact item counts remains usable without inventing exact counts.
+- linked cleanup changes the report's current band state;
+- an all-Small resolved target is excluded;
+- a partial cleanup uses the submitted remaining bands;
+- legacy stored records may be normalized through compatibility adapters without inventing participant-facing counts.
 
-To keep legacy and Iteration 2 reports comparable, composition aggregates the **internal quantity-level weights** (`Small=1`, `Medium=2`, `Large=3`, `Very Large=4`) for each category across the active set, then normalises those category totals to whole percentages that sum to 100. It does **not** mix raw exact counts with invented legacy counts and it is not a direct raw-item-count percentage.
+Composition aggregates internal quantity-level weights (`Small=1`, `Medium=2`, `Large=3`, `Very Large=4`) by category across the active set, then normalises those category totals to percentages that sum to 100.
 
-Standalone cleanup actions have no `targetReportId`; they remain separate cleanup evidence and do not subtract from any report or directly alter composition. Linked cleanup actions do affect the linked report's remaining state.
+Standalone cleanup actions have no `targetReportId`; they are separate cleanup evidence and do not alter an unrelated report or directly change report-based composition.
 
 The three-report evidence threshold applies to the public Beach Attention band, **not** to composition. Composition may still be shown when one or two active unresolved reports remain, with its active report count disclosed.
 
-When composition is available, `GET /beaches/{id}` returns:
-
-```json
-{
-  "compositionSource": {
-    "method": "active_report_estimate",
-    "activeReportCount": 2,
-    "windowDays": 90
-  }
-}
-```
-
-When no active unresolved report remains, both `composition` and `compositionSource` are `null`.
+When composition is available, `GET /beaches/{id}` returns an `active_report_estimate` source with `activeReportCount` and `windowDays`. When no active unresolved report remains, both `composition` and `compositionSource` are `null`.
 
 ## 6. Cleanup targets and actions
 
-Only `Counted` reports with confirmed `itemCounts` and a positive remaining quantity can become linked cleanup targets.
+Cleanup is also band-based.
 
-`GET /cleanup-targets?beachId=morib` returns current linked targets. Optional `reportId` limits the response to one shared target.
+### Linked cleanup
 
-`POST /cleanup-actions` appends either a linked cleanup action or a standalone beach-level cleanup action.
+A linked cleanup references one active `Counted` report and submits the litter **remaining after cleanup**:
 
-A **linked cleanup**:
+```json
+{
+  "targetReportId": "r_123",
+  "remainingQuantities": {
+    "Plastic": "Small",
+    "Glass": "Medium"
+  },
+  "handling": "Collected for disposal",
+  "idempotencyKey": "..."
+}
+```
 
-- includes `targetReportId`;
-- cannot remove more than the target's current remaining count in any category;
-- stores the removal ledger but does not overwrite the original audit report;
-- may be partial, allowing later linked cleanup actions until remaining counts reach zero;
-- changes the linked report's current remaining state used by Beach Attention and current composition.
+Rules:
 
-A **standalone cleanup**:
+- remaining bands cannot increase beyond the target's current band state;
+- categories with no litter left may be omitted;
+- if every remaining category is `Small` (or none remains), the target becomes logically resolved;
+- resolution does **not** delete the historical report, original photo or cleanup action;
+- the updated active state is used by Beach Attention and current composition.
 
-- omits `targetReportId` and supplies `beachId`;
-- records what was cleaned without assuming it belongs to an existing report;
-- does not subtract from an unrelated report and therefore does not directly change Beach Attention or current report-based composition.
+### Standalone cleanup
+
+A standalone cleanup omits `targetReportId`, supplies `beachId`, and records bands for litter removed during that cleanup:
+
+```json
+{
+  "beachId": "kelanang",
+  "removedQuantities": {
+    "Plastic": "Large",
+    "Glass": "Small"
+  },
+  "handling": "Collected for disposal",
+  "idempotencyKey": "..."
+}
+```
+
+It does not alter an unrelated report.
+
+### Cleanup score
+
+Cleanup `score` is a transparent **quantity-band unit** total, not a raw item count and not a personal points system:
+
+- Small = 1
+- Medium = 2
+- Large = 3
+- Very Large = 4
+
+For standalone cleanup, sum the submitted removed bands. For linked cleanup, score the band-unit reduction from the previous state to the submitted remaining state.
 
 Both forms are idempotent for the same participant + `idempotencyKey` + request fingerprint.
 
-Cleanup `score` means **number of items removed**. It is not a personal point score, badge or leaderboard value.
+After-cleanup photos used for AI suggestions are processed ephemerally and are not stored as cleanup media.
 
 ## 7. Community events and attendance
 
-`GET /events` idempotently ensures four upcoming Saturday activities per supported beach, normally 09:00–12:00 Malaysia time. A moderator may add another event date through `POST /events`; Iteration 2 does not require a full edit/cancel management console.
+Automatic Saturday activities are created only for beaches whose current Beach Attention severity is `Moderate`, `High` or `Severe`.
 
-Join, Check-in and Attendance are separate states.
+- `Low` → no new automatic event.
+- insufficient data → no new automatic event.
+- existing scheduled events are not deleted merely because later cleanup lowers the beach's Attention state.
+- generation remains idempotent and keeps the established Malaysia timezone and upcoming-Saturday schedule.
 
-Attendance is recorded only when all of these are true:
+A moderator may add another event date through `POST /events`; Iteration 2 does not require a full edit/cancel management console.
+
+Join, Check-in and Attendance are separate states. Attendance is recorded only when all of these are true:
 
 1. participant joined the event;
 2. participant successfully checked in within the broad beach area during the event;
 3. participant produced same-event evidence at the same beach: either a photo-backed `Counted` report linked to the event or a cleanup action linked to the event.
 
-Check-in uses the requested GPS coordinates only for the proximity decision. Exact check-in coordinates are not stored.
-
-Relevant endpoints:
-
-- `GET /events`
-- `GET /events/{id}`
-- `POST /events/{id}/join`
-- `DELETE /events/{id}/join`
-- `POST /events/{id}/check-in`
-- `GET /events/{id}/cleanups`
-- `POST /events` (moderator)
+Check-in uses request GPS only for the broad proximity decision. Exact check-in coordinates are not stored.
 
 ## 8. Location privacy
 
-Iteration 2 does not persist raw report GPS coordinates for the new count-backed flow.
+New GPS report requests may include coordinates for the immediate beach/proximity decision, but the backend clears raw report latitude/longitude and retains only a target-scoped HMAC proximity reference.
 
-For the active-target proximity check, the server stores a target-scoped HMAC of an approximately one-metre projected grid cell. It is used to detect another active cleanup target within roughly 10 metres. The HMAC is not an encrypted coordinate and cannot be reversed into latitude/longitude without the original coordinate search space and server key.
-
-Check-in stores only the pass result and timestamp. No public response serializes exact report or check-in coordinates.
+The HMAC is not an encrypted coordinate and is not exposed publicly. Check-in stores only the pass result and timestamp. No public response serializes exact report or check-in coordinates.
 
 `GEO_PRIVACY_HMAC_KEY` must be a stable private production secret.
 
-## 9. Sharing
+## 9. Sharing and public litter gallery
 
 Sharing is target-scoped and does not create a social graph.
 
-`GET /share-links?eventId=...&reportId=...` creates a stable signed share scope. At least one ID is required. When both IDs are supplied they must refer to the same beach.
+`GET /share-links?eventId=...&reportId=...` creates a signed share scope. At least one ID is required. When both IDs are supplied they must refer to the same beach.
 
 - Event-only links may be created publicly.
 - Report links require the authenticated report owner.
-- Shared report pages expose only the selected report/target, its current remaining counts and the scoped photo endpoint.
-- Sharing never exposes account details or exact coordinates.
+- Shared report pages expose only the selected report/target and its scoped photo endpoint.
+- Sharing never exposes account details, raw private photo keys or exact coordinates.
 
-Public read endpoints:
+### Beach litter gallery
 
-- `GET /share-links/{token}`
-- `GET /share-links/{token}/photo`
+`GET /beaches/{beachId}/litter-gallery` is public and returns only ordinary historical `Counted` report photos scoped to that beach. Each entry contains only:
 
-Invalid or out-of-scope tokens return `404`.
+- `reportId`
+- `reportedAt`
+- short-lived `photoUrl`
 
-## 10. Database integration
+The response does not expose reporter identity, `photoKey`, latitude/longitude or `proximityRef`. Duplicate reports are excluded. A logically resolved historical Counted report remains eligible because the gallery is historical evidence, not the active-score set.
+
+Gallery photo access uses a short-lived token bound to beach + report + an HMAC photo reference. The raw private storage key is not embedded in the public token. Cleanup images cannot enter the gallery because cleanup suggestion photos are not persisted.
+
+## 10. Database integration and compatibility
 
 Production uses PostgreSQL through `DATABASE_URL`; local development may use SQLite. `DATABASE_SCHEMA` may select an existing PostgreSQL schema.
 
-For an existing database:
+The active schema keeps historical compatibility fields such as `reports.item_counts`, but new participant-facing report and cleanup writes are band-based. Compatibility fields must not become a second source of truth for new writes.
 
-1. apply `migrations/001_rename_frontend_reports_to_reports.sql` when the legacy `frontend_reports` table still exists;
-2. apply `migrations/002_add_iteration2.sql` before deploying the Iteration 2 backend;
-3. deploy the application with the same schema selected by `DATABASE_SCHEMA`.
+Iteration 2 cleanup storage includes band-state fields for remaining and removed quantities plus cleanup score. Startup migration/backfill is idempotent and must preserve stored report statuses.
 
-Migration 002 adds:
-
-- `users.user_token`;
-- report `item_counts`, `proximity_ref`, `event_id` and compatibility fields;
-- `community_events`;
-- `community_event_members`;
-- `cleanup_actions`;
-- foreign keys, CHECK constraints and indexes required by the Iteration 2 contract.
-
-The application startup path is idempotent and also repairs missing Iteration 2 constraints if an application process created the tables before the release migration was applied. Existing report rows are preserved.
-
-`schema.sql` is the clean-new-database definition. It must stay aligned with migration 002 and the SQLAlchemy runtime tables.
+`schema.sql`, release migrations and SQLAlchemy runtime tables must stay aligned. Existing report rows are preserved.
 
 ## 11. Moderator provisioning
 
-Normal anonymous signup creates `volunteer` users only. Use `scripts/provision_moderator.py` for a controlled moderator account. The moderator role can create event dates but does not gain report-review powers in this iteration.
+Normal anonymous signup creates `volunteer` users only. Use `scripts/provision_moderator.py` for controlled moderator provisioning. The moderator role can create event dates but does not gain report-review powers in this iteration.
 
 ## 12. Deployment configuration
 
@@ -240,6 +264,6 @@ Required or recommended production settings:
 - `FRONTEND_ORIGINS`
 - `PHOTO_STORAGE_DIR` on persistent private storage
 - `GEO_PRIVACY_HMAC_KEY`
-- `LITTER_MODEL_PATH` and `LITTER_MODEL_VERSION` when YOLO inference is enabled
+- `LITTER_MODEL_PATH` and `LITTER_MODEL_VERSION` when recognition is enabled
 
-The original report photo is retained in private audit storage. After-cleanup recognition photos are temporary and are discarded after inference.
+The original report photo is retained in private audit storage. After-cleanup recognition photos are temporary and discarded after inference.

@@ -13,6 +13,7 @@ from api_tests_core import api, signup, upload
 
 
 def _submit_count_report(client, counts):
+    """Legacy count-backed fixture retained to prove compatibility normalisation."""
     _session, headers = signup(client)
     photo = upload(client, headers)
     response = client.post(
@@ -31,27 +32,29 @@ def _submit_count_report(client, counts):
 
 def _composition_by_category(client):
     detail = client.get("/beaches/morib").get_json()
-    return detail, {row["category"]: row["percentage"] for row in detail["composition"]}
+    composition = detail["composition"] or []
+    return detail, {row["category"]: row["percentage"] for row in composition}
 
 
-def test_composition_uses_same_active_reports_and_remaining_bands_as_attention(api):
+def test_composition_uses_same_non_small_active_evidence_as_attention(api):
     _application, client = api
 
-    plastic, plastic_headers = _submit_count_report(client, {"Plastic": 6})
-    _metal, metal_headers = _submit_count_report(client, {"Metal": 1})
-    glass, glass_headers = _submit_count_report(client, {"Glass": 21})
+    plastic, plastic_headers = _submit_count_report(client, {"Plastic": 6})      # Medium
+    _standalone_session, standalone_headers = signup(client)
+    glass, glass_headers = _submit_count_report(client, {"Glass": 21})           # Large
 
     detail, composition = _composition_by_category(client)
-    assert composition == {"Plastic": 33, "Glass": 50, "Metal": 17}
+    assert composition == {"Plastic": 40, "Glass": 60}
     assert detail["compositionSource"] == {
         "method": "active_report_estimate",
-        "activeReportCount": 3,
+        "activeReportCount": 2,
         "windowDays": 90,
     }
 
+    # A standalone cleanup never subtracts from unrelated report evidence.
     standalone = client.post(
         "/cleanup-actions",
-        headers=metal_headers,
+        headers=standalone_headers,
         json={
             "beachId": "morib",
             "removed": {"Plastic": 50},
@@ -63,8 +66,10 @@ def test_composition_uses_same_active_reports_and_remaining_bands_as_attention(a
     assert standalone.get_json()["targetReportId"] is None
 
     _detail, composition = _composition_by_category(client)
-    assert composition == {"Plastic": 33, "Glass": 50, "Metal": 17}
+    assert composition == {"Plastic": 40, "Glass": 60}
 
+    # Reducing the Medium Plastic legacy target to one remaining item re-bands it
+    # to Small, so it leaves the active composition without deleting history.
     partial = client.post(
         "/cleanup-actions",
         headers=plastic_headers,
@@ -78,8 +83,8 @@ def test_composition_uses_same_active_reports_and_remaining_bands_as_attention(a
     assert partial.status_code == 201
 
     detail, composition = _composition_by_category(client)
-    assert composition == {"Plastic": 20, "Glass": 60, "Metal": 20}
-    assert detail["compositionSource"]["activeReportCount"] == 3
+    assert composition == {"Glass": 100}
+    assert detail["compositionSource"]["activeReportCount"] == 1
 
     cleared = client.post(
         "/cleanup-actions",
@@ -94,9 +99,6 @@ def test_composition_uses_same_active_reports_and_remaining_bands_as_attention(a
     assert cleared.status_code == 201
 
     detail, composition = _composition_by_category(client)
-    assert composition == {"Plastic": 50, "Metal": 50}
-    assert detail["compositionSource"] == {
-        "method": "active_report_estimate",
-        "activeReportCount": 2,
-        "windowDays": 90,
-    }
+    assert composition == {}
+    assert detail["composition"] is None
+    assert detail["compositionSource"] is None
