@@ -10,6 +10,8 @@ from urllib.parse import quote
 from flask import jsonify, request, send_file
 from sqlalchemy import select
 
+from share_contract import install_reviewed_share_contract
+
 
 GALLERY_TOKEN_PURPOSE = "litter-gallery-photo"
 GALLERY_TOKEN_TTL = timedelta(minutes=5)
@@ -75,7 +77,7 @@ def _available_photo(report: Any, directory: Path, impl: Any) -> Path | None:
 
 
 def install_litter_gallery(application: Any, engine: Any, jwt_secret: str, impl: Any) -> None:
-    """Install the public, beach-scoped historical litter-photo gallery."""
+    """Install public historical evidence routes reviewed for Iteration 2."""
     directory = Path(application.extensions["photo_storage_dir"])
     valid_beach_ids = {beach["id"] for beach in impl.load_beaches(engine)}
 
@@ -142,3 +144,8 @@ def install_litter_gallery(application: Any, engine: Any, jwt_secret: str, impl:
         response = send_file(photo_path, mimetype="image/jpeg", max_age=0, conditional=True)
         response.headers["Cache-Control"] = "private, no-store"
         return response
+
+    # app.py already calls this reviewed public-evidence installer once. Reuse
+    # the same integration point so report sharing and gallery photos agree on
+    # privacy and band-native report state without adding another app hook.
+    install_reviewed_share_contract(application, engine, jwt_secret, impl)
