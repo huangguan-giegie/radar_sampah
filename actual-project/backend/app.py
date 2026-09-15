@@ -113,13 +113,7 @@ def _ensure_postgres_iteration2_contract(engine: Any) -> None:
 
 
 def _repair_exact_duplicate_statuses(engine: Any) -> None:
-    """Do not rewrite historical duplicate decisions during startup.
-
-    Older startup repair grouped rows by participant/day/content and could turn
-    a valid >10 m GPS report into Duplicate after a restart. The reviewed rule
-    requires the original 10 m decision to remain stable, so status is now an
-    immutable audit result unless a future explicit migration owns that change.
-    """
+    """Do not rewrite historical duplicate decisions during startup."""
     return None
 
 
@@ -162,13 +156,42 @@ def _ensure_report_columns_single_connection(engine: Any) -> None:
                     ))
 
 
+def _repair_existing_reports_without_status_reclassification(engine: Any) -> None:
+    """Backfill report columns while preserving the stored duplicate decision."""
+    schema = _impl.database_schema() if engine.dialect.name != "sqlite" else None
+    columns = {column["name"] for column in inspect(engine).get_columns("reports", schema=schema)}
+    if "quantities" not in columns:
+        return
+    report_table = "reports" if schema is None else f'"{schema}".reports'
+    with engine.begin() as connection:
+        rows = connection.execute(text(
+            f"SELECT id, quantities FROM {report_table} ORDER BY created_at, id"
+        )).mappings().all()
+        for row in rows:
+            try:
+                quantities = _impl.json.loads(row["quantities"])
+                category, quantity = _impl.derive_category_quantity(quantities)
+            except (TypeError, ValueError, StopIteration):
+                continue
+            values: dict[str, Any] = {"category": category, "quantity": quantity}
+            values.update(_impl.quantity_values(quantities))
+            set_clause = ", ".join(f"{name} = :{name}" for name in values)
+            connection.execute(
+                text(f"UPDATE {report_table} SET {set_clause} WHERE id = :id"),
+                {**values, "id": row["id"]},
+            )
+
+
 def _initialise_database(engine: Any) -> None:
     original_ensure_report_columns = _impl.ensure_report_columns
+    original_repair_existing_reports = _impl.repair_existing_reports
     _impl.ensure_report_columns = _ensure_report_columns_single_connection
+    _impl.repair_existing_reports = _repair_existing_reports_without_status_reclassification
     try:
         _original_initialise_database(engine)
     finally:
         _impl.ensure_report_columns = original_ensure_report_columns
+        _impl.repair_existing_reports = original_repair_existing_reports
     _repair_exact_duplicate_statuses(engine)
     _ensure_postgres_iteration2_contract(engine)
 
