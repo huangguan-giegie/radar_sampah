@@ -34,8 +34,6 @@ from standalone_cleanup import (
 )
 
 
-# Iteration 2 originally required every cleanup to point at a counted report.
-# The reviewed product rule now also allows a beach-level standalone cleanup.
 configure_cleanup_schema(_impl)
 
 _original_create_app = _impl.create_app
@@ -79,7 +77,6 @@ def _constraint_exists(connection: Any, table_name: str, constraint_name: str) -
 
 def _ensure_postgres_iteration2_contract(engine: Any) -> None:
     """Bring runtime-created PostgreSQL tables up to the migration contract."""
-
     if engine.dialect.name != "postgresql":
         return
 
@@ -103,83 +100,38 @@ def _ensure_postgres_iteration2_contract(engine: Any) -> None:
     ]
 
     with engine.begin() as connection:
-        connection.execute(
-            text(
-                f"ALTER TABLE {q('cleanup_actions')} "
-                "ALTER COLUMN target_report_id DROP NOT NULL"
-            )
-        )
+        connection.execute(text(f"ALTER TABLE {q('cleanup_actions')} ALTER COLUMN target_report_id DROP NOT NULL"))
         for table_name, constraint_name, definition in definitions:
             if _constraint_exists(connection, table_name, constraint_name):
                 continue
-            connection.execute(
-                text(
-                    f'ALTER TABLE {q(table_name)} '
-                    f'ADD CONSTRAINT "{constraint_name}" {definition}'
-                )
-            )
+            connection.execute(text(f'ALTER TABLE {q(table_name)} ADD CONSTRAINT "{constraint_name}" {definition}'))
 
         schema = _impl.database_schema()
         index_name = f'"{schema}".cleanup_actions_target' if schema else "cleanup_actions_target"
         connection.execute(text(f"DROP INDEX IF EXISTS {index_name}"))
-        connection.execute(
-            text(
-                f"CREATE INDEX cleanup_actions_target "
-                f"ON {q('cleanup_actions')} (target_report_id, created_at)"
-            )
-        )
+        connection.execute(text(f"CREATE INDEX cleanup_actions_target ON {q('cleanup_actions')} (target_report_id, created_at)"))
 
 
 def _repair_exact_duplicate_statuses(engine: Any) -> None:
-    """Keep the existing legacy repair until old rows are retired."""
+    """Do not rewrite historical duplicate decisions during startup.
 
-    with engine.begin() as connection:
-        rows = connection.execute(
-            select(_impl.reports_table)
-            .where(_impl.reports_table.c.status != "Incomplete")
-            .order_by(_impl.reports_table.c.created_at, _impl.reports_table.c.id)
-        ).all()
-        seen: set[tuple[str, str, Any, tuple[tuple[str, str], ...]]] = set()
-        for row in rows:
-            if row.status == "Duplicate" and str(getattr(row, "status_note", "") or "").startswith(
-                GEO_DUPLICATE_NOTE_PREFIX
-            ):
-                continue
-            quantities = _impl.quantities_from_row(row)
-            signature = tuple(
-                (category, quantities[category])
-                for category in _impl.FRONTEND_CATEGORIES
-                if category in quantities
-            )
-            local_day = _impl.utc_datetime(row.created_at).astimezone(_impl.KUALA_LUMPUR).date()
-            key = (row.reporter_id, row.beach_id, local_day, signature)
-            desired = "Duplicate" if key in seen else "Counted"
-            seen.add(key)
-            if row.status == desired:
-                continue
-            values: dict[str, Any] = {"status": desired}
-            if desired == "Counted":
-                values["status_note"] = None
-            connection.execute(
-                _impl.reports_table.update()
-                .where(_impl.reports_table.c.id == row.id)
-                .values(**values)
-            )
+    Older startup repair grouped rows by participant/day/content and could turn
+    a valid >10 m GPS report into Duplicate after a restart. The reviewed rule
+    requires the original 10 m decision to remain stable, so status is now an
+    immutable audit result unless a future explicit migration owns that change.
+    """
+    return None
 
 
 def _ensure_report_columns_single_connection(engine: Any) -> None:
     """Apply startup report DDL without reflecting through a second pooled connection."""
-
     schema = _impl.database_schema() if engine.dialect.name != "sqlite" else None
     inspector = inspect(engine)
     if "reports" not in inspector.get_table_names(schema=schema):
         return
     column_info = inspector.get_columns("reports", schema=schema)
     existing = {column["name"] for column in column_info}
-    column_types = {
-        column["name"]: column["type"].__class__.__name__.lower()
-        for column in column_info
-    }
+    column_types = {column["name"]: column["type"].__class__.__name__.lower() for column in column_info}
     additions = {
         "beach_name": "VARCHAR(160)",
         "quantities": "TEXT",
@@ -233,16 +185,13 @@ def _candidate_quantities(connection: Any, exclude_report_id: str | None) -> dic
             }
             if len(normalised) == len(quantities):
                 return normalised
-
         if "itemCounts" in payload:
             item_counts = _impl.validate_item_counts(payload.get("itemCounts"))
             if item_counts:
                 return _impl.quantity_bands_for_counts(item_counts)
 
     if exclude_report_id:
-        row = connection.execute(
-            select(_impl.reports_table).where(_impl.reports_table.c.id == exclude_report_id)
-        ).first()
+        row = connection.execute(select(_impl.reports_table).where(_impl.reports_table.c.id == exclude_report_id)).first()
         if row is not None:
             return _impl.quantities_from_row(row)
     return None
@@ -250,7 +199,6 @@ def _candidate_quantities(connection: Any, exclude_report_id: str | None) -> dic
 
 def _nearby_proximity_refs_reviewed(lat: float, lng: float, target_id: str, secret: str) -> set[str]:
     """The reviewed create flow handles nearby active targets itself."""
-
     if request.endpoint == "create_report":
         return set()
     return _original_nearby_proximity_refs(lat, lng, target_id, secret)
@@ -264,7 +212,6 @@ def _duplicate_status(
     exclude_report_id: str | None = None,
 ) -> str:
     """Retain exact-signature duplicate handling for non-GPS legacy/manual flows."""
-
     candidate = _candidate_quantities(connection, exclude_report_id)
     if not candidate:
         return "Counted"
@@ -288,8 +235,6 @@ def _duplicate_status(
 
 
 def _remaining_count_attention(engine: Any, rows: list[Any]) -> float | None:
-    """Apply cleanup per report and take the median of active reports only."""
-
     active = _impl.active_attention_rows(engine, rows)
     if len(active) < 3:
         return None
@@ -337,7 +282,6 @@ def _distance_to_stored_cell(
     secret: str,
 ) -> float | None:
     """Match an HMAC cell without recovering or persisting the target coordinate."""
-
     x, y = _projected_xy(lat, lng)
     grid = float(_impl.GEO_GRID_METRES)
     base_x = _impl.math.floor(x / grid)
@@ -359,7 +303,6 @@ def _distance_to_stored_cell(
 
 def _gps_proximity_decision(engine: Any, payload: Any, secret: str) -> tuple[str, str | None]:
     """Return desired status and optional active target whose reference moves."""
-
     if not isinstance(payload, dict) or payload.get("locationSource") != "gps":
         return "Counted", None
     coords = payload.get("coords")
@@ -406,7 +349,6 @@ def _gps_proximity_decision(engine: Any, payload: Any, secret: str) -> tuple[str
 
 def _repair_gps_privacy_rows(engine: Any, secret: str) -> None:
     """Convert any transient/raw GPS rows to a privacy reference and clear raw coordinates."""
-
     with engine.begin() as connection:
         rows = connection.execute(
             select(_impl.reports_table).where(
@@ -452,30 +394,18 @@ def create_app(
         if not _impl.re.fullmatch(r"\d{4}", participant_id):
             return _impl.error_response(404, "UNKNOWN_PARTICIPANT", "That participant ID was not found.")
         with engine.connect() as connection:
-            row = connection.execute(
-                select(_impl.users_table).where(_impl.users_table.c.participant_id == participant_id)
-            ).first()
+            row = connection.execute(select(_impl.users_table).where(_impl.users_table.c.participant_id == participant_id)).first()
         if row is None:
             return _impl.error_response(404, "UNKNOWN_PARTICIPANT", "That participant ID was not found.")
         stored_digest = getattr(row, "user_token", None)
         digest_match = bool(
             supplied_recovery_token
             and stored_digest
-            and hmac.compare_digest(
-                stored_digest,
-                hashlib.sha256(supplied_recovery_token.encode("utf-8")).hexdigest(),
-            )
+            and hmac.compare_digest(stored_digest, hashlib.sha256(supplied_recovery_token.encode("utf-8")).hexdigest())
         )
-        legacy_match = bool(
-            supplied_recovery_token
-            and _impl.recovery_token_matches(row.id, supplied_recovery_token, jwt_secret)
-        )
+        legacy_match = bool(supplied_recovery_token and _impl.recovery_token_matches(row.id, supplied_recovery_token, jwt_secret))
         if not (digest_match or legacy_match):
-            return _impl.error_response(
-                401,
-                "INVALID_RECOVERY_TOKEN",
-                "That participant ID and recovery token do not match.",
-            )
+            return _impl.error_response(401, "INVALID_RECOVERY_TOKEN", "That participant ID and recovery token do not match.")
         return jsonify({"token": _impl.issue_token(row.id, jwt_secret), "user": _impl.user_dict(row)})
 
     def get_iteration2_scoring_method_reviewed():
@@ -507,8 +437,6 @@ def create_app(
 
     @application.after_request
     def persist_location_duplicate_note(response):
-        # Retained for old pre-band requests. New GPS duplicate status/note is
-        # set atomically by the reviewed wrapper below.
         if (
             request.endpoint == "create_report"
             and response.status_code == 201
