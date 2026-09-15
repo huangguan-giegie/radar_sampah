@@ -531,11 +531,9 @@ def create_app(
                 {"category": category, "weight": _impl.CATEGORY_WEIGHTS[category]}
                 for category in _impl.FRONTEND_CATEGORIES
             ],
-            "itemCountBands": [
-                {"minimum": 1, "maximum": 5, "quantity": "Small", "weight": 1},
-                {"minimum": 6, "maximum": 20, "quantity": "Medium", "weight": 2},
-                {"minimum": 21, "maximum": 50, "quantity": "Large", "weight": 3},
-                {"minimum": 51, "maximum": None, "quantity": "Very Large", "weight": 4},
+            "quantityWeights": [
+                {"quantity": quantity, "weight": _impl.QUANTITY_WEIGHTS[quantity]}
+                for quantity in ("Small", "Medium", "Large", "Very Large")
             ],
             "windowDays": 90,
             "minReports": 3,
