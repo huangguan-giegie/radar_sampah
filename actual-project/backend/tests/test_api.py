@@ -460,8 +460,8 @@ def test_fully_cleared_reports_are_excluded_from_five_report_median(api):
     created = []
     headers_by_report = []
     for counts in (
-        {"Plastic": 1},
-        {"Fishing gear": 1},
+        {"Plastic": 6},
+        {"Fishing gear": 8},
         {"Plastic": 6},
         {"Fishing gear": 8},
         {"Fishing gear": 21},
@@ -477,7 +477,7 @@ def test_fully_cleared_reports_are_excluded_from_five_report_median(api):
         created.append(response.get_json())
         headers_by_report.append(headers)
 
-    for index, removed in enumerate(({"Plastic": 1}, {"Fishing gear": 1})):
+    for index, removed in enumerate(({"Plastic": 6}, {"Fishing gear": 8})):
         response = client.post(
             "/cleanup-actions",
             headers=headers_by_report[index],
