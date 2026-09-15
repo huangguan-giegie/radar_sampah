@@ -1,8 +1,8 @@
 """Iteration 2 API test suite with reviewed contract corrections.
 
-The teammate's full suite is kept byte-for-byte in ``api_tests_core.py``. We
-load it here, remove obsolete expectations, then add regression coverage for
-the reviewed contracts.
+The teammate's full suite is kept in ``api_tests_core.py``. We load it here,
+remove obsolete expectations, then add regression coverage for the reviewed
+contracts.
 """
 
 from __future__ import annotations
@@ -81,9 +81,9 @@ def test_duplicate_requires_exact_same_categories_and_quantities(api):
         assert response.status_code == 201
         return response.get_json()
 
-    first = submit({"Plastic": "Small"})
-    different_quantity = submit({"Plastic": "Medium"})
-    exact_repeat = submit({"Plastic": "Small"})
+    first = submit({"Plastic": "Medium"})
+    different_quantity = submit({"Plastic": "Large"})
+    exact_repeat = submit({"Plastic": "Medium"})
 
     assert first["status"] == "Counted"
     assert different_quantity["status"] == "Counted"
@@ -156,12 +156,12 @@ def test_restart_preserves_non_exact_same_day_reports(tmp_path):
     first = client.post(
         "/reports",
         headers=headers,
-        json=report_payload(first_photo["photoKey"], quantities={"Plastic": "Small"}),
+        json=report_payload(first_photo["photoKey"], quantities={"Plastic": "Medium"}),
     )
     second = client.post(
         "/reports",
         headers=headers,
-        json=report_payload(second_photo["photoKey"], quantities={"Plastic": "Medium"}),
+        json=report_payload(second_photo["photoKey"], quantities={"Plastic": "Large"}),
     )
     assert first.get_json()["status"] == "Counted"
     assert second.get_json()["status"] == "Counted"
@@ -172,10 +172,7 @@ def test_restart_preserves_non_exact_same_day_reports(tmp_path):
         photo_storage_dir=photo_dir,
     )
     restarted_client = restarted.test_client()
-    statuses = [
-        report["status"]
-        for report in restarted_client.get("/reports/mine", headers=headers).get_json()
-    ]
+    statuses = [report["status"] for report in restarted_client.get("/reports/mine", headers=headers).get_json()]
     assert statuses == ["Counted", "Counted"]
 
 
@@ -184,7 +181,7 @@ def test_cleanup_recomputes_each_report_then_keeps_beach_median(api):
     created = []
     headers_by_report = []
     for counts in (
-        {"Plastic": 1},
+        {"Plastic": 6},
         {"Fishing gear": 8},
         {"Fishing gear": 60},
     ):
