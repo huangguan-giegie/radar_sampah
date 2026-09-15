@@ -35,6 +35,7 @@ for _obsolete in (
     "test_beach_attention_uses_median_for_even_count",
     "test_report_validation_errors_are_contract_shaped",
     "test_share_links_are_stable_and_scoped_to_one_event_and_report",
+    "test_iteration2_report_supports_repeated_partial_cleanup_and_private_location",
 ):
     globals().pop(_obsolete, None)
 
