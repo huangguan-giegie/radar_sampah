@@ -21,6 +21,7 @@ import type { BeachDetail, SpeciesDistributionResult } from '../types';
 import { hasDraftProgress, resumePath } from '../flowRules';
 import { cleanupTotal, getCleanupTarget, getLatestCleanupForBeach, type CleanupAction, type CleanupTarget } from '../iteration2';
 import { MODEL_SPECIES_MEDIA } from '../speciesMedia';
+import { litterGalleryPath } from '../litterGallery';
 
 /*
  * relativeOccurrenceScore is shown exactly as the API sends it, on a 0..1 scale.
@@ -553,6 +554,7 @@ export default function BeachScreen() {
             <span>Add a Cleanup</span>
             <small style={{ marginLeft: 6, fontSize: '0.72em', fontWeight: 500 }}>(commit to cleaning it)</small>
           </GhostButton>
+          <GhostButton onClick={() => nav(litterGalleryPath(beachId))}>Litter Gallery</GhostButton>
           <GhostButton onClick={() => nav('/community')}>Community Cleanups</GhostButton>
           <GhostButton onClick={() => nav('/map')}>Back to Map</GhostButton>
         </div>
