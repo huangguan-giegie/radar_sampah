@@ -11,7 +11,7 @@ if str(_backend_dir) not in sys.path:
     sys.path.insert(0, str(_backend_dir))
 
 from api_tests_core import api, signup, upload
-from app import reports_table
+from app import create_app, reports_table
 
 
 def _create_report(client, headers, payload, beach_id="morib"):
@@ -107,7 +107,6 @@ def test_linked_cleanup_accepts_remaining_bands_and_logically_resolves_target(ap
     assert body["resolved"] is True
     assert body["score"] == 3
 
-    # Audit evidence stays available even though the active target is resolved.
     mine = client.get("/reports/mine", headers=headers).get_json()
     assert any(item["id"] == report["id"] for item in mine)
     targets = client.get("/cleanup-targets?beachId=morib", headers=headers).get_json()
@@ -266,7 +265,6 @@ def test_prior_day_nearby_changed_map_is_not_blanket_rejected(api):
 
 def test_10m_boundary_matrix(api):
     _application, client = api
-    # These latitude offsets are ~8.9 m, ~10.0 m, and ~13.4 m at this beach.
     for suffix, lat, expected in (
         ("inside", 2.74622, "Duplicate"),
         ("boundary", 2.74623, "Duplicate"),
@@ -274,15 +272,45 @@ def test_10m_boundary_matrix(api):
     ):
         first_session, first_headers = signup(client)
         second_session, second_headers = signup(client)
-        first = _create_gps_report(client, first_headers, {"Fishing gear": "Medium"}, lng=101.44024 + len(suffix) * 0.001)
+        lng = 101.44024 + len(suffix) * 0.001
+        first = _create_gps_report(client, first_headers, {"Fishing gear": "Medium"}, lng=lng)
         assert first.status_code == 201, (suffix, first.get_json())
         second = _create_gps_report(
             client,
             second_headers,
             {"Fishing gear": "Medium"},
             lat=lat,
-            lng=101.44024 + len(suffix) * 0.001,
+            lng=lng,
         )
         assert second.status_code == 201, (suffix, second.get_json())
         assert second.get_json()["status"] == expected, suffix
         assert first_session["user"]["id"] != second_session["user"]["id"]
+
+
+def test_same_user_far_equal_gps_reports_stay_counted_after_restart(tmp_path):
+    database_path = tmp_path / "restart-far-gps.db"
+    photo_dir = tmp_path / "photos"
+    application = create_app(
+        database_url=f"sqlite:///{database_path}",
+        testing=True,
+        photo_storage_dir=photo_dir,
+    )
+    client = application.test_client()
+    _session, headers = signup(client)
+
+    first = _create_gps_report(client, headers, {"Plastic": "Medium"}, lat=2.74614)
+    second = _create_gps_report(client, headers, {"Plastic": "Medium"}, lat=2.74634)
+    assert first.status_code == second.status_code == 201
+    assert first.get_json()["status"] == "Counted"
+    assert second.get_json()["status"] == "Counted"
+
+    restarted = create_app(
+        database_url=f"sqlite:///{database_path}",
+        testing=True,
+        photo_storage_dir=photo_dir,
+    )
+    statuses = [
+        report["status"]
+        for report in restarted.test_client().get("/reports/mine", headers=headers).get_json()
+    ]
+    assert statuses == ["Counted", "Counted"]
