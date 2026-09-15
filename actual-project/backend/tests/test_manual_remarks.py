@@ -11,7 +11,7 @@ if str(_backend_dir) not in sys.path:
     sys.path.insert(0, str(_backend_dir))
 
 from api_tests_core import api, signup, upload
-from app import create_app, reports_table
+from app import create_app, events_table, reports_table
 
 
 def _create_report(client, headers, payload, beach_id="morib"):
@@ -40,6 +40,17 @@ def _create_gps_report(client, headers, quantities, *, lat=2.74614, lng=101.4402
 def _report_row(application, report_id):
     with application.extensions["marine_engine"].connect() as connection:
         return connection.execute(select(reports_table).where(reports_table.c.id == report_id)).one()
+
+
+def _seed_attention(client, beach_id, quantities, count=3):
+    created = []
+    for _ in range(count):
+        _session, headers = signup(client)
+        response = _create_report(client, headers, {"quantities": quantities}, beach_id=beach_id)
+        assert response.status_code == 201, response.get_json()
+        assert response.get_json()["status"] == "Counted"
+        created.append((response.get_json(), headers))
+    return created
 
 
 def test_new_report_accepts_quantity_bands_without_exact_counts(api):
@@ -314,3 +325,91 @@ def test_same_user_far_equal_gps_reports_stay_counted_after_restart(tmp_path):
         for report in restarted.test_client().get("/reports/mine", headers=headers).get_json()
     ]
     assert statuses == ["Counted", "Counted"]
+
+
+def test_weekly_events_are_created_only_for_moderate_high_and_severe_beaches(api):
+    _application, client = api
+    _seed_attention(client, "morib", {"Fishing gear": "Medium"})
+    _seed_attention(client, "remis", {"Fishing gear": "Large"})
+    _seed_attention(client, "kelanang", {"Fishing gear": "Very Large"})
+    _seed_attention(client, "bagan", {"Paper": "Medium"})
+
+    severities = {item["id"]: item["severity"] for item in client.get("/beaches").get_json()}
+    assert severities == {
+        "morib": "Moderate",
+        "remis": "High",
+        "kelanang": "Severe",
+        "bagan": "Low",
+    }
+
+    events = client.get("/events").get_json()
+    weekly_by_beach = {
+        beach_id: [event for event in events if event["source"] == "weekly" and event["beachId"] == beach_id]
+        for beach_id in severities
+    }
+    assert len(weekly_by_beach["morib"]) == 4
+    assert len(weekly_by_beach["remis"]) == 4
+    assert len(weekly_by_beach["kelanang"]) == 4
+    assert weekly_by_beach["bagan"] == []
+
+
+def test_weekly_event_gate_skips_beaches_with_insufficient_data(api):
+    _application, client = api
+
+    events = client.get("/events").get_json()
+
+    assert [event for event in events if event["source"] == "weekly"] == []
+
+
+def test_existing_weekly_events_survive_later_attention_drop(api):
+    application, client = api
+    seeded = _seed_attention(client, "morib", {"Fishing gear": "Medium"})
+    first_events = client.get("/events?beachId=morib").get_json()
+    first_ids = [event["id"] for event in first_events if event["source"] == "weekly"]
+    assert len(first_ids) == 4
+
+    for index, (report, headers) in enumerate(seeded):
+        cleanup = client.post(
+            "/cleanup-actions",
+            headers=headers,
+            json={
+                "targetReportId": report["id"],
+                "remainingQuantities": {"Fishing gear": "Small"},
+                "handling": "Collected for disposal",
+                "idempotencyKey": f"event-gate-resolve-{index}",
+            },
+        )
+        assert cleanup.status_code == 201
+        assert cleanup.get_json()["resolved"] is True
+
+    morib = client.get("/beaches/morib").get_json()
+    assert morib["severity"] is None
+    assert morib["insufficientData"] is True
+
+    second_events = client.get("/events?beachId=morib").get_json()
+    second_ids = [event["id"] for event in second_events if event["source"] == "weekly"]
+    assert second_ids == first_ids
+
+    with application.extensions["marine_engine"].connect() as connection:
+        stored_ids = connection.execute(
+            select(events_table.c.id).where(events_table.c.beach_id == "morib")
+        ).scalars().all()
+    assert sorted(stored_ids) == sorted(first_ids)
+
+
+def test_weekly_event_generation_is_idempotent_when_band_is_eligible(api):
+    application, client = api
+    _seed_attention(client, "morib", {"Fishing gear": "Large"})
+
+    first = client.get("/events?beachId=morib").get_json()
+    second = client.get("/events?beachId=morib").get_json()
+
+    first_ids = [event["id"] for event in first if event["source"] == "weekly"]
+    second_ids = [event["id"] for event in second if event["source"] == "weekly"]
+    assert len(first_ids) == 4
+    assert second_ids == first_ids
+    with application.extensions["marine_engine"].connect() as connection:
+        count = connection.execute(
+            select(events_table.c.id).where(events_table.c.beach_id == "morib")
+        ).scalars().all()
+    assert sorted(count) == sorted(first_ids)
