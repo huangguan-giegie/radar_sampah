@@ -22,6 +22,7 @@ import { hasDraftProgress, resumePath } from '../flowRules';
 import { cleanupTotal, getCleanupTarget, getLatestCleanupForBeach, type CleanupAction, type CleanupTarget } from '../iteration2';
 import { MODEL_SPECIES_MEDIA } from '../speciesMedia';
 import { litterGalleryPath } from '../litterGallery';
+import { EcologicalBackgroundLink } from '../components/EcologicalBackgroundLink';
 
 /*
  * relativeOccurrenceScore is shown exactly as the API sends it, on a 0..1 scale.
@@ -542,6 +543,7 @@ export default function BeachScreen() {
             <div style={{ fontSize: 13, lineHeight: 1.6, color: C.ink2, marginTop: 7 }}>
               {b.ecologicalNote}
             </div>
+            <EcologicalBackgroundLink />
           </div>
         </div>
 
