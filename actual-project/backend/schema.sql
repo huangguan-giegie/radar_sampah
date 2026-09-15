@@ -140,19 +140,24 @@ CREATE TABLE community_event_members (
 );
 
 CREATE TABLE cleanup_actions (
-  id                  text PRIMARY KEY,
-  target_report_id    text NOT NULL REFERENCES reports(id),
-  participant_id      text NOT NULL REFERENCES users(id),
-  event_id            text REFERENCES community_events(id),
-  beach_id            text NOT NULL REFERENCES beaches(id),
-  removed_counts      text NOT NULL,
-  rows                text NOT NULL,
-  total_removed       integer NOT NULL CHECK (total_removed > 0),
-  handling            text NOT NULL CHECK (handling IN ('Collected for disposal','Recycled / handled','Not recorded')),
-  note                text,
-  idempotency_key     varchar(128) NOT NULL,
-  request_fingerprint char(64) NOT NULL,
-  created_at          timestamptz NOT NULL DEFAULT now(),
+  id                   text PRIMARY KEY,
+  target_report_id     text REFERENCES reports(id),
+  participant_id       text NOT NULL REFERENCES users(id),
+  event_id             text REFERENCES community_events(id),
+  beach_id             text NOT NULL REFERENCES beaches(id),
+  -- Legacy exact-count fields stay nullable/readable for historical clients.
+  removed_counts       text,
+  total_removed        integer CHECK (total_removed > 0),
+  -- Canonical Iteration 2 cleanup state.
+  remaining_quantities text,
+  removed_quantities   text,
+  cleanup_score        integer CHECK (cleanup_score > 0),
+  rows                 text NOT NULL,
+  handling             text NOT NULL CHECK (handling IN ('Collected for disposal','Recycled / handled','Not recorded')),
+  note                 text,
+  idempotency_key      varchar(128) NOT NULL,
+  request_fingerprint  char(64) NOT NULL,
+  created_at           timestamptz NOT NULL DEFAULT now(),
   UNIQUE (participant_id, idempotency_key)
 );
 
