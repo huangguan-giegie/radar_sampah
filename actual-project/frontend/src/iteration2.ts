@@ -43,14 +43,17 @@ export interface CleanupTarget {
   beachId: string;
   beachName: string;
   reportedAt: string;
-  remaining: Partial<Record<LitterCategory, number>>;
+  remainingQuantities: QuantityByCategory;
 }
 
 export interface CleanupRow {
   category: LitterCategory;
-  removed: number;
-  before: number | null;
-  after: number | null;
+  before?: QuantityBand | null;
+  after?: QuantityBand | null;
+  removedBand?: QuantityBand;
+  removedUnits?: number;
+  /** Deprecated legacy-count fields returned only for historical cleanup rows. */
+  removed?: number;
 }
 
 export interface CleanupAction {
@@ -63,6 +66,9 @@ export interface CleanupAction {
   createdAt: string;
   rows: CleanupRow[];
   score: number;
+  remainingQuantities: QuantityByCategory | null;
+  removedQuantities: QuantityByCategory | null;
+  resolved: boolean;
   handling: CleanupHandling;
   note: string;
   status: 'Cleanup recorded — awaiting follow-up';
@@ -91,14 +97,29 @@ export function effectiveAiModelState(
   return state === 'ready' && Object.keys(normalizeSuggestedCounts(counts)).length === 0 ? 'empty' : state;
 }
 
+export const CLEANUP_BAND_UNITS: Record<QuantityBand, number> = {
+  Small: 1,
+  Medium: 2,
+  Large: 3,
+  'Very Large': 4,
+};
+
+function isQuantityBand(value: unknown): value is QuantityBand {
+  return value === 'Small' || value === 'Medium' || value === 'Large' || value === 'Very Large';
+}
+
+function activeTarget(quantities: QuantityByCategory): boolean {
+  return Object.values(quantities).some((band) => band !== undefined && band !== 'Small');
+}
+
 type Iteration2Store = {
-  version: 3;
+  version: 4;
   events: CleanupEvent[];
   cleanups: CleanupAction[];
   targets: CleanupTarget[];
 };
 
-const STORE_KEY = 'rs_iteration2_v3';
+const STORE_KEY = 'rs_iteration2_v4';
 
 const BEACHES = [
   { id: 'morib', name: 'Pantai Morib', area: 'Banting, Selangor' },
@@ -153,7 +174,7 @@ function seedStore(): Iteration2Store {
   );
 
   return {
-    version: 3,
+    version: 4,
     events,
     cleanups: [],
     targets: [
@@ -162,21 +183,28 @@ function seedStore(): Iteration2Store {
         beachId: 'morib',
         beachName: 'Pantai Morib',
         reportedAt: '2026-08-14T02:00:00Z',
-        remaining: { Plastic: 62, 'Fishing gear': 24, Glass: 15, Metal: 11, Paper: 7, Other: 5 },
+        remainingQuantities: {
+          Plastic: 'Very Large',
+          'Fishing gear': 'Large',
+          Glass: 'Medium',
+          Metal: 'Medium',
+          Paper: 'Medium',
+          Other: 'Small',
+        },
       },
       {
         reportId: 'r3',
         beachId: 'remis',
         beachName: 'Pantai Remis',
         reportedAt: '2026-07-20T02:00:00Z',
-        remaining: { 'Fishing gear': 10, Plastic: 8, Glass: 2 },
+        remainingQuantities: { 'Fishing gear': 'Large', Plastic: 'Medium', Glass: 'Small' },
       },
       {
         reportId: 'r_seed_bagan',
         beachId: 'bagan',
         beachName: 'Pantai Bagan Lalang',
         reportedAt: '2026-07-24T16:00:00+08:00',
-        remaining: { Plastic: 12, 'Fishing gear': 9, Glass: 3, Other: 2 },
+        remainingQuantities: { Plastic: 'Large', 'Fishing gear': 'Medium', Glass: 'Small', Other: 'Small' },
       },
     ],
   };
@@ -185,7 +213,7 @@ function seedStore(): Iteration2Store {
 function readStore(): Iteration2Store {
   try {
     const parsed = JSON.parse(localStorage.getItem(STORE_KEY) || 'null') as Iteration2Store | null;
-    if (parsed?.version === 3 && Array.isArray(parsed.events) && Array.isArray(parsed.targets)) return parsed;
+    if (parsed?.version === 4 && Array.isArray(parsed.events) && Array.isArray(parsed.targets)) return parsed;
   } catch {
     // Corrupt or unavailable storage simply starts a fresh local demo ledger.
   }
@@ -278,12 +306,25 @@ export async function getCleanupTargetRecord(beachId: string, reportId?: string)
   return getCleanupTarget(beachId, reportId);
 }
 
+function normalizeTarget(raw: any): CleanupTarget {
+  return {
+    reportId: String(raw.reportId),
+    beachId: String(raw.beachId),
+    beachName: String(raw.beachName),
+    reportedAt: String(raw.reportedAt),
+    remainingQuantities: (raw.remainingQuantities ?? {}) as QuantityByCategory,
+  };
+}
+
 export async function listCleanupTargets(beachId?: string, reportId?: string, includeAuth = true): Promise<CleanupTarget[]> {
-  if (!USE_MOCK) return getIteration2Targets(beachId, reportId, includeAuth);
+  if (!USE_MOCK) {
+    const targets = await getIteration2Targets(beachId, reportId, includeAuth);
+    return (targets as any[]).map(normalizeTarget).filter((target) => activeTarget(target.remainingQuantities));
+  }
   return readStore().targets
     .filter((target) => !beachId || target.beachId === beachId)
     .filter((target) => !reportId || target.reportId === reportId)
-    .filter((target) => cleanupTotal(target) > 0);
+    .filter((target) => activeTarget(target.remainingQuantities));
 }
 
 export async function getCleanup(cleanupId: string): Promise<CleanupAction | null> {
@@ -292,16 +333,14 @@ export async function getCleanup(cleanupId: string): Promise<CleanupAction | nul
 }
 
 export async function getLatestCleanupForBeach(beachId: string): Promise<CleanupAction | null> {
-  const cleanups = USE_MOCK
-    ? readStore().cleanups
-    : await getIteration2MyCleanups();
-  return cleanups.filter((cleanup) => cleanup.beachId === beachId)
-    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0] ?? null;
+  const cleanups = USE_MOCK ? readStore().cleanups : await getIteration2MyCleanups();
+  return cleanups.filter((cleanup: CleanupAction) => cleanup.beachId === beachId)
+    .sort((a: CleanupAction, b: CleanupAction) => b.createdAt.localeCompare(a.createdAt))[0] ?? null;
 }
 
 export async function getCleanupForTarget(targetReportId: string): Promise<CleanupAction | null> {
   const cleanups = USE_MOCK ? readStore().cleanups : await getIteration2MyCleanups();
-  return cleanups.find((cleanup) => cleanup.targetReportId === targetReportId) ?? null;
+  return cleanups.find((cleanup: CleanupAction) => cleanup.targetReportId === targetReportId) ?? null;
 }
 
 export async function completeCleanup(input: {
@@ -309,61 +348,85 @@ export async function completeCleanup(input: {
   beachId?: string;
   targetReportId?: string;
   eventId?: string | null;
-  removed: Partial<Record<LitterCategory, number>>;
+  remainingQuantities?: QuantityByCategory;
+  removedQuantities?: QuantityByCategory;
   handling: CleanupHandling;
   note?: string;
   idempotencyKey?: string;
 }): Promise<CleanupAction> {
   const idempotencyKey = input.idempotencyKey ?? crypto.randomUUID();
   if (!input.targetReportId && !input.beachId) throw new Error('Choose a beach for this cleanup.');
+  if (input.targetReportId && input.remainingQuantities === undefined) throw new Error('Confirm what remains after this cleanup.');
+  if (!input.targetReportId && !input.removedQuantities) throw new Error('Confirm what you removed.');
+
   if (!USE_MOCK) {
     const payload: any = {
       beachId: input.beachId,
       targetReportId: input.targetReportId,
       eventId: input.eventId,
-      removed: input.removed,
+      remainingQuantities: input.remainingQuantities,
+      removedQuantities: input.removedQuantities,
       handling: input.handling,
       note: input.note,
       idempotencyKey,
     };
     if (!payload.targetReportId) delete payload.targetReportId;
     if (!payload.beachId) delete payload.beachId;
-    return createIteration2Cleanup(payload);
+    if (payload.remainingQuantities === undefined) delete payload.remainingQuantities;
+    if (payload.removedQuantities === undefined) delete payload.removedQuantities;
+    return createIteration2Cleanup(payload as any) as Promise<CleanupAction>;
   }
 
   const store = readStore();
   const target = input.targetReportId
     ? store.targets.find((item) => item.reportId === input.targetReportId)
     : undefined;
-  if (input.targetReportId && !target) throw new Error('This report is not eligible for a cleanup.');
+  if (input.targetReportId && (!target || !activeTarget(target.remainingQuantities))) {
+    throw new Error('This report is not eligible for a cleanup.');
+  }
   const beachId = target?.beachId ?? input.beachId!;
   const beach = BEACHES.find((item) => item.id === beachId);
   if (!beach) throw new Error('Choose a monitored beach.');
 
-  let rows: CleanupRow[];
+  let rows: CleanupRow[] = [];
+  let score = 0;
+  let remainingQuantities: QuantityByCategory | null = null;
+  let removedQuantities: QuantityByCategory | null = null;
+  let resolved = false;
+
   if (target) {
-    rows = (Object.keys(target.remaining) as LitterCategory[])
-      .map((category): CleanupRow | null => {
-        const before = target.remaining[category] ?? 0;
-        const removed = input.removed[category] ?? 0;
-        if (!Number.isInteger(removed) || removed < 0) throw new Error('Removed quantities must be whole numbers.');
-        if (removed > before) throw new Error('Removed quantities cannot exceed the remaining count.');
-        if (removed === 0) return null;
-        target.remaining[category] = before - removed;
-        return { category, before, removed, after: before - removed };
+    const before = { ...target.remainingQuantities };
+    const after = { ...(input.remainingQuantities ?? {}) };
+    for (const [category, band] of Object.entries(after) as [LitterCategory, QuantityBand][]) {
+      if (!(category in before) || !isQuantityBand(band)) throw new Error('Use only the litter categories already recorded for this target.');
+      const beforeBand = before[category];
+      if (!beforeBand || CLEANUP_BAND_UNITS[band] > CLEANUP_BAND_UNITS[beforeBand]) {
+        throw new Error('Remaining litter cannot increase during a cleanup.');
+      }
+    }
+    rows = (Object.entries(before) as [LitterCategory, QuantityBand][])
+      .map(([category, beforeBand]): CleanupRow | null => {
+        const afterBand = after[category] ?? null;
+        const removedUnits = CLEANUP_BAND_UNITS[beforeBand] - (afterBand ? CLEANUP_BAND_UNITS[afterBand] : 0);
+        if (removedUnits <= 0) return null;
+        return { category, before: beforeBand, after: afterBand, removedUnits };
       })
       .filter((row): row is CleanupRow => row !== null);
+    score = rows.reduce((sum, row) => sum + (row.removedUnits ?? 0), 0);
+    if (score <= 0) throw new Error('Record at least one reduction in the cleanup result.');
+    target.remainingQuantities = after;
+    remainingQuantities = after;
+    resolved = !activeTarget(after);
   } else {
-    rows = CLEANUP_CATEGORIES
-      .map((category): CleanupRow | null => {
-        const removed = input.removed[category] ?? 0;
-        if (!Number.isInteger(removed) || removed < 0) throw new Error('Removed quantities must be whole numbers.');
-        return removed > 0 ? { category, before: null, removed, after: null } : null;
-      })
-      .filter((row): row is CleanupRow => row !== null);
+    removedQuantities = { ...(input.removedQuantities ?? {}) };
+    for (const [category, band] of Object.entries(removedQuantities) as [LitterCategory, QuantityBand][]) {
+      if (!CLEANUP_CATEGORIES.includes(category) || !isQuantityBand(band)) throw new Error('Choose a supported category and quantity band.');
+      rows.push({ category, removedBand: band, removedUnits: CLEANUP_BAND_UNITS[band] });
+    }
+    if (rows.length === 0) throw new Error('Record at least one category you removed.');
+    score = rows.reduce((sum, row) => sum + (row.removedUnits ?? 0), 0);
   }
 
-  if (rows.length === 0) throw new Error('Enter at least one item you removed.');
   const action: CleanupAction = {
     id: `cleanup-${Date.now()}-${crypto.randomUUID()}`,
     participantId: input.participantId,
@@ -373,7 +436,10 @@ export async function completeCleanup(input: {
     beachName: beach.name,
     createdAt: new Date().toISOString(),
     rows,
-    score: rows.reduce((sum, row) => sum + row.removed, 0),
+    score,
+    remainingQuantities,
+    removedQuantities,
+    resolved,
     handling: input.handling,
     note: input.note?.trim() ?? '',
     status: 'Cleanup recorded — awaiting follow-up',
@@ -405,9 +471,8 @@ export async function getSharedItems(token: string): Promise<{ event: CleanupEve
   const store = readStore();
   const event = store.events.find((row) => row.id === token);
   if (event) return { event, report: null };
-  const target = store.targets.find((row) => row.reportId === token && cleanupTotal(row) > 0);
+  const target = store.targets.find((row) => row.reportId === token && activeTarget(row.remainingQuantities));
   if (!target) return { event: null, report: null };
-  const remaining = { ...target.remaining };
   return {
     event: null,
     report: {
@@ -416,10 +481,8 @@ export async function getSharedItems(token: string): Promise<{ event: CleanupEve
       beachName: target.beachName,
       reportedAt: target.reportedAt,
       status: 'Counted',
-      quantities: {},
-      itemCounts: remaining,
-      remainingItemCounts: remaining,
-      remainingTotal: cleanupTotal(target),
+      quantities: target.remainingQuantities,
+      remainingQuantities: target.remainingQuantities,
       photoAvailable: false,
     },
   };
@@ -482,43 +545,42 @@ export async function analyseReportPhoto(photoKey: string, forceFailure = false)
 export async function analyseCleanupPhoto(
   photo: File,
   target?: CleanupTarget | null,
-): Promise<Partial<Record<LitterCategory, number>>> {
+): Promise<QuantityByCategory> {
   if (!USE_MOCK) {
     const result = await recognizeCleanupPhoto(photo);
-    const suggested = result.counts as Partial<Record<LitterCategory, number>>;
-    if (!target) {
-      return Object.fromEntries(
-        Object.entries(suggested).filter(([, count]) => Number(count) > 0),
-      ) as Partial<Record<LitterCategory, number>>;
-    }
-    return Object.fromEntries(Object.entries(suggested).flatMap(([category, count]) => {
-      const remaining = target.remaining[category as LitterCategory] ?? 0;
-      const confirmed = Math.min(remaining, Number(count) || 0);
-      return confirmed > 0 ? [[category, confirmed]] : [];
-    })) as Partial<Record<LitterCategory, number>>;
+    const suggested = result.suggestions as QuantityByCategory;
+    if (!target) return suggested;
+    return Object.fromEntries(
+      Object.entries(suggested).flatMap(([category, band]) => {
+        const typedCategory = category as LitterCategory;
+        const before = target.remainingQuantities[typedCategory];
+        if (!before || !band || !isQuantityBand(band)) return [];
+        const capped = CLEANUP_BAND_UNITS[band] <= CLEANUP_BAND_UNITS[before] ? band : before;
+        return [[typedCategory, capped]];
+      }),
+    ) as QuantityByCategory;
   }
   await new Promise((resolve) => setTimeout(resolve, 650));
   if (!photo) throw new Error('Choose a JPG or PNG photo first.');
   if (!target) {
     const seed = [...photo.name].reduce((sum, character) => sum + character.charCodeAt(0), 0);
     const category = CLEANUP_CATEGORIES[seed % CLEANUP_CATEGORIES.length];
-    return { [category]: 1 + (seed % 6) };
+    const bands: QuantityBand[] = ['Small', 'Medium', 'Large'];
+    return { [category]: bands[seed % bands.length] };
   }
   if (target.beachId === 'morib') {
-    return {
-      Plastic: Math.min(26, target.remaining.Plastic ?? 0),
-      'Fishing gear': Math.min(9, target.remaining['Fishing gear'] ?? 0),
-    };
+    return { Plastic: 'Medium', 'Fishing gear': 'Medium', Glass: 'Small' };
   }
   const seed = [...photo.name].reduce((sum, character) => sum + character.charCodeAt(0), 0);
-  const result: Partial<Record<LitterCategory, number>> = {};
-  (Object.keys(target.remaining) as LitterCategory[]).forEach((category, index) => {
-    const available = target.remaining[category] ?? 0;
-    if (available === 0) return;
-    const suggestion = Math.min(available, 1 + ((seed + index * 3) % Math.min(available, 6)));
-    if ((seed + index) % 3 !== 0) result[category] = suggestion;
+  const result: QuantityByCategory = {};
+  (Object.keys(target.remainingQuantities) as LitterCategory[]).forEach((category, index) => {
+    const before = target.remainingQuantities[category];
+    if (!before || (seed + index) % 3 === 0) return;
+    const beforeUnits = CLEANUP_BAND_UNITS[before];
+    const suggestedUnits = Math.max(1, beforeUnits - 1);
+    result[category] = (Object.entries(CLEANUP_BAND_UNITS).find(([, units]) => units === suggestedUnits)?.[0] ?? 'Small') as QuantityBand;
   });
-  return Object.keys(result).length > 0 ? result : { Plastic: Math.min(1, target.remaining.Plastic ?? 0) };
+  return result;
 }
 
 export function formatEventDate(date: string): string {
@@ -530,5 +592,8 @@ export function formatEventDate(date: string): string {
 }
 
 export function cleanupTotal(target: CleanupTarget): number {
-  return Object.values(target.remaining).reduce((sum, value) => sum + (value ?? 0), 0);
+  return Object.values(target.remainingQuantities).reduce(
+    (sum, band) => sum + (band ? CLEANUP_BAND_UNITS[band] : 0),
+    0,
+  );
 }
