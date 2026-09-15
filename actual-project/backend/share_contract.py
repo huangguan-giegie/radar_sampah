@@ -101,6 +101,19 @@ def install_reviewed_share_contract(application: Any, engine: Any, jwt_secret: s
                 "remainingQuantities": _current_band_state(impl, report, actions),
                 "photoAvailable": _available_photo(report, directory, impl) is not None,
             }
+            # Historical count-backed links stay readable for deployed clients,
+            # but new band-native reports never expose or synthesize exact counts.
+            if getattr(report, "item_counts", None):
+                try:
+                    item_counts = impl.json.loads(report.item_counts or "{}")
+                except (TypeError, ValueError):
+                    item_counts = {}
+                remaining_counts = impl.remaining_counts_for(report, actions)
+                shared_report.update({
+                    "itemCounts": item_counts,
+                    "remainingItemCounts": remaining_counts,
+                    "remainingTotal": sum(remaining_counts.values()),
+                })
 
         event_payload = None
         if event_id:
