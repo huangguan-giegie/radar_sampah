@@ -10,6 +10,7 @@ from urllib.parse import quote
 from flask import jsonify, request, send_file
 from sqlalchemy import select
 
+from report_compat import install_legacy_small_only_guard
 from share_contract import install_reviewed_share_contract
 
 
@@ -77,9 +78,10 @@ def _available_photo(report: Any, directory: Path, impl: Any) -> Path | None:
 
 
 def install_litter_gallery(application: Any, engine: Any, jwt_secret: str, impl: Any) -> None:
-    """Install public historical evidence routes reviewed for Iteration 2."""
+    """Install reviewed public evidence routes and the final report compatibility guard."""
     directory = Path(application.extensions["photo_storage_dir"])
     valid_beach_ids = {beach["id"] for beach in impl.load_beaches(engine)}
+    install_legacy_small_only_guard(application, impl)
 
     @application.get("/beaches/<beach_id>/litter-gallery")
     def list_litter_gallery(beach_id: str):
