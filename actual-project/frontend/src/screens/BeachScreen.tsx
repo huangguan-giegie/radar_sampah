@@ -19,7 +19,7 @@ import { BandMeter, Callout, GlassPanel, InfoChip } from '../components/ds';
 import { useApp } from '../AppContext';
 import type { BeachDetail, SpeciesDistributionResult } from '../types';
 import { hasDraftProgress, resumePath } from '../flowRules';
-import { cleanupTotal, getCleanupTarget, getLatestCleanupForBeach, type CleanupAction, type CleanupTarget } from '../iteration2';
+import { getCleanupTarget, getLatestCleanupForBeach, type CleanupAction, type CleanupTarget } from '../iteration2';
 import { MODEL_SPECIES_MEDIA } from '../speciesMedia';
 import { litterGalleryPath } from '../litterGallery';
 import { EcologicalBackgroundLink } from '../components/EcologicalBackgroundLink';
@@ -300,7 +300,7 @@ export default function BeachScreen() {
               If you removed any of it, record what changed.
             </div>
             <div style={{ marginTop: 9, fontFamily: MONO, fontSize: 9, color: C.dim }}>
-              REPORT {cleanupTarget.reportId.toUpperCase()} · {cleanupTotal(cleanupTarget)} ITEMS REMAIN
+              REPORT {cleanupTarget.reportId.toUpperCase()} · ACTIVE BAND STATE
             </div>
             <PrimaryButton onClick={() => nav(user ? `/cleanup/${beachId}` : `/identity?next=${encodeURIComponent(`/cleanup/${beachId}`)}`)} style={{ marginTop: 13 }}>
               <span>Add a Cleanup</span>
@@ -320,9 +320,9 @@ export default function BeachScreen() {
                 : 'Latest report · backend percentage estimate'}
           </div>
           {/* Current unresolved composition uses the same active Counted report
-              set as Beach Attention. Linked cleanups first reduce exact counts;
-              partial targets are re-banded and fully cleared targets disappear.
-              Legacy band-only reports remain compatible with the same estimate. */}
+              set as Beach Attention. Linked cleanups apply the submitted remaining
+              bands; resolved targets disappear from the active estimate while
+              historical reports remain available. */}
           {b.composition ? (
             <div style={{ background: C.white, border: `1px solid ${C.line}`, borderRadius: 24, padding: 20, display: 'flex', flexDirection: 'column', gap: 11 }}>
               {b.composition.map((c, i) => (
@@ -367,7 +367,7 @@ export default function BeachScreen() {
 
         {latestCleanup && (
           <Callout title="Cleanup recorded — awaiting follow-up" tone="reassurance" icon={<Check color={C.green} />}>
-            {latestCleanup.score} items removed on {formatDate(latestCleanup.createdAt)}. A new report will confirm the change.
+            Cleanup recorded on {formatDate(latestCleanup.createdAt)}. A new report will confirm the change.
           </Callout>
         )}
 
