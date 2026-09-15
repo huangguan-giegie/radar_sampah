@@ -11,7 +11,7 @@ type AiSuggestionHelpProps = {
 
 export function AiSuggestionHelp({ context, suggestions }: AiSuggestionHelpProps) {
   const rows = Object.entries(suggestions)
-    .filter((entry): entry is [string, NonNullable<(typeof suggestions)[keyof typeof suggestions]>] => Boolean(entry[1]))
+    .filter(([, band]) => Boolean(band))
     .map(([category, band]) => `${category} — ${band}`);
 
   return (
@@ -25,6 +25,7 @@ export function AiSuggestionHelp({ context, suggestions }: AiSuggestionHelpProps
       }}
     >
       <summary
+        aria-label="AI suggestion help"
         style={{
           cursor: 'pointer',
           listStyle: 'none',
@@ -54,7 +55,6 @@ export function AiSuggestionHelp({ context, suggestions }: AiSuggestionHelpProps
         >
           ?
         </span>
-        <span className="sr-only">Help about AI suggestions</span>
       </summary>
       <div style={{ padding: '0 11px 11px', fontSize: 11.5, lineHeight: 1.55 }}>
         <p style={{ margin: '0 0 7px' }}>
