@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../AppContext';
+import { AiSuggestionHelp } from '../components/AiSuggestionHelp';
 import { Alert } from '../components/Icon';
 import { BackButton, PrimaryButton, StepBadge } from '../components/ui';
 import { C } from '../theme';
@@ -46,6 +47,9 @@ export default function RecordScreen() {
         <StepBadge>STEP 3 OF 3 · DETAILS</StepBadge>
         <h1 className="i2-title" style={{ marginTop: 18 }}>{draft.editingReportId ? 'Correct your report' : 'What did you find?'}</h1>
         <p className="i2-subtitle">Select every category and choose a quantity band.</p>
+        {draft.aiModelState === 'ready' && Object.keys(quantities).length > 0 && (
+          <AiSuggestionHelp context="report" suggestions={quantities} />
+        )}
         {(draft.aiModelState === 'empty' || draft.aiModelState === 'unavailable') && (
           <div style={{ marginTop: 16, padding: 13, borderRadius: 14, background: C.tint, color: C.slate, fontSize: 12 }}>
             <Alert /> AI could not provide a supported suggestion. Select the category and quantity band manually.
