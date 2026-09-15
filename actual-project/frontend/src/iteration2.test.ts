@@ -35,7 +35,7 @@ describe('Iteration 2 date presentation', () => {
 });
 
 describe('Iteration 2 activity and cleanup ledger', () => {
-  it('keeps only positive whole AI counts', () => {
+  it('keeps detector counts internal and only normalizes positive whole detections', () => {
     expect(normalizeSuggestedCounts({ Plastic: 8, Glass: 0, Metal: 2.8 })).toEqual({ Plastic: 8 });
   });
 
@@ -43,7 +43,7 @@ describe('Iteration 2 activity and cleanup ledger', () => {
     expect(effectiveAiModelState('ready', {})).toBe('empty');
   });
 
-  it('generates four Saturday events per configured beach', async () => {
+  it('generates four Saturday events per configured beach before the attention gate is applied', async () => {
     expect(await listCleanupEvents()).toHaveLength(16);
   });
 
@@ -62,20 +62,47 @@ describe('Iteration 2 activity and cleanup ledger', () => {
     expect((await getCleanupEvent(first.id))?.source).toBe('admin');
   });
 
-  it('subtracts partial cleanup actions repeatedly without going below zero', async () => {
+  it('records linked cleanup as the remaining band state and resolves all-Small targets', async () => {
     const target = (await getCleanupTarget('morib'))!;
+    expect(target.remainingQuantities.Plastic).toBe('Very Large');
+
     const cleanup = await completeCleanup({
       participantId: '1637',
       targetReportId: target.reportId,
-      removed: { Plastic: 62, Glass: 2 },
+      remainingQuantities: {
+        Plastic: 'Small',
+        'Fishing gear': 'Small',
+        Glass: 'Small',
+        Metal: 'Small',
+        Paper: 'Small',
+        Other: 'Small',
+      },
       handling: 'Collected for disposal',
     });
-    expect(cleanup.score).toBe(64);
-    expect(cleanup.rows.find((row) => row.category === 'Plastic')).toMatchObject({ before: 62, removed: 62, after: 0 });
-    expect((await getCleanupTarget('morib'))?.remaining.Glass).toBe(13);
-    const next = await completeCleanup({ participantId: '1637', targetReportId: target.reportId, removed: { Glass: 1 }, handling: 'Not recorded' });
-    expect(next.id).not.toBe(cleanup.id);
-    expect((await getCleanupTarget('morib'))?.remaining.Glass).toBe(12);
+
+    expect(cleanup.resolved).toBe(true);
+    expect(cleanup.remainingQuantities).toEqual({
+      Plastic: 'Small',
+      'Fishing gear': 'Small',
+      Glass: 'Small',
+      Metal: 'Small',
+      Paper: 'Small',
+      Other: 'Small',
+    });
+    expect(cleanup.score).toBe(8);
+    expect(await getCleanupTarget('morib', target.reportId)).toBeNull();
+  });
+
+  it('scores a standalone cleanup from removed quantity bands', async () => {
+    const cleanup = await completeCleanup({
+      participantId: '1637',
+      beachId: 'kelanang',
+      removedQuantities: { Plastic: 'Large', Glass: 'Small' },
+      handling: 'Collected for disposal',
+    });
+    expect(cleanup.targetReportId).toBeNull();
+    expect(cleanup.removedQuantities).toEqual({ Plastic: 'Large', Glass: 'Small' });
+    expect(cleanup.score).toBe(4);
   });
 
   it('keeps manual reporting available when AI is unavailable', async () => {
@@ -84,7 +111,7 @@ describe('Iteration 2 activity and cleanup ledger', () => {
     expect(result.suggestions).toEqual({});
   });
 
-  it('returns no cleanup suggestion when recognition has zero counts', () => {
+  it('returns no detector evidence when recognition has zero counts', () => {
     expect(normalizeSuggestedCounts({ Plastic: 0, Glass: 0 })).toEqual({});
   });
 });
