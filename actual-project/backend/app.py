@@ -10,6 +10,7 @@ Iteration 2 contracts that must not regress during integration:
 * cleanup changes each report's current score before the active-report beach median is taken;
 * fully cleared reports stay in history but leave the current score and active count;
 * automatic weekly events are created only for Moderate, High, or Severe beaches;
+* public litter galleries expose only beach-scoped signed historical report photos;
 * PostgreSQL Iteration 2 tables receive the same integrity constraints as the
   release migration, even if an application process creates them first.
 """
@@ -27,6 +28,7 @@ from sqlalchemy import inspect, select, text
 
 import app_core as _impl
 from app_core import *  # noqa: F401,F403 - preserve the public module contract
+from litter_gallery import install_litter_gallery
 from standalone_cleanup import (
     _active_quantities,
     _current_band_state,
@@ -570,6 +572,7 @@ def create_app(
         return response
 
     install_cleanup_route(application, engine, jwt_secret, _impl)
+    install_litter_gallery(application, engine, jwt_secret, _impl)
 
     reviewed_scheduler = _reviewed_event_scheduler(engine)
     for endpoint in ("list_events", "get_event"):
