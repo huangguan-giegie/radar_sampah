@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { AiSuggestionHelp } from '../components/AiSuggestionHelp';
 import { Camera, Check, Upload } from '../components/Icon';
 import { Alert, Callout, InfoChip, SectionLabel } from '../components/ds';
 import { BackButton, PrimaryButton, TextButton } from '../components/ui';
@@ -212,7 +213,14 @@ export default function CleanupScreen() {
             </span>
           </button>
           {photoName && <PrimaryButton onClick={usePhotoSuggestion} disabled={analysing} height={48} style={{ marginTop: 10 }}>{analysing ? 'Checking photo…' : 'Get editable suggestions'}</PrimaryButton>}
-          {photoUsed && <Callout title="AI suggestion" tone="reassurance" icon={<Check color={C.green} />} style={{ marginTop: 10 }}>These bands are only a suggestion — edit any row before you confirm.</Callout>}
+          {photoUsed && (
+            <>
+              <Callout title="AI suggestion" tone="reassurance" icon={<Check color={C.green} />} style={{ marginTop: 10 }}>
+                These bands are only a suggestion — edit any row before you confirm.
+              </Callout>
+              <AiSuggestionHelp context="cleanup" suggestions={quantities} />
+            </>
+          )}
         </div>
 
         <div className="i2-card">
