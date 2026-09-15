@@ -19,8 +19,49 @@ def configure_cleanup_schema(impl: Any) -> None:
 
 
 def install_cleanup_route(application: Any, engine: Any, jwt_secret: str, impl: Any) -> None:
-    """Replace the target-only Iteration 2 cleanup route with an optional-target contract."""
+    """Install reviewed cleanup behavior plus the final active-band boundary."""
     rate_events: defaultdict[str, deque[float]] = defaultdict(deque)
+
+    # Keep legacy rows readable but ensure Small evidence never enters the
+    # current unresolved composition or Beach Attention aggregate.
+    if not getattr(impl, "_manual_remarks_active_filter_installed", False):
+        original_active_attention_rows = impl.active_attention_rows
+
+        def active_non_small_rows(active_engine: Any, rows: list[Any]):
+            active = original_active_attention_rows(active_engine, rows)
+            filtered: list[tuple[Any, dict[str, str]]] = []
+            for row, quantities in active:
+                non_small = {
+                    category: quantity
+                    for category, quantity in quantities.items()
+                    if quantity != "Small"
+                }
+                if non_small:
+                    filtered.append((row, non_small))
+            return filtered
+
+        impl.active_attention_rows = active_non_small_rows
+        impl._manual_remarks_active_filter_installed = True
+
+    @application.before_request
+    def reject_small_only_new_report():
+        if request.endpoint != "create_report":
+            return None
+        payload = request.get_json(silent=True)
+        if not isinstance(payload, dict):
+            return None
+        quantities = payload.get("quantities")
+        if (
+            isinstance(quantities, dict)
+            and quantities
+            and all(quantity == "Small" for quantity in quantities.values())
+        ):
+            return impl.error_response(
+                422,
+                "SMALL_ONLY_REPORT",
+                "This report is below the active litter threshold because every confirmed category is Small.",
+            )
+        return None
 
     def current_user():
         header = request.headers.get("Authorization", "")
@@ -59,7 +100,7 @@ def install_cleanup_route(application: Any, engine: Any, jwt_secret: str, impl: 
             category: sum(
                 impl.QUANTITY_WEIGHTS[quantities[category]]
                 for _row, quantities in active_rows
-                if category in quantities
+                if category in quantities and quantities[category] != "Small"
             )
             for category in impl.FRONTEND_CATEGORIES
         }
@@ -210,18 +251,10 @@ def install_cleanup_route(application: Any, engine: Any, jwt_secret: str, impl: 
                     .with_for_update()
                 ).first()
                 if target is None or target.status != "Counted" or not target.item_counts:
-                    return impl.error_response(
-                        404,
-                        "CLEANUP_TARGET_NOT_FOUND",
-                        "The cleanup target is no longer available.",
-                    )
+                    return impl.error_response(404, "CLEANUP_TARGET_NOT_FOUND", "The cleanup target is no longer available.")
                 beach_id = target.beach_id
                 if requested_beach_id is not None and requested_beach_id != beach_id:
-                    return impl.error_response(
-                        400,
-                        "VALIDATION_FAILED",
-                        "beachId must match the cleanup target beach.",
-                    )
+                    return impl.error_response(400, "VALIDATION_FAILED", "beachId must match the cleanup target beach.")
                 prior_actions = connection.execute(
                     select(impl.cleanup_actions_table).where(
                         impl.cleanup_actions_table.c.target_report_id == target_report_id
@@ -229,15 +262,8 @@ def install_cleanup_route(application: Any, engine: Any, jwt_secret: str, impl: 
                 ).all()
                 remaining = impl.remaining_counts_for(target, prior_actions)
                 if not remaining:
-                    return impl.error_response(
-                        409,
-                        "CLEANUP_TARGET_COMPLETE",
-                        "This cleanup target has already been fully cleared.",
-                    )
-                if any(
-                    category not in remaining or count > remaining[category]
-                    for category, count in removed_counts.items()
-                ):
+                    return impl.error_response(409, "CLEANUP_TARGET_COMPLETE", "This cleanup target has already been fully cleared.")
+                if any(category not in remaining or count > remaining[category] for category, count in removed_counts.items()):
                     return impl.error_response(
                         409,
                         "REMOVED_COUNT_EXCEEDS_REMAINING",
@@ -255,26 +281,17 @@ def install_cleanup_route(application: Any, engine: Any, jwt_secret: str, impl: 
                 ]
             else:
                 beach_id = requested_beach_id
-                beach = connection.execute(
-                    select(impl.beaches_table.c.id).where(impl.beaches_table.c.id == beach_id)
-                ).first()
+                beach = connection.execute(select(impl.beaches_table.c.id).where(impl.beaches_table.c.id == beach_id)).first()
                 if beach is None:
                     return impl.error_response(404, "NOT_FOUND", "Beach not found.")
                 rows = [
-                    {
-                        "category": category,
-                        "removed": removed_counts[category],
-                        "before": None,
-                        "after": None,
-                    }
+                    {"category": category, "removed": removed_counts[category], "before": None, "after": None}
                     for category in impl.FRONTEND_CATEGORIES
                     if removed_counts.get(category, 0) > 0
                 ]
 
             if event_id is not None:
-                event = connection.execute(
-                    select(impl.events_table).where(impl.events_table.c.id == event_id)
-                ).first()
+                event = connection.execute(select(impl.events_table).where(impl.events_table.c.id == event_id)).first()
                 member = connection.execute(
                     select(impl.event_members_table).where(
                         impl.event_members_table.c.event_id == event_id,
@@ -283,25 +300,11 @@ def install_cleanup_route(application: Any, engine: Any, jwt_secret: str, impl: 
                 ).first()
                 now = datetime.now(timezone.utc)
                 if event is None or event.beach_id != beach_id:
-                    return impl.error_response(
-                        400,
-                        "VALIDATION_FAILED",
-                        "eventId must refer to an event at the cleanup beach.",
-                    )
+                    return impl.error_response(400, "VALIDATION_FAILED", "eventId must refer to an event at the cleanup beach.")
                 if member is None or not member.location_passed:
-                    return impl.error_response(
-                        409,
-                        "EVENT_CHECKIN_REQUIRED",
-                        "Join and check in to the event before linking this cleanup.",
-                    )
-                if event.status != "Open" or not (
-                    impl.utc_datetime(event.starts_at) <= now <= impl.utc_datetime(event.ends_at)
-                ):
-                    return impl.error_response(
-                        409,
-                        "EVENT_NOT_ACTIVE",
-                        "An event-linked cleanup must be recorded during the event.",
-                    )
+                    return impl.error_response(409, "EVENT_CHECKIN_REQUIRED", "Join and check in to the event before linking this cleanup.")
+                if event.status != "Open" or not (impl.utc_datetime(event.starts_at) <= now <= impl.utc_datetime(event.ends_at)):
+                    return impl.error_response(409, "EVENT_NOT_ACTIVE", "An event-linked cleanup must be recorded during the event.")
 
             now = datetime.now(timezone.utc)
             action_id = "c_" + secrets.token_hex(10)
@@ -336,11 +339,7 @@ def install_cleanup_route(application: Any, engine: Any, jwt_secret: str, impl: 
                     )
                 ).first()
                 if action is None or action.request_fingerprint != fingerprint:
-                    return impl.error_response(
-                        409,
-                        "IDEMPOTENCY_CONFLICT",
-                        "This idempotency key was already used for a different cleanup.",
-                    )
+                    return impl.error_response(409, "IDEMPOTENCY_CONFLICT", "This idempotency key was already used for a different cleanup.")
                 response_status = 200
 
         return jsonify(cleanup_action_dict(action)), response_status
