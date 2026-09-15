@@ -37,14 +37,14 @@ def test_new_report_accepts_quantity_bands_without_exact_counts(api):
     assert not body.get("itemCounts")
 
 
-def test_new_report_rejects_exact_count_only_contract(api):
+def test_legacy_exact_count_only_input_remains_a_compatibility_adapter(api):
     _application, client = api
     _session, headers = signup(client)
 
     response = _create_report(client, headers, {"itemCounts": {"Plastic": 8}})
 
-    assert response.status_code == 422
-    assert response.get_json()["code"] == "QUANTITY_BANDS_REQUIRED"
+    assert response.status_code == 201
+    assert response.get_json()["quantities"] == {"Plastic": "Medium"}
 
 
 def test_small_only_report_is_not_persisted_as_counted_evidence(api):
