@@ -249,7 +249,7 @@ Frontend coverage includes:
 
 Backend coverage includes:
 
-- new report contract rejects exact-count-only input and accepts band input;
+- new report contract accepts band input while exact-count-only input is retained only as a legacy compatibility adapter;
 - Small-only new report does not become Counted/persisted active evidence;
 - mixed reports exclude Small categories from active score/composition;
 - legacy item-count rows remain readable;
