@@ -38,7 +38,7 @@ def test_composition_uses_same_active_reports_and_remaining_bands_as_attention(a
     _application, client = api
 
     plastic, plastic_headers = _submit_count_report(client, {"Plastic": 6})
-    _metal, _metal_headers = _submit_count_report(client, {"Metal": 1})
+    _metal, metal_headers = _submit_count_report(client, {"Metal": 1})
     glass, glass_headers = _submit_count_report(client, {"Glass": 21})
 
     detail, composition = _composition_by_category(client)
@@ -48,6 +48,22 @@ def test_composition_uses_same_active_reports_and_remaining_bands_as_attention(a
         "activeReportCount": 3,
         "windowDays": 90,
     }
+
+    standalone = client.post(
+        "/cleanup-actions",
+        headers=metal_headers,
+        json={
+            "beachId": "morib",
+            "removed": {"Plastic": 50},
+            "handling": "Collected for disposal",
+            "idempotencyKey": "composition-standalone-cleanup",
+        },
+    )
+    assert standalone.status_code == 201
+    assert standalone.get_json()["targetReportId"] is None
+
+    _detail, composition = _composition_by_category(client)
+    assert composition == {"Plastic": 33, "Glass": 50, "Metal": 17}
 
     partial = client.post(
         "/cleanup-actions",
