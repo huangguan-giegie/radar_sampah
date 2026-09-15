@@ -37,8 +37,31 @@ for _obsolete in (
     "test_share_links_are_stable_and_scoped_to_one_event_and_report",
     "test_iteration2_report_supports_repeated_partial_cleanup_and_private_location",
     "test_create_report_returns_full_contract_and_hides_private_fields",
+    "test_events_require_join_location_and_evidence_for_attendance",
+    "test_unlinked_counted_report_does_not_confirm_event_attendance",
 ):
     globals().pop(_obsolete, None)
+
+
+def _seed_morib_weekly_event(client):
+    """Create the minimum active evidence required for a weekly Morib event."""
+    for _ in range(3):
+        _session, headers = signup(client)
+        photo = upload(client, headers)
+        created = client.post(
+            "/reports",
+            headers=headers,
+            json=report_payload(photo["photoKey"], quantities={"Fishing gear": "Medium"}),
+        )
+        assert created.status_code == 201
+        assert created.get_json()["status"] == "Counted"
+    morib = next(item for item in client.get("/beaches").get_json() if item["id"] == "morib")
+    assert morib["severity"] == "Moderate"
+    return next(
+        item
+        for item in client.get("/events?beachId=morib").get_json()
+        if item["beachId"] == "morib" and item["source"] == "weekly"
+    )
 
 
 def test_iteration2_scoring_metadata_publishes_active_report_rule(api):
@@ -114,8 +137,8 @@ def test_report_validation_errors_remain_contract_shaped_with_band_contract(api)
 
 def test_share_links_still_work_for_legacy_count_backed_non_small_reports(api):
     _application, client = api
+    event = _seed_morib_weekly_event(client)
     _session, headers = signup(client)
-    event = next(item for item in client.get("/events?beachId=morib").get_json() if item["beachId"] == "morib")
 
     first_photo = upload(client, headers)
     first_payload = report_payload(first_photo["photoKey"], quantities={"Plastic": "Medium"})
@@ -156,11 +179,129 @@ def test_share_links_still_work_for_legacy_count_backed_non_small_reports(api):
     assert photo_response.mimetype == "image/jpeg"
     assert photo_response.headers["Cache-Control"] == "private, no-store"
 
-    token = share["token"]
-    forged = token[:-1] + ("A" if token[-1] != "A" else "B")
+    token_parts = share["token"].split(".")
+    assert len(token_parts) == 3 and token_parts[-1]
+    signature = token_parts[-1]
+    token_parts[-1] = ("A" if signature[0] != "A" else "B") + signature[1:]
+    forged = ".".join(token_parts)
     assert client.get(f"/share-links/{forged}").status_code == 404
     mismatch = client.get(f"/share-links?eventId={event['id']}&reportId={second_id}", headers=headers)
     assert mismatch.status_code == 400
+
+
+def test_events_require_join_location_and_band_evidence_for_attendance(api):
+    application, client = api
+    event = _seed_morib_weekly_event(client)
+    session, headers = signup(client)
+    assert event["source"] == "weekly"
+    assert event["area"]
+    assert event["startsAt"] == "09:00"
+    assert event["endsAt"] == "12:00"
+    assert isinstance(event["checkIns"], dict)
+
+    now = datetime.now(timezone.utc)
+    with application.extensions["marine_engine"].begin() as connection:
+        connection.execute(events_table.update().where(events_table.c.id == event["id"]).values(
+            starts_at=now - timedelta(minutes=1),
+            ends_at=now + timedelta(hours=2),
+            status="Open",
+        ))
+
+    joined = client.post(f"/events/{event['id']}/join", headers=headers)
+    assert joined.status_code == 200
+    checkin = client.post(
+        f"/events/{event['id']}/check-in",
+        headers=headers,
+        json={"lat": 2.746, "lng": 101.440},
+    )
+    assert checkin.status_code == 200
+    assert checkin.get_json()["checkedIn"] is True
+    assert checkin.get_json()["attendanceConfirmed"] is False
+
+    photo = upload(client, headers)
+    report = client.post(
+        "/reports",
+        headers=headers,
+        json={
+            "beachId": "morib",
+            "photoKey": photo["photoKey"],
+            "locationSource": "manual",
+            "quantities": {"Plastic": "Medium"},
+            "eventId": event["id"],
+        },
+    )
+    assert report.status_code == 201
+    assert report.get_json()["status"] == "Counted"
+
+    attended = client.get(f"/events/{event['id']}", headers=headers).get_json()
+    participant_id = session["user"]["participantId"]
+    assert attended["attendanceConfirmed"] is True
+    assert participant_id in attended["joinedBy"]
+    assert attended["checkIns"][participant_id] == "within_area"
+    assert participant_id in attended["attendanceBy"]
+
+    cleanup = client.post(
+        "/cleanup-actions",
+        headers=headers,
+        json={
+            "targetReportId": report.get_json()["id"],
+            "eventId": event["id"],
+            "remainingQuantities": {"Plastic": "Small"},
+            "handling": "Collected for disposal",
+            "idempotencyKey": "event-band-cleanup-result-test",
+        },
+    )
+    assert cleanup.status_code == 201
+    event_cleanups = client.get(f"/events/{event['id']}/cleanups").get_json()
+    assert [item["id"] for item in event_cleanups] == [cleanup.get_json()["id"]]
+    assert event_cleanups[0]["targetReportId"] == report.get_json()["id"]
+    assert "lat" not in event_cleanups[0] and "lng" not in event_cleanups[0]
+
+    with application.extensions["marine_engine"].connect() as connection:
+        membership = connection.execute(select(event_members_table).where(
+            event_members_table.c.event_id == event["id"],
+            event_members_table.c.participant_id == session["user"]["id"],
+        )).one()
+    assert membership.location_passed is True
+    assert membership.checked_in_at is not None
+
+    left = client.delete(f"/events/{event['id']}/join", headers=headers)
+    assert left.status_code == 200
+    assert participant_id not in left.get_json()["joinedBy"]
+    assert participant_id not in left.get_json()["checkIns"]
+
+
+def test_unlinked_counted_band_report_does_not_confirm_event_attendance(api):
+    application, client = api
+    event = _seed_morib_weekly_event(client)
+    _session, headers = signup(client)
+    now = datetime.now(timezone.utc)
+    with application.extensions["marine_engine"].begin() as connection:
+        connection.execute(events_table.update().where(events_table.c.id == event["id"]).values(
+            starts_at=now - timedelta(minutes=1),
+            ends_at=now + timedelta(hours=2),
+            status="Open",
+        ))
+
+    assert client.post(f"/events/{event['id']}/join", headers=headers).status_code == 200
+    checked_in = client.post(
+        f"/events/{event['id']}/check-in",
+        headers=headers,
+        json={"lat": 2.746, "lng": 101.440},
+    )
+    assert checked_in.status_code == 200
+
+    photo = upload(client, headers)
+    report = client.post(
+        "/reports",
+        headers=headers,
+        json=report_payload(photo["photoKey"], quantities={"Plastic": "Medium"}),
+    )
+    assert report.status_code == 201
+    assert report.get_json()["status"] == "Counted"
+    event_view = client.get(f"/events/{event['id']}", headers=headers).get_json()
+    assert event_view["attendanceConfirmed"] is False
+    assert event_view["attendanceBy"] == []
 
 
 def test_duplicate_requires_exact_same_categories_and_quantities(api):
