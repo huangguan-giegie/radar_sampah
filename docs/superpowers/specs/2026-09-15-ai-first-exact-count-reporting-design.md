@@ -1,3 +1,5 @@
+> **SUPERSEDED — do not implement this contract.** The final Iteration 2 quantity contract uses participant-facing quantity bands, not exact item counts. Use `docs/superpowers/specs/2026-09-15-iteration2-manual-remarks-design.md` and its matching implementation plan as the authoritative source. This file remains only as historical design context.
+
 # AI First Exact Count Reporting Design
 
 ## Goal
