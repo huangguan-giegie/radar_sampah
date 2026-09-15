@@ -198,6 +198,14 @@ export interface BeachDetail extends Omit<BeachSummary, 'speciesNames'> {
   ecologicalNote: string;
 }
 
+/** One public beach-gallery item. It deliberately carries no reporter identity,
+ * raw storage key, precise coordinates, or proximity reference. */
+export interface LitterGalleryEntry {
+  reportId: string;
+  reportedAt: string;
+  photoUrl: string;
+}
+
 /** One species row from the offline distribution model. The score is a ranking
  *  number, not a chance - the same warning as SpeciesLikelihood applies, so
  *  print it plain and never with a % sign. */
