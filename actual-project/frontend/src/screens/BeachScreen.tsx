@@ -35,6 +35,13 @@ import { MODEL_SPECIES_MEDIA } from '../speciesMedia';
 // severity colours. Reusing those would suggest that a row is "severe".
 const COMP_COLORS = ['#B8FF36', '#2C4A8C', '#5470A8', '#7A879B', '#98A4B5', '#CBD3E0'];
 
+type RuntimeCompositionSource = {
+  method?: 'yolo' | 'reported_quantity_estimate' | 'active_report_estimate';
+  createdAt?: string;
+  activeReportCount?: number;
+  windowDays?: number;
+};
+
 export default function BeachScreen() {
   const { beachId = '' } = useParams();
   const nav = useNavigate();
@@ -146,6 +153,8 @@ export default function BeachScreen() {
   const modelByScientificName = new Map(
     (modelResult?.predictions ?? []).map((prediction) => [prediction.scientificName, prediction]),
   );
+  const compositionSource = b.compositionSource as unknown as RuntimeCompositionSource | null;
+  const activeComposition = compositionSource?.method === 'active_report_estimate';
 
   return (
     <div className="screen scroll-y" style={{ zIndex: 20 }}>
@@ -302,14 +311,16 @@ export default function BeachScreen() {
         <div>
           <Label style={{ marginBottom: 12 }}>LITTER COMPOSITION</Label>
           <div style={{ fontSize: 12, lineHeight: 1.5, color: C.muted, margin: '-4px 0 12px' }}>
-            {b.compositionSource?.method === 'yolo'
-              ? 'Latest report photo · YOLO + backend percentages'
-              : 'Latest report · backend percentage estimate'}
+            {activeComposition
+              ? `Current unresolved litter · ${compositionSource?.activeReportCount ?? b.validReports} active ${reportWord(compositionSource?.activeReportCount ?? b.validReports)} · last ${compositionSource?.windowDays ?? 90} days`
+              : compositionSource?.method === 'yolo'
+                ? 'Latest report photo · YOLO + backend percentages'
+                : 'Latest report · backend percentage estimate'}
           </div>
-          {/* What the litter is made of. This comes from the single most recent
-              counted report, and that report's date is printed under the bars -
-              so the user knows they are reading one day's observation, not an
-              average over months. */}
+          {/* Current unresolved composition uses the same active Counted report
+              set as Beach Attention. Linked cleanups first reduce exact counts;
+              partial targets are re-banded and fully cleared targets disappear.
+              Legacy band-only reports remain compatible with the same estimate. */}
           {b.composition ? (
             <div style={{ background: C.white, border: `1px solid ${C.line}`, borderRadius: 24, padding: 20, display: 'flex', flexDirection: 'column', gap: 11 }}>
               {b.composition.map((c, i) => (
@@ -333,17 +344,19 @@ export default function BeachScreen() {
                 </div>
               ))}
               <div style={{ fontFamily: MONO, fontSize: 8.5, letterSpacing: '.1em', color: C.faint, marginTop: 4 }}>
-                {b.compositionSource
-                  ? `REPORT ${formatDate(b.compositionSource.createdAt).toUpperCase()} · ${b.compositionSource.method === 'yolo' ? 'YOLO + BACKEND' : 'BACKEND ESTIMATE'}`
-                  : 'BACKEND CALCULATED'}
+                {activeComposition
+                  ? 'ACTIVE COUNTED REPORTS · AFTER LINKED CLEANUPS'
+                  : compositionSource?.createdAt
+                    ? `REPORT ${formatDate(compositionSource.createdAt).toUpperCase()} · ${compositionSource.method === 'yolo' ? 'YOLO + BACKEND' : 'BACKEND ESTIMATE'}`
+                    : 'BACKEND CALCULATED'}
               </div>
             </div>
           ) : (
-            /* No counted report yet. A dashed empty box, not a chart of
+            /* No active unresolved report. A dashed empty box, not a chart of
                zeroes: an empty chart still looks like a measurement. */
             <div style={{ border: '1.5px dashed rgba(11,33,97,.18)', borderRadius: 24, padding: 22, textAlign: 'center' }}>
               <div style={{ fontSize: 13.5, fontWeight: 640, color: C.muted }}>
-                No counted report yet
+                No active unresolved litter report
               </div>
 
             </div>
