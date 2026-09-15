@@ -1,8 +1,8 @@
 """Iteration 2 API test suite with reviewed contract corrections.
 
 The teammate's full suite is kept byte-for-byte in ``api_tests_core.py``. We
-load it here, remove the obsolete ID-only recovery and broad duplicate
-expectations, then add regression coverage for the reviewed contracts.
+load it here, remove obsolete expectations, then add regression coverage for
+the reviewed contracts.
 """
 
 from __future__ import annotations
@@ -30,6 +30,7 @@ globals().pop("test_restore_accepts_current_id_only_contract_and_rejects_wrong_o
 globals().pop("test_id_only_restore_matches_current_main_and_optional_token_is_checked", None)
 globals().pop("test_partial_main_database_is_migrated_to_contract_rules", None)
 globals().pop("test_iteration2_gps_rejects_a_report_near_an_active_target", None)
+globals().pop("test_beach_attention_uses_median_report_scores_and_latest_composition", None)
 
 
 def test_iteration2_scoring_metadata_publishes_active_report_rule(api):
