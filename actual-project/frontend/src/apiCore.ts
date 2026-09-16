@@ -904,8 +904,14 @@ function deriveCategoryQuantity(q: QuantityByCategory): { category: LitterCatego
 export async function createReport(input: CreateReportInput): Promise<LitterReport> {
   if (USE_MOCK) {
     await delay(500);
+    // Same status and code as the backend's 422, so the review screen can tell
+    // this rule apart from a real failure in the demo as well.
     if (Object.values(input.quantities).every((band) => band === 'Small')) {
-      throw new Error('This report is below the active litter threshold because every confirmed category is Small.');
+      throw new ApiError(
+        'This report is below the active litter threshold because every confirmed category is Small.',
+        422,
+        'SMALL_ONLY_REPORT',
+      );
     }
     const beach = BEACHES.find((b) => b.id === input.beachId) || BEACHES[0];
     const createdAt = new Date().toISOString();

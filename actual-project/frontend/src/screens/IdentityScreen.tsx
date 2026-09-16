@@ -31,11 +31,13 @@ export default function IdentityScreen() {
   // the number on screen would no longer be the one they were given.
   const [newSession, setNewSession] = useState<{ participantId: string; token: string } | null>(null);
   const [copied, setCopied] = useState(false);
+  const [copiedId, setCopiedId] = useState(false);
   const [savedRecovery, setSavedRecovery] = useState(false);
 
   const recoveryKitText = newSession
     ? `Radar Sampah recovery details\nParticipant ID: ${newSession.participantId}\nRecovery token: ${newSession.token}\n\nKeep this file private. The token works like a password.`
     : '';
+  const canRestore = !busy && typedId.trim() !== '' && typedToken.trim() !== '';
 
   function downloadRecoveryKit() {
     if (!newSession) return;
@@ -106,71 +108,166 @@ export default function IdentityScreen() {
         <BackButton onClick={goBack} />
 
         <div>
+          {/* One headline for the whole flow, as in the prototype. Switching
+              between "get" and "restore", or being issued a number, changes
+              what is below it - not what the page is about. */}
           <div style={{ fontSize: 31, fontWeight: 640, letterSpacing: '-.8px' }}>
-            {newSession ? 'Save your recovery token' : mode === 'existing' ? 'Log in' : 'Join without sharing your name'}
+            Join in — no name needed
           </div>
-          <div style={{ fontSize: 14, color: C.muted, marginTop: 8, lineHeight: 1.5 }}>
-            {newSession
-              ? "You won't see this token again after leaving this screen."
-              : mode === 'existing'
+          {/* No subtitle once the number is issued: the token card says what
+              matters there, right next to the token. */}
+          {!newSession && (
+            <div style={{ fontSize: 14, color: C.muted, marginTop: 8, lineHeight: 1.5 }}>
+              {mode === 'existing'
                 ? 'Use your participant ID and recovery token.'
                 : 'No name, email or phone number required.'}
-          </div>
+            </div>
+          )}
         </div>
 
         {newSession ? (
-          // The number is issued: show it big, offer a one-tap copy, and press
-          // the user to save it. That warning is the honest price of having no
-          // password, and the Account page repeats it.
+          // The number is issued. Two cards, as in the prototype: the
+          // participant ID is how others see you, the recovery token is marked
+          // KEEP PRIVATE. The save checkbox is the honest price of having no
+          // password, and the Account page repeats the warning.
+          //
+          // How restore should work is still being decided with the backend
+          // (see docs/BACKEND_FOLLOWUPS_PROTOTYPE_ALIGNMENT.md), so nothing on
+          // this screen makes promises about what the ID can or cannot do.
           <>
-            <div style={{ background: C.white, border: `1px solid ${C.line}`, borderRadius: 24, overflow: 'hidden' }}>
-              <div style={{ padding: '14px 18px', borderBottom: `1px solid ${C.line}`, color: '#9C4237', fontFamily: MONO, fontSize: 10, fontWeight: 700, letterSpacing: '.14em' }}>
-                KEEP PRIVATE
+            <div style={{ background: C.navy, borderRadius: 24, padding: '18px 18px 20px', color: C.bg }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+                <div style={{ fontFamily: MONO, fontSize: 9.5, letterSpacing: '.14em', color: 'rgba(221,227,236,.62)' }}>
+                  YOUR PARTICIPANT ID
+                </div>
+                <button
+                  type="button"
+                  className="press"
+                  onClick={async () => {
+                    if (!navigator.clipboard) return;
+                    try {
+                      await navigator.clipboard.writeText(newSession.participantId);
+                      setCopiedId(true);
+                    } catch {
+                      setCopiedId(false);
+                    }
+                  }}
+                  style={{
+                    flex: 'none',
+                    padding: '6px 11px',
+                    borderRadius: 10,
+                    border: '1px solid rgba(221,227,236,.32)',
+                    color: C.bg,
+                    fontSize: 12.5,
+                    fontWeight: 620,
+                  }}
+                >
+                  {copiedId ? 'Copied' : 'Copy ID'}
+                </button>
               </div>
-              <div style={{ padding: 18 }}>
-                <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: '.12em', color: C.dim }}>PARTICIPANT ID</div>
-                <div style={{ fontFamily: MONO, fontSize: 34, fontWeight: 700, color: C.navy, marginTop: 5, userSelect: 'all' }}>
-                  {newSession.participantId}
-                </div>
-                <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: '.12em', color: C.dim, marginTop: 18 }}>RECOVERY TOKEN</div>
-                <div style={{ fontFamily: MONO, fontSize: 15, lineHeight: 1.65, color: C.ink2, marginTop: 5, wordBreak: 'break-word', userSelect: 'all' }}>
-                  {newSession.token}
-                </div>
-                <div style={{ marginTop: 14, fontSize: 12, lineHeight: 1.5, color: C.muted }}>
-                  Others see this profile as Volunteer {newSession.participantId}.
-                </div>
+              <div style={{ fontFamily: MONO, fontSize: 40, fontWeight: 700, color: C.lime, marginTop: 10, userSelect: 'all' }}>
+                {newSession.participantId}
+              </div>
+              <div style={{ marginTop: 6, fontSize: 12.5, lineHeight: 1.5, color: 'rgba(221,227,236,.78)' }}>
+                Others see you as Volunteer {newSession.participantId}.
               </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-              <GhostButton
-                onClick={async () => {
-                  if (!navigator.clipboard) return;
-                  try {
-                    await navigator.clipboard.writeText(recoveryKitText);
-                    setCopied(true);
-                    setSavedRecovery(true);
-                  } catch {
-                    setCopied(false);
-                  }
+            <div style={{ background: C.white, border: `1px solid ${C.line}`, borderRadius: 24, padding: 18 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+                <div style={{ fontSize: 16, fontWeight: 650, color: C.ink2 }}>Recovery token</div>
+                <span
+                  style={{
+                    flex: 'none',
+                    padding: '4px 9px',
+                    borderRadius: 999,
+                    background: 'rgba(156,66,55,.09)',
+                    color: C.red,
+                    fontFamily: MONO,
+                    fontSize: 9.5,
+                    fontWeight: 700,
+                    letterSpacing: '.14em',
+                  }}
+                >
+                  KEEP PRIVATE
+                </span>
+              </div>
+              {/* The prototype's "the only way back in" waits on the restore
+                  decision with the backend, so this line only promises what we
+                  can keep today. */}
+              <div style={{ fontSize: 13, lineHeight: 1.5, color: C.muted, marginTop: 5 }}>
+                You won't see this token again after leaving this screen.
+              </div>
+              <div
+                style={{
+                  marginTop: 14,
+                  padding: '14px 16px',
+                  borderRadius: 14,
+                  background: C.bg,
+                  border: `1px solid ${C.line2}`,
+                  fontFamily: MONO,
+                  fontSize: 16,
+                  fontWeight: 600,
+                  lineHeight: 1.5,
+                  letterSpacing: '.04em',
+                  color: C.ink2,
+                  wordBreak: 'break-word',
+                  userSelect: 'all',
                 }}
               >
-                {copied ? 'Copied' : 'Copy token'}
-              </GhostButton>
-              <GhostButton onClick={downloadRecoveryKit}>Download</GhostButton>
+                {newSession.token}
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 12 }}>
+                <GhostButton
+                  height={46}
+                  style={{ fontSize: 14 }}
+                  onClick={async () => {
+                    if (!navigator.clipboard) return;
+                    try {
+                      await navigator.clipboard.writeText(recoveryKitText);
+                      setCopied(true);
+                      setSavedRecovery(true);
+                    } catch {
+                      setCopied(false);
+                    }
+                  }}
+                >
+                  {copied ? 'Copied' : 'Copy token'}
+                </GhostButton>
+                <GhostButton height={46} style={{ fontSize: 14 }} onClick={downloadRecoveryKit}>Download</GhostButton>
+              </div>
+
+              <label style={{ display: 'flex', gap: 11, alignItems: 'center', marginTop: 14, color: C.ink2, fontSize: 13.5, fontWeight: 620, cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  checked={savedRecovery}
+                  onChange={(event) => setSavedRecovery(event.target.checked)}
+                  style={{ width: 20, height: 20, accentColor: C.navy }}
+                />
+                I have saved my recovery token
+              </label>
             </div>
 
-            <label style={{ display: 'flex', gap: 11, alignItems: 'center', padding: '13px 14px', borderRadius: 16, background: C.tint, color: C.ink2, fontSize: 13.5, fontWeight: 620 }}>
-              <input
-                type="checkbox"
-                checked={savedRecovery}
-                onChange={(event) => setSavedRecovery(event.target.checked)}
-                style={{ width: 20, height: 20, accentColor: C.navy }}
-              />
-              I have saved my recovery token
-            </label>
-
-            <PrimaryButton disabled={!savedRecovery} onClick={() => nav(next, { replace: true })}>Continue</PrimaryButton>
+            <PrimaryButton disabled={!savedRecovery} trailingArrow onClick={() => nav(next, { replace: true })}>
+              Continue
+            </PrimaryButton>
+            {/* For someone who tapped "Create" by mistake and already had a
+                profile. They are after the restore form, not this new token. */}
+            <TextButton
+              onClick={() => {
+                // The new profile is already signed in at this point. Say so, or
+                // someone backing out would think it had been thrown away.
+                if (!savedRecovery && !window.confirm('Leave without saving your recovery token? The new profile stays signed in until you sign out from Account.')) return;
+                setNewSession(null);
+                setCopied(false);
+                setCopiedId(false);
+                setSavedRecovery(false);
+                setMode('existing');
+              }}
+            >
+              I already have a token
+            </TextButton>
           </>
         ) : (
           // No number yet. A segmented control instead of two separate pages,
@@ -219,7 +316,7 @@ export default function IdentityScreen() {
                   fontWeight: mode === 'existing' ? 650 : 600,
                 }}
               >
-                Log in
+                Restore profile
               </button>
             </div>
 
@@ -228,7 +325,7 @@ export default function IdentityScreen() {
             {mode === 'new' ? (
               <>
                 <PrimaryButton onClick={getNewId} disabled={busy}>
-                  {busy ? 'Creating your ID…' : 'Create participant ID'}
+                  {busy ? 'Creating your profile…' : 'Create my profile'}
                 </PrimaryButton>
                 <TextButton onClick={() => setMode('existing')}>I already have a token</TextButton>
               </>
@@ -280,9 +377,13 @@ export default function IdentityScreen() {
                   />
                 </label>
 
-                <PrimaryButton type="submit" disabled={busy || !typedId.trim() || !typedToken.trim()}>
-                  {busy ? 'Checking…' : 'Log in'}
+                {/* Both fields stay required. The prototype restores from the
+                    token alone; that depends on a backend change that has not
+                    been agreed yet. */}
+                <PrimaryButton type="submit" trailingArrow={canRestore} disabled={!canRestore}>
+                  {busy ? 'Checking…' : 'Restore profile'}
                 </PrimaryButton>
+                <TextButton onClick={() => setMode('new')}>+ Create a new profile</TextButton>
 
               </form>
             )}

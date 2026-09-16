@@ -136,7 +136,7 @@ export default function AccountScreen() {
             () => setSheet(true),
           )}
           {link(
-            'Severity scoring method',
+            "How it's rated",
             'Weights, thresholds and limits',
             <BarChart size={16} />,
             () => nav('/method'),

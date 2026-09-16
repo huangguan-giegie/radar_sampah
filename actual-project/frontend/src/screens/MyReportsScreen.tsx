@@ -12,7 +12,7 @@ import { ErrorNote, Skeleton } from '../components/ui';
 import { C, MONO, formatDate } from '../theme';
 import { StatusBadge, type BadgeStatus } from '../components/ds';
 import { useApp } from '../AppContext';
-import { formatReportComposition } from '../flowRules';
+import { formatReportComposition, historicalPhotoUnavailable } from '../flowRules';
 import type { BeachSummary, LitterReport } from '../types';
 
 // Three tabs, not four. Duplicate and Incomplete both sit under "Excluded"
@@ -25,7 +25,7 @@ const TABS: Tab[] = ['All', 'Counted', 'Excluded'];
 export default function MyReportsScreen() {
   const nav = useNavigate();
   const [params, setParams] = useSearchParams();
-  const { reportsVersion } = useApp();
+  const { reportsVersion, patchDraft, resetDraft, setLastSavedReport } = useApp();
 
   // The tab lives in the URL, not in useState. That makes /reports?tab=Counted
   // a real link, which is how the tiles on the home and account pages jump
@@ -67,6 +67,34 @@ export default function MyReportsScreen() {
       url: beach ? beach.coverImageUrl : null,
       scene: beach ? beach.scene : 'linear-gradient(160deg,#4E9EC9,#1C4A85)',
     };
+  }
+
+
+  // Tapping a row goes straight to the correction screen, as the prototype
+  // does. An excluded report is then one tap from being fixed, not two - the
+  // reason is already printed on the row, so a details page in between only
+  // repeats it. The draft is filled the same way as "Edit this report" on the details page
+  // and "Correct report" on the saved page: resetDraft() first so two reports
+  // never blend, editingReportId to turn the submit into a PATCH, the old photo
+  // key so the picture need not be retaken, and coords left null because a
+  // position the user has not confirmed for this edit is not ours to keep.
+  function correctReport(report: LitterReport) {
+    resetDraft();
+    setLastSavedReport(null);
+    patchDraft({
+      editingReportId: report.id,
+      beachId: report.beachId,
+      beachName: report.beachName,
+      quantities: { ...report.quantities },
+      locationSource: report.locationSource ?? 'manual',
+      coords: null,
+      existingPhotoUrl: report.photoUrl ?? null,
+      existingPhotoKey: report.photoKey ?? null,
+      existingPhotoUnavailable: historicalPhotoUnavailable(report.photoUrl, report.photoKey),
+      editingStatus: report.status,
+      editingStatusNote: report.statusNote ?? null,
+    });
+    nav('/report/details');
   }
 
 
@@ -136,10 +164,17 @@ export default function MyReportsScreen() {
             <div style={{ width: 52, height: 52, borderRadius: 26, background: 'rgba(11,33,97,.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto' }}>
               <Camera size={22} color={C.dim} strokeWidth={1.7} />
             </div>
-            <div style={{ fontSize: 15, fontWeight: 650, marginTop: 12, color: C.ink2 }}>Your first one's waiting</div>
-            <div style={{ fontSize: 12, color: C.dim, marginTop: 5, lineHeight: 1.5 }}>
-              Next time you're at the coast, snap what you see.
+            {/* "No reports yet" only when that is literally true. On a filtered
+                tab the user may well have reports, just none of this kind, and
+                telling them they have none would undo the point of the page. */}
+            <div style={{ fontSize: 15, fontWeight: 650, marginTop: 12, color: C.ink2 }}>
+              {reports.length === 0 ? 'No reports yet' : `No ${tab.toLowerCase()} reports`}
             </div>
+            {reports.length === 0 && (
+              <div style={{ fontSize: 12, color: C.dim, marginTop: 5, lineHeight: 1.5 }}>
+                Next time you're at the coast, snap what you see.
+              </div>
+            )}
           </div>
         )}
 
@@ -149,11 +184,11 @@ export default function MyReportsScreen() {
               <button
                 key={r.id}
                 type="button"
-                onClick={() => nav(`/reports/${r.id}`)}
+                onClick={() => correctReport(r)}
                 // The visible row is three separate scraps of text, so a screen
                 // reader would run them together. This gives the button one
                 // clear name and says what pressing it does.
-                aria-label={`View report for ${r.beachName}`}
+                aria-label={`Correct report for ${r.beachName} (${r.status})`}
                 className="card-hover"
                 style={{
                   display: 'flex',
@@ -201,11 +236,16 @@ export default function MyReportsScreen() {
           })}
         </div>
 
-        <div style={{ marginTop: 4, padding: '13px 15px', borderRadius: 16, background: 'rgba(11,33,97,.03)', border: '1px solid rgba(11,33,97,.07)' }}>
-          <div style={{ fontSize: 12, lineHeight: 1.5, color: C.muted }}>
-            <b style={{ color: C.green }}>Counted</b> affects beach status. <b>Excluded</b> does not.
+        {/* The legend explains the badges, so it only earns its place once
+            there are badges to explain - not over a skeleton, an error panel or
+            a first-time empty state. */}
+        {!loading && !failed && reports.length > 0 && (
+          <div style={{ marginTop: 4, padding: '13px 15px', borderRadius: 16, background: 'rgba(11,33,97,.03)', border: '1px solid rgba(11,33,97,.07)' }}>
+            <div style={{ fontSize: 12, lineHeight: 1.5, color: C.muted }}>
+              <b style={{ color: C.green }}>Counted</b> affects beach status. <b>Excluded</b> does not.
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );

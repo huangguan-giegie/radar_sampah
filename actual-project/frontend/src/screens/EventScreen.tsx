@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Check, ChevronRight, Clock, Pin } from '../components/Icon';
+import { ArrowRight, Check, ChevronRight, Clock, Pin } from '../components/Icon';
 import { EmptyState, InfoChip, SectionLabel } from '../components/ds';
 import { BackButton, GhostButton, PrimaryButton, TextButton } from '../components/ui';
 import { useApp } from '../AppContext';
 import {
   formatEventDate,
+  formatEventTimeRange,
   getCleanupTarget,
   getCleanupEvent,
   eventCanRecordAttendance,
@@ -110,10 +111,14 @@ export default function EventScreen() {
     }
   }
 
+  // The prototype lists Confirm attendance before the report or cleanup. The
+  // backend refuses attendance until a linked report or cleanup exists
+  // (EVENT_EVIDENCE_REQUIRED), so the steps stay in the order that actually
+  // works - otherwise step 3 would promise a button that cannot appear yet.
   const participation = [
     { label: 'Join', done: joined },
     { label: 'Check in on the day', done: checkedIn },
-    { label: 'Add a report or cleanup', done: hasEvidence },
+    { label: 'Report or cleanup linked to this event', done: hasEvidence },
     { label: 'Confirm attendance', done: attendanceRecorded },
   ];
 
@@ -126,12 +131,12 @@ export default function EventScreen() {
           <SectionLabel size="sm" tone="dark">COMMUNITY CLEANUP</SectionLabel>
           <h1 style={{ margin: '8px 0 0', fontSize: 25, lineHeight: 1.08, letterSpacing: '-.6px' }}>{event.beachName}</h1>
           <div className="i2-event-meta">
-            <span><Clock color={C.lime} />{formatEventDate(event.date)} · {event.startsAt}–{event.endsAt}</span>
+            <span><Clock color={C.lime} />{formatEventDate(event.date)} · {formatEventTimeRange(event.startsAt, event.endsAt)}</span>
             <span><Pin color={C.lime} />{event.area}</span>
           </div>
           <div className="i2-stat-grid" style={{ marginTop: 15 }}>
             <div className="i2-stat"><strong>{event.participantCount}</strong><span>PARTICIPANTS</span></div>
-            <div className="i2-stat"><strong>{event.attendanceCount}</strong><span>RECORDED</span></div>
+            <div className="i2-stat"><strong>{event.attendanceCount}</strong><span>RECORDED ATTENDANCE</span></div>
             <div className="i2-stat"><strong style={{ fontSize: 15 }}>{event.status}</strong><span>STATUS</span></div>
           </div>
         </div>
@@ -188,7 +193,7 @@ export default function EventScreen() {
             </div>
             <InfoChip>{event.cleanupIds.length} cleanups</InfoChip>
           </div>
-          <GhostButton onClick={() => nav(`/beach/${event.beachId}`)} style={{ marginTop: 12 }}>View beach</GhostButton>
+          <GhostButton onClick={() => nav(`/beach/${event.beachId}`)} style={{ marginTop: 12 }}>View beach data <ArrowRight color={C.navy} /></GhostButton>
         </div>
 
         <div className="i2-card">

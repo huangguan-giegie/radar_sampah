@@ -14,6 +14,21 @@ import { useNavigate } from 'react-router-dom';
 import { C, MONO, NOISE } from '../theme';
 import { Pin } from '../components/Icon';
 
+// Morib Beach at dusk, the walk the headline is talking about. Like the photo
+// on Home it is one of the four beaches in this app and ships with the app, so
+// opening it sends nothing to a photo site. The file was only resized.
+//
+// CC BY-SA 4.0 requires credit, shown under the buttons. The author has no
+// Commons user page, so the name is plain text and the link goes to the file.
+const WELCOME_PHOTO = {
+  src: '/home/morib-beach-dusk.jpg',
+  place: 'Morib Beach',
+  author: 'Ajayrb135',
+  sourceUrl: 'https://commons.wikimedia.org/wiki/File:Morib_Beach.jpg',
+  license: 'CC BY-SA 4.0',
+  licenseUrl: 'https://creativecommons.org/licenses/by-sa/4.0/',
+};
+
 export default function WelcomeScreen() {
   const nav = useNavigate();
 
@@ -22,16 +37,33 @@ export default function WelcomeScreen() {
       className="screen"
       style={{
         zIndex: 50,
-        background:
-          'linear-gradient(172deg,#7FC4DE 0%,#4E9EC936 30%,transparent 60%),radial-gradient(110% 55% at 72% 20%,rgba(221,227,236,.35),transparent 58%),linear-gradient(180deg,#8FD0E8 0%,#4E9EC9 34%,#2E6EA8 52%,#1C4A85 76%,#102E5C 100%)',
+        // The old sky gradient stays underneath as the colour shown while the
+        // photo loads, or if it never does - the text is readable on both.
+        background: 'linear-gradient(180deg,#4E6FA8 0%,#2E4F86 45%,#102E5C 100%)',
       }}
-      /* Three stacked layers make the background: a horizon line, a grain
-         texture, then a dark wash at the bottom. The wash is not decoration -
-         it is what keeps the white text readable over a light sky. */
+      /* Three layers over the photo: a light grain, a dark band at the top for
+         the place label, and a dark wash at the bottom. The wash is not
+         decoration - it is what keeps the white headline readable over sand. */
     >
-      <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg,transparent 42%,rgba(221,227,236,.22) 47%,rgba(156,174,168,.12) 51%,transparent 60%)' }} />
-      <div style={{ position: 'absolute', inset: 0, opacity: 0.35, backgroundImage: NOISE }} />
-      <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg,rgba(9,24,52,.28) 0%,transparent 26%,transparent 55%,rgba(7,20,44,.82) 100%)' }} />
+      <img
+        src={WELCOME_PHOTO.src}
+        alt=""
+        aria-hidden="true"
+        draggable={false}
+        fetchPriority="high"
+        style={{
+          position: 'absolute',
+          inset: 0,
+          width: '100%',
+          height: '100%',
+          objectFit: 'cover',
+          // Right of centre, so a narrow phone still gets the tree line and
+          // the lamps along the path, not only sky and sand.
+          objectPosition: '56% center',
+        }}
+      />
+      <div style={{ position: 'absolute', inset: 0, opacity: 0.2, backgroundImage: NOISE }} />
+      <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg,rgba(7,20,44,.5) 0%,transparent 22%,transparent 40%,rgba(7,20,44,.72) 66%,rgba(7,20,44,.92) 100%)' }} />
 
       <div
         style={{
@@ -44,7 +76,7 @@ export default function WelcomeScreen() {
           fontFamily: MONO,
           fontSize: 9,
           letterSpacing: '.2em',
-          color: 'rgba(9,26,64,.8)',
+          color: 'rgba(232,238,245,.86)',
         }}
       >
         <i style={{ width: 6, height: 6, borderRadius: 3, background: C.lime, display: 'block' }} />
@@ -74,7 +106,7 @@ export default function WelcomeScreen() {
           can count for something.
         </div>
         <div style={{ fontSize: 14.5, lineHeight: 1.55, color: 'rgba(232,238,245,.82)', maxWidth: 310 }}>
-          Four Selangor beaches, mapped by volunteers like you. Marine life next door, on the same map.
+          Four Selangor beaches, mapped by volunteers like you.
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 8 }}>
           <button
@@ -120,6 +152,18 @@ export default function WelcomeScreen() {
           </button>
           <div style={{ textAlign: 'center', fontSize: 12, color: 'rgba(221,227,236,.7)', lineHeight: 1.5 }}>
             You'll only need an ID when you add something.
+          </div>
+          {/* Same credit format as Home and the species cards. */}
+          <div style={{ textAlign: 'center', fontSize: 9.5, color: 'rgba(221,227,236,.55)', lineHeight: 1.5 }}>
+            Photo:{' '}
+            <a href={WELCOME_PHOTO.sourceUrl} target="_blank" rel="noopener noreferrer" style={{ color: 'inherit', textDecoration: 'underline' }}>
+              {WELCOME_PHOTO.place}
+            </a>{' '}
+            by {WELCOME_PHOTO.author} ·{' '}
+            <a href={WELCOME_PHOTO.licenseUrl} target="_blank" rel="noopener noreferrer" style={{ color: 'inherit', textDecoration: 'underline' }}>
+              {WELCOME_PHOTO.license}
+            </a>{' '}
+            <span style={{ whiteSpace: 'nowrap' }}>· Wikimedia Commons</span>
           </div>
         </div>
       </div>

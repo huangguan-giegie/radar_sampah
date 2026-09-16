@@ -1,4 +1,5 @@
-// The opening screen: the logo, then straight on to /welcome.
+// The opening screen: the logo, then on to the Background intro, which says
+// why the app exists before the welcome screen asks anything of the visitor.
 //
 // It is a screen, not a loading screen. Nothing is being fetched here. It
 // exists so the app opens with its name and its purpose instead of dropping a
@@ -22,7 +23,7 @@ export default function SplashScreen() {
   const nav = useNavigate();
 
   useEffect(() => {
-    const t = window.setTimeout(() => nav('/welcome', { replace: true }), 2600);
+    const t = window.setTimeout(() => nav('/background/intro', { replace: true }), 2600);
     // Clearing the timer on unmount matters: if the user taps through first,
     // this would otherwise fire later and yank them off whatever page they had
     // reached by then.
@@ -33,10 +34,10 @@ export default function SplashScreen() {
     // The whole screen is a <button>, not a <div> with onClick. That gives
     // us keyboard focus and Enter for free, so a returning user does not have
     // to sit through the animation. replace: true keeps the splash out of the
-    // history, or Back from /welcome would land on it again and again.
+    // history, or Back from the next page would land on it again and again.
     <button
       type="button"
-      onClick={() => nav('/welcome', { replace: true })}
+      onClick={() => nav('/background/intro', { replace: true })}
       className="screen"
       style={{
         zIndex: 60,

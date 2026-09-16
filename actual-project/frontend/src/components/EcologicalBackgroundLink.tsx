@@ -1,7 +1,11 @@
 import { C } from '../theme';
+import { OWID_MALAYSIA_URL } from '../oceanPlastic';
 
-export const ECOLOGICAL_BACKGROUND_URL =
-  'https://ourworldindata.org/grapher/share-of-global-plastic-waste-emitted-to-the-ocean?country=PAK';
+// The one "Learn more" link out to the ocean-plastic source, used on every
+// beach page. It opens the Our World in Data chart with Malaysia highlighted,
+// because Malaysia is the country this app is about. (An earlier copy pointed
+// at Pakistan; that came from a stale prototype frame, not a decision.)
+export const ECOLOGICAL_BACKGROUND_URL = OWID_MALAYSIA_URL;
 
 export function EcologicalBackgroundLink() {
   return (
@@ -19,7 +23,7 @@ export function EcologicalBackgroundLink() {
         textUnderlineOffset: 3,
       }}
     >
-      Learn more
+      Learn more ↗
     </a>
   );
 }

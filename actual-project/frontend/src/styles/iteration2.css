@@ -420,3 +420,12 @@
   .i2-event-card { grid-template-columns: 50px minmax(0, 1fr) auto; }
   .i2-share-grid { grid-template-columns: 1fr; }
 }
+
+/* Background map: the continents are invisible tap targets over the chart
+   image. On hover or keyboard focus the target shows a soft outline, so a
+   pointer or Tab user can see which region they are about to open. */
+.bg-region:hover,
+.bg-region:focus-visible {
+  background: rgba(184, 255, 54, 0.18) !important;
+  box-shadow: inset 0 0 0 1.5px rgba(11, 33, 97, 0.55);
+}

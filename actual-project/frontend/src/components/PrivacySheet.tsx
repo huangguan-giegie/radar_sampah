@@ -2,22 +2,22 @@ import { C } from '../theme';
 import { ShieldCheck } from './Icon';
 import { GhostButton } from './ui';
 
-// The three things exact GPS is used for. All three are true and all three are
-// listed - including duplicate detection, which is the one a user would least
-// expect. A privacy explanation that leaves out the awkward use is worse than
-// none, because it is the one they would object to if they found out later.
+// The two things GPS is used for, in the prototype's words. The second one is
+// the duplicate check - a report with the same category and band within 10
+// metres - which is the use a user would least expect. It stays on the list:
+// a privacy explanation that leaves out the awkward use is worse than none,
+// because it is the one they would object to if they found out later.
 const POINTS = [
   'Suggest the correct beach',
-  'Assign the report to a supported beach',
-  'Detect duplicate reports',
+  'Check nearby category and band matches',
 ];
 
 /**
  * The sheet behind "Why do we need this?".
  *
  * It appears where the question is asked, not in a policy page nobody opens.
- * It says what exact coordinates are used FOR, and what other people can see -
- * which is only ever the beach or a broad area.
+ * It says what GPS is used FOR, that it is thrown away after the check, and
+ * what other people can see - which is only ever the beach.
  */
 export function PrivacySheet({ onClose }: { onClose: () => void }) {
   return (
@@ -84,7 +84,7 @@ export function PrivacySheet({ onClose }: { onClose: () => void }) {
           </div>
         </div>
         <div style={{ fontSize: 13, color: C.muted, margin: '14px 0 10px', lineHeight: 1.5 }}>
-          Exact GPS is used privately to:
+          GPS is used temporarily to:
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
           {POINTS.map((p) => (
@@ -105,12 +105,10 @@ export function PrivacySheet({ onClose }: { onClose: () => void }) {
             lineHeight: 1.55,
           }}
         >
-          {/* The strongest claim on the sheet, so it gets the dark box. It is
-              also enforced in code: coordinates are rounded in GpsScreen and
-              are never returned by any public endpoint. */}
-          Other users only ever see the <b style={{ color: C.bg }}>beach or broad area</b>.
-          <br />
-          Exact litter coordinates never appear on the public map.
+          {/* The strongest claim on the sheet, so it gets the dark box. The API
+              turns the fix into a private proximity reference for the check
+              and no public endpoint returns coordinates, only the beach. */}
+          GPS is used for the check, then discarded. Others see only the beach.
         </div>
         <GhostButton onClick={onClose} height={52} style={{ marginTop: 14, borderRadius: 16, fontSize: 14.5, fontWeight: 640 }}>
           Got it

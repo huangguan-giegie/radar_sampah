@@ -7,13 +7,13 @@
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { createReport, getBeaches, getMyReports, photoPreviewUrl, updateReport } from '../api';
-import { ArrowRight, Info, Shield } from '../components/Icon';
+import { ArrowRight, Check, Info, Shield } from '../components/Icon';
 import { BackButton, ErrorNote, PrimaryButton, StepBadge, TextButton } from '../components/ui';
 import { C } from '../theme';
 import { Alert, InfoChip, OverlayChip, StatusBadge } from '../components/ds';
 import { useApp } from '../AppContext';
 import type { BeachSummary, LitterCategory, LitterReport, QuantityBand } from '../types';
-import { backFromReview, buildReportSubmission, findExactDuplicateReport, finishReportSubmission } from '../flowRules';
+import { backFromReview, buildReportSubmission, findExactDuplicateReport, finishReportSubmission, isSmallOnlyRejection } from '../flowRules';
 import { linkEventReportData } from '../iteration2Api';
 
 export default function ReviewScreen() {
@@ -26,6 +26,10 @@ export default function ReviewScreen() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [duplicateMatch, setDuplicateMatch] = useState<LitterReport | null>(null);
+  // Set when the server turned the report away because every category is
+  // Small. That is the scope rule working, not a failure, so the page becomes
+  // a calm "not recorded" outcome instead of showing a red error.
+  const [smallOnly, setSmallOnly] = useState(false);
 
   useEffect(() => {
     getBeaches()
@@ -93,6 +97,10 @@ export default function ReviewScreen() {
       bumpReports();
       finishReportSubmission(nav);
     } catch (err) {
+      if (isSmallOnlyRejection(err)) {
+        setSmallOnly(true);
+        return;
+      }
       setError(err instanceof Error ? err.message : 'Could not save this report.');
       showToast('Save failed');
     } finally {
@@ -155,6 +163,15 @@ export default function ReviewScreen() {
     </button>
   );
 
+  // A quiet green line for an outcome the user chose or a rule that applied -
+  // neither is an error, so neither gets the red treatment.
+  const greenNote = (text: string) => (
+    <div role="status" style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '11px 14px', borderRadius: 14, background: C.greenBg, border: '1px solid rgba(23,122,62,.22)', color: C.green, fontSize: 12.5, fontWeight: 650 }}>
+      <Check color={C.green} size={13} />
+      {text}
+    </div>
+  );
+
   return (
     <div className="screen scroll-y" style={{ zIndex: 26 }}>
       <div
@@ -163,11 +180,13 @@ export default function ReviewScreen() {
       >
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <BackButton onClick={() => backToDetails()} />
-          <StepBadge>STEP 3 OF 3 · REVIEW</StepBadge>
+          <StepBadge>STEP 4 OF 4 · REVIEW</StepBadge>
         </div>
 
         <div>
-          <div style={{ fontSize: 29, fontWeight: 640, letterSpacing: '-.7px' }}>Almost there</div>
+          <div style={{ fontSize: 29, fontWeight: 640, letterSpacing: '-.7px' }}>
+            {smallOnly ? 'Small — not recorded' : 'Review your report'}
+          </div>
         </div>
 
         <div style={{ position: 'relative', height: 150, borderRadius: 24, overflow: 'hidden', background: '#A19C90' }}>
@@ -192,12 +211,6 @@ export default function ReviewScreen() {
 
         <div style={{ background: C.white, border: `1px solid ${C.line}`, borderRadius: 24, overflow: 'hidden' }}>
           {row('Beach', draft.beachName ?? beach?.name ?? 'Not selected', () => nav('/report/confirm', { replace: true }))}
-          {row(
-            'Entry',
-            draft.aiDecision === 'confirmed' ? 'AI suggestion confirmed' : 'Manual values confirmed',
-            undefined,
-            draft.aiDecision === 'confirmed' ? 'USER CONFIRMED' : 'MANUAL',
-          )}
           {(Object.keys(draft.quantities) as LitterCategory[]).length === 0
             ? row('Litter', 'Not selected', () => backToDetails())
             : (Object.entries(draft.quantities) as [LitterCategory, QuantityBand][]).map(([cat, q]) =>
@@ -208,7 +221,12 @@ export default function ReviewScreen() {
             : row('Location', 'Selected manually', undefined, 'NO GPS STORED')}
         </div>
 
-        {duplicateMatch && (
+        {/* Only an accepted AI suggestion gets this row. Manual values need no
+            label: the rows above already are what the user entered. */}
+        {draft.aiDecision === 'confirmed' && !smallOnly && greenNote('Confirmed by you')}
+        {smallOnly && greenNote('Small is excluded from Counted and not saved.')}
+
+        {duplicateMatch && !smallOnly && (
           <Alert title="You already filed this one" tone="caution">
             <div>Report {duplicateMatch.id} looks the same as this one. If it really is a new find, you can still submit it.</div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 10 }}>
@@ -220,26 +238,49 @@ export default function ReviewScreen() {
               ))}
             </div>
             <div style={{ marginTop: 9 }}>This is a warning only, not a rejection.</div>
+            {/* Below the chips rather than as the alert's side action, which
+                would squeeze the chips into a narrow column on a phone. */}
+            <button
+              type="button"
+              onClick={() => nav(`/reports/${duplicateMatch.id}`)}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 6, minHeight: 44, marginTop: 4, color: 'inherit', fontSize: 13, fontWeight: 760 }}
+            >
+              View existing report
+              <ArrowRight color="currentColor" />
+            </button>
           </Alert>
         )}
 
         {error && <ErrorNote title="Could not save" body={error} />}
 
-        <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start', background: C.tint, borderRadius: 16, padding: '13px 14px' }}>
-          <Info style={{ flex: 'none', marginTop: 1 }} />
-          <div style={{ fontSize: 12, lineHeight: 1.55, color: C.slate }}>
-            Duplicate or incomplete reports are excluded from the severity calculation — the same
-            rule for every beach.
+        {smallOnly ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
+            <PrimaryButton onClick={() => backToDetails()}>Change size band</PrimaryButton>
+            {/* The draft is left as it is, so the photo and beach are still
+                there if the user comes back to report something bigger. */}
+            <TextButton onClick={() => nav(`/beach/${draft.beachId}`)}>Back to beach</TextButton>
           </div>
-        </div>
+        ) : (
+          <>
+            <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start', background: C.tint, borderRadius: 16, padding: '13px 14px' }}>
+              <Info style={{ flex: 'none', marginTop: 1 }} />
+              <div style={{ fontSize: 12, lineHeight: 1.55, color: C.slate }}>
+                Duplicate or incomplete reports are excluded from the severity calculation — the same
+                rule for every beach.
+              </div>
+            </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
-          <PrimaryButton onClick={submit} disabled={busy}>
-            {busy ? 'Saving…' : duplicateMatch ? 'Submit anyway — new observation' : 'Submit Report'}
-            {!busy && <ArrowRight />}
-          </PrimaryButton>
-          <TextButton onClick={() => backToDetails()}>Back to details</TextButton>
-        </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
+              <PrimaryButton onClick={submit} disabled={busy}>
+                {busy ? 'Saving…' : duplicateMatch ? 'Submit anyway — new observation' : 'Submit Report'}
+                {!busy && <ArrowRight />}
+              </PrimaryButton>
+              <TextButton onClick={() => backToDetails()}>
+                {draft.aiDecision === 'confirmed' ? 'Change category or band' : 'Back to details'}
+              </TextButton>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

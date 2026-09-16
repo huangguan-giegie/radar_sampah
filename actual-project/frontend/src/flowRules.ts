@@ -16,7 +16,11 @@ export function safeNextPath(value: string | null): string {
 
 export type ReportStep = 'photo' | 'location' | 'confirm' | 'details' | 'suggestions' | 'review';
 
-const STEP_ORDER: ReportStep[] = ['photo', 'location', 'confirm', 'suggestions', 'details', 'review'];
+// Iteration 2 numbers the flow 1 PHOTO, 2 DETAILS, 3 AI CHECK, 4 REVIEW, so the
+// details step comes before the AI check. With the AI check first, the
+// manual way out of it pointed at a step the guard would not open yet, and
+// the user was sent straight back to the AI check.
+const STEP_ORDER: ReportStep[] = ['photo', 'location', 'confirm', 'details', 'suggestions', 'review'];
 const STEP_PATH: Record<ReportStep, string> = {
   photo: '/report/photo',
   location: '/report/location',
@@ -87,14 +91,51 @@ export function reachableStep(draft: ReportDraft): ReportStep {
   if (!hasPhoto) return 'photo';
   if (!draft.beachId) return 'confirm';
 
-  // The user must explicitly accept the AI suggestion or confirm the manual
-  // bands before Review, even when a previous screen left partial quantities.
-  if (!draft.aiDecision) return 'suggestions';
+  // Details first: every picked category needs a band before the AI check.
+  if (!validBandState(draft.quantities)) return 'details';
 
-  if (!validBandState(draft.quantities)) {
-    return draft.aiModelState === null ? 'suggestions' : 'details';
-  }
+  // The user must explicitly accept the AI suggestion or keep their own bands
+  // before Review.
+  if (!draft.aiDecision) return 'suggestions';
   return 'review';
+}
+
+export type DetailsContinue =
+  | { to: '/report/suggestions' }
+  | { to: '/report/review'; aiDecision: 'confirmed' | 'manual' };
+
+/**
+ * Where Continue on the details step goes.
+ *
+ * The AI check runs once per photo. aiModelState is null until it has run, and
+ * a new photo resets it (AppContext.patchDraft), so a fresh photo is always
+ * checked. Once it has run, Continue goes straight to Review and keeps any
+ * decision already made: values kept as manual stay manual after an edit.
+ * With no decision yet, bands the user reached from a ready suggestion count
+ * as a confirmed suggestion, and anything else as manual.
+ */
+export function continueFromDetails(draft: ReportDraft): DetailsContinue {
+  if (draft.aiModelState == null) return { to: '/report/suggestions' };
+  return {
+    to: '/report/review',
+    aiDecision: draft.aiDecision ?? (draft.aiModelState === 'ready' ? 'confirmed' : 'manual'),
+  };
+}
+
+/** The backend's code for a report whose every category is Small (422). */
+export const SMALL_ONLY_REPORT_CODE = 'SMALL_ONLY_REPORT';
+
+/**
+ * True when a failed save was the Small-only rule, not a fault. Small reports
+ * are not recorded by design, so the review screen shows a calm outcome with
+ * a way to change the band instead of a red "Could not save".
+ */
+export function isSmallOnlyRejection(error: unknown): boolean {
+  return Boolean(
+    error
+    && typeof error === 'object'
+    && (error as { code?: unknown }).code === SMALL_ONLY_REPORT_CODE,
+  );
 }
 
 function malaysiaLocalDay(value: string | Date): string {
@@ -233,7 +274,7 @@ export function reportOutcome(status: ReportStatus): ReportOutcome {
   if (status === 'Counted') {
     return {
       title: "Nice one — it's on the map",
-      badge: 'COUNTED · NOT A DUPLICATE',
+      badge: 'COUNTED',
       message: "Thanks for this. Your report passed the checks, so it now counts toward this beach's rating — that's one more piece of evidence for the coast.",
       tone: 'success',
     };

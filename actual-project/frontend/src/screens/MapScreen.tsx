@@ -12,8 +12,8 @@ import { useNavigate } from 'react-router-dom';
 import { getBeaches } from '../api';
 import { markerHtml } from '../components/BeachMarker';
 import { useLeafletMap } from '../components/useLeafletMap';
-import { ArrowRight, Check, Close, Info, WifiOff } from '../components/Icon';
-import { attentionStateFor, C, freshnessLabel, freshStyle, MONO, reportWord, severityLabel } from '../theme';
+import { ArrowRight, Check, ChevronRight, Close, Info, WifiOff } from '../components/Icon';
+import { attentionStateFor, C, freshnessLabel, freshStyle, lastReportedLabel, MONO, reportWord, severityLabel } from '../theme';
 import { GlassPanel, SeverityBadge } from '../components/ds';
 import { useApp } from '../AppContext';
 import type { BeachSummary, MapLayer } from '../types';
@@ -56,9 +56,9 @@ const LAYERS: MapLayer[] = ['litter', 'bio'];
 // The legend. A colour with no key is decoration, not information - without
 // this the user has no way to learn what orange means.
 //
-// The fourth label goes through severityLabel(), so the map says "VERY HIGH"
-// while the data still says 'Severe'. Hard-coding the word here is how a
-// legend ends up disagreeing with the pins it explains.
+// The fourth label goes through severityLabel(), the same helper the badges
+// use. Hard-coding the word here is how a legend ends up disagreeing with the
+// pins it explains.
 const LEGEND = [
   { label: 'LOW', color: '#7CA98B' },
   { label: 'MODERATE', color: '#D9A24B' },
@@ -66,8 +66,9 @@ const LEGEND = [
   { label: severityLabel('Severe').toUpperCase(), color: '#B84A3F' },
   // The grey pin was on the map with nothing in the legend to explain it, so
   // "no evidence yet" looked like a fifth, milder severity. Same grey as
-  // BeachMarker uses when severity is null - dashed there, dashed here.
-  { label: 'NO DATA', color: '#98A4B5', dashed: true },
+  // BeachMarker uses when severity is null - dashed there, dashed here. The
+  // words match the beach page's "Insufficient data", not a vaguer "no data".
+  { label: 'INSUFFICIENT DATA', color: '#98A4B5', dashed: true },
 ];
 
 export default function MapScreen() {
@@ -410,6 +411,7 @@ export default function MapScreen() {
             nav(`/beach/${selected.id}`, layer === 'bio' ? { state: { focus: 'species' } } : undefined)
           }
           onCleanup={() => nav(`/cleanup/${selected.id}`)}
+          onMethod={() => nav('/method')}
           onJoin={(eventId) => nav(`/events/${eventId}`)}
         />
       )}
@@ -432,6 +434,7 @@ function SelectedCard({
   onClose,
   onOpen,
   onCleanup,
+  onMethod,
   onJoin,
 }: {
   beach: BeachSummary;
@@ -441,6 +444,7 @@ function SelectedCard({
   onClose: () => void;
   onOpen: () => void;
   onCleanup: () => void;
+  onMethod: () => void;
   onJoin: (eventId: string) => void;
 }) {
   const fs = freshStyle(beach.freshnessKind);
@@ -448,6 +452,9 @@ function SelectedCard({
   // below. One source, so the card cannot show a status band in one place and
   // say "Insufficient data" in another.
   const attention = attentionStateFor(beach.severity, beach.insufficientData, beach.validReports);
+  const cleanupCategories = cleanupTarget
+    ? Object.values(cleanupTarget.remainingBands).filter(Boolean).length
+    : 0;
   // A small label/value row. Written once as a function so the labels line up
   // in one column - a fixed 78px label width, rather than each row guessing.
   const metaRow = (k: string, v: string, color: string = C.ink2, weight = 400) => (
@@ -530,12 +537,45 @@ function SelectedCard({
               </div>
             </div>
 
+            {/* The date in words, under the chips. The prototype swaps this
+                line for the cleanup row when a beach has one, so it only
+                shows when there is no cleanup to add. Same helper as the pins,
+                so "NEVER REPORTED" is never printed as "0 DAYS AGO". */}
+            {!cleanupTarget && (
+              <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '.1em', color: C.dim, marginTop: 10 }}>
+                {beach.lastReportedAt ? `LAST REPORTED ${lastReportedLabel(beach.lastReportedAt)}` : lastReportedLabel(null)}
+              </div>
+            )}
+
             {cleanupTarget && (
               <button type="button" onClick={onCleanup} className="press" style={{ width: '100%', marginTop: 12, padding: '11px 13px', borderRadius: 14, background: 'rgba(184,255,54,.18)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, textAlign: 'left' }}>
-                <span style={{ minWidth: 0 }}><strong style={{ display: 'block', fontSize: 12.5, lineHeight: 1.35, color: C.ink2 }}>Add a Cleanup</strong><span style={{ display: 'block', marginTop: 3, fontSize: 10.5, lineHeight: 1.4, color: C.muted }}>Estimated bands are ready to confirm</span></span>
+                <span style={{ minWidth: 0 }}>
+                  <strong style={{ display: 'block', fontSize: 12.5, lineHeight: 1.35, color: C.ink2 }}>Add a Cleanup</strong>
+                  {/* Counted from the cleanup target's own bands, so the number
+                      is what the cleanup screen will actually ask about. No
+                      categories, no sub-line - never "0 reported categories". */}
+                  {cleanupCategories > 0 && (
+                    <span style={{ display: 'block', marginTop: 3, fontSize: 10.5, lineHeight: 1.4, color: C.muted }}>
+                      {cleanupCategories} reported litter {cleanupCategories === 1 ? 'category' : 'categories'}
+                    </span>
+                  )}
+                </span>
                 <ArrowRight size={13} />
               </button>
             )}
+
+            {/* The way from a band to the rule behind it, without opening the
+                beach first. A small link, because View Beach is still the
+                main thing to do from this card. */}
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 8 }}>
+              <button
+                type="button"
+                onClick={onMethod}
+                style={{ minHeight: 32, display: 'flex', alignItems: 'center', gap: 4, padding: '0 2px', fontSize: 12, fontWeight: 650, color: C.navy }}
+              >
+                How it's rated <ChevronRight size={11} color={C.navy} strokeWidth={2.2} />
+              </button>
+            </div>
           </>
         ) : (
           <>
@@ -575,11 +615,11 @@ function SelectedCard({
 
             {beach.speciesNames?.length > 0 && (
               <div style={{ fontFamily: MONO, fontSize: 8.5, letterSpacing: '.1em', color: C.dim, marginTop: 10, lineHeight: 1.5 }}>
-                {/* The beach page treats this line as required on every
-                    species card. These are the same names, so the qualifier
+                {/* The beach page carries a habitat-context caveat under its
+                    species cards. These are the same names, so a qualifier
                     comes with them. Dropping it here because space is tight
                     would turn "context" into "we saw these animals". */}
-                CONTEXT ONLY · NOT PROOF OF CURRENT PRESENCE
+                MAY NOT BE PRESENT NOW
               </div>
             )}
           </>

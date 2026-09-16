@@ -16,11 +16,26 @@ import { useApp } from '../AppContext';
 import type { BeachSummary, ReportCounts } from '../types';
 import { hasDraftProgress, orderByNeed, resumePath } from '../flowRules';
 
+// The photo behind "Which beach needs you?" is Pantai Morib, one of the four
+// beaches in this app, at low tide - mudflat, casuarinas and all. A postcard
+// beach would promise a coast volunteers will not find, and would make the
+// question on top of it read as rhetorical.
+//
+// It ships with the app instead of loading from a photo site, the same as the
+// species photos: nothing about a visitor is sent to a third party just for
+// opening Home, and the card still has its picture offline. The original was
+// cropped to leave out two children playing on the sand.
+//
+// The licence is CC0, which asks for no credit. It is credited anyway, and the
+// credit travels with the file so it cannot be separated from the image.
 const HOME_BEACH_PHOTO = {
-  src: 'https://images.unsplash.com/photo-1542132232-f7c389572a90?auto=format&fit=crop&q=86&w=1600',
-  page: 'https://unsplash.com/photos/a-sandy-beach-with-palm-trees-and-a-cloudy-sky-zRKCciEFuL8?utm_source=radar_sampah&utm_medium=referral',
-  photographer: 'Engin Akyurt',
-  photographerUrl: 'https://unsplash.com/@enginakyurt?utm_source=radar_sampah&utm_medium=referral',
+  src: '/home/pantai-morib.jpg',
+  place: 'Pantai Morib',
+  author: 'Wiki Farazi',
+  authorUrl: 'https://commons.wikimedia.org/wiki/User:Wiki_Farazi',
+  sourceUrl: 'https://commons.wikimedia.org/wiki/File:Morib_New_Beach_1.jpg',
+  license: 'CC0 1.0',
+  licenseUrl: 'https://creativecommons.org/publicdomain/zero/1.0/',
 };
 
 // Morning / afternoon / evening, from the device clock. The date is a
@@ -89,9 +104,10 @@ function BeachRow({ b, last, onClick }: { b: BeachSummary; last: boolean; onClic
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontSize: 14, fontWeight: 620 }}>{b.name}</div>
         {/* reportWord picks report/reports, so a beach with one report does
-            not read "1 active reports". */}
+            not read "1 counted reports". "Counted" is the word every other
+            screen uses for the reports that go into a band. */}
         <div style={{ fontSize: 11.5, color: C.dim, marginTop: 3 }}>
-          {b.validReports} active {reportWord(b.validReports)} · {lastReportedLabel(b.lastReportedAt).toLowerCase()}
+          {b.validReports} counted {reportWord(b.validReports)} · {lastReportedLabel(b.lastReportedAt).toLowerCase()}
         </div>
       </div>
       <SeverityBadge band={attention.hasBand ? b.severity : null} label={attention.pageLabel} block />
@@ -251,7 +267,7 @@ export default function HomeScreen() {
               width: '100%',
               height: '100%',
               objectFit: 'cover',
-              objectPosition: 'center 56%',
+              objectPosition: 'center 62%',
             }}
           />
           <div style={{ position: 'absolute', inset: 0, opacity: 0.3, backgroundImage: NOISE }} />
@@ -296,15 +312,21 @@ export default function HomeScreen() {
           </div>
         </button>
 
-        <div style={{ marginTop: 7, paddingInline: 4, fontSize: 9.5, color: C.dim, textAlign: 'right' }}>
-          Photo by{' '}
-          <a href={HOME_BEACH_PHOTO.photographerUrl} target="_blank" rel="noreferrer" style={{ color: 'inherit', textDecoration: 'underline' }}>
-            {HOME_BEACH_PHOTO.photographer}
+        {/* Same credit format as the species cards: Photo, who, licence. */}
+        <div style={{ marginTop: 7, paddingInline: 4, fontSize: 9.5, color: C.dim, textAlign: 'right', lineHeight: 1.5 }}>
+          Photo:{' '}
+          <a href={HOME_BEACH_PHOTO.sourceUrl} target="_blank" rel="noopener noreferrer" style={{ color: 'inherit', textDecoration: 'underline' }}>
+            {HOME_BEACH_PHOTO.place}
           </a>{' '}
-          on{' '}
-          <a href={HOME_BEACH_PHOTO.page} target="_blank" rel="noreferrer" style={{ color: 'inherit', textDecoration: 'underline' }}>
-            Unsplash
-          </a>
+          by{' '}
+          <a href={HOME_BEACH_PHOTO.authorUrl} target="_blank" rel="noopener noreferrer" style={{ color: 'inherit', textDecoration: 'underline' }}>
+            {HOME_BEACH_PHOTO.author}
+          </a>{' '}
+          ·{' '}
+          <a href={HOME_BEACH_PHOTO.licenseUrl} target="_blank" rel="noopener noreferrer" style={{ color: 'inherit', textDecoration: 'underline' }}>
+            {HOME_BEACH_PHOTO.license}
+          </a>{' '}
+          · Wikimedia Commons
         </div>
 
         <div style={{ display: 'flex', gap: 12, marginTop: 10 }}>
@@ -374,10 +396,10 @@ export default function HomeScreen() {
         </div>
 
         <Label style={{ margin: '26px 0 12px' }}>
-          {/* The list is ordered, so the header says so. UF-17: participants
-              could not tell what the order meant and asked whether it was
-              distance or random. */}
-          {beachesFailed ? 'EVIDENCE STATUS' : `EVIDENCE STATUS · NEEDS ATTENTION FIRST`}
+          {/* "BEACHES" as in the prototype. The ordering note stays: UF-17
+              found participants could not tell what the order meant and asked
+              whether it was distance or random. */}
+          {beachesFailed ? 'BEACHES' : 'BEACHES · NEEDS ATTENTION FIRST'}
         </Label>
         {beachesFailed ? (
           <ErrorNote
@@ -428,6 +450,33 @@ export default function HomeScreen() {
           <div style={{ fontSize: 12, lineHeight: 1.5, color: C.muted, marginTop: 6 }}>
             Not enough or recent data means <b>unchecked</b>, not clean.
           </div>
+        </div>
+
+        {/* Background: the wider problem this app sits inside. It is the last
+            thing on Home on purpose - the beaches above are what a volunteer
+            came for; this is for the one who wants to know why they matter. */}
+        <div style={{ marginTop: 14, background: C.white, border: `1px solid ${C.line}`, borderRadius: 24, padding: 19 }}>
+          <div style={{ fontSize: 16.5, fontWeight: 600, letterSpacing: '-.2px', color: C.ink }}>Background</div>
+          <div style={{ fontSize: 11.5, lineHeight: 1.45, color: C.dim, marginTop: 8 }}>
+            Explore global data on the share of plastic waste entering the ocean. Our World in Data · 2019.
+          </div>
+          <button
+            type="button"
+            onClick={() => nav('/background')}
+            className="btn-primary press"
+            style={{
+              marginTop: 12,
+              width: '100%',
+              minHeight: 46,
+              borderRadius: 18,
+              background: C.navy,
+              color: C.bg,
+              fontSize: 15.5,
+              fontWeight: 600,
+            }}
+          >
+            Explore the background →
+          </button>
         </div>
       </div>
     </div>

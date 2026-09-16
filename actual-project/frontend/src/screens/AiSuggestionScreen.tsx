@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Check } from '../components/Icon';
-import { Alert, Callout, SectionLabel } from '../components/ds';
-import { BackButton, GhostButton, PrimaryButton, TextButton } from '../components/ui';
+import { photoPreviewUrl } from '../api';
+import { Check, Shield } from '../components/Icon';
+import { Alert, Callout, OverlayChip, SectionLabel } from '../components/ds';
+import { BackButton, GhostButton, PrimaryButton, StepBadge, TextButton } from '../components/ui';
 import { useApp } from '../AppContext';
 import { analyseReportPhoto, type AiSuggestion } from '../iteration2';
 import { C, MONO } from '../theme';
@@ -10,6 +11,20 @@ import type { LitterCategory, QuantityBand, QuantityByCategory } from '../types'
 
 const CATEGORIES: LitterCategory[] = ['Plastic', 'Fishing gear', 'Glass', 'Metal', 'Paper', 'Other'];
 const QUANTITIES: QuantityBand[] = ['Small', 'Medium', 'Large', 'Very Large'];
+
+// A green "kept" row. When the AI cannot help, the first worry is whether the
+// work so far is lost, so the fallback states answer that before anything else.
+function KeptRow({ children }: { children: string }) {
+  return (
+    <div
+      role="status"
+      style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '11px 14px', borderRadius: 14, background: C.greenBg, border: '1px solid rgba(23,122,62,.22)', color: C.green, fontSize: 12.5, fontWeight: 650 }}
+    >
+      <Check color={C.green} size={13} />
+      {children}
+    </div>
+  );
+}
 
 export default function AiSuggestionScreen() {
   const nav = useNavigate();
@@ -20,29 +35,61 @@ export default function AiSuggestionScreen() {
   const [loading, setLoading] = useState(true);
   const started = useRef(false);
 
-  useEffect(() => {
-    if (started.current) return;
-    started.current = true;
-    const photoKey = draft.photo?.photoKey ?? draft.existingPhotoKey ?? '';
-    const requestedState = params.get('ai');
-    const forcedState = requestedState === 'unreadable' ? 'unreadable' : requestedState === 'fail' ? 'unavailable' : null;
+  const photoKey = draft.photo?.photoKey ?? draft.existingPhotoKey ?? '';
+  const photoUrl =
+    draft.photo?.previewUrl || photoPreviewUrl(draft.photo?.photoKey) || draft.existingPhotoUrl;
+
+  function run(forcedState: 'unavailable' | 'unreadable' | null) {
+    setLoading(true);
+    setResult(null);
     analyseReportPhoto(photoKey, forcedState)
       .then((suggestion) => {
         setResult(suggestion);
         setEditable(suggestion.suggestions);
       })
       .finally(() => setLoading(false));
+  }
+
+  useEffect(() => {
+    if (started.current) return;
+    started.current = true;
+    // ?ai=unreadable and ?ai=fail force a fallback state for demos. They apply
+    // to the first check only, so "Try again" really asks the model again.
+    const requestedState = params.get('ai');
+    run(requestedState === 'unreadable' ? 'unreadable' : requestedState === 'fail' ? 'unavailable' : null);
   }, [draft.photo?.photoKey, draft.existingPhotoKey, params]);
+
+  const modelVersion = result?.modelVersion ?? null;
 
   function confirm() {
     if (Object.keys(editable).length === 0) return;
-    patchDraft({ quantities: editable, aiDecision: 'confirmed', aiModelVersion: result?.modelVersion ?? null });
+    patchDraft({ quantities: editable, aiDecision: 'confirmed', aiModelState: 'ready', aiModelVersion: modelVersion });
     nav('/report/review', { state: { from: 'suggestions' } });
   }
 
+  // Edit the suggestion on the details step. The suggested bands go with it,
+  // unless every category was removed here, in which case the user's own
+  // entries stay rather than being wiped.
+  function changeCategoryOrBand() {
+    patchDraft({
+      ...(Object.keys(editable).length > 0 ? { quantities: editable } : {}),
+      aiDecision: null,
+      aiModelState: 'ready',
+      aiModelVersion: modelVersion,
+    });
+    nav('/report/details', { replace: true });
+  }
+
   function keepManual() {
-    patchDraft({ aiDecision: 'manual', aiModelVersion: result?.modelVersion ?? null });
+    patchDraft({ aiDecision: 'manual', aiModelState: 'ready', aiModelVersion: modelVersion });
     nav('/report/review', { state: { from: 'suggestions' } });
+  }
+
+  // No usable suggestion. The details already entered stay; the user checks
+  // them on the details step, and Continue there goes on to Review as manual.
+  function continueManually(state: 'empty' | 'unavailable') {
+    patchDraft({ aiDecision: null, aiModelState: state, aiModelVersion: modelVersion });
+    nav('/report/details', { replace: true });
   }
 
   function toggle(category: LitterCategory) {
@@ -54,13 +101,29 @@ export default function AiSuggestionScreen() {
     });
   }
 
+  const ready = !loading && result?.modelState === 'ready';
+  const title = loading
+    ? 'Checking your photo…'
+    : result?.modelState === 'ready'
+      ? 'Check the AI suggestion'
+      : result?.modelState === 'unreadable'
+        ? 'We couldn’t read that photo.'
+        : result?.modelState === 'unavailable'
+          ? 'AI check unavailable'
+          : "We're not sure";
+
   return (
     <div className="screen scroll-y" style={{ zIndex: 27 }}>
       <div className="measure i2-page anim-fade-up" style={{ paddingBottom: 'calc(var(--safe-bottom) + 34px)' }}>
-        <BackButton onClick={() => nav('/report/details', { replace: true })} />
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+          <BackButton onClick={() => nav('/report/details', { replace: true })} />
+          {/* The suggestion itself is checked on the review step, so a ready
+              result is step 4; checking and every fallback are step 3. */}
+          <StepBadge>{ready ? 'STEP 4 OF 4 · REVIEW' : 'STEP 3 OF 4 · AI CHECK'}</StepBadge>
+        </div>
         <div>
           <SectionLabel size="sm">AI SUGGESTION · REVIEW BEFORE SAVING</SectionLabel>
-          <h1 className="i2-title" style={{ marginTop: 7 }}>{loading ? 'Checking your photo…' : result?.modelState === 'ready' ? 'Review the suggestion' : result?.modelState === 'unreadable' ? 'Photo unreadable' : "We're not sure"}</h1>
+          <h1 className="i2-title" style={{ marginTop: 7 }}>{title}</h1>
           <p className="i2-subtitle">You decide the final categories and amounts. A suggestion is never submitted on its own.</p>
         </div>
 
@@ -73,6 +136,21 @@ export default function AiSuggestionScreen() {
           </div>
         ) : result?.modelState === 'ready' ? (
           <>
+            {/* The analysed photo, so each suggestion can be checked against
+                it. No boxes or scores are drawn: the recognition response does
+                not include them. */}
+            <div style={{ position: 'relative', height: 150, borderRadius: 24, overflow: 'hidden', background: '#A19C90' }}>
+              {photoUrl && (
+                <img src={photoUrl} alt="Photo the AI checked" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+              )}
+              {draft.photo?.metadataStripped && (
+                <OverlayChip style={{ position: 'absolute', left: 12, bottom: 12 }}>
+                  <Shield size={10} />
+                  LOCATION METADATA REMOVED
+                </OverlayChip>
+              )}
+            </div>
+
             <Callout title="Suggestion ready" tone="reassurance" icon={<Check color={C.green} />}>
               Check each selected category and change any amount that does not match what you saw.
             </Callout>
@@ -101,23 +179,30 @@ export default function AiSuggestionScreen() {
 
             {Object.keys(editable).length === 0 && <Alert title="Choose at least one category" tone="caution">Or keep the manual values you entered on the previous page.</Alert>}
             <PrimaryButton onClick={confirm} disabled={Object.keys(editable).length === 0}>Confirm suggestions</PrimaryButton>
-            <GhostButton onClick={keepManual}>Keep my manual entries</GhostButton>
+            <GhostButton onClick={changeCategoryOrBand}>Change category or band</GhostButton>
+            <TextButton onClick={keepManual}>Keep my manual entries</TextButton>
           </>
         ) : result?.modelState === 'unreadable' ? (
           <>
-            <Alert title="Choose another photo" tone="caution">
-              We could not read this image. Nothing has been submitted.
-            </Alert>
+            <p style={{ margin: 0, color: C.muted, fontSize: 13, lineHeight: 1.55 }}>Nothing has been submitted.</p>
+            <KeptRow>{`${draft.beachName ?? 'Beach'} and draft kept`}</KeptRow>
             <PrimaryButton onClick={() => nav('/report/photo', { replace: true })}>Choose another photo</PrimaryButton>
-            <GhostButton onClick={() => nav('/report/details', { replace: true })}>Enter details manually</GhostButton>
+            <GhostButton onClick={() => continueManually('unavailable')}>Continue manually</GhostButton>
+          </>
+        ) : result?.modelState === 'unavailable' ? (
+          <>
+            <KeptRow>Photo, beach and draft kept</KeptRow>
+            <PrimaryButton onClick={() => continueManually('unavailable')}>Continue manually</PrimaryButton>
+            <GhostButton onClick={() => run(null)}>Try again</GhostButton>
           </>
         ) : (
           <>
-            <Alert title="Select the litter manually" tone="caution">
-              The photo could not be classified confidently. Your photo, beach and manual entries are still here.
-            </Alert>
-            <PrimaryButton onClick={keepManual}>Select manually</PrimaryButton>
-            <GhostButton onClick={() => nav('/report/details', { replace: true })}>Review manual entries</GhostButton>
+            <p style={{ margin: 0, color: C.muted, fontSize: 13, lineHeight: 1.55 }}>
+              The AI couldn't tell what litter this is.
+              <br />
+              Your photo, beach and manual entries are still here.
+            </p>
+            <PrimaryButton onClick={() => continueManually('empty')}>Select Manually</PrimaryButton>
           </>
         )}
 
