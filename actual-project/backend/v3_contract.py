@@ -48,63 +48,86 @@ def _beach(engine: Any, impl: Any, beach_id: str) -> dict[str, Any] | None:
     return next((item for item in impl.load_beaches(engine) if item["id"] == beach_id), None)
 
 
-def _event_payload(engine: Any, impl: Any, event: Any, viewer_id: str | None, attendance_table: Any) -> dict[str, Any]:
+def _event_payloads(engine: Any, impl: Any, events: list[Any], viewer_id: str | None, attendance_table: Any) -> list[dict[str, Any]]:
+    if not events:
+        return []
+    event_ids = [event.id for event in events]
     with engine.connect() as connection:
         members = connection.execute(
-            select(impl.event_members_table).where(impl.event_members_table.c.event_id == event.id).order_by(impl.event_members_table.c.joined_at)
+            select(impl.event_members_table).where(impl.event_members_table.c.event_id.in_(event_ids)).order_by(impl.event_members_table.c.joined_at)
         ).all()
         ids = {member.participant_id for member in members}
         users = connection.execute(select(impl.users_table.c.id, impl.users_table.c.participant_id).where(impl.users_table.c.id.in_(ids))).all() if ids else []
         numbers = {row.id: row.participant_id for row in users}
-        reports = connection.execute(select(impl.reports_table.c.id, impl.reports_table.c.reporter_id, impl.reports_table.c.created_at).where(
-            impl.reports_table.c.event_id == event.id, impl.reports_table.c.status == "Counted"
+        reports = connection.execute(select(impl.reports_table.c.id, impl.reports_table.c.event_id, impl.reports_table.c.reporter_id, impl.reports_table.c.created_at).where(
+            impl.reports_table.c.event_id.in_(event_ids), impl.reports_table.c.status == "Counted"
         )).all()
-        cleanups = connection.execute(select(impl.cleanup_actions_table.c.id, impl.cleanup_actions_table.c.participant_id, impl.cleanup_actions_table.c.created_at).where(
-            impl.cleanup_actions_table.c.event_id == event.id
+        cleanups = connection.execute(select(impl.cleanup_actions_table.c.id, impl.cleanup_actions_table.c.event_id, impl.cleanup_actions_table.c.participant_id, impl.cleanup_actions_table.c.created_at).where(
+            impl.cleanup_actions_table.c.event_id.in_(event_ids)
         )).all()
-        confirmed = connection.execute(select(attendance_table.c.participant_id).where(attendance_table.c.event_id == event.id)).all()
+        confirmed = connection.execute(select(attendance_table.c.event_id, attendance_table.c.participant_id).where(attendance_table.c.event_id.in_(event_ids))).all()
 
-    start, end = impl.utc_datetime(event.starts_at), impl.utc_datetime(event.ends_at)
-    evidence_ids: set[str] = set()
-    report_evidence: dict[str, list[str]] = {}
+    members_by_event: dict[str, list[Any]] = {}
+    for member in members:
+        members_by_event.setdefault(member.event_id, []).append(member)
+    confirmed_by_event: dict[str, list[str]] = {}
+    for row in confirmed:
+        confirmed_by_event.setdefault(row.event_id, []).append(row.participant_id)
+    evidence_ids_by_event: dict[str, set[str]] = {}
+    report_evidence_by_event: dict[str, dict[str, list[str]]] = {}
     for report in reports:
+        event = next(item for item in events if item.id == report.event_id)
+        start, end = impl.utc_datetime(event.starts_at), impl.utc_datetime(event.ends_at)
         if start <= impl.utc_datetime(report.created_at) <= end:
-            evidence_ids.add(report.reporter_id)
+            evidence_ids_by_event.setdefault(event.id, set()).add(report.reporter_id)
             number = numbers.get(report.reporter_id)
             if number:
-                report_evidence.setdefault(number, []).append(report.id)
+                report_evidence_by_event.setdefault(event.id, {}).setdefault(number, []).append(report.id)
+    cleanup_ids_by_event: dict[str, list[str]] = {}
     for cleanup in cleanups:
+        event = next(item for item in events if item.id == cleanup.event_id)
+        start, end = impl.utc_datetime(event.starts_at), impl.utc_datetime(event.ends_at)
+        cleanup_ids_by_event.setdefault(event.id, []).append(cleanup.id)
         if start <= impl.utc_datetime(cleanup.created_at) <= end:
-            evidence_ids.add(cleanup.participant_id)
+            evidence_ids_by_event.setdefault(event.id, set()).add(cleanup.participant_id)
 
-    beach = _beach(engine, impl, event.beach_id)
-    local_start = impl.utc_datetime(event.starts_at).astimezone(impl.KUALA_LUMPUR)
-    local_end = impl.utc_datetime(event.ends_at).astimezone(impl.KUALA_LUMPUR)
-    joined_by = [numbers[member.participant_id] for member in members if member.participant_id in numbers]
-    check_ins = {numbers[member.participant_id]: ("within_area" if member.location_passed else "idle") for member in members if member.participant_id in numbers}
-    evidence_by = sorted(numbers[participant_id] for participant_id in evidence_ids if participant_id in numbers)
-    attendance_by = [numbers[row.participant_id] for row in confirmed if row.participant_id in numbers]
-    return {
-        "id": event.id,
-        "beachId": event.beach_id,
-        "beachName": (beach or {}).get("name", event.beach_id),
-        "area": (beach or {}).get("area", event.beach_id),
-        "date": local_start.date().isoformat(),
-        "startsAt": local_start.strftime("%H:%M"),
-        "endsAt": local_end.strftime("%H:%M"),
-        "status": event.status,
-        "source": "weekly" if event.source == "scheduled" else "admin",
-        "participantCount": len(joined_by),
-        "attendanceCount": len(attendance_by),
-        "joinedBy": joined_by,
-        "checkIns": check_ins,
-        "attendanceBy": attendance_by,
-        "evidenceBy": evidence_by,
-        "reportEvidenceBy": report_evidence,
-        "cleanupIds": [cleanup.id for cleanup in cleanups],
-        "joined": bool(viewer_id and viewer_id in {member.participant_id for member in members}),
-        "checkedIn": bool(viewer_id and any(member.participant_id == viewer_id and member.location_passed for member in members)),
-    }
+    beaches = {item["id"]: item for item in impl.load_beaches(engine)}
+    payloads = []
+    for event in events:
+        event_members = members_by_event.get(event.id, [])
+        joined_by = [numbers[member.participant_id] for member in event_members if member.participant_id in numbers]
+        check_ins = {numbers[member.participant_id]: ("within_area" if member.location_passed else "idle") for member in event_members if member.participant_id in numbers}
+        evidence_by = sorted(numbers[participant_id] for participant_id in evidence_ids_by_event.get(event.id, set()) if participant_id in numbers)
+        attendance_by = [numbers[participant_id] for participant_id in confirmed_by_event.get(event.id, []) if participant_id in numbers]
+        local_start = impl.utc_datetime(event.starts_at).astimezone(impl.KUALA_LUMPUR)
+        local_end = impl.utc_datetime(event.ends_at).astimezone(impl.KUALA_LUMPUR)
+        beach = beaches.get(event.beach_id, {})
+        payloads.append({
+            "id": event.id,
+            "beachId": event.beach_id,
+            "beachName": beach.get("name", event.beach_id),
+            "area": beach.get("area", event.beach_id),
+            "date": local_start.date().isoformat(),
+            "startsAt": local_start.strftime("%H:%M"),
+            "endsAt": local_end.strftime("%H:%M"),
+            "status": event.status,
+            "source": "weekly" if event.source == "scheduled" else "admin",
+            "participantCount": len(joined_by),
+            "attendanceCount": len(attendance_by),
+            "joinedBy": joined_by,
+            "checkIns": check_ins,
+            "attendanceBy": attendance_by,
+            "evidenceBy": evidence_by,
+            "reportEvidenceBy": report_evidence_by_event.get(event.id, {}),
+            "cleanupIds": cleanup_ids_by_event.get(event.id, []),
+            "joined": bool(viewer_id and viewer_id in {member.participant_id for member in event_members}),
+            "checkedIn": bool(viewer_id and any(member.participant_id == viewer_id and member.location_passed for member in event_members)),
+        })
+    return payloads
+
+
+def _event_payload(engine: Any, impl: Any, event: Any, viewer_id: str | None, attendance_table: Any) -> dict[str, Any]:
+    return _event_payloads(engine, impl, [event], viewer_id, attendance_table)[0]
 
 
 def _event_by_id(engine: Any, impl: Any, event_id: str):
@@ -202,15 +225,11 @@ def install_v3_contract(application: Any, engine: Any, jwt_secret: str, impl: An
         viewer = _user(engine, impl, jwt_secret)
         if request.args.get("joined") == "true" and viewer is None:
             return jsonify([])
-        result = []
-        for row in rows:
-            event = _event_by_id(engine, impl, row["id"])
-            if event is None:
-                continue
-            payload = _event_payload(engine, impl, event, viewer.id if viewer else None, attendance)
-            if request.args.get("joined") == "true" and not payload["joined"]:
-                continue
-            result.append(payload)
+        event_ids = [row["id"] for row in rows]
+        with engine.connect() as connection:
+            events = connection.execute(select(impl.events_table).where(impl.events_table.c.id.in_(event_ids))).all() if event_ids else []
+        payloads = _event_payloads(engine, impl, events, viewer.id if viewer else None, attendance)
+        result = [payload for payload in payloads if request.args.get("joined") != "true" or payload["joined"]]
         return jsonify(result)
 
     def event_v3(event_id: str):
