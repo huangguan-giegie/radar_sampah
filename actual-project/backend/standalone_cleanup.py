@@ -124,18 +124,22 @@ def install_cleanup_route(application: Any, engine: Any, jwt_secret: str, impl: 
     # composition, and cleanup targets all consume the same state.
     def active_band_rows(active_engine: Any, rows: list[Any]):
         filtered: list[tuple[Any, dict[str, str]]] = []
+        counted = [row for row in rows if row.status == "Counted"]
+        if not counted:
+            return filtered
+        actions_by_report: dict[str, list[Any]] = defaultdict(list)
         with active_engine.connect() as connection:
-            for row in rows:
-                if row.status != "Counted":
-                    continue
-                actions = connection.execute(
-                    select(impl.cleanup_actions_table)
-                    .where(impl.cleanup_actions_table.c.target_report_id == row.id)
-                    .order_by(impl.cleanup_actions_table.c.created_at)
-                ).all()
-                active = _active_quantities(_current_band_state(impl, row, actions))
-                if active:
-                    filtered.append((row, active))
+            actions = connection.execute(
+                select(impl.cleanup_actions_table)
+                .where(impl.cleanup_actions_table.c.target_report_id.in_([row.id for row in counted]))
+                .order_by(impl.cleanup_actions_table.c.created_at)
+            ).all()
+        for action in actions:
+            actions_by_report[action.target_report_id].append(action)
+        for row in counted:
+            active = _active_quantities(_current_band_state(impl, row, actions_by_report[row.id]))
+            if active:
+                filtered.append((row, active))
         return filtered
 
     impl.active_attention_rows = active_band_rows

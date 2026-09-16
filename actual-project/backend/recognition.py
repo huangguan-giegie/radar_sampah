@@ -11,6 +11,7 @@ from io import BytesIO
 import os
 from pathlib import Path
 from types import SimpleNamespace
+from threading import Lock
 from typing import Any
 
 import numpy as np
@@ -185,6 +186,7 @@ class LitterRecognizer:
         self.version = version
         self.unavailable_reason = unavailable_reason
         self.inference_size = inference_size
+        self._inference_lock = Lock()
 
     @classmethod
     def load(cls) -> "LitterRecognizer":
@@ -222,15 +224,17 @@ class LitterRecognizer:
             return cls(None, version, f"model_load_failed:{type(error).__name__}")
 
     def _predict(self, source: Image.Image) -> Any:
-        return self.model.predict(
-            source=source,
-            conf=0.25,
-            iou=0.7,
-            imgsz=self.inference_size,
-            device="cpu",
-            batch=1,
-            verbose=False,
-        )
+        # Share one model across request threads without concurrent tensor peaks.
+        with self._inference_lock:
+            return self.model.predict(
+                source=source,
+                conf=0.25,
+                iou=0.7,
+                imgsz=self.inference_size,
+                device="cpu",
+                batch=1,
+                verbose=False,
+            )
 
     def recognise(self, image_bytes: bytes) -> dict[str, Any]:
         if self.model is None:
