@@ -1,5 +1,10 @@
 # Radar Sampah — Backend API Specification v1 (Iteration 1)
 
+> **Historical Iteration 1 specification.** The current source of truth is
+> [`API_ITERATION2.md`](../backend/API_ITERATION2.md) and [`openapi.yaml`](./openapi.yaml).
+> Older same-day duplicate rules, three-decimal GPS storage, exact-count reporting,
+> composition, and event-generation requirements below are superseded by Iteration 2.
+
 > **This is the English version.** The same contract exists three times and they must stay in
 > step — change one, change all three:
 >

@@ -1,5 +1,9 @@
 # Backend — what to build
 
+> **Historical Iteration 1 task brief.** Follow [`API_ITERATION2.md`](../backend/API_ITERATION2.md)
+> for current behavior. Same-day duplicate rules, three-decimal GPS storage, composition,
+> and event generation below are superseded by the final Iteration 2 Manual Remarks.
+
 **Owner:** LiHanXia (backend / API — validation, Flask routes, service integration)
 **Source of truth:** [`frontend/API.md`](../frontend/API.md). English:
 [`frontend/API.en.md`](../frontend/API.en.md).

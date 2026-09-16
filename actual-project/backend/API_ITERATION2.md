@@ -82,7 +82,7 @@ For GPS-backed reports at the same beach, compare against active unresolved `Cou
 
 The location rule applies across participants. It is not a blanket same-day rule and it does not reject a changed report merely because an active target is nearby.
 
-For manual/legacy flows, the compatibility exact-signature rule may still mark a same-participant, same-beach, same-Malaysia-local-day report `Duplicate` when the complete category/band signature is identical.
+Manual reports have no proximity evidence and are treated as independent reports. The same participant, beach, date, or category/band signature alone does not establish a duplicate. Historical duplicate decisions remain unchanged.
 
 Duplicate submissions are still saved with HTTP `201` and status `Duplicate`; they are excluded from Beach Attention. Startup migration/backfill must not reclassify historical report statuses.
 

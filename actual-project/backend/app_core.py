@@ -1856,7 +1856,7 @@ def create_app(
             "windowDays": 90,
             "minReports": 3,
             "reportEligibility": "Counted reports in the latest 90 days with remaining litter after cleanup; fully cleared count-backed reports are excluded from the active count but retained in history",
-            "remainingCountAggregation": "per-report-after-cleanup",
+            "remainingBandAggregation": "per-report-after-cleanup",
             "reportAggregation": "max-category-score",
             "beachAggregation": "median-of-active-reports",
             "modelClassMapping": [{"modelClass": model_class, "category": category} for model_class, category in ITERATION2_CATEGORIES.items()],

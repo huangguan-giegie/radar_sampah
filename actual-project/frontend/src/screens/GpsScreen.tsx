@@ -41,23 +41,10 @@ export default function GpsScreen() {
     setBusy(true);
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
-        // Round the coordinates the moment we receive them.
-        //
-        // DMP section 4.2 says we store an approximate location, and the
-        // screen promises the exact position never leaves the device. Three
-        // decimal places is about 110 metres. We round HERE, at the point of
-        // collection, so the precise value is never put in a variable that
-        // could be sent anywhere - a promise kept by the shape of the code,
-        // not by remembering to strip it later.
-        //
-        // 110 m is plenty: the nearest two beaches are about 10 km apart.
-        //
-        // This rounding is also what makes the bold line in the card below
-        // true - "Your exact coordinates never appear publicly." That line is
-        // bold because it is the sentence that decides whether the user
-        // presses Allow, so it has to stay true here.
-        const round3 = (n: number) => Math.round(n * 1000) / 1000;
-        const coords = { lat: round3(pos.coords.latitude), lng: round3(pos.coords.longitude) };
+        // Keep temporary precision for the 10 metre duplicate check. The API
+        // converts it to a private proximity reference and discards the raw
+        // coordinates; public responses remain beach-level only.
+        const coords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
 
         // A rough fix is worse than no fix. accuracy is the radius the browser
         // itself is confident about; past 2 km the answer is little better

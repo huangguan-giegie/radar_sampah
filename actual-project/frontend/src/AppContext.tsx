@@ -155,7 +155,7 @@ function loadDraft(): ReportDraft {
 
     // Spread over emptyDraft, not returned directly: a draft saved before we
     // added a field would leave that field undefined and crash a screen.
-    return { ...emptyDraft(), ...rec.draft };
+    return { ...emptyDraft(), ...rec.draft, coords: null, locationSource: rec.draft.locationSource === 'gps' ? 'manual' : rec.draft.locationSource };
   } catch {
     // Private browsing, storage switched off, or corrupted JSON. All of them
     // just mean "there is no draft" - never a crash on the very first render.
@@ -173,7 +173,9 @@ function saveDraft(d: ReportDraft) {
     // shared or library computer contradicts what we promise users about
     // photos. After a refresh the preview is fetched again from the photoKey
     // by photoPreviewUrl() in api.ts.
-    const lean: ReportDraft = d.photo ? { ...d, photo: { ...d.photo, previewUrl: '' } } : d;
+    // Precise GPS stays in memory only; a refreshed draft uses its selected beach.
+    const lean: ReportDraft = { ...d, coords: null, locationSource: d.locationSource === 'gps' ? 'manual' : d.locationSource,
+      photo: d.photo ? { ...d.photo, previewUrl: '' } : null };
     sessionStorage.setItem(DRAFT_KEY, JSON.stringify({ v: 1, savedAt: Date.now(), draft: lean }));
   } catch {
 

@@ -238,26 +238,7 @@ def _duplicate_status(
     created_at: Any,
     exclude_report_id: str | None = None,
 ) -> str:
-    """Retain exact-signature duplicate handling for non-GPS legacy/manual flows."""
-    candidate = _candidate_quantities(connection, exclude_report_id)
-    if not candidate:
-        return "Counted"
-
-    rows = connection.execute(
-        select(_impl.reports_table).where(
-            _impl.reports_table.c.reporter_id == reporter_id,
-            _impl.reports_table.c.beach_id == beach_id,
-            _impl.reports_table.c.status == "Counted",
-        )
-    ).all()
-    local_day = _impl.utc_datetime(created_at).astimezone(_impl.KUALA_LUMPUR).date()
-    for row in rows:
-        if row.id == exclude_report_id:
-            continue
-        if _impl.utc_datetime(row.created_at).astimezone(_impl.KUALA_LUMPUR).date() != local_day:
-            continue
-        if _impl.quantities_from_row(row) == candidate:
-            return "Duplicate"
+    """Manual reports are independent; GPS proximity decides duplicates."""
     return "Counted"
 
 
@@ -538,7 +519,7 @@ def create_app(
             "windowDays": 90,
             "minReports": 3,
             "reportEligibility": "Counted reports in the latest 90 days with active non-Small litter after cleanup; resolved reports remain in history",
-            "remainingCountAggregation": "per-report-after-cleanup",
+            "remainingBandAggregation": "per-report-after-cleanup",
             "reportAggregation": "max-category-score",
             "beachAggregation": "median-of-active-reports",
             "modelClassMapping": [

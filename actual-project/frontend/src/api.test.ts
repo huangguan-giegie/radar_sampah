@@ -199,7 +199,7 @@ describe('真实 API contract', () => {
     const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify(report), { status: 201 }));
     vi.stubGlobal('fetch', fetchMock);
     const { createReport } = await import('./api');
-    const input = { beachId: 'morib', quantities: { Plastic: 'Large' as const, Glass: 'Small' as const }, photoKey: 'photos/1.jpg', locationSource: 'gps' as const, coords: { lat: 2.746, lng: 101.44 } };
+    const input = { beachId: 'morib', quantities: { Plastic: 'Large' as const, Glass: 'Small' as const }, photoKey: 'photos/1.jpg', locationSource: 'gps' as const, coords: { lat: 2.7461437, lng: 101.4402489 } };
 
     await createReport(input);
 
@@ -247,27 +247,13 @@ describe('真实 API contract', () => {
     expect(report.categoryScores).toEqual({ Plastic: 2.55, 'Fishing gear': 2 });
   });
 
-  // The duplicate rule counts one report per beach per local day, and the users
-  // are in Malaysia (UTC+8, no daylight saving). So the day must roll over at
-  // 16:00 UTC, not at midnight UTC. These two times sit either side of that.
-  it('uses the Kuala Lumpur calendar day for mock duplicate checks', async () => {
-    vi.stubEnv('VITE_API_BASE_URL', '');
-    const { localDayInKualaLumpur } = await import('./api');
-
-    expect(localDayInKualaLumpur('2026-09-01T15:59:59.000Z')).toBe('2026-09-01');
-    expect(localDayInKualaLumpur('2026-09-01T16:00:00.000Z')).toBe('2026-09-02');
-  });
-
-  // Same participant, same beach, same day: the second report is still saved,
-  // but marked Duplicate so it cannot inflate the beach score. The note is
-  // compared word for word because the user reads it on screen.
-  it('marks a second same-day mock report as duplicate', async () => {
+  it('does not blanket-mark a second same-day manual report as duplicate', async () => {
     vi.stubEnv('VITE_API_BASE_URL', '');
     storage.set('rs_mock_participant', '1637');
     const { createReport } = await import('./api');
     const input = {
       beachId: 'morib',
-      quantities: { Plastic: 'Small' as const },
+      quantities: { Plastic: 'Medium' as const },
       photoKey: 'mock/photo.jpg',
       locationSource: 'manual' as const,
     };
@@ -276,28 +262,23 @@ describe('真实 API contract', () => {
     const second = await createReport(input);
 
     expect(first.status).toBe('Counted');
-    expect(second.status).toBe('Duplicate');
-    expect(second.statusNote).toBe(
-      'Same participant, beach and local day as an existing counted report. Saved here but excluded from the beach score.',
-    );
+    expect(second.status).toBe('Counted');
+    expect(second.statusNote).toBeUndefined();
   });
 
-  // Editing a report runs the duplicate check again. The second report is on a
-  // different beach, so it counts at first; moving it to the first beach must
-  // make it a duplicate and give the same explanation as a fresh duplicate.
-  it('keeps the duplicate explanation after a mock correction', async () => {
+  it('keeps a corrected manual report counted', async () => {
     vi.stubEnv('VITE_API_BASE_URL', '');
     storage.set('rs_mock_participant', '1637');
     const { createReport, updateReport } = await import('./api');
     const first = await createReport({
       beachId: 'morib',
-      quantities: { Plastic: 'Small' },
+      quantities: { Plastic: 'Medium' },
       photoKey: 'mock/first.jpg',
       locationSource: 'manual',
     });
     const second = await createReport({
       beachId: 'remis',
-      quantities: { Plastic: 'Small' },
+      quantities: { Plastic: 'Medium' },
       photoKey: 'mock/second.jpg',
       locationSource: 'manual',
     });
@@ -305,10 +286,18 @@ describe('真实 API contract', () => {
     expect(first.status).toBe('Counted');
     const corrected = await updateReport(second.id, { beachId: 'morib' });
 
-    expect(corrected.status).toBe('Duplicate');
-    expect(corrected.statusNote).toBe(
-      'Same participant, beach and local day as an existing counted report. Saved here but excluded from the beach score.',
-    );
+    expect(corrected.status).toBe('Counted');
+    expect(corrected.statusNote).toBeUndefined();
+  });
+
+  it('rejects a Small-only mock report without adding counted evidence', async () => {
+    vi.stubEnv('VITE_API_BASE_URL', '');
+    storage.set('rs_mock_participant', '1637');
+    const { createReport, getMyReportCounts } = await import('./api');
+    const before = await getMyReportCounts();
+    await expect(createReport({ beachId: 'morib', quantities: { Plastic: 'Small' },
+      photoKey: 'mock/photo.jpg', locationSource: 'manual' })).rejects.toThrow('below the active litter threshold');
+    expect(await getMyReportCounts()).toEqual(before);
   });
 
   // An empty file cannot be decoded into an image. The guard runs before the

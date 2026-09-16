@@ -1,5 +1,9 @@
 # Database — what to build
 
+> **Historical Iteration 1 task brief.** Follow [`API_ITERATION2.md`](../backend/API_ITERATION2.md)
+> for current behavior. New GPS reports retain a private proximity reference, not raw
+> coordinates; duplicate detection uses active category/band state within 10 metres.
+
 **Owner:** Keith Junn Chong (database / data integration)
 **Source of truth:** [`frontend/API.md`](../frontend/API.md) §9, and the `CREATE TABLE`
 blocks in §2c. English: [`frontend/API.en.md`](../frontend/API.en.md).

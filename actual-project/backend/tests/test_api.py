@@ -37,6 +37,7 @@ for _obsolete in (
     "test_share_links_are_stable_and_scoped_to_one_event_and_report",
     "test_iteration2_report_supports_repeated_partial_cleanup_and_private_location",
     "test_create_report_returns_full_contract_and_hides_private_fields",
+    "test_duplicate_rule_and_counts",
     "test_events_require_join_location_and_evidence_for_attendance",
     "test_unlinked_counted_report_does_not_confirm_event_attendance",
 ):
@@ -68,7 +69,7 @@ def test_iteration2_scoring_metadata_publishes_active_report_rule(api):
     _application, client = api
     body = client.get("/scoring-method/iteration2").get_json()
     assert body["ruleVersion"] == "radar-sampah-scoring-i2-v3"
-    assert body["remainingCountAggregation"] == "per-report-after-cleanup"
+    assert body["remainingBandAggregation"] == "per-report-after-cleanup"
     assert body["beachAggregation"] == "median-of-active-reports"
     assert "active non-Small litter" in body["reportEligibility"]
     assert "resolved reports remain in history" in body["reportEligibility"]
@@ -304,7 +305,7 @@ def test_unlinked_counted_band_report_does_not_confirm_event_attendance(api):
     assert event_view["attendanceBy"] == []
 
 
-def test_duplicate_requires_exact_same_categories_and_quantities(api):
+def test_manual_reports_are_not_blanket_same_day_duplicates(api):
     _application, client = api
     _session, headers = signup(client)
 
@@ -324,7 +325,7 @@ def test_duplicate_requires_exact_same_categories_and_quantities(api):
 
     assert first["status"] == "Counted"
     assert different_quantity["status"] == "Counted"
-    assert exact_repeat["status"] == "Duplicate"
+    assert exact_repeat["status"] == "Counted"
 
 
 def test_partial_main_database_migrates_without_broad_duplicate_reclassification(tmp_path):

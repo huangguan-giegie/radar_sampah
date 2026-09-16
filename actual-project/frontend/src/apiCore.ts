@@ -404,52 +404,6 @@ function currentMockReports(): LitterReport[] {
   return mockAccounts[currentMockParticipantId()];
 }
 
-// Which calendar day a timestamp falls on, in Malaysia.
-//
-// The duplicate rule below allows one report per day, and "the day" has to be
-// the day the volunteer stood on the beach. The phone's own zone gets it wrong
-// for anyone travelling, and UTC is 8 hours behind here, so an evening report
-// would be filed under the day before.
-//
-// 'en-CA' is picked only because it formats as 2026-09-02, which lets two days
-// be compared as plain strings.
-export function localDayInKualaLumpur(iso: string): string {
-  return new Intl.DateTimeFormat('en-CA', {
-    timeZone: 'Asia/Kuala_Lumpur',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  }).format(new Date(iso));
-}
-
-// Shown to the volunteer on a duplicate. It says the report was kept, because
-// "Duplicate" on its own reads like the work was thrown away.
-const MOCK_DUPLICATE_STATUS_NOTE =
-  'Same participant, beach and local day as an existing counted report. Saved here but excluded from the beach score.';
-
-// One counted report per participant, per beach, per local day.
-//
-// Beach scores are an average over reports. Without this rule one keen person
-// could file ten reports in an afternoon and move a beach's score alone, and
-// the map would say more about who is enthusiastic than about where the litter
-// is. The extra reports are still saved and still shown to their author.
-//
-// excludeReportId is passed when a report is being edited, so a report is never
-// marked a duplicate of its own earlier version.
-//
-// The real backend decides this. The mock copies the rule so a demo behaves the
-// same way (API.md).
-function mockDuplicateStatus(beachId: string, createdAt: string, excludeReportId?: string): LitterReport['status'] {
-  const day = localDayInKualaLumpur(createdAt);
-  const duplicate = currentMockReports().some((report) =>
-    report.id !== excludeReportId &&
-    report.status === 'Counted' &&
-    report.beachId === beachId &&
-    localDayInKualaLumpur(report.createdAt) === day,
-  );
-  return duplicate ? 'Duplicate' : 'Counted';
-}
-
 function replaceCurrentMockReports(reports: LitterReport[]) {
   mockAccounts = { ...mockAccounts, [currentMockParticipantId()]: reports };
   saveMockAccounts();
@@ -937,12 +891,11 @@ function deriveCategoryQuantity(q: QuantityByCategory): { category: LitterCatego
 export async function createReport(input: CreateReportInput): Promise<LitterReport> {
   if (USE_MOCK) {
     await delay(500);
+    if (Object.values(input.quantities).every((band) => band === 'Small')) {
+      throw new Error('This report is below the active litter threshold because every confirmed category is Small.');
+    }
     const beach = BEACHES.find((b) => b.id === input.beachId) || BEACHES[0];
-    // Read the time once and reuse it. If the duplicate check and the saved
-    // report each called new Date(), a report made at midnight could be checked
-    // against one day and stored under the next.
     const createdAt = new Date().toISOString();
-    const status = mockDuplicateStatus(beach.id, createdAt);
     const report: LitterReport = {
       id: 'r_' + Date.now(),
       beachId: beach.id,
@@ -956,10 +909,7 @@ export async function createReport(input: CreateReportInput): Promise<LitterRepo
       reportScore: reportScoreFor(input.quantities),
       photoUrl: mockPhotoStore.get(input.photoKey) ?? null,
       createdAt,
-      status,
-      // The note goes only on a duplicate. A counted report has nothing to
-      // explain, and an empty grey box would just worry people.
-      statusNote: status === 'Duplicate' ? MOCK_DUPLICATE_STATUS_NOTE : undefined,
+      status: 'Counted',
     };
     replaceCurrentMockReports([report, ...currentMockReports()]);
     return report;
@@ -1000,11 +950,6 @@ export async function getMyReportCounts(): Promise<ReportCounts> {
 // becomes Counted once the missing part is supplied. Without this, a volunteer
 // whose report was rejected could never rescue their work.
 //
-// Editing does not get round the one-a-day rule: the duplicate check runs again
-// and can come back Duplicate, for example when the beach is changed to one the
-// volunteer already reported today. The report's own id is excluded so it is
-// never a duplicate of itself.
-//
 // The original createdAt is reused, not refreshed. Editing must not move a
 // report into today, or a stale one could be dragged back into a fresh day.
 //
@@ -1022,7 +967,6 @@ export async function updateReport(
 
     const old = reports[index];
     const beach = changes.beachId ? BEACHES.find((b) => b.id === changes.beachId) : undefined;
-    const status = mockDuplicateStatus(beach ? beach.id : old.beachId, old.createdAt, old.id);
     const updated: LitterReport = {
       ...old,
       ...(changes.quantities
@@ -1036,8 +980,8 @@ export async function updateReport(
       photoUrl: changes.photoKey ? mockPhotoStore.get(changes.photoKey) ?? null : old.photoUrl,
       beachId: beach ? beach.id : old.beachId,
       beachName: beach ? beach.name : old.beachName,
-      status,
-      statusNote: status === 'Duplicate' ? MOCK_DUPLICATE_STATUS_NOTE : undefined,
+      status: 'Counted',
+      statusNote: undefined,
     };
 
     const nextReports = reports.slice();

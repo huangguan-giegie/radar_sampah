@@ -1,5 +1,9 @@
 # Radar Sampah — 后端接口规范 v1（Iteration 1）
 
+> **历史 Iteration 1 规范。** 当前以 [`API_ITERATION2.md`](../backend/API_ITERATION2.md)
+> 和 [`openapi.yaml`](./openapi.yaml) 为准。下文旧的同日去重、三位小数 GPS 存储、
+> 精确数量上报、垃圾组成和活动生成规则均已由 Iteration 2 替代。
+
 > **本文是中文版。** 同一份契约有三份，内容一致，改一份要三份都改：
 >
 > | 文件 | 语言 | 给谁 |
