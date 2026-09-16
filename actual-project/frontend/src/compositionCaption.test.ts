@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { compositionFooter } from './screens/BeachScreen';
+import { compositionFooter, compositionPercentageLabel } from './screens/BeachScreen';
 import { initialFor } from './useAsyncData';
 
 describe('shared loader initial value', () => {
@@ -23,5 +23,17 @@ describe('composition caption', () => {
     const single = { method: 'reported_quantity_estimate' as const, reportId: 'r_1', createdAt: '2026-08-19T18:00:00+08:00' };
     expect(compositionFooter(single)).toBe('REPORT 2026-08-19 (WED)');
     expect(compositionFooter(null)).toBe('BACKEND CALCULATED');
+  });
+});
+
+describe('composition display', () => {
+  it('renders the active category share as a percentage, not a quantity band', () => {
+    expect(compositionPercentageLabel(33)).toBe('33%');
+    expect(compositionPercentageLabel(24.6)).toBe('25%');
+  });
+
+  it('keeps malformed API values inside the percentage range', () => {
+    expect(compositionPercentageLabel(-5)).toBe('0%');
+    expect(compositionPercentageLabel(108)).toBe('100%');
   });
 });

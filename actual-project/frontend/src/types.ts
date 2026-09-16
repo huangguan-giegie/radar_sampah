@@ -109,17 +109,16 @@ export interface Species {
 /**
  * One row of the litter composition bar on the beach page.
  *
- * Composition comes from the SINGLE most recent Counted report for that beach
- * (its six category columns), not from an average over the window. Averaging
- * would let one very old report keep colouring the bar forever, and there is
- * no honest date to print next to an average.
+ * The live API aggregates unresolved Counted reports that remain active inside
+ * the 90-day scoring window. Each row is that category's weighted share of the
+ * aggregate; old or resolved reports must not keep colouring the bars.
  *
  * Only categories that were actually recorded appear, sorted by category
  * weight, heaviest first.
  */
 export interface CompositionSlice {
   category: LitterCategory;
-  /** Percentage of the latest report photo assigned to this category.
+  /** Percentage of the active aggregate assigned to this category.
    * The backend owns the calculation so the rows always add up to 100. */
   percentage: number;
 }

@@ -51,7 +51,7 @@ export const BEACHES: BeachDetail[] = [
       { category: 'Paper', percentage: 8 },
       { category: 'Other', percentage: 9 },
     ],
-    compositionSource: { reportId: 'r_seed_morib', createdAt: '2026-08-19T16:00:00+08:00', method: 'reported_quantity_estimate' },
+    compositionSource: { method: 'active_report_estimate', activeReportCount: 8, windowDays: 90 },
     species: [
       {
         name: 'Green Sea Turtle',
@@ -129,7 +129,7 @@ export const BEACHES: BeachDetail[] = [
       { category: 'Metal', percentage: 9 },
       { category: 'Other', percentage: 10 },
     ],
-    compositionSource: { reportId: 'r_seed_remis', createdAt: '2026-07-25T16:00:00+08:00', method: 'reported_quantity_estimate' },
+    compositionSource: { method: 'active_report_estimate', activeReportCount: 6, windowDays: 90 },
     species: [
       {
         name: 'Migratory Shorebirds',
@@ -198,10 +198,9 @@ export const BEACHES: BeachDetail[] = [
     scene:
       'radial-gradient(90% 55% at 70% 16%,rgba(156,174,168,.35),transparent 60%),linear-gradient(178deg,#2F6B7C 0%,#245A6B 44%,#1B4557 72%,#123244 100%)',
 
-    composition: [
-      { category: 'Plastic', percentage: 67 },
-      { category: 'Other', percentage: 33 },
-    ],
+    // Historical reports stay in history, but they must not look like current
+    // composition when none remain active inside the 90-day window.
+    composition: null,
     species: [
       {
         name: 'Mangrove Habitat',
@@ -225,7 +224,7 @@ export const BEACHES: BeachDetail[] = [
         source: PENDING_SOURCE,
       },
     ],
-    compositionSource: { reportId: 'r_seed_kelanang', createdAt: '2026-05-21T16:00:00+08:00', method: 'reported_quantity_estimate' },
+    compositionSource: null,
     ecologicalNote:
       'Litter caught in mangrove roots can persist for years and may break down into microplastics.',
   },
@@ -290,7 +289,7 @@ export const BEACHES: BeachDetail[] = [
         source: PENDING_SOURCE,
       },
     ],
-    compositionSource: { reportId: 'r_seed_bagan', createdAt: '2026-07-24T16:00:00+08:00', method: 'reported_quantity_estimate' },
+    compositionSource: { method: 'active_report_estimate', activeReportCount: 7, windowDays: 90 },
     ecologicalNote:
       'Ghost nets and plastic sheeting may trap horseshoe crabs that come ashore to spawn.',
   },
