@@ -54,6 +54,12 @@ export function compositionFooter(source: BeachDetail['compositionSource']): str
   return source.createdAt ? `REPORT ${formatDate(source.createdAt).toUpperCase()}` : 'REPORT ESTIMATE';
 }
 
+/** Beach composition is an aggregate share, so it is always presented as a
+ * percentage. Quantity bands remain on individual reports and cleanup flows. */
+export function compositionPercentageLabel(percentage: number): string {
+  return `${Math.max(0, Math.min(100, Math.round(percentage)))}%`;
+}
+
 export default function BeachScreen() {
   const { beachId = '' } = useParams();
   const nav = useNavigate();
@@ -374,7 +380,7 @@ export default function BeachScreen() {
                     />
                   </div>
                   <span style={{ width: 44, flex: 'none', textAlign: 'right', fontFamily: MONO, fontSize: 12, fontWeight: 700, color: C.ink2 }}>
-                    {c.percentage}%
+                    {compositionPercentageLabel(c.percentage)}
                   </span>
                 </div>
               ))}
