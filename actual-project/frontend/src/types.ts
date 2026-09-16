@@ -124,14 +124,21 @@ export interface CompositionSlice {
   percentage: number;
 }
 
-/** Which report the composition came from. The UI must print this date, so it
- *  can never claim to be "the share across N reports". */
+/** Where the composition came from, so the UI can label it honestly.
+ *
+ * The live API aggregates the active unresolved reports inside the scoring
+ * window and reports that as `active_report_estimate`. The single-report fields
+ * below are kept for the local mock, which still describes one report. */
 export interface CompositionSource {
-  reportId: string;
-  createdAt: string;
   /** The UI is ready for YOLO output but does not label a fallback estimate as
    * model output before the detector is connected. */
-  method?: 'yolo' | 'reported_quantity_estimate';
+  method?: 'yolo' | 'reported_quantity_estimate' | 'active_report_estimate';
+  /** Single-report sources only. */
+  reportId?: string;
+  createdAt?: string;
+  /** Window sources only: how much evidence the percentages were built from. */
+  activeReportCount?: number;
+  windowDays?: number;
 }
 
 /** The small version of a beach, used by the map and the home list. */

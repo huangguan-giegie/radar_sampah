@@ -37,6 +37,29 @@ import { useAsyncData } from '../useAsyncData';
 // severity colours. Reusing those would suggest that a row is "severe".
 const COMP_COLORS = ['#B8FF36', '#2C4A8C', '#5470A8', '#7A879B', '#98A4B5', '#CBD3E0'];
 
+/*
+ * The composition caption has to name the evidence it came from, because the
+ * two sources are not the same claim. The live API aggregates the active
+ * unresolved reports inside the scoring window and sends how many it used; the
+ * local mock still describes one report, and therefore still prints its date.
+ */
+export function compositionSentence(source: BeachDetail['compositionSource']): string {
+  if (source?.method === 'active_report_estimate') {
+    return `Weighted reported composition of ${source.activeReportCount ?? 0} active reports in the last ${source.windowDays ?? 90} days.`;
+  }
+  if (source?.method === 'yolo') return 'Latest report photo · YOLO + backend percentages';
+  return 'Latest report · backend percentage estimate';
+}
+
+export function compositionFooter(source: BeachDetail['compositionSource']): string {
+  if (!source) return 'BACKEND CALCULATED';
+  if (source.method === 'active_report_estimate') {
+    return `${source.activeReportCount ?? 0} ACTIVE REPORTS · ${source.windowDays ?? 90} DAYS · BACKEND ESTIMATE`;
+  }
+  const method = source.method === 'yolo' ? 'YOLO + BACKEND' : 'BACKEND ESTIMATE';
+  return source.createdAt ? `REPORT ${formatDate(source.createdAt).toUpperCase()} · ${method}` : method;
+}
+
 export default function BeachScreen() {
   const { beachId = '' } = useParams();
   const nav = useNavigate();
@@ -329,14 +352,11 @@ export default function BeachScreen() {
         <div>
           <Label style={{ marginBottom: 12 }}>LITTER COMPOSITION</Label>
           <div style={{ fontSize: 12, lineHeight: 1.5, color: C.muted, margin: '-4px 0 12px' }}>
-            {b.compositionSource?.method === 'yolo'
-              ? 'Latest report photo · YOLO + backend percentages'
-              : 'Latest report · backend percentage estimate'}
+            {compositionSentence(b.compositionSource)}
           </div>
-          {/* What the litter is made of. This comes from the single most recent
-              counted report, and that report's date is printed under the bars -
-              so the user knows they are reading one day's observation, not an
-              average over months. */}
+          {/* What the litter is made of, and which evidence it came from. The
+              footer under the bars always names that evidence, so the rows
+              cannot be read as a claim the percentages do not support. */}
           {b.composition ? (
             <div style={{ background: C.white, border: `1px solid ${C.line}`, borderRadius: 24, padding: 20, display: 'flex', flexDirection: 'column', gap: 11 }}>
               {b.composition.map((c, i) => (
@@ -360,9 +380,7 @@ export default function BeachScreen() {
                 </div>
               ))}
               <div style={{ fontFamily: MONO, fontSize: 8.5, letterSpacing: '.1em', color: C.faint, marginTop: 4 }}>
-                {b.compositionSource
-                  ? `REPORT ${formatDate(b.compositionSource.createdAt).toUpperCase()} · ${b.compositionSource.method === 'yolo' ? 'YOLO + BACKEND' : 'BACKEND ESTIMATE'}`
-                  : 'BACKEND CALCULATED'}
+                {compositionFooter(b.compositionSource)}
               </div>
             </div>
           ) : (

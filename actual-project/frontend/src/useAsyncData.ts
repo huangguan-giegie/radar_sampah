@@ -1,11 +1,22 @@
 import { useEffect, useState, type DependencyList } from 'react';
 import { USE_MOCK } from './api';
 
+/**
+ * Callers hand in the mock value as `initial`. In API mode that value must not
+ * reach the screen, but returning null breaks the screens that read an array
+ * during their first render - the request has not resolved yet, so the array
+ * methods run on null. Array payloads therefore start empty; object payloads
+ * keep null, which those screens already guard with `?.`.
+ */
+export function initialFor<T>(initial: T): T {
+  return (Array.isArray(initial) ? [] : null) as T;
+}
+
 /** Small shared loader for screens backed by the real API or the local mock.
  * It ignores late responses after navigation so an old beach/event cannot
  * overwrite the next screen's data. */
 export function useAsyncData<T>(load: () => Promise<T>, dependencies: DependencyList, initial: T) {
-  const [data, setData] = useState<T>(USE_MOCK ? initial : (null as T));
+  const [data, setData] = useState<T>(USE_MOCK ? initial : initialFor(initial));
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -28,7 +39,7 @@ export function useAsyncData<T>(load: () => Promise<T>, dependencies: Dependency
     let active = true;
     // Do not leave the previous beach/event visible while a route parameter
     // changes and the next request is in flight.
-    setData(USE_MOCK ? initial : (null as T));
+    setData(USE_MOCK ? initial : initialFor(initial));
     setLoading(true);
     setError(null);
     load()
