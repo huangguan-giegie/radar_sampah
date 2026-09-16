@@ -87,11 +87,11 @@ export function reachableStep(draft: ReportDraft): ReportStep {
   if (!hasPhoto) return 'photo';
   if (!draft.beachId) return 'confirm';
 
-  if (!validBandState(draft.quantities)) {
-    return draft.aiModelState === null ? 'suggestions' : 'details';
-  }
+  // The user must explicitly accept the AI suggestion or confirm the manual
+  // bands before Review, even when a previous screen left partial quantities.
+  if (!draft.aiDecision) return 'suggestions';
 
-  if (!draft.aiDecision) {
+  if (!validBandState(draft.quantities)) {
     return draft.aiModelState === null ? 'suggestions' : 'details';
   }
   return 'review';

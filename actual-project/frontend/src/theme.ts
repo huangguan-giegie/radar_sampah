@@ -68,7 +68,7 @@ export function severityLabel(band: SeverityBand): string {
 /**
  * Whether a beach may show a band at all, and what to say when it may not.
  *
- * Below SCORING_METHOD.minReports active reports the answer is "Insufficient
+ * Below SCORING_METHOD.minReports counted reports the answer is "Insufficient
  * data" plus the count so far, because a band drawn from one report looks just
  * as confident as one drawn from fifty. Two labels come back because pins
  * shout and pages do not. Every screen asks this one function, so a beach
@@ -85,7 +85,7 @@ export function attentionStateFor(
     return {
       markerLabel: 'NO DATA',
       pageLabel: 'Insufficient data',
-      detail: `${validReports} active ${word} · At least ${minimum} active reports are required for a band`,
+      detail: `${validReports} counted ${word} · At least ${minimum} counted reports are required for a band`,
       hasBand: false,
     } as const;
   }
@@ -113,7 +113,7 @@ export function freshStyle(k: FreshnessKind) {
  * "report" or "reports" for a count. One shared helper, because the same
  * sentence is built on the home list, the map card and the beach page, and
  * three hand-written copies drifted - the live site was showing
- * "1 active reports".
+ * "1 counted reports".
  */
 export function reportWord(count: number): string {
   return count === 1 ? 'report' : 'reports';
@@ -166,10 +166,10 @@ export function freshnessLabel(kind: FreshnessKind, iso: string | null): string 
   return `Reported ${d} days ago`;
 }
 
-/** A fixed date follows the prototype's unambiguous `2026-09-12 (Sat)` rule.
- *  "Today" stays relative because it describes freshness rather than a
- *  calendar date. All comparisons use Malaysia time so a late-night report
- *  cannot move to the wrong day on a device in another time zone. */
+/** A fixed date always follows the prototype's unambiguous
+ *  `2026-09-12 (Sat)` rule. All comparisons use Malaysia time so a
+ *  late-night report cannot move to the wrong day on a device in another
+ *  time zone. */
 export function formatDate(iso: string): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso;
@@ -180,7 +180,6 @@ export function formatDate(iso: string): string {
     day: '2-digit',
   }).format(value);
   const exactDate = parts(d);
-  if (exactDate === parts(new Date())) return 'Today';
   const weekday = d.toLocaleDateString('en-GB', {
     weekday: 'short',
     timeZone: 'Asia/Kuala_Lumpur',

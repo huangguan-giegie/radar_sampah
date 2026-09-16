@@ -2,14 +2,17 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import {
   analyseReportPhoto,
   completeCleanup,
+  canRecordAttendance,
   createAdminEvent,
   formatEventDate,
   getCleanupEvent,
   getCleanupTarget,
+  hasEventEvidence,
   joinCleanupEvent,
   listCleanupEvents,
-  normalizeSuggestedCounts,
-  effectiveAiModelState,
+  recordAttendance,
+  recordCheckIn,
+  recordEventReportEvidence,
 } from './iteration2';
 
 class MemoryStorage implements Storage {
@@ -35,83 +38,91 @@ describe('Iteration 2 date presentation', () => {
 });
 
 describe('Iteration 2 activity and cleanup ledger', () => {
-  it('keeps detector counts internal and only normalizes positive whole detections', () => {
-    expect(normalizeSuggestedCounts({ Plastic: 8, Glass: 0, Metal: 2.8 })).toEqual({ Plastic: 8 });
+  it('generates four Saturday events only for beaches with a qualifying band', () => {
+    const events = listCleanupEvents();
+    expect(events).toHaveLength(12);
+    expect(events.some((event) => event.beachId === 'kelanang')).toBe(false);
   });
 
-  it('treats a ready response with no detections as empty', () => {
-    expect(effectiveAiModelState('ready', {})).toBe('empty');
-  });
-
-  it('generates four Saturday events per configured beach before the attention gate is applied', async () => {
-    expect(await listCleanupEvents()).toHaveLength(16);
-  });
-
-  it('makes Join idempotent for the same participant and event', async () => {
-    const event = (await listCleanupEvents()).find((item) => item.beachId === 'morib')!;
-    const first = await joinCleanupEvent(event.id, '1637');
-    const second = await joinCleanupEvent(event.id, '1637');
+  it('makes Join idempotent for the same participant and event', () => {
+    const event = listCleanupEvents().find((item) => item.beachId === 'morib')!;
+    const first = joinCleanupEvent(event.id, '1637');
+    const second = joinCleanupEvent(event.id, '1637');
     expect(second.participantCount).toBe(first.participantCount);
     expect(second.joinedBy).toEqual(['1637']);
   });
 
-  it('creates at most one admin event for a beach and date', async () => {
-    const first = await createAdminEvent({ beachId: 'morib', date: '2030-01-02' });
-    const second = await createAdminEvent({ beachId: 'morib', date: '2030-01-02' });
+  it('creates at most one admin event for a beach and date', () => {
+    const first = createAdminEvent({ beachId: 'morib', date: '2030-01-02' });
+    const second = createAdminEvent({ beachId: 'morib', date: '2030-01-02' });
     expect(second.id).toBe(first.id);
-    expect((await getCleanupEvent(first.id))?.source).toBe('admin');
+    expect(getCleanupEvent(first.id)?.source).toBe('admin');
   });
 
-  it('records linked cleanup as the remaining band state and resolves all-Small targets', async () => {
-    const target = (await getCleanupTarget('morib'))!;
-    expect(target.remainingQuantities.Plastic).toBe('Very Large');
-
-    const cleanup = await completeCleanup({
+  it('records lower quantity bands and allows a later partial cleanup', () => {
+    const target = getCleanupTarget('morib')!;
+    const cleanup = completeCleanup({
       participantId: '1637',
       targetReportId: target.reportId,
-      remainingQuantities: {
-        Plastic: 'Small',
-        'Fishing gear': 'Small',
-        Glass: 'Small',
-        Metal: 'Small',
-        Paper: 'Small',
-        Other: 'Small',
-      },
+      afterBands: { Plastic: 'Large', Glass: 'Small' },
       handling: 'Collected for disposal',
     });
-
-    expect(cleanup.resolved).toBe(true);
-    expect(cleanup.remainingQuantities).toEqual({
-      Plastic: 'Small',
-      'Fishing gear': 'Small',
-      Glass: 'Small',
-      Metal: 'Small',
-      Paper: 'Small',
-      Other: 'Small',
-    });
-    expect(cleanup.score).toBe(8);
-    expect(await getCleanupTarget('morib', target.reportId)).toBeNull();
+    expect(cleanup.score).toBe(3);
+    expect(cleanup.rows.find((row) => row.category === 'Plastic')).toMatchObject({ beforeBand: 'Very Large', afterBand: 'Large', score: 1 });
+    expect(getCleanupTarget('morib')?.remainingBands.Glass).toBe('Small');
+    const second = completeCleanup({ participantId: '1637', targetReportId: target.reportId, afterBands: { Plastic: 'Medium', Glass: 'Small' }, handling: 'Not recorded' });
+    expect(second.id).not.toBe(cleanup.id);
   });
 
-  it('scores a standalone cleanup from removed quantity bands', async () => {
-    const cleanup = await completeCleanup({
+  it('refuses a cleanup linked to an activity at another beach', () => {
+    const target = getCleanupTarget('morib')!;
+    const otherBeachEvent = listCleanupEvents().find((item) => item.beachId === 'remis')!;
+    joinCleanupEvent(otherBeachEvent.id, '1637');
+
+    expect(() => completeCleanup({
       participantId: '1637',
-      beachId: 'kelanang',
-      removedQuantities: { Plastic: 'Large', Glass: 'Small' },
-      handling: 'Collected for disposal',
-    });
-    expect(cleanup.targetReportId).toBeNull();
-    expect(cleanup.removedQuantities).toEqual({ Plastic: 'Large', Glass: 'Small' });
-    expect(cleanup.score).toBe(4);
+      targetReportId: target.reportId,
+      eventId: otherBeachEvent.id,
+      afterBands: { Plastic: 'Large' },
+      handling: 'Not recorded',
+    })).toThrow('activity beach');
   });
 
   it('keeps manual reporting available when AI is unavailable', async () => {
-    const result = await analyseReportPhoto('mock/photo.jpg', true);
+    const result = await analyseReportPhoto('mock/photo.jpg', 'unavailable');
     expect(result.modelState).toBe('unavailable');
     expect(result.suggestions).toEqual({});
   });
 
-  it('returns no detector evidence when recognition has zero counts', () => {
-    expect(normalizeSuggestedCounts({ Plastic: 0, Glass: 0 })).toEqual({});
+  it('requires a separate attendance confirmation after check-in and cleanup evidence', () => {
+    const event = listCleanupEvents().find((item) => item.beachId === 'morib')!;
+    const target = getCleanupTarget('morib')!;
+    joinCleanupEvent(event.id, '1637');
+    recordCheckIn(event.id, '1637', 'within_area');
+    expect(canRecordAttendance(event.id, '1637')).toBe(false);
+
+    completeCleanup({
+      participantId: '1637',
+      targetReportId: target.reportId,
+      eventId: event.id,
+      afterBands: { Plastic: 'Large' },
+      handling: 'Not recorded',
+    });
+
+    expect(hasEventEvidence(event.id, '1637')).toBe(true);
+    expect(getCleanupEvent(event.id)?.attendanceBy).toEqual([]);
+    expect(canRecordAttendance(event.id, '1637')).toBe(true);
+    expect(recordAttendance(event.id, '1637').attendanceBy).toEqual(['1637']);
+  });
+
+  it('also accepts a same-event, same-beach report as evidence without auto-recording attendance', () => {
+    const event = listCleanupEvents().find((item) => item.beachId === 'morib')!;
+    joinCleanupEvent(event.id, '1637');
+    recordCheckIn(event.id, '1637', 'within_area');
+    recordEventReportEvidence(event.id, '1637', 'r-new', 'morib');
+
+    expect(hasEventEvidence(event.id, '1637')).toBe(true);
+    expect(getCleanupEvent(event.id)?.attendanceBy).toEqual([]);
+    expect(recordAttendance(event.id, '1637').attendanceBy).toEqual(['1637']);
   });
 });

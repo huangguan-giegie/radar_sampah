@@ -8,8 +8,6 @@ import { BackButton, ErrorNote, GhostButton, Label, PrimaryButton, Skeleton } fr
 import { historicalPhotoUnavailable } from '../flowRules';
 import { C, MONO, formatDate } from '../theme';
 import type { LitterCategory, LitterReport, QuantityBand } from '../types';
-import { createSharePath } from '../iteration2';
-import { canShareCountedReport } from '../sharedReportPresentation';
 
 export default function ReportDetailScreen() {
   const { reportId = '' } = useParams();
@@ -18,30 +16,18 @@ export default function ReportDetailScreen() {
   const [report, setReport] = useState<LitterReport | null>(null);
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
-  const [shareBusy, setShareBusy] = useState(false);
-  const [copied, setCopied] = useState(false);
-  const [sharePath, setSharePath] = useState<string | null>(null);
 
   useEffect(() => {
-    let active = true;
     setLoading(true);
     setFailed(false);
-    setSharePath(null);
     getMyReports()
       .then((reports) => {
         const match = reports.find((item) => item.id === reportId) ?? null;
-        if (!active) return;
         setReport(match);
         setFailed(!match);
-        if (match && canShareCountedReport(match.status)) {
-          createSharePath({ reportId: match.id })
-            .then((path) => { if (active) setSharePath(path); })
-            .catch(() => { if (active) setSharePath(null); });
-        }
       })
-      .catch(() => { if (active) setFailed(true); })
-      .finally(() => { if (active) setLoading(false); });
-    return () => { active = false; };
+      .catch(() => setFailed(true))
+      .finally(() => setLoading(false));
   }, [reportId, reportsVersion]);
 
   function editReport() {
@@ -53,7 +39,6 @@ export default function ReportDetailScreen() {
       beachId: report.beachId,
       beachName: report.beachName,
       quantities: { ...report.quantities },
-      itemCounts: report.itemCounts ? { ...report.itemCounts } : null,
       locationSource: report.locationSource ?? 'manual',
       coords: null,
       existingPhotoUrl: report.photoUrl ?? null,
@@ -63,50 +48,6 @@ export default function ReportDetailScreen() {
       editingStatusNote: report.statusNote ?? null,
     });
     nav('/report/details');
-  }
-
-  function reportShareUrl() {
-    return sharePath ? `${window.location.origin}${sharePath}` : null;
-  }
-
-  async function copyShareLink() {
-    setShareBusy(true);
-    try {
-      const url = reportShareUrl();
-      if (!url) return;
-      await navigator.clipboard.writeText(url);
-      setCopied(true);
-    } catch {
-      setCopied(false);
-    } finally {
-      setShareBusy(false);
-    }
-  }
-
-  async function shareReport() {
-    setShareBusy(true);
-    try {
-      const url = reportShareUrl();
-      if (!url) return;
-      if (navigator.share) await navigator.share({ title: `Litter report at ${report!.beachName}`, url });
-      else await navigator.clipboard.writeText(url);
-    } catch {
-      // A dismissed native share sheet is not an error.
-    } finally {
-      setShareBusy(false);
-    }
-  }
-
-  async function shareOnWhatsApp() {
-    setShareBusy(true);
-    try {
-      const url = reportShareUrl();
-      if (url) window.open(`https://wa.me/?text=${encodeURIComponent(`${report!.beachName} litter report · ${url}`)}`, '_blank', 'noopener,noreferrer');
-    } catch {
-      setCopied(false);
-    } finally {
-      setShareBusy(false);
-    }
   }
 
   if (loading) {
@@ -187,16 +128,6 @@ export default function ReportDetailScreen() {
         )}
 
         <PrimaryButton onClick={() => nav(`/beach/${report.beachId}`)}>View beach</PrimaryButton>
-        {canShareCountedReport(report.status) && (
-          <>
-            <div className="i2-share-grid">
-              <button type="button" className="btn-ghost press i2-share-button" onClick={shareOnWhatsApp} disabled={shareBusy || !sharePath}>WhatsApp</button>
-              <button type="button" className="btn-ghost press i2-share-button" onClick={shareReport} disabled={shareBusy || !sharePath}>Share…</button>
-              <button type="button" className={`btn-primary press i2-share-button${copied ? ' i2-copy-success' : ''}`} onClick={copyShareLink} disabled={shareBusy || !sharePath}>{copied ? 'Copied' : 'Copy link'}</button>
-            </div>
-            {!sharePath && <p style={{ margin: '8px 0 0', color: C.muted, fontSize: 11 }}>Preparing a secure report link…</p>}
-          </>
-        )}
         <GhostButton onClick={editReport}>{report.status === 'Incomplete' ? 'Fix this report' : 'Edit this report'}</GhostButton>
         <div style={{ textAlign: 'center', fontFamily: MONO, fontSize: 10, color: C.faint }}>REPORT {report.id.toUpperCase()}</div>
       </div>

@@ -1,96 +1,93 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { AiSuggestionHelp } from '../components/AiSuggestionHelp';
 import { Camera, Check, Upload } from '../components/Icon';
-import { Alert, Callout, InfoChip, SectionLabel } from '../components/ds';
+import { Alert, Callout, EmptyState, InfoChip, SectionLabel } from '../components/ds';
 import { BackButton, PrimaryButton, TextButton } from '../components/ui';
 import { useApp } from '../AppContext';
 import {
   analyseCleanupPhoto,
-  CLEANUP_BAND_UNITS,
-  completeCleanup,
   formatEventDate,
   getCleanupEvent,
   getCleanupTarget,
+  QUANTITY_BANDS,
   type CleanupHandling,
 } from '../iteration2';
-import { C, formatDate } from '../theme';
-import type { LitterCategory, QuantityBand, QuantityByCategory } from '../types';
+import { fetchCleanupEvent, fetchCleanupTarget, submitCleanup } from '../iteration2Api';
+import { C, MONO, formatDate } from '../theme';
+import type { LitterCategory, QuantityBand } from '../types';
+import { useAsyncData } from '../useAsyncData';
 
 const HANDLING: CleanupHandling[] = ['Collected for disposal', 'Recycled / handled', 'Not recorded'];
-const CLEANUP_CATEGORIES: LitterCategory[] = ['Fishing gear', 'Plastic', 'Glass', 'Metal', 'Other', 'Paper'];
-const BANDS: QuantityBand[] = ['Small', 'Medium', 'Large', 'Very Large'];
 
 export default function CleanupScreen() {
   const { beachId = '' } = useParams();
   const [params] = useSearchParams();
   const eventId = params.get('event');
-  const targetReportId = params.get('target') ?? undefined;
   const nav = useNavigate();
   const { user, showToast } = useApp();
+  const { data: event, loading: eventLoading } = useAsyncData(
+    () => eventId ? fetchCleanupEvent(eventId) : Promise.resolve(null),
+    [eventId, user?.participantId],
+    eventId ? getCleanupEvent(eventId) : null,
+  );
+  const { data: target, loading: targetLoading, error: targetError } = useAsyncData(
+    () => fetchCleanupTarget(beachId),
+    [beachId],
+    getCleanupTarget(beachId),
+  );
   const inputRef = useRef<HTMLInputElement>(null);
-  const idempotencyKey = useRef<string | null>(null);
-  const [event, setEvent] = useState<Awaited<ReturnType<typeof getCleanupEvent>>>(null);
-  const [target, setTarget] = useState<Awaited<ReturnType<typeof getCleanupTarget>>>(null);
-  const [loading, setLoading] = useState(true);
-  const [quantities, setQuantities] = useState<QuantityByCategory>({});
-  const [handling, setHandling] = useState<CleanupHandling>('Collected for disposal');
+  const [afterBands, setAfterBands] = useState<Partial<Record<LitterCategory, QuantityBand>>>({});
+  const [handling, setHandling] = useState<CleanupHandling>('Not recorded');
   const [note, setNote] = useState('');
-  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photo, setPhoto] = useState<File | null>(null);
   const [analysing, setAnalysing] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
   const [photoUsed, setPhotoUsed] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const photoName = photoFile?.name ?? null;
-
-  useEffect(() => {
-    let active = true;
-    setLoading(true);
-    Promise.all([getCleanupTarget(beachId, targetReportId), eventId ? getCleanupEvent(eventId) : Promise.resolve(null)])
-      .then(([targetResult, eventResult]) => {
-        if (!active) return;
-        setTarget(targetResult);
-        setEvent(eventResult);
-        setQuantities(targetResult ? { ...targetResult.remainingQuantities } : {});
-      })
-      .catch((reason) => { if (active) setError(reason instanceof Error ? reason.message : 'Could not load cleanup details.'); })
-      .finally(() => { if (active) setLoading(false); });
-    return () => { active = false; };
-  }, [beachId, eventId, targetReportId]);
-
+  const idempotencyKey = useRef(crypto.randomUUID());
   const categories = useMemo(
-    () => target ? (Object.keys(target.remainingQuantities) as LitterCategory[]) : CLEANUP_CATEGORIES,
+    () => target ? (Object.keys(target.remainingBands) as LitterCategory[]).filter((category) => target.remainingBands[category]) : [],
     [target],
   );
 
-  if (loading) {
-    return <div className="screen scroll-y"><div className="measure i2-page"><BackButton onClick={() => nav(eventId ? `/events/${eventId}` : `/beach/${beachId}`)} /><SectionLabel size="sm">Loading cleanup…</SectionLabel></div></div>;
+  if ((eventLoading || targetLoading) && !target) {
+    return <div className="screen scroll-y"><div className="measure i2-page"><Alert title="Loading cleanup" tone="caution">Checking the latest report and cleanup state.</Alert></div></div>;
   }
 
+  if (!target) {
+    return (
+      <div className="screen scroll-y">
+        <div className="measure i2-page">
+          <BackButton onClick={() => nav(event ? `/events/${event.id}` : `/beach/${beachId}`)} />
+          <EmptyState
+            title="Nothing to clean up yet"
+            body={targetError ?? 'A cleanup must be linked to a report at this beach.'}
+            action="Report litter here"
+            onAction={() => nav(`/beach/${beachId}`)}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  const cleanupTarget = target;
+
   async function usePhotoSuggestion() {
-    if (!photoFile) {
+    if (!photo) {
       inputRef.current?.click();
       return;
     }
     setAnalysing(true);
     setError(null);
     try {
-      const suggestion = await analyseCleanupPhoto(photoFile, target);
-      const hasSuggestion = Object.keys(suggestion).length > 0;
-      if (hasSuggestion) {
-        setQuantities(suggestion);
-        setPhotoUsed(true);
-        showToast('AI suggestions added — please confirm them');
-      } else {
-        setPhotoUsed(false);
-        setError(target
-          ? 'No remaining litter band was suggested. Confirm the post-cleanup bands manually.'
-          : 'No removed litter band was suggested. Confirm the cleanup bands manually.');
-      }
-      setPhotoFile(null);
+      const suggestion = await analyseCleanupPhoto(photo, cleanupTarget);
+      setAfterBands(suggestion);
+      setPhotoUsed(true);
+      setPhoto(null);
       if (inputRef.current) inputRef.current.value = '';
+      showToast('AI suggestions added — please confirm them');
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : 'AI suggestion is unavailable. Confirm the quantity bands manually.');
+      setError(reason instanceof Error ? reason.message : 'AI suggestion is unavailable. Choose the remaining bands manually.');
     } finally {
       setAnalysing(false);
     }
@@ -101,18 +98,15 @@ export default function CleanupScreen() {
     setError(null);
     setSubmitting(true);
     try {
-      idempotencyKey.current ??= crypto.randomUUID();
-      const cleanup = await completeCleanup({
+      const cleanup = await submitCleanup({
         participantId: user.participantId,
-        beachId,
-        targetReportId: target?.reportId,
+        targetReportId: cleanupTarget.reportId,
         eventId,
-        ...(target ? { remainingQuantities: quantities } : { removedQuantities: quantities }),
+        afterBands,
         handling,
         note,
         idempotencyKey: idempotencyKey.current,
       });
-      idempotencyKey.current = null;
       nav(`/cleanup/result/${cleanup.id}`, { replace: true });
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : 'Could not record this cleanup.');
@@ -121,19 +115,11 @@ export default function CleanupScreen() {
     }
   }
 
-  function setBand(category: LitterCategory, value: string) {
-    setQuantities((current) => {
-      const next = { ...current };
-      if (!value) delete next[category];
-      else next[category] = value as QuantityBand;
-      return next;
-    });
-    setError(null);
-  }
-
-  function markNoneRemaining() {
-    if (!target) return;
-    setQuantities({});
+  function removeEverything() {
+    const all: Partial<Record<LitterCategory, QuantityBand>> = {};
+    categories.forEach((category) => { all[category] = 'Small'; });
+    setAfterBands(all);
+    idempotencyKey.current = crypto.randomUUID();
     setError(null);
   }
 
@@ -151,7 +137,7 @@ export default function CleanupScreen() {
             setError('Use a JPG or PNG image.');
             return;
           }
-          setPhotoFile(file);
+          setPhoto(file);
           setPhotoUsed(false);
           setError(null);
         }}
@@ -160,37 +146,23 @@ export default function CleanupScreen() {
         <BackButton onClick={() => nav(event ? `/events/${event.id}` : `/beach/${beachId}`)} />
         <div>
           <SectionLabel size="sm">ADD A CLEANUP</SectionLabel>
-          <h1 className="i2-title" style={{ marginTop: 7 }}>{target ? 'Confirm what remains' : 'Confirm what you removed'}</h1>
-          <p className="i2-subtitle">
-            {target
-              ? 'Use quantity bands for the litter left after cleanup. Categories with nothing left can be set to None.'
-              : 'Record removed litter with Small, Medium, Large, or Very Large bands.'}
-          </p>
+          <h1 className="i2-title" style={{ marginTop: 7 }}>Confirm what you removed</h1>
+          <p className="i2-subtitle">Select a lower remaining band only for litter you cleared.</p>
         </div>
 
-        {target ? (
-          <div className="i2-card">
-            <SectionLabel size="sm">REPORTED LITTER AT THIS BEACH</SectionLabel>
-            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 14, marginTop: 10 }}>
-              <div>
-                <div style={{ fontSize: 16, fontWeight: 720, color: C.ink2 }}>{target.beachName}</div>
-                <div style={{ marginTop: 4, fontSize: 11.5, color: C.muted }}>Report {target.reportId} · {formatDate(target.reportedAt)}</div>
-              </div>
-              <InfoChip color={C.green} background={C.greenBg}>Linked report</InfoChip>
+        <div className="i2-card">
+          <SectionLabel size="sm">REPORTED LITTER AT THIS BEACH</SectionLabel>
+          <div style={{ display: 'flex', justifyContent: 'space-between', gap: 14, marginTop: 10 }}>
+            <div>
+              <div style={{ fontSize: 16, fontWeight: 720, color: C.ink2 }}>{target.beachName}</div>
+              <div style={{ marginTop: 4, fontSize: 11.5, color: C.muted }}>Report {target.reportId} · {formatDate(target.reportedAt)}</div>
             </div>
-            <div style={{ marginTop: 12, paddingTop: 11, borderTop: `1px solid ${C.line}`, display: 'grid', gap: 7 }}>
-              {(Object.entries(target.remainingQuantities) as [LitterCategory, QuantityBand][]).map(([category, band]) => (
-                <div key={category} style={{ display: 'flex', justifyContent: 'space-between', gap: 12, fontSize: 11.5 }}>
-                  <span style={{ color: C.muted }}>{category}</span><strong>{band}</strong>
-                </div>
-              ))}
-            </div>
+            <InfoChip color={C.green} background={C.greenBg}>Eligible</InfoChip>
           </div>
-        ) : (
-          <Callout title="No prior report required" tone="reassurance">
-            You can record a cleanup at this beach at any time. Record only the litter bands you actually removed; this standalone cleanup will not alter an unrelated report.
-          </Callout>
-        )}
+          <div style={{ marginTop: 12, paddingTop: 11, borderTop: `1px solid ${C.line}`, fontFamily: MONO, fontSize: 10, color: C.muted }}>
+            CONFIRM BANDS, NOT EXACT COUNTS
+          </div>
+        </div>
 
         {event && (
           <Callout title="Linked activity" tone="quiet">
@@ -205,55 +177,45 @@ export default function CleanupScreen() {
           </p>
           <button type="button" className="i2-field press" onClick={() => inputRef.current?.click()} style={{ display: 'flex', alignItems: 'center', gap: 11, textAlign: 'left' }}>
             <span style={{ width: 36, height: 36, borderRadius: 12, background: 'rgba(11,33,97,.07)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              {photoName ? <Camera color={C.navy} /> : <Upload color={C.navy} />}
+          {photo ? <Camera color={C.navy} /> : <Upload color={C.navy} />}
             </span>
             <span style={{ flex: 1, minWidth: 0 }}>
-              <strong style={{ display: 'block', fontSize: 13 }}>{photoName ?? (photoUsed ? 'Photo processed and discarded' : 'Choose after-cleanup photo')}</strong>
+              <strong style={{ display: 'block', fontSize: 13 }}>{photo?.name ?? (photoUsed ? 'Photo processed and discarded' : 'Choose after-cleanup photo')}</strong>
               <span style={{ display: 'block', marginTop: 2, color: C.dim, fontSize: 10.5 }}>JPG or PNG · optional</span>
             </span>
           </button>
-          {photoName && <PrimaryButton onClick={usePhotoSuggestion} disabled={analysing} height={48} style={{ marginTop: 10 }}>{analysing ? 'Checking photo…' : 'Get editable suggestions'}</PrimaryButton>}
-          {photoUsed && (
-            <>
-              <Callout title="AI suggestion" tone="reassurance" icon={<Check color={C.green} />} style={{ marginTop: 10 }}>
-                These bands are only a suggestion — edit any row before you confirm.
-              </Callout>
-              <AiSuggestionHelp context="cleanup" suggestions={quantities} />
-            </>
-          )}
+          {photo && <PrimaryButton onClick={usePhotoSuggestion} disabled={analysing} height={48} style={{ marginTop: 10 }}>{analysing ? 'Checking photo…' : 'Get editable suggestions'}</PrimaryButton>}
+          {photoUsed && <Callout title="AI suggestion" tone="reassurance" icon={<Check color={C.green} />} style={{ marginTop: 10 }}>These bands are only a suggestion — edit any row before you confirm.</Callout>}
         </div>
 
         <div className="i2-card">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12 }}>
-            <SectionLabel size="sm">{target ? 'LITTER REMAINING' : 'LITTER REMOVED'}</SectionLabel>
-            {target && <button type="button" onClick={markNoneRemaining} style={{ fontSize: 11, fontWeight: 720, color: C.navy }}>Mark none remaining</button>}
+            <SectionLabel size="sm">BANDS AFTER CLEANUP</SectionLabel>
+            <button type="button" onClick={removeEverything} style={{ fontSize: 11, fontWeight: 720, color: C.navy }}>All Small</button>
           </div>
           <div style={{ marginTop: 8 }}>
-            {categories.map((category) => {
-              const before = target?.remainingQuantities[category];
-              const allowedBands = target && before
-                ? BANDS.filter((band) => CLEANUP_BAND_UNITS[band] <= CLEANUP_BAND_UNITS[before])
-                : BANDS;
-              return (
-                <label key={category} className="i2-quantity-row">
-                  <span>
-                    <strong style={{ display: 'block', fontSize: 13.5, color: C.ink2 }}>{category}</strong>
-                    <span style={{ display: 'block', marginTop: 3, fontSize: 10.5, color: C.dim }}>
-                      {before ? `Before cleanup: ${before}` : 'Choose a band only if this category was removed'}
-                    </span>
-                  </span>
-                  <select
-                    className="i2-field"
-                    aria-label={`${category} ${target ? 'remaining quantity band' : 'removed quantity band'}`}
-                    value={quantities[category] ?? ''}
-                    onChange={(event) => setBand(category, event.target.value)}
-                  >
-                    <option value="">{target ? 'None remaining' : 'Not recorded'}</option>
-                    {allowedBands.map((band) => <option key={band} value={band}>{band}</option>)}
-                  </select>
-                </label>
-              );
-            })}
+            {categories.map((category) => (
+              <label key={category} className="i2-quantity-row">
+                <span>
+                  <strong style={{ display: 'block', fontSize: 13.5, color: C.ink2 }}>{category}</strong>
+                  <span style={{ display: 'block', marginTop: 3, fontSize: 10.5, color: C.dim }}>Before: {target.remainingBands[category]}</span>
+                </span>
+                <select
+                  className="i2-field"
+                  aria-label={`${category} remaining band after cleanup`}
+                  value={afterBands[category] ?? ''}
+                  onChange={(event) => {
+                    const band = event.target.value as QuantityBand;
+                    setAfterBands((current) => ({ ...current, [category]: band }));
+                    idempotencyKey.current = crypto.randomUUID();
+                    setError(null);
+                  }}
+                >
+                  <option value="" disabled>Choose band</option>
+                  {QUANTITY_BANDS.map((band) => <option key={band} value={band}>{band}</option>)}
+                </select>
+              </label>
+            ))}
           </div>
         </div>
 
@@ -273,7 +235,7 @@ export default function CleanupScreen() {
 
         {error && <Alert title="Cleanup not saved" tone="error">{error}</Alert>}
 
-        <PrimaryButton onClick={submit} disabled={submitting}>{submitting ? 'Recording…' : 'Record cleanup'}</PrimaryButton>
+        <PrimaryButton onClick={submit} disabled={submitting || Object.keys(afterBands).length === 0}>{submitting ? 'Saving cleanup…' : 'Confirm cleanup'}</PrimaryButton>
         <TextButton onClick={() => nav(event ? `/events/${event.id}` : `/beach/${beachId}`)}>Cancel</TextButton>
       </div>
     </div>

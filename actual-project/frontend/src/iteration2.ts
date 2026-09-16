@@ -1,21 +1,5 @@
 import type { LitterCategory, QuantityBand, QuantityByCategory } from './types';
-import {
-  checkInIteration2Event,
-  createIteration2Cleanup,
-  createIteration2Event,
-  getIteration2Event,
-  getIteration2EventCleanups,
-  getIteration2Events,
-  createIteration2ShareLink,
-  getIteration2SharedItems,
-  getIteration2MyCleanups,
-  getIteration2Targets,
-  joinIteration2Event,
-  leaveIteration2Event,
-  recognizeCleanupPhoto,
-  recognizeReportPhoto,
-  USE_MOCK,
-} from './api';
+import { recognizeCleanupPhoto, recognizeReportPhoto, USE_MOCK } from './api';
 
 export type EventStatus = 'Open' | 'Closed';
 export type CleanupHandling = 'Collected for disposal' | 'Recycled / handled' | 'Not recorded';
@@ -32,9 +16,14 @@ export interface CleanupEvent {
   status: EventStatus;
   source: 'weekly' | 'admin';
   participantCount: number;
+  attendanceCount: number;
   joinedBy: string[];
   checkIns: Record<string, CheckInState>;
   attendanceBy: string[];
+  /** Contains only the current participant id when their evidence is valid. */
+  evidenceBy: string[];
+  /** Report ids saved by a joined participant for this event's beach. */
+  reportEvidenceBy: Record<string, string[]>;
   cleanupIds: string[];
 }
 
@@ -43,17 +32,17 @@ export interface CleanupTarget {
   beachId: string;
   beachName: string;
   reportedAt: string;
-  remainingQuantities: QuantityByCategory;
+  remainingBands: Partial<Record<LitterCategory, QuantityBand>>;
 }
 
 export interface CleanupRow {
   category: LitterCategory;
-  before?: QuantityBand | null;
-  after?: QuantityBand | null;
+  beforeBand?: QuantityBand;
+  afterBand?: QuantityBand;
   removedBand?: QuantityBand;
   removedUnits?: number;
-  /** Deprecated legacy-count fields returned only for historical cleanup rows. */
-  removed?: number;
+  /** Difference between the shared band values for this one action only. */
+  score?: number;
 }
 
 export interface CleanupAction {
@@ -66,50 +55,19 @@ export interface CleanupAction {
   createdAt: string;
   rows: CleanupRow[];
   score: number;
-  remainingQuantities: QuantityByCategory | null;
-  removedQuantities: QuantityByCategory | null;
-  resolved: boolean;
   handling: CleanupHandling;
   note: string;
   status: 'Cleanup recorded — awaiting follow-up';
+  remainingQuantities?: QuantityByCategory | null;
+  removedQuantities?: QuantityByCategory | null;
+  resolved?: boolean;
 }
 
 export interface AiSuggestion {
-  modelState: 'ready' | 'unavailable' | 'empty';
+  modelState: 'ready' | 'unavailable' | 'unreadable' | 'empty';
   modelVersion: string;
   suggestions: QuantityByCategory;
-  counts: Partial<Record<LitterCategory, number>>;
   supportedClasses: string[];
-}
-
-export function normalizeSuggestedCounts(
-  counts: Partial<Record<LitterCategory, number>>,
-): Partial<Record<LitterCategory, number>> {
-  return Object.fromEntries(
-    Object.entries(counts).filter(([, count]) => Number.isInteger(count) && Number(count) > 0),
-  ) as Partial<Record<LitterCategory, number>>;
-}
-
-export function effectiveAiModelState(
-  state: AiSuggestion['modelState'],
-  counts: Partial<Record<LitterCategory, number>>,
-): AiSuggestion['modelState'] {
-  return state === 'ready' && Object.keys(normalizeSuggestedCounts(counts)).length === 0 ? 'empty' : state;
-}
-
-export const CLEANUP_BAND_UNITS: Record<QuantityBand, number> = {
-  Small: 1,
-  Medium: 2,
-  Large: 3,
-  'Very Large': 4,
-};
-
-function isQuantityBand(value: unknown): value is QuantityBand {
-  return value === 'Small' || value === 'Medium' || value === 'Large' || value === 'Very Large';
-}
-
-function activeTarget(quantities: QuantityByCategory): boolean {
-  return Object.values(quantities).some((band) => band !== undefined && band !== 'Small');
 }
 
 type Iteration2Store = {
@@ -121,6 +79,34 @@ type Iteration2Store = {
 
 const STORE_KEY = 'rs_iteration2_v4';
 
+export const QUANTITY_BANDS: QuantityBand[] = ['Small', 'Medium', 'Large', 'Very Large'];
+export const CLEANUP_BAND_UNITS: Record<QuantityBand, number> = {
+  Small: 1,
+  Medium: 2,
+  Large: 3,
+  'Very Large': 4,
+};
+const CLEANUP_CATEGORIES: LitterCategory[] = ['Fishing gear', 'Plastic', 'Glass', 'Metal', 'Other', 'Paper'];
+
+const QUANTITY_BAND_VALUE: Record<QuantityBand, number> = {
+  Small: 1,
+  Medium: 2,
+  Large: 3,
+  'Very Large': 4,
+};
+
+export function quantityBandValue(band: QuantityBand): number {
+  return QUANTITY_BAND_VALUE[band];
+}
+
+function activeTarget(quantities: Partial<Record<LitterCategory, QuantityBand>>): boolean {
+  return Object.values(quantities).some((band) => band !== undefined && band !== 'Small');
+}
+
+function isQuantityBand(value: unknown): value is QuantityBand {
+  return QUANTITY_BANDS.includes(value as QuantityBand);
+}
+
 const BEACHES = [
   { id: 'morib', name: 'Pantai Morib', area: 'Banting, Selangor' },
   { id: 'remis', name: 'Pantai Remis', area: 'Jeram, Kuala Selangor' },
@@ -128,8 +114,12 @@ const BEACHES = [
   { id: 'bagan', name: 'Pantai Bagan Lalang', area: 'Sepang, Selangor' },
 ] as const;
 
+// The demo mirrors the published rule: only beaches at Moderate or above get
+// automatically generated Saturday activities. Kelanang has insufficient
+// evidence, so it must not acquire an event merely because it is configured.
+const AUTO_EVENT_BEACH_IDS = new Set(['morib', 'remis', 'bagan']);
+
 const MODEL_CLASSES = ['plastic', 'metal', 'glass', 'paper_cardboard', 'styrofoam', 'fishing_gear'];
-const CLEANUP_CATEGORIES: LitterCategory[] = ['Fishing gear', 'Plastic', 'Glass', 'Metal', 'Other', 'Paper'];
 
 function malaysiaDate(date: Date): string {
   return new Intl.DateTimeFormat('en-CA', {
@@ -155,7 +145,7 @@ function nextSaturdays(count: number): string[] {
 function seedStore(): Iteration2Store {
   const saturdays = nextSaturdays(4);
   const events = saturdays.flatMap((date, week) =>
-    BEACHES.map((beach, beachIndex): CleanupEvent => ({
+    BEACHES.filter((beach) => AUTO_EVENT_BEACH_IDS.has(beach.id)).map((beach, beachIndex): CleanupEvent => ({
       id: `${beach.id}-${date}`,
       beachId: beach.id,
       beachName: beach.name,
@@ -166,9 +156,12 @@ function seedStore(): Iteration2Store {
       status: 'Open',
       source: 'weekly',
       participantCount: 6 + week * 2 + beachIndex * 3,
+      attendanceCount: 0,
       joinedBy: [],
       checkIns: {},
       attendanceBy: [],
+      evidenceBy: [],
+      reportEvidenceBy: {},
       cleanupIds: [],
     })),
   );
@@ -183,28 +176,21 @@ function seedStore(): Iteration2Store {
         beachId: 'morib',
         beachName: 'Pantai Morib',
         reportedAt: '2026-08-14T02:00:00Z',
-        remainingQuantities: {
-          Plastic: 'Very Large',
-          'Fishing gear': 'Large',
-          Glass: 'Medium',
-          Metal: 'Medium',
-          Paper: 'Medium',
-          Other: 'Small',
-        },
+        remainingBands: { Plastic: 'Very Large', 'Fishing gear': 'Very Large', Glass: 'Large', Metal: 'Large', Paper: 'Medium', Other: 'Medium' },
       },
       {
         reportId: 'r3',
         beachId: 'remis',
         beachName: 'Pantai Remis',
         reportedAt: '2026-07-20T02:00:00Z',
-        remainingQuantities: { 'Fishing gear': 'Large', Plastic: 'Medium', Glass: 'Small' },
+        remainingBands: { 'Fishing gear': 'Large', Plastic: 'Medium', Glass: 'Small' },
       },
       {
         reportId: 'r_seed_bagan',
         beachId: 'bagan',
         beachName: 'Pantai Bagan Lalang',
         reportedAt: '2026-07-24T16:00:00+08:00',
-        remainingQuantities: { Plastic: 'Large', 'Fishing gear': 'Medium', Glass: 'Small', Other: 'Small' },
+        remainingBands: { Plastic: 'Large', 'Fishing gear': 'Large', Glass: 'Medium', Other: 'Small' },
       },
     ],
   };
@@ -213,7 +199,25 @@ function seedStore(): Iteration2Store {
 function readStore(): Iteration2Store {
   try {
     const parsed = JSON.parse(localStorage.getItem(STORE_KEY) || 'null') as Iteration2Store | null;
-    if (parsed?.version === 4 && Array.isArray(parsed.events) && Array.isArray(parsed.targets)) return parsed;
+    if (parsed?.version === 4 && Array.isArray(parsed.events) && Array.isArray(parsed.targets)) {
+      // Keep earlier local ledgers usable after report evidence was added.
+      // This is an additive field, so filling an absent value cannot change a
+      // participant's prior attendance or cleanup records.
+      if (parsed.events.some((event) => !event.reportEvidenceBy || !event.evidenceBy || event.attendanceCount === undefined)) {
+        const normalized = {
+          ...parsed,
+          events: parsed.events.map((event) => ({
+            ...event,
+            attendanceCount: event.attendanceCount ?? event.attendanceBy.length,
+            evidenceBy: event.evidenceBy ?? [],
+            reportEvidenceBy: event.reportEvidenceBy ?? {},
+          })),
+        };
+        writeStore(normalized);
+        return normalized;
+      }
+      return parsed;
+    }
   } catch {
     // Corrupt or unavailable storage simply starts a fresh local demo ledger.
   }
@@ -243,31 +247,30 @@ function updateEvent(eventId: string, change: (event: CleanupEvent) => CleanupEv
   return updated;
 }
 
-export async function listCleanupEvents(participantId?: string, joinedOnly = false, includeAuth = true): Promise<CleanupEvent[]> {
-  const events = USE_MOCK ? readStore().events : await getIteration2Events(undefined, includeAuth);
-  return events
+export function listCleanupEvents(participantId?: string, joinedOnly = false): CleanupEvent[] {
+  const events = readStore().events
     .filter((event) => event.status === 'Open')
     .filter((event) => !joinedOnly || Boolean(participantId && event.joinedBy.includes(participantId)))
     .sort((a, b) => a.date.localeCompare(b.date) || a.beachName.localeCompare(b.beachName));
+  return events;
 }
 
-export async function getCleanupEvent(eventId: string): Promise<CleanupEvent | null> {
-  if (!USE_MOCK) {
-    try { return await getIteration2Event(eventId); } catch { return null; }
-  }
+export function getCleanupEvent(eventId: string): CleanupEvent | null {
   return readStore().events.find((event) => event.id === eventId) ?? null;
 }
 
-export async function joinCleanupEvent(eventId: string, participantId: string): Promise<CleanupEvent> {
-  if (!USE_MOCK) return joinIteration2Event(eventId);
+export function joinCleanupEvent(eventId: string, participantId: string): CleanupEvent {
   return updateEvent(eventId, (event) => {
     if (event.joinedBy.includes(participantId)) return event;
-    return { ...event, joinedBy: [...event.joinedBy, participantId], participantCount: event.participantCount + 1 };
+    return {
+      ...event,
+      joinedBy: [...event.joinedBy, participantId],
+      participantCount: event.participantCount + 1,
+    };
   });
 }
 
-export async function leaveCleanupEvent(eventId: string, participantId: string): Promise<CleanupEvent> {
-  if (!USE_MOCK) return leaveIteration2Event(eventId);
+export function leaveCleanupEvent(eventId: string, participantId: string): CleanupEvent {
   return updateEvent(eventId, (event) => {
     if (!event.joinedBy.includes(participantId)) return event;
     const checkIns = { ...event.checkIns };
@@ -276,118 +279,80 @@ export async function leaveCleanupEvent(eventId: string, participantId: string):
       ...event,
       joinedBy: event.joinedBy.filter((id) => id !== participantId),
       attendanceBy: event.attendanceBy.filter((id) => id !== participantId),
+      attendanceCount: event.attendanceBy.includes(participantId)
+        ? Math.max(0, event.attendanceCount - 1)
+        : event.attendanceCount,
       checkIns,
       participantCount: Math.max(0, event.participantCount - 1),
     };
   });
 }
 
-export async function recordCheckIn(
-  eventId: string,
-  participantId: string,
-  result: CheckInState | { lat: number; lng: number },
-): Promise<CleanupEvent> {
-  if (!USE_MOCK) {
-    if (typeof result === 'string') throw new Error('Location coordinates are required for check-in.');
-    return checkInIteration2Event(eventId, result);
-  }
-  if (typeof result !== 'string') throw new Error('Mock check-in requires a check-in result.');
+export function recordCheckIn(eventId: string, participantId: string, state: CheckInState): CleanupEvent {
   return updateEvent(eventId, (event) => {
     if (!event.joinedBy.includes(participantId)) throw new Error('Join this activity before checking in.');
-    return { ...event, checkIns: { ...event.checkIns, [participantId]: result } };
+    return { ...event, checkIns: { ...event.checkIns, [participantId]: state } };
   });
 }
 
-export async function getCleanupTarget(beachId: string, reportId?: string): Promise<CleanupTarget | null> {
-  return (await listCleanupTargets(beachId, reportId))[0] ?? null;
+export function getCleanupTarget(beachId: string): CleanupTarget | null {
+  const target = getCleanupTargetRecord(beachId);
+  if (!target) return null;
+  const hasLitterAboveSmall = Object.values(target.remainingBands).some(
+    (band) => band && quantityBandValue(band) > quantityBandValue('Small'),
+  );
+  return hasLitterAboveSmall ? target : null;
 }
 
-export async function getCleanupTargetRecord(beachId: string, reportId?: string): Promise<CleanupTarget | null> {
-  return getCleanupTarget(beachId, reportId);
+export function getCleanupTargetRecord(beachId: string): CleanupTarget | null {
+  return readStore().targets.find((item) => item.beachId === beachId) ?? null;
 }
 
-function normalizeTarget(raw: any): CleanupTarget {
-  return {
-    reportId: String(raw.reportId),
-    beachId: String(raw.beachId),
-    beachName: String(raw.beachName),
-    reportedAt: String(raw.reportedAt),
-    remainingQuantities: (raw.remainingQuantities ?? {}) as QuantityByCategory,
-  };
-}
-
-export async function listCleanupTargets(beachId?: string, reportId?: string, includeAuth = true): Promise<CleanupTarget[]> {
-  if (!USE_MOCK) {
-    const targets = await getIteration2Targets(beachId, reportId, includeAuth);
-    return (targets as any[]).map(normalizeTarget).filter((target) => activeTarget(target.remainingQuantities));
-  }
-  return readStore().targets
-    .filter((target) => !beachId || target.beachId === beachId)
-    .filter((target) => !reportId || target.reportId === reportId)
-    .filter((target) => activeTarget(target.remainingQuantities));
-}
-
-export async function getCleanup(cleanupId: string): Promise<CleanupAction | null> {
-  if (!USE_MOCK) return (await getIteration2MyCleanups()).find((action: CleanupAction) => action.id === cleanupId) ?? null;
+export function getCleanup(cleanupId: string): CleanupAction | null {
   return readStore().cleanups.find((cleanup) => cleanup.id === cleanupId) ?? null;
 }
 
-export async function getLatestCleanupForBeach(beachId: string): Promise<CleanupAction | null> {
-  const cleanups = USE_MOCK ? readStore().cleanups : await getIteration2MyCleanups();
-  return cleanups.filter((cleanup: CleanupAction) => cleanup.beachId === beachId)
-    .sort((a: CleanupAction, b: CleanupAction) => b.createdAt.localeCompare(a.createdAt))[0] ?? null;
+export function getLatestCleanupForBeach(beachId: string): CleanupAction | null {
+  return readStore().cleanups
+    .filter((cleanup) => cleanup.beachId === beachId)
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0] ?? null;
 }
 
-export async function getCleanupForTarget(targetReportId: string): Promise<CleanupAction | null> {
-  const cleanups = USE_MOCK ? readStore().cleanups : await getIteration2MyCleanups();
-  return cleanups.find((cleanup: CleanupAction) => cleanup.targetReportId === targetReportId) ?? null;
+export function getCleanupForTarget(targetReportId: string): CleanupAction | null {
+  return readStore().cleanups.find((cleanup) => cleanup.targetReportId === targetReportId) ?? null;
 }
 
-export async function completeCleanup(input: {
+export function completeCleanup(input: {
   participantId: string;
   beachId?: string;
   targetReportId?: string;
   eventId?: string | null;
-  remainingQuantities?: QuantityByCategory;
+  afterBands?: Partial<Record<LitterCategory, QuantityBand>>;
   removedQuantities?: QuantityByCategory;
   handling: CleanupHandling;
   note?: string;
-  idempotencyKey?: string;
-}): Promise<CleanupAction> {
-  const idempotencyKey = input.idempotencyKey ?? crypto.randomUUID();
-  if (!input.targetReportId && !input.beachId) throw new Error('Choose a beach for this cleanup.');
-  if (input.targetReportId && input.remainingQuantities === undefined) throw new Error('Confirm what remains after this cleanup.');
-  if (!input.targetReportId && !input.removedQuantities) throw new Error('Confirm what you removed.');
-
-  if (!USE_MOCK) {
-    const payload: any = {
-      beachId: input.beachId,
-      targetReportId: input.targetReportId,
-      eventId: input.eventId,
-      remainingQuantities: input.remainingQuantities,
-      removedQuantities: input.removedQuantities,
-      handling: input.handling,
-      note: input.note,
-      idempotencyKey,
-    };
-    if (!payload.targetReportId) delete payload.targetReportId;
-    if (!payload.beachId) delete payload.beachId;
-    if (payload.remainingQuantities === undefined) delete payload.remainingQuantities;
-    if (payload.removedQuantities === undefined) delete payload.removedQuantities;
-    return createIteration2Cleanup(payload as any) as Promise<CleanupAction>;
-  }
-
+}): CleanupAction {
   const store = readStore();
+  if (!input.targetReportId && !input.beachId) throw new Error('Choose a beach for this cleanup.');
   const target = input.targetReportId
     ? store.targets.find((item) => item.reportId === input.targetReportId)
     : undefined;
-  if (input.targetReportId && (!target || !activeTarget(target.remainingQuantities))) {
+  if (input.targetReportId && (!target || !activeTarget(target.remainingBands))) {
     throw new Error('This report is not eligible for a cleanup.');
   }
+  if (input.eventId) {
+    const event = store.events.find((item) => item.id === input.eventId);
+    if (!event || !event.joinedBy.includes(input.participantId)) {
+      throw new Error('Join this activity before recording a cleanup for it.');
+    }
+    if (event.beachId !== (target?.beachId ?? input.beachId)) {
+      throw new Error('This cleanup must use a report from the activity beach.');
+    }
+  }
+
   const beachId = target?.beachId ?? input.beachId!;
   const beach = BEACHES.find((item) => item.id === beachId);
   if (!beach) throw new Error('Choose a monitored beach.');
-
   let rows: CleanupRow[] = [];
   let score = 0;
   let remainingQuantities: QuantityByCategory | null = null;
@@ -395,42 +360,42 @@ export async function completeCleanup(input: {
   let resolved = false;
 
   if (target) {
-    const before = { ...target.remainingQuantities };
-    const after = { ...(input.remainingQuantities ?? {}) };
+    const before = { ...target.remainingBands };
+    const after = { ...before, ...(input.afterBands ?? {}) };
     for (const [category, band] of Object.entries(after) as [LitterCategory, QuantityBand][]) {
-      if (!(category in before) || !isQuantityBand(band)) throw new Error('Use only the litter categories already recorded for this target.');
       const beforeBand = before[category];
-      if (!beforeBand || CLEANUP_BAND_UNITS[band] > CLEANUP_BAND_UNITS[beforeBand]) {
+      if (!beforeBand || !isQuantityBand(band)) throw new Error('Use only the litter categories already recorded for this target.');
+      if (CLEANUP_BAND_UNITS[band] > CLEANUP_BAND_UNITS[beforeBand]) {
         throw new Error('Remaining litter cannot increase during a cleanup.');
       }
     }
     rows = (Object.entries(before) as [LitterCategory, QuantityBand][])
       .map(([category, beforeBand]): CleanupRow | null => {
-        const afterBand = after[category] ?? null;
-        const removedUnits = CLEANUP_BAND_UNITS[beforeBand] - (afterBand ? CLEANUP_BAND_UNITS[afterBand] : 0);
-        if (removedUnits <= 0) return null;
-        return { category, before: beforeBand, after: afterBand, removedUnits };
+        const afterBand = after[category];
+        if (!afterBand) return null;
+        const removedUnits = CLEANUP_BAND_UNITS[beforeBand] - CLEANUP_BAND_UNITS[afterBand];
+        return removedUnits > 0 ? { category, beforeBand, afterBand, score: removedUnits } : null;
       })
       .filter((row): row is CleanupRow => row !== null);
-    score = rows.reduce((sum, row) => sum + (row.removedUnits ?? 0), 0);
+    score = rows.reduce((sum, row) => sum + (row.score ?? 0), 0);
     if (score <= 0) throw new Error('Record at least one reduction in the cleanup result.');
-    target.remainingQuantities = after;
+    target.remainingBands = after;
     remainingQuantities = after;
     resolved = !activeTarget(after);
   } else {
     removedQuantities = { ...(input.removedQuantities ?? {}) };
     for (const [category, band] of Object.entries(removedQuantities) as [LitterCategory, QuantityBand][]) {
       if (!CLEANUP_CATEGORIES.includes(category) || !isQuantityBand(band)) throw new Error('Choose a supported category and quantity band.');
-      rows.push({ category, removedBand: band, removedUnits: CLEANUP_BAND_UNITS[band] });
+      rows.push({ category, removedBand: band, removedUnits: CLEANUP_BAND_UNITS[band], score: CLEANUP_BAND_UNITS[band] });
     }
     if (rows.length === 0) throw new Error('Record at least one category you removed.');
-    score = rows.reduce((sum, row) => sum + (row.removedUnits ?? 0), 0);
+    score = rows.reduce((sum, row) => sum + (row.score ?? 0), 0);
   }
 
   const action: CleanupAction = {
     id: `cleanup-${Date.now()}-${crypto.randomUUID()}`,
     participantId: input.participantId,
-    targetReportId: target?.reportId ?? null,
+    targetReportId: input.targetReportId ?? null,
     eventId: input.eventId ?? null,
     beachId,
     beachName: beach.name,
@@ -444,52 +409,99 @@ export async function completeCleanup(input: {
     note: input.note?.trim() ?? '',
     status: 'Cleanup recorded — awaiting follow-up',
   };
+
   store.cleanups.push(action);
+  if (resolved && target) {
+    store.targets = store.targets.filter((item) => item.reportId !== target.reportId);
+  }
   if (action.eventId) {
-    store.events = store.events.map((event) => event.id === action.eventId
-      ? { ...event, cleanupIds: [...event.cleanupIds, action.id] }
-      : event);
+    store.events = store.events.map((event) => {
+      if (event.id !== action.eventId) return event;
+      return {
+        ...event,
+        cleanupIds: [...event.cleanupIds, action.id],
+        evidenceBy: event.evidenceBy.includes(input.participantId)
+          ? event.evidenceBy
+          : [...event.evidenceBy, input.participantId],
+      };
+    });
   }
   writeStore(store);
   return action;
 }
 
-export async function eventCleanups(eventId: string): Promise<CleanupAction[]> {
-  return USE_MOCK
-    ? readStore().cleanups.filter((cleanup) => cleanup.eventId === eventId)
-    : getIteration2EventCleanups(eventId);
+export function eventCleanups(eventId: string): CleanupAction[] {
+  return readStore().cleanups.filter((cleanup) => cleanup.eventId === eventId);
 }
 
-export async function createSharePath(input: { eventId?: string; reportId?: string }): Promise<string> {
-  if (!USE_MOCK) return (await createIteration2ShareLink(input)).path;
-  if (input.eventId) return `/share/events/${encodeURIComponent(input.eventId)}`;
-  return `/share/reports/${encodeURIComponent(input.reportId ?? '')}`;
+/** A cleanup supplies the same-event evidence; attendance remains a separate
+ * explicit participant action after the broad-area check. */
+export function hasEventEvidence(eventId: string, participantId: string): boolean {
+  const event = getCleanupEvent(eventId);
+  const hasEvidence = Boolean(
+    event?.reportEvidenceBy[participantId]?.length
+    || eventCleanups(eventId).some((cleanup) => cleanup.participantId === participantId),
+  );
+  if (hasEvidence && event && !event.evidenceBy.includes(participantId)) {
+    updateEvent(eventId, (current) => ({ ...current, evidenceBy: [...current.evidenceBy, participantId] }));
+  }
+  return hasEvidence;
 }
 
-export async function getSharedItems(token: string): Promise<{ event: CleanupEvent | null; report: any | null }> {
-  if (!USE_MOCK) return getIteration2SharedItems(token);
-  const store = readStore();
-  const event = store.events.find((row) => row.id === token);
-  if (event) return { event, report: null };
-  const target = store.targets.find((row) => row.reportId === token && activeTarget(row.remainingQuantities));
-  if (!target) return { event: null, report: null };
-  return {
-    event: null,
-    report: {
-      id: target.reportId,
-      beachId: target.beachId,
-      beachName: target.beachName,
-      reportedAt: target.reportedAt,
-      status: 'Counted',
-      quantities: target.remainingQuantities,
-      remainingQuantities: target.remainingQuantities,
-      photoAvailable: false,
-    },
-  };
+export function eventHasEvidence(event: CleanupEvent, participantId: string): boolean {
+  return event.evidenceBy.includes(participantId) || Boolean(event.reportEvidenceBy[participantId]?.length);
 }
 
-export async function createAdminEvent(input: { beachId: string; date: string }): Promise<CleanupEvent> {
-  if (!USE_MOCK) return createIteration2Event(input);
+export function eventCanRecordAttendance(event: CleanupEvent, participantId: string): boolean {
+  return event.joinedBy.includes(participantId)
+    && event.checkIns[participantId] === 'within_area'
+    && eventHasEvidence(event, participantId)
+    && !event.attendanceBy.includes(participantId);
+}
+
+/** Save the fact that a participant filed a report for this specific event
+ * beach. It deliberately does not record attendance: that remains the
+ * participant's separate, explicit action. */
+export function recordEventReportEvidence(eventId: string, participantId: string, reportId: string, beachId: string): CleanupEvent {
+  return updateEvent(eventId, (event) => {
+    if (!event.joinedBy.includes(participantId)) throw new Error('Join this activity before linking a report to it.');
+    if (event.beachId !== beachId) throw new Error('This report belongs to a different beach.');
+    const current = event.reportEvidenceBy[participantId] ?? [];
+    if (current.includes(reportId)) return event;
+    return {
+      ...event,
+      evidenceBy: event.evidenceBy.includes(participantId) ? event.evidenceBy : [...event.evidenceBy, participantId],
+      reportEvidenceBy: { ...event.reportEvidenceBy, [participantId]: [...current, reportId] },
+    };
+  });
+}
+
+export function canRecordAttendance(eventId: string, participantId: string): boolean {
+  const event = getCleanupEvent(eventId);
+  return Boolean(
+    event
+      && event.joinedBy.includes(participantId)
+      && event.checkIns[participantId] === 'within_area'
+      && hasEventEvidence(eventId, participantId)
+      && !event.attendanceBy.includes(participantId),
+  );
+}
+
+export function recordAttendance(eventId: string, participantId: string): CleanupEvent {
+  return updateEvent(eventId, (event) => {
+    if (!event.joinedBy.includes(participantId)) throw new Error('Join this activity before confirming attendance.');
+    if (event.checkIns[participantId] !== 'within_area') throw new Error('Check in near the beach before confirming attendance.');
+    if (!hasEventEvidence(eventId, participantId)) throw new Error('Add a linked report or cleanup before confirming attendance.');
+    if (event.attendanceBy.includes(participantId)) return event;
+    return {
+      ...event,
+      attendanceBy: [...event.attendanceBy, participantId],
+      attendanceCount: event.attendanceCount + 1,
+    };
+  });
+}
+
+export function createAdminEvent(input: { beachId: string; date: string }): CleanupEvent {
   const store = readStore();
   const beach = BEACHES.find((item) => item.id === input.beachId);
   if (!beach) throw new Error('Choose a monitored beach.');
@@ -498,9 +510,23 @@ export async function createAdminEvent(input: { beachId: string; date: string })
   const existing = store.events.find((event) => event.id === id);
   if (existing) return existing;
   const event: CleanupEvent = {
-    id, beachId: beach.id, beachName: beach.name, area: beach.area, date: input.date,
-    startsAt: '09:00', endsAt: '12:00', status: 'Open', source: 'admin', participantCount: 0,
-    joinedBy: [], checkIns: {}, attendanceBy: [], cleanupIds: [],
+    id,
+    beachId: beach.id,
+    beachName: beach.name,
+    area: beach.area,
+    date: input.date,
+    startsAt: '09:00',
+    endsAt: '12:00',
+    status: 'Open',
+    source: 'admin',
+    participantCount: 0,
+    attendanceCount: 0,
+    joinedBy: [],
+    checkIns: {},
+    attendanceBy: [],
+    evidenceBy: [],
+    reportEvidenceBy: {},
+    cleanupIds: [],
   };
   store.events.push(event);
   writeStore(store);
@@ -511,33 +537,30 @@ export function monitoredBeaches() {
   return BEACHES.map((beach) => ({ ...beach }));
 }
 
-export async function analyseReportPhoto(photoKey: string, forceFailure = false): Promise<AiSuggestion> {
+export async function analyseReportPhoto(
+  photoKey: string,
+  forcedState: 'unavailable' | 'unreadable' | null = null,
+): Promise<AiSuggestion> {
   if (!USE_MOCK) {
-    if (forceFailure) return { modelState: 'unavailable', modelVersion: 'unavailable', suggestions: {}, counts: {}, supportedClasses: MODEL_CLASSES };
+    if (forcedState) return { modelState: forcedState === 'unreadable' ? 'unreadable' : 'unavailable', modelVersion: 'unavailable', suggestions: {}, supportedClasses: MODEL_CLASSES };
     const result = await recognizeReportPhoto(photoKey);
-    const counts = normalizeSuggestedCounts(result.counts);
-    return {
-      modelState: effectiveAiModelState(result.modelState, counts),
-      modelVersion: result.modelVersion,
-      suggestions: result.suggestions,
-      counts,
-      supportedClasses: result.supportedClasses,
-    };
+    const state = result.modelState === 'ready' && Object.keys(result.suggestions ?? {}).length === 0 ? 'empty' : result.modelState;
+    return { modelState: state, modelVersion: result.modelVersion, suggestions: result.suggestions ?? {}, supportedClasses: result.supportedClasses ?? MODEL_CLASSES };
   }
   await new Promise((resolve) => setTimeout(resolve, 650));
-  if (forceFailure || !photoKey) {
-    return { modelState: 'unavailable', modelVersion: 'sea-taco-yolo11m-best', suggestions: {}, counts: {}, supportedClasses: MODEL_CLASSES };
+  if (forcedState === 'unreadable' || photoKey.toLowerCase().includes('unreadable')) {
+    return { modelState: 'unreadable', modelVersion: 'sea-taco-yolo11m-best', suggestions: {}, supportedClasses: MODEL_CLASSES };
+  }
+  if (forcedState === 'unavailable' || !photoKey) {
+    return { modelState: 'unavailable', modelVersion: 'sea-taco-yolo11m-best', suggestions: {}, supportedClasses: MODEL_CLASSES };
   }
   const number = [...photoKey].reduce((sum, character) => sum + character.charCodeAt(0), 0);
   const primary: LitterCategory = number % 3 === 0 ? 'Fishing gear' : number % 3 === 1 ? 'Plastic' : 'Glass';
   const quantity: QuantityBand = number % 2 === 0 ? 'Medium' : 'Small';
-  const count = quantity === 'Medium' ? 8 : 3;
-  const counts = { [primary]: count } as Partial<Record<LitterCategory, number>>;
   return {
-    modelState: effectiveAiModelState('ready', counts),
+    modelState: 'ready',
     modelVersion: 'sea-taco-yolo11m-best',
     suggestions: { [primary]: quantity },
-    counts,
     supportedClasses: MODEL_CLASSES,
   };
 }
@@ -545,42 +568,36 @@ export async function analyseReportPhoto(photoKey: string, forceFailure = false)
 export async function analyseCleanupPhoto(
   photo: File,
   target?: CleanupTarget | null,
-): Promise<QuantityByCategory> {
+): Promise<Partial<Record<LitterCategory, QuantityBand>>> {
   if (!USE_MOCK) {
+    if (!photo) throw new Error('Choose a JPG or PNG photo first.');
     const result = await recognizeCleanupPhoto(photo);
-    const suggested = result.suggestions as QuantityByCategory;
+    if (result.modelState !== 'ready') throw new Error('AI cleanup suggestion is unavailable. Choose the bands manually.');
+    const suggested = result.suggestions ?? {};
     if (!target) return suggested;
     return Object.fromEntries(
-      Object.entries(suggested).flatMap(([category, band]) => {
-        const typedCategory = category as LitterCategory;
-        const before = target.remainingQuantities[typedCategory];
-        if (!before || !band || !isQuantityBand(band)) return [];
-        const capped = CLEANUP_BAND_UNITS[band] <= CLEANUP_BAND_UNITS[before] ? band : before;
-        return [[typedCategory, capped]];
+      (Object.entries(target.remainingBands) as [LitterCategory, QuantityBand][]).map(([category, before]) => {
+        const band = suggested[category];
+        if (!band || !isQuantityBand(band)) return [category, before];
+        return [category, CLEANUP_BAND_UNITS[band] <= CLEANUP_BAND_UNITS[before] ? band : before];
       }),
-    ) as QuantityByCategory;
+    ) as Partial<Record<LitterCategory, QuantityBand>>;
   }
   await new Promise((resolve) => setTimeout(resolve, 650));
   if (!photo) throw new Error('Choose a JPG or PNG photo first.');
   if (!target) {
     const seed = [...photo.name].reduce((sum, character) => sum + character.charCodeAt(0), 0);
-    const category = CLEANUP_CATEGORIES[seed % CLEANUP_CATEGORIES.length];
-    const bands: QuantityBand[] = ['Small', 'Medium', 'Large'];
-    return { [category]: bands[seed % bands.length] };
-  }
-  if (target.beachId === 'morib') {
-    return { Plastic: 'Medium', 'Fishing gear': 'Medium', Glass: 'Small' };
+    return { [CLEANUP_CATEGORIES[seed % CLEANUP_CATEGORIES.length]]: QUANTITY_BANDS[seed % 3] };
   }
   const seed = [...photo.name].reduce((sum, character) => sum + character.charCodeAt(0), 0);
-  const result: QuantityByCategory = {};
-  (Object.keys(target.remainingQuantities) as LitterCategory[]).forEach((category, index) => {
-    const before = target.remainingQuantities[category];
-    if (!before || (seed + index) % 3 === 0) return;
-    const beforeUnits = CLEANUP_BAND_UNITS[before];
-    const suggestedUnits = Math.max(1, beforeUnits - 1);
-    result[category] = (Object.entries(CLEANUP_BAND_UNITS).find(([, units]) => units === suggestedUnits)?.[0] ?? 'Small') as QuantityBand;
+  const result: Partial<Record<LitterCategory, QuantityBand>> = {};
+  (Object.keys(target.remainingBands) as LitterCategory[]).forEach((category, index) => {
+    const current = target.remainingBands[category];
+    if (!current || current === 'Small') return;
+    const nextIndex = Math.max(0, QUANTITY_BANDS.indexOf(current) - 1 - ((seed + index) % 2));
+    if ((seed + index) % 3 !== 0) result[category] = QUANTITY_BANDS[nextIndex];
   });
-  return result;
+  return Object.keys(result).length > 0 ? result : { Plastic: 'Small' };
 }
 
 export function formatEventDate(date: string): string {
@@ -589,11 +606,4 @@ export function formatEventDate(date: string): string {
     timeZone: 'Asia/Kuala_Lumpur',
   });
   return `${date} (${weekday})`;
-}
-
-export function cleanupTotal(target: CleanupTarget): number {
-  return Object.values(target.remainingQuantities).reduce(
-    (sum, band) => sum + (band ? CLEANUP_BAND_UNITS[band] : 0),
-    0,
-  );
 }

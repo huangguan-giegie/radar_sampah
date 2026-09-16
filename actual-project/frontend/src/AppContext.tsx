@@ -49,11 +49,12 @@ export type ReportDraft = {
    *  review page can print "Pantai Morib" straight away, instead of showing a
    *  blank while it waits for /beaches to come back over the network. */
   beachName: string | null;
+  linkedEventId?: string | null;
   locationSource: 'gps' | 'manual' | null;
   coords: { lat: number; lng: number } | null;
   quantities: QuantityByCategory;
-  itemCounts: Partial<Record<LitterCategory, number>> | null;
-  eventId: string | null;
+  itemCounts?: Partial<Record<LitterCategory, number>> | null;
+  eventId?: string | null;
 
   /**
    * Iteration 2 keeps AI output separate from the participant's final report.
@@ -61,8 +62,8 @@ export type ReportDraft = {
    * AI suggestion or explicitly keeps the manual values they entered.
    */
   aiDecision: 'confirmed' | 'manual' | null;
-  aiModelState: 'ready' | 'empty' | 'unavailable' | null;
-  aiModelVersion: string | null;
+  aiModelState?: 'ready' | 'empty' | 'unavailable' | null;
+  aiModelVersion?: string | null;
 
   /**
    * Why finding the location failed, so the confirm screen can say something
@@ -99,6 +100,7 @@ function emptyDraft(): ReportDraft {
     existingPhotoUnavailable: false,
     beachId: null,
     beachName: null,
+    linkedEventId: null,
     locationSource: null,
     coords: null,
     quantities: {},
@@ -233,7 +235,7 @@ type AppState = {
   // button; null means there is nothing to tell the user.
   authSyncError: string | null;
   retryAuth: () => Promise<void>;
-  createId: () => Promise<{ participantId: string; recoveryToken?: string }>;
+  createId: () => Promise<{ participantId: string; token: string }>;
   restore: (participantId: string, token?: string) => Promise<void>;
   signOut: () => Promise<void>;
 
@@ -401,7 +403,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setAuthSyncError(null);
       return {
         participantId: session.user.participantId,
-        recoveryToken: session.recoveryToken,
+        token: session.recoveryToken ?? session.token,
       };
     },
 

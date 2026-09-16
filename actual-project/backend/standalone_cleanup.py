@@ -8,7 +8,7 @@ import time
 from datetime import datetime, timezone
 from typing import Any
 
-from flask import jsonify, request
+from flask import g, jsonify, request
 from sqlalchemy import Column, Integer, Text, inspect, insert, select, text
 from sqlalchemy.exc import IntegrityError
 
@@ -338,7 +338,7 @@ def install_cleanup_route(application: Any, engine: Any, jwt_secret: str, impl: 
             return impl.error_response(429, "RATE_LIMITED", "Too many requests. Please try again later.")
         events.append(now_monotonic)
 
-        payload = request.get_json(silent=True)
+        payload = getattr(g, "v3_cleanup_payload", None) or request.get_json(silent=True)
         if not isinstance(payload, dict):
             return impl.error_response(400, "VALIDATION_FAILED", "A cleanup object is required.")
         allowed = {
@@ -443,12 +443,15 @@ def install_cleanup_route(application: Any, engine: Any, jwt_secret: str, impl: 
                     if _is_resolved(before):
                         return impl.error_response(409, "CLEANUP_TARGET_COMPLETE", "This cleanup target has already been resolved.")
                     assert remaining_quantities is not None
+                    # Omitted categories are unchanged, not removed. Persist
+                    # the complete state so later scoring cannot lose them.
+                    remaining_quantities = {**before, **remaining_quantities}
                     if any(category not in before for category in remaining_quantities):
                         return impl.error_response(400, "VALIDATION_FAILED", "A cleanup cannot add a new litter category to its target.")
                     if any(BAND_UNITS[band] > BAND_UNITS[before[category]] for category, band in remaining_quantities.items()):
                         return impl.error_response(409, "CLEANUP_STATE_INCREASED", "Remaining litter cannot increase during a cleanup.")
                     cleanup_score = sum(
-                        max(0, BAND_UNITS[before_band] - BAND_UNITS.get(remaining_quantities.get(category, ""), 0))
+                        max(0, BAND_UNITS[before_band] - BAND_UNITS.get(remaining_quantities.get(category, before_band), 0))
                         for category, before_band in before.items()
                     )
                     if cleanup_score <= 0:
@@ -457,11 +460,11 @@ def install_cleanup_route(application: Any, engine: Any, jwt_secret: str, impl: 
                         {
                             "category": category,
                             "before": before_band,
-                            "after": remaining_quantities.get(category),
-                            "removedUnits": max(0, BAND_UNITS[before_band] - BAND_UNITS.get(remaining_quantities.get(category, ""), 0)),
+                            "after": remaining_quantities.get(category, before_band),
+                            "removedUnits": max(0, BAND_UNITS[before_band] - BAND_UNITS.get(remaining_quantities.get(category, before_band), 0)),
                         }
                         for category, before_band in before.items()
-                        if BAND_UNITS[before_band] != BAND_UNITS.get(remaining_quantities.get(category, ""), 0)
+                        if BAND_UNITS[before_band] != BAND_UNITS.get(remaining_quantities.get(category, before_band), 0)
                     ]
                 else:
                     # Deprecated exact-count compatibility for historical clients.

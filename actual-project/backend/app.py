@@ -35,6 +35,7 @@ from standalone_cleanup import (
     configure_cleanup_schema,
     install_cleanup_route,
 )
+from v3_contract import install_v3_contract
 
 
 configure_cleanup_schema(_impl)
@@ -552,6 +553,7 @@ def create_app(
 
     install_cleanup_route(application, engine, jwt_secret, _impl)
     install_litter_gallery(application, engine, jwt_secret, _impl)
+    install_v3_contract(application, engine, jwt_secret, _impl)
 
     reviewed_scheduler = _reviewed_event_scheduler(engine)
     for endpoint in ("list_events", "get_event"):

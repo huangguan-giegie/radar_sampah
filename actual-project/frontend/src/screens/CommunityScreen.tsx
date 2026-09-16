@@ -1,23 +1,24 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronRight } from '../components/Icon';
 import { EmptyState, InfoChip, SectionLabel } from '../components/ds';
 import { useApp } from '../AppContext';
 import { formatEventDate, listCleanupEvents } from '../iteration2';
+import { fetchCleanupEvents } from '../iteration2Api';
+import { useAsyncData } from '../useAsyncData';
 import { C } from '../theme';
 
 export default function CommunityScreen() {
   const nav = useNavigate();
   const { user } = useApp();
   const [filter, setFilter] = useState<'All' | 'Joined'>('All');
-  const [events, setEvents] = useState<Awaited<ReturnType<typeof listCleanupEvents>>>([]);
-  useEffect(() => {
-    let active = true;
-    listCleanupEvents(user?.participantId, filter === 'Joined')
-      .then((rows) => { if (active) setEvents(rows); })
-      .catch(() => { if (active) setEvents([]); });
-    return () => { active = false; };
-  }, [user?.participantId, filter]);
+  const { data: events, loading, error } = useAsyncData(
+    () => filter === 'Joined' && !user
+      ? Promise.resolve([])
+      : fetchCleanupEvents(user?.participantId, filter === 'Joined'),
+    [user?.participantId, filter],
+    listCleanupEvents(user?.participantId, filter === 'Joined'),
+  );
   const grouped = useMemo(() => {
     return events.reduce<Record<string, typeof events>>((groups, event) => {
       (groups[event.date] ??= []).push(event);
@@ -36,6 +37,17 @@ export default function CommunityScreen() {
           </p>
         </div>
 
+        {user?.role === 'moderator' && (
+          <button
+            type="button"
+            className="btn-ghost press"
+            onClick={() => nav('/platform/events/new')}
+            style={{ width: '100%', minHeight: 46, borderRadius: 15, fontSize: 13.5, fontWeight: 700, color: C.navy }}
+          >
+            Organiser tools
+          </button>
+        )}
+
         <div className="i2-chip-row" role="tablist" aria-label="Cleanup activity filter">
           {(['All', 'Joined'] as const).map((value) => (
             <button
@@ -52,7 +64,11 @@ export default function CommunityScreen() {
           ))}
         </div>
 
-        {events.length === 0 ? (
+        {loading ? (
+          <EmptyState title="Loading activities…" body="Checking the latest shared cleanup schedule." />
+        ) : error ? (
+          <EmptyState title="Couldn't load activities" body={error} action="Show all activities" onAction={() => setFilter('All')} />
+        ) : events.length === 0 ? (
           <EmptyState
             title="No joined cleanups yet"
             body={user ? 'Join an activity and it will appear here.' : 'Log in, then join an activity to keep it in this list.'}

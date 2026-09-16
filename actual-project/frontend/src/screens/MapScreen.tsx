@@ -17,7 +17,9 @@ import { attentionStateFor, C, freshnessLabel, freshStyle, MONO, reportWord, sev
 import { GlassPanel, SeverityBadge } from '../components/ds';
 import { useApp } from '../AppContext';
 import type { BeachSummary, MapLayer } from '../types';
-import { cleanupTotal, formatEventDate, listCleanupEvents, listCleanupTargets, type CleanupEvent, type CleanupTarget } from '../iteration2';
+import { formatEventDate, getCleanupTarget, listCleanupEvents, type CleanupEvent, type CleanupTarget } from '../iteration2';
+import { fetchCleanupEvents, fetchCleanupTarget } from '../iteration2Api';
+import { useAsyncData } from '../useAsyncData';
 
 
 // The opening view. Zoom 9 fits all four beaches at once, so the user sees the
@@ -92,40 +94,21 @@ export default function MapScreen() {
   const [compact, setCompact] = useState(false);
 
   const [beaches, setBeaches] = useState<BeachSummary[]>([]);
-  const [events, setEvents] = useState<CleanupEvent[]>([]);
-  const [cleanupTargets, setCleanupTargets] = useState<Record<string, CleanupTarget>>({});
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
 
 
-  // Load public map data one request at a time. This avoids a burst of three
-  // cross-origin requests, which is more likely to trigger edge protection.
-  async function loadMapData() {
+  // Named, because the Retry button in the offline bar calls the same code.
+  function loadBeaches() {
     setLoading(true);
     setFailed(false);
-    try {
-      const list = await getBeaches();
-      setBeaches(list);
-      setLoading(false);
-    } catch {
-      setFailed(true);
-      setLoading(false);
-      return;
-    }
-
-    // Supporting layers are useful but must not hide the beach markers when
-    // one of their requests is unavailable.
-    try {
-      const eventRows = await listCleanupEvents(undefined, false, false);
-      setEvents(eventRows);
-      const targets = await listCleanupTargets(undefined, undefined, false);
-      setCleanupTargets(Object.fromEntries(targets.map((target) => [target.beachId, target])));
-    } catch {
-      // The beach layer remains usable without events or cleanup targets.
-    }
+    getBeaches()
+      .then((list) => setBeaches(list))
+      .catch(() => setFailed(true))
+      .finally(() => setLoading(false));
   }
 
-  useEffect(() => { void loadMapData(); }, []);
+  useEffect(loadBeaches, []);
   // Leaflet itself is set up in useLeafletMap - see that file for why the map
   // object lives in a ref instead of state.
   const { elRef, mapRef, ready } = useLeafletMap({ center: CENTER, zoom: ZOOM });
@@ -135,7 +118,17 @@ export default function MapScreen() {
   const markersRef = useRef<Record<string, L.Marker>>({});
 
   const selected = beaches.find((b) => b.id === selectedId) || null;
-  const selectedEvent = selected ? events.find((event) => event.beachId === selected.id) ?? null : null;
+  const { data: cleanupEvents } = useAsyncData(
+    () => fetchCleanupEvents(),
+    [],
+    listCleanupEvents(),
+  );
+  const selectedEvent = selected ? cleanupEvents.find((event) => event.beachId === selected.id) ?? null : null;
+  const { data: selectedCleanupTarget } = useAsyncData(
+    () => selected ? fetchCleanupTarget(selected.id) : Promise.resolve(null),
+    [selected?.id],
+    selected ? getCleanupTarget(selected.id) : null,
+  );
 
 
   // Redraw every pin when the data, the layer, the selection or the compact
@@ -371,7 +364,7 @@ export default function MapScreen() {
             type="button"
             onClick={() => {
               setOffline(false);
-              void loadMapData();
+              loadBeaches();
             }}
             style={{ fontSize: 11, color: C.lime, fontWeight: 600 }}
           >
@@ -408,7 +401,7 @@ export default function MapScreen() {
           beach={selected}
           layer={layer}
           event={selectedEvent}
-          cleanupTarget={cleanupTargets[selected.id] ?? null}
+          cleanupTarget={selectedCleanupTarget}
           onClose={() => setSelectedId(null)}
           // From the biodiversity layer the button says Learn More, so it has
           // to land on the species cards. It used to open the beach at the top
@@ -529,7 +522,7 @@ function SelectedCard({
                 ) : (
                   <Info size={12} color={C.slate} strokeWidth={2} />
                 )}
-                {beach.validReports} active {reportWord(beach.validReports)}
+                {beach.validReports} counted {reportWord(beach.validReports)}
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 11px', borderRadius: 999, background: fs.bg, fontSize: 11.5, fontWeight: 600, color: fs.c }}>
                 <i style={{ width: 6, height: 6, borderRadius: 3, background: fs.dot, display: 'block' }} />
@@ -539,7 +532,7 @@ function SelectedCard({
 
             {cleanupTarget && (
               <button type="button" onClick={onCleanup} className="press" style={{ width: '100%', marginTop: 12, padding: '11px 13px', borderRadius: 14, background: 'rgba(184,255,54,.18)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, textAlign: 'left' }}>
-                <span style={{ minWidth: 0 }}><strong style={{ display: 'block', fontSize: 12.5, lineHeight: 1.35, color: C.ink2 }}>Add a Cleanup</strong><span style={{ display: 'block', marginTop: 3, fontSize: 10.5, lineHeight: 1.4, color: C.muted }}>{cleanupTotal(cleanupTarget)} recorded items remain</span></span>
+                <span style={{ minWidth: 0 }}><strong style={{ display: 'block', fontSize: 12.5, lineHeight: 1.35, color: C.ink2 }}>Add a Cleanup</strong><span style={{ display: 'block', marginTop: 3, fontSize: 10.5, lineHeight: 1.4, color: C.muted }}>Estimated bands are ready to confirm</span></span>
                 <ArrowRight size={13} />
               </button>
             )}

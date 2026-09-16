@@ -19,10 +19,10 @@ import { BandMeter, Callout, GlassPanel, InfoChip } from '../components/ds';
 import { useApp } from '../AppContext';
 import type { BeachDetail, SpeciesDistributionResult } from '../types';
 import { hasDraftProgress, resumePath } from '../flowRules';
-import { getCleanupTarget, getLatestCleanupForBeach, type CleanupAction, type CleanupTarget } from '../iteration2';
+import { getCleanupEvent, getCleanupTarget, getLatestCleanupForBeach } from '../iteration2';
+import { fetchCleanupEvent, fetchCleanupTarget, fetchLatestCleanupForBeach } from '../iteration2Api';
 import { MODEL_SPECIES_MEDIA } from '../speciesMedia';
-import { litterGalleryPath } from '../litterGallery';
-import { EcologicalBackgroundLink } from '../components/EcologicalBackgroundLink';
+import { useAsyncData } from '../useAsyncData';
 
 /*
  * relativeOccurrenceScore is shown exactly as the API sends it, on a 0..1 scale.
@@ -37,13 +37,6 @@ import { EcologicalBackgroundLink } from '../components/EcologicalBackgroundLink
 // severity colours. Reusing those would suggest that a row is "severe".
 const COMP_COLORS = ['#B8FF36', '#2C4A8C', '#5470A8', '#7A879B', '#98A4B5', '#CBD3E0'];
 
-type RuntimeCompositionSource = {
-  method?: 'yolo' | 'reported_quantity_estimate' | 'active_report_estimate';
-  createdAt?: string;
-  activeReportCount?: number;
-  windowDays?: number;
-};
-
 export default function BeachScreen() {
   const { beachId = '' } = useParams();
   const nav = useNavigate();
@@ -56,8 +49,28 @@ export default function BeachScreen() {
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
   const [modelResult, setModelResult] = useState<SpeciesDistributionResult | null>(null);
-  const [latestCleanup, setLatestCleanup] = useState<CleanupAction | null>(null);
-  const [cleanupTarget, setCleanupTarget] = useState<CleanupTarget | null>(null);
+  const requestedEventId = new URLSearchParams(location.search).get('event');
+  const { data: latestCleanup } = useAsyncData(
+    () => fetchLatestCleanupForBeach(beachId),
+    [beachId],
+    getLatestCleanupForBeach(beachId),
+  );
+  const { data: cleanupTarget } = useAsyncData(
+    () => fetchCleanupTarget(beachId),
+    [beachId],
+    getCleanupTarget(beachId),
+  );
+  const { data: linkedEvent } = useAsyncData(
+    () => requestedEventId ? fetchCleanupEvent(requestedEventId) : Promise.resolve(null),
+    [requestedEventId, user?.participantId],
+    requestedEventId ? getCleanupEvent(requestedEventId) : null,
+  );
+  const canLinkReportToEvent = Boolean(
+    user
+      && linkedEvent
+      && linkedEvent.beachId === beachId
+      && linkedEvent.joinedBy.includes(user.participantId),
+  );
 
   // beachId is in the dependency list, so moving between beaches refetches.
   // Without it React would show the previous beach under the new name. Model
@@ -77,16 +90,6 @@ export default function BeachScreen() {
       })
       .catch(() => setFailed(true))
       .finally(() => setLoading(false));
-  }, [beachId]);
-
-  useEffect(() => {
-    let active = true;
-    Promise.all([getLatestCleanupForBeach(beachId), getCleanupTarget(beachId)]).then(([cleanup, target]) => {
-      if (!active) return;
-      setLatestCleanup(cleanup);
-      setCleanupTarget(target);
-    }).catch(() => undefined);
-    return () => { active = false; };
   }, [beachId]);
 
   // Scroll once the beach has loaded - before that the section does not exist
@@ -117,7 +120,11 @@ export default function BeachScreen() {
     }
     resetDraft();
     setLastSavedReport(null);
-    patchDraft({ beachId, beachName: b?.name ?? null });
+    patchDraft({
+      beachId,
+      beachName: b?.name ?? null,
+      linkedEventId: canLinkReportToEvent ? linkedEvent!.id : null,
+    });
     nav(user ? '/report/photo' : `/identity?next=${encodeURIComponent('/report/photo')}`);
   };
 
@@ -155,8 +162,6 @@ export default function BeachScreen() {
   const modelByScientificName = new Map(
     (modelResult?.predictions ?? []).map((prediction) => [prediction.scientificName, prediction]),
   );
-  const compositionSource = b.compositionSource as unknown as RuntimeCompositionSource | null;
-  const activeComposition = compositionSource?.method === 'active_report_estimate';
 
   return (
     <div className="screen scroll-y" style={{ zIndex: 20 }}>
@@ -254,7 +259,7 @@ export default function BeachScreen() {
               ) : (
                 <Info size={11} color={C.slate} strokeWidth={2.2} />
               )}
-              {b.validReports} active {reportWord(b.validReports)}
+              {b.validReports} counted {reportWord(b.validReports)}
             </InfoChip>
             {/* The raw attention score is deliberately NOT shown. Epic 4's
                 call: the public sees the band, not the number behind it. The
@@ -292,7 +297,7 @@ export default function BeachScreen() {
 
       <div className="measure" style={{ padding: '20px 16px calc(var(--safe-bottom) + 36px)', display: 'flex', flexDirection: 'column', gap: 22 }}>
 
-        {cleanupTarget && (
+        {cleanupTarget ? (
           <div className="i2-card">
             <Label style={{ marginBottom: 8 }}>CLEANUP CHECK</Label>
             <div style={{ fontSize: 17, fontWeight: 680, color: C.ink2 }}>Does this litter need clearing?</div>
@@ -300,29 +305,38 @@ export default function BeachScreen() {
               If you removed any of it, record what changed.
             </div>
             <div style={{ marginTop: 9, fontFamily: MONO, fontSize: 9, color: C.dim }}>
-              REPORT {cleanupTarget.reportId.toUpperCase()} · ACTIVE BAND STATE
+              REPORT {cleanupTarget.reportId.toUpperCase()} · ESTIMATED BANDS RECORDED
             </div>
             <PrimaryButton onClick={() => nav(user ? `/cleanup/${beachId}` : `/identity?next=${encodeURIComponent(`/cleanup/${beachId}`)}`)} style={{ marginTop: 13 }}>
-              <span>Add a Cleanup</span>
-              <small style={{ marginLeft: 6, fontSize: '0.72em', fontWeight: 500 }}>(commit to cleaning it)</small>
-              <ChevronRight size={13} color={C.lime} />
+              Add a Cleanup <ChevronRight size={13} color={C.lime} />
             </PrimaryButton>
           </div>
+        ) : (
+          <div className="i2-card">
+            <Label style={{ marginBottom: 8 }}>CLEANUP CHECK</Label>
+            <div style={{ fontSize: 17, fontWeight: 680, color: C.ink2 }}>Nothing to clean up yet</div>
+            <div style={{ marginTop: 5, fontSize: 12.5, lineHeight: 1.5, color: C.muted }}>
+              A cleanup needs a report linked to this beach.
+            </div>
+            <GhostButton onClick={startReport} style={{ marginTop: 13 }}>Report litter here</GhostButton>
+          </div>
         )}
+
+        <GhostButton onClick={() => nav(`/beach/${beachId}/gallery`)}>
+          Litter Gallery
+        </GhostButton>
 
         <div>
           <Label style={{ marginBottom: 12 }}>LITTER COMPOSITION</Label>
           <div style={{ fontSize: 12, lineHeight: 1.5, color: C.muted, margin: '-4px 0 12px' }}>
-            {activeComposition
-              ? `Current unresolved litter · ${compositionSource?.activeReportCount ?? b.validReports} active ${reportWord(compositionSource?.activeReportCount ?? b.validReports)} · last ${compositionSource?.windowDays ?? 90} days`
-              : compositionSource?.method === 'yolo'
-                ? 'Latest report photo · YOLO + backend percentages'
-                : 'Latest report · backend percentage estimate'}
+            {b.compositionSource?.method === 'yolo'
+              ? 'Latest report photo · YOLO + backend percentages'
+              : 'Latest report · backend percentage estimate'}
           </div>
-          {/* Current unresolved composition uses the same active Counted report
-              set as Beach Attention. Linked cleanups apply the submitted remaining
-              bands; resolved targets disappear from the active estimate while
-              historical reports remain available. */}
+          {/* What the litter is made of. This comes from the single most recent
+              counted report, and that report's date is printed under the bars -
+              so the user knows they are reading one day's observation, not an
+              average over months. */}
           {b.composition ? (
             <div style={{ background: C.white, border: `1px solid ${C.line}`, borderRadius: 24, padding: 20, display: 'flex', flexDirection: 'column', gap: 11 }}>
               {b.composition.map((c, i) => (
@@ -346,19 +360,17 @@ export default function BeachScreen() {
                 </div>
               ))}
               <div style={{ fontFamily: MONO, fontSize: 8.5, letterSpacing: '.1em', color: C.faint, marginTop: 4 }}>
-                {activeComposition
-                  ? 'ACTIVE COUNTED REPORTS · AFTER LINKED CLEANUPS'
-                  : compositionSource?.createdAt
-                    ? `REPORT ${formatDate(compositionSource.createdAt).toUpperCase()} · ${compositionSource.method === 'yolo' ? 'YOLO + BACKEND' : 'BACKEND ESTIMATE'}`
-                    : 'BACKEND CALCULATED'}
+                {b.compositionSource
+                  ? `REPORT ${formatDate(b.compositionSource.createdAt).toUpperCase()} · ${b.compositionSource.method === 'yolo' ? 'YOLO + BACKEND' : 'BACKEND ESTIMATE'}`
+                  : 'BACKEND CALCULATED'}
               </div>
             </div>
           ) : (
-            /* No active unresolved report. A dashed empty box, not a chart of
+            /* No counted report yet. A dashed empty box, not a chart of
                zeroes: an empty chart still looks like a measurement. */
             <div style={{ border: '1.5px dashed rgba(11,33,97,.18)', borderRadius: 24, padding: 22, textAlign: 'center' }}>
               <div style={{ fontSize: 13.5, fontWeight: 640, color: C.muted }}>
-                No active unresolved litter report
+                No counted report yet
               </div>
 
             </div>
@@ -367,7 +379,7 @@ export default function BeachScreen() {
 
         {latestCleanup && (
           <Callout title="Cleanup recorded — awaiting follow-up" tone="reassurance" icon={<Check color={C.green} />}>
-            Cleanup recorded on {formatDate(latestCleanup.createdAt)}. A new report will confirm the change.
+            Cleanup score {latestCleanup.score} from confirmed band changes on {formatDate(latestCleanup.createdAt)}. A new report will confirm the change.
           </Callout>
         )}
 
@@ -543,7 +555,14 @@ export default function BeachScreen() {
             <div style={{ fontSize: 13, lineHeight: 1.6, color: C.ink2, marginTop: 7 }}>
               {b.ecologicalNote}
             </div>
-            <EcologicalBackgroundLink />
+            <a
+              href="https://ourworldindata.org/grapher/share-of-global-plastic-waste-emitted-to-the-ocean?country=~MYS"
+              target="_blank"
+              rel="noreferrer"
+              style={{ display: 'inline-block', marginTop: 10, color: C.navy, fontSize: 12, fontWeight: 700, textDecoration: 'underline', textUnderlineOffset: 3 }}
+            >
+              Learn more about ocean plastic data
+            </a>
           </div>
         </div>
 
@@ -552,11 +571,11 @@ export default function BeachScreen() {
             <Camera size={16} strokeWidth={1.9} />
             Report Litter Here
           </PrimaryButton>
-          <GhostButton onClick={() => nav(user ? `/cleanup/${beachId}` : `/identity?next=${encodeURIComponent(`/cleanup/${beachId}`)}`)}>
-            <span>Add a Cleanup</span>
-            <small style={{ marginLeft: 6, fontSize: '0.72em', fontWeight: 500 }}>(commit to cleaning it)</small>
-          </GhostButton>
-          <GhostButton onClick={() => nav(litterGalleryPath(beachId))}>Litter Gallery</GhostButton>
+          {cleanupTarget && (
+            <GhostButton onClick={() => nav(user ? `/cleanup/${beachId}` : `/identity?next=${encodeURIComponent(`/cleanup/${beachId}`)}`)}>
+              Add a Cleanup
+            </GhostButton>
+          )}
           <GhostButton onClick={() => nav('/community')}>Community Cleanups</GhostButton>
           <GhostButton onClick={() => nav('/map')}>Back to Map</GhostButton>
         </div>

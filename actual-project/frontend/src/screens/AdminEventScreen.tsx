@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { Check, Shield } from '../components/Icon';
 import { Alert, Callout, SectionLabel } from '../components/ds';
 import { BackButton, PrimaryButton } from '../components/ui';
-import { createAdminEvent, formatEventDate, getCleanupEvent, monitoredBeaches } from '../iteration2';
+import { formatEventDate, monitoredBeaches } from '../iteration2';
+import { createAdminEventData, fetchCleanupEvent } from '../iteration2Api';
 import { C } from '../theme';
 
 export default function AdminEventScreen() {
@@ -11,22 +12,18 @@ export default function AdminEventScreen() {
   const beaches = monitoredBeaches();
   const [beachId, setBeachId] = useState<string>(beaches[0].id);
   const [date, setDate] = useState('');
-  const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState<{ kind: 'success' | 'duplicate' | 'error'; text: string } | null>(null);
 
   async function create() {
     setMessage(null);
-    setSubmitting(true);
     try {
       const id = `${beachId}-${date}`;
-      const before = await getCleanupEvent(id);
-      const event = await createAdminEvent({ beachId, date });
+      const before = await fetchCleanupEvent(id);
+      const event = await createAdminEventData({ beachId, date });
       if (before) setMessage({ kind: 'duplicate', text: `An activity already exists for ${formatEventDate(event.date)}. No duplicate was created.` });
       else setMessage({ kind: 'success', text: `${event.beachName} · ${formatEventDate(event.date)} was added.` });
     } catch (reason) {
       setMessage({ kind: 'error', text: reason instanceof Error ? reason.message : 'Could not create the activity.' });
-    } finally {
-      setSubmitting(false);
     }
   }
 
@@ -55,7 +52,7 @@ export default function AdminEventScreen() {
             <span style={{ display: 'block', marginBottom: 7, color: C.muted, fontSize: 11.5 }}>Date</span>
             <input className="i2-field" type="date" value={date} onChange={(event) => setDate(event.target.value)} />
           </label>
-          <PrimaryButton onClick={create} disabled={!date || submitting} height={50} style={{ marginTop: 15 }}>{submitting ? 'Creating…' : 'Create activity'}</PrimaryButton>
+          <PrimaryButton onClick={create} disabled={!date} height={50} style={{ marginTop: 15 }}>Create activity</PrimaryButton>
         </div>
 
         {message?.kind === 'success' && <Callout title="Activity created" tone="reassurance" icon={<Check color={C.green} />}>{message.text}</Callout>}

@@ -1736,7 +1736,9 @@ def create_app(
         quantity_bands = quantity_bands_for_counts(counts) if counts else {}
         state = result.get("state")
         model_state = "empty" if state == "ready" and not counts else state
-        if model_state not in {"ready", "unavailable", "empty"}:
+        if model_state == "failed":
+            model_state = "unreadable"
+        if model_state not in {"ready", "unavailable", "unreadable", "empty"}:
             model_state = "unavailable"
         return {
             **result,

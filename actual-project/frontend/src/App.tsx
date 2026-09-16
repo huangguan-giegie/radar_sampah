@@ -44,7 +44,7 @@ const SharedEventScreen = lazy(() => import('./screens/SharedEventScreen'));
 const AiSuggestionScreen = lazy(() => import('./screens/AiSuggestionScreen'));
 const AiMethodScreen = lazy(() => import('./screens/AiMethodScreen'));
 const AdminEventScreen = lazy(() => import('./screens/AdminEventScreen'));
-const LitterGalleryScreen = lazy(() => import('./screens/LitterGalleryScreen'));
+const GalleryScreen = lazy(() => import('./screens/GalleryScreen'));
 
 
 // The bottom tab bar appears on these four pages only.
@@ -131,8 +131,6 @@ export default function App() {
       ? 'Add a report'
       : pathname.startsWith('/share/events/')
         ? 'Shared cleanup activity'
-        : pathname.startsWith('/share/')
-          ? 'Shared cleanup report'
         : pathname.startsWith('/events/') && pathname.endsWith('/check-in')
           ? 'Cleanup check-in'
           : pathname.startsWith('/events/') && pathname.endsWith('/result')
@@ -204,7 +202,7 @@ export default function App() {
         <Route path="/home" element={<HomeScreen />} />
         <Route path="/map" element={<MapScreen />} />
         <Route path="/beach/:beachId" element={<BeachScreen />} />
-        <Route path="/beach/:beachId/gallery" element={<LitterGalleryScreen />} />
+        <Route path="/beach/:beachId/gallery" element={<GalleryScreen />} />
         <Route path="/method" element={<MethodScreen />} />
         <Route path="/method/ai" element={<AiMethodScreen />} />
 
@@ -212,8 +210,6 @@ export default function App() {
         <Route path="/events/:eventId" element={<EventScreen />} />
         <Route path="/events/:eventId/result" element={<EventResultScreen />} />
         <Route path="/share/events/:eventId" element={<SharedEventScreen />} />
-        <Route path="/share/reports/:reportId" element={<SharedEventScreen />} />
-        <Route path="/share/:shareToken" element={<SharedEventScreen />} />
         <Route path="/events/:eventId/check-in" element={<RequireAuth><CheckInScreen /></RequireAuth>} />
         <Route path="/cleanup/:beachId" element={<RequireAuth><CleanupScreen /></RequireAuth>} />
         <Route path="/cleanup/result/:cleanupId" element={<RequireAuth><CleanupResultScreen /></RequireAuth>} />

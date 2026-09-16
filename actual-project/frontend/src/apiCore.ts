@@ -192,6 +192,19 @@ async function request(path: string, method = 'GET', body?: unknown, timeoutMs =
   return data;
 }
 
+// New Iteration 2 screens use the same request pipeline as the established
+// API. Keep one exported name at this boundary so auth, timeout and errors do
+// not get reimplemented in the feature adapter.
+export async function apiRequest<T = any>(
+  path: string,
+  method = 'GET',
+  body?: unknown,
+  timeoutMs = 15_000,
+  includeAuth = true,
+): Promise<T> {
+  return request(path, method, body, timeoutMs, includeAuth) as Promise<T>;
+}
+
 // Iteration 2 endpoints live here alongside the original API so they share
 // bearer-token handling, timeouts and server error messages with every screen.
 export function getIteration2Events(beachId?: string, includeAuth = true): Promise<any[]> {
