@@ -58,18 +58,20 @@ function warnIfRuleDiffers(remote: ScoringMethod) {
 // What this score cannot tell you. Every line is a real way the number could
 // be misread, written plainly rather than hedged:
 //   - a busy beach gets more reports, which is not the same as more litter
-//   - the amounts are estimates by eye, so only big differences mean anything
+//   - the size bands are estimates, not a measured area
 //   - it is a 90 day window, and a beach can change in a weekend
 //   - it measures reported litter, not water quality or whether it is safe
 //   - biodiversity data sits beside this number and never enters it
+// Four of the five lines use the prototype's wording. The window line is not
+// in the prototype; it stays because it is still a real way to misread a band.
 // It takes the method as an argument so the window length stays in step with
 // the real setting instead of being typed out again as prose.
 const limitations = (m: ScoringMethod) => [
   'More visits means more reports, not more litter.',
-  'Bands are estimates by eye — comparable in order of magnitude only.',
+  'Size bands are estimates, not measured area.',
   `Conditions move faster than a ${m.windowDays}-day window can show.`,
   'This is reported litter, not water quality, ecology or safety.',
-  'Biodiversity context sits beside this score and never feeds into it.',
+  'Biodiversity context is not part of this score.',
 ];
 
 export default function MethodScreen() {
@@ -119,15 +121,16 @@ export default function MethodScreen() {
             style={{ background: 'rgba(255,255,255,.1)', border: '1px solid rgba(255,255,255,.2)' }}
           />
           <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '.18em', color: '#8290A8', marginTop: 20 }}>
-            DETERMINISTIC · PUBLISHED · SAME FOR ALL BEACHES
+            SAME FOR ALL BEACHES
           </div>
           <div style={{ fontSize: 29, fontWeight: 640, letterSpacing: '-.7px', marginTop: 8, lineHeight: 1.1 }}>
             How the severity band is decided
           </div>
+          {/* One line, as in the Iteration 2 prototype. The AI card further
+              down explains what "only suggests" means, and the limitations
+              say biodiversity never enters the score. */}
           <div style={{ fontSize: 14.5, lineHeight: 1.65, color: C.cloud, marginTop: 10 }}>
-            No model and no judgement call in the litter score — the same arithmetic runs on
-            every active report. The species occurrence score on a beach page is a separate,
-            modelled figure, and it never enters this calculation.
+            Fixed litter rules. AI only suggests.
           </div>
         </div>
       </div>
@@ -144,11 +147,12 @@ export default function MethodScreen() {
                  one is a decision we can be asked about. Category: weight x
                  amount. Report: the HIGHEST of those, so one very bad category
                  is not averaged away. Beach: the MEDIAN of its reports, so a
-                 single extreme day cannot drag a beach up. Fully cleared reports
-                 are excluded from the active median. */
+                 single extreme day cannot drag a beach up. After a cleanup the
+                 beach is worked out again from the litter still recorded, which
+                 is what the third row says in plain words. */
               { of: 'ONE CATEGORY', is: 'category weight × quantity level' },
-              { of: 'ONE REPORT', is: 'highest category score (Max)' },
-              { of: 'ONE BEACH', is: `median of active report scores after cleanup, last ${m.windowDays} days` },
+              { of: 'ONE REPORT', is: 'highest category score' },
+              { of: 'ONE BEACH', is: 'recalculated from remaining recorded litter' },
             ].map((f) => (
               <div key={f.of} style={{ background: C.tint, borderRadius: 14, padding: '11px 14px' }}>
                 <div style={{ fontFamily: MONO, fontSize: 8.5, letterSpacing: '.14em', color: C.dim }}>{f.of}</div>
@@ -197,7 +201,7 @@ export default function MethodScreen() {
             {/* The four bands with their exact ranges and their real colours -
                 the same colours the map uses, from the same source, so the
                 legend cannot disagree with the pins. severityLabel() is used
-                for the name, so this page says "Very high" exactly like every
+                for the name, so this page says "Severe" exactly like every
                 other screen. */}
             {m.bands.map((b, i) => (
               <div
@@ -223,7 +227,7 @@ export default function MethodScreen() {
           <Label style={{ marginBottom: 11 }}>WHEN NO BAND IS SHOWN</Label>
           <div style={{ background: C.white, border: `1px solid ${C.line}`, borderRadius: 22, padding: 18, display: 'flex', flexDirection: 'column', gap: 9 }}>
             {[
-              [`Under ${m.minReports} active reports`, 'Insufficient data'],
+              [`Under ${m.minReports} reports`, 'Insufficient data'],
               [`Nothing in ${m.windowDays} days`, 'Not recently reported'],
               ['Duplicate or incomplete', 'Never counted at all'],
             ].map(([when, then]) => (

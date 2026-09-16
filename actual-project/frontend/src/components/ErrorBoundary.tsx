@@ -64,8 +64,7 @@ export class ErrorBoundary extends Component<Props, State> {
             This screen stopped working
           </h1>
           <p style={{ fontSize: 14, lineHeight: 1.6, color: C.muted, margin: '10px 0 0' }}>
-            Nothing you sent us is lost — reports that were submitted are saved. Starting again
-            clears whatever this device was holding on to.
+            Your submitted reports are saved. Starting again clears any unsent draft.
           </p>
           <button
             type="button"

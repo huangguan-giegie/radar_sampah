@@ -34,6 +34,9 @@ import MyReportsScreen from './screens/MyReportsScreen';
 import ReportDetailScreen from './screens/ReportDetailScreen';
 import AccountScreen from './screens/AccountScreen';
 import AdminAccessDeniedScreen from './screens/AdminAccessDeniedScreen';
+// Not lazy: the intro opens straight after the splash on a first visit, and a
+// loading gap there would flash an empty frame before the first real page.
+import BackgroundScreen from './screens/BackgroundScreen';
 const CommunityScreen = lazy(() => import('./screens/CommunityScreen'));
 const EventScreen = lazy(() => import('./screens/EventScreen'));
 const CheckInScreen = lazy(() => import('./screens/CheckInScreen'));
@@ -149,6 +152,8 @@ export default function App() {
                       ? 'Beach details'
                       : pathname === '/community'
                         ? 'Community cleanups'
+                        : pathname.startsWith('/background')
+                          ? 'Background'
                         : pathname === '/method/ai'
                           ? 'AI suggestion method'
                           : pathname === '/map'
@@ -196,6 +201,7 @@ export default function App() {
             that is the point of the project, and it is what makes the map
             worth sharing. Only FILING a report needs an identity. */}
         <Route path="/" element={<SplashScreen />} />
+        <Route path="/background/intro" element={<BackgroundScreen intro />} />
         <Route path="/welcome" element={<WelcomeScreen />} />
         <Route path="/identity" element={<IdentityScreen />} />
 
@@ -205,6 +211,7 @@ export default function App() {
         <Route path="/beach/:beachId/gallery" element={<GalleryScreen />} />
         <Route path="/method" element={<MethodScreen />} />
         <Route path="/method/ai" element={<AiMethodScreen />} />
+        <Route path="/background" element={<BackgroundScreen />} />
 
         <Route path="/community" element={<CommunityScreen />} />
         <Route path="/events/:eventId" element={<EventScreen />} />

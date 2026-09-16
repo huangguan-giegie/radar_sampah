@@ -2,11 +2,12 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { getBeach } from '../api';
 import { getLitterGallery, litterGalleryPhotoUrl } from '../litterGallery';
-import { EmptyState, SectionLabel } from '../components/ds';
+import { EmptyState } from '../components/ds';
+import { Camera } from '../components/Icon';
 import { BackButton, ErrorNote, GhostButton, PrimaryButton, Skeleton } from '../components/ui';
 import { getCleanupTarget } from '../iteration2';
 import { fetchCleanupTarget } from '../iteration2Api';
-import { C, formatDate } from '../theme';
+import { C, formatDate, MONO } from '../theme';
 import type { LitterGalleryEntry } from '../types';
 import { useAsyncData } from '../useAsyncData';
 
@@ -42,11 +43,35 @@ export default function GalleryScreen() {
   return (
     <div className="screen scroll-y" style={{ zIndex: 27 }}>
       <div className="measure i2-page anim-fade-up" style={{ paddingBottom: 'calc(var(--safe-bottom) + 34px)' }}>
-        <BackButton onClick={() => nav(`/beach/${beachId}`)} />
+        {/* The count sits beside the back button, as in the prototype, and
+            only once there is something to count. "0 available photos" next
+            to the empty-state card would say the same thing twice. */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+          <BackButton onClick={() => nav(`/beach/${beachId}`)} />
+          {!loading && !failed && photos.length > 0 && (
+            <span
+              style={{
+                padding: '7px 13px',
+                borderRadius: 999,
+                background: C.white,
+                border: `1px solid ${C.line2}`,
+                fontFamily: MONO,
+                fontSize: 9.5,
+                letterSpacing: '.1em',
+                color: C.slate,
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {photos.length} AVAILABLE {photos.length === 1 ? 'PHOTO' : 'PHOTOS'}
+            </span>
+          )}
+        </div>
         <div>
-          <SectionLabel size="sm">LITTER GALLERY</SectionLabel>
-          <h1 className="i2-title" style={{ marginTop: 7 }}>{name}</h1>
-          <p className="i2-subtitle">Beach-level location only.</p>
+          <h1 className="i2-title">Litter gallery</h1>
+          <p className="i2-subtitle">{name}</p>
+          {/* Kept: the photos are public, so the page says up front that no
+              exact position comes with them. */}
+          <p className="i2-subtitle" style={{ marginTop: 2 }}>Beach-level location only.</p>
         </div>
 
         <div className="i2-confirmed-row" style={{ color: C.slate }}>
@@ -60,7 +85,15 @@ export default function GalleryScreen() {
         )}
 
         {!loading && !failed && photos.length === 0 && (
-          <EmptyState title="No gallery photos yet" body="There are no authorised report photos for this beach." />
+          <EmptyState
+            icon={(
+              <span aria-hidden="true" style={{ width: 52, height: 52, borderRadius: 26, background: C.tint, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Camera size={20} color={C.slate} />
+              </span>
+            )}
+            title="No photos available"
+            body="There are no report photos you can access for this beach yet."
+          />
         )}
 
         {!loading && !failed && photos.map((photo) => (

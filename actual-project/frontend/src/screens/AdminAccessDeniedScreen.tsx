@@ -1,9 +1,42 @@
+import type { ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Shield } from '../components/Icon';
-import { Alert, InfoChip, SectionLabel } from '../components/ds';
+import { Alert, SectionLabel } from '../components/ds';
 import { BackButton, GhostButton } from '../components/ui';
 import { useApp } from '../AppContext';
 import { C } from '../theme';
+
+/**
+ * The "SIGNED IN AS" strip at the top of the platform console. Both the console
+ * and this refusal screen show it, so the person always sees which account the
+ * decision was made for - green when the account may create activities, red
+ * when it may not. The colour is never the only signal: the words say it too.
+ */
+export function SignedInBanner({ tone, children }: { tone: 'admin' | 'participant'; children: ReactNode }) {
+  const admin = tone === 'admin';
+  const color = admin ? C.green : C.red;
+  return (
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 11,
+        padding: '10px 15px',
+        borderRadius: 14,
+        border: `1px solid ${admin ? 'rgba(23,122,62,.22)' : 'rgba(156,66,55,.22)'}`,
+        background: admin ? C.greenBg : '#FFF0EE',
+      }}
+    >
+      <span aria-hidden="true" style={{ width: 7, height: 7, borderRadius: '50%', background: color, flex: 'none' }} />
+      <span style={{ minWidth: 0 }}>
+        <SectionLabel size="sm">SIGNED IN AS</SectionLabel>
+        <strong style={{ display: 'block', marginTop: 2, color, fontSize: 13.5, fontWeight: 700, lineHeight: 1.35 }}>
+          {children}
+        </strong>
+      </span>
+    </div>
+  );
+}
 
 export default function AdminAccessDeniedScreen() {
   const nav = useNavigate();
@@ -18,9 +51,9 @@ export default function AdminAccessDeniedScreen() {
           <h1 className="i2-title" style={{ marginTop: 7 }}>Create an activity</h1>
         </div>
 
-        <InfoChip color="#9C4237" background="#FFF0EE" style={{ alignSelf: 'flex-start' }}>
+        <SignedInBanner tone="participant">
           Participant account · Volunteer {user?.participantId}
-        </InfoChip>
+        </SignedInBanner>
 
         <Alert title="Not authorised" tone="error">
           A participant account cannot create activities. Nothing was created.

@@ -203,7 +203,15 @@ function readStore(): Iteration2Store {
       // Keep earlier local ledgers usable after report evidence was added.
       // This is an additive field, so filling an absent value cannot change a
       // participant's prior attendance or cleanup records.
-      if (parsed.events.some((event) => !event.reportEvidenceBy || !event.evidenceBy || event.attendanceCount === undefined)) {
+      // Older ledgers also stored a target's bands as `remainingQuantities`,
+      // the API's name. Without this, every event page for that beach crashed
+      // on reading bands that were saved under the other key.
+      type StoredTarget = CleanupTarget & { remainingQuantities?: CleanupTarget['remainingBands'] };
+      const staleTarget = (target: StoredTarget) => !target.remainingBands;
+      if (
+        parsed.events.some((event) => !event.reportEvidenceBy || !event.evidenceBy || event.attendanceCount === undefined)
+        || (parsed.targets as StoredTarget[]).some(staleTarget)
+      ) {
         const normalized = {
           ...parsed,
           events: parsed.events.map((event) => ({
@@ -211,6 +219,10 @@ function readStore(): Iteration2Store {
             attendanceCount: event.attendanceCount ?? event.attendanceBy.length,
             evidenceBy: event.evidenceBy ?? [],
             reportEvidenceBy: event.reportEvidenceBy ?? {},
+          })),
+          targets: (parsed.targets as StoredTarget[]).map(({ remainingQuantities, ...target }) => ({
+            ...target,
+            remainingBands: target.remainingBands ?? remainingQuantities ?? {},
           })),
         };
         writeStore(normalized);
@@ -606,4 +618,65 @@ export function formatEventDate(date: string): string {
     timeZone: 'Asia/Kuala_Lumpur',
   });
   return `${date} (${weekday})`;
+}
+
+/** "09:00" → "9:00 AM". The API keeps 24-hour times so they sort and compare
+ *  simply; volunteers read the 12-hour clock the prototype uses. Anything that
+ *  is not a plain HH:MM is shown as it came, rather than guessed at. */
+function formatClock(value: string): string {
+  const match = /^(\d{1,2}):(\d{2})$/.exec(value);
+  if (!match) return value;
+  const hours = Number(match[1]);
+  const twelveHour = hours % 12 === 0 ? 12 : hours % 12;
+  return `${twelveHour}:${match[2]} ${hours >= 12 ? 'PM' : 'AM'}`;
+}
+
+/** "9:00 AM – 12:00 PM" - one helper, so the list, the event page, check-in
+ *  and the shared link cannot each write the same time a different way. */
+export function formatEventTimeRange(startsAt: string, endsAt: string): string {
+  return `${formatClock(startsAt)} – ${formatClock(endsAt)}`;
+}
+
+/**
+ * The "THIS SATURDAY" / "NEXT SATURDAY" / "IN 3 WEEKS" heading over a date
+ * group on the Community list. Weeks are counted from the coming Saturday in
+ * Malaysia time, so the label does not jump a week for someone browsing late
+ * at night on a phone set to another time zone.
+ *
+ * Extra dates from the platform team need not fall on a Saturday, so those say
+ * "THIS WEEK" / "NEXT WEEK" instead of naming a day they are not on. A past
+ * date returns null: the caller then shows the plain date, never "IN -1 WEEKS".
+ */
+export function relativeEventWeek(date: string, today: string = malaysiaDate(new Date())): string | null {
+  const target = Date.parse(`${date}T12:00:00+08:00`);
+  const now = Date.parse(`${today}T12:00:00+08:00`);
+  if (Number.isNaN(target) || Number.isNaN(now)) return null;
+  const days = Math.round((target - now) / 86_400_000);
+  if (days < 0) return null;
+  // Noon in Malaysia is 04:00 UTC on the same calendar day, so the UTC
+  // weekday is the Malaysian weekday.
+  const daysToSaturday = (6 - new Date(now).getUTCDay() + 7) % 7;
+  const week = days <= daysToSaturday ? 0 : Math.ceil((days - daysToSaturday) / 7);
+  const isSaturday = new Date(target).getUTCDay() === 6;
+  if (week === 0) return isSaturday ? 'THIS SATURDAY' : 'THIS WEEK';
+  if (week === 1) return isSaturday ? 'NEXT SATURDAY' : 'NEXT WEEK';
+  return `IN ${week + 1} WEEKS`;
+}
+
+/**
+ * The band a cleanup row took away - "Small", not a number - which is what the
+ * event result lists under BAND REMOVED.
+ *
+ * A standalone cleanup records that band directly. A cleanup of a report
+ * records before and after bands instead, and the drop between them is read
+ * back through the same unit scale the cleanup score uses: Large → Medium
+ * removed one step, which is a Small amount. A row with neither (an older
+ * count-only record) returns null rather than a band nobody chose.
+ */
+export function removedBandForRow(row: CleanupRow): QuantityBand | null {
+  if (row.beforeBand && row.afterBand) {
+    const removedUnits = CLEANUP_BAND_UNITS[row.beforeBand] - CLEANUP_BAND_UNITS[row.afterBand];
+    return QUANTITY_BANDS.find((band) => CLEANUP_BAND_UNITS[band] === removedUnits) ?? null;
+  }
+  return row.removedBand && isQuantityBand(row.removedBand) ? row.removedBand : null;
 }

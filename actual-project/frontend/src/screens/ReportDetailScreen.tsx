@@ -1,3 +1,8 @@
+// One saved report, read-only, with a way to correct it.
+//
+// My Reports rows no longer open this page - they go straight to the correction
+// screen, as the prototype does. The page stays at /reports/:reportId so a link
+// to a single saved report still has somewhere to land.
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { getMyReports } from '../api';

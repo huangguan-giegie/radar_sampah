@@ -149,7 +149,7 @@ export default function SubmittedScreen() {
             <ChevronRight color={C.slate} />
           </div>
           <div style={{ fontSize: 13, lineHeight: 1.6, color: C.ink2, marginTop: 7 }}>
-            Reports use the highest category score, and each beach uses the median of active
+            Reports use the highest category score, and each beach uses the median of counted
             report scores over the reporting window. Duplicate or incomplete reports are excluded.
           </div>
         </button>

@@ -200,13 +200,13 @@ export default function ConfirmBeachScreen() {
                 }}
               >
                 <Search />
-                {/* The placeholder doubles as a status line: four beaches, not
-                    every beach in Malaysia, so an empty result is explained
-                    before the user types. */}
+                {/* The placeholder is the prototype's plain "Search beaches".
+                    It only turns into a status line when the list failed to
+                    load, so nobody types into a search that cannot answer. */}
                 <input
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  placeholder={failed ? 'Beach list unavailable' : `Search the ${beaches.length || 4} supported beaches`}
+                  placeholder={failed ? 'Beach list unavailable' : 'Search beaches'}
                   style={{ flex: 1, border: 'none', background: 'transparent', fontSize: 13.5, color: C.ink }}
                 />
               </div>

@@ -2,7 +2,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import { EcologicalBackgroundLink, ECOLOGICAL_BACKGROUND_URL } from './components/EcologicalBackgroundLink';
 
-const APPROVED_URL = 'https://ourworldindata.org/grapher/share-of-global-plastic-waste-emitted-to-the-ocean?country=PAK';
+const APPROVED_URL = 'https://ourworldindata.org/grapher/share-of-global-plastic-waste-emitted-to-the-ocean?country=~MYS';
 
 describe('ecological background story link', () => {
   it('opens the exact approved Our World in Data background source safely', () => {

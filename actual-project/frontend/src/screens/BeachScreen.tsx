@@ -12,6 +12,7 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useEffect, useRef, useState } from 'react';
 import { getBeach, getSpeciesDistribution, USE_MOCK } from '../api';
 import { BeachCover } from '../components/BeachCover';
+import { EcologicalBackgroundLink } from '../components/EcologicalBackgroundLink';
 import { Camera, Check, ChevronRight, Clock, Info, SpeciesIcon } from '../components/Icon';
 import { BackButton, GhostButton, Label, PrimaryButton, Skeleton } from '../components/ui';
 import { attentionStateFor, C, formatDate, freshnessLabel, freshStyle, MONO, NOISE, reportWord, SEVERITY, severityLabel } from '../theme';
@@ -21,6 +22,8 @@ import type { BeachDetail, SpeciesDistributionResult } from '../types';
 import { hasDraftProgress, resumePath } from '../flowRules';
 import { getCleanupEvent, getCleanupTarget, getLatestCleanupForBeach } from '../iteration2';
 import { fetchCleanupEvent, fetchCleanupTarget, fetchLatestCleanupForBeach } from '../iteration2Api';
+import { SCORING_METHOD } from '../scoring';
+import { pendingSourceLabel } from '../sources';
 import { MODEL_SPECIES_MEDIA } from '../speciesMedia';
 import { useAsyncData } from '../useAsyncData';
 
@@ -38,26 +41,17 @@ import { useAsyncData } from '../useAsyncData';
 const COMP_COLORS = ['#B8FF36', '#2C4A8C', '#5470A8', '#7A879B', '#98A4B5', '#CBD3E0'];
 
 /*
- * The composition caption has to name the evidence it came from, because the
- * two sources are not the same claim. The live API aggregates the active
- * unresolved reports inside the scoring window and sends how many it used; the
- * local mock still describes one report, and therefore still prints its date.
+ * The footer names the evidence behind the bars, because the live API
+ * aggregates the active unresolved reports inside the scoring window while the
+ * local mock still describes one report. Which method produced the shares is
+ * ours to know, so the wording stays on the evidence and the date.
  */
-export function compositionSentence(source: BeachDetail['compositionSource']): string {
-  if (source?.method === 'active_report_estimate') {
-    return `Weighted reported composition of ${source.activeReportCount ?? 0} active reports in the last ${source.windowDays ?? 90} days.`;
-  }
-  if (source?.method === 'yolo') return 'Latest report photo · YOLO + backend percentages';
-  return 'Latest report · backend percentage estimate';
-}
-
 export function compositionFooter(source: BeachDetail['compositionSource']): string {
   if (!source) return 'BACKEND CALCULATED';
   if (source.method === 'active_report_estimate') {
-    return `${source.activeReportCount ?? 0} ACTIVE REPORTS · ${source.windowDays ?? 90} DAYS · BACKEND ESTIMATE`;
+    return `${source.activeReportCount ?? 0} ACTIVE REPORTS · LAST ${source.windowDays ?? 90} DAYS`;
   }
-  const method = source.method === 'yolo' ? 'YOLO + BACKEND' : 'BACKEND ESTIMATE';
-  return source.createdAt ? `REPORT ${formatDate(source.createdAt).toUpperCase()} · ${method}` : method;
+  return source.createdAt ? `REPORT ${formatDate(source.createdAt).toUpperCase()}` : 'REPORT ESTIMATE';
 }
 
 export default function BeachScreen() {
@@ -235,7 +229,7 @@ export default function BeachScreen() {
       >
         {/* wrap, and let the left block shrink. "MODERATE" is the widest band
             word we render - 163px against HIGH's 76px, wider even than
-            "VERY HIGH" - and next to a long freshness chip it used to push the
+            "SEVERE" - and next to a long freshness chip it used to push the
             chip column past the right edge of the phone, clipping "6 counted
             reports" to "6 counted repor". Wrapping drops the chips onto their
             own row instead of overflowing; minWidth 0 lets the band block give
@@ -244,7 +238,7 @@ export default function BeachScreen() {
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', rowGap: 10 }}>
           <div style={{ minWidth: 0 }}>
             <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '.16em', color: C.muted }}>
-              LITTER STATUS
+              LITTER SEVERITY
             </div>
             {/* A band, or an honest refusal to give one. Never a default and
                 never a zero - both would read as "this beach is fine". The
@@ -283,6 +277,13 @@ export default function BeachScreen() {
                 <Info size={11} color={C.slate} strokeWidth={2.2} />
               )}
               {b.validReports} counted {reportWord(b.validReports)}
+              {/* Below the minimum, say how far off a band is, in the chip
+                  itself - "2 counted reports · 3 needed". Only while the count
+                  really is short: a beach with enough reports but no band
+                  (nothing recent) must not be told it needs more. */}
+              {!attention.hasBand && b.validReports < SCORING_METHOD.minReports
+                ? ` · ${SCORING_METHOD.minReports} needed`
+                : null}
             </InfoChip>
             {/* The raw attention score is deliberately NOT shown. Epic 4's
                 call: the public sees the band, not the number behind it. The
@@ -311,7 +312,7 @@ export default function BeachScreen() {
             <div style={{ flex: 1, fontSize: 12, lineHeight: 1.5, color: C.muted }}>
 
               {b.lastReportedAt
-                ? 'Last reported over 90 days ago. That means unchecked, not clean.'
+                ? 'No report in 90 days — not a sign it’s clean.'
                 : 'No counted report yet. That means unchecked, not clean.'}
             </div>
           </div>
@@ -320,18 +321,19 @@ export default function BeachScreen() {
 
       <div className="measure" style={{ padding: '20px 16px calc(var(--safe-bottom) + 36px)', display: 'flex', flexDirection: 'column', gap: 22 }}>
 
+        {/* A question and one button, as in the Iteration 2 prototype. The
+            cleanup screen itself shows which report and which bands are being
+            confirmed, so repeating the report id here only added noise. */}
         {cleanupTarget ? (
           <div className="i2-card">
-            <Label style={{ marginBottom: 8 }}>CLEANUP CHECK</Label>
-            <div style={{ fontSize: 17, fontWeight: 680, color: C.ink2 }}>Does this litter need clearing?</div>
-            <div style={{ marginTop: 5, fontSize: 12.5, lineHeight: 1.5, color: C.muted }}>
-              If you removed any of it, record what changed.
-            </div>
-            <div style={{ marginTop: 9, fontFamily: MONO, fontSize: 9, color: C.dim }}>
-              REPORT {cleanupTarget.reportId.toUpperCase()} · ESTIMATED BANDS RECORDED
-            </div>
-            <PrimaryButton onClick={() => nav(user ? `/cleanup/${beachId}` : `/identity?next=${encodeURIComponent(`/cleanup/${beachId}`)}`)} style={{ marginTop: 13 }}>
-              Add a Cleanup <ChevronRight size={13} color={C.lime} />
+            <div style={{ fontSize: 17, fontWeight: 680, color: C.ink2 }}>Cleaned up here?</div>
+            <PrimaryButton
+              onClick={() => nav(user ? `/cleanup/${beachId}` : `/identity?next=${encodeURIComponent(`/cleanup/${beachId}`)}`)}
+              height={44}
+              trailingArrow
+              style={{ marginTop: 13, width: 'fit-content', borderRadius: 999, fontSize: 14 }}
+            >
+              Add a Cleanup
             </PrimaryButton>
           </div>
         ) : (
@@ -345,18 +347,15 @@ export default function BeachScreen() {
           </div>
         )}
 
-        <GhostButton onClick={() => nav(`/beach/${beachId}/gallery`)}>
-          Litter Gallery
-        </GhostButton>
-
         <div>
           <Label style={{ marginBottom: 12 }}>LITTER COMPOSITION</Label>
-          <div style={{ fontSize: 12, lineHeight: 1.5, color: C.muted, margin: '-4px 0 12px' }}>
-            {compositionSentence(b.compositionSource)}
-          </div>
-          {/* What the litter is made of, and which evidence it came from. The
-              footer under the bars always names that evidence, so the rows
-              cannot be read as a claim the percentages do not support. */}
+          {/* What the litter is made of. The live API aggregates the active
+              unresolved reports inside the 90-day window and the footer under
+              the bars names that evidence, so the rows cannot be read as a
+              physical measurement. How the share was computed (model or
+              estimate) is ours to know, not the volunteer's, so it is not
+              printed. The prototype shows a quantity band per row instead of a
+              share; that needs the band in the beach response. */}
           {b.composition ? (
             <div style={{ background: C.white, border: `1px solid ${C.line}`, borderRadius: 24, padding: 20, display: 'flex', flexDirection: 'column', gap: 11 }}>
               {b.composition.map((c, i) => (
@@ -397,7 +396,9 @@ export default function BeachScreen() {
 
         {latestCleanup && (
           <Callout title="Cleanup recorded — awaiting follow-up" tone="reassurance" icon={<Check color={C.green} />}>
-            Cleanup score {latestCleanup.score} from confirmed band changes on {formatDate(latestCleanup.createdAt)}. A new report will confirm the change.
+            {/* Date first, as its own phrase: formatDate can answer "Today",
+                which cannot follow "on". */}
+            {formatDate(latestCleanup.createdAt)} · Cleanup score {latestCleanup.score} from confirmed band changes. A new report will confirm the change.
           </Callout>
         )}
 
@@ -425,7 +426,7 @@ export default function BeachScreen() {
           <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '.16em', color: C.dim }}>
             HOW THIS BAND IS CALCULATED
           </div>
-          <div style={{ fontSize: 15.5, fontWeight: 650, marginTop: 9 }}>One consistent 90-day rule</div>
+          <div style={{ fontSize: 15.5, fontWeight: 650, marginTop: 9 }}>Same rule for every beach</div>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, borderTop: '1px solid rgba(255,255,255,.1)', marginTop: 13, paddingTop: 11 }}>
 
             <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 650, color: C.lime, whiteSpace: 'nowrap' }}>
@@ -436,10 +437,109 @@ export default function BeachScreen() {
 
 
         <div ref={speciesRef} id="species-model">
-          <Label style={{ marginBottom: 12 }}>BIODIVERSITY NEAR THIS BEACH</Label>
+          <Label style={{ marginBottom: 12 }}>BIODIVERSITY NEARBY</Label>
           <div style={{ fontSize: 12.5, lineHeight: 1.5, color: C.muted, margin: '-4px 0 12px' }}>
             Habitat · {b.habitat}
           </div>
+
+          {/* This beach's own wildlife and habitat cards, straight from the
+              beach record - on Morib a turtle, a mangrove fringe and coastal
+              birds, not the same four animals on every beach. No photo: a
+              picture's copyright is cleared separately from the dataset
+              licence, so the card uses the beach's own colour instead. The
+              credit line stays, because CC BY-NC requires it to be shown (see
+              sources.ts), and a card with no real source says so. The ?.
+              keeps one missing field from blanking the page. */}
+          {b.species?.length > 0 && (
+            <div
+              className="scroll-x"
+              style={{
+                display: 'flex',
+                gap: 12,
+                paddingBottom: 6,
+                margin: '0 -16px',
+                paddingLeft: 16,
+                paddingRight: 16,
+                scrollSnapType: 'x proximity',
+              }}
+            >
+              {b.species.map((species) => {
+                const pending = species.source.dataset === 'pending';
+                return (
+                  <article
+                    key={species.name}
+                    style={{
+                      width: 196,
+                      flex: 'none',
+                      background: C.white,
+                      border: `1px solid ${C.line}`,
+                      borderRadius: 22,
+                      overflow: 'hidden',
+                      scrollSnapAlign: 'start',
+                      boxShadow: '0 10px 26px -24px rgba(11,33,97,.7)',
+                    }}
+                  >
+                    <div aria-hidden="true" style={{ height: 88, background: b.scene }} />
+                    <div style={{ padding: '0 14px 15px', marginTop: -24 }}>
+                      <div
+                        aria-hidden="true"
+                        style={{
+                          position: 'relative',
+                          width: 40,
+                          height: 40,
+                          borderRadius: 20,
+                          background: C.white,
+                          border: `1px solid ${C.line}`,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
+                      >
+                        <SpeciesIcon glyph={species.glyph} />
+                      </div>
+                      <div style={{ fontSize: 14.5, fontWeight: 680, lineHeight: 1.25, color: C.ink2, marginTop: 8 }}>
+                        {species.name}
+                      </div>
+                      {/* Only a single species has a Latin name. A habitat or
+                          a group never gets an empty italic line. */}
+                      {species.kind === 'species' && species.scientificName && (
+                        <div style={{ fontSize: 11.5, fontStyle: 'italic', lineHeight: 1.35, color: C.dim, marginTop: 3 }}>
+                          {species.scientificName}
+                        </div>
+                      )}
+                      <div style={{ fontSize: 12, lineHeight: 1.5, color: C.muted, marginTop: 7 }}>
+                        {species.text}
+                      </div>
+                      <div style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '.06em', lineHeight: 1.5, color: pending ? '#8A6420' : C.dim, marginTop: 9 }}>
+                        {pending ? pendingSourceLabel(species.kind) : species.source.citation}
+                      </div>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          )}
+          <div style={{ fontSize: 11.5, color: C.muted, marginTop: 8, lineHeight: 1.5 }}>
+            Habitat context — not proof a species is here now.
+          </div>
+
+          <div style={{ marginTop: 16, background: C.tint, borderRadius: 20, padding: '16px 17px' }}>
+            <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '.14em', color: C.slate }}>
+              WHY LITTER MATTERS HERE
+            </div>
+            <div style={{ fontSize: 13, lineHeight: 1.6, color: C.ink2, marginTop: 7 }}>
+              {b.ecologicalNote}
+            </div>
+            {/* The shared link, so every beach points at the same approved
+                Our World in Data chart with Malaysia selected. */}
+            <EcologicalBackgroundLink />
+          </div>
+
+          {/* The packaged species model, kept apart from the beach's own cards
+              above. These four animals are the same on every beach and carry a
+              relative score, so they get their own heading rather than sitting
+              in the row that describes this beach. */}
+          <Label style={{ marginTop: 22, marginBottom: 12 }}>MODELLED SPECIES CONTEXT</Label>
           <div
             className="scroll-x"
             style={{
@@ -565,23 +665,6 @@ export default function BeachScreen() {
           <div style={{ fontSize: 11.5, color: C.muted, marginTop: 8, lineHeight: 1.5 }}>
             Relative model scores · not probabilities or confirmed sightings · OBIS snapshot, CC BY-NC
           </div>
-
-          <div style={{ marginTop: 16, background: C.tint, borderRadius: 20, padding: '16px 17px' }}>
-            <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '.14em', color: C.slate }}>
-              WHY LITTER MATTERS HERE
-            </div>
-            <div style={{ fontSize: 13, lineHeight: 1.6, color: C.ink2, marginTop: 7 }}>
-              {b.ecologicalNote}
-            </div>
-            <a
-              href="https://ourworldindata.org/grapher/share-of-global-plastic-waste-emitted-to-the-ocean?country=~MYS"
-              target="_blank"
-              rel="noreferrer"
-              style={{ display: 'inline-block', marginTop: 10, color: C.navy, fontSize: 12, fontWeight: 700, textDecoration: 'underline', textUnderlineOffset: 3 }}
-            >
-              Learn more about ocean plastic data
-            </a>
-          </div>
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
@@ -595,6 +678,10 @@ export default function BeachScreen() {
             </GhostButton>
           )}
           <GhostButton onClick={() => nav('/community')}>Community Cleanups</GhostButton>
+          {/* With the other actions at the foot of the page, where the
+              Iteration 2 prototype puts it - it is somewhere to go next, not
+              part of the litter status the top of the page is about. */}
+          <GhostButton onClick={() => nav(`/beach/${beachId}/gallery`)}>Litter gallery</GhostButton>
           <GhostButton onClick={() => nav('/map')}>Back to Map</GhostButton>
         </div>
       </div>

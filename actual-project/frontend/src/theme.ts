@@ -56,13 +56,15 @@ export const SEVERITY: Record<SeverityBand, { col: string; text: string; tint: s
 };
 
 /**
- * The data keeps 'Severe', because that is the word in the contract and in the
- * database. Screens say "Very high" instead. "Severe" sounds like an official
- * hazard warning, and volunteer litter counts cannot support that claim.
- * Renaming here keeps it wording we can revise without touching the backend.
+ * The word a screen shows for a band. The four names are Low, Moderate, High
+ * and Severe - the same words as the contract, the database and the Iteration 2
+ * prototype. Screens used to rename 'Severe' to "Very high", which left the map
+ * legend, the method page and the published rule using two names for one band.
+ * Every screen still asks this one function, so if the wording ever has to
+ * change again it is one edit here and no backend change.
  */
 export function severityLabel(band: SeverityBand): string {
-  return band === 'Severe' ? 'Very high' : band;
+  return band;
 }
 
 /**
@@ -166,11 +168,14 @@ export function freshnessLabel(kind: FreshnessKind, iso: string | null): string 
   return `Reported ${d} days ago`;
 }
 
-/** A fixed date always follows the prototype's unambiguous
- *  `2026-09-12 (Sat)` rule. All comparisons use Malaysia time so a
- *  late-night report cannot move to the wrong day on a device in another
- *  time zone. */
-export function formatDate(iso: string): string {
+/** A date follows the prototype's unambiguous `2026-09-12 (Sat)` rule, except
+ *  a timestamp from the current day, which reads "Today" - the prototype's
+ *  newest report and a just-recorded cleanup both say it that way. All
+ *  comparisons use Malaysia time so a late-night report cannot move to the
+ *  wrong day on a device in another time zone.
+ *
+ *  `now` is a parameter only so a test can pin the day; screens leave it out. */
+export function formatDate(iso: string, now: Date | number = Date.now()): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso;
   const parts = (value: Date) => new Intl.DateTimeFormat('en-CA', {
@@ -180,6 +185,7 @@ export function formatDate(iso: string): string {
     day: '2-digit',
   }).format(value);
   const exactDate = parts(d);
+  if (exactDate === parts(new Date(now))) return 'Today';
   const weekday = d.toLocaleDateString('en-GB', {
     weekday: 'short',
     timeZone: 'Asia/Kuala_Lumpur',
