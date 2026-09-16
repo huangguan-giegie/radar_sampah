@@ -77,7 +77,11 @@ def install_litter_gallery(application: Any, engine: Any, jwt_secret: str, impl:
 
         with engine.connect() as connection:
             reports = connection.execute(
-                select(impl.reports_table)
+                select(impl.reports_table, impl.report_photos_table.c.photo_key.label("stored_photo_key"))
+                .outerjoin(impl.report_photos_table, (
+                    (impl.report_photos_table.c.photo_key == impl.reports_table.c.photo_key)
+                    & (impl.report_photos_table.c.owner_id == impl.reports_table.c.reporter_id)
+                ))
                 .where(
                     impl.reports_table.c.beach_id == beach_id,
                     impl.reports_table.c.status == "Counted",
@@ -87,7 +91,7 @@ def install_litter_gallery(application: Any, engine: Any, jwt_secret: str, impl:
 
         entries = []
         for report in reports:
-            if not impl.photo_available(engine, directory, report.photo_key, report.reporter_id):
+            if report.stored_photo_key is None and not impl.photo_available(None, directory, report.photo_key, report.reporter_id):
                 continue
             token = _issue_gallery_token(report, jwt_secret, impl)
             entries.append(
