@@ -27,11 +27,12 @@ import { MODEL_SPECIES_MEDIA } from '../speciesMedia';
 import { useAsyncData } from '../useAsyncData';
 
 /*
- * relativeOccurrenceScore is shown exactly as the API sends it, on a 0..1 scale.
- * That is what AC5.5.1 asks for, and the User Story Map was updated to say so.
+ * relativeOccurrenceScore stays on the API's 0..1 scale, and the card prints it
+ * with two decimals: 0.118262 reads as precision a relative score does not have.
  *
  * Do not "fix" this into a percentage. A previous version multiplied by 100 to
- * print "12 / 100"; the AC was settled the other way, so the raw value stands.
+ * print "12 / 100"; AC5.5.1 was settled the other way. Only the number of
+ * printed decimals changed here, never the scale.
  */
 
 // Bar colours for the composition rows. They only separate one row from the
