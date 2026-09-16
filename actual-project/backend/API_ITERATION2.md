@@ -23,7 +23,9 @@ A new anonymous participant receives:
 }
 ```
 
-The 4-digit participant ID is an identifier, **not a credential by itself**. Missing or incorrect recovery tokens return `401 INVALID_RECOVERY_TOKEN`. A successful restore returns a new session JWT.
+The 4-digit participant ID is an identifier, **not a credential by itself**. A missing token returns `401 RECOVERY_TOKEN_REQUIRED` so the restore screen can ask for it, and a wrong token returns `401 INVALID_RECOVERY_TOKEN`. A successful restore returns a new session JWT.
+
+Restore must never succeed from the participant ID alone. The ID is printed on reports, event signups and share pages and the space is only four digits wide, so an ID-only path would hand out a session for any account a caller can enumerate. Accounts whose owner never saved a recovery token therefore cannot be restored; that is deliberate.
 
 Protected mutations require a valid bearer/session token. Participant ID alone must never authorize a mutation or expose a participant's private reports.
 
@@ -86,6 +88,10 @@ Manual reports have no proximity evidence and are treated as independent reports
 
 Duplicate submissions are still saved with HTTP `201` and status `Duplicate`; they are excluded from Beach Attention. Startup migration/backfill must not reclassify historical report statuses.
 
+The stored note on a duplicate describes that rule in words a volunteer can act on: `Matching report within 10 metres: an active report already records the same current categories and quantity bands. This report is saved here but left out of the beach rating.` The comparison uses each report's current bands, so a target that has been partly cleaned no longer blocks a later report of the same original bands.
+
+When a nearby active report carries a *different* category or band, the new report is accepted and the create-report response carries `nearbyReportFound: true` and `locationReferenceUpdated: true`. The other report is never identified in the response.
+
 For GPS reports, raw coordinates are not persisted. The backend stores a target-scoped HMAC over an approximately one-metre projected grid and compares neighbouring cells during the request.
 
 ## 4. Beach Attention after cleanup
@@ -128,6 +134,22 @@ Standalone cleanup actions have no `targetReportId`; they are separate cleanup e
 The three-report evidence threshold applies to the public Beach Attention band, **not** to composition. Composition may still be shown when one or two active unresolved reports remain, with its active report count disclosed.
 
 When composition is available, `GET /beaches/{id}` returns an `active_report_estimate` source with `activeReportCount` and `windowDays`. When no active unresolved report remains, both `composition` and `compositionSource` are `null`.
+
+Each `composition` row carries the highest current band recorded for that category across the active set, next to its percentage:
+
+```json
+{ "category": "Plastic", "percentage": 25, "band": "Large" }
+```
+
+The percentage and the band are two views of the same active evidence. A share on its own cannot be turned back into a band, which is why the band is sent rather than derived on the client.
+
+`GET /beaches/{id}` also always returns `recentReportBands`, the current bands of up to four newest `Counted` reports for that beach, newest first:
+
+```json
+[{ "reportId": "r_...", "reportedAt": "2026-09-16T21:19:00+08:00", "bands": { "Plastic": "Large" } }]
+```
+
+This is the archive a beach page shows when no public band can be published. Fully cleared reports are omitted rather than listed with no remaining litter.
 
 ## 6. Cleanup targets and actions
 
@@ -201,6 +223,8 @@ Automatic Saturday activities are created only for beaches whose current Beach A
 
 A moderator may add another event date through `POST /events`; Iteration 2 does not require a full edit/cancel management console.
 
+`POST /events` accepts `{ "beachId", "date" }` or `{ "beachId", "startsAt", "endsAt" }`, plus an optional `meetingPoint` of up to 160 characters. Every event payload returns `meetingPoint`, which is `null` until a moderator sets one: the backend does not invent a gathering place for a real beach. `startsAt` and `endsAt` are the local `HH:MM` values the event cards print.
+
 Join, Check-in and Attendance are separate states. Attendance is recorded only when all of these are true:
 
 1. participant joined the event;
@@ -234,9 +258,12 @@ Sharing is target-scoped and does not create a social graph.
 
 - `reportId`
 - `reportedAt`
+- `categories` and `bands`: what the photo shows, taken from the report as submitted, because a later cleanup changes the beach's current state rather than this historical card
+- `status`
+- `metadataStripped`: whether the stored photo had its metadata removed on upload
 - short-lived `photoUrl`
 
-The response does not expose reporter identity, `photoKey`, latitude/longitude or `proximityRef`. Duplicate reports are excluded. A logically resolved historical Counted report remains eligible because the gallery is historical evidence, not the active-score set.
+The response does not expose reporter identity, `photoKey`, latitude/longitude or `proximityRef`. It deliberately carries **no participant id**: this route is public and unauthenticated, and a stable id per photo would let anyone link one person's photos, dates and beaches into a movement trail. Attributing gallery photos needs a separate, deliberate decision. Duplicate reports are excluded. A logically resolved historical Counted report remains eligible because the gallery is historical evidence, not the active-score set.
 
 Gallery photo access uses a short-lived token bound to beach + report + an HMAC photo reference. The raw private storage key is not embedded in the public token. Cleanup images cannot enter the gallery because cleanup suggestion photos are not persisted.
 

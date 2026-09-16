@@ -56,15 +56,17 @@ export const SEVERITY: Record<SeverityBand, { col: string; text: string; tint: s
 };
 
 /**
- * The word a screen shows for a band. The four names are Low, Moderate, High
- * and Severe - the same words as the contract, the database and the Iteration 2
- * prototype. Screens used to rename 'Severe' to "Very high", which left the map
- * legend, the method page and the published rule using two names for one band.
- * Every screen still asks this one function, so if the wording ever has to
- * change again it is one edit here and no backend change.
+ * The word a screen shows for a band. The data keeps 'Severe', because that is
+ * the word in the contract and in the database, and every screen asks this one
+ * function so the wording can change without touching the backend.
+ *
+ * The top band is shown as "Very high". "Severe" reads like an official hazard
+ * warning, which volunteer litter counts cannot support, and the team settled
+ * on the softer label for everything a volunteer sees. The scoring document
+ * records the same mapping: contract value 'Severe', displayed "Very high".
  */
 export function severityLabel(band: SeverityBand): string {
-  return band;
+  return band === 'Severe' ? 'Very high' : band;
 }
 
 /**

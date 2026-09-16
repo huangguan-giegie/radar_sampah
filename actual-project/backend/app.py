@@ -43,10 +43,14 @@ configure_cleanup_schema(_impl)
 _original_create_app = _impl.create_app
 _original_initialise_database = _impl.initialise_database
 _original_nearby_proximity_refs = _impl.nearby_proximity_refs
-GEO_DUPLICATE_NOTE_PREFIX = "Privacy-proximity duplicate:"
+# The stored note has to describe the rule the API actually applies: the
+# comparison uses each report's current bands after any cleanup, and the match
+# is kept in history rather than rejected.
+GEO_DUPLICATE_NOTE_PREFIX = "Matching report within 10 metres:"
 GEO_DUPLICATE_NOTE = (
     GEO_DUPLICATE_NOTE_PREFIX
-    + " an active unresolved report within 10 metres has the same non-Small category and quantity-band map."
+    + " an active report already records the same current categories and quantity bands."
+    + " This report is saved here but left out of the beach rating."
 )
 WEEKLY_EVENT_SEVERITIES = {"Moderate", "High", "Severe"}
 
@@ -105,6 +109,9 @@ def _ensure_postgres_iteration2_contract(engine: Any) -> None:
     ]
 
     with engine.begin() as connection:
+        # Iteration 2 added the optional meeting point that the event screens
+        # show; runtime-created tables need it added in place.
+        connection.execute(text(f"ALTER TABLE {q('community_events')} ADD COLUMN IF NOT EXISTS meeting_point VARCHAR(160)"))
         connection.execute(text(f"ALTER TABLE {q('cleanup_actions')} ALTER COLUMN target_report_id DROP NOT NULL"))
         for table_name, constraint_name, definition in definitions:
             if _constraint_exists(connection, table_name, constraint_name):
@@ -485,27 +492,6 @@ def create_app(
     geo_secret = _geo_secret(jwt_secret)
     _repair_gps_privacy_rows(engine, geo_secret)
 
-    def restore_anonymous_participant_strict():
-        payload = request.get_json(silent=True)
-        participant_id = str(payload.get("participantId") or "").strip() if isinstance(payload, dict) else ""
-        supplied_recovery_token = str(payload.get("token") or "").strip() if isinstance(payload, dict) else ""
-        if not _impl.re.fullmatch(r"\d{4}", participant_id):
-            return _impl.error_response(404, "UNKNOWN_PARTICIPANT", "That participant ID was not found.")
-        with engine.connect() as connection:
-            row = connection.execute(select(_impl.users_table).where(_impl.users_table.c.participant_id == participant_id)).first()
-        if row is None:
-            return _impl.error_response(404, "UNKNOWN_PARTICIPANT", "That participant ID was not found.")
-        stored_digest = getattr(row, "user_token", None)
-        digest_match = bool(
-            supplied_recovery_token
-            and stored_digest
-            and hmac.compare_digest(stored_digest, hashlib.sha256(supplied_recovery_token.encode("utf-8")).hexdigest())
-        )
-        legacy_match = bool(supplied_recovery_token and _impl.recovery_token_matches(row.id, supplied_recovery_token, jwt_secret))
-        if not (digest_match or legacy_match):
-            return _impl.error_response(401, "INVALID_RECOVERY_TOKEN", "That participant ID and recovery token do not match.")
-        return jsonify({"token": _impl.issue_token(row.id, jwt_secret), "user": _impl.user_dict(row)})
-
     def get_iteration2_scoring_method_reviewed():
         return jsonify({
             "ruleVersion": "radar-sampah-scoring-i2-v3",
@@ -604,11 +590,17 @@ def create_app(
             body["statusNote"] = GEO_DUPLICATE_NOTE
         else:
             body.pop("statusNote", None)
+            if refresh_target_id:
+                # A nearby active report carries a different category or band, so
+                # this observation was accepted and the permitted location
+                # reference moved to it. The reporter is told that happened; the
+                # other report stays anonymous and its id is not exposed.
+                body["nearbyReportFound"] = True
+                body["locationReferenceUpdated"] = True
         response.set_data(_impl.json.dumps(body, separators=(",", ":")))
         return response
 
     application.view_functions["create_report"] = create_report_with_reviewed_proximity
-    application.view_functions["restore_anonymous_participant"] = restore_anonymous_participant_strict
     application.view_functions["get_iteration2_scoring_method"] = get_iteration2_scoring_method_reviewed
     return application
 

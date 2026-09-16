@@ -521,7 +521,14 @@ def test_beach_summary_and_detail_shapes_are_strict(api):
     assert beaches[0]["freshnessKind"] == "stale"
 
     detail = client.get("/beaches/morib").get_json()
-    assert set(detail) == expected_summary_fields | {"composition", "compositionSource", "species", "ecologicalNote"}
+    assert set(detail) == expected_summary_fields | {
+        "composition",
+        "compositionSource",
+        # Iteration 2 prototype: archived bands for a beach with no public band.
+        "recentReportBands",
+        "species",
+        "ecologicalNote",
+    }
     assert detail["composition"] is None
     assert detail["compositionSource"] is None
     assert [species["name"] for species in detail["species"]] == detail["speciesNames"]

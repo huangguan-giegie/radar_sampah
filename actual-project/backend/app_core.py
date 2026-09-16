@@ -347,6 +347,10 @@ events_table = Table(
     Column("ends_at", DateTime(timezone=True), nullable=False),
     Column("status", String(20), nullable=False),
     Column("source", String(20), nullable=False),
+    # Where volunteers should gather. Nullable: a scheduled event does not have
+    # one until a moderator adds it, and inventing a meeting point for a real
+    # beach would be a guess.
+    Column("meeting_point", String(160)),
     Column("created_by", String(80)),
     Column("created_at", DateTime(timezone=True), nullable=False),
     Column("updated_at", DateTime(timezone=True), nullable=False),
@@ -1677,6 +1681,8 @@ def create_app(
                 "date": local_start.date().isoformat(),
                 "startsAt": local_start.strftime("%H:%M"),
                 "endsAt": local_end.strftime("%H:%M"),
+                # Null until a moderator sets one; the UI decides what to show.
+                "meetingPoint": getattr(event, "meeting_point", None),
                 "status": event.status,
                 "source": "weekly" if event.source == "scheduled" else "admin",
                 "participantCount": len(joined_by),
@@ -1811,27 +1817,38 @@ def create_app(
     def restore_anonymous_participant():
         payload = request.get_json(silent=True)
         participant_id = str(payload.get("participantId") or "").strip() if isinstance(payload, dict) else ""
-        supplied_recovery_token = str(payload.get("token") or "") if isinstance(payload, dict) else ""
+        supplied_recovery_token = str(payload.get("token") or "").strip() if isinstance(payload, dict) else ""
         if not re.fullmatch(r"\d{4}", participant_id):
             return error_response(404, "UNKNOWN_PARTICIPANT", "That participant ID was not found.")
         with engine.connect() as connection:
             row = connection.execute(select(users_table).where(users_table.c.participant_id == participant_id)).first()
         if row is None:
             return error_response(404, "UNKNOWN_PARTICIPANT", "That participant ID was not found.")
-        # Latest main restores by participant ID only. Older Iteration 2
-        # clients may still send a recovery token; validate it when present.
-        if supplied_recovery_token:
-            stored_digest = getattr(row, "user_token", None)
-            legacy_match = bool(
-                stored_digest
-                and hmac.compare_digest(stored_digest, recovery_token_digest(supplied_recovery_token))
+        # A participant ID is public: it is printed on reports, event signups and
+        # share pages. Restoring on the ID alone would hand anybody a working
+        # session for any account they can enumerate, so the recovery token is
+        # required and checked before a token is issued.
+        if not supplied_recovery_token:
+            return error_response(
+                401,
+                "RECOVERY_TOKEN_REQUIRED",
+                "Enter the recovery token you saved when you joined.",
             )
-            if not legacy_match and not recovery_token_matches(row.id, supplied_recovery_token, jwt_secret):
-                return error_response(
-                    401,
-                    "INVALID_RECOVERY_TOKEN",
-                    "That participant ID and recovery token do not match.",
-                )
+        stored_digest = getattr(row, "user_token", None)
+        digest_match = bool(
+            stored_digest
+            and hmac.compare_digest(stored_digest, recovery_token_digest(supplied_recovery_token))
+        )
+        # Tokens issued before the digest was stored were derived from the
+        # server's signing secret and the internal user id, so they cannot be
+        # re-derived by a client that only knows the public participant ID.
+        legacy_match = bool(recovery_token_matches(row.id, supplied_recovery_token, jwt_secret))
+        if not (digest_match or legacy_match):
+            return error_response(
+                401,
+                "INVALID_RECOVERY_TOKEN",
+                "That participant ID and recovery token do not match.",
+            )
         return jsonify({"token": issue_token(row.id, jwt_secret), "user": user_dict(row)})
 
     @application.post("/auth/logout")
@@ -2103,10 +2120,22 @@ def create_app(
         if not isinstance(payload, dict):
             return error_response(400, "VALIDATION_FAILED", "An event object is required.")
         fields = set(payload)
-        date_only = fields == {"beachId", "date"}
-        explicit_times = fields == {"beachId", "startsAt", "endsAt"}
+        date_only = fields in ({"beachId", "date"}, {"beachId", "date", "meetingPoint"})
+        explicit_times = fields in (
+            {"beachId", "startsAt", "endsAt"},
+            {"beachId", "startsAt", "endsAt", "meetingPoint"},
+        )
         if not date_only and not explicit_times:
             return error_response(400, "VALIDATION_FAILED", "Send beachId and date, or beachId with startsAt and endsAt.")
+        meeting_point = payload.get("meetingPoint")
+        if meeting_point is not None:
+            if not isinstance(meeting_point, str):
+                return error_response(400, "VALIDATION_FAILED", "meetingPoint must be text.")
+            meeting_point = meeting_point.strip()
+            if not meeting_point:
+                meeting_point = None
+            elif len(meeting_point) > 160:
+                return error_response(400, "VALIDATION_FAILED", "meetingPoint must be 160 characters or fewer.")
         beach_id = str(payload.get("beachId") or "").strip()
         if not any(beach["id"] == beach_id for beach in beaches):
             return error_response(404, "NOT_FOUND", "Beach not found.")
@@ -2150,6 +2179,7 @@ def create_app(
                         ends_at=ends_at,
                         status="Open" if ends_at > now else "Closed",
                         source="moderator",
+                        meeting_point=meeting_point,
                         created_by=request.current_user.id,
                         created_at=now,
                         updated_at=now,

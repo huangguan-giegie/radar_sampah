@@ -110,6 +110,7 @@ def _event_payloads(engine: Any, impl: Any, events: list[Any], viewer_id: str | 
             "date": local_start.date().isoformat(),
             "startsAt": local_start.strftime("%H:%M"),
             "endsAt": local_end.strftime("%H:%M"),
+            "meetingPoint": getattr(event, "meeting_point", None),
             "status": event.status,
             "source": "weekly" if event.source == "scheduled" else "admin",
             "participantCount": len(joined_by),

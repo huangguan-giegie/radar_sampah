@@ -77,7 +77,10 @@ def install_litter_gallery(application: Any, engine: Any, jwt_secret: str, impl:
 
         with engine.connect() as connection:
             reports = connection.execute(
-                select(impl.reports_table, impl.report_photos_table.c.photo_key.label("stored_photo_key"))
+                select(
+                    impl.reports_table,
+                    impl.report_photos_table.c.photo_key.label("stored_photo_key"),
+                )
                 .outerjoin(impl.report_photos_table, (
                     (impl.report_photos_table.c.photo_key == impl.reports_table.c.photo_key)
                     & (impl.report_photos_table.c.owner_id == impl.reports_table.c.reporter_id)
@@ -94,10 +97,23 @@ def install_litter_gallery(application: Any, engine: Any, jwt_secret: str, impl:
             if report.stored_photo_key is None and not impl.photo_available(None, directory, report.photo_key, report.reporter_id):
                 continue
             token = _issue_gallery_token(report, jwt_secret, impl)
+            # The bands are what the photo shows, taken from the report as it was
+            # submitted. Later cleanups change the current beach state, not this
+            # historical card, and the card would otherwise read as a claim about
+            # litter that has since been removed.
+            bands = impl.quantities_from_row(report)
             entries.append(
                 {
                     "reportId": report.id,
                     "reportedAt": impl.contract_timestamp(report.created_at),
+                    "categories": list(bands),
+                    "bands": bands,
+                    "status": report.status,
+                    # Whether the stored photo had its metadata removed on upload.
+                    "metadataStripped": bool(getattr(report, "photo_stripped", False)),
+                    # No participantId: this route is public and unauthenticated,
+                    # and a stable id per photo would let anyone link a person's
+                    # photos, dates and beaches together.
                     "photoUrl": (
                         f"/beaches/{quote(beach_id, safe='')}/litter-gallery/"
                         f"{quote(report.id, safe='')}/photo?token={quote(token, safe='')}"

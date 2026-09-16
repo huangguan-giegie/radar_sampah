@@ -209,7 +209,11 @@ def install_cleanup_route(application: Any, engine: Any, jwt_secret: str, impl: 
 
     def active_composition_percentages(active_rows: list[tuple[Any, dict[str, str]]]) -> list[dict[str, Any]]:
         # Composition uses the published category score (category weight x
-        # quantity level) so its percentages match the documented rule.
+        # quantity level) so its percentages match the documented rule. Each row
+        # also carries the highest current band seen for that category, because
+        # the beach screen shows bands next to the shares and a share alone
+        # cannot be turned back into a band.
+        band_by_level = {level: band for band, level in impl.QUANTITY_WEIGHTS.items()}
         aggregate = {
             category: impl.CATEGORY_WEIGHTS[category] * sum(
                 impl.QUANTITY_WEIGHTS[quantities[category]]
@@ -217,6 +221,15 @@ def install_cleanup_route(application: Any, engine: Any, jwt_secret: str, impl: 
                 if category in quantities
             )
             for category in impl.FRONTEND_CATEGORIES
+        }
+        highest_level = {
+            category: max(
+                impl.QUANTITY_WEIGHTS[quantities[category]]
+                for _row, quantities in active_rows
+                if category in quantities
+            )
+            for category in impl.FRONTEND_CATEGORIES
+            if aggregate[category] > 0
         }
         weighted = [(category, aggregate[category]) for category in impl.FRONTEND_CATEGORIES if aggregate[category] > 0]
         total = sum(weight for _category, weight in weighted)
@@ -231,7 +244,55 @@ def install_cleanup_route(application: Any, engine: Any, jwt_secret: str, impl: 
             reverse=True,
         )[:remainder]:
             whole[category] += 1
-        return [{"category": category, "percentage": whole[category]} for category, _weight in weighted]
+        return [
+            {
+                "category": category,
+                "percentage": whole[category],
+                "band": band_by_level.get(highest_level.get(category, 0)),
+            }
+            for category, _weight in weighted
+        ]
+
+    def recent_report_bands(beach_id: str, limit: int = 4) -> list[dict[str, Any]]:
+        """Current bands of the newest Counted reports, for a beach with no band.
+
+        A beach below the evidence threshold still has observations worth
+        reading, and the archived bands are what the prototype shows in that
+        state. Each entry reports the current (post-cleanup) bands so it cannot
+        contradict the cleanup state shown elsewhere.
+        """
+        with engine.connect() as connection:
+            reports = connection.execute(
+                select(impl.reports_table)
+                .where(
+                    impl.reports_table.c.beach_id == beach_id,
+                    impl.reports_table.c.status == "Counted",
+                )
+                .order_by(impl.reports_table.c.created_at.desc(), impl.reports_table.c.id.desc())
+                .limit(limit)
+            ).all()
+            actions_by_report: dict[str, list[Any]] = defaultdict(list)
+            if reports:
+                actions = connection.execute(
+                    select(impl.cleanup_actions_table)
+                    .where(impl.cleanup_actions_table.c.target_report_id.in_([report.id for report in reports]))
+                    .order_by(impl.cleanup_actions_table.c.created_at)
+                ).all()
+                for action in actions:
+                    actions_by_report[action.target_report_id].append(action)
+        entries = []
+        for report in reports:
+            current = _active_quantities(_current_band_state(impl, report, actions_by_report[report.id]))
+            if not current:
+                # Fully cleared: the report stays in history but has no band to
+                # show, and printing all-Small rows would read as "clean".
+                continue
+            entries.append({
+                "reportId": report.id,
+                "reportedAt": impl.contract_timestamp(report.created_at),
+                "bands": current,
+            })
+        return entries
 
     original_get_beach = application.view_functions["get_beach"]
 
@@ -263,6 +324,8 @@ def install_cleanup_route(application: Any, engine: Any, jwt_secret: str, impl: 
                 "activeReportCount": len(active_rows),
                 "windowDays": 90,
             }
+        # Always sent: the beach page shows these when no band can be published.
+        detail["recentReportBands"] = recent_report_bands(beach_id)
         return jsonify(detail)
 
     def list_cleanup_targets_reviewed():

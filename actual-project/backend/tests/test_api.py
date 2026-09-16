@@ -89,7 +89,9 @@ def test_restore_requires_recovery_token(api):
     )
 
     assert missing.status_code == 401
-    assert missing.get_json()["code"] == "INVALID_RECOVERY_TOKEN"
+    # A missing token is its own outcome: the restore screen has to ask for the
+    # token rather than report a wrong one.
+    assert missing.get_json()["code"] == "RECOVERY_TOKEN_REQUIRED"
     assert wrong.status_code == 401
     assert wrong.get_json()["code"] == "INVALID_RECOVERY_TOKEN"
     assert restored.status_code == 200
