@@ -368,6 +368,13 @@ cleanup_actions_table = Table(
     Column("created_at", DateTime(timezone=True), nullable=False),
     UniqueConstraint("participant_id", "idempotency_key", name="cleanup_actions_idempotency"),
 )
+event_attendance_table = Table(
+    "community_event_attendance",
+    i2_metadata,
+    Column("event_id", String(100), primary_key=True),
+    Column("participant_id", String(80), primary_key=True),
+    Column("confirmed_at", DateTime(timezone=True), nullable=False),
+)
 Index("cleanup_actions_target", cleanup_actions_table.c.target_report_id)
 Index("community_events_window", events_table.c.beach_id, events_table.c.starts_at)
 Index("reports_severity_window", reports_table.c.beach_id, reports_table.c.status, reports_table.c.created_at)
@@ -855,6 +862,46 @@ def remaining_counts_for(report: Any, actions: list[Any]) -> dict[str, int]:
     return {category: count for category, count in remaining.items() if count > 0}
 
 
+def quantity_band_value(band: str | None) -> int:
+    return QUANTITY_WEIGHTS.get(band or "", 0)
+
+
+def remaining_bands_for(report: Any, actions: list[Any]) -> dict[str, str]:
+    """Project a report's current cleanup state into the Iteration 2 band API.
+
+    Older cleanup rows contain numeric removals. New rows contain before/after
+    bands, so both representations remain readable while the database is
+    migrated in place.
+    """
+    remaining = quantities_from_row(report)
+    for action in actions:
+        try:
+            rows = json.loads(action.rows or "[]")
+        except (TypeError, ValueError):
+            rows = []
+        if rows and all(isinstance(row, dict) and row.get("afterBand") for row in rows):
+            for row in rows:
+                category, after = row.get("category"), row.get("afterBand")
+                if category in CATEGORY_WEIGHTS and after in QUANTITY_WEIGHTS:
+                    remaining[category] = after
+            continue
+        # Legacy numeric cleanup: subtracting items is converted back to the
+        # shared band scale for the new frontend contract.
+        try:
+            removed = json.loads(action.removed_counts or "{}")
+        except (TypeError, ValueError):
+            removed = {}
+        for category, count in removed.items():
+            if category not in remaining:
+                continue
+            old_value = quantity_band_value(remaining[category])
+            remaining[category] = next(
+                (band for band, value in QUANTITY_WEIGHTS.items() if value == max(1, old_value - int(count))),
+                "Small",
+            )
+    return {category: band for category, band in remaining.items() if band in QUANTITY_WEIGHTS}
+
+
 def recovery_token_digest(recovery_token: str) -> str:
     return hashlib.sha256(recovery_token.encode("utf-8")).hexdigest()
 
@@ -1009,7 +1056,20 @@ def remaining_count_attention(engine: Engine, rows: list[Any]) -> float | None:
         return None
     counted_rows = [row for row in rows if getattr(row, "item_counts", None)]
     if not counted_rows:
-        return attention_score_for(rows)
+        report_ids = [row.id for row in rows]
+        with engine.connect() as connection:
+            actions = connection.execute(select(cleanup_actions_table).where(
+                cleanup_actions_table.c.target_report_id.in_(report_ids)
+            )).all()
+        actions_by_report: defaultdict[str, list[Any]] = defaultdict(list)
+        for action in actions:
+            actions_by_report[action.target_report_id].append(action)
+        scores = []
+        for row in rows:
+            bands = remaining_bands_for(row, actions_by_report[row.id])
+            if bands:
+                scores.append(report_score_for(bands))
+        return float(median(scores)) if scores else 0.0
     report_ids = [row.id for row in counted_rows]
     with engine.connect() as connection:
         actions = connection.execute(
@@ -1486,6 +1546,48 @@ def create_app(
                 if utc_datetime(event.ends_at) < current:
                     connection.execute(events_table.update().where(events_table.c.id == event.id).values(status="Closed", updated_at=current))
 
+    def qualifying_beach_ids(now: datetime | None = None) -> set[str]:
+        current = now or datetime.now(timezone.utc)
+        qualifying: set[str] = set()
+        for beach in beaches:
+            summary = beach_summary(engine, beach, current)
+            if summary.get("severity") in {"Moderate", "High", "Severe"}:
+                qualifying.add(beach["id"])
+        return qualifying
+
+    def ensure_qualifying_events(now: datetime | None = None) -> None:
+        current = now or datetime.now(timezone.utc)
+        starts = upcoming_saturdays(current)
+        allowed = qualifying_beach_ids(current)
+        with engine.begin() as connection:
+            for beach in beaches:
+                if beach["id"] not in allowed:
+                    continue
+                for starts_at in starts:
+                    local_date = starts_at.astimezone(KUALA_LUMPUR).date().isoformat()
+                    event_id = f"{beach['id']}-{local_date}"
+                    if connection.execute(select(events_table.c.id).where(events_table.c.id == event_id)).first() is not None:
+                        continue
+                    try:
+                        with connection.begin_nested():
+                            connection.execute(insert(events_table).values(
+                                id=event_id,
+                                beach_id=beach["id"],
+                                starts_at=starts_at,
+                                ends_at=starts_at + timedelta(hours=EVENT_END_LOCAL_HOUR - EVENT_START_LOCAL_HOUR),
+                                status="Open",
+                                source="scheduled",
+                                created_by=None,
+                                created_at=current,
+                                updated_at=current,
+                            ))
+                    except IntegrityError:
+                        continue
+            stale = connection.execute(select(events_table).where(events_table.c.status == "Open")).all()
+            for event in stale:
+                if utc_datetime(event.ends_at) < current:
+                    connection.execute(events_table.update().where(events_table.c.id == event.id).values(status="Closed", updated_at=current))
+
     def event_has_evidence(connection: Any, event: Any, participant_id: str) -> bool:
         start, end = utc_datetime(event.starts_at), utc_datetime(event.ends_at)
         report = connection.execute(
@@ -1510,7 +1612,8 @@ def create_app(
         ).first()
         return cleanup is not None
 
-    def event_dict(event: Any, viewer_id: str | None = None) -> dict[str, Any]:
+    def event_dict(event: Any, viewer_id: str | None = None, explicit_attendance: bool = False) -> dict[str, Any]:
+        explicit_attendance = explicit_attendance or request.path.startswith("/cleanup-events")
         with engine.connect() as connection:
             members = connection.execute(
                 select(event_members_table)
@@ -1527,22 +1630,47 @@ def create_app(
                 if member.participant_id in participant_numbers
             }
             checked_in_numbers = [participant_id for participant_id, state in check_ins.items() if state == "within_area"]
-            attendance_by = [
+            derived_attendance_by = [
                 participant_numbers[member.participant_id]
                 for member in members
                 if member.location_passed
                 and member.participant_id in participant_numbers
                 and event_has_evidence(connection, event, member.participant_id)
             ]
+            confirmed_ids = set(connection.execute(select(event_attendance_table.c.participant_id).where(
+                event_attendance_table.c.event_id == event.id
+            )).scalars().all())
+            attendance_by = [
+                participant_numbers[participant_id]
+                for participant_id in confirmed_ids
+                if participant_id in participant_numbers
+            ] if explicit_attendance else derived_attendance_by
             viewer_member = next((member for member in members if member.participant_id == viewer_id), None)
             cleanup_ids = connection.execute(select(cleanup_actions_table.c.id).where(
                 cleanup_actions_table.c.event_id == event.id
             ).order_by(cleanup_actions_table.c.created_at)).scalars().all()
+            report_evidence: defaultdict[str, list[str]] = defaultdict(list)
+            evidence_rows = connection.execute(
+                select(reports_table.c.reporter_id, reports_table.c.id).where(
+                    reports_table.c.event_id == event.id,
+                    reports_table.c.beach_id == event.beach_id,
+                    reports_table.c.status == "Counted",
+                )
+            ).all()
+            for evidence in evidence_rows:
+                report_evidence[evidence.reporter_id].append(evidence.id)
+            cleanup_evidence_ids = set(connection.execute(
+                select(cleanup_actions_table.c.participant_id).where(
+                    cleanup_actions_table.c.event_id == event.id
+                )
+            ).scalars().all())
             viewer_attended = bool(
                 viewer_member
                 and viewer_member.location_passed
                 and event_has_evidence(connection, event, viewer_id)
             ) if viewer_id else False
+            if explicit_attendance:
+                viewer_attended = bool(viewer_id and viewer_id in confirmed_ids)
         beach_name = beach_names.get(event.beach_id, event.beach_id)
         beach = next((item for item in beaches if item["id"] == event.beach_id), None)
         local_start = utc_datetime(event.starts_at).astimezone(KUALA_LUMPUR)
@@ -1561,6 +1689,16 @@ def create_app(
             "joinedBy": joined_by,
             "checkIns": check_ins,
             "attendanceBy": attendance_by,
+            "evidenceBy": [
+                participant_numbers[participant_id]
+                for participant_id in set(report_evidence) | cleanup_evidence_ids
+                if participant_id in participant_numbers
+            ],
+            "reportEvidenceBy": {
+                participant_numbers[participant_id]: report_ids
+                for participant_id, report_ids in report_evidence.items()
+                if participant_id in participant_numbers
+            },
             "cleanupIds": cleanup_ids,
             "checkedInCount": len(checked_in_numbers),
             "attendanceCount": len(attendance_by),
@@ -1614,7 +1752,9 @@ def create_app(
         quantity_bands = quantity_bands_for_counts(counts) if counts else {}
         state = result.get("state")
         model_state = "empty" if state == "ready" and not counts else state
-        if model_state not in {"ready", "unavailable", "empty"}:
+        if model_state == "failed":
+            model_state = "unreadable"
+        if model_state not in {"ready", "unavailable", "unreadable", "empty"}:
             model_state = "unavailable"
         return {
             **result,
@@ -1759,6 +1899,44 @@ def create_app(
             )
         return jsonify(detail)
 
+    @application.get("/beaches/<beach_id>/gallery")
+    def get_beach_gallery(beach_id: str):
+        if not any(beach["id"] == beach_id for beach in beaches):
+            return error_response(404, "NOT_FOUND", "Beach not found.")
+        with engine.connect() as connection:
+            rows = connection.execute(select(reports_table).where(
+                reports_table.c.beach_id == beach_id,
+                reports_table.c.status == "Counted",
+            ).order_by(reports_table.c.created_at.desc()).limit(50)).all()
+        values = []
+        for row in rows:
+            if photo_file_path(directory, row.photo_key) is None:
+                continue
+            values.append({
+                "reportId": row.id,
+                "beachId": row.beach_id,
+                "beachName": beach_names.get(row.beach_id, row.beach_id),
+                "createdAt": contract_timestamp(row.created_at),
+                "quantities": quantities_from_row(row),
+                "photoUrl": f"{request.host_url.rstrip('/')}/beaches/{quote(beach_id, safe='')}/gallery/{quote(row.id, safe='')}/photo",
+            })
+        return jsonify(values)
+
+    @application.get("/beaches/<beach_id>/gallery/<report_id>/photo")
+    def get_gallery_photo(beach_id: str, report_id: str):
+        with engine.connect() as connection:
+            row = connection.execute(select(reports_table).where(
+                reports_table.c.id == report_id,
+                reports_table.c.beach_id == beach_id,
+                reports_table.c.status == "Counted",
+            )).first()
+        path = photo_file_path(directory, row.photo_key) if row is not None else None
+        if row is None or path is None or not path.is_file():
+            return error_response(404, "NOT_FOUND", "Gallery photo not found.")
+        response = send_file(path, mimetype="image/jpeg", max_age=0, conditional=True)
+        response.headers["Cache-Control"] = "public, max-age=300"
+        return response
+
     @application.get("/scoring-method")
     def get_scoring_method():
         return jsonify(
@@ -1849,8 +2027,9 @@ def create_app(
         return jsonify(recognition_payload(result))
 
     @application.get("/events")
+    @application.get("/cleanup-events")
     def list_events():
-        ensure_scheduled_events()
+        ensure_scheduled_events() if request.path == "/events" else ensure_qualifying_events()
         beach_id = request.args.get("beachId")
         if beach_id and not any(beach["id"] == beach_id for beach in beaches):
             return error_response(404, "NOT_FOUND", "Beach not found.")
@@ -1861,11 +2040,15 @@ def create_app(
         with engine.connect() as connection:
             rows = connection.execute(query).all()
         viewer = optional_current_user()
-        return jsonify([event_dict(row, viewer.id if viewer else None) for row in rows])
+        values = [event_dict(row, viewer.id if viewer else None) for row in rows]
+        if request.path == "/cleanup-events" and request.args.get("joined") == "true":
+            values = [value for value in values if viewer and viewer.participant_id in value["joinedBy"]]
+        return jsonify(values)
 
     @application.get("/events/<event_id>")
+    @application.get("/cleanup-events/<event_id>")
     def get_event(event_id: str):
-        ensure_scheduled_events()
+        ensure_scheduled_events() if request.path.startswith("/events/") else ensure_qualifying_events()
         with engine.connect() as connection:
             event = connection.execute(select(events_table).where(events_table.c.id == event_id)).first()
         if event is None:
@@ -1955,6 +2138,7 @@ def create_app(
         return response
 
     @application.get("/events/<event_id>/cleanups")
+    @application.get("/cleanup-events/<event_id>/cleanups")
     def list_event_cleanups(event_id: str):
         with engine.connect() as connection:
             event = connection.execute(select(events_table.c.id).where(events_table.c.id == event_id)).first()
@@ -1968,6 +2152,7 @@ def create_app(
         return jsonify([cleanup_action_dict(action) for action in actions])
 
     @application.post("/events")
+    @application.post("/cleanup-events")
     @require_moderator
     def create_moderator_event():
         payload = request.get_json(silent=True)
@@ -2031,6 +2216,7 @@ def create_app(
         return jsonify(event_dict(event, request.current_user.id)), 201
 
     @application.post("/events/<event_id>/join")
+    @application.post("/cleanup-events/<event_id>/join")
     @require_auth
     def join_event(event_id: str):
         now = datetime.now(timezone.utc)
@@ -2056,6 +2242,7 @@ def create_app(
         return jsonify(event_dict(event, request.current_user.id))
 
     @application.delete("/events/<event_id>/join")
+    @application.delete("/cleanup-events/<event_id>/join")
     @require_auth
     def leave_event(event_id: str):
         with engine.begin() as connection:
@@ -2068,13 +2255,46 @@ def create_app(
                     event_members_table.c.participant_id == request.current_user.id,
                 )
             )
+            connection.execute(event_attendance_table.delete().where(
+                event_attendance_table.c.event_id == event_id,
+                event_attendance_table.c.participant_id == request.current_user.id,
+            ))
             event = connection.execute(select(events_table).where(events_table.c.id == event_id)).first()
         return jsonify(event_dict(event, request.current_user.id))
 
     @application.post("/events/<event_id>/check-in")
+    @application.post("/cleanup-events/<event_id>/check-in")
     @require_auth
     def check_in_event(event_id: str):
         payload = request.get_json(silent=True)
+        if request.path.startswith("/cleanup-events/") and isinstance(payload, dict) and set(payload) == {"state"}:
+            state = payload.get("state")
+            if state not in {"idle", "checking", "within_area", "denied", "outside_area"}:
+                return error_response(400, "VALIDATION_FAILED", "state is not a supported check-in state.")
+            with engine.connect() as connection:
+                event = connection.execute(select(events_table).where(events_table.c.id == event_id)).first()
+                member = connection.execute(select(event_members_table).where(
+                    event_members_table.c.event_id == event_id,
+                    event_members_table.c.participant_id == request.current_user.id,
+                )).first()
+            if event is None:
+                return error_response(404, "NOT_FOUND", "Event not found.")
+            if member is None:
+                return error_response(409, "JOIN_REQUIRED", "Join this event before checking in.")
+            if state == "within_area":
+                now = datetime.now(timezone.utc)
+                with engine.begin() as connection:
+                    connection.execute(event_members_table.update().where(
+                        event_members_table.c.event_id == event_id,
+                        event_members_table.c.participant_id == request.current_user.id,
+                    ).values(checked_in_at=now, location_passed=True))
+            else:
+                with engine.begin() as connection:
+                    connection.execute(event_members_table.update().where(
+                        event_members_table.c.event_id == event_id,
+                        event_members_table.c.participant_id == request.current_user.id,
+                    ).values(checked_in_at=None, location_passed=False))
+            return jsonify(event_dict(event, request.current_user.id))
         if not isinstance(payload, dict) or set(payload) != {"lat", "lng"}:
             return error_response(400, "VALIDATION_FAILED", "lat and lng are required for check-in.")
         if not is_json_number(payload["lat"]) or not is_json_number(payload["lng"]):
@@ -2108,6 +2328,64 @@ def create_app(
             ).values(checked_in_at=now, location_passed=True))
         return jsonify(event_dict(event, request.current_user.id))
 
+    @application.post("/cleanup-events/<event_id>/attendance")
+    @require_auth
+    def confirm_event_attendance(event_id: str):
+        with engine.connect() as connection:
+            event = connection.execute(select(events_table).where(events_table.c.id == event_id)).first()
+            member = connection.execute(select(event_members_table).where(
+                event_members_table.c.event_id == event_id,
+                event_members_table.c.participant_id == request.current_user.id,
+            )).first()
+        if event is None:
+            return error_response(404, "NOT_FOUND", "Event not found.")
+        if member is None:
+            return error_response(409, "JOIN_REQUIRED", "Join this event before confirming attendance.")
+        if not member.location_passed:
+            return error_response(409, "CHECKIN_REQUIRED", "Check in near the beach before confirming attendance.")
+        with engine.connect() as connection:
+            has_evidence = event_has_evidence(connection, event, request.current_user.id)
+        if not has_evidence:
+            return error_response(409, "EVENT_EVIDENCE_REQUIRED", "Add a linked report or cleanup before confirming attendance.")
+        with engine.begin() as connection:
+            existing = connection.execute(select(event_attendance_table).where(
+                event_attendance_table.c.event_id == event_id,
+                event_attendance_table.c.participant_id == request.current_user.id,
+            )).first()
+            if existing is None:
+                connection.execute(insert(event_attendance_table).values(
+                    event_id=event_id,
+                    participant_id=request.current_user.id,
+                    confirmed_at=datetime.now(timezone.utc),
+                ))
+        return jsonify(event_dict(event, request.current_user.id, explicit_attendance=True))
+
+    @application.post("/cleanup-events/<event_id>/reports/<report_id>")
+    @require_auth
+    def link_event_report_evidence(event_id: str, report_id: str):
+        with engine.connect() as connection:
+            event = connection.execute(select(events_table).where(events_table.c.id == event_id)).first()
+            report = connection.execute(select(reports_table).where(reports_table.c.id == report_id)).first()
+            member = connection.execute(select(event_members_table).where(
+                event_members_table.c.event_id == event_id,
+                event_members_table.c.participant_id == request.current_user.id,
+            )).first()
+        if event is None or report is None:
+            return error_response(404, "NOT_FOUND", "Event or report not found.")
+        if member is None:
+            return error_response(409, "JOIN_REQUIRED", "Join this event before linking a report to it.")
+        if report.reporter_id != request.current_user.id or report.status != "Counted":
+            return error_response(403, "FORBIDDEN", "Only your counted report can be linked.")
+        if report.beach_id != event.beach_id:
+            return error_response(400, "VALIDATION_FAILED", "This report belongs to a different beach.")
+        with engine.begin() as connection:
+            connection.execute(reports_table.update().where(reports_table.c.id == report_id).values(
+                event_id=event_id,
+                updated_at=datetime.now(timezone.utc),
+            ))
+            event = connection.execute(select(events_table).where(events_table.c.id == event_id)).first()
+        return jsonify(event_dict(event, request.current_user.id))
+
     @application.get("/cleanup-targets")
     def list_cleanup_targets():
         beach_id = request.args.get("beachId")
@@ -2133,6 +2411,140 @@ def create_app(
                 if target:
                     targets.append(target)
         return jsonify(targets)
+
+    @application.get("/cleanup-targets/<beach_id>")
+    def get_cleanup_target_for_beach(beach_id: str):
+        if not any(beach["id"] == beach_id for beach in beaches):
+            return error_response(404, "NOT_FOUND", "Beach not found.")
+        with engine.connect() as connection:
+            report = connection.execute(select(reports_table).where(
+                reports_table.c.beach_id == beach_id,
+                reports_table.c.status == "Counted",
+            ).order_by(reports_table.c.created_at.desc())).first()
+            if report is None:
+                return jsonify(None)
+            actions = connection.execute(select(cleanup_actions_table).where(
+                cleanup_actions_table.c.target_report_id == report.id
+            ).order_by(cleanup_actions_table.c.created_at)).all()
+        bands = remaining_bands_for(report, actions)
+        if not any(quantity_band_value(band) > quantity_band_value("Small") for band in bands.values()):
+            return jsonify(None)
+        return jsonify({
+            "reportId": report.id,
+            "beachId": report.beach_id,
+            "beachName": beach_names.get(report.beach_id, report.beach_id),
+            "reportedAt": contract_timestamp(report.created_at),
+            "remainingBands": bands,
+        })
+
+    def new_cleanup_action(payload: Any):
+        if not isinstance(payload, dict):
+            return error_response(400, "VALIDATION_FAILED", "A cleanup object is required.")
+        required = {"targetReportId", "afterBands", "handling"}
+        if not required <= set(payload) or set(payload) - required - {"eventId", "note"}:
+            return error_response(400, "VALIDATION_FAILED", "targetReportId, afterBands and handling are required.")
+        target_id = str(payload.get("targetReportId") or "").strip()
+        after = payload.get("afterBands")
+        handling = payload.get("handling")
+        event_id = payload.get("eventId")
+        note = payload.get("note", "")
+        if not target_id or not isinstance(after, dict) or not after:
+            return error_response(400, "VALIDATION_FAILED", "afterBands must contain at least one category.")
+        if handling not in EVENT_HANDLING_VALUES:
+            return error_response(400, "VALIDATION_FAILED", "handling is not a supported value.")
+        if not isinstance(note, str) or len(note) > 500:
+            return error_response(400, "VALIDATION_FAILED", "note must be 500 characters or fewer.")
+        if event_id is not None and (not isinstance(event_id, str) or not event_id.strip()):
+            return error_response(400, "VALIDATION_FAILED", "eventId must be a valid event identifier.")
+        with engine.begin() as connection:
+            target = connection.execute(select(reports_table).where(
+                reports_table.c.id == target_id,
+                reports_table.c.status == "Counted",
+            ).with_for_update()).first()
+            if target is None:
+                return error_response(404, "CLEANUP_TARGET_NOT_FOUND", "The cleanup target is no longer available.")
+            actions = connection.execute(select(cleanup_actions_table).where(
+                cleanup_actions_table.c.target_report_id == target_id
+            ).order_by(cleanup_actions_table.c.created_at)).all()
+            before = remaining_bands_for(target, actions)
+            if not any(quantity_band_value(band) > 1 for band in before.values()):
+                return error_response(409, "CLEANUP_TARGET_COMPLETE", "This cleanup target has already been fully cleared.")
+            existing = actions[0] if actions else None
+            if existing is not None:
+                return jsonify(cleanup_action_dict(existing)), 200
+            if event_id is not None:
+                event = connection.execute(select(events_table).where(events_table.c.id == event_id)).first()
+                member = connection.execute(select(event_members_table).where(
+                    event_members_table.c.event_id == event_id,
+                    event_members_table.c.participant_id == request.current_user.id,
+                )).first()
+                if event is None or event.beach_id != target.beach_id:
+                    return error_response(400, "VALIDATION_FAILED", "eventId must refer to an event at the target beach.")
+                if member is None or not member.location_passed:
+                    return error_response(409, "EVENT_CHECKIN_REQUIRED", "Join and check in to the event before recording this cleanup.")
+            rows = []
+            removed = {}
+            for category, before_band in before.items():
+                after_band = after.get(category)
+                if after_band is None or after_band not in QUANTITY_WEIGHTS:
+                    return error_response(400, "VALIDATION_FAILED", f"Choose a valid quantity band for {category}.")
+                delta = quantity_band_value(before_band) - quantity_band_value(after_band)
+                if delta < 0:
+                    return error_response(409, "QUANTITY_INCREASED", f"{category} cannot increase after a cleanup.")
+                if delta:
+                    rows.append({"category": category, "beforeBand": before_band, "afterBand": after_band, "score": delta})
+                    removed[category] = delta
+            if not rows:
+                return error_response(400, "VALIDATION_FAILED", "Choose at least one lower band before confirming.")
+            now = datetime.now(timezone.utc)
+            action_id = "c_" + secrets.token_hex(10)
+            connection.execute(insert(cleanup_actions_table).values(
+                id=action_id,
+                target_report_id=target_id,
+                participant_id=request.current_user.id,
+                event_id=event_id,
+                beach_id=target.beach_id,
+                removed_counts=json.dumps(removed, separators=(",", ":")),
+                rows=json.dumps(rows, separators=(",", ":")),
+                total_removed=sum(row["score"] for row in rows),
+                handling=handling,
+                note=note,
+                idempotency_key="new-" + action_id,
+                request_fingerprint=hashlib.sha256(json.dumps(payload, sort_keys=True).encode()).hexdigest(),
+                created_at=now,
+            ))
+            action = connection.execute(select(cleanup_actions_table).where(cleanup_actions_table.c.id == action_id)).first()
+        return jsonify(cleanup_action_dict(action)), 201
+
+    @application.post("/cleanups")
+    @require_auth
+    @rate_limited("cleanup-create", 60)
+    def create_band_cleanup():
+        return new_cleanup_action(request.get_json(silent=True))
+
+    @application.get("/cleanups/<cleanup_id>")
+    def get_cleanup(cleanup_id: str):
+        with engine.connect() as connection:
+            action = connection.execute(select(cleanup_actions_table).where(cleanup_actions_table.c.id == cleanup_id)).first()
+        return jsonify(cleanup_action_dict(action)) if action is not None else error_response(404, "NOT_FOUND", "Cleanup not found.")
+
+    @application.get("/cleanups/by-target/<report_id>")
+    def get_cleanup_by_target(report_id: str):
+        with engine.connect() as connection:
+            action = connection.execute(select(cleanup_actions_table).where(
+                cleanup_actions_table.c.target_report_id == report_id
+            ).order_by(cleanup_actions_table.c.created_at.desc())).first()
+        return jsonify(cleanup_action_dict(action)) if action is not None else jsonify(None)
+
+    @application.get("/beaches/<beach_id>/cleanups/latest")
+    def get_latest_beach_cleanup(beach_id: str):
+        if not any(beach["id"] == beach_id for beach in beaches):
+            return error_response(404, "NOT_FOUND", "Beach not found.")
+        with engine.connect() as connection:
+            action = connection.execute(select(cleanup_actions_table).where(
+                cleanup_actions_table.c.beach_id == beach_id
+            ).order_by(cleanup_actions_table.c.created_at.desc())).first()
+        return jsonify(cleanup_action_dict(action)) if action is not None else jsonify(None)
 
     @application.post("/cleanup-actions")
     @require_auth
