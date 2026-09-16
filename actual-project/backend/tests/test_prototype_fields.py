@@ -36,7 +36,7 @@ def test_beach_composition_rows_carry_the_highest_current_band(api):
 
 
 def test_recent_report_bands_archive_the_newest_reports(api):
-    application, client = api
+    _application, client = api
     _, headers = signup(client)
     photo = upload(client, headers)
     for band in ("Medium", "Large", "Very Large", "Large", "Medium"):
@@ -47,11 +47,14 @@ def test_recent_report_bands_archive_the_newest_reports(api):
 
     assert len(archived) == 4
     assert archived[0]["bands"] == {"Plastic": "Medium"}
-    # Newest first, and only reports that still carry litter.
+    # Newest first.
     assert [entry["reportedAt"] for entry in archived] == sorted(
         (entry["reportedAt"] for entry in archived), reverse=True
     )
 
+    # The archive is the history of what volunteers recorded, so cleaning a
+    # report up must not remove its band. A beach with no public band is usually
+    # a beach whose reports were all cleaned.
     cleared = archived[0]["reportId"]
     response = client.post("/cleanup-actions", headers=headers, json={
         "targetReportId": cleared,
@@ -62,7 +65,32 @@ def test_recent_report_bands_archive_the_newest_reports(api):
     assert response.status_code == 201
 
     refreshed = client.get("/beaches/morib").get_json()["recentReportBands"]
-    assert cleared not in [entry["reportId"] for entry in refreshed]
+    kept = next(entry for entry in refreshed if entry["reportId"] == cleared)
+    assert kept["bands"] == {"Plastic": "Medium"}
+
+
+def test_recent_report_bands_still_show_a_cleared_beach(api):
+    _application, client = api
+    _, headers = signup(client)
+    photo = upload(client, headers)
+    for index, band in enumerate(("Large", "Very Large", "Large")):
+        report = _submit(client, headers, photo["photoKey"], {"Plastic": band})
+        response = client.post("/cleanup-actions", headers=headers, json={
+            "targetReportId": report["id"],
+            "remainingQuantities": {"Plastic": "Small"},
+            "handling": "Collected for disposal",
+            "idempotencyKey": f"cleared-archive-{index}",
+        })
+        assert response.status_code == 201
+
+    detail = client.get("/beaches/morib").get_json()
+
+    assert detail["severity"] is None and detail["insufficientData"] is True
+    assert [entry["bands"] for entry in detail["recentReportBands"]] == [
+        {"Plastic": "Large"},
+        {"Plastic": "Very Large"},
+        {"Plastic": "Large"},
+    ]
 
 
 def test_gallery_entries_carry_report_metadata(api):

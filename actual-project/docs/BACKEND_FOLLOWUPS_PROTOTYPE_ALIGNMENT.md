@@ -104,7 +104,7 @@ The prototype copy about the token is now accurate, so the frontend can add it.
 | # | Status | What the API returns now |
 |---|---|---|
 | 2.1 | Done | Each `composition` row carries `band`, the highest current band for that category across the active set: `{ "category": "Plastic", "percentage": 25, "band": "Large" }` |
-| 2.2 | Done | `GET /beaches/{id}` always returns `recentReportBands`: the current bands of up to four newest `Counted` reports, newest first, with `reportId`, `reportedAt` and `bands` |
+| 2.2 | Done | `GET /beaches/{id}` always returns `recentReportBands`: the bands recorded by up to four newest `Counted` reports, newest first, with `reportId`, `reportedAt` and `bands`. These are the bands as submitted, so a beach that has no public band *because* everything was cleaned still shows what was found |
 | 2.3 | Done, except the participant id | Gallery entries now carry `categories`, `bands`, `status` and `metadataStripped`. `participantId` is deliberately not sent on this public route; see the note below |
 | 2.4 | Already available | `/recognitions` has returned `detections` all along: each item has `box` (`[left, top, right, bottom]`), `modelClass`, `category` and `confidence`. No backend change was needed |
 | 2.5 | Done | The create-report response carries `nearbyReportFound: true` and `locationReferenceUpdated: true` when a nearby report with a different category or band was found and the location reference moved. The other report is never identified |

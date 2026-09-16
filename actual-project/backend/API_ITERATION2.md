@@ -143,13 +143,17 @@ Each `composition` row carries the highest current band recorded for that catego
 
 The percentage and the band are two views of the same active evidence. A share on its own cannot be turned back into a band, which is why the band is sent rather than derived on the client.
 
-`GET /beaches/{id}` also always returns `recentReportBands`, the current bands of up to four newest `Counted` reports for that beach, newest first:
+`GET /beaches/{id}` also always returns `recentReportBands`, the bands recorded by up to four newest
+`Counted` reports for that beach, newest first:
 
 ```json
 [{ "reportId": "r_...", "reportedAt": "2026-09-16T21:19:00+08:00", "bands": { "Plastic": "Large" } }]
 ```
 
-This is the archive a beach page shows when no public band can be published. Fully cleared reports are omitted rather than listed with no remaining litter.
+This is the archive a beach page shows when no public band can be published. The bands are the ones
+submitted, not the current state: a beach usually has no public band *because* its reports were
+cleaned, so filtering on the current state would empty the archive exactly when it is needed. Each
+entry carries `reportedAt` so an older reading is not mistaken for today's.
 
 ## 6. Cleanup targets and actions
 

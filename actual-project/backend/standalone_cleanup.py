@@ -254,12 +254,14 @@ def install_cleanup_route(application: Any, engine: Any, jwt_secret: str, impl: 
         ]
 
     def recent_report_bands(beach_id: str, limit: int = 4) -> list[dict[str, Any]]:
-        """Current bands of the newest Counted reports, for a beach with no band.
+        """Bands the newest Counted reports recorded, newest first.
 
         A beach below the evidence threshold still has observations worth
-        reading, and the archived bands are what the prototype shows in that
-        state. Each entry reports the current (post-cleanup) bands so it cannot
-        contradict the cleanup state shown elsewhere.
+        reading, and this archive is what the screen shows in that state. These
+        are the bands as submitted, not the current state: a beach usually has
+        no public band *because* its reports were cleaned, so filtering on the
+        current state would empty the archive exactly when it is needed. Each
+        entry carries its date so an older reading is not mistaken for today's.
         """
         with engine.connect() as connection:
             reports = connection.execute(
@@ -271,26 +273,16 @@ def install_cleanup_route(application: Any, engine: Any, jwt_secret: str, impl: 
                 .order_by(impl.reports_table.c.created_at.desc(), impl.reports_table.c.id.desc())
                 .limit(limit)
             ).all()
-            actions_by_report: dict[str, list[Any]] = defaultdict(list)
-            if reports:
-                actions = connection.execute(
-                    select(impl.cleanup_actions_table)
-                    .where(impl.cleanup_actions_table.c.target_report_id.in_([report.id for report in reports]))
-                    .order_by(impl.cleanup_actions_table.c.created_at)
-                ).all()
-                for action in actions:
-                    actions_by_report[action.target_report_id].append(action)
         entries = []
         for report in reports:
-            current = _active_quantities(_current_band_state(impl, report, actions_by_report[report.id]))
-            if not current:
-                # Fully cleared: the report stays in history but has no band to
-                # show, and printing all-Small rows would read as "clean".
+            bands = _active_quantities(impl.quantities_from_row(report))
+            if not bands:
+                # Nothing above Small was recorded, so there is no band to show.
                 continue
             entries.append({
                 "reportId": report.id,
                 "reportedAt": impl.contract_timestamp(report.created_at),
-                "bands": current,
+                "bands": bands,
             })
         return entries
 
