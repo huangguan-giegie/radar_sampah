@@ -1169,7 +1169,10 @@ def test_share_links_are_stable_and_scoped_to_one_event_and_report(api):
     assert photo_response.headers["Cache-Control"] == "private, no-store"
 
     token = share["token"]
-    forged = token[:-1] + ("A" if token[-1] != "A" else "B")
+    token_parts = token.split(".")
+    signature = token_parts[2]
+    tampered_signature = ("A" if signature[0] != "A" else "B") + signature[1:]
+    forged = ".".join((token_parts[0], token_parts[1], tampered_signature))
     assert client.get(f"/share-links/{forged}").status_code == 404
     mismatch = client.get(f"/share-links?eventId={event['id']}&reportId={second_id}", headers=headers)
     assert mismatch.status_code == 400
