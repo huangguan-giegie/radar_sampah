@@ -714,12 +714,17 @@ def test_unattached_photo_is_swept_after_24_hours(api):
     _session, headers = signup(client)
     uploaded = upload(client, headers)
     directory = application.extensions["photo_storage_dir"]
-    metadata_value = read_photo_metadata(directory, uploaded["photoKey"])
-    metadata_value["createdAt"] = (datetime.now(timezone.utc) - timedelta(hours=25)).isoformat()
-    write_photo_metadata(directory, uploaded["photoKey"], metadata_value)
+    from app_core import report_photos_table
 
-    sweep_orphan_photos(application.extensions["marine_engine"], directory)
+    engine = application.extensions["marine_engine"]
+    with engine.begin() as connection:
+        connection.execute(report_photos_table.update().where(
+            report_photos_table.c.photo_key == uploaded["photoKey"]
+        ).values(created_at=datetime.now(timezone.utc) - timedelta(hours=25)))
+
+    sweep_orphan_photos(engine, directory)
     assert not photo_file_path(directory, uploaded["photoKey"]).exists()
+    assert client.get(uploaded["previewUrl"]).status_code == 404
 
 
 def test_create_report_returns_full_contract_and_hides_private_fields(api):

@@ -16,8 +16,8 @@ services:
         sync: false
       - key: AUTH_JWT_SECRET
         generateValue: true
-      # Configure a private persistent mount/path in production. The application
-      # never serves this directory directly; it issues 15-minute signed links.
+      # Optional legacy photo directory. New report photos are stored privately
+      # in PostgreSQL; no persistent disk is required for new uploads.
       - key: PHOTO_STORAGE_DIR
         sync: false
 

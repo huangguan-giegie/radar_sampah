@@ -43,6 +43,7 @@ from sqlalchemy import (
     ForeignKey,
     Index,
     Integer,
+    LargeBinary,
     MetaData,
     String,
     Table,
@@ -324,6 +325,16 @@ reports_table = Table(
         "status <> 'Counted' OR status_note IS NULL",
         name="reports_note_only_when_excluded_check",
     ),
+)
+
+report_photos_table = Table(
+    "report_photos",
+    metadata,
+    Column("photo_key", String(500), primary_key=True),
+    Column("owner_id", ForeignKey("users.id"), nullable=False),
+    Column("mime", String(64), nullable=False),
+    Column("data", LargeBinary, nullable=False),
+    Column("created_at", DateTime(timezone=True), nullable=False),
 )
 
 i2_metadata = MetaData()
@@ -1146,10 +1157,50 @@ def process_photo(raw: bytes) -> bytes:
         raise ValueError("The photo could not be read. Please choose another image.") from error
 
 
-def signed_photo_url(photo_key: str, owner_id: str, jwt_secret: str, directory: Path) -> str | None:
-    metadata_value = read_photo_metadata(directory, photo_key)
+def photo_blob(engine: Engine, photo_key: str, owner_id: str) -> Any | None:
+    if not owner_id:
+        return None
+    with engine.connect() as connection:
+        return connection.execute(select(report_photos_table).where(
+            report_photos_table.c.photo_key == photo_key,
+            report_photos_table.c.owner_id == owner_id,
+        )).first()
+
+
+def stored_photo_metadata(engine: Engine | None, directory: Path, photo_key: str) -> dict[str, Any] | None:
+    if engine is not None:
+        with engine.connect() as connection:
+            row = connection.execute(select(
+                report_photos_table.c.owner_id, report_photos_table.c.mime,
+            ).where(report_photos_table.c.photo_key == photo_key)).first()
+        if row is not None:
+            return {"ownerId": row.owner_id, "mime": row.mime, "metadataStripped": True}
     path = photo_file_path(directory, photo_key)
-    if metadata_value is None or metadata_value.get("ownerId") != owner_id or path is None or not path.is_file():
+    return read_photo_metadata(directory, photo_key) if path is not None and path.is_file() else None
+
+
+def photo_available(engine: Engine | None, directory: Path, photo_key: str, owner_id: str) -> bool:
+    info = stored_photo_metadata(engine, directory, photo_key)
+    return bool(owner_id and info and info.get("ownerId") == owner_id)
+
+
+def read_photo_source(engine: Engine, directory: Path, photo_key: str, owner_id: str) -> BytesIO | Path | None:
+    blob = photo_blob(engine, photo_key, owner_id)
+    if blob is not None:
+        return BytesIO(blob.data)
+    if photo_available(engine, directory, photo_key, owner_id):
+        return photo_file_path(directory, photo_key)
+    return None
+
+
+def signed_photo_url(
+    photo_key: str,
+    owner_id: str,
+    jwt_secret: str,
+    directory: Path,
+    engine: Engine | None = None,
+) -> str | None:
+    if not photo_available(engine, directory, photo_key, owner_id):
         return None
     now = datetime.now(timezone.utc)
     token = jwt.encode(
@@ -1173,16 +1224,28 @@ def delete_photo(directory: Path, photo_key: str) -> None:
 
 
 def delete_photo_if_unreferenced(engine: Engine, directory: Path, photo_key: str) -> None:
-    with engine.connect() as connection:
+    with engine.begin() as connection:
         referenced = connection.execute(
             select(reports_table.c.id).where(reports_table.c.photo_key == photo_key)
         ).first()
+        if referenced is None:
+            connection.execute(report_photos_table.delete().where(
+                report_photos_table.c.photo_key == photo_key,
+                ~select(reports_table.c.id).where(reports_table.c.photo_key == photo_key).exists(),
+            ))
     if referenced is None:
         delete_photo(directory, photo_key)
 
 
 def sweep_orphan_photos(engine: Engine, directory: Path) -> None:
     cutoff = datetime.now(timezone.utc) - PHOTO_ORPHAN_TTL
+    with engine.begin() as connection:
+        connection.execute(report_photos_table.delete().where(
+            report_photos_table.c.created_at < cutoff,
+            ~select(reports_table.c.id).where(
+                reports_table.c.photo_key == report_photos_table.c.photo_key,
+            ).exists(),
+        ))
     with engine.connect() as connection:
         referenced = set(connection.execute(select(reports_table.c.photo_key)).scalars().all())
     for metadata_path in directory.glob("*.jpg.meta.json"):
@@ -1249,7 +1312,7 @@ def report_dict(
     if viewer_id == row.reporter_id:
         # The opaque key is returned only to the owner so an expired preview can be renewed.
         value["photoKey"] = row.photo_key
-        photo_url = signed_photo_url(row.photo_key, row.reporter_id, jwt_secret, directory)
+        photo_url = signed_photo_url(row.photo_key, row.reporter_id, jwt_secret, directory, engine)
         if photo_url:
             value["photoUrl"] = photo_url
     return value
@@ -1265,6 +1328,7 @@ def validate_report_payload(
     owner_id: str,
     directory: Path,
     require_uploaded_photo: bool,
+    engine: Engine | None = None,
 ) -> tuple[dict[str, Any] | None, tuple[int, str, str] | None]:
     if not isinstance(payload, dict):
         return None, report_problem(400, "VALIDATION_FAILED", "A JSON object is required.")
@@ -1316,7 +1380,7 @@ def validate_report_payload(
     elif coords is not None:
         return None, report_problem(400, "VALIDATION_FAILED", "Manual reports must not include coordinates.")
 
-    photo_metadata = read_photo_metadata(directory, photo_key)
+    photo_metadata = stored_photo_metadata(engine, directory, photo_key)
     if require_uploaded_photo and (photo_metadata is None or photo_metadata.get("ownerId") != owner_id):
         return None, report_problem(404, "NOT_FOUND", "Photo not found.")
 
@@ -1389,6 +1453,16 @@ def create_app(
     application.extensions["litter_recognizer"] = recognizer
     application.extensions["species_distribution_model"] = species_distribution_model
     sweep_orphan_photos(engine, directory)
+    with engine.connect() as connection:
+        pending_photos = connection.execute(select(
+            report_photos_table.c.photo_key, report_photos_table.c.created_at,
+        ).where(~select(reports_table.c.id).where(
+            reports_table.c.photo_key == report_photos_table.c.photo_key,
+        ).exists())).all()
+    for photo in pending_photos:
+        application.extensions["photo_cleanup_timers"].append(
+            schedule_orphan_cleanup(engine, directory, photo.photo_key, photo.created_at)
+        )
     for metadata_path in directory.glob("*.jpg.meta.json"):
         photo_key = metadata_path.name.removesuffix(".meta.json")
         metadata_value = read_photo_metadata(directory, photo_key)
@@ -1870,11 +1944,11 @@ def create_app(
     def recognise_report_photo():
         payload = request.get_json(silent=True)
         photo_key = str(payload.get("photoKey") or "").strip() if isinstance(payload, dict) else ""
-        metadata_value = read_photo_metadata(directory, photo_key) if photo_key else None
-        photo_path = photo_file_path(directory, photo_key) if photo_key else None
-        if metadata_value is None or metadata_value.get("ownerId") != request.current_user.id or photo_path is None or not photo_path.is_file():
+        source = read_photo_source(engine, directory, photo_key, request.current_user.id) if photo_key else None
+        if source is None:
             return error_response(404, "NOT_FOUND", "Photo not found.")
-        result = application.extensions["litter_recognizer"].recognise(photo_path.read_bytes())
+        raw = source.getvalue() if isinstance(source, BytesIO) else source.read_bytes()
+        result = application.extensions["litter_recognizer"].recognise(raw)
         return jsonify(recognition_payload(result))
 
     @application.post("/recognitions/cleanup-photo")
@@ -1979,7 +2053,7 @@ def create_app(
                 "itemCounts": item_counts,
                 "remainingItemCounts": remaining,
                 "remainingTotal": sum(remaining.values()),
-                "photoAvailable": photo_file_path(directory, report.photo_key) is not None,
+                "photoAvailable": photo_available(engine, directory, report.photo_key, report.reporter_id),
             }
         return jsonify({
             "event": event_dict(event) if event is not None else None,
@@ -1996,11 +2070,10 @@ def create_app(
             report = connection.execute(select(reports_table).where(reports_table.c.id == report_id)).first()
         if report is None or report.status != "Counted" or not report.item_counts:
             return error_response(404, "NOT_FOUND", "Shared photo not found.")
-        metadata_value = read_photo_metadata(directory, report.photo_key)
-        photo_path = photo_file_path(directory, report.photo_key)
-        if metadata_value is None or metadata_value.get("ownerId") != report.reporter_id or photo_path is None or not photo_path.is_file():
+        source = read_photo_source(engine, directory, report.photo_key, report.reporter_id)
+        if source is None:
             return error_response(404, "NOT_FOUND", "Shared photo not found.")
-        response = send_file(photo_path, mimetype="image/jpeg", max_age=0, conditional=True)
+        response = send_file(source, mimetype="image/jpeg", max_age=0, conditional=True)
         response.headers["Cache-Control"] = "private, no-store"
         return response
 
@@ -2353,33 +2426,27 @@ def create_app(
             return error_response(400, "VALIDATION_FAILED", str(error))
         sweep_orphan_photos(engine, directory)
         photo_key = secrets.token_hex(16) + ".jpg"
-        path = photo_file_path(directory, photo_key)
-        assert path is not None
-        path.write_bytes(processed)
-        write_photo_metadata(
-            directory,
-            photo_key,
-            {
-                "ownerId": request.current_user.id,
-                "createdAt": datetime.now(timezone.utc).isoformat(),
-                "mime": "image/jpeg",
-                "metadataStripped": True,
-            },
-        )
+        created_at = datetime.now(timezone.utc)
+        with engine.begin() as connection:
+            connection.execute(
+                insert(report_photos_table).values(
+                    photo_key=photo_key,
+                    owner_id=request.current_user.id,
+                    mime="image/jpeg",
+                    data=processed,
+                    created_at=created_at,
+                )
+            )
         application.extensions["photo_cleanup_timers"].append(
-            schedule_orphan_cleanup(engine, directory, photo_key, datetime.now(timezone.utc))
+            schedule_orphan_cleanup(engine, directory, photo_key, created_at)
         )
-        preview_url = signed_photo_url(photo_key, request.current_user.id, jwt_secret, directory)
+        preview_url = signed_photo_url(photo_key, request.current_user.id, jwt_secret, directory, engine)
         return jsonify({"photoKey": photo_key, "previewUrl": preview_url, "metadataStripped": True}), 201
 
     @application.get("/uploads/photos/<photo_key>/preview-url")
     @require_auth
     def renew_photo_preview_url(photo_key: str):
-        metadata_value = read_photo_metadata(directory, photo_key)
-        path = photo_file_path(directory, photo_key)
-        if metadata_value is None or metadata_value.get("ownerId") != request.current_user.id or path is None or not path.is_file():
-            return error_response(404, "NOT_FOUND", "Photo not found.")
-        preview_url = signed_photo_url(photo_key, request.current_user.id, jwt_secret, directory)
+        preview_url = signed_photo_url(photo_key, request.current_user.id, jwt_secret, directory, engine)
         if not preview_url:
             return error_response(404, "NOT_FOUND", "Photo not found.")
         return jsonify({"previewUrl": preview_url})
@@ -2393,17 +2460,16 @@ def create_app(
             return error_response(401, "UNAUTHENTICATED", "This photo link is invalid or has expired.")
         if claims.get("purpose") != "photo-preview" or claims.get("photoKey") != photo_key:
             return error_response(401, "UNAUTHENTICATED", "This photo link is invalid or has expired.")
-        metadata_value = read_photo_metadata(directory, photo_key)
-        path = photo_file_path(directory, photo_key)
-        if metadata_value is None or metadata_value.get("ownerId") != claims.get("sub") or path is None or not path.is_file():
+        source = read_photo_source(engine, directory, photo_key, claims.get("sub"))
+        if source is None:
             return error_response(404, "NOT_FOUND", "Photo not found.")
-        return send_file(path, mimetype="image/jpeg", max_age=0, conditional=True)
+        return send_file(source, mimetype="image/jpeg", max_age=0, conditional=True)
 
     @application.post("/reports")
     @require_auth
     @rate_limited("report-create", 30)
     def create_report():
-        data, problem = validate_report_payload(request.get_json(silent=True), beaches, request.current_user.id, directory, True)
+        data, problem = validate_report_payload(request.get_json(silent=True), beaches, request.current_user.id, directory, True, engine)
         if problem:
             return error_response(*problem)
         assert data is not None
@@ -2537,7 +2603,7 @@ def create_app(
         if coords is not None:
             merged["coords"] = coords
         require_uploaded_photo = "photoKey" in payload and payload["photoKey"] != old.photo_key
-        data, problem = validate_report_payload(merged, beaches, request.current_user.id, directory, require_uploaded_photo)
+        data, problem = validate_report_payload(merged, beaches, request.current_user.id, directory, require_uploaded_photo, engine)
         if problem:
             return error_response(*problem)
         assert data is not None

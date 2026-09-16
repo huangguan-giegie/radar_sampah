@@ -16,19 +16,6 @@ def _viewer_id(jwt_secret: str, impl: Any) -> str | None:
     return impl.decode_token_subject(token, jwt_secret) if token else None
 
 
-def _available_photo(report: Any, directory: Path, impl: Any) -> Path | None:
-    metadata = impl.read_photo_metadata(directory, report.photo_key)
-    path = impl.photo_file_path(directory, report.photo_key)
-    if (
-        metadata is None
-        or metadata.get("ownerId") != report.reporter_id
-        or path is None
-        or not path.is_file()
-    ):
-        return None
-    return path
-
-
 def install_reviewed_share_contract(application: Any, engine: Any, jwt_secret: str, impl: Any) -> None:
     """Keep report sharing available after quantities became band-native."""
     directory = Path(application.extensions["photo_storage_dir"])
@@ -99,7 +86,7 @@ def install_reviewed_share_contract(application: Any, engine: Any, jwt_secret: s
                 "status": report.status,
                 "quantities": impl.quantities_from_row(report),
                 "remainingQuantities": _current_band_state(impl, report, actions),
-                "photoAvailable": _available_photo(report, directory, impl) is not None,
+                "photoAvailable": impl.photo_available(engine, directory, report.photo_key, report.reporter_id),
             }
             # Historical count-backed links stay readable for deployed clients,
             # but new band-native reports never expose or synthesize exact counts.
@@ -135,10 +122,10 @@ def install_reviewed_share_contract(application: Any, engine: Any, jwt_secret: s
             ).first()
         if report is None or report.status != "Counted":
             return impl.error_response(404, "NOT_FOUND", "Shared photo not found.")
-        photo_path = _available_photo(report, directory, impl)
-        if photo_path is None:
+        photo_source = impl.read_photo_source(engine, directory, report.photo_key, report.reporter_id)
+        if photo_source is None:
             return impl.error_response(404, "NOT_FOUND", "Shared photo not found.")
-        response = send_file(photo_path, mimetype="image/jpeg", max_age=0, conditional=True)
+        response = send_file(photo_source, mimetype="image/jpeg", max_age=0, conditional=True)
         response.headers["Cache-Control"] = "private, no-store"
         return response
 

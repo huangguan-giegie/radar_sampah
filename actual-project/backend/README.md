@@ -43,8 +43,13 @@ The development server listens on `http://localhost:5000` by default.
   Iteration 2 count-backed reports do not persist raw coordinates; the active
   target proximity check stores a target-scoped HMAC of an approximately
   one-metre grid cell instead. No API response serialises report `lat` or `lng`.
-- Photo bytes live outside the public web root. `PHOTO_STORAGE_DIR` selects the
-  private directory; production should use persistent private storage.
+- New report photos live in the private `report_photos` database table (`bytea`
+  on PostgreSQL), using the existing `reports.photo_key` reference. Startup
+  creates the table without changing existing reports. Preview, recognition,
+  gallery and share routes read these bytes across service redeploys.
+- `PHOTO_STORAGE_DIR` is a read fallback for legacy files only. Files already
+  lost from an ephemeral disk cannot be recovered by this change. Keep database
+  backups; move photo bytes to object storage if database size becomes a concern.
 - Original report photos are retained for audit. Optional after-cleanup photos
   are passed to inference in memory and are not retained.
 
@@ -80,7 +85,7 @@ Normal anonymous signup creates `volunteer` accounts only.
 - `AUTH_JWT_SECRET`: private signing secret for session/share tokens.
 - `DEMO_PARTICIPANT_ID`: optional controlled demo participant ID. It does not
   bypass Recovery Token authentication.
-- `PHOTO_STORAGE_DIR`: persistent private photo directory.
+- `PHOTO_STORAGE_DIR`: optional private directory for legacy photo reads.
 - `GEO_PRIVACY_HMAC_KEY`: stable private key for proximity references.
 - `LITTER_MODEL_PATH`, `LITTER_MODEL_VERSION`: optional recognition model
   overrides.

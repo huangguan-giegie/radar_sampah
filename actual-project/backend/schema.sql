@@ -71,6 +71,14 @@ CREATE TABLE area_species (
   CHECK ((occurrence_score IS NULL) OR (occurrence_basis IS NOT NULL))
 );
 
+CREATE TABLE report_photos (
+  photo_key  varchar(500) PRIMARY KEY,
+  owner_id   text NOT NULL REFERENCES users(id),
+  mime       varchar(64) NOT NULL,
+  data       bytea NOT NULL,
+  created_at timestamptz NOT NULL
+);
+
 CREATE TABLE reports (
   id              text        PRIMARY KEY,
   reporter_id     text        NOT NULL REFERENCES users(id),

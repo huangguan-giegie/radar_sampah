@@ -262,8 +262,12 @@ Required or recommended production settings:
 - `DATABASE_SCHEMA` when using a non-default schema
 - `AUTH_JWT_SECRET`
 - `FRONTEND_ORIGINS`
-- `PHOTO_STORAGE_DIR` on persistent private storage
+- `PHOTO_STORAGE_DIR` only when legacy photos still exist on private storage
 - `GEO_PRIVACY_HMAC_KEY`
 - `LITTER_MODEL_PATH` and `LITTER_MODEL_VERSION` when recognition is enabled
 
-The original report photo is retained in private audit storage. After-cleanup recognition photos are temporary and discarded after inference.
+Original report photos are stored in the private `report_photos` database table,
+linked by the existing `reports.photo_key`. PostgreSQL stores their processed
+JPEG bytes as `bytea`, so new photos survive service redeploys without a mounted
+disk. Unattached uploads expire after 24 hours; referenced audit photos remain.
+After-cleanup recognition photos are temporary and discarded after inference.

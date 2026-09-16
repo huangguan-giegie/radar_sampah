@@ -64,19 +64,6 @@ def _decode_gallery_token(token: str, secret: str, impl: Any) -> dict[str, Any] 
     return claims
 
 
-def _available_photo(report: Any, directory: Path, impl: Any) -> Path | None:
-    metadata = impl.read_photo_metadata(directory, report.photo_key)
-    path = impl.photo_file_path(directory, report.photo_key)
-    if (
-        metadata is None
-        or metadata.get("ownerId") != report.reporter_id
-        or path is None
-        or not path.is_file()
-    ):
-        return None
-    return path
-
-
 def install_litter_gallery(application: Any, engine: Any, jwt_secret: str, impl: Any) -> None:
     """Install reviewed public evidence routes and the final report compatibility guard."""
     directory = Path(application.extensions["photo_storage_dir"])
@@ -100,7 +87,7 @@ def install_litter_gallery(application: Any, engine: Any, jwt_secret: str, impl:
 
         entries = []
         for report in reports:
-            if _available_photo(report, directory, impl) is None:
+            if not impl.photo_available(engine, directory, report.photo_key, report.reporter_id):
                 continue
             token = _issue_gallery_token(report, jwt_secret, impl)
             entries.append(
@@ -139,11 +126,11 @@ def install_litter_gallery(application: Any, engine: Any, jwt_secret: str, impl:
         if not hmac.compare_digest(claims["photoRef"], expected_ref):
             return impl.error_response(401, "GALLERY_LINK_INVALID", "This gallery photo link is invalid or has expired.")
 
-        photo_path = _available_photo(report, directory, impl)
-        if photo_path is None:
+        photo_source = impl.read_photo_source(engine, directory, report.photo_key, report.reporter_id)
+        if photo_source is None:
             return impl.error_response(404, "NOT_FOUND", "Gallery photo not found.")
 
-        response = send_file(photo_path, mimetype="image/jpeg", max_age=0, conditional=True)
+        response = send_file(photo_source, mimetype="image/jpeg", max_age=0, conditional=True)
         response.headers["Cache-Control"] = "private, no-store"
         return response
 
