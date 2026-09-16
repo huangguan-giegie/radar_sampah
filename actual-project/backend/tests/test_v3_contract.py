@@ -44,6 +44,7 @@ def cleanup(client, headers, target, band, key="v3-1", **fields):
 
 def test_v3_partial_cleanup_uses_canonical_state_and_retry_identity(api):
     application, client = api
+    assert client.post("/cleanups", json={}).status_code == 401
     _, headers = signup(client)
     target = report(client, headers)["id"]
     first = cleanup(client, headers, target, "Large")

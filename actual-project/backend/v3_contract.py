@@ -376,6 +376,9 @@ def install_v3_contract(application: Any, engine: Any, jwt_secret: str, impl: An
         return jsonify(None)
 
     def create_cleanup_v3():
+        viewer = _required_user(engine, impl, jwt_secret)
+        if not hasattr(viewer, "id"):
+            return viewer
         payload = request.get_json(silent=True)
         allowed = {"targetReportId", "eventId", "afterBands", "handling", "note", "idempotencyKey"}
         if not isinstance(payload, dict) or set(payload) - allowed or not {"targetReportId", "afterBands", "handling", "idempotencyKey"} <= set(payload):
