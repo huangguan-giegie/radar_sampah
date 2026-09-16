@@ -973,14 +973,18 @@ def is_json_number(value: Any) -> bool:
 
 
 def composition_percentages(quantities: dict[str, str]) -> list[dict[str, Any]]:
-    """Convert the newest report's category weights into whole percentages.
+    """Convert the newest report's category scores into whole percentages.
+
+    Each category contributes its category score (category weight x quantity
+    level), so the percentages follow the published scoring rule instead of the
+    quantity bands alone.
 
     The largest-remainder method keeps every response at exactly 100, avoiding
     a chart whose labels visibly add up to 99 or 101 because of rounding.
     """
 
     weighted = [
-        (category, QUANTITY_WEIGHTS[quantities[category]])
+        (category, CATEGORY_WEIGHTS[category] * QUANTITY_WEIGHTS[quantities[category]])
         for category in FRONTEND_CATEGORIES
         if category in quantities
     ]

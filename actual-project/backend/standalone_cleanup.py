@@ -208,8 +208,10 @@ def install_cleanup_route(application: Any, engine: Any, jwt_secret: str, impl: 
         }
 
     def active_composition_percentages(active_rows: list[tuple[Any, dict[str, str]]]) -> list[dict[str, Any]]:
+        # Composition uses the published category score (category weight x
+        # quantity level) so its percentages match the documented rule.
         aggregate = {
-            category: sum(
+            category: impl.CATEGORY_WEIGHTS[category] * sum(
                 impl.QUANTITY_WEIGHTS[quantities[category]]
                 for _row, quantities in active_rows
                 if category in quantities

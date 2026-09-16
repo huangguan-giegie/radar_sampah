@@ -44,7 +44,8 @@ def test_composition_uses_same_non_small_active_evidence_as_attention(api):
     glass, glass_headers = _submit_count_report(client, {"Glass": 21})           # Large
 
     detail, composition = _composition_by_category(client)
-    assert composition == {"Plastic": 40, "Glass": 60}
+    # Plastic Medium scores 0.85 x 2, Glass Large scores 0.70 x 3.
+    assert composition == {"Plastic": 45, "Glass": 55}
     assert detail["compositionSource"] == {
         "method": "active_report_estimate",
         "activeReportCount": 2,
@@ -66,7 +67,7 @@ def test_composition_uses_same_non_small_active_evidence_as_attention(api):
     assert standalone.get_json()["targetReportId"] is None
 
     _detail, composition = _composition_by_category(client)
-    assert composition == {"Plastic": 40, "Glass": 60}
+    assert composition == {"Plastic": 45, "Glass": 55}
 
     # Reducing the Medium Plastic legacy target to one remaining item re-bands it
     # to Small, so it leaves the active composition without deleting history.
@@ -102,3 +103,14 @@ def test_composition_uses_same_non_small_active_evidence_as_attention(api):
     assert composition == {}
     assert detail["composition"] is None
     assert detail["compositionSource"] is None
+
+
+def test_composition_weights_equal_bands_by_category(api):
+    """Equal quantity bands from different categories must not score equally."""
+    _application, client = api
+
+    _submit_count_report(client, {"Plastic": 21})  # Large -> 0.85 x 3
+    _submit_count_report(client, {"Paper": 21})    # Large -> 0.35 x 3
+
+    _detail, composition = _composition_by_category(client)
+    assert composition == {"Plastic": 71, "Paper": 29}
