@@ -33,6 +33,7 @@ function draft(changes: Partial<ReportDraft> = {}): ReportDraft {
     existingPhotoUnavailable: false,
     beachId: 'morib',
     beachName: 'Pantai Morib',
+    linkedEventId: null,
     locationSource: 'manual',
     coords: null,
     quantities: { Plastic: 'Small' },

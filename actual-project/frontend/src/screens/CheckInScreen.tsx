@@ -1,11 +1,13 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Check, Pin } from '../components/Icon';
 import { Alert, InfoChip, SectionLabel } from '../components/ds';
 import { BackButton, GhostButton, PrimaryButton } from '../components/ui';
 import { useApp } from '../AppContext';
-import { formatEventDate, getCleanupEvent, recordCheckIn, type CheckInState } from '../iteration2';
+import { eventCanRecordAttendance, eventHasEvidence, formatEventDate, getCleanupEvent, getCleanupTarget, type CheckInState } from '../iteration2';
+import { confirmAttendanceData, fetchCleanupEvent, fetchCleanupTarget, recordCheckInData } from '../iteration2Api';
 import { C } from '../theme';
+import { useAsyncData } from '../useAsyncData';
 
 const BEACH_COORDS: Record<string, { lat: number; lng: number }> = {
   morib: { lat: 2.746, lng: 101.443 },
@@ -25,11 +27,24 @@ function distanceKm(a: { lat: number; lng: number }, b: { lat: number; lng: numb
 export default function CheckInScreen() {
   const { eventId = '' } = useParams();
   const nav = useNavigate();
-  const { user } = useApp();
-  const event = getCleanupEvent(eventId);
+  const { user, showToast } = useApp();
+  const { data: event, setData: setEvent, loading, error } = useAsyncData(
+    () => fetchCleanupEvent(eventId),
+    [eventId, user?.participantId],
+    getCleanupEvent(eventId),
+  );
+  const { data: cleanupTarget } = useAsyncData(
+    () => event ? fetchCleanupTarget(event.beachId) : Promise.resolve(null),
+    [event?.beachId],
+    event ? getCleanupTarget(event.beachId) : null,
+  );
   const initial = user && event ? event.checkIns[user.participantId] ?? 'idle' : 'idle';
   const [state, setState] = useState<CheckInState>(initial);
   const [message, setMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (user && event) setState(event.checkIns[user.participantId] ?? 'idle');
+  }, [event, user]);
 
   function checkIn() {
     if (!event || !user) return;
@@ -45,15 +60,25 @@ export default function CheckInScreen() {
     setState('checking');
     setMessage(null);
     navigator.geolocation.getCurrentPosition(
-      (position) => {
+      async (position) => {
         const beach = BEACH_COORDS[event.beachId];
         const current = { lat: position.coords.latitude, lng: position.coords.longitude };
         const result: CheckInState = beach && distanceKm(current, beach) <= 25 ? 'within_area' : 'outside_area';
-        recordCheckIn(event.id, user.participantId, result);
-        setState(result);
+        try {
+          setEvent(await recordCheckInData(event.id, user.participantId, result));
+          setState(result);
+        } catch (reason) {
+          setState('denied');
+          setMessage(reason instanceof Error ? reason.message : 'Check-in could not be recorded.');
+        }
       },
-      () => {
-        recordCheckIn(event.id, user.participantId, 'denied');
+      async () => {
+        try {
+          setEvent(await recordCheckInData(event.id, user.participantId, 'denied'));
+        } catch {
+          // The actionable message below is the same whether saving the broad
+          // failure state also failed; no coordinates are retained either way.
+        }
         setState('denied');
         setMessage('Location was not available. Retry when you are ready.');
       },
@@ -61,16 +86,19 @@ export default function CheckInScreen() {
     );
   }
 
-  if (!event || !user) return null;
+  if (loading && !event) return <div className="screen scroll-y"><div className="measure i2-page"><Alert title="Loading check-in" tone="caution">Checking the latest activity state.</Alert></div></div>;
+  if (!event || !user) return <div className="screen scroll-y"><div className="measure i2-page"><Alert title="Check-in unavailable" tone="caution">{error ?? 'This activity could not be found.'}</Alert></div></div>;
   const joined = event.joinedBy.includes(user.participantId);
   const attendanceRecorded = event.attendanceBy.includes(user.participantId);
   const withinArea = state === 'within_area';
+  const hasEvidence = eventHasEvidence(event, user.participantId);
+  const canConfirmAttendance = eventCanRecordAttendance(event, user.participantId);
   const locationFailed = state === 'denied' || state === 'outside_area';
   const attendanceSteps = [
     ['Joined this event', joined],
     ['Near the beach on the day', withinArea],
-    ['Added a photo report or cleanup', attendanceRecorded],
-    ['Attendance recorded automatically', attendanceRecorded],
+    ['Added a report or cleanup for this event', hasEvidence],
+    ['Confirmed attendance', attendanceRecorded],
   ] as const;
 
   const statusTitle = state === 'checking'
@@ -129,17 +157,34 @@ export default function CheckInScreen() {
             ))}
           </div>
           <InfoChip color={attendanceRecorded ? C.green : C.muted} background={attendanceRecorded ? C.greenBg : undefined} style={{ marginTop: 12 }}>
-            {attendanceRecorded ? 'Recorded attendance' : 'Attendance not recorded'}
+            {attendanceRecorded ? 'Recorded attendance' : 'Attendance not recorded yet'}
           </InfoChip>
         </div>
 
         {message && <Alert title="Check-in not completed" tone="caution">{message}</Alert>}
 
         <div className="i2-action-stack">
-          {withinArea && !attendanceRecorded ? (
+          {withinArea && !attendanceRecorded && canConfirmAttendance ? (
             <>
-              <PrimaryButton onClick={() => nav(`/cleanup/${event.beachId}?event=${encodeURIComponent(event.id)}`)}>Add a Cleanup</PrimaryButton>
-              <GhostButton onClick={() => nav(`/beach/${event.beachId}`)}>Report litter here instead</GhostButton>
+              <PrimaryButton onClick={async () => {
+                try {
+                  setEvent(await confirmAttendanceData(event.id, user.participantId));
+                  showToast('Attendance recorded');
+                  nav(`/events/${event.id}`);
+                } catch (reason) {
+                  setMessage(reason instanceof Error ? reason.message : 'Attendance could not be confirmed.');
+                }
+              }}>Confirm attendance</PrimaryButton>
+              <GhostButton onClick={() => nav(`/events/${event.id}`)}>Back to activity</GhostButton>
+            </>
+          ) : withinArea && !attendanceRecorded ? (
+            <>
+              {cleanupTarget ? (
+                <PrimaryButton onClick={() => nav(`/cleanup/${event.beachId}?event=${encodeURIComponent(event.id)}`)}>Add a Cleanup</PrimaryButton>
+              ) : (
+                <PrimaryButton onClick={() => nav(`/beach/${event.beachId}?event=${encodeURIComponent(event.id)}`)}>Report litter here</PrimaryButton>
+              )}
+              {cleanupTarget && <GhostButton onClick={() => nav(`/beach/${event.beachId}?event=${encodeURIComponent(event.id)}`)}>Report litter here instead</GhostButton>}
             </>
           ) : attendanceRecorded ? (
             <PrimaryButton onClick={() => nav(`/events/${event.id}`)}>Back to event</PrimaryButton>
@@ -148,8 +193,8 @@ export default function CheckInScreen() {
               <PrimaryButton onClick={checkIn} disabled={state === 'checking'}>{state === 'checking' ? 'Checking…' : state === 'idle' ? 'Check in — use my location' : 'Retry location'}</PrimaryButton>
               {locationFailed && (
                 <>
-                  <GhostButton onClick={() => nav(`/cleanup/${event.beachId}?event=${encodeURIComponent(event.id)}`)}>Add a Cleanup</GhostButton>
-                  <GhostButton onClick={() => nav(`/beach/${event.beachId}`)}>Report litter here instead</GhostButton>
+                  {cleanupTarget && <GhostButton onClick={() => nav(`/cleanup/${event.beachId}?event=${encodeURIComponent(event.id)}`)}>Add a Cleanup</GhostButton>}
+                  <GhostButton onClick={() => nav(`/beach/${event.beachId}?event=${encodeURIComponent(event.id)}`)}>Report litter here instead</GhostButton>
                 </>
               )}
             </>

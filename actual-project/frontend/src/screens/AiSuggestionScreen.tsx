@@ -24,7 +24,9 @@ export default function AiSuggestionScreen() {
     if (started.current) return;
     started.current = true;
     const photoKey = draft.photo?.photoKey ?? draft.existingPhotoKey ?? '';
-    analyseReportPhoto(photoKey, params.get('ai') === 'fail')
+    const requestedState = params.get('ai');
+    const forcedState = requestedState === 'unreadable' ? 'unreadable' : requestedState === 'fail' ? 'unavailable' : null;
+    analyseReportPhoto(photoKey, forcedState)
       .then((suggestion) => {
         setResult(suggestion);
         setEditable(suggestion.suggestions);
@@ -58,7 +60,7 @@ export default function AiSuggestionScreen() {
         <BackButton onClick={() => nav('/report/details', { replace: true })} />
         <div>
           <SectionLabel size="sm">AI SUGGESTION · REVIEW BEFORE SAVING</SectionLabel>
-          <h1 className="i2-title" style={{ marginTop: 7 }}>{loading ? 'Checking your photo…' : result?.modelState === 'ready' ? 'Review the suggestion' : "We're not sure"}</h1>
+          <h1 className="i2-title" style={{ marginTop: 7 }}>{loading ? 'Checking your photo…' : result?.modelState === 'ready' ? 'Review the suggestion' : result?.modelState === 'unreadable' ? 'Photo unreadable' : "We're not sure"}</h1>
           <p className="i2-subtitle">You decide the final categories and amounts. A suggestion is never submitted on its own.</p>
         </div>
 
@@ -76,7 +78,10 @@ export default function AiSuggestionScreen() {
             </Callout>
 
             <div className="i2-card">
-              <SectionLabel size="sm">CATEGORIES</SectionLabel>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
+                <SectionLabel size="sm">DETECTED CATEGORIES</SectionLabel>
+                <button type="button" onClick={() => nav('/method/ai')} style={{ minWidth: 34, minHeight: 34, borderRadius: 17, background: C.tint, color: C.navy, fontWeight: 800 }} aria-label="How AI suggestions work">?</button>
+              </div>
               <div className="i2-chip-row" style={{ marginTop: 11 }}>
                 {CATEGORIES.map((category) => (
                   <button key={category} type="button" className="i2-chip press" aria-pressed={category in editable} onClick={() => toggle(category)}>{category}</button>
@@ -97,6 +102,14 @@ export default function AiSuggestionScreen() {
             {Object.keys(editable).length === 0 && <Alert title="Choose at least one category" tone="caution">Or keep the manual values you entered on the previous page.</Alert>}
             <PrimaryButton onClick={confirm} disabled={Object.keys(editable).length === 0}>Confirm suggestions</PrimaryButton>
             <GhostButton onClick={keepManual}>Keep my manual entries</GhostButton>
+          </>
+        ) : result?.modelState === 'unreadable' ? (
+          <>
+            <Alert title="Choose another photo" tone="caution">
+              We could not read this image. Nothing has been submitted.
+            </Alert>
+            <PrimaryButton onClick={() => nav('/report/photo', { replace: true })}>Choose another photo</PrimaryButton>
+            <GhostButton onClick={() => nav('/report/details', { replace: true })}>Enter details manually</GhostButton>
           </>
         ) : (
           <>

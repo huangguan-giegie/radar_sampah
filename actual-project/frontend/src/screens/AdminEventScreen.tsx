@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { Check, Shield } from '../components/Icon';
 import { Alert, Callout, SectionLabel } from '../components/ds';
 import { BackButton, PrimaryButton } from '../components/ui';
-import { createAdminEvent, formatEventDate, getCleanupEvent, monitoredBeaches } from '../iteration2';
+import { formatEventDate, monitoredBeaches } from '../iteration2';
+import { createAdminEventData, fetchCleanupEvent } from '../iteration2Api';
 import { C } from '../theme';
 
 export default function AdminEventScreen() {
@@ -13,12 +14,12 @@ export default function AdminEventScreen() {
   const [date, setDate] = useState('');
   const [message, setMessage] = useState<{ kind: 'success' | 'duplicate' | 'error'; text: string } | null>(null);
 
-  function create() {
+  async function create() {
     setMessage(null);
     try {
       const id = `${beachId}-${date}`;
-      const before = getCleanupEvent(id);
-      const event = createAdminEvent({ beachId, date });
+      const before = await fetchCleanupEvent(id);
+      const event = await createAdminEventData({ beachId, date });
       if (before) setMessage({ kind: 'duplicate', text: `An activity already exists for ${formatEventDate(event.date)}. No duplicate was created.` });
       else setMessage({ kind: 'success', text: `${event.beachName} · ${formatEventDate(event.date)} was added.` });
     } catch (reason) {

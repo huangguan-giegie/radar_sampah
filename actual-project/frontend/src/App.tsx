@@ -44,6 +44,7 @@ const SharedEventScreen = lazy(() => import('./screens/SharedEventScreen'));
 const AiSuggestionScreen = lazy(() => import('./screens/AiSuggestionScreen'));
 const AiMethodScreen = lazy(() => import('./screens/AiMethodScreen'));
 const AdminEventScreen = lazy(() => import('./screens/AdminEventScreen'));
+const GalleryScreen = lazy(() => import('./screens/GalleryScreen'));
 
 
 // The bottom tab bar appears on these four pages only.
@@ -142,23 +143,25 @@ export default function App() {
                 ? 'Cleanup result'
                 : pathname.startsWith('/cleanup/')
                   ? 'Add a cleanup'
-                  : pathname.startsWith('/beach/')
-        ? 'Beach details'
-        : pathname === '/community'
-          ? 'Community cleanups'
-          : pathname === '/method/ai'
-            ? 'AI suggestion method'
-        : pathname === '/map'
-          ? 'Beach map'
-          : pathname.startsWith('/reports/')
-            ? 'Report details'
-            : pathname === '/reports'
-            ? 'My reports'
-            : pathname === '/account'
-              ? 'Account'
-              : pathname === '/home'
-                ? 'Home'
-                : 'Radar Sampah';
+                  : pathname.startsWith('/beach/') && pathname.endsWith('/gallery')
+                    ? 'Litter gallery'
+                    : pathname.startsWith('/beach/')
+                      ? 'Beach details'
+                      : pathname === '/community'
+                        ? 'Community cleanups'
+                        : pathname === '/method/ai'
+                          ? 'AI suggestion method'
+                          : pathname === '/map'
+                            ? 'Beach map'
+                            : pathname.startsWith('/reports/')
+                              ? 'Report details'
+                              : pathname === '/reports'
+                                ? 'My reports'
+                                : pathname === '/account'
+                                  ? 'Account'
+                                  : pathname === '/home'
+                                    ? 'Home'
+                                    : 'Radar Sampah';
 
   // Keep the browser tab title in step with the route.
   //
@@ -199,6 +202,7 @@ export default function App() {
         <Route path="/home" element={<HomeScreen />} />
         <Route path="/map" element={<MapScreen />} />
         <Route path="/beach/:beachId" element={<BeachScreen />} />
+        <Route path="/beach/:beachId/gallery" element={<GalleryScreen />} />
         <Route path="/method" element={<MethodScreen />} />
         <Route path="/method/ai" element={<AiMethodScreen />} />
 

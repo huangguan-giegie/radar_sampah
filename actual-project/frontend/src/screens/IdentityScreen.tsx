@@ -136,6 +136,9 @@ export default function IdentityScreen() {
                 <div style={{ fontFamily: MONO, fontSize: 15, lineHeight: 1.65, color: C.ink2, marginTop: 5, wordBreak: 'break-word', userSelect: 'all' }}>
                   {newSession.token}
                 </div>
+                <div style={{ marginTop: 14, fontSize: 12, lineHeight: 1.5, color: C.muted }}>
+                  Others see this profile as Volunteer {newSession.participantId}.
+                </div>
               </div>
             </div>
 
@@ -152,7 +155,7 @@ export default function IdentityScreen() {
                   }
                 }}
               >
-                {copied ? 'Copied' : 'Copy details'}
+                {copied ? 'Copied' : 'Copy token'}
               </GhostButton>
               <GhostButton onClick={downloadRecoveryKit}>Download</GhostButton>
             </div>
@@ -227,6 +230,7 @@ export default function IdentityScreen() {
                 <PrimaryButton onClick={getNewId} disabled={busy}>
                   {busy ? 'Creating your ID…' : 'Create participant ID'}
                 </PrimaryButton>
+                <TextButton onClick={() => setMode('existing')}>I already have a token</TextButton>
               </>
             ) : (
               <form onSubmit={useExistingId} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>

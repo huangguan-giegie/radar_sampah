@@ -296,6 +296,17 @@ export interface LitterReport {
   photoKey?: string | null;
 }
 
+/** A public, beach-scoped gallery row. It deliberately contains a broad beach
+ * label only: neither coordinates nor a reporter identity are ever exposed. */
+export interface GalleryPhoto {
+  reportId: string;
+  beachId: string;
+  beachName: string;
+  createdAt: string;
+  quantities: QuantityByCategory;
+  photoUrl: string | null;
+}
+
 /**
  * One quantity band per category, for a single report.
  *

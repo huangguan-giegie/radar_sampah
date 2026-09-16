@@ -166,10 +166,10 @@ export function freshnessLabel(kind: FreshnessKind, iso: string | null): string 
   return `Reported ${d} days ago`;
 }
 
-/** A fixed date follows the prototype's unambiguous `2026-09-12 (Sat)` rule.
- *  "Today" stays relative because it describes freshness rather than a
- *  calendar date. All comparisons use Malaysia time so a late-night report
- *  cannot move to the wrong day on a device in another time zone. */
+/** A fixed date always follows the prototype's unambiguous
+ *  `2026-09-12 (Sat)` rule. All comparisons use Malaysia time so a
+ *  late-night report cannot move to the wrong day on a device in another
+ *  time zone. */
 export function formatDate(iso: string): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso;
@@ -180,7 +180,6 @@ export function formatDate(iso: string): string {
     day: '2-digit',
   }).format(value);
   const exactDate = parts(d);
-  if (exactDate === parts(new Date())) return 'Today';
   const weekday = d.toLocaleDateString('en-GB', {
     weekday: 'short',
     timeZone: 'Asia/Kuala_Lumpur',

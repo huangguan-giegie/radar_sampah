@@ -29,6 +29,7 @@ import type {
   BeachDetail,
   BeachSummary,
   CreateReportInput,
+  GalleryPhoto,
   LitterCategory,
   LitterReport,
   QuantityBand,
@@ -155,6 +156,12 @@ async function request(path: string, method = 'GET', body?: unknown) {
     );
   }
   return data;
+}
+
+/** Shared by the Iteration 2 data adapter so those screens use the same
+ * authentication, timeout and error policy as every other backend call. */
+export async function apiRequest<T>(path: string, method = 'GET', body?: unknown): Promise<T> {
+  return request(path, method, body) as Promise<T>;
 }
 
 
@@ -528,6 +535,32 @@ export async function getBeach(id: string): Promise<BeachDetail> {
     return beach;
   }
   return request('/beaches/' + id);
+}
+
+/**
+ * Gallery images are a separately authorised public projection of report
+ * photos. This is intentionally not built from /reports/mine: that endpoint
+ * is owner-only and using it here would either leak private records or make a
+ * public beach page look like it had no photos.
+ */
+export async function getBeachGallery(id: string): Promise<GalleryPhoto[]> {
+  if (USE_MOCK) {
+    await delay();
+    return SEED_REPORTS
+      .filter((report) => report.beachId === id && report.status === 'Counted')
+      .map((report) => ({
+        reportId: report.id,
+        beachId: report.beachId,
+        beachName: report.beachName,
+        createdAt: report.createdAt,
+        quantities: report.quantities,
+        // The bundled demonstration image stands in for a server-authorised
+        // public gallery projection. It is never used for an owner-only report
+        // detail and carries no location metadata.
+        photoUrl: '/sample-litter.jpg',
+      }));
+  }
+  return request(`/beaches/${encodeURIComponent(id)}/gallery`);
 }
 
 // ============================================================

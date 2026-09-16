@@ -14,11 +14,12 @@ import { Alert, InfoChip, OverlayChip, StatusBadge } from '../components/ds';
 import { useApp } from '../AppContext';
 import type { BeachSummary, LitterCategory, LitterReport, QuantityBand } from '../types';
 import { backFromReview, buildReportSubmission, findExactDuplicateReport, finishReportSubmission } from '../flowRules';
+import { linkEventReportData } from '../iteration2Api';
 
 export default function ReviewScreen() {
   const nav = useNavigate();
   const location = useLocation();
-  const { draft, setLastSavedReport, bumpReports, showToast } = useApp();
+  const { draft, user, setLastSavedReport, bumpReports, showToast } = useApp();
   const [beaches, setBeaches] = useState<BeachSummary[]>([]);
   // busy disables the submit button while the request is in flight - the one
   // place a disabled button is right, since a second tap would file twice.
@@ -72,6 +73,16 @@ export default function ReviewScreen() {
         submission.kind === 'update'
           ? await updateReport(submission.reportId, submission.changes)
           : await createReport(submission.payload);
+      if (draft.linkedEventId && user) {
+        try {
+          await linkEventReportData(draft.linkedEventId, user.participantId, saved.id, saved.beachId);
+        } catch {
+          // A successful report must not be presented as failed merely because
+          // the event context expired while the form was open. Attendance is
+          // never inferred from a report, so there is no unsafe fallback here.
+          showToast('Report saved. Return to the activity to check your attendance steps.');
+        }
+      }
       // Order matters. Keep the saved report first, so the next screen needs no
       // second request that might fail. Refresh the counts. Then navigate via
       // finishReportSubmission, which commits the move before the confirmation

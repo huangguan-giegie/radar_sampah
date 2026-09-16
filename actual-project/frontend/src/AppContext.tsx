@@ -49,6 +49,9 @@ export type ReportDraft = {
    *  review page can print "Pantai Morib" straight away, instead of showing a
    *  blank while it waits for /beaches to come back over the network. */
   beachName: string | null;
+  /** Set only when a report starts from a joined cleanup event. This is
+   * local flow context, not a public location or a replacement for check-in. */
+  linkedEventId: string | null;
   locationSource: 'gps' | 'manual' | null;
   coords: { lat: number; lng: number } | null;
   quantities: QuantityByCategory;
@@ -96,6 +99,7 @@ function emptyDraft(): ReportDraft {
     existingPhotoUnavailable: false,
     beachId: null,
     beachName: null,
+    linkedEventId: null,
     locationSource: null,
     coords: null,
     quantities: {},

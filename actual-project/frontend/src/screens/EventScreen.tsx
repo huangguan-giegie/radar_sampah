@@ -6,26 +6,42 @@ import { BackButton, GhostButton, PrimaryButton, TextButton } from '../component
 import { useApp } from '../AppContext';
 import {
   formatEventDate,
+  getCleanupTarget,
   getCleanupEvent,
-  joinCleanupEvent,
-  leaveCleanupEvent,
+  eventCanRecordAttendance,
+  eventHasEvidence,
 } from '../iteration2';
+import { confirmAttendanceData, fetchCleanupEvent, fetchCleanupTarget, joinCleanupEventData, leaveCleanupEventData } from '../iteration2Api';
 import { C } from '../theme';
+import { useAsyncData } from '../useAsyncData';
 
 export default function EventScreen() {
   const { eventId = '' } = useParams();
   const nav = useNavigate();
   const { user, showToast } = useApp();
-  const [event, setEvent] = useState(() => getCleanupEvent(eventId));
+  const { data: event, setData: setEvent, loading, error } = useAsyncData(
+    () => fetchCleanupEvent(eventId),
+    [eventId, user?.participantId],
+    getCleanupEvent(eventId),
+  );
+  const { data: cleanupTarget } = useAsyncData(
+    () => event ? fetchCleanupTarget(event.beachId) : Promise.resolve(null),
+    [event?.beachId],
+    event ? getCleanupTarget(event.beachId) : null,
+  );
   const [sharing, setSharing] = useState(false);
   const [copied, setCopied] = useState(false);
+
+  if (loading && !event) {
+    return <div className="screen scroll-y"><div className="measure i2-page"><EmptyState title="Loading activity…" body="Checking the latest shared activity details." /></div></div>;
+  }
 
   if (!event) {
     return (
       <div className="screen scroll-y">
         <div className="measure i2-page">
           <BackButton onClick={() => nav('/community')} />
-          <EmptyState title="Activity not found" body="This cleanup date may have changed or is no longer listed." action="View activities" onAction={() => nav('/community')} />
+          <EmptyState title="Activity not found" body={error ?? 'This cleanup date may have changed or is no longer listed.'} action="View activities" onAction={() => nav('/community')} />
         </div>
       </div>
     );
@@ -36,22 +52,32 @@ export default function EventScreen() {
   const checkIn = participantId ? event.checkIns[participantId] : undefined;
   const checkedIn = checkIn === 'within_area';
   const attendanceRecorded = Boolean(participantId && event.attendanceBy.includes(participantId));
+  const hasEvidence = Boolean(participantId && eventHasEvidence(event, participantId));
+  const canConfirmAttendance = Boolean(participantId && eventCanRecordAttendance(event, participantId));
 
-  function join() {
+  async function join() {
     if (!participantId) {
       nav(`/identity?next=${encodeURIComponent(`/events/${eventId}`)}`);
       return;
     }
-    const updated = joinCleanupEvent(eventId, participantId);
-    setEvent(updated);
-    showToast('Activity joined');
+    try {
+      const updated = await joinCleanupEventData(eventId, participantId);
+      setEvent(updated);
+      showToast('Activity joined');
+    } catch (reason) {
+      showToast(reason instanceof Error ? reason.message : 'Could not join this activity');
+    }
   }
 
-  function leave() {
+  async function leave() {
     if (!participantId) return;
-    const updated = leaveCleanupEvent(eventId, participantId);
-    setEvent(updated);
-    showToast('You left this activity');
+    try {
+      const updated = await leaveCleanupEventData(eventId, participantId);
+      setEvent(updated);
+      showToast('You left this activity');
+    } catch (reason) {
+      showToast(reason instanceof Error ? reason.message : 'Could not leave this activity');
+    }
   }
 
   const shareUrl = `${window.location.origin}/share/events/${event.id}`;
@@ -87,8 +113,8 @@ export default function EventScreen() {
   const participation = [
     { label: 'Join', done: joined },
     { label: 'Check in on the day', done: checkedIn },
-    { label: 'Add a report or cleanup', done: attendanceRecorded },
-    { label: 'Attendance recorded automatically', done: attendanceRecorded },
+    { label: 'Add a report or cleanup', done: hasEvidence },
+    { label: 'Confirm attendance', done: attendanceRecorded },
   ];
 
   return (
@@ -105,7 +131,7 @@ export default function EventScreen() {
           </div>
           <div className="i2-stat-grid" style={{ marginTop: 15 }}>
             <div className="i2-stat"><strong>{event.participantCount}</strong><span>PARTICIPANTS</span></div>
-            <div className="i2-stat"><strong>{event.attendanceBy.length}</strong><span>RECORDED</span></div>
+            <div className="i2-stat"><strong>{event.attendanceCount}</strong><span>RECORDED</span></div>
             <div className="i2-stat"><strong style={{ fontSize: 15 }}>{event.status}</strong><span>STATUS</span></div>
           </div>
         </div>
@@ -130,10 +156,23 @@ export default function EventScreen() {
             <PrimaryButton onClick={join}>Join Cleanup</PrimaryButton>
           ) : !checkedIn ? (
             <PrimaryButton onClick={() => nav(`/events/${eventId}/check-in`)}>Check in</PrimaryButton>
-          ) : (
+          ) : canConfirmAttendance ? (
+            <PrimaryButton onClick={async () => {
+              try {
+                setEvent(await confirmAttendanceData(eventId, participantId!));
+                showToast('Attendance recorded');
+              } catch (reason) {
+                showToast(reason instanceof Error ? reason.message : 'Could not confirm attendance');
+              }
+            }}>
+              Confirm attendance <ChevronRight color={C.lime} />
+            </PrimaryButton>
+          ) : cleanupTarget ? (
             <PrimaryButton onClick={() => nav(`/cleanup/${event.beachId}?event=${encodeURIComponent(event.id)}`)}>
               Add a Cleanup <ChevronRight color={C.lime} />
             </PrimaryButton>
+          ) : (
+              <PrimaryButton onClick={() => nav(`/beach/${event.beachId}?event=${encodeURIComponent(event.id)}`)}>Report litter here <ChevronRight color={C.lime} /></PrimaryButton>
           )}
           {event.cleanupIds.length > 0 && (
             <GhostButton onClick={() => nav(`/events/${event.id}/result`)}>View recorded result</GhostButton>
