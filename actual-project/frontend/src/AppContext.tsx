@@ -20,7 +20,7 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import { createAnonymousId, getMe, logout } from './api';
+import { createAnonymousId, getMe, logout, refreshPhotoPreview } from './api';
 import type { LitterCategory, LitterReport, QuantityByCategory, ReportStatus, UploadedPhoto, User } from './types';
 import { restoreId as apiRestoreId } from './api';
 import { authFailureAction } from './authPolicy';
@@ -277,6 +277,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [reportsVersion, setReportsVersion] = useState(0);
   const [offline, setOffline] = useState(() => typeof navigator !== 'undefined' && navigator.onLine === false);
   const [toast, setToast] = useState<string | null>(null);
+
+  useEffect(() => {
+    const photoKey = draft.photo?.photoKey;
+    if (!authReady || !user || !photoKey || draft.photo?.previewUrl) return;
+    let active = true;
+    void refreshPhotoPreview(photoKey).then((previewUrl) => {
+      if (!active || !previewUrl) return;
+      setDraft((current) => current.photo?.photoKey === photoKey
+        ? { ...current, photo: { ...current.photo, previewUrl } }
+        : current);
+    }).catch(() => { /* The photo and review screens retain their retry paths. */ });
+    return () => { active = false; };
+  }, [authReady, user?.id, draft.photo?.photoKey]);
 
 
   // Keep the offline flag in step with the browser. The starting value above
