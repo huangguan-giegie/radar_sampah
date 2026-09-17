@@ -16,7 +16,7 @@ import {
   type CleanupHandling,
 } from '../iteration2';
 import { fetchCleanupEvent, fetchCleanupTarget, submitCleanup } from '../iteration2Api';
-import { C, MONO, formatDate } from '../theme';
+import { C, MONO, QUANTITY_DESC, formatDate } from '../theme';
 import type { LitterCategory, QuantityBand } from '../types';
 import { useAsyncData } from '../useAsyncData';
 
@@ -321,6 +321,11 @@ export default function CleanupScreen() {
 
         <div className="i2-card">
           <SectionLabel size="sm">AFTER-CLEANUP BANDS</SectionLabel>
+          {/* The same everyday wording as the report screen. "Small" on its own
+              means something different to every volunteer. */}
+          <div style={{ marginTop: 6, fontSize: 10.5, color: C.dim, lineHeight: 1.5 }}>
+            {QUANTITY_BANDS.map((band) => `${band} · ${QUANTITY_DESC[band]}`).join('   ')}
+          </div>
           <div style={{ marginTop: 8 }}>
             {categories.map((category) => {
               const before = target.remainingBands[category];

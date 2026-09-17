@@ -97,6 +97,39 @@ function clearToken() {
   localStorage.removeItem('rs_token');
 }
 
+// The recovery token handed out when a number is claimed.
+//
+// The server keeps only a digest of it, so this browser copy is the only way
+// the Account screen can hand the same details over a second time. Cleared on
+// sign out for the same reason the session token is, and read on screen only.
+const RECOVERY_TOKEN_KEY = 'rs_recovery_token';
+
+/** The stored recovery token, or null when this device never claimed a number. */
+export function storedRecoveryToken() {
+  try {
+    return localStorage.getItem(RECOVERY_TOKEN_KEY);
+  } catch {
+    return null;
+  }
+}
+
+function saveRecoveryToken(token: string) {
+  if (!token) return;
+  try {
+    localStorage.setItem(RECOVERY_TOKEN_KEY, token);
+  } catch {
+    // A full or blocked store only costs the re-download, never the sign in.
+  }
+}
+
+function clearRecoveryToken() {
+  try {
+    localStorage.removeItem(RECOVERY_TOKEN_KEY);
+  } catch {
+
+  }
+}
+
 
 
 /**
@@ -526,6 +559,7 @@ export async function createAnonymousId(): Promise<AuthSession> {
     localStorage.setItem('rs_mock_participant', participantId);
     const sessionToken = `mock-session-${participantId}-${Date.now()}`;
     saveToken(sessionToken);
+    saveRecoveryToken(recoveryToken);
     return {
       token: sessionToken,
       recoveryToken,
@@ -535,6 +569,7 @@ export async function createAnonymousId(): Promise<AuthSession> {
 
   const data = await request('/auth/anonymous', 'POST');
   saveToken(data.token);
+  saveRecoveryToken(data.recoveryToken);
   return data;
 }
 
@@ -556,6 +591,7 @@ export async function restoreId(participantId: string, token = ''): Promise<Auth
     localStorage.setItem('rs_mock_participant', id);
     const sessionToken = `mock-session-${id}-${Date.now()}`;
     saveToken(sessionToken);
+    saveRecoveryToken(suppliedToken);
     return {
       token: sessionToken,
       user: { id: 'u_anon_' + id, participantId: id, role: 'volunteer' },
@@ -564,6 +600,7 @@ export async function restoreId(participantId: string, token = ''): Promise<Auth
 
   const data = await request('/auth/restore', 'POST', { participantId, ...(token.trim() ? { token: token.trim() } : {}) });
   saveToken(data.token);
+  saveRecoveryToken(token.trim());
   return data;
 }
 
@@ -571,6 +608,7 @@ export async function logout(): Promise<void> {
   if (USE_MOCK) {
     await delay(100);
     clearToken();
+    clearRecoveryToken();
     localStorage.removeItem('rs_mock_participant');
     return;
   }
@@ -580,6 +618,7 @@ export async function logout(): Promise<void> {
 
   }
   clearToken();
+  clearRecoveryToken();
 }
 
 

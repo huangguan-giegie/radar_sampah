@@ -347,3 +347,23 @@ export function ErrorNote({ title, body, onRetry }: { title: string; body?: stri
     </div>
   );
 }
+
+/**
+ * Save the participant ID and the recovery token as one text file.
+ *
+ * Lives here because two screens hand out the same file: the claim screen,
+ * where the token is shown once, and Account, where a volunteer who lost it can
+ * get it again while they are still signed in. Same wording in both, because
+ * this file is the only thing they keep.
+ */
+export function downloadRecoveryKit(participantId: string, token: string) {
+  const text =
+    `Radar Sampah recovery details\nParticipant ID: ${participantId}\nRecovery token: ${token}\n\n` +
+    'Keep this file private. The token works like a password.';
+  const url = URL.createObjectURL(new Blob([text], { type: 'text/plain;charset=utf-8' }));
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `radar-sampah-recovery-${participantId}.txt`;
+  link.click();
+  URL.revokeObjectURL(url);
+}

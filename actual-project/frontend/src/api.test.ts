@@ -192,6 +192,25 @@ describe('真实 API contract', () => {
     expect(storage.get('rs_token')).toBe('fresh-session-token');
   });
 
+  // The Account screen can only hand the details over a second time if this
+  // browser still has the token the server digested away at claim time. It is
+  // stored when a number is claimed and dropped on sign out.
+  it('keeps the recovery token for a second download and clears it on sign out', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({
+      token: 'session-1',
+      recoveryToken: 'RS-AAAA-BBBB',
+      user: { id: 'u_1637', participantId: '1637', role: 'volunteer' },
+    }), { status: 200 }));
+    vi.stubGlobal('fetch', fetchMock);
+    const { createAnonymousId, logout, storedRecoveryToken } = await import('./api');
+
+    await createAnonymousId();
+    expect(storedRecoveryToken()).toBe('RS-AAAA-BBBB');
+
+    await logout();
+    expect(storedRecoveryToken()).toBeNull();
+  });
+
   // The exact JSON we POST. If a field is renamed or dropped, this fails here
   // rather than during a demo against the live API.
   it('submits the report body in the backend contract shape', async () => {

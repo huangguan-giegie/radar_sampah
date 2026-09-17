@@ -6,10 +6,10 @@
 // documents that explain how we treat their data, and a way to sign out.
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getMyReportCounts } from '../api';
+import { getMyReportCounts, storedRecoveryToken } from '../api';
 import { BarChart, ChevronRight, ShieldCheck, UserIcon } from '../components/Icon';
 import { PrivacySheet } from '../components/PrivacySheet';
-import { GhostButton, Label } from '../components/ui';
+import { GhostButton, Label, downloadRecoveryKit } from '../components/ui';
 import { C, MONO } from '../theme';
 import { StatTile, StatusBadge } from '../components/ds';
 import { useApp } from '../AppContext';
@@ -29,6 +29,10 @@ export default function AccountScreen() {
       .catch(() => setCounts(null));
   }, [reportsVersion]);
   const [sheet, setSheet] = useState(false);
+  // Only offered while this browser still holds the token (see
+  // storedRecoveryToken in apiCore). On a device that never claimed a number
+  // there is nothing to fill the file with, so the row stays hidden.
+  const recoveryToken = storedRecoveryToken();
 
 
   // One row of the settings list. Written once as a function so every row has
@@ -175,6 +179,21 @@ export default function AccountScreen() {
             </div>
           </div>
         </label>
+
+        {/* The token is shown once, when the number is claimed, and the server
+            keeps only a digest of it - so this row is the second chance for
+            anyone who closed that screen too early. */}
+        {recoveryToken && user && (
+          <div style={{ background: C.white, border: '1px solid rgba(11,33,97,.07)', borderRadius: 22, overflow: 'hidden' }}>
+            {link(
+              'Save your recovery details',
+              'Download your participant ID and recovery token again',
+              <ShieldCheck size={16} color={C.navy} />,
+              () => downloadRecoveryKit(user.participantId, recoveryToken),
+              true,
+            )}
+          </div>
+        )}
 
         <GhostButton
           height={52}

@@ -80,6 +80,11 @@ export default function ConfirmBeachScreen() {
       {/* Above Leaflet's own layers, which occupy 400 to 700. */}
       <div style={{ position: 'absolute', inset: 0, zIndex: 800, background: 'linear-gradient(180deg,rgba(221,227,236,.3) 0%,transparent 30%,rgba(12,28,58,.4) 100%)', pointerEvents: 'none' }} />
 
+      {/* Tapping the map behind the sheet leaves, exactly like Back. This map is
+          not interactive (see MiniMap), so the layer costs nothing - and without
+          it the only way out of the sheet was the small back button. */}
+      <div onClick={() => nav(-1)} aria-hidden="true" style={{ position: 'absolute', inset: 0, zIndex: 810 }} />
+
       <BackButton
         onClick={() => nav(-1)}
         style={{ position: 'absolute', top: 'var(--top-inset)', left: 18, zIndex: 820, background: 'rgba(255,255,255,.85)', backdropFilter: 'blur(10px)' }}

@@ -10,7 +10,7 @@ import { useState, type FormEvent } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { C, MONO } from '../theme';
 import { ShieldCheck } from '../components/Icon';
-import { BackButton, ErrorNote, GhostButton, PrimaryButton, TextButton } from '../components/ui';
+import { BackButton, ErrorNote, GhostButton, PrimaryButton, TextButton, downloadRecoveryKit } from '../components/ui';
 import { useApp } from '../AppContext';
 import { safeNextPath } from '../flowRules';
 
@@ -39,14 +39,9 @@ export default function IdentityScreen() {
     : '';
   const canRestore = !busy && typedId.trim() !== '' && typedToken.trim() !== '';
 
-  function downloadRecoveryKit() {
+  function saveRecoveryKit() {
     if (!newSession) return;
-    const url = URL.createObjectURL(new Blob([recoveryKitText], { type: 'text/plain;charset=utf-8' }));
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `radar-sampah-recovery-${newSession.participantId}.txt`;
-    link.click();
-    URL.revokeObjectURL(url);
+    downloadRecoveryKit(newSession.participantId, newSession.token);
     setSavedRecovery(true);
   }
 
@@ -235,7 +230,7 @@ export default function IdentityScreen() {
                 >
                   {copied ? 'Copied' : 'Copy token'}
                 </GhostButton>
-                <GhostButton height={46} style={{ fontSize: 14 }} onClick={downloadRecoveryKit}>Download</GhostButton>
+                <GhostButton height={46} style={{ fontSize: 14 }} onClick={saveRecoveryKit}>Download</GhostButton>
               </div>
 
               <label style={{ display: 'flex', gap: 11, alignItems: 'center', marginTop: 14, color: C.ink2, fontSize: 13.5, fontWeight: 620, cursor: 'pointer' }}>

@@ -7,7 +7,7 @@ import { OverlayChip, SectionLabel } from '../components/ds';
 import { Alert } from '../components/Icon';
 import { BackButton, PrimaryButton, StepBadge } from '../components/ui';
 import { continueFromDetails } from '../flowRules';
-import { C, MONO } from '../theme';
+import { C, MONO, QUANTITY_DESC } from '../theme';
 import type { LitterCategory, QuantityBand, QuantityByCategory } from '../types';
 
 const CATEGORIES: LitterCategory[] = ['Plastic', 'Fishing gear', 'Glass', 'Metal', 'Paper', 'Other'];
@@ -164,7 +164,15 @@ export default function RecordScreen() {
                       cursor: 'pointer',
                     }}
                   >
-                    {band}
+                    {/* "Medium" on its own means something different to every
+                        volunteer; the everyday description is what makes two
+                        people pick the same band. */}
+                    <span>
+                      {band}
+                      <span style={{ display: 'block', marginTop: 3, fontSize: 10, fontWeight: 550, lineHeight: 1.25 }}>
+                        {QUANTITY_DESC[band]}
+                      </span>
+                    </span>
                   </button>
                 );
               })}

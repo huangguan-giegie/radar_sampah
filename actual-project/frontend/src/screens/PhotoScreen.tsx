@@ -49,6 +49,9 @@ export default function PhotoScreen() {
   const libraryRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  // Desktop drag and drop. The photo goes through the same handleFile gate as
+  // the picker, so a dropped HEIC gets the same answer as a picked one.
+  const [dragging, setDragging] = useState(false);
 
   // Preview links from the real backend expire, so a draft opened again later
   // has a live photo key but a dead link. Ask for a fresh one. If that fails
@@ -212,6 +215,16 @@ export default function PhotoScreen() {
               type="button"
               onClick={() => cameraRef.current?.click()}
               disabled={uploading}
+              onDragOver={(e) => {
+                e.preventDefault();
+                if (!uploading) setDragging(true);
+              }}
+              onDragLeave={() => setDragging(false)}
+              onDrop={(e) => {
+                e.preventDefault();
+                setDragging(false);
+                handleFile(e.dataTransfer.files?.[0]);
+              }}
               className="lift press"
               style={{
                 position: 'relative',
@@ -227,7 +240,7 @@ export default function PhotoScreen() {
                 width: '100%',
               }}
             >
-              <div style={{ position: 'absolute', inset: 14, border: '1.5px dashed rgba(184,255,54,.35)', borderRadius: 18 }} />
+              <div style={{ position: 'absolute', inset: 14, border: `1.5px ${dragging ? 'solid' : 'dashed'} rgba(184,255,54,${dragging ? '.9' : '.35'})`, borderRadius: 18 }} />
               <div
                 style={{
                   width: 64,
@@ -243,7 +256,7 @@ export default function PhotoScreen() {
                 <Camera size={26} strokeWidth={1.7} />
               </div>
               <div style={{ color: C.bg, fontSize: 16, fontWeight: 650 }}>
-                {uploading ? 'Uploading…' : 'Take Photo'}
+                {uploading ? 'Uploading…' : dragging ? 'Drop the photo here' : 'Take Photo'}
               </div>
 
             </button>

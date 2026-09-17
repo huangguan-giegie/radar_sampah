@@ -318,6 +318,9 @@ export default function MapScreen() {
         >
           {layer === 'litter' ? (
             <>
+              {/* Testers read the bands as how busy a beach is, so the legend
+                  now names what it measures before the colours. */}
+              <span style={{ fontWeight: 700, letterSpacing: '.1em' }}>LITTER SEVERITY</span>
               {LEGEND.map((item) => (
                 <span key={item.label} style={{ display: 'flex', alignItems: 'center', gap: 3, whiteSpace: 'nowrap' }}>
                   <i style={{ width: 7, height: 7, borderRadius: 3, background: item.color, display: 'block' }} />
@@ -329,6 +332,9 @@ export default function MapScreen() {
                   really say "what people counted here". The app says "counted"
                   everywhere for the same reason - see attentionStateFor. */}
               <span style={{ color: C.muted, whiteSpace: 'nowrap' }}>· COUNTED REPORTS ONLY</span>
+              <span style={{ flexBasis: '100%', textAlign: 'center', color: C.muted, letterSpacing: 0 }}>
+                How much litter was counted here — not how busy the beach is.
+              </span>
             </>
           ) : (
             <>HABITAT CONTEXT · BROAD AREAS ONLY</>
