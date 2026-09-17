@@ -5,14 +5,18 @@
 ## Scope
 
 The Iteration 2 peer usability round raised eleven findings (F1-F11) against the
-live site. This record says what the deployed code does about each one, what was
-deliberately left out, and why. It follows the deployed build rather than a
-plan: every claim below was checked in a browser against production, not only in
-code.
+live site. This record says which suggestions we accepted, which we did not, and
+why. It follows the deployed build rather than a plan: every claim below was
+checked in a browser against production, not only in code.
 
 - Baseline reviewed: `663cb81`.
-- This update: `49af6ea`, merged to `main` and deployed.
-- Findings still open: F1, plus three parts of F2, F4, F8 and F11 named below.
+- This update: `49af6ea`, merged to `main` and deployed. The status record
+  itself is `708c9eb` and later.
+- Accepted from the report and shipped: F2 (a way out of the beach sheet), F3,
+  F5, F7, F11 (drag and drop).
+- Not accepted: F1, and the F2 bottom-navigation, F4 keep/edit logging, F8
+  duplicate-rule and F11 wide-screen text-size suggestions. The reasons are in
+  "Not accepted" below, so this is a decision record and not a to-do list.
 
 ## Fixed in this update
 
@@ -57,29 +61,49 @@ These were reproduced as working on the deployed build and were left alone.
 - **F10 - background data.** The source links open in a new tab, and the chart
   year and publisher are labelled.
 
-## Not fixed, and why
+## Not accepted
 
-- **F1 - server errors and endless loading.** The root cause is the free Render
-  instance sleeping, not application logic. The app now fails honestly: reads
-  time out at 15 seconds (60 seconds for the public beach list), retry, and the
-  session bar says the refresh failed instead of spinning. A cold start still
-  blocks the first action, so the finding stays open until the API is kept warm
-  or moved off the free tier.
-- **F2 - bottom navigation inside the flows.** The report and cleanup screens
-  deliberately override their bottom padding to 34px because they do not show
-  the tab bar (`TAB_ROUTES` in `App.tsx`). Rendering the tab bar there without a
-  layout pass would cover the Continue action on six screens, so it needs its
-  own change and its own test.
-- **F4 - keep/edit rate.** Measuring how often a suggestion is accepted needs a
-  backend field and a decision about what is stored. No field exists yet.
-- **F8 - what counts as a duplicate.** The wording is now everywhere it matters;
-  whether the same photo or place from different participants should count once
-  is a team decision, not a frontend one.
-- **F11 - text size on a laptop.** Every size in the app is an inline pixel
-  value, so there is no single token to raise. The one-line alternative, a CSS
-  `zoom` on the shell, would scale the Leaflet containers with it and can shift
-  marker placement and click coordinates on the map, which is the screen the
-  rest of the app depends on. This needs a type-scale pass, not a patch.
+These are the suggestions from the report that we are not taking forward. Each
+line states what was suggested, what the code does today, and why we are
+leaving it. Recording them as decisions rather than as an unfinished list is
+deliberate: a later round can re-open one on purpose instead of finding it in a
+backlog of half-promises.
+
+- **F1 - server errors and endless loading.** Not accepted as a code change.
+  The suggestion was a "waking up the server" state, self-retrying writes and
+  more empty states. The cause is the free Render instance sleeping between
+  visits, so those additions would dress the symptom rather than remove it, and
+  a retry on a write risks a duplicate submission. What the app does today is
+  fail honestly: reads time out at 15 seconds (60 seconds for the public beach
+  list), reads retry, and the session bar says the refresh failed instead of
+  spinning. The remedy we are relying on is operational - keep the API warm for
+  test and event days, or move off the free tier before the next round.
+- **F2 - bottom navigation inside the report and cleanup flows.** Not accepted.
+  The suggestion was to keep the tab bar visible during those flows. The report
+  and cleanup screens override their bottom padding to 34px precisely because
+  they do not show the tab bar (`TAB_ROUTES` in `App.tsx`); showing it there
+  without a layout pass across six screens would cover the Continue action. The
+  part of F2 that mattered - being able to leave - is shipped: every flow screen
+  has a back control, the browser back button follows the step URLs, and the
+  beach sheet now closes on an outside tap.
+- **F4 - logging how often a suggestion is kept or edited.** Not accepted. The
+  suggestion was to measure AI accuracy from that rate. It needs a new backend
+  field, a decision about what is stored against an anonymous participant, and
+  a baseline to compare against; without all three the number would be reported
+  without meaning. The review step that produces the signal is already in the
+  flow, so the measurement can be added when someone owns the analysis.
+- **F8 - deciding what counts as a duplicate.** Not accepted as a code change.
+  The suggestion was to settle the rule. The wording now appears on the review
+  screen, in the reports list and on the method page, so the app explains
+  itself; whether the same photo or place from different participants should
+  count once is a product and scoring decision, and making it in the frontend
+  would have changed severity numbers without the team agreeing to it.
+- **F11 - raising the text size on a laptop.** Not accepted. Every size in the
+  app is an inline pixel value, so there is no single token to raise, and the
+  one-line alternative - a CSS `zoom` on the shell - scales the Leaflet
+  containers with it and can shift marker placement and click coordinates on
+  the map the rest of the app depends on. A proper type-scale pass is a design
+  change of its own and is not worth taking on in this iteration.
 
 ## Verification
 
