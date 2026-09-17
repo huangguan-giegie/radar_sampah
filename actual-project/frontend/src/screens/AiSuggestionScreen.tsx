@@ -33,31 +33,68 @@ export default function AiSuggestionScreen() {
   const [result, setResult] = useState<AiSuggestion | null>(null);
   const [editable, setEditable] = useState<QuantityByCategory>({});
   const [loading, setLoading] = useState(true);
-  const started = useRef(false);
-
-  const photoKey = draft.photo?.photoKey ?? draft.existingPhotoKey ?? '';
+  const requestId = useRef(0);
   const photoUrl =
     draft.photo?.previewUrl || photoPreviewUrl(draft.photo?.photoKey) || draft.existingPhotoUrl;
 
   function run(forcedState: 'unavailable' | 'unreadable' | null) {
+    const key = draft.photo?.photoKey ?? draft.existingPhotoKey ?? '';
+    const id = ++requestId.current;
     setLoading(true);
     setResult(null);
-    analyseReportPhoto(photoKey, forcedState)
+    analyseWithTimeout(key, forcedState)
       .then((suggestion) => {
+        // Ignore requests from a previous route visit or retry.
+        if (requestId.current !== id) return;
         setResult(suggestion);
         setEditable(suggestion.suggestions);
+        patchDraft({
+          ...(suggestion.modelState === 'ready' ? { quantities: suggestion.suggestions } : {}),
+          aiModelState: suggestion.modelState === 'ready' ? 'ready' : suggestion.modelState === 'empty' ? 'empty' : 'unavailable',
+          aiModelVersion: suggestion.modelVersion,
+          aiDecision: null,
+        }, key);
       })
-      .finally(() => setLoading(false));
+      .finally(() => {
+        if (requestId.current === id) setLoading(false);
+      });
   }
 
   useEffect(() => {
-    if (started.current) return;
-    started.current = true;
-    // ?ai=unreadable and ?ai=fail force a fallback state for demos. They apply
-    // to the first check only, so "Try again" really asks the model again.
-    const requestedState = params.get('ai');
-    run(requestedState === 'unreadable' ? 'unreadable' : requestedState === 'fail' ? 'unavailable' : null);
+    // Recognition is cached in the draft. Revisiting this route must preserve
+    // the AI result and the participant's edits instead of charging/rerunning
+    // the same photo.
+    if (draft.aiModelState) {
+      const state = draft.aiModelState === 'ready' ? 'ready' : draft.aiModelState;
+      setResult({ modelState: state, modelVersion: draft.aiModelVersion ?? 'cached', suggestions: draft.quantities, supportedClasses: [] });
+      setEditable(draft.quantities);
+      setLoading(false);
+    } else {
+      // Optional demo states apply only to the first attempt.
+      const requestedState = params.get('ai');
+      run(requestedState === 'unreadable' ? 'unreadable' : requestedState === 'fail' ? 'unavailable' : null);
+    }
+    return () => {
+      // Invalidate late results when the route unmounts or the photo changes.
+      requestId.current += 1;
+    };
   }, [draft.photo?.photoKey, draft.existingPhotoKey, params]);
+
+  async function analyseWithTimeout(key: string, forcedState: 'unavailable' | 'unreadable' | null) {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    try {
+      return await Promise.race([
+        analyseReportPhoto(key, forcedState),
+        new Promise<AiSuggestion>((_, reject) => {
+          timer = setTimeout(() => reject(new Error('AI check timed out')), 15_000);
+        }),
+      ]);
+    } catch {
+      return { modelState: 'unavailable', modelVersion: 'unavailable', suggestions: {}, supportedClasses: [] } satisfies AiSuggestion;
+    } finally {
+      if (timer) clearTimeout(timer);
+    }
+  }
 
   const modelVersion = result?.modelVersion ?? null;
 
@@ -81,8 +118,7 @@ export default function AiSuggestionScreen() {
   }
 
   function keepManual() {
-    patchDraft({ aiDecision: 'manual', aiModelState: 'ready', aiModelVersion: modelVersion });
-    nav('/report/review', { state: { from: 'suggestions' } });
+    nav('/report/details', { replace: true });
   }
 
   // No usable suggestion. The details already entered stay; the user checks
@@ -93,15 +129,13 @@ export default function AiSuggestionScreen() {
   }
 
   function toggle(category: LitterCategory) {
-    setEditable((current) => {
-      const next = { ...current };
-      if (category in next) delete next[category];
-      else next[category] = 'Small';
-      return next;
-    });
+    const next = { ...editable };
+    if (category in next) delete next[category];
+    else next[category] = 'Small';
+    setEditable(next);
+    patchDraft({ quantities: next });
   }
 
-  const ready = !loading && result?.modelState === 'ready';
   const title = loading
     ? 'Checking your photo…'
     : result?.modelState === 'ready'
@@ -116,15 +150,15 @@ export default function AiSuggestionScreen() {
     <div className="screen scroll-y" style={{ zIndex: 27 }}>
       <div className="measure i2-page anim-fade-up" style={{ paddingBottom: 'calc(var(--safe-bottom) + 34px)' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-          <BackButton onClick={() => nav('/report/details', { replace: true })} />
+          <BackButton onClick={() => nav('/report/confirm', { replace: true })} />
           {/* The suggestion itself is checked on the review step, so a ready
               result is step 4; checking and every fallback are step 3. */}
-          <StepBadge>{ready ? 'STEP 4 OF 4 · REVIEW' : 'STEP 3 OF 4 · AI CHECK'}</StepBadge>
+          <StepBadge>STEP 4 OF 6 · AI CHECK</StepBadge>
         </div>
         <div>
           <SectionLabel size="sm">AI SUGGESTION · REVIEW BEFORE SAVING</SectionLabel>
           <h1 className="i2-title" style={{ marginTop: 7 }}>{title}</h1>
-          <p className="i2-subtitle">You decide the final categories and amounts. A suggestion is never submitted on its own.</p>
+          <p className="i2-subtitle">You decide the final categories and quantity bands. A suggestion is never submitted on its own.</p>
         </div>
 
         {loading ? (
@@ -169,7 +203,11 @@ export default function AiSuggestionScreen() {
                 {(Object.keys(editable) as LitterCategory[]).map((category) => (
                   <label key={category} className="i2-quantity-row">
                     <span style={{ fontSize: 13.5, fontWeight: 700 }}>{category}</span>
-                    <select className="i2-field" aria-label={`${category} suggested amount`} value={editable[category]} onChange={(event) => setEditable((current) => ({ ...current, [category]: event.target.value as QuantityBand }))}>
+                    <select className="i2-field" aria-label={`${category} suggested amount`} value={editable[category]} onChange={(event) => {
+                      const next = { ...editable, [category]: event.target.value as QuantityBand };
+                      setEditable(next);
+                      patchDraft({ quantities: next });
+                    }}>
                       {QUANTITIES.map((quantity) => <option key={quantity}>{quantity}</option>)}
                     </select>
                   </label>
@@ -177,10 +215,10 @@ export default function AiSuggestionScreen() {
               </div>
             </div>
 
-            {Object.keys(editable).length === 0 && <Alert title="Choose at least one category" tone="caution">Or keep the manual values you entered on the previous page.</Alert>}
+            {Object.keys(editable).length === 0 && <Alert title="Choose at least one category" tone="caution">You can enter the categories and quantity bands manually.</Alert>}
             <PrimaryButton onClick={confirm} disabled={Object.keys(editable).length === 0}>Confirm suggestions</PrimaryButton>
             <GhostButton onClick={changeCategoryOrBand}>Change category or band</GhostButton>
-            <TextButton onClick={keepManual}>Keep my manual entries</TextButton>
+            <TextButton onClick={keepManual}>Enter manually</TextButton>
           </>
         ) : result?.modelState === 'unreadable' ? (
           <>
@@ -200,7 +238,7 @@ export default function AiSuggestionScreen() {
             <p style={{ margin: 0, color: C.muted, fontSize: 13, lineHeight: 1.55 }}>
               The AI couldn't tell what litter this is.
               <br />
-              Your photo, beach and manual entries are still here.
+              Your photo and beach are still here. You can enter the categories and quantity bands manually.
             </p>
             <PrimaryButton onClick={() => continueManually('empty')}>Select Manually</PrimaryButton>
           </>

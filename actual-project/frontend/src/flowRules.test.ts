@@ -48,6 +48,7 @@ function draft(changes: Partial<ReportDraft> = {}): ReportDraft {
     coords: null,
     quantities: { Plastic: 'Small' },
     aiDecision: 'manual',
+    aiModelState: 'ready',
     aiModelVersion: null,
     gpsIssue: null,
     editingReportId: null,
@@ -135,6 +136,17 @@ describe('findExactDuplicateReport', () => {
 });
 
 describe('buildReportSubmission', () => {
+  it('allows manual correction after recognition but requires confirmation before review', () => {
+    const recognized = draft({ aiModelState: 'ready', aiDecision: null, quantities: { Plastic: 'Medium' } });
+    expect(reachableStep(recognized)).toBe('details');
+    expect(guardStep('details', recognized)).toBeNull();
+    expect(guardStep('review', recognized)).toBe('/report/details');
+  });
+
+  it('requires recognition after replacing an existing report photo', () => {
+    expect(reachableStep(draft({ editingReportId: 'saved-report', aiModelState: null, aiDecision: null }))).toBe('suggestions');
+  });
+
   it('refuses unconfirmed AI or manual values', () => {
     expect(() => buildReportSubmission(draft({ aiDecision: null }))).toThrow(/Confirm the AI suggestion/);
   });
@@ -318,13 +330,13 @@ describe('Flow guards for direct URLs into the reporting flow', () => {
   });
 
   it('stops at details when a photo and beach have no category', () => {
-    const d = draft({ quantities: {} });
+    const d = draft({ quantities: {}, aiModelState: 'empty' });
     expect(guardStep('review', d)).toBe('/report/details');
     expect(guardStep('details', d)).toBeNull();
   });
 
   it('treats a category without a quantity band as incomplete', () => {
-    const d = draft({ quantities: { Plastic: undefined } });
+    const d = draft({ quantities: { Plastic: undefined }, aiModelState: 'empty' });
     expect(guardStep('review', d)).toBe('/report/details');
   });
 
@@ -336,10 +348,30 @@ describe('Flow guards for direct URLs into the reporting flow', () => {
   });
 
   it('requires an AI or manual decision before Review', () => {
-    const d = draft({ aiDecision: null });
-    expect(reachableStep(d)).toBe('suggestions');
-    expect(guardStep('review', d)).toBe('/report/suggestions');
+    const d = draft({ aiDecision: null, aiModelState: 'ready' });
+    expect(reachableStep(d)).toBe('details');
+    expect(guardStep('review', d)).toBe('/report/details');
     expect(guardStep('suggestions', d)).toBeNull();
+  });
+
+  it('runs recognition before the manual category and band form', () => {
+    const beforeAi = draft({ quantities: {}, aiDecision: null, aiModelState: null });
+    expect(reachableStep(beforeAi)).toBe('suggestions');
+    expect(guardStep('details', beforeAi)).toBe('/report/suggestions');
+    const afterAi = draft({ quantities: {}, aiDecision: null, aiModelState: 'empty' });
+    expect(reachableStep(afterAi)).toBe('details');
+    expect(guardStep('review', afterAi)).toBe('/report/details');
+  });
+
+  it('keeps a timed-out or empty AI result on the manual details step', () => {
+    const fallback = draft({ quantities: { Plastic: 'Medium' }, aiDecision: null, aiModelState: 'unavailable' });
+    expect(reachableStep(fallback)).toBe('details');
+    expect(guardStep('review', fallback)).toBe('/report/details');
+  });
+
+  it('lets historic edits enter details without running recognition', () => {
+    const edit = draft({ editingReportId: 'r1', photo: null, existingPhotoUrl: '/old.jpg', aiModelState: null, aiDecision: null });
+    expect(reachableStep(edit)).toBe('details');
   });
 
   // This used to assert the opposite - that a correction with NO photo could
@@ -354,8 +386,8 @@ describe('Flow guards for direct URLs into the reporting flow', () => {
   });
 
   it('lets a correction keep a photo it was stored with, by key alone', () => {
-    const d = draft({ photo: null, existingPhotoKey: 'mock/1.jpg', editingReportId: 'r3' });
-    expect(reachableStep(d)).toBe('review');
+    const d = draft({ photo: null, existingPhotoKey: 'mock/1.jpg', editingReportId: 'r3', aiDecision: null });
+    expect(reachableStep(d)).toBe('details');
     expect(guardStep('photo', d)).toBeNull();
   });
 

@@ -115,7 +115,7 @@ export default function CommunityScreen() {
                   {rows.map((event) => {
                     const day = event.date.slice(8, 10);
                     const weekday = formatEventDate(event.date).slice(-4, -1).toUpperCase();
-                    const joined = Boolean(user && event.joinedBy.includes(user.participantId));
+                    const joined = Boolean(user && event.joined);
                     const beach = beachById.get(event.beachId);
                     // attentionStateFor decides whether the beach has earned a
                     // band; below the report minimum the badge says so instead.

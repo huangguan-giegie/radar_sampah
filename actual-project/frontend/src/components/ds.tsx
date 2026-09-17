@@ -80,7 +80,7 @@ export function SectionLabel({
  * a low reading. That distinction is the single most important thing this
  * component does.
  */
-export type BadgeStatus = Lowercase<SeverityBand> | Lowercase<ReportStatus> | 'none';
+export type BadgeStatus = Lowercase<SeverityBand> | Lowercase<ReportStatus> | 'resolved' | 'none';
 
 export function StatusBadge({
   children,

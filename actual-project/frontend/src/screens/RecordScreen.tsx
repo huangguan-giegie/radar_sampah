@@ -78,7 +78,7 @@ export default function RecordScreen() {
             <BackButton dark onClick={() => nav('/report/confirm', { replace: true })} />
             {beachChip && <OverlayChip>{beachChip}</OverlayChip>}
           </div>
-          <StepBadge dark>STEP 2 OF 4 · DETAILS</StepBadge>
+          <StepBadge dark>STEP 5 OF 6 · DETAILS</StepBadge>
         </div>
       </div>
 
@@ -112,7 +112,8 @@ export default function RecordScreen() {
                   key={category}
                   type="button"
                   className="i2-chip press"
-                  aria-pressed={category in quantities}
+                    aria-pressed={category in quantities}
+                  aria-invalid={showErrors && category in quantities && !band ? true : undefined}
                   aria-label={band ? `${category}, ${band}` : category}
                   onClick={() => toggleCategory(category)}
                 >
@@ -144,6 +145,8 @@ export default function RecordScreen() {
                     type="button"
                     className="press"
                     aria-pressed={selected}
+                    aria-invalid={showErrors && !quantities[category] ? true : undefined}
+                    aria-describedby={showErrors && !quantities[category] ? `${category}-band-error` : undefined}
                     onClick={() => setBand(category, band)}
                     style={{
                       minHeight: 54,
@@ -166,12 +169,17 @@ export default function RecordScreen() {
                 );
               })}
             </div>
+            {showErrors && !quantities[category] && (
+              <div id={`${category}-band-error`} role="alert" style={{ color: C.red, fontSize: 12, marginTop: 6 }}>
+                Choose a quantity band for {category}.
+              </div>
+            )}
           </div>
         ))}
 
-        {showErrors && (
+        {showErrors && picked.length === 0 && (
           <div role="alert" style={{ color: C.red, fontSize: 12 }}>
-            Select at least one category and choose Small, Medium, Large, or Very Large for every selected category.
+            Select at least one litter category.
           </div>
         )}
         <PrimaryButton onClick={next} style={{ marginTop: 8 }}>Continue</PrimaryButton>

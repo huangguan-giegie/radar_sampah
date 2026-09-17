@@ -60,6 +60,10 @@ export function compositionPercentageLabel(percentage: number): string {
   return `${Math.max(0, Math.min(100, Math.round(percentage)))}%`;
 }
 
+export function decimalScoreLabel(value: number): string {
+  return (Math.round((value + Number.EPSILON) * 100) / 100).toFixed(2);
+}
+
 export default function BeachScreen() {
   const { beachId = '' } = useParams();
   const nav = useNavigate();
@@ -92,7 +96,7 @@ export default function BeachScreen() {
     user
       && linkedEvent
       && linkedEvent.beachId === beachId
-      && linkedEvent.joinedBy.includes(user.participantId),
+      && linkedEvent.joined,
   );
 
   // beachId is in the dependency list, so moving between beaches refetches.
@@ -181,6 +185,9 @@ export default function BeachScreen() {
   const attention = attentionStateFor(b.severity, b.insufficientData, b.validReports);
   const sev = attention.hasBand && b.severity ? SEVERITY[b.severity] : null;
   const fs = freshStyle(b.freshnessKind);
+  const latestContributingAt = b.latestContributingReportAt === undefined
+    ? b.lastReportedAt
+    : b.latestContributingReportAt;
   // Scientific name is the only id a species card and a model prediction share.
   const modelByScientificName = new Map(
     (modelResult?.predictions ?? []).map((prediction) => [prediction.scientificName, prediction]),
@@ -302,7 +309,7 @@ export default function BeachScreen() {
                 re-add this chip without asking Epic 4. */}
             <InfoChip color={fs.c} background={fs.bg}>
               <i style={{ width: 6, height: 6, borderRadius: 3, background: fs.dot, display: 'block' }} />
-              {freshnessLabel(b.freshnessKind, b.lastReportedAt)}
+              {freshnessLabel(b.freshnessKind, latestContributingAt)}
             </InfoChip>
           </div>
         </div>
@@ -317,8 +324,8 @@ export default function BeachScreen() {
             <Clock style={{ flex: 'none', marginTop: 1 }} />
             <div style={{ flex: 1, fontSize: 12, lineHeight: 1.5, color: C.muted }}>
 
-              {b.lastReportedAt
-                ? 'No report in 90 days — not a sign it’s clean.'
+              {latestContributingAt
+                ? 'No contributing report in 90 days — not a sign it’s clean.'
                 : 'No counted report yet. That means unchecked, not clean.'}
             </div>
           </div>
@@ -521,7 +528,7 @@ export default function BeachScreen() {
                       }}
                     >
                       {/* Two decimals: 0.118262 reads as false precision for a relative score. */}
-                      {prediction ? `RELATIVE SCORE ${prediction.relativeOccurrenceScore.toFixed(2)}` : 'SCORE PENDING'}
+                      {prediction ? `RELATIVE SCORE ${decimalScoreLabel(prediction.relativeOccurrenceScore)}` : 'SCORE PENDING'}
                     </div>
                   </div>
                   <div style={{ padding: '14px 14px 15px' }}>

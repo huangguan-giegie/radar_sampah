@@ -240,7 +240,7 @@ type AppState = {
   signOut: () => Promise<void>;
 
   draft: ReportDraft;
-  patchDraft: (changes: Partial<ReportDraft>) => void;
+  patchDraft: (changes: Partial<ReportDraft>, expectedPhotoKey?: string) => void;
   resetDraft: () => void;
 
 
@@ -425,14 +425,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
     },
 
     draft,
-    patchDraft(changes) {
+    patchDraft(changes, expectedPhotoKey) {
       setDraft((old) => {
+        if (expectedPhotoKey !== undefined && (old.photo?.photoKey ?? old.existingPhotoKey ?? '') !== expectedPhotoKey) return old;
         const next = { ...old, ...changes };
         if ('photo' in changes && changes.photo?.photoKey !== old.photo?.photoKey) {
           next.aiDecision = null;
           next.aiModelState = null;
           next.aiModelVersion = null;
           next.itemCounts = null;
+          next.quantities = {};
         }
         return next;
       });

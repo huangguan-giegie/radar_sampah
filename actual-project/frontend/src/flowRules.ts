@@ -14,19 +14,16 @@ export function safeNextPath(value: string | null): string {
   return value;
 }
 
-export type ReportStep = 'photo' | 'location' | 'confirm' | 'details' | 'suggestions' | 'review';
+export type ReportStep = 'photo' | 'location' | 'confirm' | 'suggestions' | 'details' | 'review';
 
-// Iteration 2 numbers the flow 1 PHOTO, 2 DETAILS, 3 AI CHECK, 4 REVIEW, so the
-// details step comes before the AI check. With the AI check first, the
-// manual way out of it pointed at a step the guard would not open yet, and
-// the user was sent straight back to the AI check.
-const STEP_ORDER: ReportStep[] = ['photo', 'location', 'confirm', 'details', 'suggestions', 'review'];
+// Recognition precedes manual confirmation for every new photo.
+const STEP_ORDER: ReportStep[] = ['photo', 'location', 'confirm', 'suggestions', 'details', 'review'];
 const STEP_PATH: Record<ReportStep, string> = {
   photo: '/report/photo',
   location: '/report/location',
   confirm: '/report/confirm',
-  details: '/report/details',
   suggestions: '/report/suggestions',
+  details: '/report/details',
   review: '/report/review',
 };
 
@@ -91,7 +88,21 @@ export function reachableStep(draft: ReportDraft): ReportStep {
   if (!hasPhoto) return 'photo';
   if (!draft.beachId) return 'confirm';
 
-  // Details first: every picked category needs a band before the AI check.
+  // Historical corrections keep their existing photo and enter the editable
+  // details form. Recognition is only required for a new photo or an explicit
+  // retry/replacement.
+  if (draft.editingReportId && !draft.photo && !draft.aiDecision) return 'details';
+
+  // Recognition runs before the participant-facing category and band form.
+  // Undefined is the shape of pre-AI drafts restored from older builds. A
+  // previously decided draft can still be resumed; a fresh null state must
+  // visit recognition first.
+  if (draft.aiModelState == null && !draft.aiDecision) return 'suggestions';
+
+  // Empty, unavailable and timed-out recognition results always have a
+  // manual route. Do not send the participant back to recognition forever.
+  if (draft.aiModelState && !draft.aiDecision) return 'details';
+
   if (!validBandState(draft.quantities)) return 'details';
 
   // The user must explicitly accept the AI suggestion or keep their own bands
@@ -115,10 +126,9 @@ export type DetailsContinue =
  * as a confirmed suggestion, and anything else as manual.
  */
 export function continueFromDetails(draft: ReportDraft): DetailsContinue {
-  if (draft.aiModelState == null) return { to: '/report/suggestions' };
   return {
     to: '/report/review',
-    aiDecision: draft.aiDecision ?? (draft.aiModelState === 'ready' ? 'confirmed' : 'manual'),
+    aiDecision: draft.aiDecision ?? 'manual',
   };
 }
 

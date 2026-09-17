@@ -56,49 +56,20 @@ def _event_payloads(engine: Any, impl: Any, events: list[Any], viewer_id: str | 
         members = connection.execute(
             select(impl.event_members_table).where(impl.event_members_table.c.event_id.in_(event_ids)).order_by(impl.event_members_table.c.joined_at)
         ).all()
-        ids = {member.participant_id for member in members}
-        users = connection.execute(select(impl.users_table.c.id, impl.users_table.c.participant_id).where(impl.users_table.c.id.in_(ids))).all() if ids else []
-        numbers = {row.id: row.participant_id for row in users}
-        reports = connection.execute(select(impl.reports_table.c.id, impl.reports_table.c.event_id, impl.reports_table.c.reporter_id, impl.reports_table.c.created_at).where(
-            impl.reports_table.c.event_id.in_(event_ids), impl.reports_table.c.status == "Counted"
-        )).all()
-        cleanups = connection.execute(select(impl.cleanup_actions_table.c.id, impl.cleanup_actions_table.c.event_id, impl.cleanup_actions_table.c.participant_id, impl.cleanup_actions_table.c.created_at).where(
-            impl.cleanup_actions_table.c.event_id.in_(event_ids)
-        )).all()
         confirmed = connection.execute(select(attendance_table.c.event_id, attendance_table.c.participant_id).where(attendance_table.c.event_id.in_(event_ids))).all()
 
     members_by_event: dict[str, list[Any]] = {}
     for member in members:
         members_by_event.setdefault(member.event_id, []).append(member)
-    confirmed_by_event: dict[str, list[str]] = {}
+    confirmed_by_event: dict[str, set[str]] = {}
     for row in confirmed:
-        confirmed_by_event.setdefault(row.event_id, []).append(row.participant_id)
-    evidence_ids_by_event: dict[str, set[str]] = {}
-    report_evidence_by_event: dict[str, dict[str, list[str]]] = {}
-    for report in reports:
-        event = next(item for item in events if item.id == report.event_id)
-        start, end = impl.utc_datetime(event.starts_at), impl.utc_datetime(event.ends_at)
-        if start <= impl.utc_datetime(report.created_at) <= end:
-            evidence_ids_by_event.setdefault(event.id, set()).add(report.reporter_id)
-            number = numbers.get(report.reporter_id)
-            if number:
-                report_evidence_by_event.setdefault(event.id, {}).setdefault(number, []).append(report.id)
-    cleanup_ids_by_event: dict[str, list[str]] = {}
-    for cleanup in cleanups:
-        event = next(item for item in events if item.id == cleanup.event_id)
-        start, end = impl.utc_datetime(event.starts_at), impl.utc_datetime(event.ends_at)
-        cleanup_ids_by_event.setdefault(event.id, []).append(cleanup.id)
-        if start <= impl.utc_datetime(cleanup.created_at) <= end:
-            evidence_ids_by_event.setdefault(event.id, set()).add(cleanup.participant_id)
+        confirmed_by_event.setdefault(row.event_id, set()).add(row.participant_id)
 
     beaches = {item["id"]: item for item in impl.load_beaches(engine)}
     payloads = []
     for event in events:
         event_members = members_by_event.get(event.id, [])
-        joined_by = [numbers[member.participant_id] for member in event_members if member.participant_id in numbers]
-        check_ins = {numbers[member.participant_id]: ("within_area" if member.location_passed else "idle") for member in event_members if member.participant_id in numbers}
-        evidence_by = sorted(numbers[participant_id] for participant_id in evidence_ids_by_event.get(event.id, set()) if participant_id in numbers)
-        attendance_by = [numbers[participant_id] for participant_id in confirmed_by_event.get(event.id, []) if participant_id in numbers]
+        viewer_member = next((member for member in event_members if member.participant_id == viewer_id), None)
         local_start = impl.utc_datetime(event.starts_at).astimezone(impl.KUALA_LUMPUR)
         local_end = impl.utc_datetime(event.ends_at).astimezone(impl.KUALA_LUMPUR)
         beach = beaches.get(event.beach_id, {})
@@ -113,16 +84,11 @@ def _event_payloads(engine: Any, impl: Any, events: list[Any], viewer_id: str | 
             "meetingPoint": getattr(event, "meeting_point", None),
             "status": event.status,
             "source": "weekly" if event.source == "scheduled" else "admin",
-            "participantCount": len(joined_by),
-            "attendanceCount": len(attendance_by),
-            "joinedBy": joined_by,
-            "checkIns": check_ins,
-            "attendanceBy": attendance_by,
-            "evidenceBy": evidence_by,
-            "reportEvidenceBy": report_evidence_by_event.get(event.id, {}),
-            "cleanupIds": cleanup_ids_by_event.get(event.id, []),
-            "joined": bool(viewer_id and viewer_id in {member.participant_id for member in event_members}),
-            "checkedIn": bool(viewer_id and any(member.participant_id == viewer_id and member.location_passed for member in event_members)),
+            "participantCount": len(event_members),
+            "attendanceCount": len(confirmed_by_event.get(event.id, set())),
+            "joined": bool(viewer_member),
+            "checkedIn": bool(viewer_member and viewer_member.location_passed),
+            "attendanceConfirmed": bool(viewer_member and viewer_member.participant_id in confirmed_by_event.get(event.id, set())),
         })
     return payloads
 
@@ -221,14 +187,33 @@ def install_v3_contract(application: Any, engine: Any, jwt_secret: str, impl: An
     attendance.create(engine, checkfirst=True)
 
     def events_v3():
-        # The existing route performs the reviewed weekly-event gate first.
-        rows = _json(application.view_functions["list_events"]()) or []
         viewer = _user(engine, impl, jwt_secret)
         if request.args.get("joined") == "true" and viewer is None:
             return jsonify([])
-        event_ids = [row["id"] for row in rows]
+        beach_id = request.args.get("beachId")
+        if beach_id and _beach(engine, impl, beach_id) is None:
+            return impl.error_response(404, "NOT_FOUND", "Beach not found.")
+        now = datetime.now(timezone.utc)
+        application.extensions["ensure_scheduled_events"](now)
         with engine.connect() as connection:
-            events = connection.execute(select(impl.events_table).where(impl.events_table.c.id.in_(event_ids))).all() if event_ids else []
+            query = select(impl.events_table).where(
+                impl.events_table.c.status == "Open",
+                impl.events_table.c.ends_at >= now,
+            ).order_by(impl.events_table.c.starts_at, impl.events_table.c.id)
+            if beach_id:
+                query = query.where(impl.events_table.c.beach_id == beach_id)
+            rows = connection.execute(query).all()
+        # Automatic weekly slots are capped at four per beach. Moderator-created
+        # activities remain visible as labelled extras.
+        automatic = {}
+        events = []
+        for row in rows:
+            if row.source == "scheduled":
+                count = automatic.get(row.beach_id, 0)
+                if count >= 4:
+                    continue
+                automatic[row.beach_id] = count + 1
+            events.append(row)
         payloads = _event_payloads(engine, impl, events, viewer.id if viewer else None, attendance)
         result = [payload for payload in payloads if request.args.get("joined") != "true" or payload["joined"]]
         return jsonify(result)
@@ -279,6 +264,21 @@ def install_v3_contract(application: Any, engine: Any, jwt_secret: str, impl: An
         viewer = _required_user(engine, impl, jwt_secret)
         if not hasattr(viewer, "id"):
             return viewer
+        # A successful in-window check-in is the attendance action. The unique
+        # key makes retries idempotent, and no report or cleanup evidence is
+        # required for attendance.
+        now = datetime.now(timezone.utc)
+        if event.status == "Open" and impl.utc_datetime(event.starts_at) <= now <= impl.utc_datetime(event.ends_at):
+            try:
+                with engine.begin() as connection:
+                    with connection.begin_nested():
+                        connection.execute(insert(attendance).values(
+                            event_id=event_id,
+                            participant_id=viewer.id,
+                            confirmed_at=now,
+                        ))
+            except IntegrityError:
+                pass
         return jsonify(_event_payload(engine, impl, event, viewer.id, attendance))
 
     def confirm_attendance(event_id: str):
@@ -294,23 +294,8 @@ def install_v3_contract(application: Any, engine: Any, jwt_secret: str, impl: An
                 impl.event_members_table.c.event_id == event_id,
                 impl.event_members_table.c.participant_id == user.id,
             )).first()
-            evidence = connection.execute(select(impl.reports_table.c.id).where(
-                impl.reports_table.c.event_id == event_id,
-                impl.reports_table.c.reporter_id == user.id,
-                impl.reports_table.c.status == "Counted",
-                impl.reports_table.c.created_at >= impl.utc_datetime(event.starts_at),
-                impl.reports_table.c.created_at <= impl.utc_datetime(event.ends_at),
-            ).limit(1)).first()
-            cleanup = connection.execute(select(impl.cleanup_actions_table.c.id).where(
-                impl.cleanup_actions_table.c.event_id == event_id,
-                impl.cleanup_actions_table.c.participant_id == user.id,
-                impl.cleanup_actions_table.c.created_at >= impl.utc_datetime(event.starts_at),
-                impl.cleanup_actions_table.c.created_at <= impl.utc_datetime(event.ends_at),
-            ).limit(1)).first()
         if member is None or not member.location_passed:
             return impl.error_response(409, "EVENT_CHECKIN_REQUIRED", "Check in before confirming attendance.")
-        if evidence is None and cleanup is None:
-            return impl.error_response(409, "EVENT_EVIDENCE_REQUIRED", "Add a linked report or cleanup before confirming attendance.")
         if event.status != "Open" or not (impl.utc_datetime(event.starts_at) <= now <= impl.utc_datetime(event.ends_at)):
             return impl.error_response(409, "EVENT_NOT_ACTIVE", "Attendance can only be confirmed during the event.")
         try:
@@ -428,7 +413,14 @@ def install_v3_contract(application: Any, engine: Any, jwt_secret: str, impl: An
             actions = connection.execute(select(impl.cleanup_actions_table).where(
                 impl.cleanup_actions_table.c.event_id == event_id
             ).order_by(impl.cleanup_actions_table.c.created_at)).all()
-        return jsonify([_action_payload(engine, impl, action) for action in actions])
+        payloads = []
+        for action in actions:
+            payload = _action_payload(engine, impl, action)
+            # Event result pages show aggregate cleanup rows only. Participant
+            # identity belongs to the authenticated user's own action view.
+            payload.pop("participantId", None)
+            payloads.append(payload)
+        return jsonify(payloads)
 
     def create_event_v3():
         result = application.view_functions["create_moderator_event"]()

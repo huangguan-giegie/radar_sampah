@@ -12,8 +12,8 @@ import { ErrorNote, Skeleton } from '../components/ui';
 import { C, MONO, formatDate } from '../theme';
 import { StatusBadge, type BadgeStatus } from '../components/ds';
 import { useApp } from '../AppContext';
-import { formatReportComposition, historicalPhotoUnavailable } from '../flowRules';
-import type { BeachSummary, LitterReport } from '../types';
+import { formatReportComposition } from '../flowRules';
+import { reportStateLabel, type BeachSummary, type LitterReport } from '../types';
 
 // Three tabs, not four. Duplicate and Incomplete both sit under "Excluded"
 // because from the user's side they are the same question - "why is this not
@@ -25,7 +25,7 @@ const TABS: Tab[] = ['All', 'Counted', 'Excluded'];
 export default function MyReportsScreen() {
   const nav = useNavigate();
   const [params, setParams] = useSearchParams();
-  const { reportsVersion, patchDraft, resetDraft, setLastSavedReport } = useApp();
+  const { reportsVersion } = useApp();
 
   // The tab lives in the URL, not in useState. That makes /reports?tab=Counted
   // a real link, which is how the tiles on the home and account pages jump
@@ -70,39 +70,11 @@ export default function MyReportsScreen() {
   }
 
 
-  // Tapping a row goes straight to the correction screen, as the prototype
-  // does. An excluded report is then one tap from being fixed, not two - the
-  // reason is already printed on the row, so a details page in between only
-  // repeats it. The draft is filled the same way as "Edit this report" on the details page
-  // and "Correct report" on the saved page: resetDraft() first so two reports
-  // never blend, editingReportId to turn the submit into a PATCH, the old photo
-  // key so the picture need not be retaken, and coords left null because a
-  // position the user has not confirmed for this edit is not ours to keep.
-  function correctReport(report: LitterReport) {
-    resetDraft();
-    setLastSavedReport(null);
-    patchDraft({
-      editingReportId: report.id,
-      beachId: report.beachId,
-      beachName: report.beachName,
-      quantities: { ...report.quantities },
-      locationSource: report.locationSource ?? 'manual',
-      coords: null,
-      existingPhotoUrl: report.photoUrl ?? null,
-      existingPhotoKey: report.photoKey ?? null,
-      existingPhotoUnavailable: historicalPhotoUnavailable(report.photoUrl, report.photoKey),
-      editingStatus: report.status,
-      editingStatusNote: report.statusNote ?? null,
-    });
-    nav('/report/details');
-  }
-
-
   // Filter in the browser. The full list is already here, so re-asking the
   // server for a subset would make switching tabs slower than it needs to be.
   let rows = reports;
-  if (tab === 'Counted') rows = reports.filter((r) => r.status === 'Counted');
-  if (tab === 'Excluded') rows = reports.filter((r) => r.status !== 'Counted');
+  if (tab === 'Counted') rows = reports.filter((r) => r.status === 'Counted' && r.currentState !== 'resolved' && r.currentState !== 'excluded');
+  if (tab === 'Excluded') rows = reports.filter((r) => r.status !== 'Counted' || r.currentState === 'resolved' || r.currentState === 'excluded');
 
   return (
     <div className="screen scroll-y" style={{ zIndex: 24 }}>
@@ -184,11 +156,11 @@ export default function MyReportsScreen() {
               <button
                 key={r.id}
                 type="button"
-                onClick={() => correctReport(r)}
+                onClick={() => nav(`/reports/${r.id}`)}
                 // The visible row is three separate scraps of text, so a screen
                 // reader would run them together. This gives the button one
                 // clear name and says what pressing it does.
-                aria-label={`Correct report for ${r.beachName} (${r.status})`}
+                aria-label={`Open report details for ${r.beachName} (${reportStateLabel(r)})`}
                 className="card-hover"
                 style={{
                   display: 'flex',
@@ -211,7 +183,7 @@ export default function MyReportsScreen() {
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'space-between' }}>
                     <span style={{ fontSize: 14.5, fontWeight: 650 }}>{r.beachName}</span>
-                    <StatusBadge status={r.status.toLowerCase() as BadgeStatus} indicator>{r.status}</StatusBadge>
+                    <StatusBadge status={reportStateLabel(r).toLowerCase() as BadgeStatus} indicator>{reportStateLabel(r)}</StatusBadge>
                   </div>
                   {/* A report holds a count per litter category, so the row
                       needs the shared formatter to fold the whole findings

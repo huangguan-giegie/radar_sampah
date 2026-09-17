@@ -23,6 +23,14 @@ export type QuantityBand = 'Small' | 'Medium' | 'Large' | 'Very Large';
  * The backend uses these same three words, so do not rename them here alone.
  */
 export type ReportStatus = 'Counted' | 'Duplicate' | 'Incomplete';
+/** Lifecycle of the evidence represented by a report, independent of review status. */
+export type ReportCurrentState = 'active' | 'resolved' | 'excluded';
+
+export function reportStateLabel(report: Pick<LitterReport, 'status' | 'currentState'>): string {
+  if (report.currentState === 'resolved') return 'Resolved';
+  if (report.currentState === 'excluded') return 'Excluded';
+  return report.status;
+}
 /** How old the newest report is, so the UI can say "this may be out of date". */
 export type FreshnessKind = 'ok' | 'aging' | 'stale';
 /** The map has two layers. The user sees one at a time; they never merge. */
@@ -164,6 +172,8 @@ export interface BeachSummary {
   eligibleReportCount: number;
   /** ISO 8601. Used to work out "reported 5 days ago". */
   lastReportedAt: string | null;
+  /** Most recent report still contributing to the current beach score. */
+  latestContributingReportAt?: string | null;
   freshnessKind: FreshnessKind;
   /** Biodiversity layer fields. */
   habitat: string;
@@ -210,6 +220,7 @@ export interface LitterGalleryEntry {
   reportId: string;
   reportedAt: string;
   photoUrl: string;
+  currentState?: ReportCurrentState;
 }
 
 /** One species row from the offline distribution model. The score is a ranking
@@ -299,6 +310,10 @@ export interface LitterReport {
   /** Display date. The backend sends ISO, the frontend formats it. */
   createdAt: string;
   status: ReportStatus;
+  /** Current lifecycle state. Resolved reports remain visible for audit history. */
+  currentState?: ReportCurrentState;
+  /** Most recent contributing report date for beach freshness displays. */
+  latestContributingReportAt?: string | null;
   /** How the beach was decided when the report was filed: 'gps' = from the
    *  device location, 'manual' = the user picked it. Only the label comes
    *  back here, never the coordinates. Optional, because reports filed before

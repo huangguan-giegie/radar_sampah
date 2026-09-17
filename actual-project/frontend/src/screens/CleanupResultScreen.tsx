@@ -6,14 +6,13 @@ import { Alert, Callout, EmptyState, InfoChip, SectionLabel } from '../component
 import { BackButton, GhostButton, PrimaryButton, TextButton } from '../components/ui';
 import { useApp } from '../AppContext';
 import {
-  eventCanRecordAttendance,
   formatEventDate,
   getCleanup,
   getCleanupEvent,
   removedBandForRow,
   type CleanupRow,
 } from '../iteration2';
-import { confirmAttendanceData, fetchCleanup, fetchCleanupEvent } from '../iteration2Api';
+import { fetchCleanup, fetchCleanupEvent } from '../iteration2Api';
 import { C, MONO, formatDate } from '../theme';
 import type { LitterCategory, QuantityBand } from '../types';
 import { useAsyncData } from '../useAsyncData';
@@ -43,7 +42,7 @@ export default function CleanupResultScreen() {
     [cleanupId],
     getCleanup(cleanupId),
   );
-  const { data: event, setData: setEvent } = useAsyncData(
+  const { data: event } = useAsyncData(
     () => cleanup?.eventId ? fetchCleanupEvent(cleanup.eventId) : Promise.resolve(null),
     [cleanup?.eventId, user?.participantId],
     cleanup?.eventId ? getCleanupEvent(cleanup.eventId) : null,
@@ -67,8 +66,7 @@ export default function CleanupResultScreen() {
   }
 
   const resolved = Boolean(cleanup.resolved);
-  const canConfirmAttendance = Boolean(cleanup.eventId && user && event && eventCanRecordAttendance(event, user.participantId));
-  const attendanceRecorded = Boolean(user && event?.attendanceBy.includes(user.participantId));
+  const attendanceRecorded = Boolean(event?.attendanceConfirmed);
 
   // Categories the volunteer confirmed as unchanged still belong in the
   // before → after table, so the source report is shown whole.
@@ -79,17 +77,6 @@ export default function CleanupResultScreen() {
       .map(([category, band]) => ({ category, beforeBand: band, afterBand: band }))
     : [];
   const tableRows = [...cleanup.rows, ...unchangedRows];
-
-  async function confirmAttendance() {
-    if (!cleanup?.eventId || !user) return;
-    try {
-      setEvent(await confirmAttendanceData(cleanup.eventId, user.participantId));
-      showToast('Attendance recorded');
-      nav(`/events/${cleanup.eventId}`);
-    } catch (reason) {
-      showToast(reason instanceof Error ? reason.message : 'Could not confirm attendance');
-    }
-  }
 
   // A cleanup result is private to the volunteer, so Share hands out the
   // public activity page instead - the same link the event screen shares.
@@ -134,7 +121,7 @@ export default function CleanupResultScreen() {
 
         <div className="i2-card">
           <SectionLabel size="sm">
-            {!cleanup.targetReportId ? 'RESULT' : resolved ? 'SOURCE REMOVED · ALL AFTER BANDS SMALL' : 'SOURCE REPORT · BEFORE → AFTER'}
+            {!cleanup.targetReportId ? 'RESULT' : resolved ? 'TARGET RESOLVED · HISTORY RETAINED' : 'SOURCE REPORT · BEFORE → AFTER'}
           </SectionLabel>
           <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) 58px auto', gap: 8, marginTop: 10, paddingBottom: 6, borderBottom: `1px solid ${C.line}`, fontFamily: MONO, fontSize: 8.5, letterSpacing: '.08em', color: C.faint }}>
             <span>CATEGORY</span>
@@ -167,7 +154,7 @@ export default function CleanupResultScreen() {
         </div>
 
         <div className="i2-card" style={{ paddingTop: 6, paddingBottom: 6 }}>
-          <StatusRow label="Cleanup status">{resolved ? 'Source report removed' : 'Confirmed bands recorded'}</StatusRow>
+          <StatusRow label="Cleanup status">{resolved ? 'Target resolved · report retained in history' : 'Confirmed bands recorded'}</StatusRow>
           {resolved
             ? <StatusRow label="After cleanup">All categories Small · location cleaned</StatusRow>
             : cleanup.targetReportId && <StatusRow label="Still reported">See remaining bands above</StatusRow>}
@@ -178,9 +165,7 @@ export default function CleanupResultScreen() {
           {cleanup.eventId && event && user && (
             attendanceRecorded
               ? <StatusRow label="Attendance">Recorded</StatusRow>
-              // Attendance still needs the on-the-day check-in, which lives on
-              // the event page; the row goes there when it cannot confirm here.
-              : <StatusRow label="Attendance" onClick={canConfirmAttendance ? confirmAttendance : () => nav(`/events/${cleanup.eventId}`)}>Not recorded — confirm attendance</StatusRow>
+              : <StatusRow label="Attendance" onClick={() => nav(`/events/${cleanup.eventId}`)}>Check in on the event day</StatusRow>
           )}
           {cleanup.note && <p style={{ margin: 0, padding: '10px 0', fontSize: 12, lineHeight: 1.5, color: C.slate }}>{cleanup.note}</p>}
         </div>
@@ -216,12 +201,7 @@ export default function CleanupResultScreen() {
           Based on what you confirmed — not verified proof of a clean beach or recovered habitat.
         </Callout>
 
-        {canConfirmAttendance && (
-          <PrimaryButton onClick={confirmAttendance}>Confirm attendance <ChevronRight color={C.lime} /></PrimaryButton>
-        )}
-        {canConfirmAttendance
-          ? <GhostButton onClick={() => nav(`/beach/${cleanup.beachId}`)}>View beach data</GhostButton>
-          : <PrimaryButton onClick={() => nav(`/beach/${cleanup.beachId}`)}>View beach data <ChevronRight color={C.lime} /></PrimaryButton>}
+        <PrimaryButton onClick={() => nav(`/beach/${cleanup.beachId}`)}>View beach data <ChevronRight color={C.lime} /></PrimaryButton>
         {cleanup.eventId && <GhostButton onClick={() => nav(`/events/${cleanup.eventId}/result`)}>View event result</GhostButton>}
         <div style={{ display: 'grid', gridTemplateColumns: cleanup.eventId ? 'minmax(0,1fr) minmax(0,1fr)' : '1fr', gap: 8 }}>
           {cleanup.eventId && <GhostButton height={46} onClick={share} disabled={sharing}>{sharing ? 'Opening…' : 'Share'}</GhostButton>}

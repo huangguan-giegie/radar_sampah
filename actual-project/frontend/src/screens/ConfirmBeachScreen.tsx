@@ -9,7 +9,7 @@ import { useNavigate } from 'react-router-dom';
 import { getBeaches } from '../api';
 import { MiniMap } from '../components/MiniMap';
 import { Alert, Check, Pin, Search } from '../components/Icon';
-import { BackButton, ErrorNote, PrimaryButton, Skeleton, TextButton } from '../components/ui';
+import { BackButton, ErrorNote, PrimaryButton, Skeleton, StepBadge, TextButton } from '../components/ui';
 import { attentionStateFor, C, MONO } from '../theme';
 import { OverlayChip, SeverityBadge } from '../components/ds';
 import { useApp } from '../AppContext';
@@ -84,6 +84,7 @@ export default function ConfirmBeachScreen() {
         onClick={() => nav(-1)}
         style={{ position: 'absolute', top: 'var(--top-inset)', left: 18, zIndex: 820, background: 'rgba(255,255,255,.85)', backdropFilter: 'blur(10px)' }}
       />
+      <div style={{ position: 'absolute', top: 'var(--top-inset)', right: 18, zIndex: 820 }}><StepBadge>STEP 3 OF 6 · BEACH</StepBadge></div>
       <OverlayChip
         tone="light"
         style={{ position: 'absolute', top: 'var(--top-inset)', left: '50%', transform: 'translateX(-50%)', zIndex: 820 }}
@@ -165,7 +166,7 @@ export default function ConfirmBeachScreen() {
                 />
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 9, marginTop: 16 }}>
-                <PrimaryButton onClick={() => nav('/report/details')} height={54} style={{ borderRadius: 17, boxShadow: 'none' }}>
+                <PrimaryButton onClick={() => nav(draft.editingReportId && !draft.photo ? '/report/details' : '/report/suggestions')} height={54} style={{ borderRadius: 17, boxShadow: 'none' }}>
                   <Check />
                   Yes, Confirm
                 </PrimaryButton>
@@ -220,7 +221,7 @@ export default function ConfirmBeachScreen() {
                     type="button"
                     onClick={() => {
                       patchDraft({ beachId: b.id, beachName: b.name, locationSource: 'manual', coords: null });
-                      nav('/report/details');
+                      nav(draft.editingReportId && !draft.photo ? '/report/details' : '/report/suggestions');
                     }}
                     className="chip-hover"
                     style={{

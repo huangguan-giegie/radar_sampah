@@ -13,7 +13,7 @@ import { useNavigate } from 'react-router-dom';
 import { resolveBeach } from '../api';
 import { MiniMap } from '../components/MiniMap';
 import { Pin } from '../components/Icon';
-import { BackButton, GhostButton, PrimaryButton, TextButton } from '../components/ui';
+import { BackButton, GhostButton, PrimaryButton, StepBadge, TextButton } from '../components/ui';
 import { PrivacySheet } from '../components/PrivacySheet';
 import { C } from '../theme';
 import { useApp } from '../AppContext';
@@ -124,6 +124,7 @@ export default function GpsScreen() {
           backdropFilter: 'blur(10px)',
         }}
       />
+      <div style={{ position: 'absolute', top: 'var(--top-inset)', right: 18, zIndex: 820 }}><StepBadge>STEP 2 OF 6 · LOCATION</StepBadge></div>
 
       <div
         className="anim-sheet-up measure"

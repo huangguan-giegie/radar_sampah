@@ -144,37 +144,47 @@ def test_v3_checkin_reuses_server_time_and_distance_validation(api):
     assert client.post(path, headers=headers, json={"lat": 0, "lng": 0}).status_code == 403
     passed = client.post(path, headers=headers, json={"lat": 2.74614, "lng": 101.44024})
     assert passed.status_code == 200
-    assert passed.get_json()["checkIns"][session["user"]["participantId"]] == "within_area"
+    assert passed.get_json()["checkedIn"] is True
+    assert passed.get_json()["attendanceConfirmed"] is True
+    assert not ({"joinedBy", "checkIns", "attendanceBy", "evidenceBy", "reportEvidenceBy", "cleanupIds"} & passed.get_json().keys())
     future = event(application, "future", offset=48)
     client.post(f"/cleanup-events/{future}/join", headers=headers)
     assert client.post(f"/cleanup-events/{future}/check-in", headers=headers, json={"lat": 2.74614, "lng": 101.44024}).status_code == 409
 
 
-def test_v3_attendance_is_explicit_and_old_endpoint_keeps_derived_attendance(api):
+def test_v3_checkin_records_attendance_and_keeps_event_payload_private(api):
     application, client = api
     session, headers = signup(client)
     participant = session["user"]["participantId"]
     active = event(application)
     assert client.post(f"/cleanup-events/{active}/join", headers=headers).status_code == 200
     client.post(f"/cleanup-events/{active}/check-in", headers=headers, json={"lat": 2.74614, "lng": 101.44024})
-    assert client.post(f"/cleanup-events/{active}/attendance", headers=headers).status_code == 409
+    checked = client.post(f"/cleanup-events/{active}/attendance", headers=headers)
+    assert checked.status_code == 200
+    assert checked.get_json()["attendanceConfirmed"] is True
     target = report(client, headers)["id"]
     linked = client.post(f"/cleanup-events/{active}/reports/{target}", headers=headers)
     assert linked.status_code == 200
-    assert linked.get_json()["reportEvidenceBy"] == {participant: [target]}
-    assert linked.get_json()["attendanceBy"] == []
-    assert client.get(f"/events/{active}", headers=headers).get_json()["attendanceBy"] == [participant]
+    assert linked.get_json()["attendanceConfirmed"] is True
+    assert not ({"joinedBy", "checkIns", "attendanceBy", "evidenceBy", "reportEvidenceBy", "cleanupIds"} & linked.get_json().keys())
+    old_payload = client.get(f"/events/{active}", headers=headers).get_json()
+    assert old_payload["attendanceConfirmed"] is True
+    assert not ({"joinedBy", "checkIns", "attendanceBy", "evidenceBy", "reportEvidenceBy", "cleanupIds"} & old_payload.keys())
     for _ in range(2):
         confirmed = client.post(f"/cleanup-events/{active}/attendance", headers=headers)
         assert confirmed.status_code == 200
-        assert confirmed.get_json()["attendanceBy"] == [participant]
+        assert confirmed.get_json()["attendanceConfirmed"] is True
     assert client.get("/cleanup-events?joined=true", headers=headers).get_json()[0]["id"] == active
     assert client.get("/cleanup-events?joined=true").get_json() == []
     assert cleanup(client, headers, target, "Large", eventId=active).status_code == 201
     actions = client.get(f"/cleanup-events/{active}/cleanups").get_json()
     assert actions[0]["rows"][0]["afterBand"] == "Large"
-    assert client.delete(f"/cleanup-events/{active}/join", headers=headers).get_json()["attendanceBy"] == []
-    assert client.post(f"/cleanup-events/{active}/join", headers=headers).get_json()["attendanceBy"] == []
+    left = client.delete(f"/cleanup-events/{active}/join", headers=headers).get_json()
+    assert left["joined"] is False
+    assert left["attendanceConfirmed"] is False
+    rejoined = client.post(f"/cleanup-events/{active}/join", headers=headers).get_json()
+    assert rejoined["joined"] is True
+    assert rejoined["attendanceConfirmed"] is False
 
 
 @pytest.mark.parametrize("invalid", ["owner", "beach", "old", "duplicate", "relink", "future", "not_joined"])
@@ -216,7 +226,10 @@ def test_v3_admin_creation_is_authorized_and_read_routes_handle_missing_data(api
         connection.execute(users_table.update().where(users_table.c.id == session["user"]["id"]).values(role="moderator"))
     created = client.post("/cleanup-events", headers=headers, json=payload)
     assert created.status_code == 201
-    assert created.get_json()["evidenceBy"] == []
+    created_body = created.get_json()
+    assert created_body["joined"] is False
+    assert created_body["attendanceConfirmed"] is False
+    assert not ({"joinedBy", "checkIns", "attendanceBy", "evidenceBy", "reportEvidenceBy", "cleanupIds"} & created_body.keys())
     assert client.get("/cleanup-events/missing").status_code == 404
     assert client.get("/cleanups/missing").status_code == 404
     assert client.get("/cleanups/by-target/missing").get_json() is None

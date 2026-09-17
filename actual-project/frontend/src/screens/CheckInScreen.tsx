@@ -4,8 +4,8 @@ import { Check, Pin, ShieldCheck } from '../components/Icon';
 import { Alert, InfoChip, SectionLabel } from '../components/ds';
 import { BackButton, GhostButton, PrimaryButton } from '../components/ui';
 import { useApp } from '../AppContext';
-import { eventCanRecordAttendance, eventHasEvidence, formatEventDate, formatEventTimeRange, getCleanupEvent, getCleanupTarget, type CheckInState } from '../iteration2';
-import { confirmAttendanceData, fetchCleanupEvent, fetchCleanupTarget, recordCheckInData } from '../iteration2Api';
+import { formatEventDate, formatEventTimeRange, getCleanupEvent, getCleanupTarget, type CheckInState } from '../iteration2';
+import { fetchCleanupEvent, fetchCleanupTarget, recordCheckInData } from '../iteration2Api';
 import { C } from '../theme';
 import { useAsyncData } from '../useAsyncData';
 
@@ -22,7 +22,7 @@ function ShieldBanner({ children }: { children: ReactNode }) {
 export default function CheckInScreen() {
   const { eventId = '' } = useParams();
   const nav = useNavigate();
-  const { user, showToast } = useApp();
+  const { user } = useApp();
   const { data: event, setData: setEvent, loading, error } = useAsyncData(
     () => fetchCleanupEvent(eventId),
     [eventId, user?.participantId],
@@ -33,17 +33,17 @@ export default function CheckInScreen() {
     [event?.beachId],
     event ? getCleanupTarget(event.beachId) : null,
   );
-  const initial = user && event ? event.checkIns[user.participantId] ?? 'idle' : 'idle';
+  const initial = user && event ? (event.checkedIn ? 'within_area' : 'idle') : 'idle';
   const [state, setState] = useState<CheckInState>(initial);
   const [message, setMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    if (user && event) setState(event.checkIns[user.participantId] ?? 'idle');
+    if (user && event) setState(event.checkedIn ? 'within_area' : 'idle');
   }, [event, user]);
 
   function checkIn() {
     if (!event || !user) return;
-    if (!event.joinedBy.includes(user.participantId)) {
+    if (!event.joined) {
       setMessage('Join this activity before checking in.');
       return;
     }
@@ -60,7 +60,7 @@ export default function CheckInScreen() {
         try {
           const updated = await recordCheckInData(event.id, user.participantId, current);
           setEvent(updated);
-          setState(updated.checkIns[user.participantId] ?? 'within_area');
+          setState(updated.checkedIn ? 'within_area' : 'idle');
         } catch (reason) {
           setState('denied');
           setMessage(reason instanceof Error ? reason.message : 'Check-in could not be recorded.');
@@ -81,12 +81,10 @@ export default function CheckInScreen() {
 
   if (loading && !event) return <div className="screen scroll-y"><div className="measure i2-page"><Alert title="Loading check-in" tone="caution">Checking the latest activity state.</Alert></div></div>;
   if (!event || !user) return <div className="screen scroll-y"><div className="measure i2-page"><Alert title="Check-in unavailable" tone="caution">{error ?? 'This activity could not be found.'}</Alert></div></div>;
-  const joined = event.joinedBy.includes(user.participantId);
-  const attendanceRecorded = event.attendanceBy.includes(user.participantId);
+  const joined = Boolean(event.joined);
+  const attendanceRecorded = Boolean(event.attendanceConfirmed);
   const withinArea = state === 'within_area';
-  const hasEvidence = eventHasEvidence(event, user.participantId);
-  const canConfirmAttendance = eventCanRecordAttendance(event, user.participantId);
-  const readyToConfirm = withinArea && !attendanceRecorded && canConfirmAttendance;
+  const readyToConfirm = false;
   // Anything short of a recorded check-in keeps the location button up.
   const needsLocation = !withinArea && !attendanceRecorded;
   // A refused or failed location attempt explains itself inside the status
@@ -98,8 +96,7 @@ export default function CheckInScreen() {
   const attendanceSteps = [
     ['Joined this event', joined],
     ['Near the beach on the day', withinArea],
-    ['Report or cleanup for this event and beach', hasEvidence],
-    ['Confirmed you were there', attendanceRecorded],
+    ['Attendance recorded automatically', attendanceRecorded],
   ] as const;
 
   const statusTitle = state === 'checking'
@@ -182,26 +179,14 @@ export default function CheckInScreen() {
           <InfoChip color={attendanceRecorded ? C.green : C.muted} background={attendanceRecorded ? C.greenBg : undefined} style={{ marginTop: 12 }}>
             {attendanceRecorded
               ? 'Recorded attendance'
-              : canConfirmAttendance
-                ? 'Attendance not recorded yet'
-                : 'Attendance not recorded'}
+              : 'Attendance is recorded automatically after a successful check-in'}
           </InfoChip>
         </div>
 
         {message && !messageInStatus && <Alert title="Check-in not completed" tone="caution">{message}</Alert>}
 
         <div className="i2-action-stack">
-          {readyToConfirm ? (
-            <PrimaryButton onClick={async () => {
-              try {
-                setEvent(await confirmAttendanceData(event.id, user.participantId));
-                showToast('Attendance recorded');
-                nav(`/events/${event.id}`);
-              } catch (reason) {
-                setMessage(reason instanceof Error ? reason.message : 'Attendance could not be confirmed.');
-              }
-            }}><Check size={16} color={C.lime} />Confirm attendance</PrimaryButton>
-          ) : withinArea && !attendanceRecorded ? (
+          {withinArea && !attendanceRecorded ? (
             <>
               {cleanupTarget ? (
                 <PrimaryButton onClick={cleanUpHere}>Add a Cleanup</PrimaryButton>

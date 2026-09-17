@@ -22,15 +22,27 @@ import {
 } from './iteration2';
 import type { LitterCategory, QuantityBand } from './types';
 
+/** Keep the public event object viewer-scoped even if an older server responds
+ * with participant identifier collections. Mock ledgers retain those fields
+ * internally, while UI consumers use only the three self booleans. */
+function publicEvent(value: CleanupEvent): CleanupEvent {
+  const { joinedBy: _joinedBy, checkIns: _checkIns, attendanceBy: _attendanceBy, evidenceBy: _evidenceBy, reportEvidenceBy: _reportEvidenceBy, cleanupIds: _cleanupIds, ...safe } = value as CleanupEvent;
+  return safe as CleanupEvent;
+}
+
+function publicEvents(values: CleanupEvent[]): CleanupEvent[] {
+  return values.map(publicEvent);
+}
+
 export async function fetchCleanupEvents(participantId?: string, joinedOnly = false): Promise<CleanupEvent[]> {
   if (USE_MOCK) return listCleanupEvents(participantId, joinedOnly);
-  return apiRequest<CleanupEvent[]>(`/cleanup-events${joinedOnly ? '?joined=true' : ''}`);
+  return publicEvents(await apiRequest<CleanupEvent[]>(`/cleanup-events${joinedOnly ? '?joined=true' : ''}`));
 }
 
 export async function fetchCleanupEvent(eventId: string): Promise<CleanupEvent | null> {
   if (USE_MOCK) return getCleanupEvent(eventId);
   try {
-    return await apiRequest<CleanupEvent>(`/cleanup-events/${encodeURIComponent(eventId)}`);
+    return publicEvent(await apiRequest<CleanupEvent>(`/cleanup-events/${encodeURIComponent(eventId)}`));
   } catch (error) {
     if (error instanceof ApiError && error.status === 404) return null;
     throw error;
@@ -39,12 +51,12 @@ export async function fetchCleanupEvent(eventId: string): Promise<CleanupEvent |
 
 export async function joinCleanupEventData(eventId: string, participantId: string): Promise<CleanupEvent> {
   if (USE_MOCK) return joinCleanupEvent(eventId, participantId);
-  return apiRequest<CleanupEvent>(`/cleanup-events/${encodeURIComponent(eventId)}/join`, 'POST');
+  return publicEvent(await apiRequest<CleanupEvent>(`/cleanup-events/${encodeURIComponent(eventId)}/join`, 'POST'));
 }
 
 export async function leaveCleanupEventData(eventId: string, participantId: string): Promise<CleanupEvent> {
   if (USE_MOCK) return leaveCleanupEvent(eventId, participantId);
-  return apiRequest<CleanupEvent>(`/cleanup-events/${encodeURIComponent(eventId)}/join`, 'DELETE');
+  return publicEvent(await apiRequest<CleanupEvent>(`/cleanup-events/${encodeURIComponent(eventId)}/join`, 'DELETE'));
 }
 
 export type CheckInCoordinates = { lat: number; lng: number };
@@ -59,12 +71,12 @@ export async function recordCheckInData(
     return recordCheckIn(eventId, participantId, 'within_area');
   }
   if (typeof state === 'string') throw new Error('Location coordinates are required for check-in.');
-  return apiRequest<CleanupEvent>(`/cleanup-events/${encodeURIComponent(eventId)}/check-in`, 'POST', state);
+  return publicEvent(await apiRequest<CleanupEvent>(`/cleanup-events/${encodeURIComponent(eventId)}/check-in`, 'POST', state));
 }
 
 export async function confirmAttendanceData(eventId: string, participantId: string): Promise<CleanupEvent> {
   if (USE_MOCK) return recordAttendance(eventId, participantId);
-  return apiRequest<CleanupEvent>(`/cleanup-events/${encodeURIComponent(eventId)}/attendance`, 'POST');
+  return publicEvent(await apiRequest<CleanupEvent>(`/cleanup-events/${encodeURIComponent(eventId)}/attendance`, 'POST'));
 }
 
 export async function linkEventReportData(
@@ -74,10 +86,10 @@ export async function linkEventReportData(
   beachId: string,
 ): Promise<CleanupEvent> {
   if (USE_MOCK) return recordEventReportEvidence(eventId, participantId, reportId, beachId);
-  return apiRequest<CleanupEvent>(
+  return publicEvent(await apiRequest<CleanupEvent>(
     `/cleanup-events/${encodeURIComponent(eventId)}/reports/${encodeURIComponent(reportId)}`,
     'POST',
-  );
+  ));
 }
 
 export async function fetchCleanupTarget(beachId: string): Promise<CleanupTarget | null> {
@@ -134,5 +146,5 @@ export async function submitCleanup(input: {
 
 export async function createAdminEventData(input: { beachId: string; date: string }): Promise<CleanupEvent> {
   if (USE_MOCK) return createAdminEvent(input);
-  return apiRequest<CleanupEvent>('/cleanup-events', 'POST', input);
+  return publicEvent(await apiRequest<CleanupEvent>('/cleanup-events', 'POST', input));
 }

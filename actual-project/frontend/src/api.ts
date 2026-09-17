@@ -6,6 +6,7 @@ export * from './apiCore';
 
 import {
   createIteration2Cleanup as createIteration2CleanupCore,
+  invalidateBeaches,
   restoreId as restoreIdCore,
 } from './apiCore';
 import type { AuthSession, QuantityByCategory } from './types';
@@ -26,7 +27,10 @@ export function createIteration2Cleanup(input: Iteration2CleanupInput): Promise<
   // callers; the reviewed facade is the contract consumed by current screens.
   return createIteration2CleanupCore(
     input as unknown as Parameters<typeof createIteration2CleanupCore>[0],
-  );
+  ).then((result) => {
+    invalidateBeaches();
+    return result;
+  });
 }
 
 export async function restoreId(participantId: string, token = ''): Promise<AuthSession> {

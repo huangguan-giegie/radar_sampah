@@ -512,7 +512,7 @@ def test_beach_summary_and_detail_shapes_are_strict(api):
         "id", "name", "area", "lat", "lng", "severity", "band", "insufficientData",
         "validReports", "lastReportedAt", "freshnessKind", "habitat", "habitatTag",
         "sensitivity", "primarySpeciesGlyph", "speciesNames", "coverImageUrl", "scene",
-        "attentionScore", "eligibleReportCount",
+        "attentionScore", "eligibleReportCount", "latestContributingReportAt",
     }
     assert set(beaches[0]) == expected_summary_fields
     assert beaches[0]["severity"] is None
@@ -875,7 +875,7 @@ def test_patch_enforces_ownership_and_rechecks_status(api):
         )
     incomplete = client.get("/reports/mine", headers=owner_headers).get_json()[0]
     assert incomplete["statusNote"] == "Photo unreadable — excluded until you correct and save the record."
-    corrected = client.patch("/reports/" + report["id"], headers=owner_headers, json={"quantities": {"Glass": "Small"}})
+    corrected = client.patch("/reports/" + report["id"], headers=owner_headers, json={"quantities": {"Glass": "Medium"}})
     assert corrected.status_code == 200
     assert corrected.get_json()["status"] == "Counted"
 
@@ -1002,6 +1002,7 @@ def test_id_only_restore_matches_current_main_and_optional_token_is_checked(api)
 
 def test_model_recognition_falls_back_to_manual_when_weights_are_unavailable(api):
     _application, client = api
+    _application.extensions["litter_recognizer"] = LitterRecognizer(None, "test-unavailable/1", "weights_missing")
     _session, headers = signup(client)
     photo = upload(client, headers)
 
@@ -1064,7 +1065,8 @@ def test_recognition_endpoint_returns_frontend_band_suggestions(api):
 
     assert response.status_code == 200
     result = response.get_json()
-    assert result["counts"]["Plastic"] == 8
+    assert "counts" not in result
+    assert "detections" not in result
     assert result["quantityBands"] == {"Plastic": "Medium", "Other": "Small"}
     assert result["modelState"] == "ready"
     assert result["suggestions"] == result["quantityBands"]

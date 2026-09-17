@@ -335,12 +335,18 @@ def install_cleanup_route(application: Any, engine: Any, jwt_secret: str, impl: 
         targets: list[dict[str, Any]] = []
         with engine.connect() as connection:
             reports = connection.execute(query).all()
+            report_ids = [report.id for report in reports]
+            actions = connection.execute(
+                select(impl.cleanup_actions_table)
+                .where(impl.cleanup_actions_table.c.target_report_id.in_(report_ids))
+                .order_by(impl.cleanup_actions_table.c.created_at)
+            ).all() if report_ids else []
+            actions_by_report: dict[str, list[Any]] = {}
+            for action in actions:
+                actions_by_report.setdefault(action.target_report_id, []).append(action)
+            beach_names = {beach["id"]: beach["name"] for beach in impl.load_beaches(engine)}
             for report in reports:
-                actions = connection.execute(
-                    select(impl.cleanup_actions_table)
-                    .where(impl.cleanup_actions_table.c.target_report_id == report.id)
-                    .order_by(impl.cleanup_actions_table.c.created_at)
-                ).all()
+                actions = actions_by_report.get(report.id, [])
                 remaining_quantities = _current_band_state(impl, report, actions)
                 if _is_resolved(remaining_quantities):
                     continue
@@ -348,10 +354,7 @@ def install_cleanup_route(application: Any, engine: Any, jwt_secret: str, impl: 
                 targets.append({
                     "reportId": report.id,
                     "beachId": report.beach_id,
-                    "beachName": next(
-                        (beach["name"] for beach in impl.load_beaches() if beach["id"] == report.beach_id),
-                        report.beach_id,
-                    ),
+                    "beachName": beach_names.get(report.beach_id, report.beach_id),
                     "reportedAt": impl.contract_timestamp(report.created_at),
                     "remainingQuantities": remaining_quantities,
                     # Deprecated compatibility fields for already-deployed clients.

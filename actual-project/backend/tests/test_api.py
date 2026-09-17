@@ -192,7 +192,7 @@ def test_share_links_still_work_for_legacy_count_backed_non_small_reports(api):
     assert mismatch.status_code == 400
 
 
-def test_events_require_join_location_and_band_evidence_for_attendance(api):
+def test_events_record_attendance_on_successful_location_checkin(api):
     application, client = api
     event = _seed_morib_weekly_event(client)
     session, headers = signup(client)
@@ -200,7 +200,7 @@ def test_events_require_join_location_and_band_evidence_for_attendance(api):
     assert event["area"]
     assert event["startsAt"] == "09:00"
     assert event["endsAt"] == "12:00"
-    assert isinstance(event["checkIns"], dict)
+    assert not ({"joinedBy", "checkIns", "attendanceBy", "evidenceBy", "reportEvidenceBy", "cleanupIds"} & event.keys())
 
     now = datetime.now(timezone.utc)
     with application.extensions["marine_engine"].begin() as connection:
@@ -219,7 +219,7 @@ def test_events_require_join_location_and_band_evidence_for_attendance(api):
     )
     assert checkin.status_code == 200
     assert checkin.get_json()["checkedIn"] is True
-    assert checkin.get_json()["attendanceConfirmed"] is False
+    assert checkin.get_json()["attendanceConfirmed"] is True
 
     photo = upload(client, headers)
     report = client.post(
@@ -239,9 +239,10 @@ def test_events_require_join_location_and_band_evidence_for_attendance(api):
     attended = client.get(f"/events/{event['id']}", headers=headers).get_json()
     participant_id = session["user"]["participantId"]
     assert attended["attendanceConfirmed"] is True
-    assert participant_id in attended["joinedBy"]
-    assert attended["checkIns"][participant_id] == "within_area"
-    assert participant_id in attended["attendanceBy"]
+    assert attended["joined"] is True
+    assert attended["checkedIn"] is True
+    assert attended["attendanceConfirmed"] is True
+    assert not ({"joinedBy", "checkIns", "attendanceBy", "evidenceBy", "reportEvidenceBy", "cleanupIds"} & attended.keys())
 
     cleanup = client.post(
         "/cleanup-actions",
@@ -270,11 +271,12 @@ def test_events_require_join_location_and_band_evidence_for_attendance(api):
 
     left = client.delete(f"/events/{event['id']}/join", headers=headers)
     assert left.status_code == 200
-    assert participant_id not in left.get_json()["joinedBy"]
-    assert participant_id not in left.get_json()["checkIns"]
+    assert left.get_json()["joined"] is False
+    assert left.get_json()["checkedIn"] is False
+    assert left.get_json()["attendanceConfirmed"] is False
 
 
-def test_unlinked_counted_band_report_does_not_confirm_event_attendance(api):
+def test_counted_report_is_not_required_for_event_attendance(api):
     application, client = api
     event = _seed_morib_weekly_event(client)
     _session, headers = signup(client)
@@ -303,8 +305,8 @@ def test_unlinked_counted_band_report_does_not_confirm_event_attendance(api):
     assert report.status_code == 201
     assert report.get_json()["status"] == "Counted"
     event_view = client.get(f"/events/{event['id']}", headers=headers).get_json()
-    assert event_view["attendanceConfirmed"] is False
-    assert event_view["attendanceBy"] == []
+    assert event_view["attendanceConfirmed"] is True
+    assert not ({"joinedBy", "checkIns", "attendanceBy", "evidenceBy", "reportEvidenceBy", "cleanupIds"} & event_view.keys())
 
 
 def test_manual_reports_are_not_blanket_same_day_duplicates(api):

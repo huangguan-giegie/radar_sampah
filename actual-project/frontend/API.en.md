@@ -573,10 +573,10 @@ frontend switches to manual selection.
 
 ## 5. Photo upload
 
-**Photos do not go into the database, and there is no `photos` table.**
-The bytes live in object storage (or on disk) **outside the public web root**; `reports` keeps
-only a storage key. This follows DMP §5: `Object storage or server filesystem outside public web
-root; references in DB only. Access controlled.`
+Processed, EXIF-stripped JPEG bytes are stored privately in `report_photos`
+(PostgreSQL `bytea` in deployment). `reports` references the opaque photo key.
+Legacy private filesystem photos remain readable. See the current
+[September 17 contract decisions](../../docs/core-update-20260917.md).
 
 | Method | Path | Auth | Notes |
 | --- | --- | --- | --- |
@@ -611,13 +611,11 @@ ALTER TABLE reports
 
 `POST /reports` carries `photoKey` — the key the upload returned.
 
-### Access control: only the person who took the photo can see it
+### Access control: scoped signed access
 
-**A report photo is only ever shown to its own author.** The frontend renders a photo in exactly
-three places, all of them the viewer's own record: `ReviewScreen` (the draft being submitted),
-`RecordScreen` (the same draft), and `MyReportsScreen` (my records). No public endpoint returns
-anybody else's photo — the beach page uses `beaches.cover_image_url`, the beach's own stock
-image, which is a different thing entirely.
+Owner previews require ownership checks. Public beach galleries and signed share
+links expose only the selected historical report image through separately scoped
+tokens. They do not expose raw photo keys, participant identities or GPS coordinates.
 
 So the rule is simple:
 
@@ -647,13 +645,11 @@ GCS signed URLs), not a workaround.
    badge is a promise to the user.
 2. **Limits**: ≤ 10 MB; accept `image/jpeg`, `image/png` and `image/heic` (an iPhone shoots HEIC,
    so it must be accepted and converted to JPEG); resize the long edge to ≤ 2048 px.
-3. **Sweep orphans**: files uploaded but referenced by no report within 24 hours get deleted. The
-   bytes are outside the database, so this sweep has to be written by hand — no foreign key will
-   do it for you.
+3. **Sweep orphans**: uploads referenced by no report within 24 hours are eligible
+   for the orphan cleanup job, including their private database bytes.
 
-> ⚠️ **The database holds a key, not an image.** Delete the file in storage and `photo_key`
-> points at nothing, with nothing on the database side noticing. Deleting a report has to delete
-> the file too, and vice versa.
+Resolved reports retain the original image and report for audit. An all-Small
+cleanup removes the report from active scoring, without deleting its history.
 
 ---
 
@@ -891,16 +887,15 @@ area_species     id(PK), area_id(FK→beaches), species_id(FK→dim_species, nul
 
 reports          id, reporter_id, beach_id, location_source,
                  photo_key, photo_mime, photo_stripped
-                 ← no photos table and no bytes in the database. This is a storage
-                   key, not a reachable address; the photoUrl in a response is
-                   signed per request after an ownership check (§5)
+                 ← photo_key references private report_photos bytes; signed
+                   owner/gallery/share access follows the relevant scope (§5)
                  qty_plastic, qty_fishing_gear, qty_glass,
                  qty_metal, qty_paper, qty_other        ← each nullable, at least one set
                   category, quantity                     ← derived: maximum category score
                  lat(nullable), lng(nullable),
                  status, status_note, created_at, updated_at, deleted_at
-                 ← lat/lng written only for gps, stored to 3 decimals,
-                   never in any response (exclude explicitly when serialising)
+                 ← new GPS writes keep lat/lng null and use an opaque privacy
+                   reference; exact coordinates are never returned
 
 ```
 
