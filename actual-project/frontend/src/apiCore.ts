@@ -48,6 +48,29 @@ import type {
 const BASE_URL = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '');
 export const USE_MOCK = BASE_URL === '';
 
+// Beach summaries are shared by the map and report screens. Keep the value
+// synchronous for instant rendering, while getBeaches deduplicates concurrent
+// refreshes so a route transition cannot create duplicate requests.
+let beachesCache: BeachSummary[] | null = null;
+let beachesCacheTimestamp: number | null = null;
+let beachesInFlight: Promise<BeachSummary[]> | null = null;
+let beachesGeneration = 0;
+
+export function getCachedBeaches(): BeachSummary[] | null {
+  return beachesCache;
+}
+
+export function getBeachesCacheTimestamp(): number | null {
+  return beachesCacheTimestamp;
+}
+
+export function invalidateBeaches(): void {
+  beachesGeneration += 1;
+  beachesCache = null;
+  beachesCacheTimestamp = null;
+  beachesInFlight = null;
+}
+
 
 
 
@@ -455,6 +478,7 @@ function toSummary(beach: BeachDetail): BeachSummary {
     attentionScore: beach.attentionScore,
     eligibleReportCount: beach.eligibleReportCount,
     lastReportedAt: beach.lastReportedAt,
+    latestContributingReportAt: beach.latestContributingReportAt,
     freshnessKind: beach.freshnessKind,
     habitat: beach.habitat,
     habitatTag: beach.habitatTag,
@@ -603,14 +627,27 @@ export async function getSpeciesDistribution(latitude: number, longitude: number
 // ============================================================
 
 export async function getBeaches(): Promise<BeachSummary[]> {
-  if (USE_MOCK) {
-    await delay();
-    return BEACHES.map(toSummary);
+  if (beachesInFlight) return beachesInFlight;
+  const generation = beachesGeneration;
+  const flight = (async () => {
+    const list = USE_MOCK
+      ? (await delay(), BEACHES.map(toSummary))
+      // Render's free instance can take longer than the normal JSON timeout to
+      // wake up. Keep the public map request alive so a cold start does not look
+      // like an empty beach list.
+      : await request('/beaches', 'GET', undefined, 60_000, false);
+    if (generation === beachesGeneration) {
+      beachesCache = list;
+      beachesCacheTimestamp = Date.now();
+    }
+    return list;
+  })();
+  beachesInFlight = flight;
+  try {
+    return await flight;
+  } finally {
+    if (beachesInFlight === flight) beachesInFlight = null;
   }
-  // Render's free instance can take longer than the normal JSON timeout to
-  // wake up. Keep the public map request alive so a cold start does not look
-  // like an empty beach list.
-  return request('/beaches', 'GET', undefined, 60_000, false);
 }
 
 export async function getBeach(id: string): Promise<BeachDetail> {
@@ -931,10 +968,13 @@ export async function createReport(input: CreateReportInput): Promise<LitterRepo
       status: 'Counted',
     };
     replaceCurrentMockReports([report, ...currentMockReports()]);
+    invalidateBeaches();
     return report;
   }
 
-  return request('/reports', 'POST', input);
+  const report = await request('/reports', 'POST', input);
+  invalidateBeaches();
+  return report;
 }
 
 // A volunteer's own reports, optionally narrowed to one status - which is what
@@ -1006,8 +1046,11 @@ export async function updateReport(
     const nextReports = reports.slice();
     nextReports[index] = updated;
     replaceCurrentMockReports(nextReports);
+    invalidateBeaches();
     return updated;
   }
 
-  return request('/reports/' + id, 'PATCH', changes);
+  const report = await request('/reports/' + id, 'PATCH', changes);
+  invalidateBeaches();
+  return report;
 }

@@ -17,12 +17,15 @@ export interface CleanupEvent {
   source: 'weekly' | 'admin';
   participantCount: number;
   attendanceCount: number;
+  /** Viewer-scoped state. Participant identifiers are never part of the API contract. */
+  joined?: boolean;
+  checkedIn?: boolean;
+  attendanceConfirmed?: boolean;
+  /** Local mock ledger fields; server responses omit these fields. */
   joinedBy: string[];
   checkIns: Record<string, CheckInState>;
   attendanceBy: string[];
-  /** Contains only the current participant id when their evidence is valid. */
   evidenceBy: string[];
-  /** Report ids saved by a joined participant for this event's beach. */
   reportEvidenceBy: Record<string, string[]>;
   cleanupIds: string[];
 }
@@ -262,7 +265,7 @@ function updateEvent(eventId: string, change: (event: CleanupEvent) => CleanupEv
 export function listCleanupEvents(participantId?: string, joinedOnly = false): CleanupEvent[] {
   const events = readStore().events
     .filter((event) => event.status === 'Open')
-    .filter((event) => !joinedOnly || Boolean(participantId && event.joinedBy.includes(participantId)))
+    .filter((event) => !joinedOnly || Boolean(participantId && (event.joined ?? event.joinedBy?.includes(participantId))))
     .sort((a, b) => a.date.localeCompare(b.date) || a.beachName.localeCompare(b.beachName));
   return events;
 }
@@ -273,7 +276,7 @@ export function getCleanupEvent(eventId: string): CleanupEvent | null {
 
 export function joinCleanupEvent(eventId: string, participantId: string): CleanupEvent {
   return updateEvent(eventId, (event) => {
-    if (event.joinedBy.includes(participantId)) return event;
+    if (event.joinedBy?.includes(participantId)) return { ...event, joined: true };
     return {
       ...event,
       joinedBy: [...event.joinedBy, participantId],
@@ -284,7 +287,7 @@ export function joinCleanupEvent(eventId: string, participantId: string): Cleanu
 
 export function leaveCleanupEvent(eventId: string, participantId: string): CleanupEvent {
   return updateEvent(eventId, (event) => {
-    if (!event.joinedBy.includes(participantId)) return event;
+    if (!event.joinedBy?.includes(participantId)) return event;
     const checkIns = { ...event.checkIns };
     delete checkIns[participantId];
     return {
@@ -302,8 +305,19 @@ export function leaveCleanupEvent(eventId: string, participantId: string): Clean
 
 export function recordCheckIn(eventId: string, participantId: string, state: CheckInState): CleanupEvent {
   return updateEvent(eventId, (event) => {
-    if (!event.joinedBy.includes(participantId)) throw new Error('Join this activity before checking in.');
-    return { ...event, checkIns: { ...event.checkIns, [participantId]: state } };
+    if (!event.joinedBy?.includes(participantId)) throw new Error('Join this activity before checking in.');
+    const checkIns = { ...(event.checkIns ?? {}), [participantId]: state };
+    const attendanceBy = state === 'within_area' && !event.attendanceBy.includes(participantId)
+      ? [...event.attendanceBy, participantId]
+      : event.attendanceBy;
+    return {
+      ...event,
+      checkIns,
+      attendanceBy,
+      attendanceCount: attendanceBy.length,
+      checkedIn: state === 'within_area',
+      attendanceConfirmed: state === 'within_area' || event.attendanceConfirmed,
+    };
   });
 }
 
@@ -354,7 +368,7 @@ export function completeCleanup(input: {
   }
   if (input.eventId) {
     const event = store.events.find((item) => item.id === input.eventId);
-    if (!event || !event.joinedBy.includes(input.participantId)) {
+    if (!event || !event.joinedBy?.includes(input.participantId)) {
       throw new Error('Join this activity before recording a cleanup for it.');
     }
     if (event.beachId !== (target?.beachId ?? input.beachId)) {
@@ -446,8 +460,7 @@ export function eventCleanups(eventId: string): CleanupAction[] {
   return readStore().cleanups.filter((cleanup) => cleanup.eventId === eventId);
 }
 
-/** A cleanup supplies the same-event evidence; attendance remains a separate
- * explicit participant action after the broad-area check. */
+/** A cleanup supplies event evidence for result pages; check-in records attendance. */
 export function hasEventEvidence(eventId: string, participantId: string): boolean {
   const event = getCleanupEvent(eventId);
   const hasEvidence = Boolean(
@@ -461,22 +474,20 @@ export function hasEventEvidence(eventId: string, participantId: string): boolea
 }
 
 export function eventHasEvidence(event: CleanupEvent, participantId: string): boolean {
-  return event.evidenceBy.includes(participantId) || Boolean(event.reportEvidenceBy[participantId]?.length);
+  return Boolean(event.evidenceBy?.includes(participantId) || event.reportEvidenceBy?.[participantId]?.length);
 }
 
 export function eventCanRecordAttendance(event: CleanupEvent, participantId: string): boolean {
-  return event.joinedBy.includes(participantId)
-    && event.checkIns[participantId] === 'within_area'
+  return Boolean((event.joined ?? event.joinedBy?.includes(participantId))
+    && (event.checkIns?.[participantId] === 'within_area' || event.checkedIn)
     && eventHasEvidence(event, participantId)
-    && !event.attendanceBy.includes(participantId);
+    && !event.attendanceBy.includes(participantId));
 }
 
-/** Save the fact that a participant filed a report for this specific event
- * beach. It deliberately does not record attendance: that remains the
- * participant's separate, explicit action. */
+/** Save the fact that a participant filed a report for this specific event beach. */
 export function recordEventReportEvidence(eventId: string, participantId: string, reportId: string, beachId: string): CleanupEvent {
   return updateEvent(eventId, (event) => {
-    if (!event.joinedBy.includes(participantId)) throw new Error('Join this activity before linking a report to it.');
+    if (!event.joinedBy?.includes(participantId)) throw new Error('Join this activity before linking a report to it.');
     if (event.beachId !== beachId) throw new Error('This report belongs to a different beach.');
     const current = event.reportEvidenceBy[participantId] ?? [];
     if (current.includes(reportId)) return event;
@@ -492,8 +503,8 @@ export function canRecordAttendance(eventId: string, participantId: string): boo
   const event = getCleanupEvent(eventId);
   return Boolean(
     event
-      && event.joinedBy.includes(participantId)
-      && event.checkIns[participantId] === 'within_area'
+      && (event.joined ?? event.joinedBy?.includes(participantId))
+      && (event.checkIns?.[participantId] === 'within_area' || event.checkedIn)
       && hasEventEvidence(eventId, participantId)
       && !event.attendanceBy.includes(participantId),
   );
@@ -501,10 +512,10 @@ export function canRecordAttendance(eventId: string, participantId: string): boo
 
 export function recordAttendance(eventId: string, participantId: string): CleanupEvent {
   return updateEvent(eventId, (event) => {
-    if (!event.joinedBy.includes(participantId)) throw new Error('Join this activity before confirming attendance.');
-    if (event.checkIns[participantId] !== 'within_area') throw new Error('Check in near the beach before confirming attendance.');
+    if (!event.joinedBy?.includes(participantId) && !event.joined) throw new Error('Join this activity before confirming attendance.');
+    if (event.checkIns?.[participantId] !== 'within_area' && !event.checkedIn) throw new Error('Check in near the beach before confirming attendance.');
+    if (event.attendanceBy?.includes(participantId) || event.attendanceConfirmed) return event;
     if (!hasEventEvidence(eventId, participantId)) throw new Error('Add a linked report or cleanup before confirming attendance.');
-    if (event.attendanceBy.includes(participantId)) return event;
     return {
       ...event,
       attendanceBy: [...event.attendanceBy, participantId],

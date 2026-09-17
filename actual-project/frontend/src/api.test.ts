@@ -266,6 +266,34 @@ describe('真实 API contract', () => {
     expect(second.statusNote).toBeUndefined();
   });
 
+  it('deduplicates concurrent beach refreshes and exposes the cached timestamp', async () => {
+    vi.stubEnv('VITE_API_BASE_URL', 'https://radar-sampah-api.onrender.com');
+    vi.resetModules();
+    const fetchMock = vi.fn().mockResolvedValue(new Response('[]', { status: 200 }));
+    vi.stubGlobal('fetch', fetchMock);
+    const { getBeaches, getCachedBeaches, getBeachesCacheTimestamp, invalidateBeaches } = await import('./api');
+    invalidateBeaches();
+    const [first, second] = await Promise.all([getBeaches(), getBeaches()]);
+    expect(first).toEqual([]);
+    expect(second).toEqual([]);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(getCachedBeaches()).toEqual([]);
+    expect(getBeachesCacheTimestamp()).toEqual(expect.any(Number));
+  });
+
+  it('does not restore an invalidated cache when an old beach request settles', async () => {
+    vi.stubEnv('VITE_API_BASE_URL', 'https://radar-sampah-api.onrender.com');
+    vi.resetModules();
+    let resolveResponse!: (response: Response) => void;
+    vi.stubGlobal('fetch', vi.fn(() => new Promise<Response>((resolve) => { resolveResponse = resolve; })));
+    const { getBeaches, getCachedBeaches, invalidateBeaches } = await import('./api');
+    const pending = getBeaches();
+    invalidateBeaches();
+    resolveResponse(new Response('[]', { status: 200 }));
+    await pending;
+    expect(getCachedBeaches()).toBeNull();
+  });
+
   it('keeps a corrected manual report counted', async () => {
     vi.stubEnv('VITE_API_BASE_URL', '');
     storage.set('rs_mock_participant', '1637');

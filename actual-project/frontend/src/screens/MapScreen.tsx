@@ -9,7 +9,7 @@
 import { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import { useNavigate } from 'react-router-dom';
-import { getBeaches } from '../api';
+import { getBeaches, getCachedBeaches, getBeachesCacheTimestamp } from '../api';
 import { markerHtml } from '../components/BeachMarker';
 import { useLeafletMap } from '../components/useLeafletMap';
 import { ArrowRight, Check, ChevronRight, Close, Info, WifiOff } from '../components/Icon';
@@ -97,14 +97,23 @@ export default function MapScreen() {
   const [beaches, setBeaches] = useState<BeachSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
+  const [cacheTimestamp, setCacheTimestamp] = useState<number | null>(null);
 
 
   // Named, because the Retry button in the offline bar calls the same code.
   function loadBeaches() {
+    const cached = getCachedBeaches();
+    if (cached) {
+      setBeaches(cached);
+      setCacheTimestamp(getBeachesCacheTimestamp());
+    }
     setLoading(true);
     setFailed(false);
     getBeaches()
-      .then((list) => setBeaches(list))
+      .then((list) => {
+        setBeaches(list);
+        setCacheTimestamp(getBeachesCacheTimestamp());
+      })
       .catch(() => setFailed(true))
       .finally(() => setLoading(false));
   }
@@ -119,13 +128,13 @@ export default function MapScreen() {
   const markersRef = useRef<Record<string, L.Marker>>({});
 
   const selected = beaches.find((b) => b.id === selectedId) || null;
-  const { data: cleanupEvents } = useAsyncData(
-    () => fetchCleanupEvents(),
-    [],
-    listCleanupEvents(),
+  const { data: cleanupEvents, error: eventsError } = useAsyncData(
+    () => selected ? fetchCleanupEvents() : Promise.resolve([]),
+    [selected?.id],
+    selected ? listCleanupEvents() : [],
   );
   const selectedEvent = selected ? cleanupEvents.find((event) => event.beachId === selected.id) ?? null : null;
-  const { data: selectedCleanupTarget } = useAsyncData(
+  const { data: selectedCleanupTarget, error: targetError } = useAsyncData(
     () => selected ? fetchCleanupTarget(selected.id) : Promise.resolve(null),
     [selected?.id],
     selected ? getCleanupTarget(selected.id) : null,
@@ -331,7 +340,7 @@ export default function MapScreen() {
           this refresh failed. Both leave the user looking at data that may be
           stale, so both must say so - a map that silently shows old numbers is
           worse than one that shows an error. */}
-      {(offline || failed) && (
+      {(offline || failed || (cacheTimestamp !== null && Date.now() - cacheTimestamp > 5 * 60_000)) && (
         <div
           className="anim-fade-up measure"
           style={{
@@ -353,12 +362,14 @@ export default function MapScreen() {
           <WifiOff />
           <div style={{ flex: 1 }}>
             <div style={{ fontSize: 12.5, fontWeight: 600 }}>
-              {offline ? 'Offline preview' : 'Map refresh failed'}
+              {offline ? 'Offline preview' : failed ? 'Map refresh failed' : 'Showing cached map data'}
             </div>
             <div style={{ fontSize: 11, color: C.mist }}>
               {offline
                 ? 'Cached map data may be outdated. Real API submissions require a connection.'
-                : 'Could not refresh map data. Check your connection and retry.'}
+                : failed
+                  ? 'Could not refresh map data. Check your connection and retry.'
+                  : 'This map may be out of date while the latest data loads.'}
             </div>
           </div>
           <button
@@ -398,22 +409,24 @@ export default function MapScreen() {
       )}
 
       {selected && (
-        <SelectedCard
-          beach={selected}
-          layer={layer}
-          event={selectedEvent}
-          cleanupTarget={selectedCleanupTarget}
-          onClose={() => setSelectedId(null)}
-          // From the biodiversity layer the button says Learn More, so it has
-          // to land on the species cards. It used to open the beach at the top
-          // and leave the user to find them.
-          onOpen={() =>
-            nav(`/beach/${selected.id}`, layer === 'bio' ? { state: { focus: 'species' } } : undefined)
-          }
-          onCleanup={() => nav(`/cleanup/${selected.id}`)}
-          onMethod={() => nav('/method')}
-          onJoin={(eventId) => nav(`/events/${eventId}`)}
-        />
+        <>
+          <SelectedCard
+            beach={selected}
+            layer={layer}
+            event={selectedEvent}
+            cleanupTarget={selectedCleanupTarget}
+            onClose={() => setSelectedId(null)}
+            // From the biodiversity layer the button says Learn More, so it has
+            // to land on the species cards.
+            onOpen={() =>
+              nav(`/beach/${selected.id}`, layer === 'bio' ? { state: { focus: 'species' } } : undefined)
+            }
+            onCleanup={() => nav(`/cleanup/${selected.id}`)}
+            onMethod={() => nav('/method')}
+            onJoin={(eventId) => nav(`/events/${eventId}`)}
+            detailsError={eventsError || targetError ? 'Some activity details could not be loaded.' : null}
+          />
+        </>
       )}
     </div>
   );
@@ -436,6 +449,7 @@ function SelectedCard({
   onCleanup,
   onMethod,
   onJoin,
+  detailsError,
 }: {
   beach: BeachSummary;
   layer: MapLayer;
@@ -446,8 +460,12 @@ function SelectedCard({
   onCleanup: () => void;
   onMethod: () => void;
   onJoin: (eventId: string) => void;
+  detailsError: string | null;
 }) {
   const fs = freshStyle(beach.freshnessKind);
+  const latestContributingAt = beach.latestContributingReportAt === undefined
+    ? beach.lastReportedAt
+    : beach.latestContributingReportAt;
   // Worked out once, then used by the badge, the explanation and the icon
   // below. One source, so the card cannot show a status band in one place and
   // say "Insufficient data" in another.
@@ -494,6 +512,7 @@ function SelectedCard({
         >
           <Close />
         </button>
+        {detailsError && <div style={{ marginTop: 10, padding: '8px 10px', borderRadius: 10, background: 'rgba(30,36,44,.08)', color: C.slate, fontSize: 11 }}>{detailsError}</div>}
 
         {layer === 'litter' ? (
           <>
@@ -533,7 +552,7 @@ function SelectedCard({
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 11px', borderRadius: 999, background: fs.bg, fontSize: 11.5, fontWeight: 600, color: fs.c }}>
                 <i style={{ width: 6, height: 6, borderRadius: 3, background: fs.dot, display: 'block' }} />
-                {freshnessLabel(beach.freshnessKind, beach.lastReportedAt)}
+                {freshnessLabel(beach.freshnessKind, latestContributingAt)}
               </div>
             </div>
 
@@ -543,7 +562,9 @@ function SelectedCard({
                 so "NEVER REPORTED" is never printed as "0 DAYS AGO". */}
             {!cleanupTarget && (
               <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '.1em', color: C.dim, marginTop: 10 }}>
-                {beach.lastReportedAt ? `LAST REPORTED ${lastReportedLabel(beach.lastReportedAt)}` : lastReportedLabel(null)}
+                {latestContributingAt
+                  ? `LATEST CONTRIBUTING ${lastReportedLabel(latestContributingAt)}`
+                  : lastReportedLabel(null)}
               </div>
             )}
 

@@ -5,14 +5,14 @@
 // to a single saved report still has somewhere to land.
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { getMyReports } from '../api';
+import { createIteration2ShareLink, getMyReports } from '../api';
 import { useApp } from '../AppContext';
 import { Camera } from '../components/Icon';
 import { StatusBadge, type BadgeStatus } from '../components/ds';
 import { BackButton, ErrorNote, GhostButton, Label, PrimaryButton, Skeleton } from '../components/ui';
 import { historicalPhotoUnavailable } from '../flowRules';
 import { C, MONO, formatDate } from '../theme';
-import type { LitterCategory, LitterReport, QuantityBand } from '../types';
+import { reportStateLabel, type LitterCategory, type LitterReport, type QuantityBand } from '../types';
 
 export default function ReportDetailScreen() {
   const { reportId = '' } = useParams();
@@ -21,6 +21,8 @@ export default function ReportDetailScreen() {
   const [report, setReport] = useState<LitterReport | null>(null);
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
+  const [shareError, setShareError] = useState<string | null>(null);
+  const [sharing, setSharing] = useState(false);
 
   useEffect(() => {
     setLoading(true);
@@ -53,6 +55,20 @@ export default function ReportDetailScreen() {
       editingStatusNote: report.statusNote ?? null,
     });
     nav('/report/details');
+  }
+
+  async function shareReport() {
+    if (!report || report.status !== 'Counted' || report.currentState === 'excluded') return;
+    setSharing(true);
+    setShareError(null);
+    try {
+      const link = await createIteration2ShareLink({ reportId: report.id });
+      nav(link.path);
+    } catch (reason) {
+      setShareError(reason instanceof Error ? reason.message : 'Could not create a share link.');
+    } finally {
+      setSharing(false);
+    }
   }
 
   if (loading) {
@@ -92,7 +108,7 @@ export default function ReportDetailScreen() {
             <h1 className="i2-title" style={{ marginTop: 7 }}>{report.beachName}</h1>
             <div style={{ marginTop: 6, color: C.muted, fontSize: 13 }}>{formatDate(report.createdAt)}</div>
           </div>
-          <StatusBadge status={report.status.toLowerCase() as BadgeStatus} indicator>{report.status}</StatusBadge>
+          <StatusBadge status={reportStateLabel(report).toLowerCase() as BadgeStatus} indicator>{reportStateLabel(report)}</StatusBadge>
         </div>
 
         {report.photoUrl ? (
@@ -132,8 +148,13 @@ export default function ReportDetailScreen() {
           </div>
         )}
 
+        {shareError && <div style={{ color: C.red, fontSize: 12 }}>{shareError}</div>}
+
         <PrimaryButton onClick={() => nav(`/beach/${report.beachId}`)}>View beach</PrimaryButton>
         <GhostButton onClick={editReport}>{report.status === 'Incomplete' ? 'Fix this report' : 'Edit this report'}</GhostButton>
+        {report.status === 'Counted' && report.currentState !== 'excluded' && (
+          <GhostButton onClick={shareReport} disabled={sharing}>{sharing ? 'Creating link…' : 'Share report'}</GhostButton>
+        )}
         <div style={{ textAlign: 'center', fontFamily: MONO, fontSize: 10, color: C.faint }}>REPORT {report.id.toUpperCase()}</div>
       </div>
     </div>

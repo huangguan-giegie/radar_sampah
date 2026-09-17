@@ -7,7 +7,7 @@ from urllib.parse import quote
 from flask import jsonify, request, send_file
 from sqlalchemy import select
 
-from standalone_cleanup import _current_band_state
+from standalone_cleanup import _current_band_state, _is_resolved
 
 
 def _viewer_id(jwt_secret: str, impl: Any) -> str | None:
@@ -75,6 +75,10 @@ def install_reviewed_share_contract(application: Any, engine: Any, jwt_secret: s
 
         shared_report = None
         if report is not None:
+            remaining = _current_band_state(impl, report, actions)
+            current_state = "resolved" if _is_resolved(remaining) else "active"
+            if current_state == "active" and impl.utc_datetime(report.created_at) < impl.datetime.now(impl.timezone.utc) - impl.timedelta(days=90):
+                current_state = "excluded"
             shared_report = {
                 "id": report.id,
                 "beachId": report.beach_id,
@@ -84,8 +88,9 @@ def install_reviewed_share_contract(application: Any, engine: Any, jwt_secret: s
                 ),
                 "reportedAt": impl.contract_timestamp(report.created_at),
                 "status": report.status,
+                "currentState": current_state,
                 "quantities": impl.quantities_from_row(report),
-                "remainingQuantities": _current_band_state(impl, report, actions),
+                "remainingQuantities": remaining,
                 "photoAvailable": impl.photo_available(engine, directory, report.photo_key, report.reporter_id),
             }
             # Historical count-backed links stay readable for deployed clients,
@@ -107,7 +112,12 @@ def install_reviewed_share_contract(application: Any, engine: Any, jwt_secret: s
             event_response = application.make_response(get_event(event_id))
             if event_response.status_code != 200:
                 return impl.error_response(404, "NOT_FOUND", "Shared item not found.")
-            event_payload = event_response.get_json()
+            payload = event_response.get_json()
+            public_fields = (
+                "id", "beachId", "beachName", "area", "date", "startsAt", "endsAt",
+                "meetingPoint", "status", "source", "participantCount", "attendanceCount",
+            )
+            event_payload = {key: payload[key] for key in public_fields if key in payload}
 
         return jsonify({"event": event_payload, "report": shared_report})
 

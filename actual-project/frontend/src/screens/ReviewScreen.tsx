@@ -180,7 +180,7 @@ export default function ReviewScreen() {
       >
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <BackButton onClick={() => backToDetails()} />
-          <StepBadge>STEP 4 OF 4 · REVIEW</StepBadge>
+          <StepBadge>STEP 6 OF 6 · REVIEW</StepBadge>
         </div>
 
         <div>

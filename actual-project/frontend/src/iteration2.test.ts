@@ -94,12 +94,12 @@ describe('Iteration 2 activity and cleanup ledger', () => {
     expect(result.suggestions).toEqual({});
   });
 
-  it('requires a separate attendance confirmation after check-in and cleanup evidence', () => {
+  it('records attendance immediately after a successful check-in', () => {
     const event = listCleanupEvents().find((item) => item.beachId === 'morib')!;
     const target = getCleanupTarget('morib')!;
     joinCleanupEvent(event.id, '1637');
     recordCheckIn(event.id, '1637', 'within_area');
-    expect(canRecordAttendance(event.id, '1637')).toBe(false);
+    expect(getCleanupEvent(event.id)?.attendanceBy).toEqual(['1637']);
 
     completeCleanup({
       participantId: '1637',
@@ -110,19 +110,17 @@ describe('Iteration 2 activity and cleanup ledger', () => {
     });
 
     expect(hasEventEvidence(event.id, '1637')).toBe(true);
-    expect(getCleanupEvent(event.id)?.attendanceBy).toEqual([]);
-    expect(canRecordAttendance(event.id, '1637')).toBe(true);
+    expect(canRecordAttendance(event.id, '1637')).toBe(false);
     expect(recordAttendance(event.id, '1637').attendanceBy).toEqual(['1637']);
   });
 
-  it('also accepts a same-event, same-beach report as evidence without auto-recording attendance', () => {
+  it('accepts same-event, same-beach report evidence without changing attendance', () => {
     const event = listCleanupEvents().find((item) => item.beachId === 'morib')!;
     joinCleanupEvent(event.id, '1637');
     recordCheckIn(event.id, '1637', 'within_area');
     recordEventReportEvidence(event.id, '1637', 'r-new', 'morib');
 
     expect(hasEventEvidence(event.id, '1637')).toBe(true);
-    expect(getCleanupEvent(event.id)?.attendanceBy).toEqual([]);
-    expect(recordAttendance(event.id, '1637').attendanceBy).toEqual(['1637']);
+    expect(getCleanupEvent(event.id)?.attendanceBy).toEqual(['1637']);
   });
 });

@@ -91,6 +91,13 @@ def install_litter_gallery(application: Any, engine: Any, jwt_secret: str, impl:
                 )
                 .order_by(impl.reports_table.c.created_at.desc(), impl.reports_table.c.id.desc())
             ).all()
+            report_ids = [report.id for report in reports]
+            actions = connection.execute(
+                select(impl.cleanup_actions_table).where(impl.cleanup_actions_table.c.target_report_id.in_(report_ids))
+            ).all() if report_ids else []
+        actions_by_report = {}
+        for action in actions:
+            actions_by_report.setdefault(action.target_report_id, []).append(action)
 
         entries = []
         for report in reports:
@@ -102,6 +109,10 @@ def install_litter_gallery(application: Any, engine: Any, jwt_secret: str, impl:
             # historical card, and the card would otherwise read as a claim about
             # litter that has since been removed.
             bands = impl.quantities_from_row(report)
+            current_bands = impl.quantity_band_state_for(report, actions_by_report.get(report.id, []))
+            current_state = "excluded" if impl.utc_datetime(report.created_at) < datetime.now(timezone.utc) - timedelta(days=90) else (
+                "active" if any(band != "Small" for band in current_bands.values()) else "resolved"
+            )
             entries.append(
                 {
                     "reportId": report.id,
@@ -109,6 +120,7 @@ def install_litter_gallery(application: Any, engine: Any, jwt_secret: str, impl:
                     "categories": list(bands),
                     "bands": bands,
                     "status": report.status,
+                    "currentState": current_state,
                     # Whether the stored photo had its metadata removed on upload.
                     "metadataStripped": bool(getattr(report, "photo_stripped", False)),
                     # No participantId: this route is public and unauthenticated,

@@ -101,7 +101,7 @@ export default function PhotoScreen() {
     }
     if (file.size > MAX_PHOTO_BYTES) {
       const mb = (file.size / 1024 / 1024).toFixed(1);
-      setUploadError(`That photo is ${mb} MB. The limit is 10 MB — try a smaller one.`);
+      setUploadError(`That photo is ${mb} MB, just over the 10 MB limit. Please choose a smaller one.`);
       return;
     }
     if (file.size === 0) {
@@ -170,13 +170,13 @@ export default function PhotoScreen() {
       >
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <BackButton onClick={() => nav(-1)} />
-          <StepBadge>STEP 1 OF 3 · PHOTO</StepBadge>
+          <StepBadge>STEP 1 OF 6 · PHOTO</StepBadge>
         </div>
 
         <div>
           <div style={{ fontSize: 30, fontWeight: 640, letterSpacing: '-.8px' }}>Show us what you found</div>
           <div style={{ fontSize: 14, color: C.muted, marginTop: 7, lineHeight: 1.5 }}>
-            You can review an editable AI suggestion later, or keep your own manual values.
+          We'll check the photo first. Then you can confirm or change the suggested categories and amounts.
           </div>
         </div>
 

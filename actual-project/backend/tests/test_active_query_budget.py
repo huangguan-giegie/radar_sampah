@@ -48,5 +48,6 @@ def test_gallery_batches_photo_availability_without_loading_bytes(api):
         event.remove(engine, 'before_cursor_execute', capture)
     assert response.status_code == 200
     assert len(response.get_json()) == 6
-    assert len(queries) == 1
+    # One joined report/photo query and one batch of current cleanup states.
+    assert len(queries) == 2
     assert 'report_photos.data' not in queries[0]

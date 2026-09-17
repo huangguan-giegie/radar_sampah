@@ -105,7 +105,7 @@ export default function GalleryScreen() {
             )}
             <div style={{ padding: 16 }}>
               <strong style={{ display: 'block', fontSize: 14, color: C.ink2 }}>Report {photo.reportId.toUpperCase()}</strong>
-              <span style={{ display: 'block', marginTop: 4, fontSize: 12, color: C.muted }}>Stored Counted report photo</span>
+              <span style={{ display: 'block', marginTop: 4, fontSize: 12, color: C.muted }}>{photo.currentState === 'resolved' ? 'Resolved report photo · retained for history' : 'Active report photo'}</span>
               <span style={{ display: 'block', marginTop: 5, fontSize: 10.5, color: C.dim }}>{formatDate(photo.reportedAt)}</span>
             </div>
           </article>

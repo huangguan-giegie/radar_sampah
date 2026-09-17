@@ -1036,14 +1036,8 @@ def active_attention_rows(engine: Engine, rows: list[Any]) -> list[tuple[Any, di
         actions_by_report[action.target_report_id].append(action)
     active: list[tuple[Any, dict[str, str]]] = []
     for row in rows:
-        if getattr(row, "item_counts", None) is not None:
-            remaining = remaining_counts_for(row, actions_by_report[row.id])
-            if not remaining:
-                continue
-            quantities = quantity_bands_for_counts(remaining)
-        else:
-            quantities = quantities_from_row(row)
-        if quantities:
+        quantities = quantity_band_state_for(row, actions_by_report[row.id])
+        if quantities and any(value != "Small" for value in quantities.values()):
             active.append((row, quantities))
     return active
 
@@ -1102,10 +1096,52 @@ def beach_summary(engine: Engine, beach: dict[str, Any], now: datetime | None = 
             "attentionScore": round(attention_score, 2) if attention_score is not None else None,
             "eligibleReportCount": len(active_rows),
             "lastReportedAt": contract_timestamp(newest.created_at) if newest else None,
+            "latestContributingReportAt": contract_timestamp(max((row.created_at for row, _ in active_rows), default=None)) if active_rows else None,
             "freshnessKind": freshness,
         }
     )
     return summary
+
+
+def beach_summaries_batch(engine: Engine, beaches: list[dict[str, Any]], now: datetime | None = None) -> list[dict[str, Any]]:
+    """Build all beach cards from one report query and one cleanup query."""
+    current_time = now or datetime.now(timezone.utc)
+    cutoff = current_time - timedelta(days=90)
+    beach_ids = [beach["id"] for beach in beaches]
+    with engine.connect() as connection:
+        reports = connection.execute(select(reports_table).where(reports_table.c.beach_id.in_(beach_ids))).all()
+        report_ids = [row.id for row in reports]
+        actions = connection.execute(
+            select(cleanup_actions_table).where(cleanup_actions_table.c.target_report_id.in_(report_ids))
+        ).all() if report_ids else []
+    actions_by_report: defaultdict[str, list[Any]] = defaultdict(list)
+    for action in actions:
+        actions_by_report[action.target_report_id].append(action)
+    result = []
+    for beach in beaches:
+        all_counted = [row for row in reports if row.beach_id == beach["id"] and row.status == "Counted" and getattr(row, "deleted_at", None) is None]
+        eligible = [row for row in all_counted if utc_datetime(row.created_at) >= cutoff]
+        active_rows = []
+        for row in eligible:
+            quantities = quantity_band_state_for(row, actions_by_report[row.id])
+            active_quantities = {category: band for category, band in quantities.items() if band != "Small"}
+            if active_quantities:
+                active_rows.append((row, active_quantities))
+        score = float(median(report_score_for(q) for _, q in active_rows)) if len(active_rows) >= 3 else None
+        severity, band = severity_from_score(score)
+        newest = max(all_counted, key=lambda row: utc_datetime(row.created_at), default=None)
+        newest_at = utc_datetime(newest.created_at) if newest else None
+        age = current_time - newest_at if newest_at else None
+        summary = {field: beach[field] for field in BEACH_SUMMARY_FIELDS}
+        summary.update({
+            "severity": severity, "band": band, "insufficientData": severity is None,
+            "validReports": len(active_rows), "attentionScore": round(score, 2) if score is not None else None,
+            "eligibleReportCount": len(active_rows), "lastReportedAt": contract_timestamp(newest.created_at) if newest else None,
+            "latestContributingReportAt": contract_timestamp(max((row.created_at for row, _ in active_rows), default=None)) if active_rows else None,
+            "freshnessKind": "stale" if age is None else "ok" if age < timedelta(days=30) else "aging" if age <= timedelta(days=90) else "stale",
+        })
+        result.append(summary)
+    return result
 
 
 def photo_storage_path(configured: str | Path | None) -> Path:
@@ -1207,9 +1243,18 @@ def signed_photo_url(
     jwt_secret: str,
     directory: Path,
     engine: Engine | None = None,
+    photo_info: dict[str, Any] | None = None,
 ) -> str | None:
-    if not photo_available(engine, directory, photo_key, owner_id):
+    if photo_info is False:
         return None
+    if photo_info is None and not photo_available(engine, directory, photo_key, owner_id):
+        return None
+    if photo_info is not None and photo_info.get("ownerId") != owner_id:
+        return None
+    if photo_info is not None and photo_info.get("legacy"):
+        legacy_path = photo_file_path(directory, photo_key)
+        if legacy_path is None or not legacy_path.is_file():
+            return None
     now = datetime.now(timezone.utc)
     token = jwt.encode(
         {
@@ -1277,6 +1322,20 @@ def schedule_orphan_cleanup(engine: Engine, directory: Path, photo_key: str, cre
     return timer
 
 
+def quantity_band_state_for(report: Any, actions: list[Any]) -> dict[str, str]:
+    """Return the current band state, including canonical cleanup after-states."""
+    canonical = [action for action in actions if getattr(action, "remaining_quantities", None)]
+    if canonical:
+        try:
+            parsed = json.loads(max(canonical, key=lambda action: utc_datetime(action.created_at)).remaining_quantities)
+        except (TypeError, ValueError):
+            parsed = {}
+        return {category: band for category, band in (parsed or {}).items() if category in CATEGORY_WEIGHTS and band in QUANTITY_WEIGHTS}
+    if getattr(report, "item_counts", None):
+        return quantity_bands_for_counts(remaining_counts_for(report, actions))
+    return quantities_from_row(report)
+
+
 def report_dict(
     row: Any,
     viewer_id: str,
@@ -1284,6 +1343,8 @@ def report_dict(
     directory: Path,
     beach_names: dict[str, str],
     engine: Engine | None = None,
+    actions: list[Any] | None = None,
+    photo_info: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     # Exact coordinates and photo bytes are never copied into this response.
     quantities = quantities_from_row(row)
@@ -1300,8 +1361,21 @@ def report_dict(
         "status": row.status,
         "locationSource": row.location_source,
     }
-    if row.status in REPORT_STATUS_NOTES:
+    if getattr(row, "status_note", None):
+        value["statusNote"] = row.status_note
+    elif row.status in REPORT_STATUS_NOTES:
         value["statusNote"] = REPORT_STATUS_NOTES[row.status]
+    loaded_actions = actions
+    eligible_cutoff = datetime.now(timezone.utc) - timedelta(days=90)
+    if row.status != "Counted" or utc_datetime(row.created_at) < eligible_cutoff or getattr(row, "deleted_at", None) is not None:
+        value["currentState"] = "excluded"
+    else:
+        loaded_actions = actions
+        if loaded_actions is None and engine is not None:
+            with engine.connect() as connection:
+                loaded_actions = connection.execute(select(cleanup_actions_table).where(cleanup_actions_table.c.target_report_id == row.id)).all()
+        current_quantities = quantity_band_state_for(row, loaded_actions or [])
+        value["currentState"] = "active" if any(band != "Small" for band in current_quantities.values()) else "resolved"
     if getattr(row, "item_counts", None):
         try:
             item_counts = json.loads(row.item_counts)
@@ -1309,18 +1383,14 @@ def report_dict(
             item_counts = {}
         value["itemCounts"] = item_counts
         remaining = item_counts
-        if engine is not None:
-            with engine.connect() as connection:
-                actions = connection.execute(
-                    select(cleanup_actions_table).where(cleanup_actions_table.c.target_report_id == row.id)
-                ).all()
-            remaining = remaining_counts_for(row, actions)
+        if loaded_actions is not None:
+            remaining = remaining_counts_for(row, loaded_actions)
         value["remainingItemCounts"] = remaining
         value["eventId"] = getattr(row, "event_id", None)
     if viewer_id == row.reporter_id:
         # The opaque key is returned only to the owner so an expired preview can be renewed.
         value["photoKey"] = row.photo_key
-        photo_url = signed_photo_url(row.photo_key, row.reporter_id, jwt_secret, directory, engine)
+        photo_url = signed_photo_url(row.photo_key, row.reporter_id, jwt_secret, directory, engine, photo_info)
         if photo_url:
             value["photoUrl"] = photo_url
     return value
@@ -1619,55 +1689,14 @@ def create_app(
                 .where(event_members_table.c.event_id.in_(event_ids))
                 .order_by(event_members_table.c.joined_at)
             ).all()
-            user_ids = {member.participant_id for member in members}
-            user_rows = connection.execute(select(users_table.c.id, users_table.c.participant_id).where(users_table.c.id.in_(user_ids))).all() if user_ids else []
-            participant_numbers = {row.id: row.participant_id for row in user_rows}
-            reports = connection.execute(select(
-                reports_table.c.event_id,
-                reports_table.c.reporter_id,
-                reports_table.c.created_at,
-            ).where(
-                reports_table.c.event_id.in_(event_ids),
-                reports_table.c.status == "Counted",
-            )).all()
-            cleanups = connection.execute(select(
-                cleanup_actions_table.c.id,
-                cleanup_actions_table.c.event_id,
-                cleanup_actions_table.c.participant_id,
-                cleanup_actions_table.c.created_at,
-            ).where(cleanup_actions_table.c.event_id.in_(event_ids)).order_by(cleanup_actions_table.c.created_at)).all()
 
         members_by_event: defaultdict[str, list[Any]] = defaultdict(list)
-        cleanups_by_event: defaultdict[str, list[str]] = defaultdict(list)
-        evidence_by_event: defaultdict[str, set[str]] = defaultdict(set)
-        events_by_id = {event.id: event for event in event_rows}
         for member in members:
             members_by_event[member.event_id].append(member)
-        for report in reports:
-            event = events_by_id[report.event_id]
-            if utc_datetime(event.starts_at) <= utc_datetime(report.created_at) <= utc_datetime(event.ends_at):
-                evidence_by_event[event.id].add(report.reporter_id)
-        for cleanup in cleanups:
-            cleanups_by_event[cleanup.event_id].append(cleanup.id)
-            event = events_by_id[cleanup.event_id]
-            if utc_datetime(event.starts_at) <= utc_datetime(cleanup.created_at) <= utc_datetime(event.ends_at):
-                evidence_by_event[event.id].add(cleanup.participant_id)
 
         payloads = []
         for event in event_rows:
             event_members = members_by_event[event.id]
-            evidence = evidence_by_event[event.id]
-            joined_by = [participant_numbers[member.participant_id] for member in event_members if member.participant_id in participant_numbers]
-            check_ins = {
-                participant_numbers[member.participant_id]: "within_area" if member.location_passed else "idle"
-                for member in event_members
-                if member.participant_id in participant_numbers
-            }
-            attendance_by = [
-                participant_numbers[member.participant_id]
-                for member in event_members
-                if member.location_passed and member.participant_id in participant_numbers and member.participant_id in evidence
-            ]
             viewer_member = next((member for member in event_members if member.participant_id == viewer_id), None)
             beach_name = beach_names.get(event.beach_id, event.beach_id)
             beach = next((item for item in beaches if item["id"] == event.beach_id), None)
@@ -1685,16 +1714,12 @@ def create_app(
                 "meetingPoint": getattr(event, "meeting_point", None),
                 "status": event.status,
                 "source": "weekly" if event.source == "scheduled" else "admin",
-                "participantCount": len(joined_by),
-                "joinedBy": joined_by,
-                "checkIns": check_ins,
-                "attendanceBy": attendance_by,
-                "cleanupIds": cleanups_by_event[event.id],
-                "checkedInCount": sum(state == "within_area" for state in check_ins.values()),
-                "attendanceCount": len(attendance_by),
+                "participantCount": len(event_members),
+                "checkedInCount": sum(member.location_passed for member in event_members),
+                "attendanceCount": sum(member.location_passed for member in event_members),
                 "joined": bool(viewer_member),
                 "checkedIn": bool(viewer_member and viewer_member.location_passed),
-                "attendanceConfirmed": bool(viewer_member and viewer_member.location_passed and viewer_id in evidence),
+                "attendanceConfirmed": bool(viewer_member and viewer_member.location_passed),
             })
         return payloads
 
@@ -1751,13 +1776,13 @@ def create_app(
         if model_state not in {"ready", "unavailable", "unreadable", "empty"}:
             model_state = "unavailable"
         return {
-            **result,
             "quantityBands": quantity_bands,
-            "manualEntryRequired": model_state != "ready",
-            # Iteration 2 UI contract: counts remain the auditable detector output,
-            # while suggestions retain the frontend's four quantity-band shape.
-            "modelState": model_state,
             "suggestions": quantity_bands,
+            "confidence": result.get("confidence"),
+            "modelVersion": result.get("modelVersion"),
+            "state": model_state,
+            "modelState": model_state,
+            "manualEntryRequired": model_state != "ready",
             "supportedClasses": list(ITERATION2_CATEGORIES),
         }
 
@@ -1864,7 +1889,7 @@ def create_app(
     @application.get("/beaches")
     def get_beaches():
         now = datetime.now(timezone.utc)
-        return jsonify([beach_summary(engine, beach, now) for beach in beaches])
+        return jsonify(beach_summaries_batch(engine, beaches, now))
 
     @application.get("/beaches/<beach_id>")
     def get_beach(beach_id: str):
@@ -2204,13 +2229,18 @@ def create_app(
                 event_members_table.c.participant_id == request.current_user.id,
             )).first()
             if existing is None:
-                connection.execute(insert(event_members_table).values(
-                    event_id=event_id,
-                    participant_id=request.current_user.id,
-                    joined_at=now,
-                    checked_in_at=None,
-                    location_passed=False,
-                ))
+                try:
+                    with connection.begin_nested():
+                        connection.execute(insert(event_members_table).values(
+                            event_id=event_id,
+                            participant_id=request.current_user.id,
+                            joined_at=now,
+                            checked_in_at=None,
+                            location_passed=False,
+                        ))
+                except IntegrityError:
+                    # A concurrent join already created this membership.
+                    pass
             event = connection.execute(select(events_table).where(events_table.c.id == event_id)).first()
         return jsonify(event_dict(event, request.current_user.id))
 
@@ -2265,6 +2295,7 @@ def create_app(
                 event_members_table.c.event_id == event_id,
                 event_members_table.c.participant_id == request.current_user.id,
             ).values(checked_in_at=now, location_passed=True))
+            event = connection.execute(select(events_table).where(events_table.c.id == event_id)).first()
         return jsonify(event_dict(event, request.current_user.id))
 
     @application.get("/cleanup-targets")
@@ -2586,7 +2617,27 @@ def create_app(
             query = query.where(reports_table.c.status == status)
         with engine.connect() as connection:
             rows = connection.execute(query).all()
-        return jsonify([report_dict(row, request.current_user.id, jwt_secret, directory, beach_names, engine) for row in rows])
+            report_ids = [row.id for row in rows]
+            actions = connection.execute(
+                select(cleanup_actions_table).where(cleanup_actions_table.c.target_report_id.in_(report_ids))
+            ).all() if report_ids else []
+            photo_keys = [row.photo_key for row in rows if row.photo_key]
+            photo_rows = connection.execute(
+                select(report_photos_table.c.photo_key, report_photos_table.c.owner_id, report_photos_table.c.mime)
+                .where(report_photos_table.c.photo_key.in_(photo_keys))
+            ).all() if photo_keys else []
+        actions_by_report: defaultdict[str, list[Any]] = defaultdict(list)
+        for action in actions:
+            actions_by_report[action.target_report_id].append(action)
+        photos = {photo.photo_key: {"ownerId": photo.owner_id, "mime": photo.mime, "metadataStripped": True} for photo in photo_rows}
+        for row in rows:
+            if row.photo_key not in photos and read_photo_metadata(directory, row.photo_key):
+                photos[row.photo_key] = {"ownerId": row.reporter_id, "legacy": True}
+        return jsonify([
+            report_dict(row, request.current_user.id, jwt_secret, directory, beach_names, engine,
+                        actions_by_report.get(row.id, []), photos.get(row.photo_key, False))
+            for row in rows
+        ])
 
     @application.get("/reports/mine/counts")
     @require_auth
@@ -2615,13 +2666,13 @@ def create_app(
             return error_response(404, "NOT_FOUND", "Report not found.")
         if old.reporter_id != request.current_user.id:
             return error_response(403, "NOT_OWNER", "You can only correct your own report.")
+        with engine.connect() as connection:
+            has_cleanup = connection.execute(
+                select(cleanup_actions_table.c.id).where(cleanup_actions_table.c.target_report_id == report_id).limit(1)
+            ).first()
+        if has_cleanup:
+            return error_response(409, "REPORT_IMMUTABLE", "A report with cleanup history cannot be edited.")
         if getattr(old, "item_counts", None):
-            with engine.connect() as connection:
-                has_cleanup = connection.execute(
-                    select(cleanup_actions_table.c.id).where(cleanup_actions_table.c.target_report_id == report_id).limit(1)
-                ).first()
-            if has_cleanup:
-                return error_response(409, "REPORT_IMMUTABLE", "A report with cleanup history cannot be edited.")
             return error_response(409, "REPORT_IMMUTABLE", "Iteration 2 model-confirmed counts are immutable after submission.")
 
         if "locationSource" in payload or "coords" in payload:
@@ -2629,22 +2680,48 @@ def create_app(
             coords = payload.get("coords")
         else:
             location_source = old.location_source
-            coords = {"lat": old.lat, "lng": old.lng} if old.location_source == "gps" else None
+            coords = None
         merged = {
             "beachId": payload.get("beachId", old.beach_id),
             "quantities": payload.get("quantities", quantities_from_row(old)),
             "photoKey": payload.get("photoKey", old.photo_key),
             "locationSource": location_source,
         }
+        unchanged_gps = old.location_source == "gps" and "coords" not in payload and "locationSource" not in payload and merged["beachId"] == old.beach_id
+        if old.location_source == "gps" and "coords" not in payload and merged["beachId"] != old.beach_id:
+            merged["locationSource"] = location_source = "manual"
+        if unchanged_gps:
+            # The old raw coordinate is intentionally unavailable. Validate the
+            # non-location fields as manual, then retain the privacy reference.
+            merged["locationSource"] = "manual"
         if coords is not None:
             merged["coords"] = coords
+        raw_gps_coords = None
+        if location_source == "gps" and isinstance(coords, dict) and is_json_number(coords.get("lat")) and is_json_number(coords.get("lng")):
+            raw_gps_coords = (float(coords["lat"]), float(coords["lng"]))
         require_uploaded_photo = "photoKey" in payload and payload["photoKey"] != old.photo_key
         data, problem = validate_report_payload(merged, beaches, request.current_user.id, directory, require_uploaded_photo, engine)
         if problem:
             return error_response(*problem)
         assert data is not None
+        if all(band == "Small" for band in data["quantities"].values()):
+            return error_response(422, "SMALL_ONLY_REPORT", "At least one non-Small quantity band is required.")
+        if unchanged_gps:
+            data["location_source"] = "gps"
+            data["lat"] = data["lng"] = None
         created_at = utc_datetime(old.created_at)
         now = datetime.now(timezone.utc)
+        geo_secret = os.getenv("GEO_PRIVACY_HMAC_KEY", "").strip() or hmac.new(
+            jwt_secret.encode("utf-8"), b"radar-sampah-geo-key-v1", hashlib.sha256
+        ).hexdigest()
+        new_proximity_ref = old.proximity_ref if unchanged_gps else (
+            proximity_ref(raw_gps_coords[0], raw_gps_coords[1], report_id, geo_secret)
+            if data["location_source"] == "gps" and raw_gps_coords is not None else None
+        )
+        if data["location_source"] == "gps":
+            data["lat"] = data["lng"] = None
+        gps_decision = application.extensions.get("gps_proximity_decision")
+        reviewed_status, refresh_target_id = gps_decision({**merged, "locationSource": "gps"}, report_id) if raw_gps_coords is not None and gps_decision else (None, None)
         with engine.begin() as connection:
             status = duplicate_status(
                 connection,
@@ -2653,6 +2730,19 @@ def create_app(
                 created_at,
                 exclude_report_id=report_id,
             )
+            if unchanged_gps and old.status == "Duplicate":
+                # Without a new location measurement the earlier privacy-safe
+                # duplicate decision cannot be recomputed from raw coordinates.
+                status = old.status
+                data["status_note"] = old.status_note
+            elif reviewed_status is not None:
+                status = reviewed_status
+                if status == "Duplicate":
+                    data["status_note"] = "Matching report within 10 metres: an active report already records the same current categories and quantity bands."
+                if refresh_target_id:
+                    connection.execute(reports_table.update().where(reports_table.c.id == refresh_target_id).values(
+                        proximity_ref=proximity_ref(raw_gps_coords[0], raw_gps_coords[1], refresh_target_id, geo_secret)
+                    ))
             connection.execute(
                 reports_table.update()
                 .where(reports_table.c.id == report_id)
@@ -2668,6 +2758,8 @@ def create_app(
                     location_source=data["location_source"],
                     lat=data["lat"],
                     lng=data["lng"],
+                    proximity_ref=new_proximity_ref,
+                    status_note=data.get("status_note"),
                     status=status,
                     updated_at=now,
                     **quantity_values(data["quantities"]),

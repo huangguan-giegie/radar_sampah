@@ -152,7 +152,20 @@ The original run used an NVIDIA GPU (`device=0`). Change `--device` when running
 
 ## Deployment note
 
-This branch supplies the detector weights and inference entry point. It does not yet replace the backend's existing demonstration recognition adapter. Production integration should load the model once at backend startup, accept an uploaded image, run local inference, and return class, confidence and bounding-box coordinates to the frontend.
+The backend loads the ONNX export once at startup using ONNX Runtime. The current
+model identifier is `sea-taco-yolo11m-best-onnx/1`. The artifact
+`models/sea_taco_yolo11m_best.onnx` has SHA-256
+`d0bfca4779a93eea6b3c32abc57c21fedf684b8dbc9ba3b9af7f6bf918b92b34`.
+
+Recognition counts detections internally and maps them to supported quantity
+bands. The public response contains editable category/band suggestions and model
+state, not raw detection boxes or exact counts. Only participant-confirmed bands
+are submitted as report values. The model does not verify a report, determine
+Beach Attention, or certify cleanup success.
+
+The metrics above are validation-split measurements. A test split is listed in
+the dataset manifest, but a separately evaluated test-set result is not recorded
+in this repository. Phone-photo accuracy must not be claimed from those metrics.
 
 ## Sources and attribution
 

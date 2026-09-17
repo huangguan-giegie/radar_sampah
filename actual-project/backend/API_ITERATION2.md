@@ -4,6 +4,25 @@ This document is the reviewed Iteration 2 backend contract after the final Manua
 
 Business timezone: `Asia/Kuala_Lumpur`. JSON timestamps use ISO 8601 with timezone information. Event cards expose local `date`, `startsAt` and `endsAt` values.
 
+## September 17 contract update
+
+The [approved core update](../../docs/core-update-20260917.md) supersedes older
+conflicting attendance, deletion, precision, and storage wording below.
+
+- Report creation and correction reject all-Small values without persisting the
+  attempted change. Both paths retain only privacy-preserving location references.
+- Report reads include `currentState: active | resolved | excluded`; the original
+  `status` remains compatible. All-Small cleanup retains audit history.
+- Beach reads include `latestContributingReportAt: string | null`, independently
+  of the historical `lastReportedAt` field.
+- Successful eligible check-in immediately records attendance. Event responses
+  contain aggregate counts and viewer-only `joined`, `checkedIn`, and
+  `attendanceConfirmed` booleans, not participant/evidence maps.
+- `GET /share-links?eventId=...` or an owner's `?reportId=...` produces a stable
+  `/share/:token` frontend path. Reading the token exposes only those targets.
+- Recognition suggestions are category/band values. Public responses omit raw
+  detection counts and boxes. Failed recognition always permits manual entry.
+
 ## 1. Authentication and participant recovery
 
 The app does not collect a participant name, email address or phone number.

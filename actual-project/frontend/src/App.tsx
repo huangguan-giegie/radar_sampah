@@ -44,6 +44,7 @@ const CleanupScreen = lazy(() => import('./screens/CleanupScreen'));
 const CleanupResultScreen = lazy(() => import('./screens/CleanupResultScreen'));
 const EventResultScreen = lazy(() => import('./screens/EventResultScreen'));
 const SharedEventScreen = lazy(() => import('./screens/SharedEventScreen'));
+const SharedItemScreen = lazy(() => import('./screens/SharedItemScreen'));
 const AiSuggestionScreen = lazy(() => import('./screens/AiSuggestionScreen'));
 const AiMethodScreen = lazy(() => import('./screens/AiMethodScreen'));
 const AdminEventScreen = lazy(() => import('./screens/AdminEventScreen'));
@@ -72,7 +73,7 @@ function RequireAuth({ children }: { children: JSX.Element }) {
   // Render nothing until we know who the user is. Deciding earlier would
   // redirect on the strength of a guess, and send people to the sign-in page
   // they were about to be let past.
-  if (!authReady) return null;
+  if (!authReady) return <div className="screen"><div className="measure i2-page" role="status">Restoring your session...</div></div>;
   if (!user) {
     return <Navigate to={`/identity?next=${encodeURIComponent(pathname + search)}`} replace />;
   }
@@ -82,7 +83,7 @@ function RequireAuth({ children }: { children: JSX.Element }) {
 function RequireAdmin({ children }: { children: JSX.Element }) {
   const { user, authReady } = useApp();
   const { pathname, search } = useLocation();
-  if (!authReady) return null;
+  if (!authReady) return <div className="screen"><div className="measure i2-page" role="status">Restoring your session...</div></div>;
   if (!user) return <Navigate to={`/identity?next=${encodeURIComponent(pathname + search)}`} replace />;
   if (user.role !== 'moderator') return <AdminAccessDeniedScreen />;
   return children;
@@ -132,8 +133,8 @@ export default function App() {
     ? 'Report saved'
     : pathname.startsWith('/report/')
       ? 'Add a report'
-      : pathname.startsWith('/share/events/')
-        ? 'Shared cleanup activity'
+      : pathname.startsWith('/share/')
+        ? 'Shared item'
         : pathname.startsWith('/events/') && pathname.endsWith('/check-in')
           ? 'Cleanup check-in'
           : pathname.startsWith('/events/') && pathname.endsWith('/result')
@@ -195,7 +196,7 @@ export default function App() {
       >
         {pageTitle}
       </div>
-      <Suspense fallback={null}>
+      <Suspense fallback={<div className="screen"><div className="measure i2-page" role="status">Loading...</div></div>}>
       <Routes>
         {/* Public pages. Anyone can look at beach data without an account -
             that is the point of the project, and it is what makes the map
@@ -217,6 +218,7 @@ export default function App() {
         <Route path="/events/:eventId" element={<EventScreen />} />
         <Route path="/events/:eventId/result" element={<EventResultScreen />} />
         <Route path="/share/events/:eventId" element={<SharedEventScreen />} />
+        <Route path="/share/:token" element={<SharedItemScreen />} />
         <Route path="/events/:eventId/check-in" element={<RequireAuth><CheckInScreen /></RequireAuth>} />
         <Route path="/cleanup/:beachId" element={<RequireAuth><CleanupScreen /></RequireAuth>} />
         <Route path="/cleanup/result/:cleanupId" element={<RequireAuth><CleanupResultScreen /></RequireAuth>} />

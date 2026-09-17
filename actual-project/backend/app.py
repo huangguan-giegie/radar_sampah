@@ -317,7 +317,7 @@ def _distance_to_stored_cell(
     return None
 
 
-def _gps_proximity_decision(engine: Any, payload: Any, secret: str) -> tuple[str, str | None]:
+def _gps_proximity_decision(engine: Any, payload: Any, secret: str, exclude_report_id: str | None = None) -> tuple[str, str | None]:
     """Return desired status and optional active target whose reference moves."""
     if not isinstance(payload, dict) or payload.get("locationSource") != "gps":
         return "Counted", None
@@ -340,9 +340,13 @@ def _gps_proximity_decision(engine: Any, payload: Any, secret: str) -> tuple[str
                 _impl.reports_table.c.beach_id == beach_id,
                 _impl.reports_table.c.status == "Counted",
                 _impl.reports_table.c.proximity_ref.is_not(None),
+                _impl.reports_table.c.deleted_at.is_(None),
+                _impl.reports_table.c.created_at >= _impl.datetime.now(_impl.timezone.utc) - _impl.timedelta(days=90),
             )
         ).all()
         for target in targets:
+            if target.id == exclude_report_id:
+                continue
             distance = _distance_to_stored_cell(lat, lng, target.id, target.proximity_ref, secret)
             if distance is None or distance > 10.0:
                 continue
@@ -411,10 +415,11 @@ def _reviewed_event_scheduler(engine: Any):
     def ensure_scheduled_events(now: Any | None = None) -> None:
         current = now or _impl.datetime.now(_impl.timezone.utc)
         starts = _upcoming_saturdays_reviewed(current)
+        summaries = {summary["id"]: summary for summary in _impl.beach_summaries_batch(engine, beaches, current)}
         eligible_beaches = [
             beach
             for beach in beaches
-            if _impl.beach_summary(engine, beach, current).get("severity") in WEEKLY_EVENT_SEVERITIES
+            if summaries.get(beach["id"], {}).get("severity") in WEEKLY_EVENT_SEVERITIES
         ]
         scheduled = [
             (
@@ -542,6 +547,8 @@ def create_app(
     install_v3_contract(application, engine, jwt_secret, _impl)
 
     reviewed_scheduler = _reviewed_event_scheduler(engine)
+    application.extensions["ensure_scheduled_events"] = reviewed_scheduler
+    application.extensions["gps_proximity_decision"] = lambda payload, report_id: _gps_proximity_decision(engine, payload, geo_secret, report_id)
     for endpoint in ("list_events", "get_event"):
         route = application.view_functions.get(endpoint)
         if route is None or not _replace_freevar(route, "ensure_scheduled_events", reviewed_scheduler):

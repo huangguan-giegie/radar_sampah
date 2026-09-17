@@ -110,7 +110,7 @@ export default function CleanupScreen() {
       patchDraft({
         beachId,
         beachName,
-        linkedEventId: event && user && event.beachId === beachId && event.joinedBy.includes(user.participantId) ? event.id : null,
+        linkedEventId: event && user && event.beachId === beachId && event.joined ? event.id : null,
       });
       nav(user ? '/report/photo' : `/identity?next=${encodeURIComponent('/report/photo')}`);
     };
