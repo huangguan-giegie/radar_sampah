@@ -3,9 +3,11 @@
 ## Local checks
 
 - Baseline backend: 137 passed before changes.
-- Updated backend full run: 148 passed, one environment-dependent fallback test
-  failed after ONNX Runtime was installed. The test now explicitly supplies an
-  unavailable recognizer; its focused rerun passed. All 149 cases have passed.
+- Updated backend final full run: 149 passed in 122.57 seconds. Contract tests
+  use an unavailable model path; real ONNX inference was checked separately.
+  The fallback test explicitly supplies an unavailable recognizer.
+- A final GPS response consistency correction passed all four report-update
+  regressions: creation returns the same current eligibility as the saved row.
 - Frontend: 119 tests passed across 14 files; TypeScript build and Vite production
   build passed.
 - Query regression: `/beaches` uses two report/cleanup SELECTs for both six and
@@ -28,6 +30,7 @@ production database. No production report was created during local verification.
 - Installed the repository-pinned ONNX Runtime 1.27.0 in the local Python runtime;
   the real bundled ONNX model loaded and returned editable suggestions.
 - Changed Plastic to Large, then opened the manual correction form successfully.
+- Refreshed the details page and verified restored photo preview and edited bands.
 - Reports list, detail and signed selected-report share displayed the saved image.
 - Inspected 390x844 review and 320x844 report/share layouts for clipping/overlap.
 - Map rendered four pins and tiles before any activity request. Local resource
@@ -44,4 +47,12 @@ production database. No production report was created during local verification.
 - Source Google Docs were reviewed; this repository decision record is the
   implementation reference. Remote documents were not edited.
 - Rollback baseline: `a90f082cbb0460f455d56106286688a20114fac9`.
-- Production deployment and smoke results will be recorded after release.
+- PR #50 merged as `f0e1e66`; frontend preview restoration is `2964533`.
+- Render confirmed both services live. Warm `/beaches` responses: 1203, 1119,
+  1087 ms (median 1119 ms), compared with the 4.6-5.1 s baseline. Activity list:
+  4101 ms versus 11.3 s, with no public participant identity arrays.
+- Production browser checks: Reports and historical resolved detail load;
+  `/reports/mine` requests were 1840-1956 ms. Four map pins and tiles render,
+  and no activity request is made before selecting a beach.
+- A historical production image was already unavailable; this update does not
+  reconstruct previously lost photo bytes.

@@ -593,6 +593,7 @@ def create_app(
                     .values(proximity_ref=_impl.proximity_ref(lat, lng, refresh_target_id, geo_secret))
                 )
         body["status"] = desired_status
+        body["currentState"] = "excluded" if desired_status == "Duplicate" else "active"
         if desired_status == "Duplicate":
             body["statusNote"] = GEO_DUPLICATE_NOTE
         else:

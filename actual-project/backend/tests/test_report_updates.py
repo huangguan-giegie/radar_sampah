@@ -50,6 +50,8 @@ def test_gps_edit_without_new_coordinates_preserves_reference_and_duplicate(api)
     first = client.post('/reports', headers=headers, json=payload).get_json()
     second = client.post('/reports', headers=headers, json=payload).get_json()
     assert second['status'] == 'Duplicate'
+    assert first['currentState'] == 'active'
+    assert second['currentState'] == 'excluded'
     engine = application.extensions['marine_engine']
     with engine.connect() as connection:
         before = connection.execute(select(reports_table).where(reports_table.c.id == second['id'])).first()
