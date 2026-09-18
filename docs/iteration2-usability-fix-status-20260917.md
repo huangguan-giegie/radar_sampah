@@ -127,6 +127,52 @@ backlog of half-promises.
   checks. One sample photo was uploaded into an unsubmitted draft, and one
   anonymous test participant was created.
 
+## Latest follow-up after acceptance test - 18 September 2026
+
+This section records the team's follow-up after the manual acceptance-test review.
+It is a status and process update only; it does not redefine the deployed
+behaviour described above.
+
+- **Scope freeze.** The team agreed that there should be no further deployment
+  changes at this point. Any Acceptance Criterion that is still Partial or Fail
+  should be reflected in tracking/LeanKit rather than treated as already fixed.
+- **Deferred backlog alignment.** US 5.3 and US 5.4 from the Overall Dev Plan
+  have been added to `EP,US, AC_Iteration2_V3(updated with metor's feedbacks)`
+  under **Deferred To** so that the document remains aligned with LeanKit. They
+  are backlog items until Iteration 3. A separate Backlog Grooming file had not
+  yet existed at the time of discussion and was assigned to be created.
+- **Manual re-check required.** Everyone was asked to run each acceptance test
+  manually against the current live deployment. If AC2.4.4 is not satisfied, it
+  should be moved back to **Doing**.
+- **AC2.1.3 naming clarification.** The current plan does not contain an
+  Iteration 2 criterion called "AC2.1.3 - Correcting a report". AC2.1.3 was
+  already used in Iteration 1 for **Protect Exact Location**. Any discussion of
+  correcting a report should therefore refer to the relevant current AC by its
+  actual identifier rather than reusing AC2.1.3.
+- **Meaning of "No (run stopped)".** This label belongs to the team's own
+  re-check column, not to the application. Every Partial/Fail verdict was meant
+  to be verified twice. **Yes** means a second person re-checked the row and the
+  verdict held; **No (run stopped)** means the second pass stopped before that
+  row was reached. The affected Epic 9 results are therefore first-pass results
+  that still need re-verification, not Epic 9 runtime errors.
+
+### Current follow-up on the four acceptance-test failures
+
+The detailed live re-check posted at 14:54 on 18 September is treated as the
+latest status where it conflicts with earlier shorthand saying that only
+AC9.4.1 remained.
+
+| Acceptance Criterion | Latest live status | Follow-up |
+| --- | --- | --- |
+| **AC1.2.5** | **Working / resolved in deployment** | The old evidence rule is no longer enforced by the backend. An in-window check-in records attendance (TD-1), and the event page shows **Join -> Check in -> Attendance recorded**. |
+| **AC3.3.3** | **Partial** | The API now returns `latestContributingReportAt`, but the beach page still shows only **Recently reported** without the date. Frontend work remains. |
+| **AC2.4.4** | **Fail / open** | The cleanup screen says **All after-cleanup bands Small: remove this report**, but the backend does not delete the source report. This should remain open and move back to **Doing** if the manual acceptance test confirms the failure. |
+| **AC9.4.1** | **Open - QA evidence** | This requires the QA evidence package to be assembled; it is not a code-change item. |
+
+This follow-up should be used when updating the acceptance-test record, LeanKit
+status and the upcoming Backlog Grooming record. It does not itself authorise a
+new deployment.
+
 ## Known trade-off
 
 The recovery token is now written to browser storage, cleared on sign out. It is
