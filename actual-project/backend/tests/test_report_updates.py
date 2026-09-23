@@ -81,4 +81,6 @@ def test_resolved_and_expired_reports_remain_in_history_without_contributing(api
     assert rows[current['id']]['photoUrl']
     card = next(row for row in client.get('/beaches').get_json() if row['id'] == 'morib')
     assert card['validReports'] == 0
+    assert card['newestCountedReportAt'] is None
     assert card['latestContributingReportAt'] is None
+    assert card['freshnessKind'] == 'stale'
