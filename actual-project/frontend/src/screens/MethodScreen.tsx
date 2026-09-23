@@ -152,7 +152,7 @@ export default function MethodScreen() {
                  is what the third row says in plain words. */
               { of: 'ONE CATEGORY', is: 'category weight × quantity level' },
               { of: 'ONE REPORT', is: 'highest category score' },
-              { of: 'ONE BEACH', is: 'recalculated from remaining recorded litter' },
+              { of: 'ONE BEACH', is: `median of active counted report scores · latest ${m.windowDays} days` },
             ].map((f) => (
               <div key={f.of} style={{ background: C.tint, borderRadius: 14, padding: '11px 14px' }}>
                 <div style={{ fontFamily: MONO, fontSize: 8.5, letterSpacing: '.14em', color: C.dim }}>{f.of}</div>
@@ -219,6 +219,9 @@ export default function MethodScreen() {
                 <span style={{ fontFamily: MONO, fontSize: 12.5, fontWeight: 600, color: C.ink2 }}>{b.range}</span>
               </div>
             ))}
+          </div>
+          <div style={{ padding: '10px 14px', borderTop: `1px solid ${C.line}`, color: C.muted, fontSize: 11.5, lineHeight: 1.5 }}>
+            “Very high” is the participant-facing label. The API keeps “Severe” only as its internal contract value.
           </div>
         </div>
 
