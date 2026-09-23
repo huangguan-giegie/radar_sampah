@@ -14,7 +14,7 @@ import { getBeach, getSpeciesDistribution, USE_MOCK } from '../api';
 import { BeachCover } from '../components/BeachCover';
 import { EcologicalBackgroundLink } from '../components/EcologicalBackgroundLink';
 import { Camera, Check, ChevronRight, Clock, Info, SpeciesIcon } from '../components/Icon';
-import { BackButton, ErrorNote, GhostButton, Label, PrimaryButton, Skeleton } from '../components/ui';
+import { BackButton, DraftChoiceDialog, ErrorNote, GhostButton, Label, PrimaryButton, Skeleton } from '../components/ui';
 import { attentionStateFor, C, formatDate, freshnessLabel, freshStyle, MONO, NOISE, reportWord, SEVERITY, severityLabel } from '../theme';
 import { BandMeter, Callout, GlassPanel, InfoChip } from '../components/ds';
 import { useApp } from '../AppContext';
@@ -76,6 +76,7 @@ export default function BeachScreen() {
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [showDraftChoice, setShowDraftChoice] = useState(false);
   const [modelResult, setModelResult] = useState<SpeciesDistributionResult | null>(null);
   const requestedEventId = new URLSearchParams(location.search).get('event');
   const { data: latestCleanup } = useAsyncData(
@@ -148,13 +149,7 @@ export default function BeachScreen() {
   // clear the last saved report: while that value is set the report routes send
   // the user to /reports, so a new report would bounce straight out of the flow
   // if it were left behind.
-  const startReport = () => {
-    if (hasDraftProgress(draft)) {
-      if (window.confirm('Resume your unfinished report? Choose Cancel to start a new report.')) {
-        nav(resumePath(draft));
-        return;
-      }
-    }
+  const beginNewReport = () => {
     resetDraft();
     setLastSavedReport(null);
     patchDraft({
@@ -163,6 +158,14 @@ export default function BeachScreen() {
       linkedEventId: canLinkReportToEvent ? linkedEvent!.id : null,
     });
     nav(user ? '/report/photo' : `/identity?next=${encodeURIComponent('/report/photo')}`);
+  };
+
+  const startReport = () => {
+    if (hasDraftProgress(draft)) {
+      setShowDraftChoice(true);
+      return;
+    }
+    beginNewReport();
   };
 
   // A bad route and a lost connection are different recovery paths. The old
@@ -220,6 +223,18 @@ export default function BeachScreen() {
 
   return (
     <div className="screen scroll-y" style={{ zIndex: 20 }}>
+      {showDraftChoice && (
+        <DraftChoiceDialog
+          onResume={() => {
+            setShowDraftChoice(false);
+            nav(resumePath(draft));
+          }}
+          onStartNew={() => {
+            setShowDraftChoice(false);
+            beginNewReport();
+          }}
+        />
+      )}
 
       <BeachCover coverImageUrl={b.coverImageUrl} scene={b.scene} alt={b.name} style={{ height: 300 }}>
         {/* The cover is a real photo when the backend has one. When it does
