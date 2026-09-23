@@ -53,7 +53,7 @@ export default function AiMethodScreen() {
         <div className="i2-card">
           <SectionLabel size="sm">CATEGORY &amp; SIZE</SectionLabel>
           <p style={{ margin: '8px 0 0', color: C.muted, fontSize: 12.5, lineHeight: 1.55 }}>
-            Category means litter type. Quantity uses Small, Medium, Large or Very Large. Small reports are not recorded.
+            Category means litter type. Quantity uses Small, Medium, Large or Very Large. A new report with only Small bands is not counted as active evidence; Small is still used to record what remains after cleanup.
           </p>
         </div>
 
