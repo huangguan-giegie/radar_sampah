@@ -254,7 +254,7 @@ export default function CleanupScreen() {
           <div style={{ marginTop: 4, fontSize: 12, color: C.muted }}>{compositionLine(target.remainingBands)}</div>
           <div style={{ marginTop: 4, fontFamily: MONO, fontSize: 10, color: C.dim }}>REPORTED {formatDate(target.reportedAt).toUpperCase()}</div>
           <p style={{ margin: '12px 0 0', paddingTop: 11, borderTop: `1px solid ${C.line}`, fontSize: 12, lineHeight: 1.5, color: C.slate }}>
-            All after-cleanup bands Small: remove this report.
+            Source report kept as history; no longer counted.
           </p>
         </div>
 
