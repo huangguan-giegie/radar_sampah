@@ -155,6 +155,38 @@ export function TextButton({
 }
 
 
+/** Explicit two-choice replacement for browser confirm() when a report draft exists. */
+export function DraftChoiceDialog({
+  onResume,
+  onStartNew,
+}: {
+  onResume: () => void;
+  onStartNew: () => void;
+}) {
+  return (
+    <div
+      style={{ position: 'fixed', inset: 0, zIndex: 120, display: 'grid', placeItems: 'center', padding: 20, background: 'rgba(6,18,47,.48)', backdropFilter: 'blur(4px)' }}
+    >
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="draft-choice-title"
+        style={{ width: 'min(100%, 420px)', borderRadius: 22, background: C.white, border: `1px solid ${C.line}`, boxShadow: '0 26px 70px rgba(6,18,47,.28)', padding: 20 }}
+      >
+        <div id="draft-choice-title" style={{ fontSize: 18, fontWeight: 720, color: C.ink2 }}>Unfinished report found</div>
+        <p style={{ margin: '8px 0 16px', fontSize: 13.5, lineHeight: 1.55, color: C.muted }}>
+          Continue where you stopped, or explicitly discard that draft and start a new report.
+        </p>
+        <div style={{ display: 'grid', gap: 9 }}>
+          <PrimaryButton onClick={onResume} height={50}>Continue draft</PrimaryButton>
+          <GhostButton onClick={onStartNew} height={50}>Discard draft &amp; start new</GhostButton>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
 /**
  * The round back button.
  *
