@@ -1080,11 +1080,11 @@ def beach_summary(engine: Engine, beach: dict[str, Any], now: datetime | None = 
     )
     severity, band = severity_from_score(attention_score)
     newest = max(all_counted, key=lambda row: utc_datetime(row.created_at), default=None)
-    newest_at = utc_datetime(newest.created_at) if newest else None
-    if newest_at is None:
+    newest_counted_at = max((utc_datetime(row.created_at) for row, _ in active_rows), default=None)
+    if newest_counted_at is None:
         freshness = "stale"
     else:
-        age = current_time - newest_at
+        age = current_time - newest_counted_at
         freshness = "ok" if age < timedelta(days=30) else "aging" if age <= timedelta(days=90) else "stale"
     summary = {field: beach[field] for field in BEACH_SUMMARY_FIELDS}
     summary.update(
@@ -1096,7 +1096,8 @@ def beach_summary(engine: Engine, beach: dict[str, Any], now: datetime | None = 
             "attentionScore": round(attention_score, 2) if attention_score is not None else None,
             "eligibleReportCount": len(active_rows),
             "lastReportedAt": contract_timestamp(newest.created_at) if newest else None,
-            "latestContributingReportAt": contract_timestamp(max((row.created_at for row, _ in active_rows), default=None)) if active_rows else None,
+            "newestCountedReportAt": contract_timestamp(newest_counted_at) if newest_counted_at else None,
+            "latestContributingReportAt": contract_timestamp(newest_counted_at) if newest_counted_at else None,
             "freshnessKind": freshness,
         }
     )
@@ -1130,14 +1131,15 @@ def beach_summaries_batch(engine: Engine, beaches: list[dict[str, Any]], now: da
         score = float(median(report_score_for(q) for _, q in active_rows)) if len(active_rows) >= 3 else None
         severity, band = severity_from_score(score)
         newest = max(all_counted, key=lambda row: utc_datetime(row.created_at), default=None)
-        newest_at = utc_datetime(newest.created_at) if newest else None
-        age = current_time - newest_at if newest_at else None
+        newest_counted_at = max((utc_datetime(row.created_at) for row, _ in active_rows), default=None)
+        age = current_time - newest_counted_at if newest_counted_at else None
         summary = {field: beach[field] for field in BEACH_SUMMARY_FIELDS}
         summary.update({
             "severity": severity, "band": band, "insufficientData": severity is None,
             "validReports": len(active_rows), "attentionScore": round(score, 2) if score is not None else None,
             "eligibleReportCount": len(active_rows), "lastReportedAt": contract_timestamp(newest.created_at) if newest else None,
-            "latestContributingReportAt": contract_timestamp(max((row.created_at for row, _ in active_rows), default=None)) if active_rows else None,
+            "newestCountedReportAt": contract_timestamp(newest_counted_at) if newest_counted_at else None,
+            "latestContributingReportAt": contract_timestamp(newest_counted_at) if newest_counted_at else None,
             "freshnessKind": "stale" if age is None else "ok" if age < timedelta(days=30) else "aging" if age <= timedelta(days=90) else "stale",
         })
         result.append(summary)
