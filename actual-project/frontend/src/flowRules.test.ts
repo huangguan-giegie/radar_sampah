@@ -451,7 +451,7 @@ describe('Map marker accessibility', () => {
     expect(html).toContain('tabindex="0"');
 
     const insufficientHtml = markerHtml({ ...beach, validReports: 1 }, false, 'litter', 'bird');
-    expect(insufficientHtml).toContain('aria-label="Pantai Morib · NO DATA"');
+    expect(insufficientHtml).toContain('aria-label="Pantai Morib · INSUFFICIENT DATA"');
     expect(insufficientHtml).not.toContain('>HIGH</b>');
 
     // Zoomed out the beaches converge and the pills overlap into an unreadable
