@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Camera, Check, Upload } from '../components/Icon';
 import { Alert, Callout, InfoChip, SectionLabel } from '../components/ds';
-import { BackButton, GhostButton, PrimaryButton, TextButton } from '../components/ui';
+import { BackButton, DraftChoiceDialog, GhostButton, PrimaryButton, TextButton } from '../components/ui';
 import { getBeach } from '../api';
 import { useApp } from '../AppContext';
 import { hasDraftProgress, resumePath } from '../flowRules';
@@ -63,6 +63,7 @@ export default function CleanupScreen() {
   const [photoUsed, setPhotoUsed] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showDraftChoice, setShowDraftChoice] = useState(false);
   const idempotencyKey = useRef(crypto.randomUUID());
   const categories = useMemo(
     () => target ? (Object.keys(target.remainingBands) as LitterCategory[]).filter((category) => target.remainingBands[category]) : [],
@@ -92,13 +93,7 @@ export default function CleanupScreen() {
     // Same start as the beach page's "Report litter here": an unfinished draft
     // is offered back first, and the new report is pre-filled with this beach
     // so the button does what it says instead of only opening the beach.
-    const startReport = async () => {
-      if (hasDraftProgress(draft)) {
-        if (window.confirm('Resume your unfinished report? Choose Cancel to start a new report.')) {
-          nav(resumePath(draft));
-          return;
-        }
-      }
+    const beginNewReport = async () => {
       // The report screens show the beach name from the draft. Without an
       // event there is no name on this screen, so look it up; if that fails
       // the report still starts, the beach is confirmed later in the flow.
@@ -114,8 +109,28 @@ export default function CleanupScreen() {
       });
       nav(user ? '/report/photo' : `/identity?next=${encodeURIComponent('/report/photo')}`);
     };
+
+    const startReport = () => {
+      if (hasDraftProgress(draft)) {
+        setShowDraftChoice(true);
+        return;
+      }
+      void beginNewReport();
+    };
     return (
       <div className="screen scroll-y">
+        {showDraftChoice && (
+          <DraftChoiceDialog
+            onResume={() => {
+              setShowDraftChoice(false);
+              nav(resumePath(draft));
+            }}
+            onStartNew={() => {
+              setShowDraftChoice(false);
+              void beginNewReport();
+            }}
+          />
+        )}
         <div className="measure i2-page">
           <BackButton onClick={() => nav(event ? `/events/${event.id}` : `/beach/${beachId}`)} />
           <div className="i2-card">
