@@ -9,7 +9,7 @@ import { useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { getBeaches, getMyReportCounts } from '../api';
 import { ArrowRight, BarChart, Camera, Info, UserIcon } from '../components/Icon';
-import { ErrorNote, Label, Skeleton } from '../components/ui';
+import { DraftChoiceDialog, ErrorNote, Label, Skeleton } from '../components/ui';
 import { OverlayChip, SeverityBadge, StatTile } from '../components/ds';
 import { attentionStateFor, C, lastReportedLabel, MONO, NOISE, reportWord } from '../theme';
 import { useApp } from '../AppContext';
@@ -125,6 +125,7 @@ export default function HomeScreen() {
   const [beaches, setBeaches] = useState<BeachSummary[]>([]);
   const [loadingBeaches, setLoadingBeaches] = useState(true);
   const [beachesFailed, setBeachesFailed] = useState(false);
+  const [showDraftChoice, setShowDraftChoice] = useState(false);
 
   // A named function, not an inline effect body, because the error panel's
   // Retry button calls exactly the same code. Retry must repeat the request,
@@ -163,31 +164,36 @@ export default function HomeScreen() {
   // An unfinished draft is never thrown away without asking. Resume takes the
   // user back to the furthest step they had reached, so a report started days
   // ago can still be finished instead of being started again from the photo.
-  const startReport = () => {
-    if (hasDraftProgress(draft)) {
-      if (window.confirm('Resume your unfinished report? Choose Cancel to start a new report.')) {
-        nav(resumePath(draft));
-        return;
-      }
-    }
-    // Cancel means "start a new one", so the old draft goes. Otherwise a
-    // report abandoned last week would come back with its old photo and old
-    // beach filled in, and that stale beach could be submitted unnoticed.
-    // Clearing the last saved report matters too: while that value is set the
-    // report routes send the user to /reports, so a new report would bounce
-    // straight out of the flow.
+  const beginNewReport = () => {
     resetDraft();
     setLastSavedReport(null);
-    // A guest gets a number first, and ?next= brings them straight back to the
-    // photo step instead of dumping them on the home page to hunt for this
-    // button again.
     nav(user ? '/report/photo' : '/identity?next=/report/photo');
+  };
+
+  const startReport = () => {
+    if (hasDraftProgress(draft)) {
+      setShowDraftChoice(true);
+      return;
+    }
+    beginNewReport();
   };
 
 
 
   return (
     <div className="screen scroll-y" style={{ zIndex: 10 }}>
+      {showDraftChoice && (
+        <DraftChoiceDialog
+          onResume={() => {
+            setShowDraftChoice(false);
+            nav(resumePath(draft));
+          }}
+          onStartNew={() => {
+            setShowDraftChoice(false);
+            beginNewReport();
+          }}
+        />
+      )}
       <div
         className="anim-fade-up pt-page-lg measure"
         style={{ paddingInline: 20, paddingBottom: 132, display: 'flex', flexDirection: 'column' }}
