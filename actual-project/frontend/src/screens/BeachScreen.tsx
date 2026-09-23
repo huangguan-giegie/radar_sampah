@@ -14,7 +14,7 @@ import { getBeach, getSpeciesDistribution, USE_MOCK } from '../api';
 import { BeachCover } from '../components/BeachCover';
 import { EcologicalBackgroundLink } from '../components/EcologicalBackgroundLink';
 import { Camera, Check, ChevronRight, Clock, Info, SpeciesIcon } from '../components/Icon';
-import { BackButton, GhostButton, Label, PrimaryButton, Skeleton } from '../components/ui';
+import { BackButton, ErrorNote, GhostButton, Label, PrimaryButton, Skeleton } from '../components/ui';
 import { attentionStateFor, C, formatDate, freshnessLabel, freshStyle, MONO, NOISE, reportWord, SEVERITY, severityLabel } from '../theme';
 import { BandMeter, Callout, GlassPanel, InfoChip } from '../components/ds';
 import { useApp } from '../AppContext';
@@ -75,6 +75,7 @@ export default function BeachScreen() {
   const [b, setB] = useState<BeachDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [modelResult, setModelResult] = useState<SpeciesDistributionResult | null>(null);
   const requestedEventId = new URLSearchParams(location.search).get('event');
   const { data: latestCleanup } = useAsyncData(
@@ -99,12 +100,11 @@ export default function BeachScreen() {
       && linkedEvent.joined,
   );
 
-  // beachId is in the dependency list, so moving between beaches refetches.
-  // Without it React would show the previous beach under the new name. Model
-  // state is cleared on the same pass, and the model call is kept separate from
-  // the beach call so a model failure never takes the whole page down.
-  useEffect(() => {
+  function loadBeach() {
     setLoading(true);
+    setFailed(false);
+    setLoadError(null);
+    setB(null);
     setModelResult(null);
     getBeach(beachId)
       .then((data) => {
@@ -115,8 +115,18 @@ export default function BeachScreen() {
             .catch(() => setModelResult(null));
         }
       })
-      .catch(() => setFailed(true))
+      .catch((reason) => {
+        setFailed(true);
+        setLoadError(reason instanceof Error ? reason.message : 'Could not load this beach.');
+      })
       .finally(() => setLoading(false));
+  }
+
+  // beachId is in the dependency list, so moving between beaches refetches.
+  // Retry calls the same loader, so the error state and the first load cannot
+  // quietly drift into different behaviour.
+  useEffect(() => {
+    loadBeach();
   }, [beachId]);
 
   // Scroll once the beach has loaded - before that the section does not exist
@@ -155,16 +165,32 @@ export default function BeachScreen() {
     nav(user ? '/report/photo' : `/identity?next=${encodeURIComponent('/report/photo')}`);
   };
 
-  // Early return for loading and failure. The back button is rendered in BOTH
-  // states: a user who reaches a beach that will not load must still be able to
-  // leave without the browser's back button.
+  // A bad route and a lost connection are different recovery paths. The old
+  // screen collapsed both into one sentence and offered neither a map exit nor
+  // a retry.
   if (loading || !b) {
+    const notFound = Boolean(loadError && /not found|could not be found/i.test(loadError));
+    const offline = typeof navigator !== 'undefined' && navigator.onLine === false;
     return (
       <div className="screen scroll-y" style={{ zIndex: 20 }}>
         <div className="pt-page measure" style={{ paddingInline: 20, display: 'flex', flexDirection: 'column', gap: 14 }}>
           <BackButton onClick={() => nav(-1)} />
           {failed ? (
-            <div style={{ color: C.red, fontSize: 14 }}>Could not load this beach.</div>
+            notFound ? (
+              <div className="i2-card">
+                <div style={{ fontSize: 17, fontWeight: 700, color: C.ink2 }}>Beach not found</div>
+                <p style={{ margin: '7px 0 0', color: C.muted, fontSize: 13, lineHeight: 1.5 }}>
+                  This link does not match a current beach.
+                </p>
+                <GhostButton onClick={() => nav('/map')} style={{ marginTop: 12 }}>Back to map</GhostButton>
+              </div>
+            ) : (
+              <ErrorNote
+                title={offline ? 'You seem to be offline' : 'Could not load this beach'}
+                body={offline ? 'Reconnect, then retry this beach.' : 'The beach could not be loaded. Try the request again.'}
+                onRetry={loadBeach}
+              />
+            )
           ) : (
             <>
               <Skeleton h={240} r={24} />
@@ -185,9 +211,8 @@ export default function BeachScreen() {
   const attention = attentionStateFor(b.severity, b.insufficientData, b.validReports);
   const sev = attention.hasBand && b.severity ? SEVERITY[b.severity] : null;
   const fs = freshStyle(b.freshnessKind);
-  const latestContributingAt = b.latestContributingReportAt === undefined
-    ? b.lastReportedAt
-    : b.latestContributingReportAt;
+  const newestCountedAt = b.newestCountedReportAt
+    ?? (b.latestContributingReportAt === undefined ? b.lastReportedAt : b.latestContributingReportAt);
   // Scientific name is the only id a species card and a model prediction share.
   const modelByScientificName = new Map(
     (modelResult?.predictions ?? []).map((prediction) => [prediction.scientificName, prediction]),
@@ -238,6 +263,7 @@ export default function BeachScreen() {
           maxWidth: 'var(--measure)',
           position: 'relative',
           padding: 18,
+          background: C.white,
         }}
       >
         {/* wrap, and let the left block shrink. "MODERATE" is the widest band
@@ -309,8 +335,13 @@ export default function BeachScreen() {
                 re-add this chip without asking Epic 4. */}
             <InfoChip color={fs.c} background={fs.bg}>
               <i style={{ width: 6, height: 6, borderRadius: 3, background: fs.dot, display: 'block' }} />
-              {freshnessLabel(b.freshnessKind, latestContributingAt)}
+              {freshnessLabel(b.freshnessKind, newestCountedAt)}
             </InfoChip>
+            <div style={{ maxWidth: 190, textAlign: 'right', fontFamily: MONO, fontSize: 8.5, letterSpacing: '.08em', color: C.dim, lineHeight: 1.45 }}>
+              {newestCountedAt
+                ? `NEWEST COUNTED · ${formatDate(newestCountedAt).toUpperCase()}`
+                : `NO ACTIVE COUNTED REPORT · LAST ${SCORING_METHOD.windowDays} DAYS`}
+            </div>
           </div>
         </div>
 
@@ -324,8 +355,8 @@ export default function BeachScreen() {
             <Clock style={{ flex: 'none', marginTop: 1 }} />
             <div style={{ flex: 1, fontSize: 12, lineHeight: 1.5, color: C.muted }}>
 
-              {latestContributingAt
-                ? 'No contributing report in 90 days — not a sign it’s clean.'
+              {b.lastReportedAt
+                ? `No active counted report in the last ${SCORING_METHOD.windowDays} days — not a sign it’s clean.`
                 : 'No counted report yet. That means unchecked, not clean.'}
             </div>
           </div>
