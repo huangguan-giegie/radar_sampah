@@ -9,7 +9,7 @@ import { useEffect, useState } from 'react';
 import { createReport, getBeaches, getMyReports, photoPreviewUrl, updateReport } from '../api';
 import { ArrowRight, Check, Info, Shield } from '../components/Icon';
 import { BackButton, ErrorNote, PrimaryButton, StepBadge, TextButton } from '../components/ui';
-import { C } from '../theme';
+import { C, formatDate } from '../theme';
 import { Alert, InfoChip, OverlayChip, StatusBadge } from '../components/ds';
 import { useApp } from '../AppContext';
 import type { BeachSummary, LitterCategory, LitterReport, QuantityBand } from '../types';
@@ -228,7 +228,7 @@ export default function ReviewScreen() {
 
         {duplicateMatch && !smallOnly && (
           <Alert title="You already filed this one" tone="caution">
-            <div>Report {duplicateMatch.id} looks the same as this one. If it really is a new find, you can still submit it.</div>
+            <div>A report from {formatDate(duplicateMatch.createdAt)} at {duplicateMatch.beachName} looks the same as this one. If it really is a new find, you can still submit it.</div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 10 }}>
               <InfoChip>Same participant</InfoChip>
               <InfoChip>{duplicateMatch.beachName}</InfoChip>
