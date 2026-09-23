@@ -99,9 +99,9 @@ export function markerHtml(
     }
     bars += '</span>';
     // The helper supplies the wording, never the raw band: the pin says "VERY
-    // HIGH" where the data says 'Severe'. "NO DATA" is spelled out because
+    // HIGH" where the data says 'Severe'. "INSUFFICIENT DATA" is spelled out because
     // empty bars with no label read as a Low rating, not as missing evidence.
-    const label = attention?.markerLabel ?? 'NO DATA';
+    const label = attention?.markerLabel ?? 'INSUFFICIENT DATA';
     const pill =
       `<div style="display:flex;align-items:center;gap:6px;background:${
         selected ? '#0B2161' : 'rgba(255,255,255,.95)'
@@ -111,7 +111,7 @@ export function markerHtml(
         selected ? '#B8FF36' : b.insufficientData ? 'rgba(30,36,44,.25)' : 'rgba(11,33,97,.1)'
       };box-shadow:0 10px 22px -8px rgba(14,30,64,.5);${
         // A dashed border is the third signal for "not enough evidence",
-        // alongside the empty bars and the NO DATA label.
+        // alongside the empty bars and the INSUFFICIENT DATA label.
         b.insufficientData ? 'border-style:dashed;' : ''
       }">${bars}<b style="font-size:10.5px;font-weight:750;letter-spacing:.09em;${
         b.insufficientData ? `color:${selected ? '#CBD3E0' : '#5A6474'}` : ''
