@@ -172,7 +172,9 @@ export interface BeachSummary {
   eligibleReportCount: number;
   /** ISO 8601. Used to work out "reported 5 days ago". */
   lastReportedAt: string | null;
-  /** Most recent report still contributing to the current beach score. */
+  /** Most recent active Counted report inside the current scoring window. */
+  newestCountedReportAt?: string | null;
+  /** Backward-compatible alias for newestCountedReportAt. */
   latestContributingReportAt?: string | null;
   freshnessKind: FreshnessKind;
   /** Biodiversity layer fields. */
