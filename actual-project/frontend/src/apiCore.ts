@@ -511,6 +511,7 @@ function toSummary(beach: BeachDetail): BeachSummary {
     attentionScore: beach.attentionScore,
     eligibleReportCount: beach.eligibleReportCount,
     lastReportedAt: beach.lastReportedAt,
+    newestCountedReportAt: beach.newestCountedReportAt,
     latestContributingReportAt: beach.latestContributingReportAt,
     freshnessKind: beach.freshnessKind,
     habitat: beach.habitat,
