@@ -87,7 +87,7 @@ export function attentionStateFor(
   const word = reportWord(validReports);
   if (insufficientData || validReports < minimum || !severity) {
     return {
-      markerLabel: 'NO DATA',
+      markerLabel: 'INSUFFICIENT DATA',
       pageLabel: 'Insufficient data',
       detail: `${validReports} counted ${word} · At least ${minimum} counted reports are required for a band`,
       hasBand: false,
