@@ -67,7 +67,7 @@ describe('attentionStateFor', () => {
   it.each([0, 1, 2])('keeps %s counted reports in a neutral insufficient-data state', (validReports) => {
     const reportWord = validReports === 1 ? 'report' : 'reports';
     expect(attentionStateFor(null, true, validReports)).toEqual({
-      markerLabel: 'NO DATA',
+      markerLabel: 'INSUFFICIENT DATA',
       pageLabel: 'Insufficient data',
       detail: `${validReports} counted ${reportWord} · At least 3 counted reports are required for a band`,
       hasBand: false,
