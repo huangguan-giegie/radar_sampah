@@ -512,7 +512,7 @@ def test_beach_summary_and_detail_shapes_are_strict(api):
         "id", "name", "area", "lat", "lng", "severity", "band", "insufficientData",
         "validReports", "lastReportedAt", "freshnessKind", "habitat", "habitatTag",
         "sensitivity", "primarySpeciesGlyph", "speciesNames", "coverImageUrl", "scene",
-        "attentionScore", "eligibleReportCount", "latestContributingReportAt",
+        "attentionScore", "eligibleReportCount", "newestCountedReportAt", "latestContributingReportAt",
     }
     assert set(beaches[0]) == expected_summary_fields
     assert beaches[0]["severity"] is None
