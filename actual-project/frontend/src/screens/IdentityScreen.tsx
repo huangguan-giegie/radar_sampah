@@ -37,7 +37,7 @@ export default function IdentityScreen() {
   const recoveryKitText = newSession
     ? `Radar Sampah recovery details\nParticipant ID: ${newSession.participantId}\nRecovery token: ${newSession.token}\n\nKeep this file private. The token works like a password.`
     : '';
-  const canRestore = !busy && typedId.trim() !== '' && typedToken.trim() !== '';
+  const canRestore = !busy && /^\d{4}$/.test(typedId) && typedToken.trim() !== '';
 
   function saveRecoveryKit() {
     if (!newSession) return;
@@ -333,8 +333,10 @@ export default function IdentityScreen() {
                   <input
                     className="field"
                     inputMode="numeric"
+                    pattern="[0-9]{4}"
+                    maxLength={4}
                     value={typedId}
-                    onChange={(e) => setTypedId(e.target.value)}
+                    onChange={(e) => setTypedId(e.target.value.replace(/\D/g, '').slice(0, 4))}
                     placeholder="1637"
                     style={{
                       background: C.white,
