@@ -165,8 +165,10 @@ turning the participant into Guest.
 | `validReports` | int | Number of active `Counted` reports in the 90-day window that still have litter after cleanup. Fully cleared reports remain historical but are excluded |
 | `attentionScore` | number｜null | Median of active Report Scores, rounded to two decimals; null when fewer than 3 active reports qualify |
 | `eligibleReportCount` | int | Same active report count used by the median and minimum-evidence rule |
-| `lastReportedAt` | string｜null | Newest **Counted** report. The frontend renders "6 days ago" itself — do not send prose |
-| `freshnessKind` | `"ok"｜"aging"｜"stale"` | Under 30 days / 30–90 / over 90 or never |
+| `lastReportedAt` | string｜null | Newest historical **Counted** report; retained for history and no longer used to drive current freshness |
+| `newestCountedReportAt` | string｜null | Newest active **Counted** report inside the latest 90-day window after cleanup state is applied; resolved and expired reports are excluded |
+| `latestContributingReportAt` | string｜null | Backward-compatible alias of `newestCountedReportAt` |
+| `freshnessKind` | `"ok"｜"aging"｜"stale"` | Derived from `newestCountedReportAt`: under 30 days / 30–90 / no active Counted report in the current 90-day window |
 | `primarySpeciesGlyph` | `"turtle"｜"bird"｜"mangrove"｜"grass"｜"crab"｜"fish"` | Icon for the biodiversity map marker |
 | `speciesNames` | string[] | The names of this beach's biodiversity cards, in `sort_order`. The map's biodiversity layer renders them directly — without it that layer carries habitat only and names no species at all. Names only; the full cards stay in `BeachDetail.species` |
 | `coverImageUrl` | string｜null | Real photo. **Send `null` when there is none** — the frontend falls back to `scene`, so a new beach never renders a blank header |

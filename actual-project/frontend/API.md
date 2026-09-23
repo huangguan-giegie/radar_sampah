@@ -156,8 +156,10 @@
 | `validReports` | int | 最近 90 天内、清理后仍有垃圾的 active `Counted` 报告数；完全清理的报告只保留在历史中，不计入此处 |
 | `attentionScore` | number｜null | active 报告分数的中位数，保留两位；active 报告不足 3 条时为 null |
 | `eligibleReportCount` | int | 实际参与中位数及最少证据判断的 active 报告数 |
-| `lastReportedAt` | string｜null | 最近一条 **Counted** 记录的时间。前端自己算「几天前」，后端不要给现成文案 |
-| `freshnessKind` | `"ok"｜"aging"｜"stale"` | < 30 天 / 30–90 天 / > 90 天或从无记录 |
+| `lastReportedAt` | string｜null | 历史上最近一条 **Counted** 记录的时间；保留用于历史上下文，不再驱动当前 freshness |
+| `newestCountedReportAt` | string｜null | 最近 90 天内、清理后仍 active 的最新 **Counted** 报告时间；resolved 或超过 90 天的报告不进入此字段 |
+| `latestContributingReportAt` | string｜null | `newestCountedReportAt` 的兼容别名 |
+| `freshnessKind` | `"ok"｜"aging"｜"stale"` | 由 `newestCountedReportAt` 决定：< 30 天 / 30–90 天 / 当前 90 天窗口内没有 active Counted 报告 |
 | `primarySpeciesGlyph` | `"turtle"｜"bird"｜"mangrove"｜"grass"｜"crab"｜"fish"` | 生物图层的地图标记图标 |
 | `speciesNames` | string[] | 这片海滩生物卡片的名字，按 `sort_order`。地图的生物图层直接显示它们 —— 不然图层上只有生境，看不到任何一个物种。只要名字，完整卡片仍在 `BeachDetail.species` |
 | `coverImageUrl` | string｜null | 真实封面照片。**没配图就给 `null`**，前端会退回 `scene` 渐变 |

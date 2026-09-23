@@ -415,7 +415,7 @@ components:
       required:
         [id, name, area, lat, lng, severity, band, insufficientData, validReports,
          attentionScore, eligibleReportCount,
-         lastReportedAt, freshnessKind, habitat, habitatTag, sensitivity,
+         lastReportedAt, newestCountedReportAt, latestContributingReportAt, freshnessKind, habitat, habitatTag, sensitivity,
          primarySpeciesGlyph, speciesNames, coverImageUrl, scene]
       properties:
         id: { type: string, example: morib }
@@ -450,11 +450,21 @@ components:
           type: string
           format: date-time
           nullable: true
-          description: the newest Counted report's time, ignoring the 90-day window
+          description: newest historical Counted report; retained for history and not used for current freshness
+        newestCountedReportAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: newest active Counted report in the latest 90-day scoring window after cleanup state is applied
+        latestContributingReportAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: backward-compatible alias of newestCountedReportAt
         freshnessKind:
           type: string
           enum: [ok, aging, stale]
-          description: "under 30 days / 30-90 days / over 90 days or never reported"
+          description: "derived from newestCountedReportAt: under 30 days / 30-90 days / no active Counted report in the current 90-day window"
         habitat: { type: string, example: "Intertidal mudflat & sandy shore" }
         habitatTag: { type: string, example: MUDFLAT }
         sensitivity: { type: string, example: Migratory feeding ground }
