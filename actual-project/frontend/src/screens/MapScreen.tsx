@@ -469,9 +469,8 @@ function SelectedCard({
   detailsError: string | null;
 }) {
   const fs = freshStyle(beach.freshnessKind);
-  const latestContributingAt = beach.latestContributingReportAt === undefined
-    ? beach.lastReportedAt
-    : beach.latestContributingReportAt;
+  const latestContributingAt = beach.newestCountedReportAt
+    ?? (beach.latestContributingReportAt === undefined ? beach.lastReportedAt : beach.latestContributingReportAt);
   // Worked out once, then used by the badge, the explanation and the icon
   // below. One source, so the card cannot show a status band in one place and
   // say "Insufficient data" in another.
