@@ -60,6 +60,11 @@ used the isolated local synthetic-data setup described above.
 - Browser warning/error query during the public smoke: **0 warnings, 0 errors**.
 - Render API error-log query from `2026-09-25T07:24:00Z` through
   `2026-09-25T07:37:35Z`: **0 error entries**.
+- A separate local Vite development-server session logged two non-blocking
+  messages: React did not recognize the `fetchPriority` DOM prop, and a
+  `[scoring]` diagnostic compared equal values with different object-key
+  order. They were not present in the local production-preview ready load or
+  the public RC browser console query.
 - API startup emitted an ONNX Runtime GPU-device detection warning because
   `/sys/class/drm/card0` was unavailable in the Render environment. Health and
   prediction endpoints returned HTTP 200; GPU inference was not asserted.
@@ -82,3 +87,21 @@ resolution, local retest result, deployed SHA, Render deploy IDs, and public
 network/console smoke evidence. The public release smoke was read-only apart
 from the automatic prediction request; mutation-oriented C0 interactions were
 checked with local synthetic data.
+
+## Screenshot evidence
+
+All browser captures referenced by the retest are included alongside this
+record in `evidence/iteration3-c0/screenshots/`.
+
+- AC2.4.4 cleanup history: [confirmation](../evidence/iteration3-c0/screenshots/ac2-4-4-cleanup-confirmed.jpg), [cleanup result](../evidence/iteration3-c0/screenshots/ac2-4-4-cleanup-result.jpg), [retained report](../evidence/iteration3-c0/screenshots/ac2-4-4-report-retained.jpg).
+- AC3.3.3 local freshness: [390×844](../evidence/iteration3-c0/screenshots/ac3-3-3-active-freshness-390x844.jpg).
+- Terminology: local [method](../evidence/iteration3-c0/screenshots/terminology-method.jpg), [AI method](../evidence/iteration3-c0/screenshots/terminology-method-ai.jpg), [map at 390×844](../evidence/iteration3-c0/screenshots/map-insufficient-data-390x844.jpg), [map](../evidence/iteration3-c0/screenshots/map-insufficient-data.jpg); public [method](../evidence/iteration3-c0/screenshots/rc-method-390x844.jpg), [AI method](../evidence/iteration3-c0/screenshots/rc-method-ai-390x844.jpg), and [map at 390×844](../evidence/iteration3-c0/screenshots/rc-map-390x844.jpg), [map at 320×844](../evidence/iteration3-c0/screenshots/rc-map-320x844.jpg).
+- D1 error states: local [invalid beach](../evidence/iteration3-c0/screenshots/d1-invalid-beach-404.jpg) and [offline retry](../evidence/iteration3-c0/screenshots/d1-offline-retry.jpg); public [invalid beach](../evidence/iteration3-c0/screenshots/rc-d1-invalid-beach-390x844.jpg) and [offline retry](../evidence/iteration3-c0/screenshots/rc-d1-offline-390x844.jpg).
+- F1 boot shell: [slow-network shell](../evidence/iteration3-c0/screenshots/f1-boot-shell-3g.jpg), [ready state](../evidence/iteration3-c0/screenshots/f1-ready-after-3g.jpg).
+- Opaque beach card: local Morib [390×844](../evidence/iteration3-c0/screenshots/beach-card-390x844.jpg), [320×844](../evidence/iteration3-c0/screenshots/beach-card-320x844.jpg), and Remis [1280×720](../evidence/iteration3-c0/screenshots/beach-card-remis-1280x720.jpg), [390×844](../evidence/iteration3-c0/screenshots/beach-card-remis-390x844.jpg), [320×844](../evidence/iteration3-c0/screenshots/beach-card-remis-320x844.jpg); public Morib [390×844](../evidence/iteration3-c0/screenshots/rc-beach-morib-390x844.jpg), [320×844](../evidence/iteration3-c0/screenshots/rc-beach-morib-320x844.jpg).
+- D3/D5/D7: [draft choices](../evidence/iteration3-c0/screenshots/d3-draft-choice-390x844.jpg), [duplicate warning](../evidence/iteration3-c0/screenshots/d5-duplicate-warning-390x844.jpg), [four-digit participant ID](../evidence/iteration3-c0/screenshots/d7-participant-id-4-digits.jpg).
+
+## QA runtime artifacts
+
+- [Sanitized SQLite fixture](../evidence/iteration3-c0/runtime/qa-fixture.sqlite): four synthetic reports and one cleanup action, with a placeholder local token and participant ID `0000`. `PRAGMA integrity_check` returned `ok`. The original local database was not included because it contains its generated auth token and a report-photo blob; the fixture removes both credentials and photo data.
+- [Screenshot receiver](../evidence/iteration3-c0/runtime/receive_screenshot.py): standard-library-only helper that listens on `127.0.0.1:5174`, accepts bounded JPEG captures with a filename allowlist, and writes them to the screenshot folder. It is a local QA utility, not an application service.
