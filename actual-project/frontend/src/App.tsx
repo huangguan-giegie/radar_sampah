@@ -17,7 +17,6 @@ import { Toast } from './components/Toast';
 import { useApp } from './AppContext';
 import { guardStep, type ReportStep } from './flowRules';
 
-import SplashScreen from './screens/SplashScreen';
 import WelcomeScreen from './screens/WelcomeScreen';
 import IdentityScreen from './screens/IdentityScreen';
 import HomeScreen from './screens/HomeScreen';
@@ -201,8 +200,8 @@ export default function App() {
         {/* Public pages. Anyone can look at beach data without an account -
             that is the point of the project, and it is what makes the map
             worth sharing. Only FILING a report needs an identity. */}
-        <Route path="/" element={<SplashScreen />} />
-        <Route path="/background/intro" element={<BackgroundScreen intro />} />
+        <Route path="/" element={<Navigate to="/welcome" replace />} />
+        <Route path="/background/intro" element={<Navigate to="/welcome" replace />} />
         <Route path="/welcome" element={<WelcomeScreen />} />
         <Route path="/identity" element={<IdentityScreen />} />
 
