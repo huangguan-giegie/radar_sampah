@@ -12,6 +12,7 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useEffect, useRef, useState } from 'react';
 import { getBeach, getSpeciesDistribution, USE_MOCK } from '../api';
 import { BeachCover } from '../components/BeachCover';
+import { BeachCleanupCard } from '../components/BeachCleanupCard';
 import { EcologicalBackgroundLink } from '../components/EcologicalBackgroundLink';
 import { Camera, Check, ChevronRight, Clock, Info, SpeciesIcon } from '../components/Icon';
 import { BackButton, DraftChoiceDialog, ErrorNote, GhostButton, Label, PrimaryButton, Skeleton } from '../components/ui';
@@ -84,7 +85,7 @@ export default function BeachScreen() {
     [beachId],
     getLatestCleanupForBeach(beachId),
   );
-  const { data: cleanupTarget } = useAsyncData(
+  const { data: cleanupTarget, loading: cleanupTargetLoading, error: cleanupTargetError, refresh: refreshCleanupTarget } = useAsyncData(
     () => fetchCleanupTarget(beachId),
     [beachId],
     getCleanupTarget(beachId),
@@ -383,28 +384,14 @@ export default function BeachScreen() {
         {/* A question and one button, as in the Iteration 2 prototype. The
             cleanup screen itself shows which report and which bands are being
             confirmed, so repeating the report id here only added noise. */}
-        {cleanupTarget ? (
-          <div className="i2-card">
-            <div style={{ fontSize: 17, fontWeight: 680, color: C.ink2 }}>Cleaned up here?</div>
-            <PrimaryButton
-              onClick={() => nav(user ? `/cleanup/${beachId}` : `/identity?next=${encodeURIComponent(`/cleanup/${beachId}`)}`)}
-              height={44}
-              trailingArrow
-              style={{ marginTop: 13, width: 'fit-content', borderRadius: 999, fontSize: 14 }}
-            >
-              Add a Cleanup
-            </PrimaryButton>
-          </div>
-        ) : (
-          <div className="i2-card">
-            <Label style={{ marginBottom: 8 }}>CLEANUP CHECK</Label>
-            <div style={{ fontSize: 17, fontWeight: 680, color: C.ink2 }}>Nothing to clean up yet</div>
-            <div style={{ marginTop: 5, fontSize: 12.5, lineHeight: 1.5, color: C.muted }}>
-              A cleanup needs a report linked to this beach.
-            </div>
-            <GhostButton onClick={startReport} style={{ marginTop: 13 }}>Report litter here</GhostButton>
-          </div>
-        )}
+        <BeachCleanupCard
+          target={cleanupTarget}
+          loading={cleanupTargetLoading}
+          error={cleanupTargetError}
+          onCleanup={() => nav(user ? `/cleanup/${beachId}` : `/identity?next=${encodeURIComponent(`/cleanup/${beachId}`)}`)}
+          onReport={startReport}
+          onRetry={() => { void refreshCleanupTarget(); }}
+        />
 
         <div>
           <Label style={{ marginBottom: 12 }}>LITTER COMPOSITION</Label>
@@ -651,7 +638,7 @@ export default function BeachScreen() {
             <Camera size={16} strokeWidth={1.9} />
             Report Litter Here
           </PrimaryButton>
-          {cleanupTarget && (
+          {!cleanupTargetLoading && !cleanupTargetError && cleanupTarget && (
             <GhostButton onClick={() => nav(user ? `/cleanup/${beachId}` : `/identity?next=${encodeURIComponent(`/cleanup/${beachId}`)}`)}>
               Add a Cleanup
             </GhostButton>
