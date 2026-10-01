@@ -1,4 +1,4 @@
-import { apiRequest, ApiError, USE_MOCK } from './api';
+import { apiRequest, ApiError, invalidateBeaches, USE_MOCK } from './api';
 import {
   completeCleanup,
   createAdminEvent,
@@ -133,8 +133,7 @@ export async function submitCleanup(input: {
   note?: string;
   idempotencyKey?: string;
 }): Promise<CleanupAction> {
-  if (USE_MOCK) return completeCleanup(input);
-  return apiRequest<CleanupAction>('/cleanups', 'POST', {
+  const cleanup = USE_MOCK ? completeCleanup(input) : await apiRequest<CleanupAction>('/cleanups', 'POST', {
     targetReportId: input.targetReportId,
     eventId: input.eventId ?? null,
     afterBands: input.afterBands,
@@ -142,6 +141,8 @@ export async function submitCleanup(input: {
     note: input.note ?? '',
     idempotencyKey: input.idempotencyKey ?? crypto.randomUUID(),
   });
+  invalidateBeaches();
+  return cleanup;
 }
 
 export async function createAdminEventData(input: { beachId: string; date: string }): Promise<CleanupEvent> {

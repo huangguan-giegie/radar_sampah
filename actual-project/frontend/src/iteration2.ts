@@ -674,20 +674,11 @@ export function relativeEventWeek(date: string, today: string = malaysiaDate(new
   return `IN ${week + 1} WEEKS`;
 }
 
-/**
- * The band a cleanup row took away - "Small", not a number - which is what the
- * event result lists under BAND REMOVED.
- *
- * A standalone cleanup records that band directly. A cleanup of a report
- * records before and after bands instead, and the drop between them is read
- * back through the same unit scale the cleanup score uses: Large → Medium
- * removed one step, which is a Small amount. A row with neither (an older
- * count-only record) returns null rather than a band nobody chose.
- */
-export function removedBandForRow(row: CleanupRow): QuantityBand | null {
+/** Show the bands actually recorded. A difference between ordinal bands is
+ * a score reduction, not a measured quantity of litter removed. */
+export function cleanupBandLabelForRow(row: CleanupRow): string | null {
   if (row.beforeBand && row.afterBand) {
-    const removedUnits = CLEANUP_BAND_UNITS[row.beforeBand] - CLEANUP_BAND_UNITS[row.afterBand];
-    return QUANTITY_BANDS.find((band) => CLEANUP_BAND_UNITS[band] === removedUnits) ?? null;
+    return `${row.beforeBand} → ${row.afterBand}`;
   }
   return row.removedBand && isQuantityBand(row.removedBand) ? row.removedBand : null;
 }

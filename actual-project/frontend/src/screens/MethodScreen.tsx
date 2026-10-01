@@ -220,9 +220,6 @@ export default function MethodScreen() {
               </div>
             ))}
           </div>
-          <div style={{ padding: '10px 14px', borderTop: `1px solid ${C.line}`, color: C.muted, fontSize: 11.5, lineHeight: 1.5 }}>
-            “Very high” is the participant-facing label. The API keeps “Severe” only as its internal contract value.
-          </div>
         </div>
 
 
@@ -230,7 +227,7 @@ export default function MethodScreen() {
           <Label style={{ marginBottom: 11 }}>WHEN NO BAND IS SHOWN</Label>
           <div style={{ background: C.white, border: `1px solid ${C.line}`, borderRadius: 22, padding: 18, display: 'flex', flexDirection: 'column', gap: 9 }}>
             {[
-              [`Under ${m.minReports} reports`, 'Insufficient data'],
+              [`Under ${m.minReports} active reports`, 'Insufficient data'],
               [`Nothing in ${m.windowDays} days`, 'Not recently reported'],
               ['Duplicate or incomplete', 'Never counted at all'],
             ].map(([when, then]) => (
