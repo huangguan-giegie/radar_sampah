@@ -62,6 +62,42 @@ describe('v3 real API integration', () => {
     }
   });
 
+  it('refreshes beach summaries after a cleanup changes the active report state', async () => {
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify([{ id: 'morib', validReports: 3 }])))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ id: 'cleanup-1', resolved: true })))
+      .mockResolvedValueOnce(new Response(JSON.stringify([{ id: 'morib', validReports: 2 }])));
+    vi.stubGlobal('fetch', fetchMock);
+    const { getBeaches, getCachedBeaches } = await import('./api');
+    const { submitCleanup } = await import('./iteration2Api');
+    await getBeaches();
+    expect(getCachedBeaches()?.[0].validReports).toBe(3);
+
+    await submitCleanup({
+      participantId: '1637', targetReportId: 'report-1',
+      afterBands: { Plastic: 'Small' }, handling: 'Not recorded', idempotencyKey: 'cleanup-1',
+    });
+
+    expect(getCachedBeaches()).toBeNull();
+    expect((await getBeaches())[0].validReports).toBe(2);
+  });
+
+  it('keeps the last known beach state when saving a cleanup fails', async () => {
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify([{ id: 'morib', validReports: 3 }])))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ message: 'Cleanup could not be saved' }), { status: 500 }));
+    vi.stubGlobal('fetch', fetchMock);
+    const { getBeaches, getCachedBeaches } = await import('./api');
+    const { submitCleanup } = await import('./iteration2Api');
+    await getBeaches();
+
+    await expect(submitCleanup({
+      participantId: '1637', targetReportId: 'report-1',
+      afterBands: { Plastic: 'Small' }, handling: 'Not recorded', idempotencyKey: 'cleanup-1',
+    })).rejects.toThrow('Cleanup could not be saved');
+    expect(getCachedBeaches()?.[0].validReports).toBe(3);
+  });
+
   it('uploads the actual cleanup image and keeps unrecognized target bands unchanged', async () => {
     const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({
       modelState: 'ready', suggestions: { Plastic: 'Medium' }, counts: { Plastic: 8 },

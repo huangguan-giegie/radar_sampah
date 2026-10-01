@@ -454,10 +454,10 @@ export default function BeachScreen() {
         </div>
 
         {latestCleanup && (
-          <Callout title="Cleanup recorded — awaiting follow-up" tone="reassurance" icon={<Check color={C.green} />}>
+          <Callout title="Cleanup recorded" tone="reassurance" icon={<Check color={C.green} />}>
             {/* Date first, as its own phrase: formatDate can answer "Today",
                 which cannot follow "on". */}
-            {formatDate(latestCleanup.createdAt)} · Cleanup score {latestCleanup.score} from confirmed band changes. A new report will confirm the change.
+            {formatDate(latestCleanup.createdAt)} · Cleanup score {latestCleanup.score} from the recorded quantity bands. Future reports help track conditions at this beach.
           </Callout>
         )}
 

@@ -9,7 +9,7 @@ import {
   formatEventDate,
   getCleanup,
   getCleanupEvent,
-  removedBandForRow,
+  cleanupBandLabelForRow,
   type CleanupRow,
 } from '../iteration2';
 import { fetchCleanup, fetchCleanupEvent } from '../iteration2Api';
@@ -110,7 +110,7 @@ export default function CleanupResultScreen() {
         <div className="i2-result-score">
           <div className="anim-pop-in" style={{ width: 38, height: 38, borderRadius: 19, margin: '0 auto 10px', background: C.lime, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Check color={C.navy} /></div>
           <h1 style={{ margin: 0, fontSize: 21, fontWeight: 700, letterSpacing: '-.3px', color: C.white }}>
-            {resolved ? 'Cleanup completed' : 'Cleanup recorded'}
+            Cleanup recorded
           </h1>
           <span style={{ display: 'block', marginTop: 6, color: 'rgba(255,255,255,.75)', fontSize: 12.5 }}>
             {cleanup.beachName} · {formatDate(cleanup.createdAt)}
@@ -121,24 +121,19 @@ export default function CleanupResultScreen() {
 
         <div className="i2-card">
           <SectionLabel size="sm">
-            {!cleanup.targetReportId ? 'RESULT' : resolved ? 'TARGET RESOLVED · HISTORY RETAINED' : 'SOURCE REPORT · BEFORE → AFTER'}
+            {cleanup.targetReportId ? 'REMAINING BANDS · BEFORE → AFTER' : 'RECORDED REMOVAL'}
           </SectionLabel>
-          <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) 58px auto', gap: 8, marginTop: 10, paddingBottom: 6, borderBottom: `1px solid ${C.line}`, fontFamily: MONO, fontSize: 8.5, letterSpacing: '.08em', color: C.faint }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) auto', gap: 8, marginTop: 10, paddingBottom: 6, borderBottom: `1px solid ${C.line}`, fontFamily: MONO, fontSize: 8.5, letterSpacing: '.08em', color: C.faint }}>
             <span>CATEGORY</span>
-            <span style={{ textAlign: 'right' }}>REMOVED</span>
-            <span style={{ textAlign: 'right' }}>BANDS</span>
+            <span style={{ textAlign: 'right' }}>{cleanup.targetReportId ? 'BEFORE → AFTER' : 'REMOVED BAND'}</span>
           </div>
           {tableRows.map((row) => {
-            // The removed amount in band words, from the before and after
-            // bands. An old count-only row has no bands, so it shows "—" rather
-            // than a band guessed from a raw item count.
-            const removed = removedBandForRow(row);
+            const bands = cleanupBandLabelForRow(row);
             return (
-              <div key={row.category} style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) 58px auto', gap: 8, alignItems: 'center', padding: '9px 0', borderBottom: `1px solid ${C.line}` }}>
+              <div key={row.category} style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) auto', gap: 8, alignItems: 'center', padding: '9px 0', borderBottom: `1px solid ${C.line}` }}>
                 <strong style={{ fontSize: 13.5, color: C.ink2 }}>{row.category}</strong>
-                <span style={{ textAlign: 'right', fontFamily: MONO, fontSize: 12, fontWeight: 700, color: C.green }}>{removed ?? '—'}</span>
-                <span style={{ textAlign: 'right', fontFamily: MONO, fontSize: 11, color: C.muted, whiteSpace: 'nowrap' }}>
-                  {row.beforeBand && row.afterBand ? `${row.beforeBand} → ${row.afterBand}` : '—'}
+                <span style={{ textAlign: 'right', fontFamily: MONO, fontSize: 11, color: C.muted }}>
+                  {bands ?? '—'}
                 </span>
               </div>
             );
@@ -148,7 +143,11 @@ export default function CleanupResultScreen() {
         <div className="i2-card">
           <SectionLabel size="sm">WHAT CHANGES NOW</SectionLabel>
           <p style={{ margin: '8px 0 0', color: C.muted, fontSize: 12.5, lineHeight: 1.55 }}>
-            Your confirmed bands update this report. The beach rating is worked out separately. A later report is needed to show what changed.
+            {cleanup.targetReportId
+              ? resolved
+                ? 'All remaining categories were recorded as Small. This report stays in history and is excluded from the active beach rating and litter composition.'
+                : 'The remaining bands update this report and the beach’s litter composition. The beach rating is recalculated from all active reports and may stay the same.'
+              : 'This cleanup is recorded separately because it is not linked to a report. It does not change existing reports or the report-based beach rating and litter composition.'}
           </p>
           <TextButton onClick={() => nav('/method')}>How it’s rated</TextButton>
         </div>
@@ -156,7 +155,7 @@ export default function CleanupResultScreen() {
         <div className="i2-card" style={{ paddingTop: 6, paddingBottom: 6 }}>
           <StatusRow label="Cleanup status">{resolved ? 'Target resolved · report retained in history' : 'Confirmed bands recorded'}</StatusRow>
           {resolved
-            ? <StatusRow label="After cleanup">All categories Small · location cleaned</StatusRow>
+            ? <StatusRow label="After cleanup">All categories Small · below the active threshold</StatusRow>
             : cleanup.targetReportId && <StatusRow label="Still reported">See remaining bands above</StatusRow>}
           <StatusRow label="Handling">{cleanup.handling}</StatusRow>
           {cleanup.eventId && event && (

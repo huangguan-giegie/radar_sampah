@@ -134,15 +134,15 @@ export default function CleanupScreen() {
         <div className="measure i2-page">
           <BackButton onClick={() => nav(event ? `/events/${event.id}` : `/beach/${beachId}`)} />
           <div className="i2-card">
-            <div style={{ fontSize: 17, fontWeight: 700, color: C.ink2 }}>Nothing to clean up here yet</div>
+            <div style={{ fontSize: 17, fontWeight: 700, color: C.ink2 }}>{targetError ? 'Could not load the cleanup report' : 'No active cleanup report'}</div>
             <p style={{ margin: '8px 0 0', fontSize: 12.5, lineHeight: 1.5, color: C.muted }}>
-              A cleanup is always linked to a litter report at this beach.
+              To record a cleanup, select an active litter report at this beach.
             </p>
             {/* A failed lookup is not the same as "no report": say what went
                 wrong instead of telling the volunteer the beach has none. */}
             {targetError
               ? <Alert tone="error" style={{ marginTop: 10 }}>{targetError}</Alert>
-              : <p style={{ margin: '4px 0 0', fontSize: 12.5, lineHeight: 1.5, fontWeight: 700, color: C.ink2 }}>No current report — add one first.</p>}
+              : <p style={{ margin: '4px 0 0', fontSize: 12.5, lineHeight: 1.5, fontWeight: 700, color: C.ink2 }}>If you see litter, add a report first.</p>}
             <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) minmax(0,1fr)', gap: 8, marginTop: 14 }}>
               <GhostButton height={50} onClick={() => nav(`/beach/${beachId}`)} style={{ fontSize: 14, padding: '10px 8px' }}>Back to beach</GhostButton>
               <PrimaryButton height={50} onClick={startReport} style={{ fontSize: 14, padding: '10px 8px' }}>Report litter here</PrimaryButton>
@@ -187,7 +187,7 @@ export default function CleanupScreen() {
   }
 
   async function submit() {
-    if (!user) return;
+    if (!user || !bandsComplete || previewScore <= 0) return;
     setError(null);
     setSubmitting(true);
     try {
@@ -208,7 +208,7 @@ export default function CleanupScreen() {
     }
   }
 
-  function removeEverything() {
+  function setAllSmall() {
     const all: Bands = {};
     categories.forEach((category) => { all[category] = 'Small'; });
     setAfterBands(all);
@@ -269,7 +269,7 @@ export default function CleanupScreen() {
           <div style={{ marginTop: 4, fontSize: 12, color: C.muted }}>{compositionLine(target.remainingBands)}</div>
           <div style={{ marginTop: 4, fontFamily: MONO, fontSize: 10, color: C.dim }}>REPORTED {formatDate(target.reportedAt).toUpperCase()}</div>
           <p style={{ margin: '12px 0 0', paddingTop: 11, borderTop: `1px solid ${C.line}`, fontSize: 12, lineHeight: 1.5, color: C.slate }}>
-            Source report kept as history; no longer counted.
+            The report stays in history. It leaves active totals only when all remaining categories are Small.
           </p>
         </div>
 
@@ -375,15 +375,15 @@ export default function CleanupScreen() {
           <button
             type="button"
             className="press"
-            onClick={removeEverything}
+            onClick={setAllSmall}
             style={{ width: '100%', marginTop: 10, padding: '11px 12px', borderRadius: 15, border: `1px solid ${allSmall ? C.green : C.line2}`, background: allSmall ? C.greenBg : C.white, display: 'flex', alignItems: 'center', gap: 12, textAlign: 'left' }}
           >
             <span style={{ width: 24, height: 24, flex: 'none', borderRadius: 8, border: `1.5px solid ${allSmall ? C.green : C.line2}`, background: allSmall ? C.green : C.white, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               {allSmall && <Check color={C.white} size={13} />}
             </span>
             <span style={{ minWidth: 0 }}>
-              <strong style={{ display: 'block', fontSize: 13, color: C.ink2 }}>No remaining litter observed</strong>
-              <span style={{ display: 'block', marginTop: 2, fontSize: 11.5, color: C.muted }}>Confirm all categories as Small.</span>
+              <strong style={{ display: 'block', fontSize: 13, color: C.ink2 }}>All remaining amounts are Small</strong>
+              <span style={{ display: 'block', marginTop: 2, fontSize: 11.5, color: C.muted }}>Use when every category is at the lowest quantity band.</span>
             </span>
           </button>
         </div>
@@ -410,7 +410,7 @@ export default function CleanupScreen() {
           <div style={{ minWidth: 0 }}>
             <SectionLabel size="sm">CLEANUP SCORE</SectionLabel>
             <p style={{ margin: '6px 0 0', fontSize: 12, lineHeight: 1.5, color: C.muted }}>
-              {bandsComplete ? 'Band reduction for this cleanup.' : 'Confirm all bands to calculate.'}
+              {bandsComplete ? previewScore > 0 ? 'Total quantity-band steps reduced.' : 'At least one band must decrease to record a cleanup.' : 'Confirm all bands to calculate.'}
             </p>
           </div>
           <strong aria-live="polite" style={{ fontSize: 40, lineHeight: 1, letterSpacing: '-1.5px', color: bandsComplete ? C.navy : C.faint }}>
@@ -420,8 +420,8 @@ export default function CleanupScreen() {
 
         {error && <Alert title="Cleanup not saved" tone="error">{error}</Alert>}
 
-        <PrimaryButton onClick={submit} disabled={submitting || !bandsComplete}>
-          {submitting ? 'Saving cleanup…' : bandsComplete ? 'Confirm cleanup' : 'Finish the bands first'}
+        <PrimaryButton onClick={submit} disabled={submitting || !bandsComplete || previewScore <= 0}>
+          {submitting ? 'Saving cleanup…' : !bandsComplete ? 'Finish the bands first' : previewScore > 0 ? 'Confirm cleanup' : 'Record a band reduction first'}
         </PrimaryButton>
         <TextButton onClick={() => nav(event ? `/events/${event.id}` : `/beach/${beachId}`)}>Cancel</TextButton>
       </div>
