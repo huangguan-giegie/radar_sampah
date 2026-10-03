@@ -225,15 +225,42 @@ export interface LitterGalleryEntry {
   currentState?: ReportCurrentState;
 }
 
-/** One species row from the offline distribution model. The score is a ranking
- *  number, not a chance - the same warning as SpeciesLikelihood applies, so
- *  print it plain and never with a % sign. */
+/** Historical model context, not a sighting or calibrated probability.
+ * locationMatchScore is a within-species reference percentile on 0..1;
+ * relativeOccurrenceScore preserves the original model output for details. */
 export interface SpeciesPrediction {
   speciesSlug: string;
   scientificName: string;
   commonNameEn: string;
   relativeOccurrenceScore: number;
+  locationMatchScore: number;
   selectedModel: string;
+  defaultRecommendation: boolean;
+  validationStatus: string;
+  kingdom: string | null;
+  category?: string;
+  introEn?: string;
+  introZh?: string;
+  recordYears: { min: number | null; max: number | null };
+}
+
+export interface SpeciesDistributionOptions {
+  mode?: 'exact' | 'nearby_marine';
+  topK?: number;
+}
+
+export interface SpeciesCoordinateContext {
+  requestedLatitude: number;
+  requestedLongitude: number;
+  usedLatitude: number;
+  usedLongitude: number;
+  method: 'exact_coordinate' | 'nearest_marine_grid';
+  moved: boolean;
+  distanceKm: number;
+  maxDistanceKm?: number;
+  gridCellId?: string;
+  requestedInsideMalaysianEez: boolean;
+  interpretation?: string;
 }
 
 /**
@@ -249,8 +276,13 @@ export interface SpeciesDistributionResult {
   insideMalaysianEez: boolean;
   scoreType: 'relative_occurrence';
   calibratedProbability: false;
+  crossSpeciesRankingValidated: false;
+  rankingMethod: 'heuristic_within_species_percentile';
   predictions: SpeciesPrediction[];
+  topPredictions: SpeciesPrediction[];
+  coordinateContext: SpeciesCoordinateContext;
   modelVersion: string;
+  modelCount: number;
 }
 
 /** The published scoring rules, so the "How the score works" page can print

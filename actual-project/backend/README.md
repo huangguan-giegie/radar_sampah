@@ -72,10 +72,14 @@ Normal anonymous signup creates `volunteer` accounts only.
   `requirements-ml.txt` to enable YOLO. If the weights or ML dependencies are
   unavailable, recognition falls back to manual counts instead of inventing a
   model result.
-- Four packaged OBIS species-distribution models load once per process. Their
-  scores are relative occurrence/suitability context, not calibrated
-  probabilities or real-time OBIS results, and they do not affect litter
-  severity or report status.
+- The packaged 40-species OBIS registry loads once per process. Predictions
+  include all registry species and up to five default suggestions, sorted by
+  each species' score percentile within its frozen 4,227-cell reference.
+  These historical location scores are not calibrated occurrence probabilities
+  or confirmed sightings and do not affect litter severity or report status.
+  Coordinate-only requests use strict `exact` mode. Beach requests can explicitly
+  use `mode: "nearby_marine"`, with a fixed 15 km limit and disclosed requested
+  and used coordinates. See [the model contract](species_distribution/README.md).
 
 ## Production settings
 
@@ -102,6 +106,7 @@ Normal anonymous signup creates `volunteer` accounts only.
 - `GET /scoring-method`
 - `GET /scoring-method/iteration2`
 - `POST /api/species-distribution/predict`
+- `GET /api/species-distribution/catalog`
 - `POST /geo/resolve-beach`
 - `POST /uploads/photos`
 - `POST /reports`

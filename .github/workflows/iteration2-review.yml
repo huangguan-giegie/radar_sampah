@@ -6,6 +6,7 @@ on:
       - fix/iteration2-backend-review-20260914
       - fix/standalone-cleanup-ai-prod-20260914
       - iteration3
+      - iteration3-species-upgrade
   pull_request:
     branches:
       - main
@@ -22,12 +23,14 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
+          python-version: '3.13.7'
           cache: pip
           cache-dependency-path: actual-project/backend/requirements.txt
       - run: python -m pip install --upgrade pip
       - run: pip install -r requirements.txt
-      - run: pytest -q tests/test_api.py tests/test_active_composition.py tests/test_standalone_cleanup.py tests/test_manual_remarks.py tests/test_litter_gallery.py tests/test_final_band_contract.py tests/test_review_small_legacy.py tests/test_report_updates.py tests/test_yolo_runtime.py
+      - run: pytest -q
+      - name: Check offline species retraining
+        run: python ../species-training/train.py --species "Amphiprion ocellaris" --workers 1 --output-dir ../species-training/runs/ci-smoke
 
   frontend:
     runs-on: ubuntu-latest

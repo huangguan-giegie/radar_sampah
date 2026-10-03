@@ -10,7 +10,7 @@
 // them would let a species score be read as something seen on this beach.
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useEffect, useRef, useState } from 'react';
-import { getBeach, getSpeciesDistribution, USE_MOCK } from '../api';
+import { ApiError, getBeach, getSpeciesDistribution, USE_MOCK } from '../api';
 import { BeachCover } from '../components/BeachCover';
 import { BeachCleanupCard } from '../components/BeachCleanupCard';
 import { EcologicalBackgroundLink } from '../components/EcologicalBackgroundLink';
@@ -19,22 +19,16 @@ import { BackButton, DraftChoiceDialog, ErrorNote, GhostButton, Label, PrimaryBu
 import { attentionStateFor, C, formatDate, freshnessLabel, freshStyle, MONO, NOISE, reportWord, SEVERITY, severityLabel } from '../theme';
 import { BandMeter, Callout, GlassPanel, InfoChip } from '../components/ds';
 import { useApp } from '../AppContext';
-import type { BeachDetail, SpeciesDistributionResult } from '../types';
+import type { BeachDetail, SpeciesDistributionResult, SpeciesPrediction } from '../types';
 import { hasDraftProgress, resumePath } from '../flowRules';
 import { getCleanupEvent, getCleanupTarget, getLatestCleanupForBeach } from '../iteration2';
 import { fetchCleanupEvent, fetchCleanupTarget, fetchLatestCleanupForBeach } from '../iteration2Api';
 import { SCORING_METHOD } from '../scoring';
-import { MODEL_SPECIES_MEDIA } from '../speciesMedia';
+import { glyphForSpeciesCategory, mediaForScientificName } from '../speciesMedia';
 import { useAsyncData } from '../useAsyncData';
 
-/*
- * relativeOccurrenceScore stays on the API's 0..1 scale, and the card prints it
- * with two decimals: 0.118262 reads as precision a relative score does not have.
- *
- * Do not "fix" this into a percentage. A previous version multiplied by 100 to
- * print "12 / 100"; AC5.5.1 was settled the other way. Only the number of
- * printed decimals changed here, never the scale.
- */
+// Location match uses a 0..100 display scale for the species' reference
+// percentile. The separate raw model score stays on 0..1 in the details.
 
 // Bar colours for the composition rows. They only separate one row from the
 // next - they carry no meaning, which is why they are deliberately NOT the four
@@ -65,6 +59,123 @@ export function decimalScoreLabel(value: number): string {
   return (Math.round((value + Number.EPSILON) * 100) / 100).toFixed(2);
 }
 
+export function locationMatchLabel(value: number): string {
+  return `${Math.round(Math.max(0, Math.min(1, value)) * 100)}/100`;
+}
+
+export interface SpeciesModelError {
+  kind: 'outside' | 'invalid' | 'unavailable';
+  message: string;
+}
+
+export function speciesModelError(reason: unknown): SpeciesModelError {
+  if (reason instanceof ApiError && reason.status === 422) {
+    return { kind: 'outside', message: 'There is no supported nearby marine point within 15 km of this beach.' };
+  }
+  if (reason instanceof ApiError && reason.status === 400) {
+    return { kind: 'invalid', message: 'The beach location could not be used to load species information.' };
+  }
+  return { kind: 'unavailable', message: reason instanceof Error ? reason.message : 'Please check your connection and try again.' };
+}
+
+function recordYearsLabel(prediction: SpeciesPrediction): string {
+  const { min, max } = prediction.recordYears ?? {};
+  if (min == null && max == null) return 'Record years unavailable';
+  return `Historical source records: ${min != null && max != null && min !== max ? `${min}–${max}` : max ?? min}`;
+}
+
+/** Separate states and cards are independently renderable for contract tests. */
+export function SpeciesModelCards({
+  result, loading, error, onRetry, scene, preview = false,
+}: {
+  result: SpeciesDistributionResult | null;
+  loading: boolean;
+  error: SpeciesModelError | null;
+  onRetry: () => void;
+  scene: string;
+  preview?: boolean;
+}) {
+  if (preview) {
+    return <div style={{ fontSize: 12.5, color: C.muted }}>The historical species model is unavailable in this local preview.</div>;
+  }
+  if (loading) {
+    return <div role="status" aria-live="polite"><div style={{ fontSize: 12.5, color: C.muted, marginBottom: 10 }}>Loading nearby marine species…</div><Skeleton h={180} r={22} /></div>;
+  }
+  if (error) {
+    return <ErrorNote title={error.kind === 'outside' ? 'Nearby marine area unavailable' : 'Could not load nearby species'} body={error.message} onRetry={error.kind === 'outside' ? undefined : onRetry} />;
+  }
+  if (!result) return null;
+  const cards = result.topPredictions.filter((row) => row.defaultRecommendation && row.relativeOccurrenceScore > 0).slice(0, 5);
+  const coordinates = result.coordinateContext;
+  return (
+    <>
+      <div style={{ fontSize: 12.5, lineHeight: 1.5, color: C.muted, marginBottom: 12 }}>
+        Historical nearby marine context · not confirmed sightings. Location match compares this point with other reference locations for each species; it is not an occurrence probability.
+      </div>
+      <div style={{ fontSize: 11.5, lineHeight: 1.5, color: C.dim, marginBottom: 12 }}>
+        Beach location: {coordinates.requestedLatitude.toFixed(4)}, {coordinates.requestedLongitude.toFixed(4)}
+        {' · '}Marine location: {coordinates.usedLatitude.toFixed(4)}, {coordinates.usedLongitude.toFixed(4)}
+        {' · '}{coordinates.moved ? `${coordinates.distanceKm.toFixed(1)} km from the beach` : 'Same location'}
+      </div>
+      {cards.length === 0 ? (
+        <div style={{ border: `1.5px dashed ${C.line2}`, borderRadius: 22, padding: 20, fontSize: 13, lineHeight: 1.5, color: C.muted }}>
+          No species recommendations are available for this marine location. This is not evidence that wildlife is absent.
+        </div>
+      ) : (
+        <div className="scroll-x" style={{ display: 'flex', gap: 12, paddingBottom: 6, margin: '0 -16px', paddingInline: 16, scrollSnapType: 'x proximity' }}>
+          {cards.map((prediction) => {
+            const media = mediaForScientificName(prediction.scientificName);
+            const glyph = glyphForSpeciesCategory(prediction.category);
+            return (
+              <article key={prediction.scientificName} data-species-card={prediction.scientificName} style={{ width: 226, flex: 'none', background: C.white, border: `1px solid ${C.line}`, borderRadius: 22, overflow: 'hidden', scrollSnapAlign: 'start', boxShadow: '0 10px 26px -24px rgba(11,33,97,.7)' }}>
+                <div style={{ height: 132, position: 'relative', overflow: 'hidden', background: media ? scene : C.tint }}>
+                  {media ? (
+                    <img src={media.imageUrl} alt={media.imageAlt} loading="lazy" style={{ width: '100%', height: '100%', display: 'block', objectFit: 'cover', objectPosition: media.imageObjectPosition ?? 'center' }} />
+                  ) : (
+                    <div aria-hidden="true" style={{ height: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                      {glyph ? <SpeciesIcon glyph={glyph} size={48} /> : <Info size={48} color={C.slate} />}
+                    </div>
+                  )}
+                  <div style={{ position: 'absolute', right: 10, bottom: 10, padding: '5px 9px', borderRadius: 999, background: 'rgba(7,22,50,.82)', color: C.bg, fontFamily: MONO, fontSize: 9.5, fontWeight: 700 }}>
+                    Location match {locationMatchLabel(prediction.locationMatchScore)}
+                  </div>
+                </div>
+                <div style={{ padding: '14px 14px 15px' }}>
+                  <div style={{ fontSize: 14.5, fontWeight: 680, lineHeight: 1.25, color: C.ink2 }}>{prediction.commonNameEn || prediction.scientificName}</div>
+                  <div style={{ fontSize: 11.5, fontStyle: 'italic', lineHeight: 1.35, color: C.dim, marginTop: 3 }}>{prediction.scientificName}</div>
+                  {prediction.introEn && <p style={{ fontSize: 12, lineHeight: 1.5, color: C.muted, margin: '10px 0' }}>{prediction.introEn}</p>}
+                  <details style={{ fontSize: 11.5, lineHeight: 1.5, color: C.muted, marginTop: 10 }}>
+                    <summary style={{ cursor: 'pointer', color: C.slate }}>Model details</summary>
+                    <div style={{ marginTop: 7 }}>Raw relative score: {decimalScoreLabel(prediction.relativeOccurrenceScore)} (0–1)</div>
+                    <div>{recordYearsLabel(prediction)}</div>
+                    <div>Historical source records describe the model inputs, not a current beach observation.</div>
+                    {media && <div style={{ marginTop: 7 }}>Photo: <a href={media.imageSourceUrl} target="_blank" rel="noreferrer" style={{ color: C.slate, textDecoration: 'underline' }}>{media.imageAuthor}</a>{' · '}<a href={media.imageLicenseUrl} target="_blank" rel="noreferrer" style={{ color: C.slate, textDecoration: 'underline' }}>{media.imageLicense}</a></div>}
+                  </details>
+                </div>
+              </article>
+            );
+          })}
+        </div>
+      )}
+      <details style={{ marginTop: 12, fontSize: 12, lineHeight: 1.5, color: C.muted }}>
+        <summary style={{ cursor: 'pointer', fontWeight: 650, color: C.slate }}>More species ({result.predictions.length})</summary>
+        <p>All species in this model package, including those without a recommendation. These are model results for the marine location above, not locally observed species.</p>
+        {result.predictions.map((prediction) => (
+          <div key={prediction.scientificName} style={{ padding: '10px 0', borderTop: `1px solid ${C.line}` }}>
+            <div style={{ fontWeight: 650, color: C.ink2 }}>{prediction.commonNameEn || prediction.scientificName}</div>
+            <div style={{ fontStyle: 'italic' }}>{prediction.scientificName}</div>
+            <div>Location match {locationMatchLabel(prediction.locationMatchScore)} · Raw relative score {decimalScoreLabel(prediction.relativeOccurrenceScore)}</div>
+            <div>{recordYearsLabel(prediction)}</div>
+            {!prediction.defaultRecommendation && <div>Reference context only · no recommendation</div>}
+          </div>
+        ))}
+        <p>A high location match can accompany a low raw score. Card order is an exploratory comparison across species and has not been independently validated. Neither score is a probability.</p>
+        <div style={{ fontSize: 10.5 }}>OBIS historical snapshot · model {result.modelVersion}</div>
+      </details>
+    </>
+  );
+}
+
 export default function BeachScreen() {
   const { beachId = '' } = useParams();
   const nav = useNavigate();
@@ -79,6 +190,10 @@ export default function BeachScreen() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [showDraftChoice, setShowDraftChoice] = useState(false);
   const [modelResult, setModelResult] = useState<SpeciesDistributionResult | null>(null);
+  const [modelLoading, setModelLoading] = useState(false);
+  const [modelError, setModelError] = useState<SpeciesModelError | null>(null);
+  const beachRequestId = useRef(0);
+  const modelRequestId = useRef(0);
   const requestedEventId = new URLSearchParams(location.search).get('event');
   const { data: latestCleanup } = useAsyncData(
     () => fetchLatestCleanupForBeach(beachId),
@@ -102,26 +217,47 @@ export default function BeachScreen() {
       && linkedEvent.joined,
   );
 
+  function loadSpecies(data: BeachDetail) {
+    const requestId = ++modelRequestId.current;
+    setModelLoading(true);
+    setModelResult(null);
+    setModelError(null);
+    getSpeciesDistribution(data.lat, data.lng, { mode: 'nearby_marine', topK: 5 })
+      .then((result) => {
+        if (requestId === modelRequestId.current) setModelResult(result);
+      })
+      .catch((reason) => {
+        if (requestId === modelRequestId.current) setModelError(speciesModelError(reason));
+      })
+      .finally(() => {
+        if (requestId === modelRequestId.current) setModelLoading(false);
+      });
+  }
+
   function loadBeach() {
+    const requestId = ++beachRequestId.current;
+    ++modelRequestId.current;
     setLoading(true);
     setFailed(false);
     setLoadError(null);
     setB(null);
     setModelResult(null);
+    setModelError(null);
+    setModelLoading(false);
     getBeach(beachId)
       .then((data) => {
+        if (requestId !== beachRequestId.current) return;
         setB(data);
-        if (!USE_MOCK) {
-          getSpeciesDistribution(data.lat, data.lng)
-            .then(setModelResult)
-            .catch(() => setModelResult(null));
-        }
+        if (!USE_MOCK) loadSpecies(data);
       })
       .catch((reason) => {
+        if (requestId !== beachRequestId.current) return;
         setFailed(true);
         setLoadError(reason instanceof Error ? reason.message : 'Could not load this beach.');
       })
-      .finally(() => setLoading(false));
+      .finally(() => {
+        if (requestId === beachRequestId.current) setLoading(false);
+      });
   }
 
   // beachId is in the dependency list, so moving between beaches refetches.
@@ -129,6 +265,10 @@ export default function BeachScreen() {
   // quietly drift into different behaviour.
   useEffect(() => {
     loadBeach();
+    return () => {
+      ++beachRequestId.current;
+      ++modelRequestId.current;
+    };
   }, [beachId]);
 
   // Scroll once the beach has loaded - before that the section does not exist
@@ -217,10 +357,6 @@ export default function BeachScreen() {
   const fs = freshStyle(b.freshnessKind);
   const newestCountedAt = b.newestCountedReportAt
     ?? (b.latestContributingReportAt === undefined ? b.lastReportedAt : b.latestContributingReportAt);
-  // Scientific name is the only id a species card and a model prediction share.
-  const modelByScientificName = new Map(
-    (modelResult?.predictions ?? []).map((prediction) => [prediction.scientificName, prediction]),
-  );
 
   return (
     <div className="screen scroll-y" style={{ zIndex: 20 }}>
@@ -488,137 +624,14 @@ export default function BeachScreen() {
             Habitat · {b.habitat}
           </div>
 
-          {/* The four modelled species, each with a licensed photo and its
-              relative score for this beach. A per-beach row of habitat cards
-              used to sit above these, but its entries had no photos and no
-              source yet ("pending"), so it read as placeholder content. */}
-          <div
-            className="scroll-x"
-            style={{
-              display: 'flex',
-              gap: 12,
-              paddingBottom: 6,
-              margin: '0 -16px',
-              paddingLeft: 16,
-              paddingRight: 16,
-              scrollSnapType: 'x proximity',
-            }}
-          >
-            {MODEL_SPECIES_MEDIA.map((species) => {
-              const prediction = modelByScientificName.get(species.scientificName);
-              return (
-                <article
-                  key={species.scientificName}
-                  style={{
-                    width: 226,
-                    flex: 'none',
-                    background: C.white,
-                    border: `1px solid ${C.line}`,
-                    borderRadius: 22,
-                    overflow: 'hidden',
-                    scrollSnapAlign: 'start',
-                    boxShadow: '0 10px 26px -24px rgba(11,33,97,.7)',
-                  }}
-                >
-                  <div style={{ height: 132, position: 'relative', overflow: 'hidden', background: b.scene }}>
-                    <img
-                      src={species.imageUrl}
-                      alt={species.imageAlt}
-                      loading="lazy"
-                      style={{
-                        width: '100%',
-                        height: '100%',
-                        display: 'block',
-                        objectFit: 'cover',
-                        objectPosition: species.imageObjectPosition ?? 'center',
-                      }}
-                    />
-                    <div
-                      style={{
-                        position: 'absolute',
-                        inset: 0,
-                        background: 'linear-gradient(180deg,transparent 48%,rgba(7,22,50,.66) 100%)',
-                        pointerEvents: 'none',
-                      }}
-                    />
-                    <div
-                      style={{
-                        position: 'absolute',
-                        right: 10,
-                        bottom: 10,
-                        minHeight: 26,
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        padding: '5px 9px',
-                        borderRadius: 999,
-                        background: 'rgba(7,22,50,.82)',
-                        color: C.bg,
-                        fontFamily: MONO,
-                        fontSize: 9.5,
-                        fontWeight: 700,
-                        letterSpacing: '.06em',
-                        backdropFilter: 'blur(8px)',
-                      }}
-                    >
-                      {/* Two decimals: 0.118262 reads as false precision for a relative score. */}
-                      {prediction ? `RELATIVE SCORE ${decimalScoreLabel(prediction.relativeOccurrenceScore)}` : 'SCORE PENDING'}
-                    </div>
-                  </div>
-                  <div style={{ padding: '14px 14px 15px' }}>
-                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 9 }}>
-                      <div
-                        aria-hidden="true"
-                        style={{
-                          width: 34,
-                          height: 34,
-                          flex: 'none',
-                          borderRadius: 17,
-                          background: C.tint,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                        }}
-                      >
-                        <SpeciesIcon glyph={species.glyph} />
-                      </div>
-                      <div style={{ minWidth: 0, paddingTop: 1 }}>
-                        <div style={{ fontSize: 14.5, fontWeight: 680, lineHeight: 1.25, color: C.ink2 }}>
-                          {species.commonName}
-                        </div>
-                        <div style={{ fontSize: 11.5, fontStyle: 'italic', lineHeight: 1.35, color: C.dim, marginTop: 3 }}>
-                          {species.scientificName}
-                        </div>
-                      </div>
-                    </div>
-                    <div style={{ fontSize: 11.5, lineHeight: 1.45, color: C.muted, marginTop: 11 }}>
-                      Photo:{' '}
-                      <a
-                        href={species.imageSourceUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        style={{ color: C.slate, textDecoration: 'underline', textUnderlineOffset: 2 }}
-                      >
-                        {species.imageAuthor}
-                      </a>
-                      {' · '}
-                      <a
-                        href={species.imageLicenseUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        style={{ color: C.slate, textDecoration: 'underline', textUnderlineOffset: 2 }}
-                      >
-                        {species.imageLicense}
-                      </a>
-                    </div>
-                  </div>
-                </article>
-              );
-            })}
-          </div>
-          <div style={{ fontSize: 11.5, color: C.muted, marginTop: 8, lineHeight: 1.5 }}>
-            Relative model scores · not probabilities or confirmed sightings · OBIS snapshot, CC BY-NC
-          </div>
-
+          <SpeciesModelCards
+            result={modelResult}
+            loading={modelLoading}
+            error={modelError}
+            onRetry={() => loadSpecies(b)}
+            scene={b.scene}
+            preview={USE_MOCK}
+          />
           <div style={{ marginTop: 16, background: C.tint, borderRadius: 20, padding: '16px 17px' }}>
             <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '.14em', color: C.slate }}>
               WHY LITTER MATTERS HERE

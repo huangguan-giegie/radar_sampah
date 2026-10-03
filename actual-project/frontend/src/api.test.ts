@@ -233,7 +233,12 @@ describe('真实 API contract', () => {
       insideMalaysianEez: true,
       scoreType: 'relative_occurrence',
       calibratedProbability: false,
+      crossSpeciesRankingValidated: false,
+      rankingMethod: 'heuristic_within_species_percentile',
       predictions: [],
+      topPredictions: [],
+      coordinateContext: { requestedLatitude: 2.746, requestedLongitude: 101.44, usedLatitude: 2.746, usedLongitude: 101.44, distanceKm: 0 },
+      modelCount: 40,
       modelVersion: '2026-08-29',
     };
     const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify(result), { status: 200 }));
@@ -243,6 +248,32 @@ describe('真实 API contract', () => {
     await expect(getSpeciesDistribution(2.746, 101.44)).resolves.toEqual(result);
     expect(fetchMock.mock.calls[0][0]).toBe('https://radar-sampah-api.onrender.com/api/species-distribution/predict');
     expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({ latitude: 2.746, longitude: 101.44 });
+  });
+
+  it('explicitly requests nearby marine context and preserves its disclosed point', async () => {
+    const result = {
+      insideMalaysianEez: true, scoreType: 'relative_occurrence', calibratedProbability: false,
+      crossSpeciesRankingValidated: false, rankingMethod: 'heuristic_within_species_percentile',
+      predictions: [], topPredictions: [], modelVersion: 'obis-40', modelCount: 40,
+      coordinateContext: { requestedLatitude: 2.789, requestedLongitude: 101.415, usedLatitude: 2.75, usedLongitude: 101.35, distanceKm: 8.42, moved: true },
+    };
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify(result), { status: 200 }));
+    vi.stubGlobal('fetch', fetchMock);
+    const { getSpeciesDistribution } = await import('./api');
+    await expect(getSpeciesDistribution(2.789, 101.415, { mode: 'nearby_marine', topK: 5 })).resolves.toEqual(result);
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({ latitude: 2.789, longitude: 101.415, mode: 'nearby_marine', topK: 5 });
+  });
+
+  it('keeps unsupported marine area distinct from a successful empty recommendation', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify({ code: 'OUTSIDE_MODEL_AREA', message: 'Outside model area' }), { status: 422 })));
+    const { getSpeciesDistribution } = await import('./api');
+    await expect(getSpeciesDistribution(0, 0, { mode: 'nearby_marine', topK: 5 })).rejects.toMatchObject({ status: 422, code: 'OUTSIDE_MODEL_AREA' });
+  });
+
+  it('rejects a raw-only response instead of labelling it location match', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify({ calibratedProbability: false, predictions: [] }), { status: 200 })));
+    const { getSpeciesDistribution } = await import('./api');
+    await expect(getSpeciesDistribution(2.746, 101.44)).rejects.toThrow('Species information is temporarily unavailable');
   });
 
   // The derived category must be the highest weight x amount, not simply the

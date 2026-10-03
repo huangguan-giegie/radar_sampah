@@ -8,6 +8,8 @@ services:
     healthCheckPath: /health
     plan: free
     envVars:
+      - key: PYTHON_VERSION
+        value: 3.13.7
       - key: FRONTEND_ORIGINS
         value: https://team04-marine-observation-frontend.onrender.com
       # Enter the Render PostgreSQL connection string in the dashboard.

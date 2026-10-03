@@ -18,3 +18,10 @@ actual-project/ml-model/models/last.pt
 actual-project/ml-model/models/*.onnx
 !actual-project/ml-model/models/sea_taco_yolo11m_best.onnx
 actual-project/ml-model/models/*.engine
+
+# Species retraining outputs are separate from the committed runtime registry.
+actual-project/species-training/runs/
+.pytest_cache/
+actual-project/backend/.pytest-*-tmp/
+actual-project/backend/pytest-cache-files-*/
+actual-project/backend/species-http-*/

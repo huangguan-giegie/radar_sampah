@@ -37,6 +37,7 @@ import type {
   ReportStatus,
   ScoringMethod,
   SpeciesDistributionResult,
+  SpeciesDistributionOptions,
   UploadedPhoto,
   User,
 } from './types';
@@ -654,12 +655,32 @@ export async function getMe(): Promise<User | null> {
   }
 }
 
-export async function getSpeciesDistribution(latitude: number, longitude: number): Promise<SpeciesDistributionResult> {
+export async function getSpeciesDistribution(
+  latitude: number,
+  longitude: number,
+  options: SpeciesDistributionOptions = {},
+): Promise<SpeciesDistributionResult> {
   if (USE_MOCK) {
     throw new Error('Species distribution model is not enabled in mock mode.');
   }
   // The model receives a beach's broad-area coordinate and returns context, not a litter score.
-  return request('/api/species-distribution/predict', 'POST', { latitude, longitude });
+  const result = await request('/api/species-distribution/predict', 'POST', { latitude, longitude, ...options });
+  // Do not present an older raw-only response as a location-match result.
+  if (!result || result.scoreType !== 'relative_occurrence'
+    || result.calibratedProbability !== false
+    || result.crossSpeciesRankingValidated !== false
+    || result.rankingMethod !== 'heuristic_within_species_percentile'
+    || !Array.isArray(result.predictions)
+    || !Array.isArray(result.topPredictions)
+    || !result.coordinateContext
+    || ['requestedLatitude', 'requestedLongitude', 'usedLatitude', 'usedLongitude', 'distanceKm'].some((key) => !Number.isFinite(result.coordinateContext[key]))
+    || [...result.predictions, ...result.topPredictions].some((row) =>
+      !row || !row.scientificName
+      || !Number.isFinite(row.locationMatchScore) || row.locationMatchScore < 0 || row.locationMatchScore > 1
+      || !Number.isFinite(row.relativeOccurrenceScore) || row.relativeOccurrenceScore < 0 || row.relativeOccurrenceScore > 1)) {
+    throw new Error('Species information is temporarily unavailable. Please try again.');
+  }
+  return result;
 }
 
 // ============================================================

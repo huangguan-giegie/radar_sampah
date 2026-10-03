@@ -1,5 +1,13 @@
 # Team 04 Real Project Migration
 
+## Iteration 3 species model upgrade
+
+Branch `iteration3-species-upgrade` packages 40 independently trained OBIS animal
+models, a versioned catalogue, explicit coastal-grid prediction and a Top-5 beach
+display with location-match scores. It includes offline training code and frozen
+processed inputs. See the [upgrade, methodology and deployment guide](actual-project/docs/ITERATION3_SPECIES_UPGRADE.md)
+for the data preparation, validation boundaries, API examples and rollout checks.
+
 This folder holds the active Radar Sampah project. The migration audit record
 is maintained locally only.
 
