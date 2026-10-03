@@ -5,6 +5,8 @@ type Options = {
   center: [number, number];
   zoom: number;
   interactive?: boolean;
+  zoomSnap?: number;
+  zoomAnimation?: boolean;
 };
 
 /**
@@ -23,7 +25,7 @@ type Options = {
  * this component on every pan and zoom, for no benefit, and React still could
  * not manage what is inside.
  */
-export function useLeafletMap({ center, zoom, interactive = true }: Options) {
+export function useLeafletMap({ center, zoom, interactive = true, zoomSnap = 1, zoomAnimation = true }: Options) {
   const elRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<L.Map | null>(null);
   const [ready, setReady] = useState(false);
@@ -44,6 +46,8 @@ export function useLeafletMap({ center, zoom, interactive = true }: Options) {
       doubleClickZoom: interactive,
       boxZoom: false,
       keyboard: interactive,
+      zoomSnap,
+      zoomAnimation,
     });
 
     // The attribution is required by the OpenStreetMap licence. It is not
@@ -63,8 +67,7 @@ export function useLeafletMap({ center, zoom, interactive = true }: Options) {
     // measures a size that is about to change and draws the tiles in the
     // wrong place.
     const t = window.setTimeout(() => {
-      map.invalidateSize(true);
-      map.setView(center, zoom);
+      map.invalidateSize({ pan: false });
     }, 300);
 
     /*

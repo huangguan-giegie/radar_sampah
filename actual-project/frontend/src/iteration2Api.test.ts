@@ -19,6 +19,24 @@ afterEach(() => {
   vi.unstubAllEnvs();
 });
 
+describe('local viewer-scoped events', () => {
+  it('shows Joined after one tap and never shares it with another participant', async () => {
+    vi.stubEnv('VITE_API_BASE_URL', '');
+    const { fetchCleanupEvents, joinCleanupEventData, leaveCleanupEventData, recordCheckInData } = await import('./iteration2Api');
+    const event = (await fetchCleanupEvents('1111'))[0];
+    const joined = await joinCleanupEventData(event.id, '1111');
+    expect(joined.joined).toBe(true);
+    expect((await fetchCleanupEvents('1111', true)).map(e => e.id)).toContain(event.id);
+    expect(await fetchCleanupEvents('2222', true)).toEqual([]);
+    const checked = await recordCheckInData(event.id, '1111', 'within_area');
+    expect(checked.checkedIn).toBe(true);
+    const other = (await fetchCleanupEvents('2222')).find(e => e.id === event.id);
+    expect(other?.checkedIn).toBe(false);
+    expect(other?.attendanceConfirmed).toBe(false);
+    expect((await leaveCleanupEventData(event.id, '1111')).joined).toBe(false);
+  });
+});
+
 describe('v3 real API integration', () => {
   it('sends measured coordinates for server-validated check-in', async () => {
     const fetchMock = vi.fn().mockResolvedValue(new Response('{}'));
@@ -60,6 +78,42 @@ describe('v3 real API integration', () => {
         handling: 'Collected for disposal', note: '', idempotencyKey: 'cleanup-retry-1',
       });
     }
+  });
+
+  it('refreshes beach summaries after a cleanup changes the active report state', async () => {
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify([{ id: 'morib', validReports: 3 }])))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ id: 'cleanup-1', resolved: true })))
+      .mockResolvedValueOnce(new Response(JSON.stringify([{ id: 'morib', validReports: 2 }])));
+    vi.stubGlobal('fetch', fetchMock);
+    const { getBeaches, getCachedBeaches } = await import('./api');
+    const { submitCleanup } = await import('./iteration2Api');
+    await getBeaches();
+    expect(getCachedBeaches()?.[0].validReports).toBe(3);
+
+    await submitCleanup({
+      participantId: '1637', targetReportId: 'report-1',
+      afterBands: { Plastic: 'Small' }, handling: 'Not recorded', idempotencyKey: 'cleanup-1',
+    });
+
+    expect(getCachedBeaches()).toBeNull();
+    expect((await getBeaches())[0].validReports).toBe(2);
+  });
+
+  it('keeps the last known beach state when saving a cleanup fails', async () => {
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify([{ id: 'morib', validReports: 3 }])))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ message: 'Cleanup could not be saved' }), { status: 500 }));
+    vi.stubGlobal('fetch', fetchMock);
+    const { getBeaches, getCachedBeaches } = await import('./api');
+    const { submitCleanup } = await import('./iteration2Api');
+    await getBeaches();
+
+    await expect(submitCleanup({
+      participantId: '1637', targetReportId: 'report-1',
+      afterBands: { Plastic: 'Small' }, handling: 'Not recorded', idempotencyKey: 'cleanup-1',
+    })).rejects.toThrow('Cleanup could not be saved');
+    expect(getCachedBeaches()?.[0].validReports).toBe(3);
   });
 
   it('uploads the actual cleanup image and keeps unrecognized target bands unchanged', async () => {

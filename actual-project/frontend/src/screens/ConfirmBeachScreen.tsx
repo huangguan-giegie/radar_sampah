@@ -15,6 +15,7 @@ import { OverlayChip, SeverityBadge } from '../components/ds';
 import { useApp } from '../AppContext';
 import type { BeachSummary } from '../types';
 import type { ReportDraft } from '../AppContext';
+import { useAppBack } from '../navigation';
 
 /**
  * What to say when locating did not work out. Six causes get six sentences:
@@ -33,6 +34,7 @@ const GPS_MESSAGE: Record<NonNullable<ReportDraft['gpsIssue']>, string> = {
 
 export default function ConfirmBeachScreen() {
   const nav = useNavigate();
+  const back = useAppBack('/report/location');
   const { draft, patchDraft } = useApp();
   const [beaches, setBeaches] = useState<BeachSummary[]>([]);
   const [loading, setLoading] = useState(true);
@@ -83,10 +85,10 @@ export default function ConfirmBeachScreen() {
       {/* Tapping the map behind the sheet leaves, exactly like Back. This map is
           not interactive (see MiniMap), so the layer costs nothing - and without
           it the only way out of the sheet was the small back button. */}
-      <div onClick={() => nav(-1)} aria-hidden="true" style={{ position: 'absolute', inset: 0, zIndex: 810 }} />
+      <div onClick={back} aria-hidden="true" style={{ position: 'absolute', inset: 0, zIndex: 810 }} />
 
       <BackButton
-        onClick={() => nav(-1)}
+        onClick={back}
         style={{ position: 'absolute', top: 'var(--top-inset)', left: 18, zIndex: 820, background: 'rgba(255,255,255,.85)', backdropFilter: 'blur(10px)' }}
       />
       <div style={{ position: 'absolute', top: 'var(--top-inset)', right: 18, zIndex: 820 }}><StepBadge>STEP 3 OF 6 · BEACH</StepBadge></div>

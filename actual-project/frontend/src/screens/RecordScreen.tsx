@@ -9,6 +9,7 @@ import { BackButton, PrimaryButton, StepBadge } from '../components/ui';
 import { continueFromDetails } from '../flowRules';
 import { C, MONO, QUANTITY_DESC } from '../theme';
 import type { LitterCategory, QuantityBand, QuantityByCategory } from '../types';
+import { useAppBack } from '../navigation';
 
 const CATEGORIES: LitterCategory[] = ['Plastic', 'Fishing gear', 'Glass', 'Metal', 'Paper', 'Other'];
 const BANDS: QuantityBand[] = ['Small', 'Medium', 'Large', 'Very Large'];
@@ -16,6 +17,7 @@ const BANDS: QuantityBand[] = ['Small', 'Medium', 'Large', 'Very Large'];
 export default function RecordScreen() {
   const nav = useNavigate();
   const { draft, patchDraft } = useApp();
+  const back = useAppBack(draft.editingReportId ? `/reports/${draft.editingReportId}` : '/report/confirm');
   const [showErrors, setShowErrors] = useState(false);
   const quantities = draft.quantities;
   const picked = CATEGORIES.filter((category) => category in quantities);
@@ -75,7 +77,7 @@ export default function RecordScreen() {
           style={{ position: 'absolute', top: 'var(--top-inset)', left: 0, right: 0, paddingInline: 18, display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}
         >
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 10, minWidth: 0 }}>
-            <BackButton dark onClick={() => nav('/report/confirm', { replace: true })} />
+            <BackButton dark onClick={back} />
             {beachChip && <OverlayChip>{beachChip}</OverlayChip>}
           </div>
           <StepBadge dark>STEP 5 OF 6 · DETAILS</StepBadge>

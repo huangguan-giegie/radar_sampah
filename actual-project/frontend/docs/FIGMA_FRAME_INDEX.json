@@ -1,0 +1,3426 @@
+{
+  "source": "Radar-Sampah-frontend-bundle · 03-10-2026",
+  "note": "Reference coverage index, not a claim that every frame was individually visually verified.",
+  "frames": [
+    {
+      "figmaId": "1214:204",
+      "name": "01 Splash",
+      "section": "01-a-start-profile",
+      "routes": [
+        "/welcome",
+        "/identity"
+      ],
+      "coverage": "existing identity workflow",
+      "screenshot": "screens/01-a-start-profile/001_01-splash.jpg"
+    },
+    {
+      "figmaId": "1214:297",
+      "name": "02 Welcome",
+      "section": "01-a-start-profile",
+      "routes": [
+        "/welcome",
+        "/identity"
+      ],
+      "coverage": "existing identity workflow",
+      "screenshot": "screens/01-a-start-profile/002_02-welcome.jpg"
+    },
+    {
+      "figmaId": "1214:53",
+      "name": "03 Identity · choose",
+      "section": "01-a-start-profile",
+      "routes": [
+        "/welcome",
+        "/identity"
+      ],
+      "coverage": "existing identity workflow",
+      "screenshot": "screens/01-a-start-profile/003_03-identity-choose.jpg"
+    },
+    {
+      "figmaId": "1214:241",
+      "name": "03d Identity · new ID and recovery token",
+      "section": "01-a-start-profile",
+      "routes": [
+        "/welcome",
+        "/identity"
+      ],
+      "coverage": "existing identity workflow",
+      "screenshot": "screens/01-a-start-profile/004_03d-identity-new-id-and-recovery-token.jpg"
+    },
+    {
+      "figmaId": "1222:2",
+      "name": "03e Identity · recovery token saved",
+      "section": "01-a-start-profile",
+      "routes": [
+        "/welcome",
+        "/identity"
+      ],
+      "coverage": "existing identity workflow",
+      "screenshot": "screens/01-a-start-profile/005_03e-identity-recovery-token-saved.jpg"
+    },
+    {
+      "figmaId": "1214:95",
+      "name": "03b Identity · restore profile",
+      "section": "01-a-start-profile",
+      "routes": [
+        "/welcome",
+        "/identity"
+      ],
+      "coverage": "existing identity workflow",
+      "screenshot": "screens/01-a-start-profile/006_03b-identity-restore-profile.jpg"
+    },
+    {
+      "figmaId": "1214:2",
+      "name": "03c Identity · restore · filled",
+      "section": "01-a-start-profile",
+      "routes": [
+        "/welcome",
+        "/identity"
+      ],
+      "coverage": "existing identity workflow",
+      "screenshot": "screens/01-a-start-profile/007_03c-identity-restore-filled.jpg"
+    },
+    {
+      "figmaId": "2579:16213",
+      "name": "02b Location · ask once at start",
+      "section": "01-a-start-profile",
+      "routes": [
+        "/welcome",
+        "/identity"
+      ],
+      "coverage": "existing identity workflow",
+      "screenshot": "screens/01-a-start-profile/008_02b-location-ask-once-at-start.jpg"
+    },
+    {
+      "figmaId": "1212:470",
+      "name": "04 Home",
+      "section": "02-b-home-map",
+      "routes": [
+        "/home",
+        "/map"
+      ],
+      "coverage": "new home and map templates",
+      "screenshot": "screens/02-b-home-map/001_04-home.jpg"
+    },
+    {
+      "figmaId": "1214:336",
+      "name": "05 Map · litter · 1×",
+      "section": "02-b-home-map",
+      "routes": [
+        "/home",
+        "/map"
+      ],
+      "coverage": "new home and map templates",
+      "screenshot": "screens/02-b-home-map/002_05-map-litter-1.jpg"
+    },
+    {
+      "figmaId": "1439:3",
+      "name": "Map · Selangor · beaches expanded",
+      "section": "02-b-home-map",
+      "routes": [
+        "/home",
+        "/map"
+      ],
+      "coverage": "new home and map templates",
+      "screenshot": "screens/02-b-home-map/003_map-selangor-beaches-expanded.jpg"
+    },
+    {
+      "figmaId": "1775:2",
+      "name": "Map · Perlis, Kedah & Penang · beaches expanded",
+      "section": "02-b-home-map",
+      "routes": [
+        "/home",
+        "/map"
+      ],
+      "coverage": "new home and map templates",
+      "screenshot": "screens/02-b-home-map/004_map-perlis-kedah-penang-beaches-expanded.jpg"
+    },
+    {
+      "figmaId": "1239:159",
+      "name": "05c Map · biodiversity · 1×",
+      "section": "02-b-home-map",
+      "routes": [
+        "/home",
+        "/map"
+      ],
+      "coverage": "new home and map templates",
+      "screenshot": "screens/02-b-home-map/005_05c-map-biodiversity-1.jpg"
+    },
+    {
+      "figmaId": "1775:226",
+      "name": "Map · Perak · beaches expanded",
+      "section": "03-b-map-regions",
+      "routes": [
+        "/map"
+      ],
+      "coverage": "region map and beach-sheet templates; API coordinates only",
+      "screenshot": "screens/03-b-map-regions/001_map-perak-beaches-expanded.jpg"
+    },
+    {
+      "figmaId": "1775:426",
+      "name": "Map · Negeri Sembilan & Melaka · beaches expanded",
+      "section": "03-b-map-regions",
+      "routes": [
+        "/map"
+      ],
+      "coverage": "region map and beach-sheet templates; API coordinates only",
+      "screenshot": "screens/03-b-map-regions/002_map-negeri-sembilan-melaka-beaches-expanded.jpg"
+    },
+    {
+      "figmaId": "1775:634",
+      "name": "Map · Johor · beaches expanded",
+      "section": "03-b-map-regions",
+      "routes": [
+        "/map"
+      ],
+      "coverage": "region map and beach-sheet templates; API coordinates only",
+      "screenshot": "screens/03-b-map-regions/003_map-johor-beaches-expanded.jpg"
+    },
+    {
+      "figmaId": "1775:834",
+      "name": "Map · Kelantan · beaches expanded",
+      "section": "03-b-map-regions",
+      "routes": [
+        "/map"
+      ],
+      "coverage": "region map and beach-sheet templates; API coordinates only",
+      "screenshot": "screens/03-b-map-regions/004_map-kelantan-beaches-expanded.jpg"
+    },
+    {
+      "figmaId": "1239:2",
+      "name": "05b Map · beach selected",
+      "section": "03-b-map-regions",
+      "routes": [
+        "/map"
+      ],
+      "coverage": "region map and beach-sheet templates; API coordinates only",
+      "screenshot": "screens/03-b-map-regions/005_05b-map-beach-selected.jpg"
+    },
+    {
+      "figmaId": "1350:2",
+      "name": "05k Map · key",
+      "section": "03-b-map-regions",
+      "routes": [
+        "/map"
+      ],
+      "coverage": "region map and beach-sheet templates; API coordinates only",
+      "screenshot": "screens/03-b-map-regions/006_05k-map-key.jpg"
+    },
+    {
+      "figmaId": "1341:3",
+      "name": "05d Map · area · Perlis, Kedah & Penang",
+      "section": "03-b-map-regions",
+      "routes": [
+        "/map"
+      ],
+      "coverage": "region map and beach-sheet templates; API coordinates only",
+      "screenshot": "screens/03-b-map-regions/007_05d-map-area-perlis-kedah-penang.jpg"
+    },
+    {
+      "figmaId": "1341:24",
+      "name": "05d Map · area · Perak",
+      "section": "03-b-map-regions",
+      "routes": [
+        "/map"
+      ],
+      "coverage": "region map and beach-sheet templates; API coordinates only",
+      "screenshot": "screens/03-b-map-regions/008_05d-map-area-perak.jpg"
+    },
+    {
+      "figmaId": "1341:34",
+      "name": "05d Map · area · Selangor",
+      "section": "03-b-map-regions",
+      "routes": [
+        "/map"
+      ],
+      "coverage": "region map and beach-sheet templates; API coordinates only",
+      "screenshot": "screens/03-b-map-regions/009_05d-map-area-selangor.jpg"
+    },
+    {
+      "figmaId": "1341:67",
+      "name": "05d Map · area · Negeri Sembilan & Melaka",
+      "section": "03-b-map-regions",
+      "routes": [
+        "/map"
+      ],
+      "coverage": "region map and beach-sheet templates; API coordinates only",
+      "screenshot": "screens/03-b-map-regions/010_05d-map-area-negeri-sembilan-melaka.jpg"
+    },
+    {
+      "figmaId": "1341:77",
+      "name": "05d Map · area · Johor",
+      "section": "03-b-map-regions",
+      "routes": [
+        "/map"
+      ],
+      "coverage": "region map and beach-sheet templates; API coordinates only",
+      "screenshot": "screens/03-b-map-regions/011_05d-map-area-johor.jpg"
+    },
+    {
+      "figmaId": "1341:87",
+      "name": "05d Map · area · Kelantan",
+      "section": "03-b-map-regions",
+      "routes": [
+        "/map"
+      ],
+      "coverage": "region map and beach-sheet templates; API coordinates only",
+      "screenshot": "screens/03-b-map-regions/012_05d-map-area-kelantan.jpg"
+    },
+    {
+      "figmaId": "1341:97",
+      "name": "05d Map · area · Terengganu",
+      "section": "03-b-map-regions",
+      "routes": [
+        "/map"
+      ],
+      "coverage": "region map and beach-sheet templates; API coordinates only",
+      "screenshot": "screens/03-b-map-regions/013_05d-map-area-terengganu.jpg"
+    },
+    {
+      "figmaId": "1341:112",
+      "name": "05d Map · area · Pahang",
+      "section": "03-b-map-regions",
+      "routes": [
+        "/map"
+      ],
+      "coverage": "region map and beach-sheet templates; API coordinates only",
+      "screenshot": "screens/03-b-map-regions/014_05d-map-area-pahang.jpg"
+    },
+    {
+      "figmaId": "1341:127",
+      "name": "05d Map · area · Sabah & Sarawak",
+      "section": "03-b-map-regions",
+      "routes": [
+        "/map"
+      ],
+      "coverage": "region map and beach-sheet templates; API coordinates only",
+      "screenshot": "screens/03-b-map-regions/015_05d-map-area-sabah-sarawak.jpg"
+    },
+    {
+      "figmaId": "1775:1034",
+      "name": "Map · Terengganu · beaches expanded",
+      "section": "03-b-map-regions",
+      "routes": [
+        "/map"
+      ],
+      "coverage": "region map and beach-sheet templates; API coordinates only",
+      "screenshot": "screens/03-b-map-regions/016_map-terengganu-beaches-expanded.jpg"
+    },
+    {
+      "figmaId": "1775:1242",
+      "name": "Map · Pahang · beaches expanded",
+      "section": "03-b-map-regions",
+      "routes": [
+        "/map"
+      ],
+      "coverage": "region map and beach-sheet templates; API coordinates only",
+      "screenshot": "screens/03-b-map-regions/017_map-pahang-beaches-expanded.jpg"
+    },
+    {
+      "figmaId": "1775:1450",
+      "name": "Map · Sabah & Sarawak · beaches expanded",
+      "section": "03-b-map-regions",
+      "routes": [
+        "/map"
+      ],
+      "coverage": "region map and beach-sheet templates; API coordinates only",
+      "screenshot": "screens/03-b-map-regions/018_map-sabah-sarawak-beaches-expanded.jpg"
+    },
+    {
+      "figmaId": "1214:1271",
+      "name": "06d Beach · not found",
+      "section": "03-b-map-regions",
+      "routes": [
+        "/map"
+      ],
+      "coverage": "region map and beach-sheet templates; API coordinates only",
+      "screenshot": "screens/03-b-map-regions/019_06d-beach-not-found.jpg"
+    },
+    {
+      "figmaId": "2010:469",
+      "name": "Beach · Pantai Batu Laut · litter condition",
+      "section": "04-b-beach-pages-part1",
+      "routes": [
+        "/beach/pantai-batu-laut"
+      ],
+      "coverage": "shared template",
+      "screenshot": "screens/04-b-beach-pages/001_beach-pantai-batu-laut-litter-condition.jpg"
+    },
+    {
+      "figmaId": "2010:556",
+      "name": "Beach · Pantai Redang · litter condition",
+      "section": "04-b-beach-pages-part1",
+      "routes": [
+        "/beach/pantai-redang"
+      ],
+      "coverage": "shared template",
+      "screenshot": "screens/04-b-beach-pages/002_beach-pantai-redang-litter-condition.jpg"
+    },
+    {
+      "figmaId": "2010:648",
+      "name": "Beach · Pantai Sungai Kajang Baru · litter condition",
+      "section": "04-b-beach-pages-part1",
+      "routes": [
+        "/beach/pantai-sungai-kajang-baru"
+      ],
+      "coverage": "shared template",
+      "screenshot": "screens/04-b-beach-pages/003_beach-pantai-sungai-kajang-baru-litter-condition.jpg"
+    },
+    {
+      "figmaId": "2010:735",
+      "name": "Beach · Pantai Acheh · litter condition",
+      "section": "04-b-beach-pages-part1",
+      "routes": [
+        "/beach/pantai-acheh"
+      ],
+      "coverage": "shared template",
+      "screenshot": "screens/04-b-beach-pages/004_beach-pantai-acheh-litter-condition.jpg"
+    },
+    {
+      "figmaId": "2010:822",
+      "name": "Beach · Pantai Bagan Nakhoda Omar · litter condition",
+      "section": "04-b-beach-pages-part1",
+      "routes": [
+        "/beach/pantai-bagan-nakhoda-omar"
+      ],
+      "coverage": "shared template",
+      "screenshot": "screens/04-b-beach-pages/005_beach-pantai-bagan-nakhoda-omar-litter-condition.jpg"
+    },
+    {
+      "figmaId": "2011:479",
+      "name": "Beach · Pantai Tanjung Rhu, Pulau Carey · litter condition",
+      "section": "04-b-beach-pages-part1",
+      "routes": [
+        "/beach/pantai-tanjung-rhu-pulau-carey"
+      ],
+      "coverage": "shared template",
+      "screenshot": "screens/04-b-beach-pages/006_beach-pantai-tanjung-rhu-pulau-carey-litter-condition.jpg"
+    },
+    {
+      "figmaId": "2011:571",
+      "name": "Beach · Pantai Batu 23 · litter condition",
+      "section": "04-b-beach-pages-part1",
+      "routes": [
+        "/beach/pantai-batu-23"
+      ],
+      "coverage": "shared template",
+      "screenshot": "screens/04-b-beach-pages/007_beach-pantai-batu-23-litter-condition.jpg"
+    },
+    {
+      "figmaId": "2011:658",
+      "name": "Beach · Pantai Sungai Lang · litter condition",
+      "section": "04-b-beach-pages-part1",
+      "routes": [
+        "/beach/pantai-sungai-lang"
+      ],
+      "coverage": "shared template",
+      "screenshot": "screens/04-b-beach-pages/008_beach-pantai-sungai-lang-litter-condition.jpg"
+    },
+    {
+      "figmaId": "2011:745",
+      "name": "Beach · Pantai Sungai Burung · litter condition",
+      "section": "04-b-beach-pages-part1",
+      "routes": [
+        "/beach/pantai-sungai-burung"
+      ],
+      "coverage": "shared template",
+      "screenshot": "screens/04-b-beach-pages/009_beach-pantai-sungai-burung-litter-condition.jpg"
+    },
+    {
+      "figmaId": "2011:837",
+      "name": "Beach · Pantai Sungai Haji Dorani · litter condition",
+      "section": "04-b-beach-pages-part1",
+      "routes": [
+        "/beach/pantai-sungai-haji-dorani"
+      ],
+      "coverage": "shared template",
+      "screenshot": "screens/04-b-beach-pages/010_beach-pantai-sungai-haji-dorani-litter-condition.jpg"
+    },
+    {
+      "figmaId": "2011:929",
+      "name": "Beach · Pantai Kok · litter condition",
+      "section": "04-b-beach-pages-part1",
+      "routes": [
+        "/beach/pantai-kok"
+      ],
+      "coverage": "shared template",
+      "screenshot": "screens/04-b-beach-pages/011_beach-pantai-kok-litter-condition.jpg"
+    },
+    {
+      "figmaId": "2011:1021",
+      "name": "Beach · Pantai Teluk Datai · litter condition",
+      "section": "04-b-beach-pages-part1",
+      "routes": [
+        "/beach/pantai-teluk-datai"
+      ],
+      "coverage": "shared template",
+      "screenshot": "screens/04-b-beach-pages/012_beach-pantai-teluk-datai-litter-condition.jpg"
+    },
+    {
+      "figmaId": "2011:1113",
+      "name": "Beach · Pantai Tanjung Rhu · litter condition",
+      "section": "04-b-beach-pages-part1",
+      "routes": [
+        "/beach/pantai-tanjung-rhu"
+      ],
+      "coverage": "shared template",
+      "screenshot": "screens/04-b-beach-pages/013_beach-pantai-tanjung-rhu-litter-condition.jpg"
+    },
+    {
+      "figmaId": "2011:1205",
+      "name": "Beach · Pantai Pasir Hitam · litter condition",
+      "section": "04-b-beach-pages-part1",
+      "routes": [
+        "/beach/pantai-pasir-hitam"
+      ],
+      "coverage": "shared template",
+      "screenshot": "screens/04-b-beach-pages/014_beach-pantai-pasir-hitam-litter-condition.jpg"
+    },
+    {
+      "figmaId": "2011:1297",
+      "name": "Beach · Pantai Pasir Tengkorak · litter condition",
+      "section": "04-b-beach-pages-part1",
+      "routes": [
+        "/beach/pantai-pasir-tengkorak"
+      ],
+      "coverage": "shared template",
+      "screenshot": "screens/04-b-beach-pages/015_beach-pantai-pasir-tengkorak-litter-condition.jpg"
+    },
+    {
+      "figmaId": "2011:1476",
+      "name": "Beach · Pantai Merdeka · litter condition",
+      "section": "04-b-beach-pages-part1",
+      "routes": [
+        "/beach/pantai-merdeka"
+      ],
+      "coverage": "shared template",
+      "screenshot": "screens/04-b-beach-pages/016_beach-pantai-merdeka-litter-condition.jpg"
+    },
+    {
+      "figmaId": "2011:1563",
+      "name": "Beach · Pantai Datuk Syed Omar · litter condition",
+      "section": "04-b-beach-pages-part1",
+      "routes": [
+        "/beach/pantai-datuk-syed-omar"
+      ],
+      "coverage": "shared template",
+      "screenshot": "screens/04-b-beach-pages/017_beach-pantai-datuk-syed-omar-litter-condition.jpg"
+    },
+    {
+      "figmaId": "2011:1655",
+      "name": "Beach · Pantai Tanjung Bungah · litter condition",
+      "section": "04-b-beach-pages-part1",
+      "routes": [
+        "/beach/pantai-tanjung-bungah"
+      ],
+      "coverage": "shared template",
+      "screenshot": "screens/04-b-beach-pages/018_beach-pantai-tanjung-bungah-litter-condition.jpg"
+    },
+    {
+      "figmaId": "2011:1742",
+      "name": "Beach · Monkey Beach · litter condition",
+      "section": "04-b-beach-pages-part1",
+      "routes": [
+        "/beach/monkey-beach"
+      ],
+      "coverage": "shared template",
+      "screenshot": "screens/04-b-beach-pages/019_beach-monkey-beach-litter-condition.jpg"
+    },
+    {
+      "figmaId": "2011:1834",
+      "name": "Beach · Pantai Pasir Panjang · litter condition",
+      "section": "04-b-beach-pages-part1",
+      "routes": [
+        "/beach/pantai-pasir-panjang"
+      ],
+      "coverage": "shared template",
+      "screenshot": "screens/04-b-beach-pages/020_beach-pantai-pasir-panjang-litter-condition.jpg"
+    },
+    {
+      "figmaId": "2011:1921",
+      "name": "Beach · Pantai Bersih · litter condition",
+      "section": "04-b-beach-pages-part1",
+      "routes": [
+        "/beach/pantai-bersih"
+      ],
+      "coverage": "shared template",
+      "screenshot": "screens/04-b-beach-pages/021_beach-pantai-bersih-litter-condition.jpg"
+    },
+    {
+      "figmaId": "2011:2008",
+      "name": "Beach · Pantai Teluk Aman · litter condition",
+      "section": "04-b-beach-pages-part1",
+      "routes": [
+        "/beach/pantai-teluk-aman"
+      ],
+      "coverage": "shared template",
+      "screenshot": "screens/04-b-beach-pages/022_beach-pantai-teluk-aman-litter-condition.jpg"
+    },
+    {
+      "figmaId": "2011:2095",
+      "name": "Beach · Pasir Belanda · litter condition",
+      "section": "04-b-beach-pages-part1",
+      "routes": [
+        "/beach/pasir-belanda"
+      ],
+      "coverage": "shared template",
+      "screenshot": "screens/04-b-beach-pages/023_beach-pasir-belanda-litter-condition.jpg"
+    },
+    {
+      "figmaId": "2011:2182",
+      "name": "Beach · Pantai Teluk Batik · litter condition",
+      "section": "04-b-beach-pages-part1",
+      "routes": [
+        "/beach/pantai-teluk-batik"
+      ],
+      "coverage": "shared template",
+      "screenshot": "screens/04-b-beach-pages/024_beach-pantai-teluk-batik-litter-condition.jpg"
+    },
+    {
+      "figmaId": "2011:2269",
+      "name": "Beach · Pantai Pasir Bogak · litter condition",
+      "section": "04-b-beach-pages-part1",
+      "routes": [
+        "/beach/pantai-pasir-bogak"
+      ],
+      "coverage": "shared template",
+      "screenshot": "screens/04-b-beach-pages/025_beach-pantai-pasir-bogak-litter-condition.jpg"
+    },
+    {
+      "figmaId": "2011:2356",
+      "name": "Beach · Pantai Teluk Nipah · litter condition",
+      "section": "04-b-beach-pages-part1",
+      "routes": [
+        "/beach/pantai-teluk-nipah"
+      ],
+      "coverage": "shared template",
+      "screenshot": "screens/04-b-beach-pages/026_beach-pantai-teluk-nipah-litter-condition.jpg"
+    },
+    {
+      "figmaId": "2011:2448",
+      "name": "Beach · Pantai Teluk Senangin · litter condition",
+      "section": "04-b-beach-pages-part1",
+      "routes": [
+        "/beach/pantai-teluk-senangin"
+      ],
+      "coverage": "shared template",
+      "screenshot": "screens/04-b-beach-pages/027_beach-pantai-teluk-senangin-litter-condition.jpg"
+    },
+    {
+      "figmaId": "2011:2540",
+      "name": "Beach · Pantai Teluk Segadas · litter condition",
+      "section": "04-b-beach-pages-part1",
+      "routes": [
+        "/beach/pantai-teluk-segadas"
+      ],
+      "coverage": "shared template",
+      "screenshot": "screens/04-b-beach-pages/028_beach-pantai-teluk-segadas-litter-condition.jpg"
+    },
+    {
+      "figmaId": "2011:2627",
+      "name": "Beach · Pantai Pasir Panjang, Segari · litter condition",
+      "section": "04-b-beach-pages-part1",
+      "routes": [
+        "/beach/pantai-pasir-panjang-segari"
+      ],
+      "coverage": "shared template",
+      "screenshot": "screens/04-b-beach-pages/029_beach-pantai-pasir-panjang-segari-litter-condition.jpg"
+    },
+    {
+      "figmaId": "2011:2719",
+      "name": "Beach · Emerald Bay, Pangkor Laut · litter condition",
+      "section": "04-b-beach-pages-part1",
+      "routes": [
+        "/beach/emerald-bay-pangkor-laut"
+      ],
+      "coverage": "shared template",
+      "screenshot": "screens/04-b-beach-pages/030_beach-emerald-bay-pangkor-laut-litter-condition.jpg"
+    },
+    {
+      "figmaId": "2011:2811",
+      "name": "Beach · Pantai Cahaya Negeri · litter condition",
+      "section": "04-b-beach-pages-part1",
+      "routes": [
+        "/beach/pantai-cahaya-negeri"
+      ],
+      "coverage": "shared template",
+      "screenshot": "screens/04-b-beach-pages/031_beach-pantai-cahaya-negeri-litter-condition.jpg"
+    },
+    {
+      "figmaId": "2011:2898",
+      "name": "Beach · Pantai Bagan Pinang · litter condition",
+      "section": "04-b-beach-pages-part1",
+      "routes": [
+        "/beach/pantai-bagan-pinang"
+      ],
+      "coverage": "shared template",
+      "screenshot": "screens/04-b-beach-pages/032_beach-pantai-bagan-pinang-litter-condition.jpg"
+    },
+    {
+      "figmaId": "2011:2985",
+      "name": "Beach · Pantai Tanjung Gemuk · litter condition",
+      "section": "04-b-beach-pages-part1",
+      "routes": [
+        "/beach/pantai-tanjung-gemuk"
+      ],
+      "coverage": "shared template",
+      "screenshot": "screens/04-b-beach-pages/033_beach-pantai-tanjung-gemuk-litter-condition.jpg"
+    },
+    {
+      "figmaId": "2011:3072",
+      "name": "Beach · Pantai Tanjung Biru · litter condition",
+      "section": "04-b-beach-pages-part1",
+      "routes": [
+        "/beach/pantai-tanjung-biru"
+      ],
+      "coverage": "shared template",
+      "screenshot": "screens/04-b-beach-pages/034_beach-pantai-tanjung-biru-litter-condition.jpg"
+    },
+    {
+      "figmaId": "2011:3159",
+      "name": "Beach · Pantai Pengkalan Balak · litter condition",
+      "section": "04-b-beach-pages-part1",
+      "routes": [
+        "/beach/pantai-pengkalan-balak"
+      ],
+      "coverage": "shared template",
+      "screenshot": "screens/04-b-beach-pages/035_beach-pantai-pengkalan-balak-litter-condition.jpg"
+    },
+    {
+      "figmaId": "2011:3251",
+      "name": "Beach · Pantai Kundor · litter condition",
+      "section": "04-b-beach-pages-part1",
+      "routes": [
+        "/beach/pantai-kundor"
+      ],
+      "coverage": "shared template",
+      "screenshot": "screens/04-b-beach-pages/036_beach-pantai-kundor-litter-condition.jpg"
+    },
+    {
+      "figmaId": "2011:3338",
+      "name": "Beach · Pantai Klebang · litter condition",
+      "section": "04-b-beach-pages-part1",
+      "routes": [
+        "/beach/pantai-klebang"
+      ],
+      "coverage": "shared template",
+      "screenshot": "screens/04-b-beach-pages/037_beach-pantai-klebang-litter-condition.jpg"
+    },
+    {
+      "figmaId": "2011:3430",
+      "name": "Beach · Pantai Tanjung Bidara · litter condition",
+      "section": "04-b-beach-pages-part1",
+      "routes": [
+        "/beach/pantai-tanjung-bidara"
+      ],
+      "coverage": "shared template",
+      "screenshot": "screens/04-b-beach-pages/038_beach-pantai-tanjung-bidara-litter-condition.jpg"
+    },
+    {
+      "figmaId": "2011:3522",
+      "name": "Beach · Pulau Besar, Melaka · litter condition",
+      "section": "04-b-beach-pages-part1",
+      "routes": [
+        "/beach/pulau-besar-melaka"
+      ],
+      "coverage": "shared template",
+      "screenshot": "screens/04-b-beach-pages/039_beach-pulau-besar-melaka-litter-condition.jpg"
+    },
+    {
+      "figmaId": "2011:3609",
+      "name": "Beach · Pantai Siring · litter condition",
+      "section": "04-b-beach-pages-part1",
+      "routes": [
+        "/beach/pantai-siring"
+      ],
+      "coverage": "shared template",
+      "screenshot": "screens/04-b-beach-pages/040_beach-pantai-siring-litter-condition.jpg"
+    },
+    {
+      "figmaId": "2011:3696",
+      "name": "Beach · Pantai Desaru · litter condition",
+      "section": "04-b-beach-pages-part1",
+      "routes": [
+        "/beach/pantai-desaru"
+      ],
+      "coverage": "shared template",
+      "screenshot": "screens/04-b-beach-pages/041_beach-pantai-desaru-litter-condition.jpg"
+    },
+    {
+      "figmaId": "2011:3783",
+      "name": "Beach · Pantai Air Papan · litter condition",
+      "section": "04-b-beach-pages-part1",
+      "routes": [
+        "/beach/pantai-air-papan"
+      ],
+      "coverage": "shared template",
+      "screenshot": "screens/04-b-beach-pages/042_beach-pantai-air-papan-litter-condition.jpg"
+    },
+    {
+      "figmaId": "2011:3870",
+      "name": "Beach · Pantai Tanjung Balau · litter condition",
+      "section": "04-b-beach-pages-part1",
+      "routes": [
+        "/beach/pantai-tanjung-balau"
+      ],
+      "coverage": "shared template",
+      "screenshot": "screens/04-b-beach-pages/043_beach-pantai-tanjung-balau-litter-condition.jpg"
+    },
+    {
+      "figmaId": "2011:3957",
+      "name": "Beach · Pantai Minyak Beku · litter condition",
+      "section": "04-b-beach-pages-part1",
+      "routes": [
+        "/beach/pantai-minyak-beku"
+      ],
+      "coverage": "shared template",
+      "screenshot": "screens/04-b-beach-pages/044_beach-pantai-minyak-beku-litter-condition.jpg"
+    },
+    {
+      "figmaId": "2011:4044",
+      "name": "Beach · Pantai Stulang · litter condition",
+      "section": "04-b-beach-pages-part1",
+      "routes": [
+        "/beach/pantai-stulang"
+      ],
+      "coverage": "shared template",
+      "screenshot": "screens/04-b-beach-pages/045_beach-pantai-stulang-litter-condition.jpg"
+    },
+    {
+      "figmaId": "2011:4131",
+      "name": "Beach · Pantai Teluk Gorek · litter condition",
+      "section": "04-b-beach-pages-part1",
+      "routes": [
+        "/beach/pantai-teluk-gorek"
+      ],
+      "coverage": "shared template",
+      "screenshot": "screens/04-b-beach-pages/046_beach-pantai-teluk-gorek-litter-condition.jpg"
+    },
+    {
+      "figmaId": "2011:4218",
+      "name": "Beach · Pasir Gemang · litter condition",
+      "section": "04-b-beach-pages-part1",
+      "routes": [
+        "/beach/pasir-gemang"
+      ],
+      "coverage": "shared template",
+      "screenshot": "screens/04-b-beach-pages/047_beach-pasir-gemang-litter-condition.jpg"
+    },
+    {
+      "figmaId": "2011:4305",
+      "name": "Beach · Pantai Semanyir · litter condition",
+      "section": "04-b-beach-pages-part1",
+      "routes": [
+        "/beach/pantai-semanyir"
+      ],
+      "coverage": "shared template",
+      "screenshot": "screens/04-b-beach-pages/048_beach-pantai-semanyir-litter-condition.jpg"
+    },
+    {
+      "figmaId": "2011:4392",
+      "name": "Beach · Pasir Bunga · litter condition",
+      "section": "04-b-beach-pages-part1",
+      "routes": [
+        "/beach/pasir-bunga"
+      ],
+      "coverage": "shared template",
+      "screenshot": "screens/04-b-beach-pages/049_beach-pasir-bunga-litter-condition.jpg"
+    },
+    {
+      "figmaId": "2011:4479",
+      "name": "Beach · Pulau Rawa · litter condition",
+      "section": "04-b-beach-pages-part1",
+      "routes": [
+        "/beach/pulau-rawa"
+      ],
+      "coverage": "shared template",
+      "screenshot": "screens/04-b-beach-pages/050_beach-pulau-rawa-litter-condition.jpg"
+    },
+    {
+      "figmaId": "2011:4571",
+      "name": "Beach · Pulau Tinggi · litter condition",
+      "section": "04-b-beach-pages-part1",
+      "routes": [
+        "/beach/pulau-tinggi"
+      ],
+      "coverage": "shared template",
+      "screenshot": "screens/04-b-beach-pages/051_beach-pulau-tinggi-litter-condition.jpg"
+    },
+    {
+      "figmaId": "2011:4663",
+      "name": "Beach · Pulau Besar, Mersing · litter condition",
+      "section": "04-b-beach-pages-part2",
+      "routes": [
+        "/beach/pulau-besar-mersing"
+      ],
+      "coverage": "shared template",
+      "screenshot": null
+    },
+    {
+      "figmaId": "2011:4750",
+      "name": "Beach · Pulau Sibu · litter condition",
+      "section": "04-b-beach-pages-part2",
+      "routes": [
+        "/beach/pulau-sibu"
+      ],
+      "coverage": "shared template",
+      "screenshot": null
+    },
+    {
+      "figmaId": "2011:4842",
+      "name": "Beach · Pantai Teluk Mahkota · litter condition",
+      "section": "04-b-beach-pages-part2",
+      "routes": [
+        "/beach/pantai-teluk-mahkota"
+      ],
+      "coverage": "shared template",
+      "screenshot": null
+    },
+    {
+      "figmaId": "2011:4929",
+      "name": "Beach · Pantai Batu Layar · litter condition",
+      "section": "04-b-beach-pages-part2",
+      "routes": [
+        "/beach/pantai-batu-layar"
+      ],
+      "coverage": "shared template",
+      "screenshot": null
+    },
+    {
+      "figmaId": "2011:5016",
+      "name": "Beach · Pantai Tanjung Leman · litter condition",
+      "section": "04-b-beach-pages-part2",
+      "routes": [
+        "/beach/pantai-tanjung-leman"
+      ],
+      "coverage": "shared template",
+      "screenshot": null
+    },
+    {
+      "figmaId": "2014:581",
+      "name": "Beach · Pantai Cahaya Bulan · litter condition",
+      "section": "04-b-beach-pages-part2",
+      "routes": [
+        "/beach/pantai-cahaya-bulan"
+      ],
+      "coverage": "shared template",
+      "screenshot": null
+    },
+    {
+      "figmaId": "2014:668",
+      "name": "Beach · Pantai Irama · litter condition",
+      "section": "04-b-beach-pages-part2",
+      "routes": [
+        "/beach/pantai-irama"
+      ],
+      "coverage": "shared template",
+      "screenshot": null
+    },
+    {
+      "figmaId": "2014:755",
+      "name": "Beach · Pantai Senok · litter condition",
+      "section": "04-b-beach-pages-part2",
+      "routes": [
+        "/beach/pantai-senok"
+      ],
+      "coverage": "shared template",
+      "screenshot": null
+    },
+    {
+      "figmaId": "2014:842",
+      "name": "Beach · Pantai Kuda · litter condition",
+      "section": "04-b-beach-pages-part2",
+      "routes": [
+        "/beach/pantai-kuda"
+      ],
+      "coverage": "shared template",
+      "screenshot": null
+    },
+    {
+      "figmaId": "2014:929",
+      "name": "Beach · Pantai Mek Mas · litter condition",
+      "section": "04-b-beach-pages-part2",
+      "routes": [
+        "/beach/pantai-mek-mas"
+      ],
+      "coverage": "shared template",
+      "screenshot": null
+    },
+    {
+      "figmaId": "2014:1016",
+      "name": "Beach · Pantai Tok Bali · litter condition",
+      "section": "04-b-beach-pages-part2",
+      "routes": [
+        "/beach/pantai-tok-bali"
+      ],
+      "coverage": "shared template",
+      "screenshot": null
+    },
+    {
+      "figmaId": "2014:1103",
+      "name": "Beach · Pantai Bisikan Bayu · litter condition",
+      "section": "04-b-beach-pages-part2",
+      "routes": [
+        "/beach/pantai-bisikan-bayu"
+      ],
+      "coverage": "shared template",
+      "screenshot": null
+    },
+    {
+      "figmaId": "2014:1195",
+      "name": "Beach · Pantai Penarik · litter condition",
+      "section": "04-b-beach-pages-part2",
+      "routes": [
+        "/beach/pantai-penarik"
+      ],
+      "coverage": "shared template",
+      "screenshot": null
+    },
+    {
+      "figmaId": "2014:1282",
+      "name": "Beach · Pantai Teluk Lipat · litter condition",
+      "section": "04-b-beach-pages-part2",
+      "routes": [
+        "/beach/pantai-teluk-lipat"
+      ],
+      "coverage": "shared template",
+      "screenshot": null
+    },
+    {
+      "figmaId": "2014:1369",
+      "name": "Beach · Pantai Kemasik · litter condition",
+      "section": "04-b-beach-pages-part2",
+      "routes": [
+        "/beach/pantai-kemasik"
+      ],
+      "coverage": "shared template",
+      "screenshot": null
+    },
+    {
+      "figmaId": "2014:1543",
+      "name": "Beach · Pantai Pandak · litter condition",
+      "section": "04-b-beach-pages-part2",
+      "routes": [
+        "/beach/pantai-pandak"
+      ],
+      "coverage": "shared template",
+      "screenshot": null
+    },
+    {
+      "figmaId": "2014:1630",
+      "name": "Beach · Pantai Bukit Keluang · litter condition",
+      "section": "04-b-beach-pages-part2",
+      "routes": [
+        "/beach/pantai-bukit-keluang"
+      ],
+      "coverage": "shared template",
+      "screenshot": null
+    },
+    {
+      "figmaId": "2014:1717",
+      "name": "Beach · Pulau Kapas · litter condition",
+      "section": "04-b-beach-pages-part2",
+      "routes": [
+        "/beach/pulau-kapas"
+      ],
+      "coverage": "shared template",
+      "screenshot": null
+    },
+    {
+      "figmaId": "2014:1809",
+      "name": "Beach · Long Beach, Perhentian · litter condition",
+      "section": "04-b-beach-pages-part2",
+      "routes": [
+        "/beach/long-beach-perhentian"
+      ],
+      "coverage": "shared template",
+      "screenshot": null
+    },
+    {
+      "figmaId": "2014:1901",
+      "name": "Beach · Pasir Panjang, Redang · litter condition",
+      "section": "04-b-beach-pages-part2",
+      "routes": [
+        "/beach/pasir-panjang-redang"
+      ],
+      "coverage": "shared template",
+      "screenshot": null
+    },
+    {
+      "figmaId": "2014:1993",
+      "name": "Beach · Chagar Hutang, Redang · litter condition",
+      "section": "04-b-beach-pages-part2",
+      "routes": [
+        "/beach/chagar-hutang-redang"
+      ],
+      "coverage": "shared template",
+      "screenshot": null
+    },
+    {
+      "figmaId": "2014:2085",
+      "name": "Beach · Pasir Besar, Lang Tengah · litter condition",
+      "section": "04-b-beach-pages-part2",
+      "routes": [
+        "/beach/pasir-besar-lang-tengah"
+      ],
+      "coverage": "shared template",
+      "screenshot": null
+    },
+    {
+      "figmaId": "2014:2177",
+      "name": "Beach · Pantai Cherating · litter condition",
+      "section": "04-b-beach-pages-part2",
+      "routes": [
+        "/beach/pantai-cherating"
+      ],
+      "coverage": "shared template",
+      "screenshot": null
+    },
+    {
+      "figmaId": "2014:2269",
+      "name": "Beach · Pantai Balok · litter condition",
+      "section": "04-b-beach-pages-part2",
+      "routes": [
+        "/beach/pantai-balok"
+      ],
+      "coverage": "shared template",
+      "screenshot": null
+    },
+    {
+      "figmaId": "2014:2361",
+      "name": "Beach · Pantai Chendor · litter condition",
+      "section": "04-b-beach-pages-part2",
+      "routes": [
+        "/beach/pantai-chendor"
+      ],
+      "coverage": "shared template",
+      "screenshot": null
+    },
+    {
+      "figmaId": "2014:2453",
+      "name": "Beach · Pantai Paya, Tioman · litter condition",
+      "section": "04-b-beach-pages-part2",
+      "routes": [
+        "/beach/pantai-paya-tioman"
+      ],
+      "coverage": "shared template",
+      "screenshot": null
+    },
+    {
+      "figmaId": "2014:2545",
+      "name": "Beach · Pantai Air Batang, Tioman · litter condition",
+      "section": "04-b-beach-pages-part2",
+      "routes": [
+        "/beach/pantai-air-batang-tioman"
+      ],
+      "coverage": "shared template",
+      "screenshot": null
+    },
+    {
+      "figmaId": "2014:2637",
+      "name": "Beach · Pantai Juara, Tioman · litter condition",
+      "section": "04-b-beach-pages-part2",
+      "routes": [
+        "/beach/pantai-juara-tioman"
+      ],
+      "coverage": "shared template",
+      "screenshot": null
+    },
+    {
+      "figmaId": "2014:2729",
+      "name": "Beach · Pantai Kelambu · litter condition",
+      "section": "04-b-beach-pages-part2",
+      "routes": [
+        "/beach/pantai-kelambu"
+      ],
+      "coverage": "shared template",
+      "screenshot": null
+    },
+    {
+      "figmaId": "2014:2816",
+      "name": "Beach · Pantai Merakit · litter condition",
+      "section": "04-b-beach-pages-part2",
+      "routes": [
+        "/beach/pantai-merakit"
+      ],
+      "coverage": "shared template",
+      "screenshot": null
+    },
+    {
+      "figmaId": "2014:2903",
+      "name": "Beach · Pantai Larai-Larai · litter condition",
+      "section": "04-b-beach-pages-part2",
+      "routes": [
+        "/beach/pantai-larai-larai"
+      ],
+      "coverage": "shared template",
+      "screenshot": null
+    },
+    {
+      "figmaId": "2014:2995",
+      "name": "Beach · Pantai Dalit · litter condition",
+      "section": "04-b-beach-pages-part2",
+      "routes": [
+        "/beach/pantai-dalit"
+      ],
+      "coverage": "shared template",
+      "screenshot": null
+    },
+    {
+      "figmaId": "2014:3082",
+      "name": "Beach · Pulau Mantanani · litter condition",
+      "section": "04-b-beach-pages-part2",
+      "routes": [
+        "/beach/pulau-mantanani"
+      ],
+      "coverage": "shared template",
+      "screenshot": null
+    },
+    {
+      "figmaId": "2014:3174",
+      "name": "Beach · Pantai Tanjong Lobang · litter condition",
+      "section": "04-b-beach-pages-part2",
+      "routes": [
+        "/beach/pantai-tanjong-lobang"
+      ],
+      "coverage": "shared template",
+      "screenshot": null
+    },
+    {
+      "figmaId": "2014:3261",
+      "name": "Beach · Pantai Tusan · litter condition",
+      "section": "04-b-beach-pages-part2",
+      "routes": [
+        "/beach/pantai-tusan"
+      ],
+      "coverage": "shared template",
+      "screenshot": null
+    },
+    {
+      "figmaId": "2014:3353",
+      "name": "Beach · Pantai Tanjong Batu · litter condition",
+      "section": "04-b-beach-pages-part2",
+      "routes": [
+        "/beach/pantai-tanjong-batu"
+      ],
+      "coverage": "shared template",
+      "screenshot": null
+    },
+    {
+      "figmaId": "2014:3440",
+      "name": "Beach · Pantai Mukah · litter condition",
+      "section": "04-b-beach-pages-part2",
+      "routes": [
+        "/beach/pantai-mukah"
+      ],
+      "coverage": "shared template",
+      "screenshot": null
+    },
+    {
+      "figmaId": "2014:3527",
+      "name": "Beach · Pantai Pandan · litter condition",
+      "section": "04-b-beach-pages-part2",
+      "routes": [
+        "/beach/pantai-pandan"
+      ],
+      "coverage": "shared template",
+      "screenshot": null
+    },
+    {
+      "figmaId": "2227:14669",
+      "name": "Beach · Pantai Cenang · litter condition",
+      "section": "04-b-beach-pages-part2",
+      "routes": [
+        "/beach/pantai-cenang"
+      ],
+      "coverage": "shared template",
+      "screenshot": null
+    },
+    {
+      "figmaId": "2229:14823",
+      "name": "Beach · Pantai Morib · litter condition",
+      "section": "04-b-beach-pages-part2",
+      "routes": [
+        "/beach/morib"
+      ],
+      "coverage": "shared template",
+      "screenshot": null
+    },
+    {
+      "figmaId": "2229:15014",
+      "name": "Beach · Pantai Remis · litter condition",
+      "section": "04-b-beach-pages-part2",
+      "routes": [
+        "/beach/remis"
+      ],
+      "coverage": "shared template",
+      "screenshot": null
+    },
+    {
+      "figmaId": "2229:15201",
+      "name": "Beach · Pantai Kelanang · litter condition",
+      "section": "04-b-beach-pages-part2",
+      "routes": [
+        "/beach/kelanang"
+      ],
+      "coverage": "shared template",
+      "screenshot": null
+    },
+    {
+      "figmaId": "2230:15188",
+      "name": "Beach · Pantai Batu Buruk · litter condition",
+      "section": "04-b-beach-pages-part2",
+      "routes": [
+        "/beach/pantai-batu-buruk"
+      ],
+      "coverage": "shared template",
+      "screenshot": null
+    },
+    {
+      "figmaId": "2230:15373",
+      "name": "Beach · Pantai Batu Ferringhi · litter condition",
+      "section": "04-b-beach-pages-part2",
+      "routes": [
+        "/beach/pantai-batu-ferringhi"
+      ],
+      "coverage": "shared template",
+      "screenshot": null
+    },
+    {
+      "figmaId": "2230:15574",
+      "name": "Beach · Pantai Tanjung Aru · litter condition",
+      "section": "04-b-beach-pages-part2",
+      "routes": [
+        "/beach/pantai-tanjung-aru"
+      ],
+      "coverage": "shared template",
+      "screenshot": null
+    },
+    {
+      "figmaId": "2230:15793",
+      "name": "Beach · Teluk Cempedak · litter condition",
+      "section": "04-b-beach-pages-part2",
+      "routes": [
+        "/beach/teluk-cempedak"
+      ],
+      "coverage": "shared template",
+      "screenshot": null
+    },
+    {
+      "figmaId": "2230:15978",
+      "name": "Beach · Pantai Damai · litter condition",
+      "section": "04-b-beach-pages-part2",
+      "routes": [
+        "/beach/pantai-damai"
+      ],
+      "coverage": "shared template",
+      "screenshot": null
+    },
+    {
+      "figmaId": "2230:16179",
+      "name": "Beach · Teluk Kemang · litter condition",
+      "section": "04-b-beach-pages-part2",
+      "routes": [
+        "/beach/teluk-kemang"
+      ],
+      "coverage": "shared template",
+      "screenshot": null
+    },
+    {
+      "figmaId": "2230:16395",
+      "name": "Beach · Pantai Kuala Perlis · litter condition",
+      "section": "04-b-beach-pages-part2",
+      "routes": [
+        "/beach/pantai-kuala-perlis"
+      ],
+      "coverage": "shared template",
+      "screenshot": null
+    },
+    {
+      "figmaId": "2230:16593",
+      "name": "Beach · Pantai Bagan Lalang · litter condition",
+      "section": "04-b-beach-pages-part2",
+      "routes": [
+        "/beach/bagan"
+      ],
+      "coverage": "shared template",
+      "screenshot": null
+    },
+    {
+      "figmaId": "1382:2",
+      "name": "05s Map · habitat · Langkawi",
+      "section": "05-b-habitats",
+      "routes": [
+        "/habitats/:habitatId"
+      ],
+      "coverage": "habitat template",
+      "screenshot": "screens/05-b-habitats/001_05s-map-habitat-langkawi.jpg"
+    },
+    {
+      "figmaId": "1382:38",
+      "name": "05s Map · habitat · Matang",
+      "section": "05-b-habitats",
+      "routes": [
+        "/habitats/:habitatId"
+      ],
+      "coverage": "habitat template",
+      "screenshot": "screens/05-b-habitats/002_05s-map-habitat-matang.jpg"
+    },
+    {
+      "figmaId": "1462:2",
+      "name": "05s Map · habitat · Morib mudflat",
+      "section": "05-b-habitats",
+      "routes": [
+        "/habitats/:habitatId"
+      ],
+      "coverage": "habitat template",
+      "screenshot": "screens/05-b-habitats/003_05s-map-habitat-morib-mudflat.jpg"
+    },
+    {
+      "figmaId": "1382:62",
+      "name": "05s Map · habitat · Sungai Pulai",
+      "section": "05-b-habitats",
+      "routes": [
+        "/habitats/:habitatId"
+      ],
+      "coverage": "habitat template",
+      "screenshot": "screens/05-b-habitats/004_05s-map-habitat-sungai-pulai.jpg"
+    },
+    {
+      "figmaId": "1382:86",
+      "name": "05s Map · habitat · Setiu",
+      "section": "05-b-habitats",
+      "routes": [
+        "/habitats/:habitatId"
+      ],
+      "coverage": "habitat template",
+      "screenshot": "screens/05-b-habitats/005_05s-map-habitat-setiu.jpg"
+    },
+    {
+      "figmaId": "1382:122",
+      "name": "05s Map · habitat · Pulau Tinggi",
+      "section": "05-b-habitats",
+      "routes": [
+        "/habitats/:habitatId"
+      ],
+      "coverage": "habitat template",
+      "screenshot": "screens/05-b-habitats/006_05s-map-habitat-pulau-tinggi.jpg"
+    },
+    {
+      "figmaId": "1382:146",
+      "name": "05s Map · habitat · Kuching Wetlands",
+      "section": "05-b-habitats",
+      "routes": [
+        "/habitats/:habitatId"
+      ],
+      "coverage": "habitat template",
+      "screenshot": "screens/05-b-habitats/007_05s-map-habitat-kuching-wetlands.jpg"
+    },
+    {
+      "figmaId": "1382:182",
+      "name": "05s Map · habitat · Lawas",
+      "section": "05-b-habitats",
+      "routes": [
+        "/habitats/:habitatId"
+      ],
+      "coverage": "habitat template",
+      "screenshot": "screens/05-b-habitats/008_05s-map-habitat-lawas.jpg"
+    },
+    {
+      "figmaId": "1382:206",
+      "name": "05s Map · habitat · Sandakan",
+      "section": "05-b-habitats",
+      "routes": [
+        "/habitats/:habitatId"
+      ],
+      "coverage": "habitat template",
+      "screenshot": "screens/05-b-habitats/009_05s-map-habitat-sandakan.jpg"
+    },
+    {
+      "figmaId": "1855:108",
+      "name": "Habitat detail · Langkawi · Kilim",
+      "section": "05-b-habitats",
+      "routes": [
+        "/habitats/langkawi"
+      ],
+      "coverage": "shared template",
+      "screenshot": "screens/05-b-habitats/010_habitat-detail-langkawi-kilim.jpg"
+    },
+    {
+      "figmaId": "1855:109",
+      "name": "Habitat detail · Matang",
+      "section": "05-b-habitats",
+      "routes": [
+        "/habitats/matang"
+      ],
+      "coverage": "shared template",
+      "screenshot": "screens/05-b-habitats/011_habitat-detail-matang.jpg"
+    },
+    {
+      "figmaId": "1855:110",
+      "name": "Habitat detail · Sungai Pulai",
+      "section": "05-b-habitats",
+      "routes": [
+        "/habitats/sungai-pulai"
+      ],
+      "coverage": "shared template",
+      "screenshot": "screens/05-b-habitats/012_habitat-detail-sungai-pulai.jpg"
+    },
+    {
+      "figmaId": "1855:111",
+      "name": "Habitat detail · Setiu",
+      "section": "05-b-habitats",
+      "routes": [
+        "/habitats/setiu"
+      ],
+      "coverage": "shared template",
+      "screenshot": "screens/05-b-habitats/013_habitat-detail-setiu.jpg"
+    },
+    {
+      "figmaId": "1855:112",
+      "name": "Habitat detail · Pulau Tinggi",
+      "section": "05-b-habitats",
+      "routes": [
+        "/habitats/pulau-tinggi"
+      ],
+      "coverage": "shared template",
+      "screenshot": "screens/05-b-habitats/014_habitat-detail-pulau-tinggi.jpg"
+    },
+    {
+      "figmaId": "1855:113",
+      "name": "Habitat detail · Kuching Wetlands",
+      "section": "05-b-habitats",
+      "routes": [
+        "/habitats/kuching-wetlands"
+      ],
+      "coverage": "shared template",
+      "screenshot": "screens/05-b-habitats/015_habitat-detail-kuching-wetlands.jpg"
+    },
+    {
+      "figmaId": "1855:114",
+      "name": "Habitat detail · Lawas",
+      "section": "05-b-habitats",
+      "routes": [
+        "/habitats/lawas"
+      ],
+      "coverage": "shared template",
+      "screenshot": "screens/05-b-habitats/016_habitat-detail-lawas.jpg"
+    },
+    {
+      "figmaId": "1855:115",
+      "name": "Habitat detail · Sandakan Bay",
+      "section": "05-b-habitats",
+      "routes": [
+        "/habitats/sandakan-bay"
+      ],
+      "coverage": "shared template",
+      "screenshot": "screens/05-b-habitats/017_habitat-detail-sandakan-bay.jpg"
+    },
+    {
+      "figmaId": "1855:116",
+      "name": "Habitat detail · Morib mudflat",
+      "section": "05-b-habitats",
+      "routes": [
+        "/habitats/morib-mudflat"
+      ],
+      "coverage": "shared template",
+      "screenshot": "screens/05-b-habitats/018_habitat-detail-morib-mudflat.jpg"
+    },
+    {
+      "figmaId": "2065:1103",
+      "name": "Biodiversity map · North coast",
+      "section": "06-b-marine-life-by-area",
+      "routes": [
+        "/map?layer=bio",
+        "/marine-area/:regionId"
+      ],
+      "coverage": "regional templates; context explanations simplified",
+      "screenshot": "screens/06-b-marine-life-by-area/001_biodiversity-map-north-coast.jpg"
+    },
+    {
+      "figmaId": "2065:1264",
+      "name": "Biodiversity map · Perak",
+      "section": "06-b-marine-life-by-area",
+      "routes": [
+        "/map?layer=bio",
+        "/marine-area/:regionId"
+      ],
+      "coverage": "regional templates; context explanations simplified",
+      "screenshot": "screens/06-b-marine-life-by-area/002_biodiversity-map-perak.jpg"
+    },
+    {
+      "figmaId": "2065:1392",
+      "name": "Biodiversity map · Selangor",
+      "section": "06-b-marine-life-by-area",
+      "routes": [
+        "/map?layer=bio",
+        "/marine-area/:regionId"
+      ],
+      "coverage": "regional templates; context explanations simplified",
+      "screenshot": "screens/06-b-marine-life-by-area/003_biodiversity-map-selangor.jpg"
+    },
+    {
+      "figmaId": "2065:1563",
+      "name": "Biodiversity map · Negeri Sembilan & Melaka",
+      "section": "06-b-marine-life-by-area",
+      "routes": [
+        "/map?layer=bio",
+        "/marine-area/:regionId"
+      ],
+      "coverage": "regional templates; context explanations simplified",
+      "screenshot": "screens/06-b-marine-life-by-area/004_biodiversity-map-negeri-sembilan-melaka.jpg"
+    },
+    {
+      "figmaId": "2065:1722",
+      "name": "Biodiversity map · Johor",
+      "section": "06-b-marine-life-by-area",
+      "routes": [
+        "/map?layer=bio",
+        "/marine-area/:regionId"
+      ],
+      "coverage": "regional templates; context explanations simplified",
+      "screenshot": "screens/06-b-marine-life-by-area/005_biodiversity-map-johor.jpg"
+    },
+    {
+      "figmaId": "2065:1891",
+      "name": "Biodiversity map · Kelantan",
+      "section": "06-b-marine-life-by-area",
+      "routes": [
+        "/map?layer=bio",
+        "/marine-area/:regionId"
+      ],
+      "coverage": "regional templates; context explanations simplified",
+      "screenshot": "screens/06-b-marine-life-by-area/006_biodiversity-map-kelantan.jpg"
+    },
+    {
+      "figmaId": "2065:2029",
+      "name": "Biodiversity map · Terengganu",
+      "section": "06-b-marine-life-by-area",
+      "routes": [
+        "/map?layer=bio",
+        "/marine-area/:regionId"
+      ],
+      "coverage": "regional templates; context explanations simplified",
+      "screenshot": "screens/06-b-marine-life-by-area/007_biodiversity-map-terengganu.jpg"
+    },
+    {
+      "figmaId": "2065:2183",
+      "name": "Biodiversity map · Pahang",
+      "section": "06-b-marine-life-by-area",
+      "routes": [
+        "/map?layer=bio",
+        "/marine-area/:regionId"
+      ],
+      "coverage": "regional templates; context explanations simplified",
+      "screenshot": "screens/06-b-marine-life-by-area/008_biodiversity-map-pahang.jpg"
+    },
+    {
+      "figmaId": "2065:2311",
+      "name": "Biodiversity map · Sabah & Sarawak",
+      "section": "06-b-marine-life-by-area",
+      "routes": [
+        "/map?layer=bio",
+        "/marine-area/:regionId"
+      ],
+      "coverage": "regional templates; context explanations simplified",
+      "screenshot": "screens/06-b-marine-life-by-area/009_biodiversity-map-sabah-sarawak.jpg"
+    },
+    {
+      "figmaId": "2065:1263",
+      "name": "Biodiversity · North coast · species and impact",
+      "section": "06-b-marine-life-by-area",
+      "routes": [
+        "/marine-area/north"
+      ],
+      "coverage": "shared template",
+      "screenshot": "screens/06-b-marine-life-by-area/010_biodiversity-north-coast-species-and-impact.jpg"
+    },
+    {
+      "figmaId": "2065:1391",
+      "name": "Biodiversity · Perak · species and impact",
+      "section": "06-b-marine-life-by-area",
+      "routes": [
+        "/marine-area/perak"
+      ],
+      "coverage": "shared template",
+      "screenshot": "screens/06-b-marine-life-by-area/011_biodiversity-perak-species-and-impact.jpg"
+    },
+    {
+      "figmaId": "2065:1562",
+      "name": "Biodiversity · Selangor · species and impact",
+      "section": "06-b-marine-life-by-area",
+      "routes": [
+        "/marine-area/selangor"
+      ],
+      "coverage": "shared template",
+      "screenshot": "screens/06-b-marine-life-by-area/012_biodiversity-selangor-species-and-impact.jpg"
+    },
+    {
+      "figmaId": "2065:1721",
+      "name": "Biodiversity · Negeri Sembilan & Melaka · species and impact",
+      "section": "06-b-marine-life-by-area",
+      "routes": [
+        "/marine-area/nsm"
+      ],
+      "coverage": "shared template",
+      "screenshot": "screens/06-b-marine-life-by-area/013_biodiversity-negeri-sembilan-melaka-species-and-impact.jpg"
+    },
+    {
+      "figmaId": "2065:1890",
+      "name": "Biodiversity · Johor · species and impact",
+      "section": "06-b-marine-life-by-area",
+      "routes": [
+        "/marine-area/johor"
+      ],
+      "coverage": "shared template",
+      "screenshot": "screens/06-b-marine-life-by-area/014_biodiversity-johor-species-and-impact.jpg"
+    },
+    {
+      "figmaId": "2065:2028",
+      "name": "Biodiversity · Kelantan · species and impact",
+      "section": "06-b-marine-life-by-area",
+      "routes": [
+        "/marine-area/kelantan"
+      ],
+      "coverage": "shared template",
+      "screenshot": "screens/06-b-marine-life-by-area/015_biodiversity-kelantan-species-and-impact.jpg"
+    },
+    {
+      "figmaId": "2065:2182",
+      "name": "Biodiversity · Terengganu · species and impact",
+      "section": "06-b-marine-life-by-area",
+      "routes": [
+        "/marine-area/tganu"
+      ],
+      "coverage": "shared template",
+      "screenshot": "screens/06-b-marine-life-by-area/016_biodiversity-terengganu-species-and-impact.jpg"
+    },
+    {
+      "figmaId": "2065:2310",
+      "name": "Biodiversity · Pahang · species and impact",
+      "section": "06-b-marine-life-by-area",
+      "routes": [
+        "/marine-area/pahang"
+      ],
+      "coverage": "shared template",
+      "screenshot": "screens/06-b-marine-life-by-area/017_biodiversity-pahang-species-and-impact.jpg"
+    },
+    {
+      "figmaId": "2065:2459",
+      "name": "Biodiversity · Sabah & Sarawak · species and impact",
+      "section": "06-b-marine-life-by-area",
+      "routes": [
+        "/marine-area/borneo"
+      ],
+      "coverage": "shared template",
+      "screenshot": "screens/06-b-marine-life-by-area/018_biodiversity-sabah-sarawak-species-and-impact.jpg"
+    },
+    {
+      "figmaId": "2080:1448",
+      "name": "Marine record preview · north · 2065:2535",
+      "section": "06-b-marine-life-by-area",
+      "routes": [
+        "/map?layer=bio",
+        "/marine-area/:regionId"
+      ],
+      "coverage": "regional templates; context explanations simplified",
+      "screenshot": "screens/06-b-marine-life-by-area/019_marine-record-preview-north-2065-2535.jpg"
+    },
+    {
+      "figmaId": "2080:1467",
+      "name": "Marine record preview · north · 2065:2551",
+      "section": "06-b-marine-life-by-area",
+      "routes": [
+        "/map?layer=bio",
+        "/marine-area/:regionId"
+      ],
+      "coverage": "regional templates; context explanations simplified",
+      "screenshot": "screens/06-b-marine-life-by-area/020_marine-record-preview-north-2065-2551.jpg"
+    },
+    {
+      "figmaId": "2080:1486",
+      "name": "Marine record preview · perak · 2065:2644",
+      "section": "06-b-marine-life-by-area",
+      "routes": [
+        "/map?layer=bio",
+        "/marine-area/:regionId"
+      ],
+      "coverage": "regional templates; context explanations simplified",
+      "screenshot": "screens/06-b-marine-life-by-area/021_marine-record-preview-perak-2065-2644.jpg"
+    },
+    {
+      "figmaId": "2080:1505",
+      "name": "Marine record preview · perak · 2065:2660",
+      "section": "06-b-marine-life-by-area",
+      "routes": [
+        "/map?layer=bio",
+        "/marine-area/:regionId"
+      ],
+      "coverage": "regional templates; context explanations simplified",
+      "screenshot": "screens/06-b-marine-life-by-area/022_marine-record-preview-perak-2065-2660.jpg"
+    },
+    {
+      "figmaId": "2080:1524",
+      "name": "Marine record preview · selangor · 2065:2744",
+      "section": "06-b-marine-life-by-area",
+      "routes": [
+        "/map?layer=bio",
+        "/marine-area/:regionId"
+      ],
+      "coverage": "regional templates; context explanations simplified",
+      "screenshot": "screens/06-b-marine-life-by-area/023_marine-record-preview-selangor-2065-2744.jpg"
+    },
+    {
+      "figmaId": "2080:1543",
+      "name": "Marine record preview · selangor · 2065:2760",
+      "section": "06-b-marine-life-by-area",
+      "routes": [
+        "/map?layer=bio",
+        "/marine-area/:regionId"
+      ],
+      "coverage": "regional templates; context explanations simplified",
+      "screenshot": "screens/06-b-marine-life-by-area/024_marine-record-preview-selangor-2065-2760.jpg"
+    },
+    {
+      "figmaId": "2080:1562",
+      "name": "Marine record preview · selangor · 2065:2768",
+      "section": "06-b-marine-life-by-area",
+      "routes": [
+        "/map?layer=bio",
+        "/marine-area/:regionId"
+      ],
+      "coverage": "regional templates; context explanations simplified",
+      "screenshot": "screens/06-b-marine-life-by-area/025_marine-record-preview-selangor-2065-2768.jpg"
+    },
+    {
+      "figmaId": "2080:1581",
+      "name": "Marine record preview · nsm · 2065:2886",
+      "section": "06-b-marine-life-by-area",
+      "routes": [
+        "/map?layer=bio",
+        "/marine-area/:regionId"
+      ],
+      "coverage": "regional templates; context explanations simplified",
+      "screenshot": "screens/06-b-marine-life-by-area/026_marine-record-preview-nsm-2065-2886.jpg"
+    },
+    {
+      "figmaId": "2080:1600",
+      "name": "Marine record preview · nsm · 2065:2902",
+      "section": "06-b-marine-life-by-area",
+      "routes": [
+        "/map?layer=bio",
+        "/marine-area/:regionId"
+      ],
+      "coverage": "regional templates; context explanations simplified",
+      "screenshot": "screens/06-b-marine-life-by-area/027_marine-record-preview-nsm-2065-2902.jpg"
+    },
+    {
+      "figmaId": "2080:1619",
+      "name": "Marine record preview · johor · 2065:2986",
+      "section": "06-b-marine-life-by-area",
+      "routes": [
+        "/map?layer=bio",
+        "/marine-area/:regionId"
+      ],
+      "coverage": "regional templates; context explanations simplified",
+      "screenshot": "screens/06-b-marine-life-by-area/028_marine-record-preview-johor-2065-2986.jpg"
+    },
+    {
+      "figmaId": "2080:1638",
+      "name": "Marine record preview · kelantan · 2065:3080",
+      "section": "06-b-marine-life-by-area",
+      "routes": [
+        "/map?layer=bio",
+        "/marine-area/:regionId"
+      ],
+      "coverage": "regional templates; context explanations simplified",
+      "screenshot": "screens/06-b-marine-life-by-area/029_marine-record-preview-kelantan-2065-3080.jpg"
+    },
+    {
+      "figmaId": "2080:1657",
+      "name": "Marine record preview · tganu · 2065:3147",
+      "section": "06-b-marine-life-by-area",
+      "routes": [
+        "/map?layer=bio",
+        "/marine-area/:regionId"
+      ],
+      "coverage": "regional templates; context explanations simplified",
+      "screenshot": "screens/06-b-marine-life-by-area/030_marine-record-preview-tganu-2065-3147.jpg"
+    },
+    {
+      "figmaId": "2080:1676",
+      "name": "Marine record preview · tganu · 2065:3163",
+      "section": "06-b-marine-life-by-area",
+      "routes": [
+        "/map?layer=bio",
+        "/marine-area/:regionId"
+      ],
+      "coverage": "regional templates; context explanations simplified",
+      "screenshot": "screens/06-b-marine-life-by-area/031_marine-record-preview-tganu-2065-3163.jpg"
+    },
+    {
+      "figmaId": "2080:1695",
+      "name": "Marine record preview · pahang · 2065:3247",
+      "section": "06-b-marine-life-by-area",
+      "routes": [
+        "/map?layer=bio",
+        "/marine-area/:regionId"
+      ],
+      "coverage": "regional templates; context explanations simplified",
+      "screenshot": "screens/06-b-marine-life-by-area/032_marine-record-preview-pahang-2065-3247.jpg"
+    },
+    {
+      "figmaId": "2080:1714",
+      "name": "Marine record preview · pahang · 2065:3263",
+      "section": "06-b-marine-life-by-area",
+      "routes": [
+        "/map?layer=bio",
+        "/marine-area/:regionId"
+      ],
+      "coverage": "regional templates; context explanations simplified",
+      "screenshot": "screens/06-b-marine-life-by-area/033_marine-record-preview-pahang-2065-3263.jpg"
+    },
+    {
+      "figmaId": "2080:1733",
+      "name": "Marine record preview · borneo · 2065:3347",
+      "section": "06-b-marine-life-by-area",
+      "routes": [
+        "/map?layer=bio",
+        "/marine-area/:regionId"
+      ],
+      "coverage": "regional templates; context explanations simplified",
+      "screenshot": "screens/06-b-marine-life-by-area/034_marine-record-preview-borneo-2065-3347.jpg"
+    },
+    {
+      "figmaId": "1914:234",
+      "name": "Marine Life · habitat photo credits",
+      "section": "06-b-marine-life-by-area",
+      "routes": [
+        "/map?layer=bio",
+        "/marine-area/:regionId"
+      ],
+      "coverage": "regional templates; context explanations simplified",
+      "screenshot": "screens/06-b-marine-life-by-area/035_marine-life-habitat-photo-credits.jpg"
+    },
+    {
+      "figmaId": "2065:1090",
+      "name": "Biodiversity · Why this explanation",
+      "section": "06-b-marine-life-by-area",
+      "routes": [
+        "/map?layer=bio",
+        "/marine-area/:regionId"
+      ],
+      "coverage": "regional templates; context explanations simplified",
+      "screenshot": "screens/06-b-marine-life-by-area/036_biodiversity-why-this-explanation.jpg"
+    },
+    {
+      "figmaId": "1214:1861",
+      "name": "08 Add report · photo",
+      "section": "07-c-report",
+      "routes": [
+        "/report/photo",
+        "/report/location",
+        "/report/confirm",
+        "/report/suggestions",
+        "/report/details",
+        "/report/review"
+      ],
+      "coverage": "existing report workflow",
+      "screenshot": null
+    },
+    {
+      "figmaId": "1214:1968",
+      "name": "09 Add report · location",
+      "section": "07-c-report",
+      "routes": [
+        "/report/photo",
+        "/report/location",
+        "/report/confirm",
+        "/report/suggestions",
+        "/report/details",
+        "/report/review"
+      ],
+      "coverage": "existing report workflow",
+      "screenshot": null
+    },
+    {
+      "figmaId": "1214:2078",
+      "name": "10 Add report · confirm beach",
+      "section": "07-c-report",
+      "routes": [
+        "/report/photo",
+        "/report/location",
+        "/report/confirm",
+        "/report/suggestions",
+        "/report/details",
+        "/report/review"
+      ],
+      "coverage": "existing report workflow",
+      "screenshot": null
+    },
+    {
+      "figmaId": "1214:2216",
+      "name": "11 AI suggestion",
+      "section": "07-c-report",
+      "routes": [
+        "/report/photo",
+        "/report/location",
+        "/report/confirm",
+        "/report/suggestions",
+        "/report/details",
+        "/report/review"
+      ],
+      "coverage": "existing report workflow",
+      "screenshot": null
+    },
+    {
+      "figmaId": "1214:2432",
+      "name": "12 Add report · review",
+      "section": "07-c-report",
+      "routes": [
+        "/report/photo",
+        "/report/location",
+        "/report/confirm",
+        "/report/suggestions",
+        "/report/details",
+        "/report/review"
+      ],
+      "coverage": "existing report workflow",
+      "screenshot": null
+    },
+    {
+      "figmaId": "1214:2500",
+      "name": "13 Add report · saved",
+      "section": "07-c-report",
+      "routes": [
+        "/report/photo",
+        "/report/location",
+        "/report/confirm",
+        "/report/suggestions",
+        "/report/details",
+        "/report/review"
+      ],
+      "coverage": "existing report workflow",
+      "screenshot": null
+    },
+    {
+      "figmaId": "1214:1916",
+      "name": "08b Add report · photo attached",
+      "section": "08-c-report-states",
+      "routes": [
+        "/report/*"
+      ],
+      "coverage": "existing data-driven report states; not individually visually verified",
+      "screenshot": null
+    },
+    {
+      "figmaId": "1214:2014",
+      "name": "09b Add report · why location",
+      "section": "08-c-report-states",
+      "routes": [
+        "/report/*"
+      ],
+      "coverage": "existing data-driven report states; not individually visually verified",
+      "screenshot": null
+    },
+    {
+      "figmaId": "1214:2133",
+      "name": "10b Add report · choose beach",
+      "section": "08-c-report-states",
+      "routes": [
+        "/report/*"
+      ],
+      "coverage": "existing data-driven report states; not individually visually verified",
+      "screenshot": null
+    },
+    {
+      "figmaId": "1214:2292",
+      "name": "11b AI suggestion · details",
+      "section": "08-c-report-states",
+      "routes": [
+        "/report/*"
+      ],
+      "coverage": "existing data-driven report states; not individually visually verified",
+      "screenshot": null
+    },
+    {
+      "figmaId": "1214:2362",
+      "name": "11c Details · band chosen",
+      "section": "08-c-report-states",
+      "routes": [
+        "/report/*"
+      ],
+      "coverage": "existing data-driven report states; not individually visually verified",
+      "screenshot": null
+    },
+    {
+      "figmaId": "1214:2563",
+      "name": "12b Review · possible duplicate",
+      "section": "08-c-report-states",
+      "routes": [
+        "/report/*"
+      ],
+      "coverage": "existing data-driven report states; not individually visually verified",
+      "screenshot": null
+    },
+    {
+      "figmaId": "1214:2648",
+      "name": "14 Draft · resume or start new",
+      "section": "08-c-report-states",
+      "routes": [
+        "/report/*"
+      ],
+      "coverage": "existing data-driven report states; not individually visually verified",
+      "screenshot": null
+    },
+    {
+      "figmaId": "1214:2828",
+      "name": "11d AI suggestion · unavailable",
+      "section": "08-c-report-states",
+      "routes": [
+        "/report/*"
+      ],
+      "coverage": "existing data-driven report states; not individually visually verified",
+      "screenshot": null
+    },
+    {
+      "figmaId": "1214:2869",
+      "name": "11e Details · entered manually",
+      "section": "08-c-report-states",
+      "routes": [
+        "/report/*"
+      ],
+      "coverage": "existing data-driven report states; not individually visually verified",
+      "screenshot": null
+    },
+    {
+      "figmaId": "1214:2927",
+      "name": "11f AI suggestion · photo unreadable",
+      "section": "08-c-report-states",
+      "routes": [
+        "/report/*"
+      ],
+      "coverage": "existing data-driven report states; not individually visually verified",
+      "screenshot": null
+    },
+    {
+      "figmaId": "1214:2969",
+      "name": "12c Review · Small not recorded",
+      "section": "08-c-report-states",
+      "routes": [
+        "/report/*"
+      ],
+      "coverage": "existing data-driven report states; not individually visually verified",
+      "screenshot": null
+    },
+    {
+      "figmaId": "1279:4",
+      "name": "13b Add report · saved, not counted (duplicate)",
+      "section": "08-c-report-states",
+      "routes": [
+        "/report/*"
+      ],
+      "coverage": "existing data-driven report states; not individually visually verified",
+      "screenshot": null
+    },
+    {
+      "figmaId": "1279:73",
+      "name": "11g Details · manual, category chosen",
+      "section": "08-c-report-states",
+      "routes": [
+        "/report/*"
+      ],
+      "coverage": "existing data-driven report states; not individually visually verified",
+      "screenshot": null
+    },
+    {
+      "figmaId": "1214:3037",
+      "name": "14 My reports · empty",
+      "section": "08-c-report-states",
+      "routes": [
+        "/report/*"
+      ],
+      "coverage": "existing data-driven report states; not individually visually verified",
+      "screenshot": null
+    },
+    {
+      "figmaId": "1214:3208",
+      "name": "14c My reports · counted",
+      "section": "08-c-report-states",
+      "routes": [
+        "/report/*"
+      ],
+      "coverage": "existing data-driven report states; not individually visually verified",
+      "screenshot": null
+    },
+    {
+      "figmaId": "1214:3288",
+      "name": "14d My reports · excluded",
+      "section": "08-c-report-states",
+      "routes": [
+        "/report/*"
+      ],
+      "coverage": "existing data-driven report states; not individually visually verified",
+      "screenshot": null
+    },
+    {
+      "figmaId": "1214:3372",
+      "name": "14e Report · detail and fix",
+      "section": "08-c-report-states",
+      "routes": [
+        "/report/*"
+      ],
+      "coverage": "existing data-driven report states; not individually visually verified",
+      "screenshot": null
+    },
+    {
+      "figmaId": "1279:279",
+      "name": "14g Report · detail (counted)",
+      "section": "08-c-report-states",
+      "routes": [
+        "/report/*"
+      ],
+      "coverage": "existing data-driven report states; not individually visually verified",
+      "screenshot": null
+    },
+    {
+      "figmaId": "1279:336",
+      "name": "14h Report · detail (duplicate)",
+      "section": "08-c-report-states",
+      "routes": [
+        "/report/*"
+      ],
+      "coverage": "existing data-driven report states; not individually visually verified",
+      "screenshot": null
+    },
+    {
+      "figmaId": "1359:50",
+      "name": "14k Report · detail (new, duplicate)",
+      "section": "08-c-report-states",
+      "routes": [
+        "/report/*"
+      ],
+      "coverage": "existing data-driven report states; not individually visually verified",
+      "screenshot": null
+    },
+    {
+      "figmaId": "1359:96",
+      "name": "14j My reports · all, new duplicate on top",
+      "section": "08-c-report-states",
+      "routes": [
+        "/report/*"
+      ],
+      "coverage": "existing data-driven report states; not individually visually verified",
+      "screenshot": null
+    },
+    {
+      "figmaId": "1359:231",
+      "name": "14c+ My reports · counted, new report on top",
+      "section": "08-c-report-states",
+      "routes": [
+        "/report/*"
+      ],
+      "coverage": "existing data-driven report states; not individually visually verified",
+      "screenshot": null
+    },
+    {
+      "figmaId": "1359:332",
+      "name": "14d+ My reports · excluded, new duplicate on top",
+      "section": "08-c-report-states",
+      "routes": [
+        "/report/*"
+      ],
+      "coverage": "existing data-driven report states; not individually visually verified",
+      "screenshot": null
+    },
+    {
+      "figmaId": "1372:4",
+      "name": "14e-fix Report · replace the photo",
+      "section": "08-c-report-states",
+      "routes": [
+        "/report/*"
+      ],
+      "coverage": "existing data-driven report states; not individually visually verified",
+      "screenshot": null
+    },
+    {
+      "figmaId": "1214:3424",
+      "name": "16 Screen failed to render",
+      "section": "08-c-report-states",
+      "routes": [
+        "/report/*"
+      ],
+      "coverage": "existing data-driven report states; not individually visually verified",
+      "screenshot": null
+    },
+    {
+      "figmaId": "1214:3099",
+      "name": "14b My reports · all",
+      "section": "09-d-my-reports",
+      "routes": [
+        "/reports",
+        "/reports/:reportId"
+      ],
+      "coverage": "existing report list and detail",
+      "screenshot": null
+    },
+    {
+      "figmaId": "1279:146",
+      "name": "14f My reports · all, new report on top",
+      "section": "09-d-my-reports",
+      "routes": [
+        "/reports",
+        "/reports/:reportId"
+      ],
+      "coverage": "existing report list and detail",
+      "screenshot": null
+    },
+    {
+      "figmaId": "1359:3",
+      "name": "14i Report · detail (new, counted)",
+      "section": "09-d-my-reports",
+      "routes": [
+        "/reports",
+        "/reports/:reportId"
+      ],
+      "coverage": "existing report list and detail",
+      "screenshot": null
+    },
+    {
+      "figmaId": "1239:289",
+      "name": "17 Community · upcoming cleanups",
+      "section": "10-f-community-cleanup",
+      "routes": [
+        "/community",
+        "/events/:eventId",
+        "/cleanup/:beachId",
+        "/cleanup/result/:cleanupId"
+      ],
+      "coverage": "updated event and cleanup workflows",
+      "screenshot": null
+    },
+    {
+      "figmaId": "1214:3432",
+      "name": "18 Event · not joined",
+      "section": "10-f-community-cleanup",
+      "routes": [
+        "/community",
+        "/events/:eventId",
+        "/cleanup/:beachId",
+        "/cleanup/result/:cleanupId"
+      ],
+      "coverage": "updated event and cleanup workflows",
+      "screenshot": null
+    },
+    {
+      "figmaId": "1214:3517",
+      "name": "18b Event · joined",
+      "section": "10-f-community-cleanup",
+      "routes": [
+        "/community",
+        "/events/:eventId",
+        "/cleanup/:beachId",
+        "/cleanup/result/:cleanupId"
+      ],
+      "coverage": "updated event and cleanup workflows",
+      "screenshot": null
+    },
+    {
+      "figmaId": "1214:3605",
+      "name": "34 Check-in",
+      "section": "10-f-community-cleanup",
+      "routes": [
+        "/community",
+        "/events/:eventId",
+        "/cleanup/:beachId",
+        "/cleanup/result/:cleanupId"
+      ],
+      "coverage": "updated event and cleanup workflows",
+      "screenshot": null
+    },
+    {
+      "figmaId": "1214:3757",
+      "name": "34b Check-in · attendance recorded",
+      "section": "10-f-community-cleanup",
+      "routes": [
+        "/community",
+        "/events/:eventId",
+        "/cleanup/:beachId",
+        "/cleanup/result/:cleanupId"
+      ],
+      "coverage": "updated event and cleanup workflows",
+      "screenshot": null
+    },
+    {
+      "figmaId": "1214:3824",
+      "name": "18c Event · attendance recorded",
+      "section": "10-f-community-cleanup",
+      "routes": [
+        "/community",
+        "/events/:eventId",
+        "/cleanup/:beachId",
+        "/cleanup/result/:cleanupId"
+      ],
+      "coverage": "updated event and cleanup workflows",
+      "screenshot": null
+    },
+    {
+      "figmaId": "2636:17",
+      "name": "48 Cleanup · linked report",
+      "section": "10-f-community-cleanup",
+      "routes": [
+        "/community",
+        "/events/:eventId",
+        "/cleanup/:beachId",
+        "/cleanup/result/:cleanupId"
+      ],
+      "coverage": "updated event and cleanup workflows",
+      "screenshot": null
+    },
+    {
+      "figmaId": "2635:17",
+      "name": "48a Cleanup · choose remaining amount",
+      "section": "10-f-community-cleanup",
+      "routes": [
+        "/community",
+        "/events/:eventId",
+        "/cleanup/:beachId",
+        "/cleanup/result/:cleanupId"
+      ],
+      "coverage": "updated event and cleanup workflows",
+      "screenshot": null
+    },
+    {
+      "figmaId": "2634:17",
+      "name": "48b Cleanup · AI suggestion",
+      "section": "10-f-community-cleanup",
+      "routes": [
+        "/community",
+        "/events/:eventId",
+        "/cleanup/:beachId",
+        "/cleanup/result/:cleanupId"
+      ],
+      "coverage": "updated event and cleanup workflows",
+      "screenshot": null
+    },
+    {
+      "figmaId": "2637:17",
+      "name": "49 Cleanup · recorded",
+      "section": "10-f-community-cleanup",
+      "routes": [
+        "/community",
+        "/events/:eventId",
+        "/cleanup/:beachId",
+        "/cleanup/result/:cleanupId"
+      ],
+      "coverage": "updated event and cleanup workflows",
+      "screenshot": null
+    },
+    {
+      "figmaId": "1280:2",
+      "name": "18e Event · cleanup recorded",
+      "section": "10-f-community-cleanup",
+      "routes": [
+        "/community",
+        "/events/:eventId",
+        "/cleanup/:beachId",
+        "/cleanup/result/:cleanupId"
+      ],
+      "coverage": "updated event and cleanup workflows",
+      "screenshot": null
+    },
+    {
+      "figmaId": "1225:2",
+      "name": "43 Event result",
+      "section": "10-f-community-cleanup",
+      "routes": [
+        "/community",
+        "/events/:eventId",
+        "/cleanup/:beachId",
+        "/cleanup/result/:cleanupId"
+      ],
+      "coverage": "updated event and cleanup workflows",
+      "screenshot": null
+    },
+    {
+      "figmaId": "1214:3681",
+      "name": "34c Check-in · location refused",
+      "section": "11-f-community-states",
+      "routes": [
+        "/community",
+        "/events/:eventId/check-in",
+        "/cleanup/:beachId",
+        "/community/wildlife-help"
+      ],
+      "coverage": "updated workflow states",
+      "screenshot": null
+    },
+    {
+      "figmaId": "2639:17",
+      "name": "47 Cleanup · needs a report",
+      "section": "11-f-community-states",
+      "routes": [
+        "/community",
+        "/events/:eventId/check-in",
+        "/cleanup/:beachId",
+        "/community/wildlife-help"
+      ],
+      "coverage": "updated workflow states",
+      "screenshot": null
+    },
+    {
+      "figmaId": "1214:4931",
+      "name": "44 Shared link · public page",
+      "section": "11-f-community-states",
+      "routes": [
+        "/community",
+        "/events/:eventId/check-in",
+        "/cleanup/:beachId",
+        "/community/wildlife-help"
+      ],
+      "coverage": "updated workflow states",
+      "screenshot": null
+    },
+    {
+      "figmaId": "1366:3",
+      "name": "17b Community · near me",
+      "section": "11-f-community-states",
+      "routes": [
+        "/community",
+        "/events/:eventId/check-in",
+        "/cleanup/:beachId",
+        "/community/wildlife-help"
+      ],
+      "coverage": "updated workflow states",
+      "screenshot": null
+    },
+    {
+      "figmaId": "1366:236",
+      "name": "17c Community · joined",
+      "section": "11-f-community-states",
+      "routes": [
+        "/community",
+        "/events/:eventId/check-in",
+        "/cleanup/:beachId",
+        "/community/wildlife-help"
+      ],
+      "coverage": "updated workflow states",
+      "screenshot": null
+    },
+    {
+      "figmaId": "1214:7536",
+      "name": "H27 Event · join",
+      "section": "11-f-community-states",
+      "routes": [
+        "/community",
+        "/events/:eventId/check-in",
+        "/cleanup/:beachId",
+        "/community/wildlife-help"
+      ],
+      "coverage": "updated workflow states",
+      "screenshot": null
+    },
+    {
+      "figmaId": "1214:7634",
+      "name": "H28 Event · joined",
+      "section": "11-f-community-states",
+      "routes": [
+        "/community",
+        "/events/:eventId/check-in",
+        "/cleanup/:beachId",
+        "/community/wildlife-help"
+      ],
+      "coverage": "updated workflow states",
+      "screenshot": null
+    },
+    {
+      "figmaId": "1214:7739",
+      "name": "H29 Check-in · reminder",
+      "section": "11-f-community-states",
+      "routes": [
+        "/community",
+        "/events/:eventId/check-in",
+        "/cleanup/:beachId",
+        "/community/wildlife-help"
+      ],
+      "coverage": "updated workflow states",
+      "screenshot": null
+    },
+    {
+      "figmaId": "1214:7790",
+      "name": "H30 Animal hurt or stranded",
+      "section": "11-f-community-states",
+      "routes": [
+        "/community",
+        "/events/:eventId/check-in",
+        "/cleanup/:beachId",
+        "/community/wildlife-help"
+      ],
+      "coverage": "updated workflow states",
+      "screenshot": null
+    },
+    {
+      "figmaId": "2657:17",
+      "name": "H01 Insights",
+      "section": "12-h-insights",
+      "routes": [
+        "/insights",
+        "/insights/trends",
+        "/insights/cleanup",
+        "/insights/participation",
+        "/marine-life"
+      ],
+      "coverage": "preview insight templates; live aggregates pending",
+      "screenshot": "screens/12-h-insights/001_h01-insights.jpg"
+    },
+    {
+      "figmaId": "1214:5378",
+      "name": "H02 Beach trends",
+      "section": "12-h-insights",
+      "routes": [
+        "/insights",
+        "/insights/trends",
+        "/insights/cleanup",
+        "/insights/participation",
+        "/marine-life"
+      ],
+      "coverage": "preview insight templates; live aggregates pending",
+      "screenshot": "screens/12-h-insights/002_h02-beach-trends.jpg"
+    },
+    {
+      "figmaId": "1214:5481",
+      "name": "H03 Beach trend detail",
+      "section": "12-h-insights",
+      "routes": [
+        "/insights",
+        "/insights/trends",
+        "/insights/cleanup",
+        "/insights/participation",
+        "/marine-life"
+      ],
+      "coverage": "preview insight templates; live aggregates pending",
+      "screenshot": "screens/12-h-insights/003_h03-beach-trend-detail.jpg"
+    },
+    {
+      "figmaId": "1214:5621",
+      "name": "Community · Needs volunteers",
+      "section": "12-h-insights",
+      "routes": [
+        "/insights",
+        "/insights/trends",
+        "/insights/cleanup",
+        "/insights/participation",
+        "/marine-life"
+      ],
+      "coverage": "preview insight templates; live aggregates pending",
+      "screenshot": "screens/12-h-insights/004_community-needs-volunteers.jpg"
+    },
+    {
+      "figmaId": "1214:5821",
+      "name": "H06 Cleanup results",
+      "section": "12-h-insights",
+      "routes": [
+        "/insights",
+        "/insights/trends",
+        "/insights/cleanup",
+        "/insights/participation",
+        "/marine-life"
+      ],
+      "coverage": "preview insight templates; live aggregates pending",
+      "screenshot": "screens/12-h-insights/005_h06-cleanup-results.jpg"
+    },
+    {
+      "figmaId": "1214:5946",
+      "name": "H07 Participation",
+      "section": "12-h-insights",
+      "routes": [
+        "/insights",
+        "/insights/trends",
+        "/insights/cleanup",
+        "/insights/participation",
+        "/marine-life"
+      ],
+      "coverage": "preview insight templates; live aggregates pending",
+      "screenshot": "screens/12-h-insights/006_h07-participation.jpg"
+    },
+    {
+      "figmaId": "1314:1552",
+      "name": "H26 Marine Life · species and habitats",
+      "section": "12-h-insights",
+      "routes": [
+        "/insights",
+        "/insights/trends",
+        "/insights/cleanup",
+        "/insights/participation",
+        "/marine-life"
+      ],
+      "coverage": "preview insight templates; live aggregates pending",
+      "screenshot": "screens/12-h-insights/007_h26-marine-life-species-and-habitats.jpg"
+    },
+    {
+      "figmaId": "1314:271",
+      "name": "H20 Species · Green sea turtle · read",
+      "section": "12-h-insights",
+      "routes": [
+        "/species/green-sea-turtle"
+      ],
+      "coverage": "shared template",
+      "screenshot": "screens/12-h-insights/008_h20-species-green-sea-turtle-read.jpg"
+    },
+    {
+      "figmaId": "1214:5753",
+      "name": "H05 Filters",
+      "section": "13-h-insights-states",
+      "routes": [
+        "/insights/:topic?state=loading",
+        "/insights/:topic?state=error",
+        "/insights/:topic?state=insufficient"
+      ],
+      "coverage": "preview-state controls and filters",
+      "screenshot": "screens/13-h-insights-states/001_h05-filters.jpg"
+    },
+    {
+      "figmaId": "1365:12",
+      "name": "H07s Participation · Morib",
+      "section": "13-h-insights-states",
+      "routes": [
+        "/insights/:topic?state=loading",
+        "/insights/:topic?state=error",
+        "/insights/:topic?state=insufficient"
+      ],
+      "coverage": "preview-state controls and filters",
+      "screenshot": "screens/13-h-insights-states/002_h07s-participation-morib.jpg"
+    },
+    {
+      "figmaId": "1365:129",
+      "name": "H07p Participation · Bagan Lalang",
+      "section": "13-h-insights-states",
+      "routes": [
+        "/insights/:topic?state=loading",
+        "/insights/:topic?state=error",
+        "/insights/:topic?state=insufficient"
+      ],
+      "coverage": "preview-state controls and filters",
+      "screenshot": "screens/13-h-insights-states/003_h07p-participation-bagan-lalang.jpg"
+    },
+    {
+      "figmaId": "1830:277",
+      "name": "H06c Cleanup history · Teluk Cempedak",
+      "section": "13-h-insights-states",
+      "routes": [
+        "/insights/:topic?state=loading",
+        "/insights/:topic?state=error",
+        "/insights/:topic?state=insufficient"
+      ],
+      "coverage": "preview-state controls and filters",
+      "screenshot": "screens/13-h-insights-states/004_h06c-cleanup-history-teluk-cempedak.jpg"
+    },
+    {
+      "figmaId": "1214:6163",
+      "name": "H09 Wildlife nearby",
+      "section": "13-h-insights-states",
+      "routes": [
+        "/insights/:topic?state=loading",
+        "/insights/:topic?state=error",
+        "/insights/:topic?state=insufficient"
+      ],
+      "coverage": "preview-state controls and filters",
+      "screenshot": "screens/13-h-insights-states/005_h09-wildlife-nearby.jpg"
+    },
+    {
+      "figmaId": "1214:6432",
+      "name": "H11 Insights · loading",
+      "section": "13-h-insights-states",
+      "routes": [
+        "/insights/:topic?state=loading",
+        "/insights/:topic?state=error",
+        "/insights/:topic?state=insufficient"
+      ],
+      "coverage": "preview-state controls and filters",
+      "screenshot": "screens/13-h-insights-states/006_h11-insights-loading.jpg"
+    },
+    {
+      "figmaId": "1214:6489",
+      "name": "H12 Insights · error",
+      "section": "13-h-insights-states",
+      "routes": [
+        "/insights/:topic?state=loading",
+        "/insights/:topic?state=error",
+        "/insights/:topic?state=insufficient"
+      ],
+      "coverage": "preview-state controls and filters",
+      "screenshot": "screens/13-h-insights-states/007_h12-insights-error.jpg"
+    },
+    {
+      "figmaId": "1214:6548",
+      "name": "H13 Insights · not enough data",
+      "section": "13-h-insights-states",
+      "routes": [
+        "/insights/:topic?state=loading",
+        "/insights/:topic?state=error",
+        "/insights/:topic?state=insufficient"
+      ],
+      "coverage": "preview-state controls and filters",
+      "screenshot": "screens/13-h-insights-states/008_h13-insights-not-enough-data.jpg"
+    },
+    {
+      "figmaId": "1214:6709",
+      "name": "H14 Cleanup results · not enough cleanups",
+      "section": "13-h-insights-states",
+      "routes": [
+        "/insights/:topic?state=loading",
+        "/insights/:topic?state=error",
+        "/insights/:topic?state=insufficient"
+      ],
+      "coverage": "preview-state controls and filters",
+      "screenshot": "screens/13-h-insights-states/009_h14-cleanup-results-not-enough-cleanups.jpg"
+    },
+    {
+      "figmaId": "1214:6779",
+      "name": "H15 How beaches are flagged",
+      "section": "13-h-insights-states",
+      "routes": [
+        "/insights/:topic?state=loading",
+        "/insights/:topic?state=error",
+        "/insights/:topic?state=insufficient"
+      ],
+      "coverage": "preview-state controls and filters",
+      "screenshot": "screens/13-h-insights-states/010_h15-how-beaches-are-flagged.jpg"
+    },
+    {
+      "figmaId": "2643:17",
+      "name": "Map · Personalised Insights · 3 sections",
+      "section": "14-h-personalised-insights",
+      "routes": [
+        "/map"
+      ],
+      "coverage": "personal report summary implemented; full recurrence/persistence sections pending data",
+      "screenshot": null
+    },
+    {
+      "figmaId": "2642:17",
+      "name": "Map · Personalised Insights · 2 counted reports",
+      "section": "14-h-personalised-insights",
+      "routes": [
+        "/map"
+      ],
+      "coverage": "personal report summary implemented; full recurrence/persistence sections pending data",
+      "screenshot": null
+    },
+    {
+      "figmaId": "2640:17",
+      "name": "Map · Personalised Insights · no activity",
+      "section": "14-h-personalised-insights",
+      "routes": [
+        "/map"
+      ],
+      "coverage": "personal report summary implemented; full recurrence/persistence sections pending data",
+      "screenshot": null
+    },
+    {
+      "figmaId": "2199:11993",
+      "name": "H20+ Species · Dugong · AI intro",
+      "section": "15-h-species-introductions",
+      "routes": [
+        "/species/dugong"
+      ],
+      "coverage": "shared template",
+      "screenshot": null
+    },
+    {
+      "figmaId": "2201:12429",
+      "name": "H20+ Species · Giant mudskipper · AI intro",
+      "section": "15-h-species-introductions",
+      "routes": [
+        "/species/giant-mudskipper"
+      ],
+      "coverage": "shared template",
+      "screenshot": null
+    },
+    {
+      "figmaId": "2201:12502",
+      "name": "H20+ Species · Mangrove crabs · AI intro",
+      "section": "15-h-species-introductions",
+      "routes": [
+        "/species/mangrove-crabs"
+      ],
+      "coverage": "shared template",
+      "screenshot": null
+    },
+    {
+      "figmaId": "2201:12575",
+      "name": "H20+ Species · Painted terrapin · AI intro",
+      "section": "15-h-species-introductions",
+      "routes": [
+        "/species/painted-terrapin"
+      ],
+      "coverage": "shared template",
+      "screenshot": null
+    },
+    {
+      "figmaId": "2201:12648",
+      "name": "H20+ Species · Southern river terrapin · AI intro",
+      "section": "15-h-species-introductions",
+      "routes": [
+        "/species/southern-river-terrapin"
+      ],
+      "coverage": "shared template",
+      "screenshot": null
+    },
+    {
+      "figmaId": "2201:12721",
+      "name": "H20+ Species · Estuarine crocodile · AI intro",
+      "section": "15-h-species-introductions",
+      "routes": [
+        "/species/estuarine-crocodile"
+      ],
+      "coverage": "shared template",
+      "screenshot": null
+    },
+    {
+      "figmaId": "2201:12794",
+      "name": "H20+ Species · Tube-dwelling worm · AI intro",
+      "section": "15-h-species-introductions",
+      "routes": [
+        "/species/tube-dwelling-worm"
+      ],
+      "coverage": "shared template",
+      "screenshot": null
+    },
+    {
+      "figmaId": "2201:12867",
+      "name": "H20+ Species · Bakau kurap · AI intro",
+      "section": "15-h-species-introductions",
+      "routes": [
+        "/species/bakau-kurap"
+      ],
+      "coverage": "shared template",
+      "screenshot": null
+    },
+    {
+      "figmaId": "2201:12940",
+      "name": "H20+ Species · Nipa palm · AI intro",
+      "section": "15-h-species-introductions",
+      "routes": [
+        "/species/nipa-palm"
+      ],
+      "coverage": "shared template",
+      "screenshot": null
+    },
+    {
+      "figmaId": "2204:12632",
+      "name": "H20+ Species · Rhizophora apiculata · AI intro",
+      "section": "15-h-species-introductions",
+      "routes": [
+        "/species/rhizophora-apiculata"
+      ],
+      "coverage": "shared template",
+      "screenshot": null
+    },
+    {
+      "figmaId": "2204:12705",
+      "name": "H20+ Species · Bruguiera parviflora · AI intro",
+      "section": "15-h-species-introductions",
+      "routes": [
+        "/species/bruguiera-parviflora"
+      ],
+      "coverage": "shared template",
+      "screenshot": null
+    },
+    {
+      "figmaId": "2204:12778",
+      "name": "H20+ Species · Enhalus acoroides · AI intro",
+      "section": "15-h-species-introductions",
+      "routes": [
+        "/species/enhalus-acoroides"
+      ],
+      "coverage": "shared template",
+      "screenshot": null
+    },
+    {
+      "figmaId": "2204:12851",
+      "name": "H20+ Species · Halophila ovalis · AI intro",
+      "section": "15-h-species-introductions",
+      "routes": [
+        "/species/halophila-ovalis"
+      ],
+      "coverage": "shared template",
+      "screenshot": null
+    },
+    {
+      "figmaId": "2204:12924",
+      "name": "H20+ Species · Thalassia hemprichii · AI intro",
+      "section": "15-h-species-introductions",
+      "routes": [
+        "/species/thalassia-hemprichii"
+      ],
+      "coverage": "shared template",
+      "screenshot": null
+    },
+    {
+      "figmaId": "2204:12997",
+      "name": "H20+ Species · Halodule pinifolia · AI intro",
+      "section": "15-h-species-introductions",
+      "routes": [
+        "/species/halodule-pinifolia"
+      ],
+      "coverage": "shared template",
+      "screenshot": null
+    },
+    {
+      "figmaId": "2204:13070",
+      "name": "H20+ Species · Blood cockle · AI intro",
+      "section": "15-h-species-introductions",
+      "routes": [
+        "/species/blood-cockle"
+      ],
+      "coverage": "shared template",
+      "screenshot": null
+    },
+    {
+      "figmaId": "2204:13143",
+      "name": "H20+ Species · Shorebirds · AI intro",
+      "section": "15-h-species-introductions",
+      "routes": [
+        "/species/shorebirds"
+      ],
+      "coverage": "shared template",
+      "screenshot": null
+    },
+    {
+      "figmaId": "2204:13216",
+      "name": "H20+ Species · Macaques · AI intro",
+      "section": "15-h-species-introductions",
+      "routes": [
+        "/species/macaques"
+      ],
+      "coverage": "shared template",
+      "screenshot": null
+    },
+    {
+      "figmaId": "2204:13289",
+      "name": "H20+ Species · Black sea cucumber · AI intro",
+      "section": "15-h-species-introductions",
+      "routes": [
+        "/species/black-sea-cucumber"
+      ],
+      "coverage": "shared template",
+      "screenshot": null
+    },
+    {
+      "figmaId": "2204:13362",
+      "name": "H20+ Species · Sea cucumber · AI intro",
+      "section": "15-h-species-introductions",
+      "routes": [
+        "/species/sea-cucumber"
+      ],
+      "coverage": "shared template",
+      "screenshot": null
+    },
+    {
+      "figmaId": "2204:13435",
+      "name": "H20+ Species · Hawksbill turtle · AI intro",
+      "section": "15-h-species-introductions",
+      "routes": [
+        "/species/hawksbill-turtle"
+      ],
+      "coverage": "shared template",
+      "screenshot": null
+    },
+    {
+      "figmaId": "2204:13508",
+      "name": "H20+ Species · Faunus snail · AI intro",
+      "section": "15-h-species-introductions",
+      "routes": [
+        "/species/faunus-snail"
+      ],
+      "coverage": "shared template",
+      "screenshot": null
+    },
+    {
+      "figmaId": "2204:13581",
+      "name": "H20+ Species · Horseshoe crab · AI intro",
+      "section": "15-h-species-introductions",
+      "routes": [
+        "/species/horseshoe-crab"
+      ],
+      "coverage": "shared template",
+      "screenshot": null
+    },
+    {
+      "figmaId": "2212:13960",
+      "name": "H20+ Group · Clownfish · AI intro",
+      "section": "15-h-species-introductions",
+      "routes": [
+        "/species/clownfish"
+      ],
+      "coverage": "shared template",
+      "screenshot": null
+    },
+    {
+      "figmaId": "2212:14035",
+      "name": "H20+ Group · Corals · AI intro",
+      "section": "15-h-species-introductions",
+      "routes": [
+        "/species/corals"
+      ],
+      "coverage": "shared template",
+      "screenshot": null
+    },
+    {
+      "figmaId": "2212:14110",
+      "name": "H20+ Group · Seagrass · AI intro",
+      "section": "15-h-species-introductions",
+      "routes": [
+        "/species/seagrass"
+      ],
+      "coverage": "shared template",
+      "screenshot": null
+    },
+    {
+      "figmaId": "2212:14185",
+      "name": "H20+ Group · Mangroves · AI intro",
+      "section": "15-h-species-introductions",
+      "routes": [
+        "/species/mangroves"
+      ],
+      "coverage": "shared template",
+      "screenshot": null
+    },
+    {
+      "figmaId": "2212:14260",
+      "name": "H20+ Group · Sea turtles · AI intro",
+      "section": "15-h-species-introductions",
+      "routes": [
+        "/species/sea-turtles"
+      ],
+      "coverage": "shared template",
+      "screenshot": null
+    },
+    {
+      "figmaId": "2213:14237",
+      "name": "H20+ Species · Grubeulepis malayensis · AI intro",
+      "section": "15-h-species-introductions",
+      "routes": [
+        "/species/grubeulepis-malayensis"
+      ],
+      "coverage": "shared template",
+      "screenshot": null
+    },
+    {
+      "figmaId": "2213:14312",
+      "name": "H20+ Species · Thalassina kelanang · AI intro",
+      "section": "15-h-species-introductions",
+      "routes": [
+        "/species/thalassina-kelanang"
+      ],
+      "coverage": "shared template",
+      "screenshot": null
+    },
+    {
+      "figmaId": "2213:14387",
+      "name": "H20+ Species · Indo-Pacific finless porpoise · AI intro",
+      "section": "15-h-species-introductions",
+      "routes": [
+        "/species/indo-pacific-finless-porpoise"
+      ],
+      "coverage": "shared template",
+      "screenshot": null
+    },
+    {
+      "figmaId": "2213:14463",
+      "name": "H20+ Species · Syringodium isoetifolium · AI intro",
+      "section": "15-h-species-introductions",
+      "routes": [
+        "/species/syringodium-isoetifolium"
+      ],
+      "coverage": "shared template",
+      "screenshot": null
+    },
+    {
+      "figmaId": "2213:14539",
+      "name": "H20+ Species · Rhizophora stylosa · AI intro",
+      "section": "15-h-species-introductions",
+      "routes": [
+        "/species/rhizophora-stylosa"
+      ],
+      "coverage": "shared template",
+      "screenshot": null
+    },
+    {
+      "figmaId": "2214:14587",
+      "name": "H20+ Group · Coastal shellfish · AI intro",
+      "section": "15-h-species-introductions",
+      "routes": [
+        "/species/coastal-shellfish"
+      ],
+      "coverage": "shared template",
+      "screenshot": null
+    },
+    {
+      "figmaId": "1314:55",
+      "name": "H20b Species · Irrawaddy dolphin · read",
+      "section": "16-h-species-pages",
+      "routes": [
+        "/species/irrawaddy-dolphin"
+      ],
+      "coverage": "shared template",
+      "screenshot": null
+    },
+    {
+      "figmaId": "1314:163",
+      "name": "H20c Species · Moorish idol · read",
+      "section": "16-h-species-pages",
+      "routes": [
+        "/species/moorish-idol"
+      ],
+      "coverage": "shared template",
+      "screenshot": null
+    },
+    {
+      "figmaId": "1314:376",
+      "name": "H20d Species · Ocellaris clownfish · read",
+      "section": "16-h-species-pages",
+      "routes": [
+        "/species/ocellaris-clownfish"
+      ],
+      "coverage": "shared template",
+      "screenshot": null
+    },
+    {
+      "figmaId": "1214:7887",
+      "name": "H31 Account",
+      "section": "17-account",
+      "routes": [
+        "/account",
+        "/account/nickname",
+        "/account/history",
+        "/account/leaderboard"
+      ],
+      "coverage": "new account views; profile/leaderboard changes local-preview only",
+      "screenshot": null
+    },
+    {
+      "figmaId": "1214:8060",
+      "name": "H32 Public nickname",
+      "section": "17-account",
+      "routes": [
+        "/account",
+        "/account/nickname",
+        "/account/history",
+        "/account/leaderboard"
+      ],
+      "coverage": "new account views; profile/leaderboard changes local-preview only",
+      "screenshot": null
+    },
+    {
+      "figmaId": "1214:8121",
+      "name": "H33 Contribution history",
+      "section": "17-account",
+      "routes": [
+        "/account",
+        "/account/nickname",
+        "/account/history",
+        "/account/leaderboard"
+      ],
+      "coverage": "new account views; profile/leaderboard changes local-preview only",
+      "screenshot": null
+    },
+    {
+      "figmaId": "1214:8226",
+      "name": "H34 Leaderboard",
+      "section": "17-account",
+      "routes": [
+        "/account",
+        "/account/nickname",
+        "/account/history",
+        "/account/leaderboard"
+      ],
+      "coverage": "new account views; profile/leaderboard changes local-preview only",
+      "screenshot": null
+    },
+    {
+      "figmaId": "1214:8327",
+      "name": "H35 Leaderboard · join",
+      "section": "17-account",
+      "routes": [
+        "/account",
+        "/account/nickname",
+        "/account/history",
+        "/account/leaderboard"
+      ],
+      "coverage": "new account views; profile/leaderboard changes local-preview only",
+      "screenshot": null
+    },
+    {
+      "figmaId": "1283:992",
+      "name": "H31b Account · location privacy",
+      "section": "17-account",
+      "routes": [
+        "/account",
+        "/account/nickname",
+        "/account/history",
+        "/account/leaderboard"
+      ],
+      "coverage": "new account views; profile/leaderboard changes local-preview only",
+      "screenshot": null
+    },
+    {
+      "figmaId": "1214:1302",
+      "name": "07 How it is rated",
+      "section": "18-reference",
+      "routes": [
+        "/method",
+        "/method/ai",
+        "/about",
+        "/beach/:beachId/gallery",
+        "/credits"
+      ],
+      "coverage": "reused methods and public gallery; updated About Us and credits",
+      "screenshot": null
+    },
+    {
+      "figmaId": "1214:1416",
+      "name": "07b How the AI suggestion works",
+      "section": "18-reference",
+      "routes": [
+        "/method",
+        "/method/ai",
+        "/about",
+        "/beach/:beachId/gallery",
+        "/credits"
+      ],
+      "coverage": "reused methods and public gallery; updated About Us and credits",
+      "screenshot": null
+    },
+    {
+      "figmaId": "1214:1487",
+      "name": "08 About Us · ocean plastic background",
+      "section": "18-reference",
+      "routes": [
+        "/method",
+        "/method/ai",
+        "/about",
+        "/beach/:beachId/gallery",
+        "/credits"
+      ],
+      "coverage": "reused methods and public gallery; updated About Us and credits",
+      "screenshot": null
+    },
+    {
+      "figmaId": "1214:1768",
+      "name": "08c Background · region detail",
+      "section": "18-reference",
+      "routes": [
+        "/method",
+        "/method/ai",
+        "/about",
+        "/beach/:beachId/gallery",
+        "/credits"
+      ],
+      "coverage": "reused methods and public gallery; updated About Us and credits",
+      "screenshot": null
+    },
+    {
+      "figmaId": "1214:1559",
+      "name": "09 Litter gallery · photos",
+      "section": "18-reference",
+      "routes": [
+        "/method",
+        "/method/ai",
+        "/about",
+        "/beach/:beachId/gallery",
+        "/credits"
+      ],
+      "coverage": "reused methods and public gallery; updated About Us and credits",
+      "screenshot": null
+    },
+    {
+      "figmaId": "1214:1600",
+      "name": "09b Litter gallery · none",
+      "section": "18-reference",
+      "routes": [
+        "/method",
+        "/method/ai",
+        "/about",
+        "/beach/:beachId/gallery",
+        "/credits"
+      ],
+      "coverage": "reused methods and public gallery; updated About Us and credits",
+      "screenshot": null
+    },
+    {
+      "figmaId": "1402:2",
+      "name": "Photo credits · coastal images",
+      "section": "18-reference",
+      "routes": [
+        "/method",
+        "/method/ai",
+        "/about",
+        "/beach/:beachId/gallery",
+        "/credits"
+      ],
+      "coverage": "reused methods and public gallery; updated About Us and credits",
+      "screenshot": null
+    },
+    {
+      "figmaId": "1222:105",
+      "name": "Toast · Copied",
+      "section": "19-toasts",
+      "routes": [
+        "shared toast component"
+      ],
+      "coverage": "existing transient states",
+      "screenshot": null
+    },
+    {
+      "figmaId": "1222:109",
+      "name": "Toast · Link copied",
+      "section": "19-toasts",
+      "routes": [
+        "shared toast component"
+      ],
+      "coverage": "existing transient states",
+      "screenshot": null
+    },
+    {
+      "figmaId": "1222:113",
+      "name": "Toast · Downloaded",
+      "section": "19-toasts",
+      "routes": [
+        "shared toast component"
+      ],
+      "coverage": "existing transient states",
+      "screenshot": null
+    },
+    {
+      "figmaId": "1356:19",
+      "name": "Toast · Choose a category first",
+      "section": "19-toasts",
+      "routes": [
+        "shared toast component"
+      ],
+      "coverage": "existing transient states",
+      "screenshot": null
+    },
+    {
+      "figmaId": "1356:22",
+      "name": "Toast · Choose a quantity band",
+      "section": "19-toasts",
+      "routes": [
+        "shared toast component"
+      ],
+      "coverage": "existing transient states",
+      "screenshot": null
+    },
+    {
+      "figmaId": "2574:17171",
+      "name": "Toast · Insufficient data explained",
+      "section": "19-toasts",
+      "routes": [
+        "shared toast component"
+      ],
+      "coverage": "existing transient states",
+      "screenshot": null
+    }
+  ]
+}

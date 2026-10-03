@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { getBeach } from '../api';
+import { getBeach, USE_MOCK } from '../api';
+import content from '../content/coastalContent.json';
 import { getLitterGallery, litterGalleryPhotoUrl } from '../litterGallery';
 import { EmptyState } from '../components/ds';
 import { Camera } from '../components/Icon';
@@ -10,20 +11,27 @@ import { fetchCleanupTarget } from '../iteration2Api';
 import { C, formatDate, MONO } from '../theme';
 import type { LitterGalleryEntry } from '../types';
 import { useAsyncData } from '../useAsyncData';
+import { useAppBack } from '../navigation';
 
 /** Beach-scoped, authorised report photos. This is intentionally a public
  * screen and never reuses the private "My reports" response. */
 export default function GalleryScreen() {
   const { beachId = '' } = useParams();
   const nav = useNavigate();
+  const goBack = useAppBack(`/beach/${beachId}`);
   const [name, setName] = useState('Beach');
   const [photos, setPhotos] = useState<LitterGalleryEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
+  const fixture = content.beaches.find(b => b.id === beachId);
+  const previewOnly = USE_MOCK && !!fixture && !['morib', 'bagan', 'remis', 'kelanang'].includes(beachId);
 
   function load() {
     setLoading(true);
     setFailed(false);
+    if (previewOnly) {
+      setName(fixture!.name); setPhotos([]); setLoading(false); return;
+    }
     Promise.all([getBeach(beachId), getLitterGallery(beachId)])
       .then(([beach, rows]) => {
         setName(beach.name);
@@ -35,9 +43,9 @@ export default function GalleryScreen() {
 
   useEffect(load, [beachId]);
   const { data: cleanupTarget } = useAsyncData(
-    () => fetchCleanupTarget(beachId),
+    () => previewOnly ? Promise.resolve(null) : fetchCleanupTarget(beachId),
     [beachId],
-    getCleanupTarget(beachId),
+    previewOnly ? null : getCleanupTarget(beachId),
   );
 
   return (
@@ -47,7 +55,7 @@ export default function GalleryScreen() {
             only once there is something to count. "0 available photos" next
             to the empty-state card would say the same thing twice. */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-          <BackButton onClick={() => nav(`/beach/${beachId}`)} />
+          <BackButton onClick={goBack} />
           {!loading && !failed && photos.length > 0 && (
             <span
               style={{

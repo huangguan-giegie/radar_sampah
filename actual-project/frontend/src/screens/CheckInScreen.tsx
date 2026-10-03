@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Check, Pin, ShieldCheck } from '../components/Icon';
 import { Alert, InfoChip, SectionLabel } from '../components/ds';
@@ -8,6 +8,9 @@ import { formatEventDate, formatEventTimeRange, getCleanupEvent, getCleanupTarge
 import { fetchCleanupEvent, fetchCleanupTarget, recordCheckInData } from '../iteration2Api';
 import { C } from '../theme';
 import { useAsyncData } from '../useAsyncData';
+import { CoastalPage, DataUnavailable, Sheet } from '../components/CoastalUI';
+import { useAppBack } from '../navigation';
+import { eventCanCheckIn, eventPhase, useEventClock } from '../eventAvailability';
 
 /** The grey shield banner: one short line about what check-in does or asks. */
 function ShieldBanner({ children }: { children: ReactNode }) {
@@ -22,8 +25,10 @@ function ShieldBanner({ children }: { children: ReactNode }) {
 export default function CheckInScreen() {
   const { eventId = '' } = useParams();
   const nav = useNavigate();
+  const back = useAppBack(`/events/${encodeURIComponent(eventId)}`);
+  const now = useEventClock();
   const { user } = useApp();
-  const { data: event, setData: setEvent, loading, error } = useAsyncData(
+  const { data: event, setData: setEvent, loading, error, refresh } = useAsyncData(
     () => fetchCleanupEvent(eventId),
     [eventId, user?.participantId],
     getCleanupEvent(eventId),
@@ -36,13 +41,25 @@ export default function CheckInScreen() {
   const initial = user && event ? (event.checkedIn ? 'within_area' : 'idle') : 'idle';
   const [state, setState] = useState<CheckInState>(initial);
   const [message, setMessage] = useState<string | null>(null);
+  const [reminder, setReminder] = useState(false);
+  const request = useRef(0);
+  useEffect(() => {
+    request.current += 1;
+    setMessage(null);
+    setReminder(false);
+    return () => { request.current += 1; };
+  }, [eventId, user?.participantId]);
 
   useEffect(() => {
     if (user && event) setState(event.checkedIn ? 'within_area' : 'idle');
   }, [event, user]);
 
   function checkIn() {
-    if (!event || !user) return;
+    if (!event || !user || state === 'checking') return;
+    if (!eventCanCheckIn(event)) {
+      setMessage('Check-in is available during the event.');
+      return;
+    }
     if (!event.joined) {
       setMessage('Join this activity before checking in.');
       return;
@@ -54,19 +71,30 @@ export default function CheckInScreen() {
     }
     setState('checking');
     setMessage(null);
+    const currentRequest = ++request.current;
     navigator.geolocation.getCurrentPosition(
       async (position) => {
+        if (currentRequest !== request.current) return;
+        if (!eventCanCheckIn(event)) {
+          setState('idle');
+          setMessage('Check-in is available during the event.');
+          return;
+        }
         const current = { lat: position.coords.latitude, lng: position.coords.longitude };
         try {
           const updated = await recordCheckInData(event.id, user.participantId, current);
+          if (currentRequest !== request.current) return;
           setEvent(updated);
           setState(updated.checkedIn ? 'within_area' : 'idle');
+          if (updated.checkedIn) setReminder(true);
         } catch (reason) {
+          if (currentRequest !== request.current) return;
           setState('denied');
           setMessage(reason instanceof Error ? reason.message : 'Check-in could not be recorded.');
         }
       },
       (failure) => {
+        if (currentRequest !== request.current) return;
         setState('denied');
         // Say "refused" only when the browser says the person refused. A
         // timeout or a weak signal is not a refusal, and telling someone they
@@ -79,14 +107,15 @@ export default function CheckInScreen() {
     );
   }
 
-  if (loading && !event) return <div className="screen scroll-y"><div className="measure i2-page"><Alert title="Loading check-in" tone="caution">Checking the latest activity state.</Alert></div></div>;
-  if (!event || !user) return <div className="screen scroll-y"><div className="measure i2-page"><Alert title="Check-in unavailable" tone="caution">{error ?? 'This activity could not be found.'}</Alert></div></div>;
+  if (loading && !event) return <CoastalPage title="Check In" back="/community" tabs={false}><div role="status">Loading check-in…</div></CoastalPage>;
+  if (!event || !user) return <CoastalPage title="Check In" back="/community" tabs={false}><DataUnavailable title="Check-in unavailable" retry={error ? () => void refresh() : undefined}>{error ?? 'This activity could not be found.'}</DataUnavailable></CoastalPage>;
+  const available = eventCanCheckIn(event, now);
   const joined = Boolean(event.joined);
   const attendanceRecorded = Boolean(event.attendanceConfirmed);
   const withinArea = state === 'within_area';
   const readyToConfirm = false;
   // Anything short of a recorded check-in keeps the location button up.
-  const needsLocation = !withinArea && !attendanceRecorded;
+  const needsLocation = available && !withinArea && !attendanceRecorded;
   // A refused or failed location attempt explains itself inside the status
   // card, so the same sentence is not repeated in a second alert below.
   const messageInStatus = state === 'denied' && Boolean(message);
@@ -113,8 +142,9 @@ export default function CheckInScreen() {
 
   return (
     <div className="screen scroll-y" style={{ zIndex: 26 }}>
+      {reminder && <Sheet title="Two Quick Reminders" onClose={() => setReminder(false)}><div className="wildlife-rule"><span>1</span><p>Keep away from nests and burrows</p></div><div className="wildlife-rule"><span>2</span><p>Do not handle stranded or entangled animals</p></div><PrimaryButton onClick={() => setReminder(false)}>Got It</PrimaryButton></Sheet>}
       <div className="measure i2-page anim-fade-up" style={{ paddingBottom: 'calc(var(--safe-bottom) + 34px)' }}>
-        <BackButton onClick={() => nav(`/events/${event.id}`)} />
+        <BackButton onClick={back} />
         <div>
           <SectionLabel size="sm">CHECK IN</SectionLabel>
           <h1 className="i2-title" style={{ marginTop: 7 }}>{readyToConfirm ? 'Confirm attendance' : 'Check in'}</h1>
@@ -156,6 +186,7 @@ export default function CheckInScreen() {
           <div className="i2-confirmed-row"><Check size={15} color={C.green} /><strong>Attendance confirmed</strong></div>
         )}
 
+        {!available && !attendanceRecorded && <Alert tone="caution">{eventPhase(event, now) === 'upcoming' ? 'Check-in opens when the event starts.' : 'This activity is no longer open for check-in.'}</Alert>}
         {needsLocation && (
           <>
             <PrimaryButton onClick={checkIn} disabled={state === 'checking'}>
@@ -186,7 +217,7 @@ export default function CheckInScreen() {
         {message && !messageInStatus && <Alert title="Check-in not completed" tone="caution">{message}</Alert>}
 
         <div className="i2-action-stack">
-          {withinArea && !attendanceRecorded ? (
+          {available && withinArea && !attendanceRecorded ? (
             <>
               {cleanupTarget ? (
                 <PrimaryButton onClick={cleanUpHere}>Add a Cleanup</PrimaryButton>
@@ -196,8 +227,8 @@ export default function CheckInScreen() {
               {cleanupTarget && <GhostButton onClick={reportHere}>Report litter here instead</GhostButton>}
             </>
           ) : attendanceRecorded ? (
-            <PrimaryButton onClick={() => nav(`/events/${event.id}`)}>Back to event</PrimaryButton>
-          ) : joined && state !== 'checking' ? (
+            <PrimaryButton onClick={back}>Back to event</PrimaryButton>
+          ) : available && joined && state !== 'checking' ? (
             // A report or cleanup counts for the event whether or not location
             // works, so both stay on offer before and after a location attempt.
             <>
@@ -205,7 +236,7 @@ export default function CheckInScreen() {
               <GhostButton onClick={reportHere}>Report litter here instead</GhostButton>
             </>
           ) : null}
-          {!attendanceRecorded && <GhostButton onClick={() => nav(`/events/${event.id}`)}>Back to activity</GhostButton>}
+          {!attendanceRecorded && <GhostButton onClick={back}>Back to activity</GhostButton>}
         </div>
         <p style={{ margin: 0, textAlign: 'center', color: C.dim, fontSize: 11 }}>Being nearby is not proof of a cleanup.</p>
       </div>

@@ -1,0 +1,86 @@
+{
+  "pantai-sungai-burung": {
+    "lat": 3.6905558,
+    "lng": 100.9332583,
+    "sourceUrl": "https://www.google.com/maps/place/Pantai+Sungai+Burung/data=!4m7!3m6!1s0x31cb5f76784cce95:0x74c820d72e226d9f!8m2!3d3.6905558!4d100.9332583!16s%2Fg%2F11g8k0prnv!19sChIJlc5MeHZfyzERn20iLtcgyHQ",
+    "sourceName": "Google Maps named place, 2 Jalan Sekolah, Bagan Sungai Burong, Sungai Besar; destination coordinates, not viewport centre"
+  },
+  "pantai-batu-laut": {
+    "lat": 2.67511,
+    "lng": 101.51496,
+    "sourceUrl": "https://www.malaysia-traveller.com/batu-laut-beach.html",
+    "sourceName": "Malaysia Traveller - first-hand beach GPS"
+  },
+  "pantai-sungai-kajang-baru": {
+    "lat": 3.41263,
+    "lng": 101.1566705,
+    "sourceUrl": "https://www.hotelinmy.com/address/pantai_sungai_kajang_baru/3.41263/101.1566705",
+    "sourceName": "HotelinMY - named beach location"
+  },
+  "pantai-bagan-nakhoda-omar": {
+    "lat": 3.76680202,
+    "lng": 100.8730652,
+    "sourceUrl": "https://mygeoname.mygeoportal.gov.my/exportpdffasa3.jsp?kodnegeri=10",
+    "sourceName": "JUPEM / MyGeoName Selangor gazetteer"
+  },
+  "pantai-tanjung-rhu-pulau-carey": {
+    "lat": 2.8286398,
+    "lng": 101.3325786,
+    "sourceUrl": "https://www.reddit.com/r/itookapicture/comments/17xqqdb/",
+    "sourceName": "Original photographer - Carey Island beach GPS"
+  },
+  "pantai-batu-23": {
+    "lat": 3.5934722,
+    "lng": 101.05575,
+    "sourceUrl": "https://www.sedapnya-makan.com/2018/03/terbaiklah-makan-mee-bandung-udang-pantai-bm.html",
+    "sourceName": "Sedapnya Makan - Pantai BM waterfront visit GPS"
+  },
+  "pantai-sungai-lang": {
+    "lat": 3.8226347,
+    "lng": 100.8136904,
+    "sourceUrl": "https://womenwanderingbeyond.com/beaches-in-selangor/",
+    "sourceName": "Women Wandering Beyond - Sungai Lang Google Maps destination"
+  },
+  "pantai-sungai-haji-dorani": {
+    "lat": 3.6333333,
+    "lng": 101.0166667,
+    "sourceUrl": "https://digital.nahrim.gov.my/uploads/publications/pdf_20230407151824.pdf",
+    "sourceName": "NAHRIM - Sungai Haji Dorani coastal study location"
+  },
+  "pantai-pasir-panjang-segari": {
+    "lat": 4.36365,
+    "lng": 100.581245,
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Pantai_Pasir_Panjang,_Segari_20231222_131452.jpg",
+    "sourceName": "Wiki Farazi - geotagged Segari beach photograph"
+  },
+  "emerald-bay-pangkor-laut": {
+    "lat": 4.195936,
+    "lng": 100.543037,
+    "sourceUrl": "https://resortavipangkorbeachpangkorisland.my-hotels.net/en/location.html",
+    "sourceName": "Avi Pangkor location guide - Emerald Bay attraction coordinates"
+  },
+  "pantai-klebang": {
+    "lat": 2.216384,
+    "lng": 102.194318,
+    "sourceUrl": "https://pokokkelapa.wordpress.com/2017/10/16/white-sand-dunes-pantai-klebang-melaka/",
+    "sourceName": "Pokok Kelapa - first-hand Klebang beach access GPS"
+  },
+  "pantai-tanjung-bidara": {
+    "lat": 2.296418,
+    "lng": 102.078502,
+    "sourceUrl": "https://www.mpag.gov.my/pantai-tanjung-bidara/",
+    "sourceName": "Majlis Perbandaran Alor Gajah - official beach GPS"
+  },
+  "pulau-besar-melaka": {
+    "lat": 2.1116806,
+    "lng": 102.327675,
+    "sourceUrl": "https://studentsrepo.um.edu.my/15617/2/Logananthini_Muniandy.pdf",
+    "sourceName": "Universiti Malaya - Pulau Besar beach sampling study"
+  },
+  "pantai-siring": {
+    "lat": 2.14087,
+    "lng": 102.36025,
+    "sourceUrl": "https://malaysia.worldplaces.me/view-place/2697308-pantai-siring-merlimau-melaka.html",
+    "sourceName": "WorldPlaces - Pantai Siring, Merlimau, Melaka"
+  }
+}

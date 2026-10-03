@@ -6,16 +6,23 @@
 // The cost is real, so the screen says it twice: lose the number and the old
 // reports still count for their beach, but nobody can reopen them.
 
-import { useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { C, MONO } from '../theme';
 import { ShieldCheck } from '../components/Icon';
 import { BackButton, ErrorNote, GhostButton, PrimaryButton, TextButton, downloadRecoveryKit } from '../components/ui';
 import { useApp } from '../AppContext';
 import { safeNextPath } from '../flowRules';
+import { useAppBack } from '../navigation';
 
 export default function IdentityScreen() {
   const nav = useNavigate();
+  const back = useAppBack('/home');
+  const active = useRef(true);
+  useEffect(() => {
+    active.current = true;
+    return () => { active.current = false; };
+  }, []);
   const [params] = useSearchParams();
   const next = safeNextPath(params.get('next'));
   const { createId, restore } = useApp();
@@ -47,7 +54,7 @@ export default function IdentityScreen() {
 
   function goBack() {
     if (newSession && !savedRecovery && !window.confirm('Leave without saving your recovery token?')) return;
-    nav(next === '/home' ? '/welcome' : next);
+    back();
   }
 
 
@@ -57,13 +64,15 @@ export default function IdentityScreen() {
     setError(null);
     try {
       const session = await createId();
+      if (!active.current) return;
       // Deliberately no navigation here. The user has to see the number and
       // save it first - moving straight on would lose it before they read it.
       setNewSession(session);
     } catch (err) {
+      if (!active.current) return;
       setError(err instanceof Error ? err.message : 'Could not get an ID. Please try again.');
     }
-    setBusy(false);
+    if (active.current) setBusy(false);
   }
 
 
@@ -77,15 +86,17 @@ export default function IdentityScreen() {
     setError(null);
     try {
       await restore(typedId.trim(), typedToken.trim());
+      if (!active.current) return;
       // On to wherever they were heading before we asked for an ID. Replace,
       // so Back does not drop them onto this screen again.
       nav(next, { replace: true });
     } catch (err) {
+      if (!active.current) return;
       // A server fault or a dead connection lands here too, so we must not
       // blame the user's typing every time. Prefer the message from the API.
       setError(err instanceof Error ? err.message : 'Could not use that ID. Please check the number.');
     }
-    setBusy(false);
+    if (active.current) setBusy(false);
   }
 
   return (

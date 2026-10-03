@@ -13,6 +13,7 @@ import { useNavigate } from 'react-router-dom';
 import { getScoringMethod } from '../api';
 import { SCORING_METHOD } from '../scoring';
 import { BackButton, GhostButton, Label } from '../components/ui';
+import { useAppBack } from '../navigation';
 import { C, MONO, severityLabel } from '../theme';
 import type { ScoringMethod } from '../types';
 
@@ -76,6 +77,7 @@ const limitations = (m: ScoringMethod) => [
 
 export default function MethodScreen() {
   const nav = useNavigate();
+  const goBack = useAppBack('/home');
 
 
   // Start from the frontend's own copy, then quietly upgrade if the backend
@@ -116,7 +118,7 @@ export default function MethodScreen() {
             edge. */}
         <div className="measure">
           <BackButton
-            onClick={() => nav(-1)}
+            onClick={goBack}
             dark
             style={{ background: 'rgba(255,255,255,.1)', border: '1px solid rgba(255,255,255,.2)' }}
           />
@@ -220,9 +222,6 @@ export default function MethodScreen() {
               </div>
             ))}
           </div>
-          <div style={{ padding: '10px 14px', borderTop: `1px solid ${C.line}`, color: C.muted, fontSize: 11.5, lineHeight: 1.5 }}>
-            “Very high” is the participant-facing label. The API keeps “Severe” only as its internal contract value.
-          </div>
         </div>
 
 
@@ -230,7 +229,7 @@ export default function MethodScreen() {
           <Label style={{ marginBottom: 11 }}>WHEN NO BAND IS SHOWN</Label>
           <div style={{ background: C.white, border: `1px solid ${C.line}`, borderRadius: 22, padding: 18, display: 'flex', flexDirection: 'column', gap: 9 }}>
             {[
-              [`Under ${m.minReports} reports`, 'Insufficient data'],
+              [`Under ${m.minReports} active reports`, 'Insufficient data'],
               [`Nothing in ${m.windowDays} days`, 'Not recently reported'],
               ['Duplicate or incomplete', 'Never counted at all'],
             ].map(([when, then]) => (
@@ -275,7 +274,7 @@ export default function MethodScreen() {
           </div>
         </div>
 
-        <GhostButton onClick={() => nav(-1)} height={54} style={{ borderRadius: 17, fontSize: 14.5 }}>
+        <GhostButton onClick={goBack} height={54} style={{ borderRadius: 17, fontSize: 14.5 }}>
           Back
         </GhostButton>
       </div>

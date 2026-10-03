@@ -1,164 +1,316 @@
-import { useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { ChevronRight } from '../components/Icon';
-import { EmptyState, InfoChip, SectionLabel, SeverityBadge } from '../components/ds';
-import { useApp } from '../AppContext';
-import { getBeaches } from '../api';
-import { formatEventDate, formatEventTimeRange, listCleanupEvents, relativeEventWeek } from '../iteration2';
-import { fetchCleanupEvents } from '../iteration2Api';
-import { useAsyncData } from '../useAsyncData';
-import { attentionStateFor, C, MONO } from '../theme';
-import type { BeachSummary } from '../types';
+import { useEffect, useRef, useState } from "react";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { ChevronRight } from "../components/Icon";
+import { SeverityBadge } from "../components/ds";
+import {
+  CoastalPage,
+  DataUnavailable,
+  LinkRow,
+  Sheet,
+  SummaryCard,
+  WhiteCard,
+} from "../components/CoastalUI";
+import { GhostButton, Skeleton } from "../components/ui";
+import { useApp } from "../AppContext";
+import { getBeaches, USE_MOCK } from "../api";
+import { formatEventDate, formatEventTimeRange } from "../iteration2";
+import { fetchCleanupEvents, fetchLatestCleanupForBeach } from "../iteration2Api";
+import { useAsyncData } from "../useAsyncData";
+import { C } from "../theme";
+import { eventIsAvailable, eventPhase, useEventClock } from "../eventAvailability";
+import content from "../content/coastalContent.json";
+import { beachNeedsVolunteers } from "../volunteerNeeds";
 
+type Filter = "All" | "Near Me" | "Joined";
+// Keep the last result only in this tab's memory so a detail-page return does not ask again.
+let lastPosition: { lat: number; lng: number } | null = null;
+
+function distanceKm(
+  a: { lat: number; lng: number },
+  b: { lat: number; lng: number },
+) {
+  const rad = Math.PI / 180;
+  const p =
+    Math.sin(((b.lat - a.lat) * rad) / 2) ** 2 +
+    Math.cos(a.lat * rad) *
+      Math.cos(b.lat * rad) *
+      Math.sin(((b.lng - a.lng) * rad) / 2) ** 2;
+  return 6371 * 2 * Math.atan2(Math.sqrt(p), Math.sqrt(1 - p));
+}
 export default function CommunityScreen() {
   const nav = useNavigate();
-  const { user } = useApp();
-  const [filter, setFilter] = useState<'All' | 'Joined'>('All');
-  const { data, loading, error } = useAsyncData(
-    () => filter === 'Joined' && !user
-      ? Promise.resolve([])
-      : fetchCleanupEvents(user?.participantId, filter === 'Joined'),
-    [user?.participantId, filter],
-    listCleanupEvents(user?.participantId, filter === 'Joined'),
+  const location = useLocation();
+  const needs = location.pathname.endsWith("/needs-volunteers");
+  const { user, reportsVersion } = useApp();
+  const [search, setSearch] = useSearchParams();
+  const selectedBeach = content.beaches.find(b => b.id === search.get("beach"));
+  const clearBeach = () => setSearch(previous => {
+    const next = new URLSearchParams(previous); next.delete("beach"); return next;
+  }, { replace: true });
+  const filter: Filter = search.get("filter") === "nearby" ? "Near Me" : search.get("filter") === "joined" ? "Joined" : "All";
+  const now = useEventClock();
+  const [position, setPosition] = useState<{ lat: number; lng: number } | null>(
+    lastPosition,
   );
-  // With the real API the loader starts empty (null) until the first answer
-  // arrives; treat that as "no rows yet" instead of crashing the tab.
-  const events = data ?? [];
-  // The same beach list the map and home screen use. A row shows the beach's
-  // band so a volunteer can see where help is most needed before opening it.
-  // If this request fails the rows simply go without a band - the schedule
-  // itself must still load.
-  const { data: beaches } = useAsyncData<BeachSummary[]>(() => getBeaches(), [], []);
-  const beachById = useMemo(
-    () => new Map((beaches ?? []).map((beach) => [beach.id, beach])),
-    [beaches],
+  const [locating, setLocating] = useState(false);
+  const [locationError, setLocationError] = useState("");
+  const [locationAttempt, setLocationAttempt] = useState(0);
+  const locationRequest = useRef(0);
+  const [why, setWhy] = useState(false);
+  const {
+    data: events,
+    loading,
+    error,
+    refresh,
+  } = useAsyncData(
+    () => fetchCleanupEvents(user?.participantId, !needs && filter === "Joined"),
+    [user?.participantId, filter, needs, reportsVersion],
+    [],
   );
-  const grouped = useMemo(() => {
-    return events.reduce<Record<string, typeof events>>((groups, event) => {
-      (groups[event.date] ??= []).push(event);
-      return groups;
-    }, {});
-  }, [events]);
-
+  const { data: beaches, loading: beachesLoading, error: beachesError, refresh: refreshBeaches } = useAsyncData(getBeaches, [reportsVersion], []);
+  const { data: recentCleanups, loading: historyLoading, error: historyError, refresh: refreshHistory } = useAsyncData(
+    async () => needs ? Object.fromEntries(await Promise.all(beaches.map(async b => [b.id, (await fetchLatestCleanupForBeach(b.id))?.createdAt ?? null]))) as Record<string, string | null> : {},
+    [needs, beaches, reportsVersion], {} as Record<string, string | null>,
+  );
+  const nextEvents = [...events].filter(e => eventIsAvailable(e, now)).sort((a, b) => a.startsAt.localeCompare(b.startsAt));
+  const needsHelp = (b: typeof beaches[number]) => beachNeedsVolunteers(b, recentCleanups?.[b.id], nextEvents.find(e => e.beachId === b.id)?.participantCount, now);
+  const withoutEvent = needs && filter !== "Joined" ? beaches.filter(b =>
+    (!selectedBeach || b.id === selectedBeach.id) && needsHelp(b) && !nextEvents.some(e => e.beachId === b.id) &&
+    (filter !== "Near Me" || !!position && distanceKm(position, b) <= 50)) : [];
+  const needsBeachData = needs || filter === "Near Me";
+  function chooseFilter(value: Filter) {
+    const next = new URLSearchParams(search);
+    if (value === "All") next.delete("filter");
+    else next.set("filter", value === "Near Me" ? "nearby" : "joined");
+    setSearch(next, { replace: true });
+  }
+  useEffect(() => {
+    const request = ++locationRequest.current;
+    if (filter !== "Near Me" || position) return;
+    setLocationError("");
+    setLocating(true);
+    if (!navigator.geolocation) {
+      setLocationError(
+        "Location is unavailable. You can still browse all activities.",
+      );
+      setLocating(false);
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (p) => {
+        if (request !== locationRequest.current) return;
+        lastPosition = { lat: p.coords.latitude, lng: p.coords.longitude };
+        setPosition(lastPosition);
+        setLocating(false);
+      },
+      () => {
+        if (request !== locationRequest.current) return;
+        setLocationError(
+          "Location wasn’t shared. Browse all activities, or allow location in your browser and try again.",
+        );
+        setLocating(false);
+      },
+      { timeout: 12000, maximumAge: 60000 },
+    );
+    return () => { locationRequest.current += 1; };
+  }, [filter, position, locationAttempt]);
+  const filtered = events
+    .filter(e => !selectedBeach || e.beachId === selectedBeach.id)
+    .filter((e) => filter !== "Joined" || (!!user && e.joined))
+    .filter((e) => filter === "Joined" && !needs || eventIsAvailable(e, now))
+    .filter((e) => {
+      const b = beaches.find((b) => b.id === e.beachId);
+      if (
+        needs &&
+        (!b || !needsHelp(b))
+      )
+        return false;
+      if (filter === "Near Me")
+        return !!position && !!b && distanceKm(position, b) <= 50;
+      return true;
+    });
+  const grouped = filtered.reduce<Record<string, typeof events>>((all, e) => {
+    (all[e.date] ??= []).push(e);
+    return all;
+  }, {});
   return (
-    <div className="screen scroll-y" style={{ zIndex: 20 }}>
-      <div className="measure i2-page anim-fade-up">
-        <div>
-          <SectionLabel size="sm">COMMUNITY</SectionLabel>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginTop: 7 }}>
-            <h1 className="i2-title">Community Cleanups</h1>
-            {/* Only moderators can create activities, so only they see the
-                way in. Everyone else would land on an access-denied page. */}
-            {user?.role === 'moderator' && (
-              <button
-                type="button"
-                className="press link-hover"
-                onClick={() => nav('/platform/events/new')}
-                aria-label="Organiser console"
-                style={{ flex: 'none', minHeight: 44, padding: '0 4px', fontFamily: MONO, fontSize: 10, fontWeight: 700, letterSpacing: '.14em', color: C.navy }}
-              >
-                ORGANISER
-              </button>
-            )}
-          </div>
-          <p className="i2-subtitle">
-            Choose an upcoming Saturday activity. Extra dates added by the platform team appear here too.
+    <CoastalPage
+      title={needs ? "Beaches Needing Help" : "Community Cleanups"}
+      back={needs ? "/community" : undefined}
+      subtitle={
+        needs
+          ? "Moderate or above · a little help goes a long way"
+          : "Choose a beach. Make a difference together."
+      }
+      action={
+        user?.role === "moderator" ? (
+          <button onClick={() => nav("/platform/events/new")}>Organiser</button>
+        ) : undefined
+      }
+    >
+      {selectedBeach && <div className="filter-chips" style={{ margin: 0 }}><button aria-label="Show all beaches" onClick={clearBeach}>{selectedBeach.name} ×</button></div>}
+      {!needs && (
+        <button
+          className="volunteer-banner"
+          onClick={() => nav("/community/needs-volunteers")}
+        >
+          <span>
+            <strong>Beaches Needing Help</strong>
+            <small>Find your next cleanup</small>
+          </span>
+          <ChevronRight color={C.lime} size={18} />
+        </button>
+      )}
+      {needs && (
+        <SummaryCard eyebrow="Where you can help">
+          <p style={{ lineHeight: 1.5, margin: 0 }}>
+            These beaches have no recent cleanup or fewer than 3 people joined their next activity.
           </p>
-        </div>
-
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
-          <div className="i2-chip-row" role="tablist" aria-label="Cleanup activity filter">
-            {(['All', 'Joined'] as const).map((value) => (
-              <button
-                key={value}
-                type="button"
-                className="i2-chip press"
-                role="tab"
-                aria-selected={filter === value}
-                aria-pressed={filter === value}
-                onClick={() => setFilter(value)}
-              >
-                {value === 'All' ? 'All dates' : 'Joined'}
-              </button>
-            ))}
-          </div>
-          {/* The chips already tell a screen reader which filter is on. */}
-          <SectionLabel size="sm" style={{ flex: 'none' }}>
-            <span aria-hidden="true">{filter === 'All' ? 'ALL DATES' : 'JOINED'}</span>
-          </SectionLabel>
-        </div>
-
-        {loading ? (
-          <EmptyState title="Loading activities…" body="Checking the latest shared cleanup schedule." />
-        ) : error ? (
-          <EmptyState title="Couldn't load activities" body={error} action="Show all activities" onAction={() => setFilter('All')} />
-        ) : events.length === 0 ? (
-          <EmptyState
-            title="No joined cleanups yet"
-            body={user ? 'Join an activity and it will appear here.' : 'Log in, then join an activity to keep it in this list.'}
-            action={user ? 'Show all activities' : 'Log in'}
-            onAction={() => user ? setFilter('All') : nav(`/identity?next=${encodeURIComponent('/community')}`)}
-          />
-        ) : (
-          Object.entries(grouped).map(([date, rows]) => {
-            const relative = relativeEventWeek(date);
-            return (
-              <section key={date} aria-labelledby={`events-${date}`}>
-                <div
-                  id={`events-${date}`}
-                  style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 10, margin: '3px 4px 9px' }}
-                >
-                  {relative && <SectionLabel size="sm" tone="strong">{relative}</SectionLabel>}
-                  <SectionLabel size="sm">{formatEventDate(date).toUpperCase()}</SectionLabel>
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
-                  {rows.map((event) => {
-                    const day = event.date.slice(8, 10);
-                    const weekday = formatEventDate(event.date).slice(-4, -1).toUpperCase();
-                    const joined = Boolean(user && event.joined);
-                    const beach = beachById.get(event.beachId);
-                    // attentionStateFor decides whether the beach has earned a
-                    // band; below the report minimum the badge says so instead.
-                    const attention = beach
-                      ? attentionStateFor(beach.severity, beach.insufficientData, beach.validReports)
-                      : null;
-                    return (
-                      <button
-                        key={event.id}
-                        type="button"
-                        className="i2-card i2-event-card press card-hover"
-                        onClick={() => nav(`/events/${event.id}`)}
-                      >
-                        <span className="i2-date" aria-hidden="true">
-                          <strong>{day}</strong>
-                          <span>{weekday}</span>
-                        </span>
-                        <span style={{ minWidth: 0 }}>
-                          <span style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                            <span style={{ fontSize: 15, fontWeight: 720, color: C.ink2 }}>{event.beachName}</span>
-                            {beach && attention && (
-                              <SeverityBadge band={attention.hasBand ? beach.severity : null} label={attention.pageLabel} />
-                            )}
-                          </span>
-                          <span style={{ display: 'block', marginTop: 4, fontSize: 11.5, color: C.muted }}>
-                            {formatEventTimeRange(event.startsAt, event.endsAt)} · {event.area}
-                          </span>
-                          <span style={{ display: 'flex', gap: 6, marginTop: 9, flexWrap: 'wrap' }}>
-                            <InfoChip>{event.participantCount} joined</InfoChip>
-                            {joined && <InfoChip color={C.green} background={C.greenBg}>Joined</InfoChip>}
-                            {event.source === 'admin' && <InfoChip>Extra date</InfoChip>}
-                          </span>
-                        </span>
-                        <ChevronRight color={C.navy} />
-                      </button>
-                    );
-                  })}
-                </div>
-              </section>
-            );
-          })
-        )}
+          <button
+            style={{ color: C.lime, marginTop: 14 }}
+            onClick={() => setWhy(true)}
+          >
+            Why These Beaches?
+          </button>
+        </SummaryCard>
+      )}
+      <div className="filter-chips" style={{ margin: 0 }}>
+        {(["All", "Near Me", "Joined"] as const).map((f) => (
+          <button
+            key={f}
+            aria-pressed={filter === f}
+            onClick={() => chooseFilter(f)}
+          >
+            {f === "All" ? "Upcoming" : f}
+          </button>
+        ))}
       </div>
-    </div>
+      {filter === "Near Me" && (
+        <p className="coastal-footnote" role="status">
+          {locating
+            ? "Checking your location…"
+            : locationError ||
+              "Activities within 50 km. Your location stays on this device."}
+        </p>
+      )}
+      {filter === "Near Me" && !position ? (
+        locationError ? (
+          <DataUnavailable title="Location Unavailable" retry={() => setLocationAttempt((value) => value + 1)}>
+            <GhostButton onClick={() => chooseFilter("All")}>Show Upcoming Activities</GhostButton>
+          </DataUnavailable>
+        ) : <Skeleton h={190} />
+      ) : loading || (needsBeachData && beachesLoading) || (needs && historyLoading) ? (
+        <Skeleton h={190} />
+      ) : error ? (
+        <DataUnavailable
+          title="Couldn’t Load Activities"
+          retry={() => void refresh()}
+        >
+          {error}
+        </DataUnavailable>
+      ) : needsBeachData && beachesError ? (
+        <DataUnavailable title="Couldn’t Load Beaches" retry={() => void refreshBeaches()}>
+          Please try again.
+        </DataUnavailable>
+      ) : needs && historyError ? (
+        <DataUnavailable title="Couldn’t Load Cleanup History" retry={() => void refreshHistory()}>Please try again.</DataUnavailable>
+      ) : !filtered.length && !withoutEvent.length ? (
+        <DataUnavailable
+          title={
+            filter === "Joined"
+              ? "No Joined Cleanups Yet"
+              : filter === "Near Me"
+                ? "No Cleanups Nearby"
+                : selectedBeach ? "No Upcoming Cleanups Here" : "No Activities Yet"
+          }
+        >
+          {filter === "Joined" && !user ? (
+            <>
+              <p>Log in to keep track of your cleanups.</p>
+              <GhostButton onClick={() => nav("/identity?next=" + encodeURIComponent(location.pathname + location.search))}>
+                Log In
+              </GhostButton>
+            </>
+          ) : (
+            <>
+              <p>
+                Try another filter or come back when more activities are
+                available.
+              </p>
+              <GhostButton onClick={() => selectedBeach ? clearBeach() : chooseFilter("All")}>
+                {selectedBeach ? "Show All Beaches" : "Show Upcoming Activities"}
+              </GhostButton>
+            </>
+          )}
+        </DataUnavailable>
+      ) : (
+        Object.entries(grouped).map(([date, rows]) => (
+          <section key={date}>
+            <p className="eyebrow">{formatEventDate(date)}</p>
+            <div className="event-list">
+              {rows.map((e) => {
+                const b = beaches.find((b) => b.id === e.beachId);
+                return (
+                  <button
+                    key={e.id}
+                    className="coastal-event"
+                    onClick={() => nav("/events/" + e.id)}
+                  >
+                    <span className="event-calendar">
+                      <strong>{date.slice(8, 10)}</strong>
+                      <small>
+                        {new Date(date + "T12:00:00")
+                          .toLocaleDateString("en-GB", { weekday: "short" })
+                          .toUpperCase()}
+                      </small>
+                    </span>
+                    <span className="grow">
+                      <h3>{e.beachName}</h3>
+                      <p>{formatEventTimeRange(e.startsAt, e.endsAt)}</p>
+                      <p>{e.area}</p>
+                      <span className="event-tags">
+                        <span>{e.participantCount} joined</span>
+                        {e.joined && (
+                          <span
+                            style={{ background: "#e9f6ee", color: "#177a3e" }}
+                          >
+                            Joined
+                          </span>
+                        )}
+                        {eventPhase(e, now) === "ended" ? <span>Ended</span> : e.status === "Closed" ? <span>Closed</span> : eventPhase(e, now) === "ongoing" ? <span>In progress</span> : null}
+                        {b && (
+                          <SeverityBadge
+                            band={b.insufficientData ? null : b.severity}
+                          />
+                        )}
+                      </span>
+                    </span>
+                    <ChevronRight color={C.navy} />
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+        ))
+      )}
+      {needs && !loading && !beachesLoading && !historyLoading && !error && !beachesError && !historyError && withoutEvent.map(b => <WhiteCard key={b.id}>
+        <LinkRow title={b.name} subtitle="No upcoming cleanup · view this beach" trailing={<SeverityBadge band={b.severity} />} onClick={() => nav("/beach/" + b.id)} />
+      </WhiteCard>)}
+      {USE_MOCK && <p className="demo-label">Preview · example schedule</p>}
+      {why && (
+        <Sheet title="Why These Beaches?" onClose={() => setWhy(false)}>
+          <WhiteCard>
+            <h3>Available litter evidence</h3>
+            <p className="subtle">
+              A beach is flagged at Moderate, High or Very high when it has no cleanup in the last 30 days, or fewer than 3 people have joined its next cleanup.
+            </p>
+          </WhiteCard>
+          <p className="subtle">
+            Low bands and Insufficient Data are not flagged as cleanup priorities.
+          </p>
+          <LinkRow title="How It’s Rated" onClick={() => nav("/method")} />
+        </Sheet>
+      )}
+    </CoastalPage>
   );
 }

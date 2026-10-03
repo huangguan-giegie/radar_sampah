@@ -8,6 +8,7 @@ import { useApp } from '../AppContext';
 import { analyseReportPhoto, type AiSuggestion } from '../iteration2';
 import { C, MONO } from '../theme';
 import type { LitterCategory, QuantityBand, QuantityByCategory } from '../types';
+import { useAppBack } from '../navigation';
 
 const CATEGORIES: LitterCategory[] = ['Plastic', 'Fishing gear', 'Glass', 'Metal', 'Paper', 'Other'];
 const QUANTITIES: QuantityBand[] = ['Small', 'Medium', 'Large', 'Very Large'];
@@ -28,6 +29,7 @@ function KeptRow({ children }: { children: string }) {
 
 export default function AiSuggestionScreen() {
   const nav = useNavigate();
+  const back = useAppBack('/report/confirm');
   const [params] = useSearchParams();
   const { draft, patchDraft } = useApp();
   const [result, setResult] = useState<AiSuggestion | null>(null);
@@ -150,7 +152,7 @@ export default function AiSuggestionScreen() {
     <div className="screen scroll-y" style={{ zIndex: 27 }}>
       <div className="measure i2-page anim-fade-up" style={{ paddingBottom: 'calc(var(--safe-bottom) + 34px)' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-          <BackButton onClick={() => nav('/report/confirm', { replace: true })} />
+          <BackButton onClick={back} />
           {/* The suggestion itself is checked on the review step, so a ready
               result is step 4; checking and every fallback are step 3. */}
           <StepBadge>STEP 4 OF 6 · AI CHECK</StepBadge>

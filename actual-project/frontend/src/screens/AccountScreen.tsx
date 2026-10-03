@@ -1,219 +1,400 @@
-// The account page.
-//
-// There is very little here, and that is the design. With no name, no email
-// and no password there are no profile fields to manage. What is left is the
-// participant number, a summary of what the user has contributed, the two
-// documents that explain how we treat their data, and a way to sign out.
-import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { getMyReportCounts, storedRecoveryToken } from '../api';
-import { BarChart, ChevronRight, ShieldCheck, UserIcon } from '../components/Icon';
-import { PrivacySheet } from '../components/PrivacySheet';
-import { GhostButton, Label, downloadRecoveryKit } from '../components/ui';
-import { C, MONO } from '../theme';
-import { StatTile, StatusBadge } from '../components/ds';
-import { useApp } from '../AppContext';
-import type { ReportCounts } from '../types';
-
+import { useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import {
+  getMyReportCounts,
+  getMyReports,
+  storedRecoveryToken,
+  USE_MOCK,
+} from "../api";
+import { useApp } from "../AppContext";
+import { fetchCleanupEvents } from "../iteration2Api";
+import { useAsyncData } from "../useAsyncData";
+import {
+  CoastalPage,
+  DataUnavailable,
+  LinkRow,
+  Sheet,
+  SummaryCard,
+  WhiteCard,
+} from "../components/CoastalUI";
+import {
+  GhostButton,
+  PrimaryButton,
+  downloadRecoveryKit,
+  Skeleton,
+} from "../components/ui";
+import {
+  BarChart,
+  BookmarkIcon,
+  ShieldCheck,
+  SpeciesIcon,
+  UserIcon,
+} from "../components/Icon";
+import { formatDate } from "../theme";
+import {
+  readPreviewProfile,
+  savePreviewProfile,
+  validNickname,
+} from "../accountPreview";
+const TOP = [
+  ["PenyuPal", 184],
+  ["KakiPantai", 176],
+  ["PantaiPatrol", 151],
+  ["SabahShores", 139],
+  ["TerengganuTides", 127],
+];
 export default function AccountScreen() {
+  const { section } = useParams();
   const nav = useNavigate();
-  const { user, signOut, reportsVersion, offline, setOffline } = useApp();
-  const [counts, setCounts] = useState<ReportCounts | null>(null);
-
-  // On failure we set null rather than 0. The tiles then show a dash instead
-  // of a number: telling a volunteer they have contributed nothing, when we
-  // simply could not reach the server, would be a lie about their work.
-  useEffect(() => {
-    getMyReportCounts()
-      .then((c) => setCounts(c))
-      .catch(() => setCounts(null));
-  }, [reportsVersion]);
-  const [sheet, setSheet] = useState(false);
-  // Only offered while this browser still holds the token (see
-  // storedRecoveryToken in apiCore). On a device that never claimed a number
-  // there is nothing to fill the file with, so the row stays hidden.
-  const recoveryToken = storedRecoveryToken();
-
-
-  // One row of the settings list. Written once as a function so every row has
-  // the same height, the same chevron and the same divider - a list where the
-  // rows are each built by hand always drifts apart.
-  const link = (
-    title: string,
-    subtitle: string,
-    icon: JSX.Element,
-    onClick: () => void,
-    last = false,
-  ) => (
-    <button
-      type="button"
-      onClick={onClick}
-      className="row-hover"
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 12,
-        padding: '15px 16px',
-        width: '100%',
-        borderBottom: last ? 'none' : '1px solid rgba(11,33,97,.06)',
-      }}
-    >
-      <div style={{ width: 36, height: 36, flex: 'none', borderRadius: 13, background: 'rgba(11,33,97,.06)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        {icon}
-      </div>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: 14, fontWeight: 620 }}>{title}</div>
-        <div style={{ fontSize: 11.5, color: C.dim, marginTop: 3 }}>{subtitle}</div>
-      </div>
-      <ChevronRight />
-    </button>
+  const { user, signOut, reportsVersion, showToast } = useApp();
+  const id = user?.participantId ?? "";
+  const { data: counts, loading: countsLoading, error: countsError, refresh: refreshCounts } = useAsyncData(
+    getMyReportCounts,
+    [reportsVersion, id],
+    null,
   );
-
-  return (
-    <div className="screen scroll-y" style={{ zIndex: 10 }}>
-      <div
-        className="anim-fade-up pt-page-lg measure"
-        style={{ paddingInline: 20, paddingBottom: 132, display: 'flex', flexDirection: 'column', gap: 18 }}
-      >
-        <div style={{ fontSize: 26, fontWeight: 650, letterSpacing: '-.6px' }}>Account</div>
-
-        <div
-          style={{
-            background: C.white,
-            border: `1px solid ${C.line}`,
-            borderRadius: 24,
-            padding: 17,
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 14,
-          }}
+  const { data: events, loading: eventsLoading, error: eventsError, refresh: refreshEvents } = useAsyncData(
+    () => fetchCleanupEvents(id, true),
+    [id, reportsVersion],
+    [],
+  );
+  const { data: reports, loading: reportsLoading, error: reportsError, refresh: refreshReports } = useAsyncData(
+    getMyReports,
+    [id, reportsVersion],
+    [],
+  );
+  const attendance = events.filter(
+    (e) => e.attendanceConfirmed || e.attendanceBy?.includes(id),
+  );
+  const loading = countsLoading || eventsLoading || reportsLoading;
+  const error = countsError || eventsError || reportsError;
+  const ready = !loading && !error;
+  const points = ready && counts ? counts.counted + attendance.length * 5 : null;
+  const counted = ready ? counts?.counted ?? "—" : "—";
+  const contributionSummary = loading ? "Loading contributions…" : error ? "Contributions unavailable" : `${attendance.length} recorded attendance · ${counted} counted reports`;
+  const loadError = error ? (
+    <DataUnavailable title="Couldn’t Load Contributions" retry={() => { void refreshCounts(); void refreshEvents(); void refreshReports(); }}>Please try again.</DataUnavailable>
+  ) : null;
+  const [profile, setProfile] = useState(() => readPreviewProfile(id));
+  const [nickname, setNickname] = useState(profile.nickname);
+  const [validation, setValidation] = useState("");
+  const [privacy, setPrivacy] = useState(false);
+  const recoveryToken = storedRecoveryToken();
+  function save(join?: boolean) {
+    if (!validNickname(nickname)) {
+      setValidation(
+        "Use 3–30 characters. Don’t use an email address or phone number.",
+      );
+      return;
+    }
+    const next = {
+      nickname: nickname.trim(),
+      joinedLeaderboard: join ?? profile.joinedLeaderboard,
+    };
+    try {
+      savePreviewProfile(id, next);
+      setProfile(next);
+      setValidation("");
+      showToast("Saved on this device");
+      if (join === undefined) nav("/account");
+    } catch {
+      setValidation(
+        "Could not save on this device. Please enable browser storage.",
+      );
+    }
+  }
+  const icon = (child: JSX.Element) => (
+    <span
+      className="row-thumb"
+      style={{ width: 36, height: 36, borderRadius: 10 }}
+    >
+      {child}
+    </span>
+  );
+  const nicknameInput = (
+    <WhiteCard>
+      <label className="eyebrow" htmlFor="public-nickname">
+        Nickname
+      </label>
+      <input
+        id="public-nickname"
+        className="coastal-input"
+        maxLength={30}
+        autoComplete="off"
+        value={nickname}
+        onChange={(e) => setNickname(e.target.value)}
+      />
+      <p className="coastal-footnote">
+        3–30 characters. Not your name, email or phone.
+      </p>
+      {validation && (
+        <p
+          role="alert"
+          className="coastal-footnote"
+          style={{ color: "#9c4237" }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-            <div
-              style={{
-                width: 56,
-                height: 56,
-                flex: 'none',
-                borderRadius: 28,
-                background: 'linear-gradient(140deg,#7A879B,#3E4F6E)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
+          {validation}
+        </p>
+      )}
+    </WhiteCard>
+  );
+  if (section === "nickname")
+    return (
+      <CoastalPage
+        title="Public Nickname"
+        back="/account"
+        subtitle="Only shown on the leaderboard if you join."
+      >
+        {USE_MOCK ? (
+          <>
+            {nicknameInput}
+            <PrimaryButton onClick={() => save()}>Save Nickname</PrimaryButton>
+            <p className="demo-label">Preview · saved only on this device</p>
+          </>
+        ) : (
+          <DataUnavailable title="Nickname Editing Is Not Available Yet">
+            Your participant ID is still available in Account.
+          </DataUnavailable>
+        )}
+      </CoastalPage>
+    );
+  if (section === "history")
+    return (
+      <CoastalPage title="Contribution History" back="/account">
+        <SummaryCard
+          eyebrow={USE_MOCK ? "Your Points · Preview" : "Your Contributions"}
+          value={USE_MOCK ? (points ?? "—") : counted}
+          description={USE_MOCK ? "points" : "counted reports"}
+        >
+          <p className="account-divider">
+            {contributionSummary}
+          </p>
+        </SummaryCard>
+        {loading ? <Skeleton h={160} /> : loadError}
+        {ready && attendance.map((e) => (
+          <WhiteCard key={e.id}>
+            <LinkRow
+              title="Recorded attendance"
+              subtitle={e.beachName + " · " + formatDate(e.date)}
+              trailing={USE_MOCK ? <b>+5</b> : undefined}
+              onClick={() => nav("/events/" + e.id)}
+            />
+          </WhiteCard>
+        ))}
+        {ready && reports
+          .filter((r) => r.status === "Counted")
+          .map((r) => (
+            <WhiteCard key={r.id}>
+              <LinkRow
+                title="Counted report"
+                subtitle={r.beachName + " · " + formatDate(r.createdAt)}
+                trailing={USE_MOCK ? <b>+1</b> : undefined}
+                onClick={() => nav("/reports/" + r.id)}
+              />
+            </WhiteCard>
+          ))}
+        {ready && !attendance.length && !reports.some((r) => r.status === "Counted") && (
+          <DataUnavailable title="Your History Starts Here">
+            Counted reports and recorded attendance will appear here.
+          </DataUnavailable>
+        )}
+        <p className="coastal-footnote">
+          Duplicate and incomplete reports are not included.{" "}
+          {USE_MOCK
+            ? "Preview points: recorded attendance +5, counted report +1."
+            : ""}
+        </p>
+      </CoastalPage>
+    );
+  if (section === "leaderboard")
+    return (
+      <CoastalPage
+        title="Leaderboard"
+        back="/account"
+        subtitle={
+          profile.joinedLeaderboard
+            ? "Nicknames only. You opted in."
+            : "Off until you join. Leave any time."
+        }
+      >
+        {USE_MOCK && loadError}
+        {!USE_MOCK ? (
+          <DataUnavailable title="Leaderboard Not Available Yet">
+            You can still view your own reports and contribution history.
+          </DataUnavailable>
+        ) : profile.joinedLeaderboard ? (
+          <>
+            <SummaryCard
+              eyebrow="Your Preview Profile"
+              description={profile.nickname}
+              value={points ?? "—"}
+            >
+              <p className="account-divider">
+                points · personal rank not calculated
+              </p>
+            </SummaryCard>
+            <WhiteCard>
+              {TOP.map(([name, value], i) => (
+                <div className="leaderboard-row" key={name}>
+                  <span>#{i + 1}</span>
+                  <strong>{name}</strong>
+                  <span>{value}</span>
+                </div>
+              ))}
+            </WhiteCard>
+            <p className="demo-label">Example leaderboard · as of 27-09-2026</p>
+            <GhostButton
+              onClick={() => {
+                const next = { ...profile, joinedLeaderboard: false };
+                try {
+                  savePreviewProfile(id, next);
+                  setProfile(next);
+                } catch {
+                  showToast("Could not save your preference.");
+                }
               }}
             >
-              <UserIcon size={26} color={C.bg} strokeWidth={1.8} />
-            </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '.14em', color: C.dim }}>
-                PARTICIPANT ID
+              Leave Leaderboard
+            </GhostButton>
+          </>
+        ) : (
+          <>
+            {nicknameInput}
+            <SummaryCard eyebrow="Others Will See">
+              <div className="leaderboard-row">
+                <strong style={{ color: "white" }}>
+                  {nickname || "Your nickname"}
+                </strong>
+                <span style={{ color: "#b8ff36" }}>{points ?? "—"} pts</span>
               </div>
-              {/* The participant number, shown large. This is the only copy of
-                  it the user has - it is not in an email anywhere - so the
-                  account page has to be the place they can always find it. */}
-              <div style={{ fontSize: 24, fontWeight: 660, letterSpacing: '-.3px', marginTop: 2 }}>
-                {user?.participantId ?? '—'}
-              </div>
-            </div>
-            {/* A badge, not body text. It states what kind of account this is
-                at a glance: we hold nothing that identifies this person. */}
-            <StatusBadge status="counted">ANONYMOUS</StatusBadge>
-          </div>
-
-        </div>
-
-        <div className="ds-stats">
-          <StatTile value={counts?.counted} caption="Counted" tone="counted" onClick={() => nav('/reports?tab=Counted')} />
-          <StatTile value={counts?.duplicate} caption="Duplicate" tone="duplicate" onClick={() => nav('/reports?tab=Excluded')} />
-          <StatTile value={counts?.incomplete} caption="Incomplete" tone="incomplete" onClick={() => nav('/reports?tab=Excluded')} />
-        </div>
-
-        {/* Both promises the app makes, reachable from the account page: what
-            we do with location, and how the score is calculated. Neither is
-            buried in a footer, because both are claims the user is entitled to
-            check. */}
-        <Label style={{ fontSize: 9.5 }}>PRIVACY &amp; RULES</Label>
-        <div style={{ background: C.white, border: '1px solid rgba(11,33,97,.07)', borderRadius: 22, overflow: 'hidden' }}>
-          {link(
-            'Location privacy',
-            'Exact GPS stays private — beach level only',
-            <ShieldCheck size={16} color={C.navy} />,
-            () => setSheet(true),
-          )}
-          {link(
-            "How it's rated",
-            'Weights, thresholds and limits',
-            <BarChart size={16} />,
-            () => nav('/method'),
-            true,
-          )}
-        </div>
-
-        {/* A demo switch that forces the map's offline banner on. It is here
-            so the offline behaviour can be shown in a review or a usability
-            test without unplugging the network - it changes nothing about how
-            data is stored. A real deployment would drop this row.
-            The whole thing is a <label> wrapping the checkbox, so tapping the
-            text toggles it too - a 16px checkbox is a poor target on a phone. */}
-        <label
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 12,
-            background: C.white,
-            border: '1px solid rgba(11,33,97,.07)',
-            borderRadius: 18,
-            padding: '14px 16px',
-            cursor: 'pointer',
-          }}
-        >
-          <input
-            type="checkbox"
-            checked={offline}
-            onChange={(e) => setOffline(e.target.checked)}
-            style={{ width: 18, height: 18, accentColor: C.navy }}
-          />
-          <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 14, fontWeight: 620 }}>Simulate offline mode</div>
-            <div style={{ fontSize: 11.5, color: C.dim, marginTop: 3 }}>
-              Shows the map's offline banner
-            </div>
-          </div>
-        </label>
-
-        {/* The token is shown once, when the number is claimed, and the server
-            keeps only a digest of it - so this row is the second chance for
-            anyone who closed that screen too early. */}
-        {recoveryToken && user && (
-          <div style={{ background: C.white, border: '1px solid rgba(11,33,97,.07)', borderRadius: 22, overflow: 'hidden' }}>
-            {link(
-              'Save your recovery details',
-              'Download your participant ID and recovery token again',
-              <ShieldCheck size={16} color={C.navy} />,
-              () => downloadRecoveryKit(user.participantId, recoveryToken),
-              true,
-            )}
-          </div>
+            </SummaryCard>
+            <PrimaryButton onClick={() => save(true)}>
+              Join Leaderboard
+            </PrimaryButton>
+            <p className="demo-label">
+              Preview · this choice stays on your device
+            </p>
+          </>
         )}
-
-        <GhostButton
-          height={52}
-          style={{ borderRadius: 17, fontSize: 14.5 }}
+      </CoastalPage>
+    );
+  return (
+    <CoastalPage title="Account">
+      <SummaryCard eyebrow="">
+        <div className="account-id">
+          <div>
+            <p className="eyebrow">Participant ID</p>
+            <strong>{id}</strong>
+          </div>
+          <div>
+            <p className="eyebrow">{USE_MOCK ? "Points" : "Reports"}</p>
+            <strong>
+              {USE_MOCK ? (points ?? "—") : counted}
+            </strong>
+          </div>
+        </div>
+        <p className="account-divider">
+          {contributionSummary}
+        </p>
+      </SummaryCard>
+      {loadError}
+      <WhiteCard>
+        <LinkRow
+          title="Marine Life"
+          subtitle="Explore species and habitats"
+          leading={icon(<SpeciesIcon glyph="turtle" />)}
+          onClick={() => nav("/marine-life")}
+        />
+      </WhiteCard>
+      <WhiteCard>
+        <LinkRow
+          title="Public Nickname"
+          trailing={<small>{profile.nickname || "Not set"}</small>}
+          leading={icon(<UserIcon />)}
+          onClick={() => nav("/account/nickname")}
+        />
+        <LinkRow
+          title="Contribution History"
+          leading={icon(<BarChart />)}
+          onClick={() => nav("/account/history")}
+        />
+        <LinkRow
+          title="Leaderboard"
+          leading={icon(<BarChart />)}
+          onClick={() => nav("/account/leaderboard")}
+        />
+        <LinkRow
+          title="My Reports"
+          trailing={<small>{reportsLoading || reportsError ? "—" : reports.length}</small>}
+          leading={icon(<BookmarkIcon />)}
+          onClick={() => nav("/reports")}
+        />
+      </WhiteCard>
+      <WhiteCard>
+        <LinkRow
+          title="How It’s Rated"
+          leading={icon(<BarChart />)}
+          onClick={() => nav("/method")}
+        />
+      </WhiteCard>
+      <WhiteCard>
+        <LinkRow
+          title="Location Privacy"
+          leading={icon(<ShieldCheck />)}
+          onClick={() => setPrivacy(true)}
+        />
+        {recoveryToken && (
+          <LinkRow
+            title="Save Recovery Details"
+            leading={icon(<ShieldCheck />)}
+            onClick={() => downloadRecoveryKit(id, recoveryToken)}
+          />
+        )}
+        <LinkRow
+          title="Sign Out"
           onClick={async () => {
             await signOut();
-            nav('/welcome', { replace: true });
+            nav("/welcome", { replace: true });
           }}
-        >
-          Sign Out
-        </GhostButton>
-        {/* Sits under the button, before it is pressed. Signing out is not
-            destructive here, but without the number the user cannot get back
-            in - so the warning has to come before the tap, not after. */}
-        <div style={{ fontSize: 11, lineHeight: 1.5, color: C.dim, textAlign: 'center', marginTop: -10 }}>
-          Before signing out, make sure you saved your ID and recovery token.
-        </div>
-      </div>
-
-      {sheet && <PrivacySheet onClose={() => setSheet(false)} />}
-    </div>
+        />
+      </WhiteCard>
+      <p className="coastal-footnote" style={{ textAlign: "center" }}>
+        Save your ID and recovery token before signing out.
+      </p>
+      {USE_MOCK && (
+        <p className="demo-label">
+          Preview · points are calculated on this device
+        </p>
+      )}
+      {privacy && (
+        <Sheet title="Your Privacy Matters" onClose={() => setPrivacy(false)}>
+          <p className="subtle">
+            You can browse beaches and Insights without sharing device location.
+          </p>
+          <ul className="subtle">
+            <li>
+              For a report, GPS can suggest a beach and check for matching
+              litter. You can select a beach manually.
+            </li>
+            <li>
+              Personalised suggestions use beach-level context. Device location
+              is optional.
+            </li>
+          </ul>
+          <SummaryCard eyebrow="Your location">
+            <p>
+              Report GPS is used for checks, then discarded. Others see only the
+              beach.
+            </p>
+          </SummaryCard>
+          <PrimaryButton
+            style={{ marginTop: 16 }}
+            onClick={() => setPrivacy(false)}
+          >
+            Got It
+          </PrimaryButton>
+        </Sheet>
+      )}
+    </CoastalPage>
   );
 }

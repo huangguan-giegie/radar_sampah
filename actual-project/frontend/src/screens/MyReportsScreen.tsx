@@ -8,7 +8,8 @@ import { useEffect, useState } from 'react';
 import { getBeaches, getMyReports } from '../api';
 import { BeachCover } from '../components/BeachCover';
 import { Camera } from '../components/Icon';
-import { ErrorNote, Skeleton } from '../components/ui';
+import { BackButton, ErrorNote, Skeleton } from '../components/ui';
+import { useAppBack } from '../navigation';
 import { C, MONO, formatDate } from '../theme';
 import { StatusBadge, type BadgeStatus } from '../components/ds';
 import { useApp } from '../AppContext';
@@ -24,6 +25,7 @@ const TABS: Tab[] = ['All', 'Counted', 'Excluded'];
 
 export default function MyReportsScreen() {
   const nav = useNavigate();
+  const goBack = useAppBack('/account');
   const [params, setParams] = useSearchParams();
   const { reportsVersion } = useApp();
 
@@ -82,7 +84,10 @@ export default function MyReportsScreen() {
         className="anim-fade-up pt-page-lg measure"
         style={{ paddingInline: 20, paddingBottom: 132, display: 'flex', flexDirection: 'column', gap: 16 }}
       >
-        <div style={{ fontSize: 26, fontWeight: 650, letterSpacing: '-.6px' }}>My Reports</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <BackButton onClick={goBack} />
+          <div style={{ fontSize: 26, fontWeight: 650, letterSpacing: '-.6px' }}>My Reports</div>
+        </div>
 
         <div style={{ display: 'flex', gap: 5, background: C.white, border: `1px solid ${C.line}`, padding: 4, borderRadius: 999 }}>
           {TABS.map((t) => {
@@ -91,7 +96,7 @@ export default function MyReportsScreen() {
               <button
                 key={t}
                 type="button"
-                onClick={() => setParams(t === 'All' ? {} : { tab: t })}
+                onClick={() => setParams(t === 'All' ? {} : { tab: t }, { replace: true })}
                 aria-pressed={active}
                 style={{
                   flex: 1,

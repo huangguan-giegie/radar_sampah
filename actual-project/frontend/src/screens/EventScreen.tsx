@@ -1,10 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowRight, Check, ChevronRight, Clock, Pin } from '../components/Icon';
 import { EmptyState, InfoChip, SectionLabel } from '../components/ds';
 import { BackButton, GhostButton, PrimaryButton, TextButton } from '../components/ui';
 import { useApp } from '../AppContext';
-import { createIteration2ShareLink } from '../api';
+import { createIteration2ShareLink, USE_MOCK } from '../api';
 import {
   formatEventDate,
   formatEventTimeRange,
@@ -14,10 +14,22 @@ import {
 import { fetchCleanupEvent, fetchCleanupTarget, joinCleanupEventData, leaveCleanupEventData } from '../iteration2Api';
 import { C } from '../theme';
 import { useAsyncData } from '../useAsyncData';
+import { CleanupGuide, WildlifeGuide } from '../components/CleanupGuide';
+import { fetchEventCleanups } from '../iteration2Api';
+import { eventCanCheckIn, eventIsAvailable, eventPhase, useEventClock } from '../eventAvailability';
+import { useAppBack } from '../navigation';
 
 export default function EventScreen() {
   const { eventId = '' } = useParams();
   const nav = useNavigate();
+  const goBack = useAppBack('/community');
+  const now = useEventClock();
+  const active = useRef(true);
+  const [updating, setUpdating] = useState(false);
+  useEffect(() => {
+    active.current = true;
+    return () => { active.current = false; };
+  }, [eventId]);
   const { user, showToast } = useApp();
   const { data: event, setData: setEvent, loading, error } = useAsyncData(
     () => fetchCleanupEvent(eventId),
@@ -30,11 +42,14 @@ export default function EventScreen() {
     event ? getCleanupTarget(event.beachId) : null,
   );
   const [sharing, setSharing] = useState(false);
+  const { data: cleanups } = useAsyncData(() => fetchEventCleanups(eventId), [eventId, user?.participantId], []);
+  const cleanupRecorded = Boolean(user && cleanups.some(cleanup => cleanup.participantId === user.participantId));
   const [copied, setCopied] = useState(false);
   const [sharePath, setSharePath] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
+    if (USE_MOCK) return;
     createIteration2ShareLink({ eventId })
       .then((link) => { if (active) setSharePath(link.path); })
       .catch(() => { if (active) setSharePath(null); });
@@ -42,14 +57,14 @@ export default function EventScreen() {
   }, [eventId]);
 
   if (loading && !event) {
-    return <div className="screen scroll-y"><div className="measure i2-page"><EmptyState title="Loading activity…" body="Checking the latest shared activity details." /></div></div>;
+    return <div className="screen scroll-y"><div className="measure i2-page"><BackButton onClick={goBack} /><EmptyState title="Loading activity…" body="Checking the latest shared activity details." /></div></div>;
   }
 
   if (!event) {
     return (
       <div className="screen scroll-y">
         <div className="measure i2-page">
-          <BackButton onClick={() => nav('/community')} />
+          <BackButton onClick={goBack} />
           <EmptyState title="Activity not found" body={error ?? 'This cleanup date may have changed or is no longer listed.'} action="View activities" onAction={() => nav('/community')} />
         </div>
       </div>
@@ -60,29 +75,41 @@ export default function EventScreen() {
   const joined = Boolean(participantId && event.joined);
   const checkedIn = Boolean(participantId && event.checkedIn);
   const attendanceRecorded = Boolean(participantId && event.attendanceConfirmed);
+  const phase = eventPhase(event, now);
+  const available = eventIsAvailable(event, now);
+  const status = phase === 'ended' ? 'Ended' : event.status === 'Closed' ? 'Closed' : phase === 'unavailable' ? 'Unavailable' : phase === 'ongoing' ? 'In progress' : 'Open';
 
   async function join() {
+    if (!event || updating || !eventIsAvailable(event)) return;
     if (!participantId) {
       nav(`/identity?next=${encodeURIComponent(`/events/${eventId}`)}`);
       return;
     }
+    setUpdating(true);
     try {
       const updated = await joinCleanupEventData(eventId, participantId);
+      if (!active.current) return;
       setEvent(updated);
       showToast('Activity joined');
     } catch (reason) {
-      showToast(reason instanceof Error ? reason.message : 'Could not join this activity');
+      if (active.current) showToast(reason instanceof Error ? reason.message : 'Could not join this activity');
+    } finally {
+      if (active.current) setUpdating(false);
     }
   }
 
   async function leave() {
-    if (!participantId) return;
+    if (!participantId || updating) return;
+    setUpdating(true);
     try {
       const updated = await leaveCleanupEventData(eventId, participantId);
+      if (!active.current) return;
       setEvent(updated);
       showToast('You left this activity');
     } catch (reason) {
-      showToast(reason instanceof Error ? reason.message : 'Could not leave this activity');
+      if (active.current) showToast(reason instanceof Error ? reason.message : 'Could not leave this activity');
+    } finally {
+      if (active.current) setUpdating(false);
     }
   }
 
@@ -129,7 +156,7 @@ export default function EventScreen() {
   return (
     <div className="screen scroll-y" style={{ zIndex: 24 }}>
       <div className="measure i2-page anim-fade-up" style={{ paddingBottom: 'calc(var(--safe-bottom) + 34px)' }}>
-        <BackButton onClick={() => nav('/community')} />
+        <BackButton onClick={goBack} />
 
         <div className="i2-hero i2-hero-compact">
           <SectionLabel size="sm" tone="dark">COMMUNITY CLEANUP</SectionLabel>
@@ -141,7 +168,7 @@ export default function EventScreen() {
           <div className="i2-stat-grid" style={{ marginTop: 15 }}>
             <div className="i2-stat"><strong>{event.participantCount}</strong><span>PARTICIPANTS</span></div>
             <div className="i2-stat"><strong>{event.attendanceCount}</strong><span>RECORDED ATTENDANCE</span></div>
-            <div className="i2-stat"><strong style={{ fontSize: 15 }}>{event.status}</strong><span>STATUS</span></div>
+            <div className="i2-stat"><strong style={{ fontSize: 15 }}>{status}</strong><span>STATUS</span></div>
           </div>
         </div>
 
@@ -161,18 +188,22 @@ export default function EventScreen() {
         </div>
 
         <div className="i2-action-stack">
-          {!joined ? (
-            <PrimaryButton onClick={join}>Join Cleanup</PrimaryButton>
+          {cleanupRecorded ? (
+            <PrimaryButton onClick={() => nav(`/events/${eventId}/result`)}>View Event Result <ChevronRight color={C.lime} /></PrimaryButton>
+          ) : !available && !checkedIn ? (
+            <PrimaryButton disabled>{status === 'Ended' ? 'Event Ended' : 'Event Unavailable'}</PrimaryButton>
+          ) : !joined ? (
+            <PrimaryButton onClick={join} disabled={updating}>{updating ? 'Joining…' : 'Join Cleanup'}</PrimaryButton>
           ) : !checkedIn ? (
-            <PrimaryButton onClick={() => nav(`/events/${eventId}/check-in`)}>Check in</PrimaryButton>
+            <PrimaryButton disabled={!eventCanCheckIn(event, now)} onClick={() => eventCanCheckIn(event) && nav(`/events/${eventId}/check-in`)}>{eventCanCheckIn(event, now) ? 'Check in' : 'Check-in opens when the event starts'}</PrimaryButton>
           ) : cleanupTarget ? (
             <PrimaryButton onClick={() => nav(`/cleanup/${event.beachId}?event=${encodeURIComponent(event.id)}`)}>
-              Add a Cleanup <ChevronRight color={C.lime} />
+              Log Your Cleanup <ChevronRight color={C.lime} />
             </PrimaryButton>
           ) : (
               <PrimaryButton onClick={() => nav(`/beach/${event.beachId}?event=${encodeURIComponent(event.id)}`)}>Report litter here <ChevronRight color={C.lime} /></PrimaryButton>
           )}
-          {(event.cleanupIds?.length ?? 0) > 0 && (
+          {!cleanupRecorded && (event.cleanupIds?.length ?? 0) > 0 && (
             <GhostButton onClick={() => nav(`/events/${event.id}/result`)}>View recorded result</GhostButton>
           )}
         </div>
@@ -189,19 +220,22 @@ export default function EventScreen() {
           <GhostButton onClick={() => nav(`/beach/${event.beachId}`)} style={{ marginTop: 12 }}>View beach data <ArrowRight color={C.navy} /></GhostButton>
         </div>
 
+        <CleanupGuide recorded={cleanupRecorded} />
+        <WildlifeGuide />
         <div className="i2-card">
           <SectionLabel size="sm">SHARE</SectionLabel>
           <div className="i2-share-grid">
             <a href={shareUrl ? whatsapp : undefined} target="_blank" rel="noreferrer" aria-disabled={!shareUrl} className="btn-ghost press i2-share-button">WhatsApp</a>
-            <button type="button" className="btn-ghost press i2-share-button" onClick={systemShare} disabled={sharing}>{sharing ? 'Opening…' : 'Share…'}</button>
-            <button type="button" className={`btn-primary press i2-share-button${copied ? ' i2-copy-success' : ''}`} onClick={copyLink}>
+            <button type="button" className="btn-ghost press i2-share-button" onClick={systemShare} disabled={sharing || !shareUrl}>{sharing ? 'Opening…' : 'Share…'}</button>
+            <button type="button" className={`btn-primary press i2-share-button${copied ? ' i2-copy-success' : ''}`} onClick={copyLink} disabled={!shareUrl}>
               {copied ? 'Copied' : 'Copy link'}
             </button>
           </div>
+          {USE_MOCK && <p className="coastal-footnote">Public sharing is available when connected to the shared service.</p>}
         </div>
 
         <GhostButton onClick={() => sharePath && nav(sharePath)} disabled={!sharePath}>Open public sharing page</GhostButton>
-        {joined && !attendanceRecorded && <TextButton onClick={leave}>Leave activity</TextButton>}
+        {joined && available && !attendanceRecorded && !cleanupRecorded && <TextButton onClick={leave} disabled={updating}>Leave Event</TextButton>}
       </div>
     </div>
   );

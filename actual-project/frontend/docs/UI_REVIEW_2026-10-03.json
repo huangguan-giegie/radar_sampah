@@ -1,0 +1,78 @@
+{
+  "date": "2026-10-03",
+  "environment": "Local preview at 127.0.0.1:5176; no live backend writes",
+  "automated": {"tests": 195, "testFiles": 29, "typecheck": "pass", "productionBuild": "pass", "newImagesDecode": 91},
+  "layoutPolish": {
+    "authorization": "User approved all three remaining UX suggestions: Home action order, beach action order and duplicate event sharing",
+    "home": "Existing three action tiles moved below greeting and above featured beach; existing handlers and styles retained",
+    "beach": "Existing action summary moved directly after litter severity and before marine life; gallery/content retained",
+    "eventShare": "Removed duplicate Share Event Details button; one system Share button plus WhatsApp and Copy link remain",
+    "verified": ["402x874 visual review of Home, Bagan beach and event share section", "320x640: all three screens have no horizontal overflow and retain their intended order", "Home report -> photo -> Back returns Home", "Home Log Cleanup still opens beach picker with Close", "Home Join Cleanup opens Community", "Bagan Join a Cleanup opens Bagan event; Back returns to Bagan", "Event contains exactly one system Share button; preview service restriction preserved"],
+    "console": "No warnings or errors in the verification tab",
+    "screenshots": ["work/figma-frontend-20261003/polish-home-actions-first.png", "work/figma-frontend-20261003/polish-beach-actions-after-status.png", "work/figma-frontend-20261003/polish-event-share.png"],
+    "validation": "195 existing tests, TypeScript and production build pass"
+  },
+  "prototypeReaudit": {
+    "references": "Online Figma national biodiversity frame 1239:159 plus the supplied 02/03 October screenshot/raw/specification bundle; not an exhaustive 319-frame pixel audit",
+    "biodiversity": "6 national species photo pins, 3 Borneo habitat entry points, 16 record pins across 9 regions, record preview -> species/area and return paths",
+    "regionalCounts": {"north": 2, "perak": 2, "selangor": 3, "nsm": 2, "johor": 1, "kelantan": 1, "tganu": 2, "pahang": 2, "borneo": 1},
+    "viewport402": "All 16 record markers individually clicked and matched to their record preview; no horizontal overflow",
+    "viewport320": "All 16 regional photo labels and 6 national labels remain visible; no horizontal overflow",
+    "nationalDestinations": "CRABS -> north; TERRAPINS -> tganu; MUDSKIPPER -> perak; WORMS -> selangor; DUGONG/SEAGRASS -> johor; Lawas inset -> borneo",
+    "verifiedJourneys": ["record preview -> worm introduction -> Back restores preview", "Morib -> regional records -> Morib Mudflat habitat -> biodiversity map -> Litter returns to Morib", "Bagan-scoped community list -> event -> Back keeps beach filter", "Moderate Remis appears under volunteer priorities", "Pantai Cenang gallery opens its own empty state", "cleanup history View Beach opens Teluk Cempedak", "Insights trend detail Back retains region/needs query"],
+    "wildlife": "Four prototype pilot-beach cards restored with habitat/species chips, explicitly design preview; live-mode unavailable behavior retained",
+    "assets": "Two original-source photos recovered; 48 incorrect credit suffixes removed and importer fixed; 7 species still have no supplied/verified image",
+    "console": "No warnings or errors in either verification tab",
+    "screenshots": ["work/figma-frontend-20261003/audit-biodiversity-overview.png", "work/figma-frontend-20261003/audit-biodiversity-selangor.png", "work/figma-frontend-20261003/audit-wildlife-nearby.png"],
+    "scope": "Frontend only; existing Iteration 2 service adapters reused, no backend/model changes or production writes"
+  },
+  "mapZoomChecks": [
+    "402x874: national, North, Selangor and Borneo views fit the map viewport; attribution remains above the bottom card",
+    "Superseded North region-list placeholder with individually sourced preview beach positions; all nine regions have named main beaches",
+    "Selangor cluster expands from 3 to 2 plus Bagan Lalang, then separate Morib and Kelanang markers",
+    "Plus/minus controls change scale and recompute clusters; Morib marker opens detail and Back restores Selangor context",
+    "Biodiversity now uses published-record photo pins, preview sheets and About; earlier lime-ring placeholders were superseded",
+    "320x640: eight peninsula region circles visible with compact header/card/inset and no horizontal overflow"
+  ],
+  "mapNamedBeachChecks": {
+    "figma": "Online map frames inspected through browser; all nine regional screenshots/specifications compared. Connector still requires edit access.",
+    "coverage": "97 sourced display-only locations plus 4 existing pilot positions cover all 101 prototype catalogue entries; separate from AC4.4.4 operational integration",
+    "mainLabelsByRegion": {"north": 5, "selangor": 7, "perak": 4, "nsm": 7, "johor": 7, "pahang": 4, "tganu": 6, "kelantan": 6, "borneo": 5},
+    "viewport402": "All 51 main labels visible without horizontal overflow; each clicked through to the matching detail heading and Back to its original region",
+    "viewport320": "320x640: North 5, Selangor 7, Negeri Sembilan/Melaka 7 main labels retained with compact layout; no horizontal overflow",
+    "console": "Final map verification tabs reported no warnings or errors",
+    "cluster": "North +5 expanded into individual Langkawi names; Pantai Kok opened its own detail and Back returned to North",
+    "controls": "Plus/minus recompute labels and compact secondary clusters; labels avoid map controls and use leader lines to their coastal dots",
+    "scope": "Preview map adapter only; no backend/model changes, report/check-in enablement or live submissions",
+    "sources": "MAP_LOCATION_SOURCES_2026-10-03.md"
+  },
+  "logicFixBrowserChecks": [
+    "Home -> Marine Life -> Habitats -> Back -> Back reaches Home without a loop",
+    "Home Log Cleanup asks for a beach; a selected cleanup amount survives return and reentry in this tab",
+    "Home recommendations exclude the ended 03 October event and show 10 October",
+    "Guest directly entering report/photo can leave Identity for Home without redirecting back to Identity",
+    "Direct credits Back remains in the app; invalid check-in retains Back and retry",
+    "Report Photo -> Location -> manual Remis -> Suggestions and reverse navigation preserve photo without duplicate history",
+    "Existing draft dialog Cancel closes without starting or discarding a report",
+    "Marine Life Plants + Nipa search survives species detail return",
+    "Community Joined filter survives event detail return; ended event has no new check-in action",
+    "Map Selangor beach-list panel + Remis search survives beach detail return",
+    "Directly opening future Morib 10 October check-in shows its opening-time status, no location action, and working return controls"
+  ],
+  "deliveryScope": "Iteration 3 frontend first; teammate to implement backend afterwards. Existing backend/API contracts are Iteration 2 compatibility, not the final Iteration 3 specification.",
+  "browserJourneys": [
+    "Guest Log Cleanup redirected to identity with next=/cleanup/morib",
+    "Local profile creation and recovery download enabled Continue; original cleanup resumed",
+    "Standalone cleanup saved Plastic Very Large to Medium; Done navigated to /home",
+    "Join Bagan Lalang persisted and restored the current participant's Joined state after reload",
+    "Event-linked cleanup saved; Done navigated to /events/bagan-2026-10-03; Last step was visible and Prepare absent",
+    "Nickname TideTester saved to the local preview profile",
+    "Marine Life Plants filter rendered exactly 12 cards",
+    "Unmatched Insights beach search displayed No matching beaches",
+    "Insights error retry removed the forced error state and returned to Trends"
+  ],
+  "viewport402": ["/marine-life", "/species/green-sea-turtle", "/habitats/langkawi", "/marine-area/selangor", "/beach/pantai-cenang", "/insights/trends/bagan", "/insights/participation", "/community/wildlife-help"],
+  "viewport320": ["/home", "/map", "/beach/pantai-tanjung-rhu-pulau-carey", "/marine-life", "/insights", "/community", "/account"],
+  "layoutResult": "Checked screen scrollWidth equals clientWidth at both viewport sizes",
+  "notVerified": ["Every individual Figma frame at pixel level", "Live aggregate/profile endpoints", "Live YOLO recognition", "Actual geolocation/check-in permission", "Public share creation", "All external source links"]
+}

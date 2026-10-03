@@ -1,684 +1,657 @@
-// The map: every beach as a pin, on a real map of the Selangor coast.
-//
-// The two layers are never mixed. Litter shows what volunteers counted;
-// biodiversity is background about what lives nearby. Blended into one colour,
-// a wildlife hint would read as a measurement we made.
-//
-// Leaflet with OpenStreetMap, not Google Maps: no API key, no billing account,
-// and no per-load quota to run out of on demo day.
-import { useEffect, useRef, useState } from 'react';
-import L from 'leaflet';
-import { useNavigate } from 'react-router-dom';
-import { getBeaches, getCachedBeaches, getBeachesCacheTimestamp } from '../api';
-import { markerHtml } from '../components/BeachMarker';
-import { useLeafletMap } from '../components/useLeafletMap';
-import { ArrowRight, Check, ChevronRight, Close, Info, WifiOff } from '../components/Icon';
-import { attentionStateFor, C, freshnessLabel, freshStyle, lastReportedLabel, MONO, reportWord, severityLabel } from '../theme';
-import { GlassPanel, SeverityBadge } from '../components/ds';
-import { useApp } from '../AppContext';
-import type { BeachSummary, MapLayer } from '../types';
-import { formatEventDate, getCleanupTarget, listCleanupEvents, type CleanupEvent, type CleanupTarget } from '../iteration2';
-import { fetchCleanupEvents, fetchCleanupTarget } from '../iteration2Api';
-import { useAsyncData } from '../useAsyncData';
-
-
-// The opening view. Zoom 9 fits all four beaches at once, so the user sees the
-// whole project the moment the map opens instead of landing somewhere they
-// have to pan away from.
-const CENTER: [number, number] = [2.92, 101.45];
-const ZOOM = 9;
-
-const LAYER_KEY = 'rs_map_layer';
-
-// Below this the four beaches are close enough that the full pills collide, so
-// the pins drop to a compact dot. Nothing is hidden - it stays tappable.
-const COMPACT_ZOOM = 8;
-
-// Hand-tuned nudges in screen pixels, keyed by beach id. Morib and Kelanang
-// sit close together, so at phone width their labels cover each other and the
-// one underneath cannot be read or tapped. Compact pins are small enough to
-// need none of this, so the caller skips the table below that zoom.
-//
-// This moves the drawing, not the data. The pin no longer sits exactly on its
-// coordinate, which is fine here: the map shows a broad area on purpose and
-// the exact GPS point is never published.
-const MARKER_OFFSETS: Record<string, [number, number]> = {
-  // Separate the two nearby south-coast markers at narrow mobile widths.
-  morib: [-45, -45],
-  kelanang: [-10, 65],
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import L from "leaflet";
+import { useLeafletMap } from "../components/useLeafletMap";
+import { getCoastalBeaches, REGIONS } from "../coastalData";
+import { useApp } from "../AppContext";
+import { getMyReports, USE_MOCK } from "../api";
+import { useAsyncData } from "../useAsyncData";
+import {
+  DataUnavailable,
+  LinkRow,
+  Sheet,
+  SummaryCard,
+  WhiteCard,
+} from "../components/CoastalUI";
+import { GhostButton, PrimaryButton } from "../components/ui";
+import { ChevronLeft as ArrowLeft, Search, SpeciesIcon } from "../components/Icon";
+import { SeverityBadge } from "../components/ds";
+import { severityLabel } from "../theme";
+import type { SeverityBand } from "../types";
+import content from "../content/coastalContent.json";
+import { BORNEO_VIEW_BOUNDS, getViewBounds, groupMapPoints, PENINSULA_VIEW_BOUNDS } from "../mapGeometry";
+import { getLocatedMapBeaches, PRIMARY_MAP_BEACHES } from "../mapCatalogue";
+import { placeMapLabels } from "../mapLabels";
+import { originBeachId, overviewMarinePins, regionalMarinePins, withBeach } from "../biodiversity";
+import { MarineRecordCard } from "../components/MarineRecordCard";
+const COLORS: Record<string, string> = {
+  Low: "#6e9d80",
+  Moderate: "#d5a04f",
+  High: "#ce6b45",
+  Severe: "#b84a3f",
 };
-
-
-// The two layers. An array, not two booleans, so exactly one can be on.
-const LAYERS: MapLayer[] = ['litter', 'bio'];
-
-
-// The legend. A colour with no key is decoration, not information - without
-// this the user has no way to learn what orange means.
-//
-// The fourth label goes through severityLabel(), the same helper the badges
-// use. Hard-coding the word here is how a legend ends up disagreeing with the
-// pins it explains.
-const LEGEND = [
-  { label: 'LOW', color: '#7CA98B' },
-  { label: 'MODERATE', color: '#D9A24B' },
-  { label: 'HIGH', color: '#CE6B45' },
-  { label: severityLabel('Severe').toUpperCase(), color: '#B84A3F' },
-  // The grey pin was on the map with nothing in the legend to explain it, so
-  // "no evidence yet" looked like a fifth, milder severity. Same grey as
-  // BeachMarker uses when severity is null - dashed there, dashed here. The
-  // words match the beach page's "Insufficient data", not a vaguer "no data".
-  { label: 'INSUFFICIENT DATA', color: '#98A4B5', dashed: true },
-];
-
-export default function MapScreen() {
-  const nav = useNavigate();
-  const { offline, setOffline } = useApp();
-  // Remembered per tab. Opening a beach and coming back used to drop the user
-  // on the litter layer again, so anyone browsing biodiversity had to re-pick
-  // it after every single beach.
-  const [layer, setLayer] = useState<MapLayer>(() => {
-    try {
-      return sessionStorage.getItem(LAYER_KEY) === 'bio' ? 'bio' : 'litter';
-    } catch {
-      return 'litter';
-    }
+function BorneoInset({ onClick, onHabitat }: { onClick: () => void; onHabitat?: () => void }) {
+  const { elRef, mapRef, ready } = useLeafletMap({
+    center: [4, 114.5],
+    zoom: 4,
+    interactive: false,
+    zoomSnap: 0.25,
   });
   useEffect(() => {
-    try {
-      sessionStorage.setItem(LAYER_KEY, layer);
-    } catch {
-      // Storage off: the layer just will not be remembered. Not worth an error.
-    }
-  }, [layer]);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [compact, setCompact] = useState(false);
-
-  const [beaches, setBeaches] = useState<BeachSummary[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [failed, setFailed] = useState(false);
-  const [cacheTimestamp, setCacheTimestamp] = useState<number | null>(null);
-
-
-  // Named, because the Retry button in the offline bar calls the same code.
-  function loadBeaches() {
-    const cached = getCachedBeaches();
-    if (cached) {
-      setBeaches(cached);
-      setCacheTimestamp(getBeachesCacheTimestamp());
-    }
-    setLoading(true);
-    setFailed(false);
-    getBeaches()
-      .then((list) => {
-        setBeaches(list);
-        setCacheTimestamp(getBeachesCacheTimestamp());
-      })
-      .catch(() => setFailed(true))
-      .finally(() => setLoading(false));
-  }
-
-  useEffect(loadBeaches, []);
-  // Leaflet itself is set up in useLeafletMap - see that file for why the map
-  // object lives in a ref instead of state.
-  const { elRef, mapRef, ready } = useLeafletMap({ center: CENTER, zoom: ZOOM });
-  // The markers are a ref too. React does not own these DOM nodes, Leaflet
-  // does; putting them in state would re-render on every pin change and React
-  // still could not update them.
-  const markersRef = useRef<Record<string, L.Marker>>({});
-
-  const selected = beaches.find((b) => b.id === selectedId) || null;
-  const { data: cleanupEvents, error: eventsError } = useAsyncData(
-    () => selected ? fetchCleanupEvents() : Promise.resolve([]),
-    [selected?.id],
-    selected ? listCleanupEvents() : [],
-  );
-  const selectedEvent = selected ? cleanupEvents.find((event) => event.beachId === selected.id) ?? null : null;
-  const { data: selectedCleanupTarget, error: targetError } = useAsyncData(
-    () => selected ? fetchCleanupTarget(selected.id) : Promise.resolve(null),
-    [selected?.id],
-    selected ? getCleanupTarget(selected.id) : null,
-  );
-
-
-  // Redraw every pin when the data, the layer, the selection or the compact
-  // flag changes.
-  //
-  // We remove them all and add them again rather than patching each one. With
-  // four beaches that is cheap, and it removes a whole class of bug where an
-  // old pin survives with the wrong colour, shape or icon. If this ever grew to
-  // hundreds of beaches, this is the first thing to make smarter.
-  //
-  // Because the DOM nodes are thrown away each run, the keyboard support below
-  // has to be attached again every time. That is also why the key handler needs
-  // no removal: the element it was added to is gone.
-  useEffect(() => {
-    const map = mapRef.current;
-    if (!ready || !map) return;
-
-    Object.values(markersRef.current).forEach((m) => map.removeLayer(m));
-    markersRef.current = {};
-
-    beaches.forEach((b) => {
-      const marker = L.marker([b.lat, b.lng], {
-        icon: L.divIcon({
-          className: '',
-          iconSize: [0, 0],
-          html: markerHtml(b, selectedId === b.id, layer, b.primarySpeciesGlyph, compact ? [0, 0] : MARKER_OFFSETS[b.id] ?? [0, 0], compact),
-        }),
-        // Let Leaflet put the pin in the tab order. Off, and the keyboard
-        // support set up below could never be reached.
-        keyboard: true,
-      });
-      marker.on('click', () => setSelectedId(b.id));
-      // Lift the selected pin above the others. Two beaches close together
-      // would otherwise overlap, and the one the user just chose could end up
-      // hidden underneath its neighbour.
-      marker.setZIndexOffset(selectedId === b.id ? 1000 : 0);
-      marker.addTo(map);
-      // Make the pin usable without a touch screen. A pin that only answers to
-      // a tap shuts out anyone on a keyboard or a switch device, and the marker
-      // is the only way into a beach from this screen.
-      //
-      // These go on the element Leaflet actually creates, which is the one that
-      // takes focus. markerHtml sets the same attributes on the inner div it
-      // draws inside this element.
-      const markerElement = marker.getElement();
-      markerElement?.setAttribute('role', 'button');
-      markerElement?.setAttribute('tabindex', '0');
-      // Say the litter status, not just the name. A screen reader user gets no
-      // colour and no bars, so without this the pin reads as a bare place name
-      // and the whole point of the map is lost. Same wording as the pin shows.
-      markerElement?.setAttribute(
-        'aria-label',
-        `${b.name} · ${layer === 'litter' ? attentionStateFor(b.severity, b.insufficientData, b.validReports).markerLabel : b.habitatTag}`,
-      );
-      // Enter and Space are what people expect a button to answer to, so both
-      // pick the pin. preventDefault stops Space from scrolling the page
-      // underneath while the user is still choosing.
-      markerElement?.addEventListener('keydown', (event) => {
-        if (event.key === 'Enter' || event.key === ' ') {
-          event.preventDefault();
-          setSelectedId(b.id);
-        }
-      });
-      markersRef.current[b.id] = marker;
-    });
-  }, [ready, beaches, layer, selectedId, compact, mapRef]);
-
-  // Follow the zoom so the pins can switch to dots when they would collide.
-  useEffect(() => {
-    const map = mapRef.current;
-    if (!ready || !map) return;
-    const sync = () => setCompact(map.getZoom() < COMPACT_ZOOM);
-    sync();
-    map.on('zoomend', sync);
-    return () => {
-      map.off('zoomend', sync);
-    };
-  }, [ready, mapRef]);
-
+    if (ready) mapRef.current?.fitBounds(BORNEO_VIEW_BOUNDS, { padding: [8, 8], animate: false });
+  }, [ready]);
   return (
-    <div className="screen" style={{ zIndex: 1, background: '#D9E6EF' }}>
-      {/* Leaflet draws into this empty div. Nothing inside it is React's -
-          which is exactly why it has no children here. */}
-      <div ref={elRef} style={{ position: 'absolute', inset: 0 }} />
-
-
-      <div
-        style={{
-          position: 'absolute',
-          top: 'calc(var(--top-inset) + 12px)',
-          left: 0,
-          right: 0,
-          display: 'flex',
-          justifyContent: 'center',
-          zIndex: 850,
-          pointerEvents: 'none',
-        }}
-      >
-        <div
-          style={{
-            pointerEvents: 'auto',
-            display: 'flex',
-            gap: 4,
-            padding: 4,
-            borderRadius: 999,
-            background: 'rgba(255,255,255,.78)',
-            backdropFilter: 'blur(16px) saturate(150%)',
-            WebkitBackdropFilter: 'blur(16px) saturate(150%)',
-            border: '1px solid rgba(255,255,255,.6)',
-            boxShadow: '0 10px 30px -10px rgba(14,30,64,.35)',
-          }}
-        >
-          {/* A toggle group, not two separate buttons. aria-pressed is what
-              tells a screen reader which layer is on - the only other clue is
-              the fill colour, which does not reach someone who cannot see it. */}
-          {LAYERS.map((k) => (
-            <button
-              key={k}
-              type="button"
-              onClick={() => setLayer(k)}
-              aria-pressed={layer === k}
-              style={{
-                padding: '9px 20px',
-                borderRadius: 999,
-                fontSize: 13,
-                fontWeight: 600,
-                background: layer === k ? C.navy : 'transparent',
-                color: layer === k ? C.white : C.slate,
-              }}
-            >
-              {k === 'litter' ? 'Litter' : 'Biodiversity'}
-            </button>
-          ))}
-        </div>
-      </div>
-
-
-      <div
-        style={{
-          position: 'absolute',
-          top: 'calc(var(--top-inset) + 66px)',
-          left: 0,
-          right: 0,
-          display: 'flex',
-          justifyContent: 'center',
-          zIndex: 840,
-          pointerEvents: 'none',
-          padding: '0 12px',
-        }}
-      >
-        {/* The legend wraps rather than running off the screen. It needs 419px
-            on one line, and almost every phone is narrower than that: 17px of
-            it was cut at 390 (this project's reference width), 24 at 375 and
-            52 at 320, always from the right - so "· COUNTED REPORTS ONLY", the
-            line that says which reports the colours are counting, was the part
-            nobody could read. nowrap made it unwrappable and the pill has no
-            scroller, so the text was simply gone rather than reachable. */}
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            flexWrap: 'wrap',
-            gap: 8,
-            rowGap: 3,
-            maxWidth: '100%',
-            padding: '6px 12px',
-            borderRadius: 999,
-            background: 'rgba(255,255,255,.82)',
-            backdropFilter: 'blur(10px)',
-            border: '1px solid rgba(255,255,255,.55)',
-            fontFamily: MONO,
-            fontSize: 8.5,
-            letterSpacing: '.08em',
-            color: C.slate,
-          }}
-        >
-          {layer === 'litter' ? (
-            <>
-              {/* Testers read the bands as how busy a beach is, so the legend
-                  now names what it measures before the colours. */}
-              <span style={{ fontWeight: 700, letterSpacing: '.1em' }}>LITTER SEVERITY</span>
-              {LEGEND.map((item) => (
-                <span key={item.label} style={{ display: 'flex', alignItems: 'center', gap: 3, whiteSpace: 'nowrap' }}>
-                  <i style={{ width: 7, height: 7, borderRadius: 3, background: item.color, display: 'block' }} />
-                  {item.label}
-                </span>
-              ))}
-              {/* Colours come only from reports that passed our checks. Without
-                  this line the pins read as "all the litter here", when they
-                  really say "what people counted here". The app says "counted"
-                  everywhere for the same reason - see attentionStateFor. */}
-              <span style={{ color: C.muted, whiteSpace: 'nowrap' }}>· COUNTED REPORTS ONLY</span>
-              <span style={{ flexBasis: '100%', textAlign: 'center', color: C.muted, letterSpacing: 0 }}>
-                How much litter was counted here — not how busy the beach is.
-              </span>
-            </>
-          ) : (
-            <>HABITAT CONTEXT · BROAD AREAS ONLY</>
-          )}
-        </div>
-      </div>
-
-      {/* One bar for two different problems: the app is in offline preview, or
-          this refresh failed. Both leave the user looking at data that may be
-          stale, so both must say so - a map that silently shows old numbers is
-          worse than one that shows an error. */}
-      {(offline || failed || (cacheTimestamp !== null && Date.now() - cacheTimestamp > 5 * 60_000)) && (
-        <div
-          className="anim-fade-up measure"
-          style={{
-            position: 'absolute',
-            top: 'calc(var(--top-inset) + 106px)',
-            left: 24,
-            right: 24,
-            zIndex: 860,
-            display: 'flex',
-            alignItems: 'center',
-            gap: 9,
-            padding: '11px 14px',
-            borderRadius: 16,
-            background: 'rgba(30,36,44,.88)',
-            backdropFilter: 'blur(10px)',
-            color: C.bg,
-          }}
-        >
-          <WifiOff />
-          <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 12.5, fontWeight: 600 }}>
-              {offline ? 'Offline preview' : failed ? 'Map refresh failed' : 'Showing cached map data'}
-            </div>
-            <div style={{ fontSize: 11, color: C.mist }}>
-              {offline
-                ? 'Cached map data may be outdated. Real API submissions require a connection.'
-                : failed
-                  ? 'Could not refresh map data. Check your connection and retry.'
-                  : 'This map may be out of date while the latest data loads.'}
-            </div>
-          </div>
-          <button
-            type="button"
-            onClick={() => {
-              setOffline(false);
-              loadBeaches();
-            }}
-            style={{ fontSize: 11, color: C.lime, fontWeight: 600 }}
-          >
-            Retry
-          </button>
-        </div>
-      )}
-
-      {/* Only show "loading" when there is nothing on screen yet. During a
-          retry the old pins are still there, and covering a usable map with a
-          loading message would take away what the user already had. */}
-      {loading && beaches.length === 0 && (
-        <div
-          style={{
-            position: 'absolute',
-            inset: 0,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 830,
-            pointerEvents: 'none',
-            fontFamily: MONO,
-            fontSize: 10,
-            letterSpacing: '.14em',
-            color: C.slate,
-          }}
-        >
-          LOADING BEACHES…
-        </div>
-      )}
-
-      {selected && (
-        <>
-          <SelectedCard
-            beach={selected}
-            layer={layer}
-            event={selectedEvent}
-            cleanupTarget={selectedCleanupTarget}
-            onClose={() => setSelectedId(null)}
-            // From the biodiversity layer the button says Learn More, so it has
-            // to land on the species cards.
-            onOpen={() =>
-              nav(`/beach/${selected.id}`, layer === 'bio' ? { state: { focus: 'species' } } : undefined)
-            }
-            onCleanup={() => nav(`/cleanup/${selected.id}`)}
-            onMethod={() => nav('/method')}
-            onJoin={(eventId) => nav(`/events/${eventId}`)}
-            detailsError={eventsError || targetError ? 'Some activity details could not be loaded.' : null}
-          />
-        </>
-      )}
+    <div className="borneo-inset">
+      <div ref={elRef} />
+      <button className="borneo-inset-open" aria-label="Sabah & Sarawak" onClick={onClick}><strong>Sabah & Sarawak ↗</strong></button>
+      {onHabitat && <span className="borneo-habitats">
+        <button aria-label="Kuching Wetlands · Mangrove" onClick={onHabitat}><SpeciesIcon glyph="mangrove" size={18} /></button>
+        <button aria-label="Lawas · Seagrass" onClick={onHabitat}><SpeciesIcon glyph="grass" size={18} /></button>
+        <button aria-label="Sandakan · Mangrove" onClick={onHabitat}><SpeciesIcon glyph="mangrove" size={18} /></button>
+      </span>}
     </div>
   );
 }
-
-/**
- * The card that slides up when a pin is tapped.
- *
- * It shows different things per layer, and it sits above the map rather than
- * replacing it, so the user keeps their place. Closing it returns them exactly
- * where they were - no navigation, so no back button surprise.
- */
-function SelectedCard({
-  beach,
-  layer,
-  event,
-  cleanupTarget,
-  onClose,
-  onOpen,
-  onCleanup,
-  onMethod,
-  onJoin,
-  detailsError,
-}: {
-  beach: BeachSummary;
-  layer: MapLayer;
-  event: CleanupEvent | null;
-  cleanupTarget: CleanupTarget | null;
-  onClose: () => void;
-  onOpen: () => void;
-  onCleanup: () => void;
-  onMethod: () => void;
-  onJoin: (eventId: string) => void;
-  detailsError: string | null;
-}) {
-  const fs = freshStyle(beach.freshnessKind);
-  const latestContributingAt = beach.newestCountedReportAt
-    ?? (beach.latestContributingReportAt === undefined ? beach.lastReportedAt : beach.latestContributingReportAt);
-  // Worked out once, then used by the badge, the explanation and the icon
-  // below. One source, so the card cannot show a status band in one place and
-  // say "Insufficient data" in another.
-  const attention = attentionStateFor(beach.severity, beach.insufficientData, beach.validReports);
-  const cleanupCategories = cleanupTarget
-    ? Object.values(cleanupTarget.remainingBands).filter(Boolean).length
-    : 0;
-  // A small label/value row. Written once as a function so the labels line up
-  // in one column - a fixed 78px label width, rather than each row guessing.
-  const metaRow = (k: string, v: string, color: string = C.ink2, weight = 400) => (
-    <div style={{ display: 'flex', gap: 9, alignItems: 'center' }}>
-      <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '.1em', color: C.faint, width: 78, flex: 'none' }}>
-        {k}
-      </span>
-      <span style={{ fontSize: 13, color, fontWeight: weight }}>{v}</span>
-    </div>
+export default function MapScreen() {
+  const nav = useNavigate();
+  const [params, setParams] = useSearchParams();
+  const regionId = params.get("region") ?? "";
+  const layer = params.get("layer") === "bio" ? "bio" : "litter";
+  const region = REGIONS.find((r) => r.id === regionId);
+  const { user, reportsVersion, offline } = useApp();
+  const [zoom, setZoom] = useState(6);
+  const [minZoom, setMinZoom] = useState(5);
+  const [viewSize, setViewSize] = useState("");
+  const [viewRevision, setViewRevision] = useState(0);
+  const [clusterIds, setClusterIds] = useState<string[] | null>(null);
+  const userMoved = useRef(false);
+  const fittedRegion = useRef<string | null>(null);
+  const beachId = originBeachId(params.get("beach"), regionId || undefined);
+  type Panel = "key" | "beaches" | "regions" | "personal" | "about" | "record";
+  const panel = params.get("panel");
+  const sheet = ["key", "beaches", "regions", "personal", "about", "record"].includes(panel ?? "")
+    ? panel as Panel : null;
+  const search = params.get("q") ?? "";
+  const setSheet = (value: Panel | null, ids: string[] | null = null) => {
+    setClusterIds(ids);
+    setParams(previous => {
+    const next = new URLSearchParams(previous);
+    if (value) next.set("panel", value);
+    else next.delete("panel");
+    if (value !== "record") next.delete("record");
+    if (ids) next.delete("q");
+    return next;
+    }, { replace: true });
+  };
+  const setSearch = (value: string) => setParams(previous => {
+    const next = new URLSearchParams(previous);
+    if (value) next.set("q", value);
+    else next.delete("q");
+    return next;
+  }, { replace: true });
+  const {
+    data: beaches,
+    loading,
+    error,
+    refresh,
+  } = useAsyncData(getCoastalBeaches, [reportsVersion], []);
+  const { data: reports } = useAsyncData(
+    () => (user ? getMyReports() : Promise.resolve([])),
+    [user?.participantId, reportsVersion],
+    [],
   );
+  const { elRef, mapRef, ready } = useLeafletMap({
+    center: region ? [region.lat, region.lng] : [4.05, 102],
+    zoom: region?.zoom ?? 6,
+    zoomSnap: 0.25,
+    // Keep marker regrouping synchronous; a zoom transition must not outlive route teardown.
+    zoomAnimation: false,
+  });
+  const areaBeaches = useMemo(() => region
+    ? beaches.filter((b) => b.region === region.id)
+    : beaches, [beaches, regionId]);
+  const locatedBeaches = useMemo(() => getLocatedMapBeaches(areaBeaches, USE_MOCK), [areaBeaches]);
+  const marinePins = useMemo(() => regionalMarinePins(regionId, locatedBeaches), [regionId, locatedBeaches]);
+  const selectedRecord = marinePins.find(p => p.id === params.get("record"));
+  const visible = areaBeaches.filter((b) =>
+    (!clusterIds || clusterIds.includes(b.id)) &&
+    (b.name + " " + b.area).toLowerCase().includes(search.toLowerCase()),
+  );
+  const setRegion = useCallback((id: string) => {
+    setClusterIds(null);
+    setParams({
+      ...(layer === "bio" ? { layer: "bio" } : {}),
+      ...(id ? { region: id } : {}),
+      ...(layer === "bio" && originBeachId(beachId ?? null, id || undefined) ? { beach: beachId! } : {}),
+    });
+  }, [layer, setParams, beachId]);
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready) return;
+    if (fittedRegion.current !== regionId) {
+      userMoved.current = false;
+      fittedRegion.current = regionId;
+    }
+    const fit = () => {
+      map.stop();
+      map.invalidateSize({ pan: false });
+      const size = map.getSize();
+      setViewSize(`${size.x}x${size.y}`);
+      // Reserve room for the hint and for labels anchored above beach locations.
+      const padding = L.point(96, 96);
+      const bounds = getViewBounds(regionId, regionId ? locatedBeaches : []);
+      // getBoundsZoom respects existing limits; a smaller viewport may need a lower floor.
+      map.setMinZoom(0);
+      const floor = Math.min(
+        map.getBoundsZoom(PENINSULA_VIEW_BOUNDS, false, padding),
+        map.getBoundsZoom(bounds, false, padding),
+      );
+      map.setMinZoom(floor);
+      map.setMaxZoom(18);
+      setMinZoom(floor);
+      if (!userMoved.current) map.fitBounds(bounds, {
+        paddingTopLeft: [48, 60], paddingBottomRight: [48, 36], animate: false,
+      });
+      setZoom(map.getZoom());
+    };
+    const trackZoom = () => {
+      setZoom(map.getZoom());
+    };
+    const trackMove = () => setViewRevision(value => value + 1);
+    const trackDrag = () => { userMoved.current = true; };
+    const container = map.getContainer();
+    container.addEventListener("wheel", trackDrag, { passive: true });
+    container.addEventListener("touchmove", trackDrag, { passive: true });
+    container.addEventListener("keydown", trackDrag);
+    container.addEventListener("dblclick", trackDrag);
+    map.on("zoomend", trackZoom);
+    map.on("moveend", trackMove);
+    map.on("dragstart", trackDrag);
+    fit();
+    let frame = 0;
+    const observer = new ResizeObserver(() => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(fit);
+    });
+    observer.observe(map.getContainer());
+    return () => {
+      cancelAnimationFrame(frame);
+      observer.disconnect();
+      map.off("zoomend", trackZoom);
+      map.off("moveend", trackMove);
+      map.off("dragstart", trackDrag);
+      container.removeEventListener("wheel", trackDrag);
+      container.removeEventListener("touchmove", trackDrag);
+      container.removeEventListener("keydown", trackDrag);
+      container.removeEventListener("dblclick", trackDrag);
+    };
+  }, [ready, regionId, locatedBeaches]);
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready) return;
+    const group = L.layerGroup().addTo(map);
+    const marker = (
+      lat: number,
+      lng: number,
+      label: string,
+      html: string,
+      onClick: () => void,
+      size: [number, number],
+      anchor: [number, number] = [size[0] / 2, size[1] / 2],
+      priority = 0,
+    ) => {
+      const pin = L.marker([lat, lng], {
+        icon: L.divIcon({
+          className: "coastal-map-marker",
+          html,
+          iconSize: size,
+          iconAnchor: anchor,
+        }),
+        title: label,
+        alt: label,
+        keyboard: true,
+        zIndexOffset: priority,
+      })
+        .addTo(group)
+        .on("click", onClick);
+      pin.getElement()?.setAttribute("aria-label", label);
+      return pin;
+    };
+    if (layer === "bio") {
+      const pins = region ? marinePins.map(p => ({ ...p, name: p.record.name, place: p.record.place, image: p.record.image }))
+        : overviewMarinePins(locatedBeaches).map(p => ({ ...p, place: "" }));
+      const size = map.getSize();
+      const compact = size.y < 360;
+      const containerRect = map.getContainer().getBoundingClientRect();
+      const obstacles = Array.from(map.getContainer().parentElement?.querySelectorAll(".map-hint, .map-controls, .map-full-overview, .borneo-inset") ?? []).map(el => {
+        const rect = el.getBoundingClientRect();
+        return { x: rect.left - containerRect.left, y: rect.top - containerRect.top, width: rect.width, height: rect.height };
+      });
+      const labels = placeMapLabels(pins.map(p => ({ id: p.id, name: p.name, preferred: true, ...map.latLngToContainerPoint([p.lat, p.lng]) })),
+        { width: size.x, height: size.y, obstacles, compact, labelHeight: compact ? 54 : region ? 94 : 74 });
+      const openPin = (id: string, destination: string) => {
+        if (!region) { nav(withBeach("/marine-area/" + destination, originBeachId(beachId ?? null, destination))); return; }
+        setParams(previous => {
+          const next = new URLSearchParams(previous);
+          next.set("panel", "record"); next.set("record", id);
+          return next;
+        }, { replace: true });
+      };
+      // Keep all source locations tappable even where a short viewport cannot fit every label.
+      for (const p of pins) marker(p.lat, p.lng, p.name + (p.place ? " · " + p.place : ""),
+        '<span class="marine-coast-dot"></span>', () => openPin(p.id, p.regionId), [22, 22]);
+      for (const placed of labels) {
+        const p = pins.find(pin => pin.id === placed.id)!;
+        const point = map.latLngToContainerPoint([p.lat, p.lng]);
+        const end = L.point(Math.max(placed.x, Math.min(point.x, placed.x + placed.width)), Math.max(placed.y, Math.min(point.y, placed.y + placed.height)));
+        L.polyline([[p.lat, p.lng], map.containerPointToLatLng(end)], { color: "#536779", weight: 1, opacity: .6, interactive: false }).addTo(group);
+        const node = document.createElement("div");
+        node.className = "marine-map-pin" + (region ? " regional" : "") + (compact ? " compact" : "");
+        const photo = document.createElement(p.image ? "img" : "span");
+        photo.className = "marine-map-photo";
+        if (photo instanceof HTMLImageElement) { photo.src = p.image!; photo.alt = ""; }
+        else photo.textContent = "≈";
+        const text = document.createElement("span"); text.className = "marine-map-text";
+        const name = document.createElement("b"); name.textContent = p.name;
+        text.append(name);
+        if (p.place) { const place = document.createElement("small"); place.textContent = p.place; text.append(place); }
+        node.append(photo, text);
+        marker(p.lat, p.lng, p.name + (p.place ? " · " + p.place : ""), node.outerHTML, () => openPin(p.id, p.regionId),
+          [placed.width, placed.height], [point.x - placed.x, point.y - placed.y], 1000);
+      }
+    } else if (!region) {
+      for (const r of REGIONS) {
+        if (r.id === "borneo") continue; // Borneo has its own inset in the overview.
+        const rows = beaches.filter((b) => b.region === r.id);
+        if (!rows.length && layer === "litter") continue;
+        const count = rows.reduce((n, b) => n + b.validReports, 0);
+        const levels = ["Low", "Moderate", "High", "Severe"];
+        const highest = rows.reduce(
+          (n, b) => Math.max(n, levels.indexOf(b.severity ?? "")),
+          -1,
+        );
+        const colour = COLORS[levels[highest]] ?? "#98a4b5";
+        const label = count;
+        const diameter = map.getSize().y < 360 ? 30 : 42;
+        marker(
+          r.lat,
+          r.lng,
+          r.name,
+          `<div class="region-map-pin" style="width:${diameter}px;height:${diameter}px;font-size:${diameter === 30 ? 11 : 15}px;line-height:${diameter - 8}px;border-color:` +
+            colour +
+            '"><b>' +
+            label +
+            '</b></div>',
+          () => setRegion(r.id),
+          [diameter, diameter],
+        );
+      }
+    } else if (layer === "litter") {
+      const preferred = new Set(PRIMARY_MAP_BEACHES[region.id] ?? []);
+      const size = map.getSize();
+      const compactLabels = size.y < 360;
+      const containerRect = map.getContainer().getBoundingClientRect();
+      const obstacles = Array.from(map.getContainer().parentElement?.querySelectorAll(".map-hint, .map-controls, .map-full-overview") ?? []).map(el => {
+        const rect = el.getBoundingClientRect();
+        return { x: rect.left - containerRect.left, y: rect.top - containerRect.top, width: rect.width, height: rect.height };
+      });
+      const labels = placeMapLabels(locatedBeaches
+        .filter(b => preferred.has(b.id) || zoom >= region.zoom + 1)
+        .map(b => ({ id: b.id, name: b.name, preferred: preferred.has(b.id), ...map.latLngToContainerPoint([b.lat, b.lng]) })),
+        { width: size.x, height: size.y, obstacles, compact: compactLabels });
+      const labelled = new Set(labels.map(label => label.id));
+      const displayDot = (b: typeof locatedBeaches[number]) => marker(b.lat, b.lng, b.name,
+        `<span class="beach-coast-dot" style="background:${COLORS[b.severity ?? ""] ?? "#98a4b5"}"></span>`,
+        () => nav("/beach/" + b.id), [24, 24]);
 
+      // Main prototype beaches always keep their own coastal dots and names.
+      for (const b of locatedBeaches.filter(b => preferred.has(b.id) || labelled.has(b.id))) displayDot(b);
+      const clusters = groupMapPoints(locatedBeaches.filter(b => !preferred.has(b.id) && !labelled.has(b.id)),
+        (lat, lng) => map.project([lat, lng], zoom), { width: 22, height: 22 });
+      for (const cluster of clusters) {
+        if (cluster.points.length > 1) {
+          marker(cluster.lat, cluster.lng, `${cluster.points.length} nearby beaches`,
+            `<div class="beach-cluster-pin">+${cluster.points.length}</div>`,
+            () => {
+              userMoved.current = true;
+              const samePlace = cluster.points.every(p => p.lat === cluster.lat && p.lng === cluster.lng);
+              if (map.getZoom() >= map.getMaxZoom() || samePlace) {
+                setSheet("beaches", cluster.points.map(p => p.id));
+              } else {
+                const bounds = L.latLngBounds(cluster.points.map(p => [p.lat, p.lng]));
+                const size = map.getSize();
+                const padding = L.point(Math.min(180, size.x / 2), Math.min(160, size.y / 2));
+                const fitZoom = map.getBoundsZoom(bounds, false, padding);
+                const nextZoom = Math.max(map.getZoom() + 1, Number.isFinite(fitZoom) ? fitZoom : map.getZoom() + 1);
+                map.setView(bounds.getCenter(), Math.min(nextZoom, map.getMaxZoom()));
+              }
+            }, [28, 28]);
+          continue;
+        }
+        displayDot(cluster.points[0]);
+      }
+      for (const placed of labels) {
+        const b = locatedBeaches.find(beach => beach.id === placed.id)!;
+        const point = map.latLngToContainerPoint([b.lat, b.lng]);
+        const end = L.point(Math.max(placed.x, Math.min(point.x, placed.x + placed.width)),
+          Math.max(placed.y, Math.min(point.y, placed.y + placed.height)));
+        L.polyline([[b.lat, b.lng], map.containerPointToLatLng(end)], {
+          color: "#51657c", weight: 1, opacity: 0.7, interactive: false,
+        }).addTo(group);
+        const node = document.createElement("div");
+        node.className = "beach-map-label" + (compactLabels ? " compact" : "");
+        const label = document.createElement("span");
+        label.textContent = b.name;
+        if (b.name.length > 24) label.style.fontSize = "9px";
+        const band = document.createElement("small");
+        band.textContent = b.severity ? severityLabel(b.severity) : "Insufficient data";
+        const dot = document.createElement("i");
+        dot.style.background = COLORS[b.severity ?? ""] ?? "#98a4b5";
+        band.prepend(dot);
+        node.append(band, label);
+        marker(
+          b.lat,
+          b.lng,
+          b.name,
+          node.outerHTML,
+          () => nav("/beach/" + b.id),
+          [placed.width, placed.height],
+          [point.x - placed.x, point.y - placed.y],
+          1000,
+        );
+      }
+    }
+    return () => {
+      group.remove();
+    };
+  }, [ready, regionId, layer, beaches, zoom, viewSize, viewRevision, nav, setRegion, marinePins, beachId]);
+  const counted = reports.filter((r) => r.status === "Counted");
+  const ownBeaches = beaches.filter((b) =>
+    counted.some((r) => r.beachId === b.id),
+  );
   return (
-    <div
-      className="anim-sheet-up measure"
-      style={{ position: 'absolute', left: 12, right: 12, bottom: 'calc(var(--bottom-inset) + 84px)', zIndex: 880 }}
-    >
-      <GlassPanel className="ds-glass-solid" style={{ position: 'relative', padding: 18 }}>
-        {/* 44 by 44 is the smallest tap target that is reliable on a phone.
-            This button sits over a draggable map, so a miss does not do
-            nothing - it pans the map instead, which feels broken. */}
-        <button
-          type="button"
-          onClick={onClose}
-          aria-label="Close"
-          style={{
-            position: 'absolute',
-            top: 12,
-            right: 12,
-            width: 44,
-            height: 44,
-            borderRadius: 22,
-            background: 'rgba(11,33,97,.06)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <Close />
-        </button>
-        {detailsError && <div style={{ marginTop: 10, padding: '8px 10px', borderRadius: 10, background: 'rgba(30,36,44,.08)', color: C.slate, fontSize: 11 }}>{detailsError}</div>}
-
-        {layer === 'litter' ? (
-          <>
-            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, paddingRight: 28 }}>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 18, fontWeight: 650, letterSpacing: '-.3px' }}>{beach.name}</div>
-                <div style={{ fontSize: 12, color: C.dim, marginTop: 3 }}>{beach.area}</div>
-              </div>
-              {/* Pass null for the band when the reports are too few. The badge
-                  then draws its neutral "no data" style instead of a colour
-                  that would claim we measured something. The label comes from
-                  the same helper, so the badge and the line below always agree. */}
-              <SeverityBadge band={attention.hasBand ? beach.severity : null} label={attention.pageLabel} size="lg" />
-            </div>
-
-            {/* Say why there is no band. An empty space where a colour belongs
-                reads as "nothing wrong here", which is the opposite of what we
-                know. The wording is built by attentionStateFor, so it follows
-                the required number of reports instead of repeating it here. */}
-            {!attention.hasBand && (
-              <div style={{ fontSize: 12.5, lineHeight: 1.5, color: C.muted, marginTop: 10 }}>
-                {attention.detail}
-              </div>
-            )}
-
-            <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 11px', borderRadius: 999, background: 'rgba(11,33,97,.06)', fontSize: 11.5, fontWeight: 600, color: C.ink2 }}>
-                {/* A tick beside a number we do not trust yet looks like
-                    approval. When there are too few reports for a band, show
-                    the info mark instead - same count, honest tone. */}
-                {attention.hasBand ? (
-                  <Check size={12} color={C.slate} strokeWidth={2} />
-                ) : (
-                  <Info size={12} color={C.slate} strokeWidth={2} />
-                )}
-                {beach.validReports} counted {reportWord(beach.validReports)}
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 11px', borderRadius: 999, background: fs.bg, fontSize: 11.5, fontWeight: 600, color: fs.c }}>
-                <i style={{ width: 6, height: 6, borderRadius: 3, background: fs.dot, display: 'block' }} />
-                {freshnessLabel(beach.freshnessKind, latestContributingAt)}
-              </div>
-            </div>
-
-            {/* The date in words, under the chips. The prototype swaps this
-                line for the cleanup row when a beach has one, so it only
-                shows when there is no cleanup to add. Same helper as the pins,
-                so "NEVER REPORTED" is never printed as "0 DAYS AGO". */}
-            {!cleanupTarget && (
-              <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '.1em', color: C.dim, marginTop: 10 }}>
-                {latestContributingAt
-                  ? `LATEST CONTRIBUTING ${lastReportedLabel(latestContributingAt)}`
-                  : lastReportedLabel(null)}
-              </div>
-            )}
-
-            {cleanupTarget && (
-              <button type="button" onClick={onCleanup} className="press" style={{ width: '100%', marginTop: 12, padding: '11px 13px', borderRadius: 14, background: 'rgba(184,255,54,.18)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, textAlign: 'left' }}>
-                <span style={{ minWidth: 0 }}>
-                  <strong style={{ display: 'block', fontSize: 12.5, lineHeight: 1.35, color: C.ink2 }}>Add a Cleanup</strong>
-                  {/* Counted from the cleanup target's own bands, so the number
-                      is what the cleanup screen will actually ask about. No
-                      categories, no sub-line - never "0 reported categories". */}
-                  {cleanupCategories > 0 && (
-                    <span style={{ display: 'block', marginTop: 3, fontSize: 10.5, lineHeight: 1.4, color: C.muted }}>
-                      {cleanupCategories} reported litter {cleanupCategories === 1 ? 'category' : 'categories'}
-                    </span>
-                  )}
-                </span>
-                <ArrowRight size={13} />
-              </button>
-            )}
-
-            {/* The way from a band to the rule behind it, without opening the
-                beach first. A small link, because View Beach is still the
-                main thing to do from this card. */}
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 8 }}>
-              <button
-                type="button"
-                onClick={onMethod}
-                style={{ minHeight: 32, display: 'flex', alignItems: 'center', gap: 4, padding: '0 2px', fontSize: 12, fontWeight: 650, color: C.navy }}
-              >
-                How it's rated <ChevronRight size={11} color={C.navy} strokeWidth={2.2} />
-              </button>
-            </div>
-          </>
-        ) : (
-          <>
-            <div style={{ paddingRight: 28 }}>
-              <div style={{ fontSize: 18, fontWeight: 650, letterSpacing: '-.3px' }}>{beach.name}</div>
-              <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '.14em', color: C.dim, marginTop: 3 }}>
-                BIODIVERSITY NEARBY
-              </div>
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 12 }}>
-              {metaRow('HABITAT', beach.habitat, C.ink2, 600)}
-              {metaRow('RELEVANCE', beach.sensitivity, '#2B4EA2', 600)}
-            </div>
-
-            {/* The ?. guards against a real backend. The contract now makes
-                this field required, but one missing field should degrade the
-                card, not blank the whole screen with a crash. */}
-            {beach.speciesNames?.length > 0 && (
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 11 }}>
-                {beach.speciesNames.map((n) => (
-                  <span
-                    key={n}
-                    style={{
-                      fontSize: 11.5,
-                      fontWeight: 600,
-                      color: C.ink2,
-                      background: 'rgba(11,33,97,.06)',
-                      borderRadius: 999,
-                      padding: '5px 10px',
-                    }}
-                  >
-                    {n}
-                  </span>
-                ))}
-              </div>
-            )}
-
-            {beach.speciesNames?.length > 0 && (
-              <div style={{ fontFamily: MONO, fontSize: 8.5, letterSpacing: '.1em', color: C.dim, marginTop: 10, lineHeight: 1.5 }}>
-                {/* The beach page carries a habitat-context caveat under its
-                    species cards. These are the same names, so a qualifier
-                    comes with them. Dropping it here because space is tight
-                    would turn "context" into "we saw these animals". */}
-                MAY NOT BE PRESENT NOW
-              </div>
-            )}
-          </>
-        )}
-
-        <button
-          type="button"
-          onClick={onOpen}
-          className="btn-primary press"
-          style={{
-            marginTop: 14,
-            height: 50,
-            width: '100%',
-            borderRadius: 16,
-            background: C.navy,
-            color: C.bg,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 8,
-            fontSize: 14.5,
-            fontWeight: 600,
-          }}
-        >
-          <span>{layer === 'litter' ? 'View Beach' : 'Learn More'}</span>
-          <ArrowRight size={14} />
-        </button>
-        {layer === 'litter' && event && (
-          <button type="button" onClick={() => onJoin(event.id)} className="btn-ghost press" style={{ marginTop: 8, minHeight: 48, width: '100%', padding: '10px 14px', borderRadius: 16, border: `1.5px solid ${C.line2}`, color: C.navy, background: C.white, fontSize: 13, lineHeight: 1.35, fontWeight: 650, textAlign: 'center' }}>
-            Join cleanup · {formatEventDate(event.date)}
+    <main className="screen coastal-map">
+      <header className="map-coastal-header">
+        <div>
+          {region && (
+            <button
+              className="icon-button"
+              aria-label="Full map"
+              onClick={() => setRegion("")}
+            >
+              <ArrowLeft size={18} />
+            </button>
+          )}
+          <h1>{layer === "bio" ? "Explore the Coast" : "Choose a Beach"}</h1>
+          <button className="map-pill" onClick={() => setSheet("personal")}>
+            Insights
           </button>
+        </div>
+        <div>
+          <div className="coastal-segments">
+            {["litter", "bio"].map((l) => (
+              <button
+                key={l}
+                aria-pressed={layer === l}
+                onClick={() => {
+                  if (l === "litter" && layer === "bio" && beachId) { nav("/beach/" + beachId); return; }
+                  setParams({
+                    ...(regionId ? { region: regionId } : {}),
+                    ...(l === "bio" ? { layer: "bio" } : {}),
+                    ...(beachId ? { beach: beachId } : {}),
+                  });
+                }}
+              >
+                {l === "litter" ? "Litter" : "Biodiversity"}
+              </button>
+            ))}
+          </div>
+          {layer === "litter" && <button className="map-pill" onClick={() => setSheet("key")}>
+            Key
+          </button>}
+          {layer === "bio" && <button className="map-pill" onClick={() => setSheet("about")}>About</button>}
+        </div>
+      </header>
+      <div className="coastal-map-viewport">
+      <div ref={elRef} className="coastal-map-canvas" aria-label="Interactive coast map" />
+      <div className="map-hint">
+        {loading
+          ? "Loading the coast…"
+          : region
+            ? region.name +
+              " · " +
+              (layer === "bio" ? "tap a record" : "tap a beach")
+            : layer === "bio" ? "Published records · tap to explore" : "Report counts · tap a region"}
+      </div>
+      <div className="map-controls">
+        <button className="map-pill" onClick={() => setSheet("regions")}>
+          Regions
+        </button>
+        <button
+          className="icon-button"
+          aria-label="Zoom in"
+          disabled={zoom >= 18}
+          onClick={() => { userMoved.current = true; mapRef.current?.zoomIn(); }}
+        >
+          +
+        </button>
+        <button
+          className="icon-button"
+          aria-label="Zoom out"
+          disabled={zoom <= minZoom}
+          onClick={() => { userMoved.current = true; mapRef.current?.zoomOut(); }}
+        >
+          −
+        </button>
+      </div>
+      {!region && <BorneoInset onClick={() => setRegion("borneo")} onHabitat={layer === "bio" ? () => nav("/marine-area/borneo") : undefined} />}
+      {region && <button className="map-pill map-full-overview" onClick={() => setRegion("")}>Full Map</button>}
+      </div>
+      <div className="map-bottom-card">
+        {(error || offline) && (
+          <p className="coastal-footnote" role="alert">
+            {error
+              ? "Could not load beach data."
+              : "You are viewing cached data."}{" "}
+            <button onClick={() => void refresh()}>Retry</button>
+          </p>
         )}
-      </GlassPanel>
-    </div>
+        <div>
+          <span>
+            <strong>
+              {region?.name ??
+                (layer === "bio"
+                  ? "Marine Life by Area"
+                  : "Report Counts View")}
+            </strong>
+            <small>
+              {loading ? "Loading beaches…" : layer === "bio"
+                ? (region ? (content.regions.find(r => r.id === region.id)?.records.length ?? 0) + " records · " : "Published records · ") + "not live sightings"
+                : region
+                  ? areaBeaches.length +
+                    " beaches · " +
+                    areaBeaches.reduce((n, b) => n + b.validReports, 0) +
+                    " reports"
+                  : "Explore Malaysia’s coast"}
+            </small>
+          </span>
+          <PrimaryButton
+            height={43}
+            onClick={() =>
+              layer === "bio"
+                ? nav(withBeach("/marine-area/" + (regionId || ""), beachId))
+                : region
+                  ? setSheet("beaches")
+                  : nav("/insights/trends")
+            }
+          >
+            {layer === "bio"
+              ? "See Marine Life"
+              : region
+                ? "See Beaches"
+                : "View Insights"}
+          </PrimaryButton>
+        </div>
+        {region &&
+          layer === "litter" &&
+          locatedBeaches.length < areaBeaches.length && (
+            <p className="coastal-footnote">
+              {locatedBeaches.length ? "More beaches in the list. Pins show available locations." : "Beach locations pending. Browse the beach list."}
+            </p>
+          )}
+        {USE_MOCK && layer === "litter" && <p className="demo-label">Preview · example counts</p>}
+      </div>
+      {sheet === "record" && selectedRecord && <Sheet title="Marine record" onClose={() => setSheet(null)}>
+        <MarineRecordCard record={selectedRecord.record} beachId={beachId} preview />
+        <p className="coastal-footnote">{selectedRecord.caption}</p>
+        <PrimaryButton onClick={() => nav(withBeach("/marine-area/" + regionId, beachId))}>See Marine Life in This Area</PrimaryButton>
+        <GhostButton onClick={() => setSheet(null)}>Back to Map</GhostButton>
+      </Sheet>}
+      {sheet === "about" && <Sheet title="About this map" onClose={() => setSheet(null)}>
+        <p className="subtle">Explore published species and habitat records around Malaysia’s coast. Photos illustrate species; pins show the area of a record, not live animal locations.</p>
+        <PrimaryButton onClick={() => setSheet(null)}>Got It</PrimaryButton>
+      </Sheet>}
+      {sheet === "key" && layer === "litter" && (
+        <Sheet title="Map Key" onClose={() => setSheet(null)}>
+          <p className="subtle">
+            Numbers show counted reports in this view. The ring shows the
+            highest available litter band in that region.
+          </p>
+          {Object.entries(COLORS).map(([label, color]) => (
+            <div className="legend-row" key={label}>
+              <i style={{ background: color }} />
+              {severityLabel(label as SeverityBand)}
+            </div>
+          ))}
+          <div className="legend-row">
+            <i style={{ background: "#98a4b5" }} />
+            Insufficient data
+          </div>
+          <p className="subtle">
+            No band does not mean a clean beach. Biodiversity records describe
+            published sources, not live sightings.
+          </p>
+          <PrimaryButton
+            style={{ marginTop: 18 }}
+            onClick={() => setSheet(null)}
+          >
+            Got It
+          </PrimaryButton>
+        </Sheet>
+      )}
+      {sheet === "regions" && (
+        <Sheet title="Choose a Region" onClose={() => setSheet(null)}>
+          {REGIONS.map((r) => (
+            <LinkRow
+              key={r.id}
+              title={r.name}
+              subtitle={
+                beaches.filter((b) => b.region === r.id).length + " beaches"
+              }
+              onClick={() => setRegion(r.id)}
+            />
+          ))}
+        </Sheet>
+      )}
+      {sheet === "beaches" && (
+        <Sheet title={region?.name ?? "Beaches"} onClose={() => setSheet(null)}>
+          <label className="coastal-search">
+            <Search />
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search beaches"
+              aria-label="Search beaches"
+            />
+          </label>
+          {visible.map((b) => (
+            <LinkRow
+              key={b.id}
+              title={b.name}
+              subtitle={b.validReports + " counted reports"}
+              trailing={
+                <SeverityBadge
+                  band={b.severity}
+                  label={b.severity ? undefined : "Insufficient Data"}
+                />
+              }
+              onClick={() => nav("/beach/" + b.id)}
+            />
+          ))}
+          {!visible.length && <DataUnavailable title="No matching beaches" />}
+        </Sheet>
+      )}
+      {sheet === "personal" && (
+        <Sheet title="Your Insights" onClose={() => setSheet(null)}>
+          <p className="eyebrow">Private · only you see this</p>
+          {ownBeaches.length ? (
+            <>
+              <WhiteCard>
+                <p className="eyebrow">Your Litter and Wildlife</p>
+                <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
+                  <span className="grow">
+                    <strong style={{ fontSize: 40, color: "#0b2161" }}>
+                      {counted.filter((r) => r.quantities.Plastic).length} of{" "}
+                      {counted.length}
+                    </strong>
+                    <p className="subtle">reports contain plastic</p>
+                  </span>
+                  <img
+                    src="/species/green-sea-turtle.jpg"
+                    alt="Green sea turtle"
+                    style={{
+                      width: 76,
+                      height: 76,
+                      objectFit: "cover",
+                      borderRadius: 16,
+                    }}
+                  />
+                </div>
+                {counted.some((r) => r.quantities.Plastic) && (
+                  <SummaryCard eyebrow="May affect">
+                    <strong>Sea turtles · possible swallowing risk</strong>
+                    <p style={{ fontSize: 12, color: "#ffffffb3" }}>
+                      General research · no local harm shown
+                    </p>
+                  </SummaryCard>
+                )}
+                <p className="coastal-footnote">
+                  Your counted reports ·{" "}
+                  <a
+                    href="https://www.fisheries.noaa.gov/species/green-turtle"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    NOAA Fisheries
+                  </a>
+                </p>
+              </WhiteCard>
+              <p className="subtle">Beaches you’ve reported on</p>
+              {ownBeaches.map((b) => (
+                <WhiteCard key={b.id}>
+                  <LinkRow
+                    title={b.name}
+                    subtitle={
+                      b.severity ? b.severity + " litter" : "Insufficient data"
+                    }
+                    onClick={() => nav("/beach/" + b.id)}
+                  />
+                </WhiteCard>
+              ))}
+            </>
+          ) : (
+            <DataUnavailable title="Your story starts with a report">
+              Counted reports help build insights for the beaches you visit.
+            </DataUnavailable>
+          )}
+          <GhostButton
+            style={{ marginTop: 16 }}
+            onClick={() => nav(user ? "/reports" : "/identity?next=/reports")}
+          >
+            {user ? "My Reports" : "Log In"}
+          </GhostButton>
+        </Sheet>
+      )}
+    </main>
   );
 }

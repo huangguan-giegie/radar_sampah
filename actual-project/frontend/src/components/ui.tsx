@@ -15,7 +15,7 @@
 // Everything here is a real <button> when it is clickable. That is what gives
 // us keyboard focus, Enter and Space, and the right announcement to a screen
 // reader - all of which a clickable <div> silently throws away.
-import type { CSSProperties, ReactNode } from 'react';
+import { useEffect, type CSSProperties, type ReactNode } from 'react';
 import { C, MONO } from '../theme';
 import { ArrowRight, ChevronLeft } from './Icon';
 
@@ -128,16 +128,19 @@ export function GhostButton({
 export function TextButton({
   children,
   onClick,
+  disabled = false,
   style,
 }: {
   children: ReactNode;
   onClick?: () => void;
+  disabled?: boolean;
   style?: CSSProperties;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
+      disabled={disabled}
       className="link-hover"
       style={{
         textAlign: 'center',
@@ -159,10 +162,21 @@ export function TextButton({
 export function DraftChoiceDialog({
   onResume,
   onStartNew,
+  onCancel,
 }: {
   onResume: () => void;
   onStartNew: () => void;
+  onCancel?: () => void;
 }) {
+  useEffect(() => {
+    if (!onCancel) return;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onCancel();
+    };
+    document.addEventListener('keydown', closeOnEscape);
+    return () => document.removeEventListener('keydown', closeOnEscape);
+  }, [onCancel]);
+
   return (
     <div
       style={{ position: 'fixed', inset: 0, zIndex: 120, display: 'grid', placeItems: 'center', padding: 20, background: 'rgba(6,18,47,.48)', backdropFilter: 'blur(4px)' }}
@@ -180,6 +194,7 @@ export function DraftChoiceDialog({
         <div style={{ display: 'grid', gap: 9 }}>
           <PrimaryButton onClick={onResume} height={50}>Continue draft</PrimaryButton>
           <GhostButton onClick={onStartNew} height={50}>Discard draft &amp; start new</GhostButton>
+          {onCancel && <TextButton onClick={onCancel}>Cancel</TextButton>}
         </div>
       </div>
     </div>
@@ -203,16 +218,19 @@ export function DraftChoiceDialog({
 export function BackButton({
   onClick,
   dark = false,
+  disabled = false,
   style,
 }: {
   onClick: () => void;
   dark?: boolean;
+  disabled?: boolean;
   style?: CSSProperties;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
+      disabled={disabled}
       aria-label="Back"
       className="press"
       style={{
