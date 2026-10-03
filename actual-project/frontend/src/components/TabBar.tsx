@@ -1,12 +1,17 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import { BarChart, CommunityIcon, HomeIcon, Pin, UserIcon } from "./Icon";
+import { USE_MOCK } from "../api";
+import { BarChart, BookmarkIcon, CommunityIcon, HomeIcon, Pin, UserIcon } from "./Icon";
+
 const TABS = [
   { to: "/map", label: "Map", Icon: Pin },
-  { to: "/insights", label: "Insights", Icon: BarChart },
+  USE_MOCK
+    ? { to: "/insights", label: "Insights", Icon: BarChart }
+    : { to: "/reports", label: "My Reports", Icon: BookmarkIcon },
   { to: "/home", label: "Home", Icon: HomeIcon },
   { to: "/community", label: "Community", Icon: CommunityIcon },
   { to: "/account", label: "Account", Icon: UserIcon },
 ];
+
 export function TabBar() {
   const nav = useNavigate();
   const { pathname } = useLocation();
