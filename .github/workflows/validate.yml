@@ -1,0 +1,26 @@
+name: Iteration 3 model checks
+
+on:
+  push:
+    branches: [iteration3-model-upgrade]
+  workflow_dispatch:
+
+jobs:
+  model:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13.7'
+          cache: pip
+          cache-dependency-path: requirements*.txt
+      - run: python -m pip install -r requirements-dev.txt
+      - run: python verify_bundle.py
+      - run: python -m pytest -q
+      - name: Check portable offline retraining
+        run: python training/train.py --species "Amphiprion ocellaris" --workers 1 --output-dir training/runs/ci-smoke
+      - name: Start the standalone prediction service
+        run: |
+          gunicorn --workers 1 --threads 4 --timeout 60 --bind 127.0.0.1:8000 'serve:create_app()' > /tmp/species-model.log 2>&1 &
+          python check_service.py http://127.0.0.1:8000 --wait-seconds 30

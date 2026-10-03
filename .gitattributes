@@ -1,0 +1,7 @@
+# Preserve the exact frozen bytes used by the training checksum verification.
+training/config.json -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+training/data/*.json -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol linguist-generated=true
+reference/* -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+reference/*.geojson -diff
+models/*.joblib -text -diff
+*.npz -text -diff
