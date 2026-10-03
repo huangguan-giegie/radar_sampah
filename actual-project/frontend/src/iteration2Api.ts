@@ -1,4 +1,4 @@
-import { apiRequest, ApiError, invalidateBeaches, USE_MOCK } from './api';
+import { apiRequest, ApiError, getMe, invalidateBeaches, USE_MOCK } from './api';
 import {
   completeCleanup,
   createAdminEvent,
@@ -34,13 +34,29 @@ function publicEvents(values: CleanupEvent[]): CleanupEvent[] {
   return values.map(publicEvent);
 }
 
+/** Local ledgers contain multiple volunteers; derive the same viewer-scoped
+ * booleans as the server instead of reusing another volunteer's last action. */
+function mockEventFor(value: CleanupEvent, participantId?: string): CleanupEvent {
+  return { ...value,
+    joined: Boolean(participantId && value.joinedBy?.includes(participantId)),
+    checkedIn: Boolean(participantId && value.checkIns?.[participantId] === 'within_area'),
+    attendanceConfirmed: Boolean(participantId && value.attendanceBy?.includes(participantId)),
+  };
+}
+
 export async function fetchCleanupEvents(participantId?: string, joinedOnly = false): Promise<CleanupEvent[]> {
-  if (USE_MOCK) return listCleanupEvents(participantId, joinedOnly);
+  if (USE_MOCK) {
+    const viewer = participantId ?? (await getMe())?.participantId;
+    return listCleanupEvents().map(event => mockEventFor(event, viewer)).filter(event => !joinedOnly || event.joined);
+  }
   return publicEvents(await apiRequest<CleanupEvent[]>(`/cleanup-events${joinedOnly ? '?joined=true' : ''}`));
 }
 
 export async function fetchCleanupEvent(eventId: string): Promise<CleanupEvent | null> {
-  if (USE_MOCK) return getCleanupEvent(eventId);
+  if (USE_MOCK) {
+    const event = getCleanupEvent(eventId);
+    return event ? mockEventFor(event, (await getMe())?.participantId) : null;
+  }
   try {
     return publicEvent(await apiRequest<CleanupEvent>(`/cleanup-events/${encodeURIComponent(eventId)}`));
   } catch (error) {
@@ -50,12 +66,12 @@ export async function fetchCleanupEvent(eventId: string): Promise<CleanupEvent |
 }
 
 export async function joinCleanupEventData(eventId: string, participantId: string): Promise<CleanupEvent> {
-  if (USE_MOCK) return joinCleanupEvent(eventId, participantId);
+  if (USE_MOCK) return mockEventFor(joinCleanupEvent(eventId, participantId), participantId);
   return publicEvent(await apiRequest<CleanupEvent>(`/cleanup-events/${encodeURIComponent(eventId)}/join`, 'POST'));
 }
 
 export async function leaveCleanupEventData(eventId: string, participantId: string): Promise<CleanupEvent> {
-  if (USE_MOCK) return leaveCleanupEvent(eventId, participantId);
+  if (USE_MOCK) return mockEventFor(leaveCleanupEvent(eventId, participantId), participantId);
   return publicEvent(await apiRequest<CleanupEvent>(`/cleanup-events/${encodeURIComponent(eventId)}/join`, 'DELETE'));
 }
 
@@ -67,15 +83,15 @@ export async function recordCheckInData(
   state: CheckInState | CheckInCoordinates,
 ): Promise<CleanupEvent> {
   if (USE_MOCK) {
-    if (typeof state === 'string') return recordCheckIn(eventId, participantId, state);
-    return recordCheckIn(eventId, participantId, 'within_area');
+    if (typeof state === 'string') return mockEventFor(recordCheckIn(eventId, participantId, state), participantId);
+    return mockEventFor(recordCheckIn(eventId, participantId, 'within_area'), participantId);
   }
   if (typeof state === 'string') throw new Error('Location coordinates are required for check-in.');
   return publicEvent(await apiRequest<CleanupEvent>(`/cleanup-events/${encodeURIComponent(eventId)}/check-in`, 'POST', state));
 }
 
 export async function confirmAttendanceData(eventId: string, participantId: string): Promise<CleanupEvent> {
-  if (USE_MOCK) return recordAttendance(eventId, participantId);
+  if (USE_MOCK) return mockEventFor(recordAttendance(eventId, participantId), participantId);
   return publicEvent(await apiRequest<CleanupEvent>(`/cleanup-events/${encodeURIComponent(eventId)}/attendance`, 'POST'));
 }
 

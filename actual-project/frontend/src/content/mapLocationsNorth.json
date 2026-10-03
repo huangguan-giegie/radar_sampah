@@ -1,0 +1,98 @@
+{
+  "pantai-kok": {
+    "lat": 6.365306,
+    "lng": 99.675194,
+    "sourceUrl": "https://mygeoname.mygeoportal.gov.my/pdf/02.pdf#page=367",
+    "sourceName": "MyGeoName / JUPEM Kedah gazetteer, Pantai Kok"
+  },
+  "pantai-teluk-datai": {
+    "lat": 6.428,
+    "lng": 99.6735,
+    "sourceUrl": "https://naturallylangkawi.my/wp-content/uploads/2023/07/Nature_New.pdf",
+    "sourceName": "Langkawi Development Authority, Nature Guide, Pantai Teluk Datai"
+  },
+  "pantai-tanjung-rhu": {
+    "lat": 6.457333,
+    "lng": 99.822139,
+    "sourceUrl": "https://mygeoname.mygeoportal.gov.my/pdf/02.pdf#page=367",
+    "sourceName": "MyGeoName / JUPEM Kedah gazetteer, Pantai Tg. Rhu"
+  },
+  "pantai-pasir-hitam": {
+    "lat": 6.425389,
+    "lng": 99.789139,
+    "sourceUrl": "https://mygeoname.mygeoportal.gov.my/pdf/02.pdf#page=367",
+    "sourceName": "MyGeoName / JUPEM Kedah gazetteer, Pantai Psr. Hitam"
+  },
+  "pantai-pasir-tengkorak": {
+    "lat": 6.431111,
+    "lng": 99.725778,
+    "sourceUrl": "https://mygeoname.mygeoportal.gov.my/pdf/02.pdf#page=367",
+    "sourceName": "MyGeoName / JUPEM Kedah gazetteer, Pantai Pasir Tengkorak"
+  },
+  "pantai-merdeka": {
+    "lat": 5.66603,
+    "lng": 100.36732,
+    "sourceUrl": "https://www.penang-traveltips.com/malaysia/kedah/merdeka-beach.htm",
+    "sourceName": "Penang Travel Tips, Merdeka Beach GPS"
+  },
+  "pantai-datuk-syed-omar": {
+    "lat": 6.298246,
+    "lng": 99.856387,
+    "sourceUrl": "https://geographic.org/geographic_names/name.php?c=malaysia&fid=4131&uni=10606891",
+    "sourceName": "NGA geographical names via Geographic.org, Pantai Datok Syed Omar"
+  },
+  "pantai-tanjung-bungah": {
+    "lat": 5.467972,
+    "lng": 100.288528,
+    "sourceUrl": "https://mygeoname.mygeoportal.gov.my/pdf/07.pdf#page=76",
+    "sourceName": "MyGeoName / JUPEM Penang gazetteer, Pantai Tanjong Bungah"
+  },
+  "monkey-beach": {
+    "lat": 5.470694,
+    "lng": 100.189056,
+    "sourceUrl": "https://mygeoname.mygeoportal.gov.my/pdf/07.pdf#page=76",
+    "sourceName": "MyGeoName / JUPEM Penang gazetteer, Pantai Teluk Duyung (Monkey Beach)"
+  },
+  "pantai-pasir-panjang": {
+    "lat": 5.297111,
+    "lng": 100.184028,
+    "sourceUrl": "https://mygeoname.mygeoportal.gov.my/pdf/07.pdf#page=75",
+    "sourceName": "MyGeoName / JUPEM Penang gazetteer, Pantai Pasir Panjang, Barat Daya"
+  },
+  "pantai-bersih": {
+    "lat": 5.446972,
+    "lng": 100.379556,
+    "sourceUrl": "https://mygeoname.mygeoportal.gov.my/pdf/07.pdf#page=76",
+    "sourceName": "MyGeoName / JUPEM Penang gazetteer, Pantai Bersih"
+  },
+  "pantai-teluk-aman": {
+    "lat": 5.26707,
+    "lng": 100.40876,
+    "sourceUrl": "https://mapcarta.com/W1311505901",
+    "sourceName": "OpenStreetMap way 1311505901 via Mapcarta, Pantai Teluk Aman"
+  },
+  "pasir-belanda": {
+    "lat": 5.281611,
+    "lng": 100.213472,
+    "sourceUrl": "https://mygeoname.mygeoportal.gov.my/pdf/07.pdf#page=76",
+    "sourceName": "MyGeoName / JUPEM Penang gazetteer, Pasir Belanda beach, Barat Daya"
+  },
+  "pantai-cenang": {
+    "lat": 6.295761,
+    "lng": 99.722389,
+    "sourceUrl": "https://www.wikidata.org/wiki/Q33328099",
+    "sourceName": "Wikidata Q33328099, Cenang Beach, Langkawi"
+  },
+  "pantai-batu-ferringhi": {
+    "lat": 5.473167,
+    "lng": 100.245722,
+    "sourceUrl": "https://mygeoname.mygeoportal.gov.my/pdf/07.pdf#page=76",
+    "sourceName": "MyGeoName / JUPEM Penang gazetteer, Pantai Batu Ferringgi"
+  },
+  "pantai-kuala-perlis": {
+    "lat": 6.38824,
+    "lng": 100.13499,
+    "sourceUrl": "https://malaysia.worldplaces.me/ms/places-in-kuala-perlis/1592512-pantai-kuala-perlis.html",
+    "sourceName": "WorldPlaces, Pantai Kuala Perlis GPS"
+  }
+}

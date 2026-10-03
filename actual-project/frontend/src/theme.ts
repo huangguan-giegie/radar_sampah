@@ -192,7 +192,7 @@ export function formatDate(iso: string, now: Date | number = Date.now()): string
     weekday: 'short',
     timeZone: 'Asia/Kuala_Lumpur',
   });
-  return `${exactDate} (${weekday})`;
+  return `${exactDate.split('-').reverse().join('-')} (${weekday})`;
 }
 
 // Everyday descriptions of the four amounts, shown on the record screen. Two

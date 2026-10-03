@@ -20,7 +20,7 @@ describe('fixed date presentation', () => {
   // The "now" is pinned, so these cases do not change answer on the day the
   // suite happens to run.
   it('uses the exact date and weekday while preserving an unambiguous order', () => {
-    expect(formatDate('2026-09-16T04:00:00+08:00', new Date('2026-09-20T12:00:00+08:00'))).toBe('2026-09-16 (Wed)');
+    expect(formatDate('2026-09-16T04:00:00+08:00', new Date('2026-09-20T12:00:00+08:00'))).toBe('16-09-2026 (Wed)');
   });
 
   it('says Today for a timestamp from the current Malaysia day', () => {
@@ -28,7 +28,7 @@ describe('fixed date presentation', () => {
     expect(formatDate('2026-09-16T00:10:00+08:00', now)).toBe('Today');
     // 23:30 on the 15th in UTC is already the 16th in Malaysia.
     expect(formatDate('2026-09-15T23:30:00Z', now)).toBe('Today');
-    expect(formatDate('2026-09-15T12:00:00+08:00', now)).toBe('2026-09-15 (Tue)');
+    expect(formatDate('2026-09-15T12:00:00+08:00', now)).toBe('15-09-2026 (Tue)');
   });
 });
 

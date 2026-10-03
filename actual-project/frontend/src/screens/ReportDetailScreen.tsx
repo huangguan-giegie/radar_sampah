@@ -3,21 +3,29 @@
 // My Reports rows no longer open this page - they go straight to the correction
 // screen, as the prototype does. The page stays at /reports/:reportId so a link
 // to a single saved report still has somewhere to land.
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { createIteration2ShareLink, getMyReports } from '../api';
 import { useApp } from '../AppContext';
 import { Camera } from '../components/Icon';
 import { StatusBadge, type BadgeStatus } from '../components/ds';
-import { BackButton, ErrorNote, GhostButton, Label, PrimaryButton, Skeleton } from '../components/ui';
-import { historicalPhotoUnavailable } from '../flowRules';
+import { BackButton, DraftChoiceDialog, ErrorNote, GhostButton, Label, PrimaryButton, Skeleton } from '../components/ui';
+import { hasDraftProgress, historicalPhotoUnavailable, resumePath } from '../flowRules';
+import { useAppBack } from '../navigation';
 import { C, MONO, formatDate } from '../theme';
 import { reportStateLabel, type LitterCategory, type LitterReport, type QuantityBand } from '../types';
 
 export default function ReportDetailScreen() {
   const { reportId = '' } = useParams();
   const nav = useNavigate();
-  const { patchDraft, resetDraft, setLastSavedReport, reportsVersion } = useApp();
+  const back = useAppBack('/reports');
+  const { draft, patchDraft, resetDraft, setLastSavedReport, reportsVersion } = useApp();
+  const [draftChoice, setDraftChoice] = useState(false);
+  const active = useRef(true);
+  useEffect(() => {
+    active.current = true;
+    return () => { active.current = false; };
+  }, []);
   const [report, setReport] = useState<LitterReport | null>(null);
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
@@ -57,17 +65,23 @@ export default function ReportDetailScreen() {
     nav('/report/details');
   }
 
+  function requestEdit() {
+    if (draft.editingReportId === report?.id) nav(resumePath(draft));
+    else if (hasDraftProgress(draft)) setDraftChoice(true);
+    else editReport();
+  }
+
   async function shareReport() {
     if (!report || report.status !== 'Counted' || report.currentState === 'excluded') return;
     setSharing(true);
     setShareError(null);
     try {
       const link = await createIteration2ShareLink({ reportId: report.id });
-      nav(link.path);
+      if (active.current) nav(link.path);
     } catch (reason) {
-      setShareError(reason instanceof Error ? reason.message : 'Could not create a share link.');
+      if (active.current) setShareError(reason instanceof Error ? reason.message : 'Could not create a share link.');
     } finally {
-      setSharing(false);
+      if (active.current) setSharing(false);
     }
   }
 
@@ -75,7 +89,7 @@ export default function ReportDetailScreen() {
     return (
       <div className="screen scroll-y">
         <div className="measure i2-page">
-          <BackButton onClick={() => nav('/reports')} />
+          <BackButton onClick={back} />
           <Skeleton h={210} r={24} />
           <Skeleton h={180} r={24} />
         </div>
@@ -87,7 +101,7 @@ export default function ReportDetailScreen() {
     return (
       <div className="screen scroll-y">
         <div className="measure i2-page">
-          <BackButton onClick={() => nav('/reports')} />
+          <BackButton onClick={back} />
           <ErrorNote title="Report not found" body="Return to My Reports and choose another report." />
           <PrimaryButton onClick={() => nav('/reports')}>Back to My Reports</PrimaryButton>
         </div>
@@ -100,7 +114,7 @@ export default function ReportDetailScreen() {
   return (
     <div className="screen scroll-y" style={{ zIndex: 25 }}>
       <div className="measure i2-page anim-fade-up" style={{ paddingBottom: 'calc(var(--safe-bottom) + 34px)' }}>
-        <BackButton onClick={() => nav('/reports')} />
+        <BackButton onClick={back} />
 
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 14 }}>
           <div>
@@ -151,12 +165,13 @@ export default function ReportDetailScreen() {
         {shareError && <div style={{ color: C.red, fontSize: 12 }}>{shareError}</div>}
 
         <PrimaryButton onClick={() => nav(`/beach/${report.beachId}`)}>View beach</PrimaryButton>
-        <GhostButton onClick={editReport}>{report.status === 'Incomplete' ? 'Fix this report' : 'Edit this report'}</GhostButton>
+        <GhostButton onClick={requestEdit}>{report.status === 'Incomplete' ? 'Fix this report' : 'Edit this report'}</GhostButton>
         {report.status === 'Counted' && report.currentState !== 'excluded' && (
           <GhostButton onClick={shareReport} disabled={sharing}>{sharing ? 'Creating link…' : 'Share report'}</GhostButton>
         )}
         <div style={{ textAlign: 'center', fontFamily: MONO, fontSize: 10, color: C.faint }}>REPORT {report.id.toUpperCase()}</div>
       </div>
+      {draftChoice && <DraftChoiceDialog onResume={() => nav(resumePath(draft))} onStartNew={editReport} onCancel={() => setDraftChoice(false)} />}
     </div>
   );
 }

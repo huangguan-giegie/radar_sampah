@@ -16,12 +16,14 @@ import { TabBar } from './components/TabBar';
 import { Toast } from './components/Toast';
 import { useApp } from './AppContext';
 import { guardStep, type ReportStep } from './flowRules';
+import { useAppBack } from './navigation';
+import { BackButton } from './components/ui';
 
 import WelcomeScreen from './screens/WelcomeScreen';
 import IdentityScreen from './screens/IdentityScreen';
 import HomeScreen from './screens/HomeScreen';
-import MapScreen from './screens/MapScreen';
-import BeachScreen from './screens/BeachScreen';
+const MapScreen = lazy(() => import('./screens/MapScreen'));
+const BeachScreen = lazy(() => import('./screens/CoastalBeachScreen'));
 import MethodScreen from './screens/MethodScreen';
 import PhotoScreen from './screens/PhotoScreen';
 import GpsScreen from './screens/GpsScreen';
@@ -48,13 +50,28 @@ const AiSuggestionScreen = lazy(() => import('./screens/AiSuggestionScreen'));
 const AiMethodScreen = lazy(() => import('./screens/AiMethodScreen'));
 const AdminEventScreen = lazy(() => import('./screens/AdminEventScreen'));
 const GalleryScreen = lazy(() => import('./screens/GalleryScreen'));
+const InsightsScreen = lazy(() => import('./screens/InsightsScreen'));
+const MarineLifeScreen = lazy(() => import('./screens/MarineLifeScreen'));
+const SpeciesScreen = lazy(() => import('./screens/MarineLifeScreen').then(m => ({default:m.SpeciesScreen})));
+const HabitatScreen = lazy(() => import('./screens/MarineLifeScreen').then(m => ({default:m.HabitatScreen})));
+const MarineAreaScreen = lazy(() => import('./screens/MarineLifeScreen').then(m => ({default:m.MarineAreaScreen})));
+const PhotoCreditsScreen = lazy(() => import('./screens/PhotoCreditsScreen'));
+const WildlifeHelpScreen = lazy(() => import('./screens/WildlifeHelpScreen'));
 
 
-// The bottom tab bar appears on these four pages only.
+// Main destinations retain their tab bar; focused report/detail flows use Back.
 // It is hidden all through the report flow on purpose: while filing a report
 // the user has one job, and a tab bar is an invitation to wander off and lose
 // what they typed.
-const TAB_ROUTES = ['/home', '/map', '/community', '/reports', '/account'];
+const TAB_ROUTES = ['/home', '/map', '/community', '/reports', '/account', '/marine-life', '/habitats'];
+
+function LoadingPage({ message = 'Loading...' }: { message?: string }) {
+  const goBack = useAppBack('/home');
+  return <div className="screen scroll-y"><div className="measure i2-page">
+    <BackButton onClick={goBack} />
+    <p role="status">{message}</p>
+  </div></div>;
+}
 
 
 /**
@@ -72,7 +89,7 @@ function RequireAuth({ children }: { children: JSX.Element }) {
   // Render nothing until we know who the user is. Deciding earlier would
   // redirect on the strength of a guess, and send people to the sign-in page
   // they were about to be let past.
-  if (!authReady) return <div className="screen"><div className="measure i2-page" role="status">Restoring your session...</div></div>;
+  if (!authReady) return <LoadingPage message="Restoring your session..." />;
   if (!user) {
     return <Navigate to={`/identity?next=${encodeURIComponent(pathname + search)}`} replace />;
   }
@@ -82,7 +99,7 @@ function RequireAuth({ children }: { children: JSX.Element }) {
 function RequireAdmin({ children }: { children: JSX.Element }) {
   const { user, authReady } = useApp();
   const { pathname, search } = useLocation();
-  if (!authReady) return <div className="screen"><div className="measure i2-page" role="status">Restoring your session...</div></div>;
+  if (!authReady) return <LoadingPage message="Restoring your session..." />;
   if (!user) return <Navigate to={`/identity?next=${encodeURIComponent(pathname + search)}`} replace />;
   if (user.role !== 'moderator') return <AdminAccessDeniedScreen />;
   return children;
@@ -128,7 +145,7 @@ export default function App() {
   // Order matters here: /report/saved is tested first because it also starts
   // with /report/, and the wider test below would otherwise swallow it and
   // call the confirmation page "Add a report".
-  const pageTitle = pathname.startsWith('/report/saved')
+  const legacyPageTitle = pathname.startsWith('/report/saved')
     ? 'Report saved'
     : pathname.startsWith('/report/')
       ? 'Add a report'
@@ -167,6 +184,17 @@ export default function App() {
                                   : pathname === '/home'
                                     ? 'Home'
                                     : 'Radar Sampah';
+  const pageTitle = pathname.startsWith('/insights') ? 'Insights'
+    : pathname.startsWith('/species/') ? 'Species guide'
+    : pathname.startsWith('/habitats') ? 'Coastal habitats'
+    : pathname.startsWith('/marine-area') ? 'Marine life by area'
+    : pathname === '/marine-life' ? 'Marine life'
+    : pathname === '/about' || pathname === '/background' ? 'About us'
+    : pathname === '/credits' ? 'Photo credits'
+    : pathname.startsWith('/account/') ? 'Account'
+    : pathname === '/community/wildlife-help' ? 'Animal hurt or stranded'
+    : pathname === '/community/needs-volunteers' ? 'Beaches needing help'
+    : legacyPageTitle;
 
   // Keep the browser tab title in step with the route.
   //
@@ -195,7 +223,7 @@ export default function App() {
       >
         {pageTitle}
       </div>
-      <Suspense fallback={<div className="screen"><div className="measure i2-page" role="status">Loading...</div></div>}>
+      <Suspense fallback={<LoadingPage />}>
       <Routes>
         {/* Public pages. Anyone can look at beach data without an account -
             that is the point of the project, and it is what makes the map
@@ -206,12 +234,26 @@ export default function App() {
         <Route path="/identity" element={<IdentityScreen />} />
 
         <Route path="/home" element={<HomeScreen />} />
+        <Route path="/insights" element={<InsightsScreen />} />
+        <Route path="/insights/:topic" element={<InsightsScreen />} />
+        <Route path="/insights/:topic/:beachId" element={<InsightsScreen />} />
+        <Route path="/marine-life" element={<MarineLifeScreen />} />
+        <Route path="/species/:speciesId" element={<SpeciesScreen />} />
+        <Route path="/habitats" element={<HabitatScreen />} />
+        <Route path="/habitats/:habitatId" element={<HabitatScreen />} />
+        <Route path="/marine-area" element={<MarineAreaScreen />} />
+        <Route path="/marine-area/:regionId" element={<MarineAreaScreen />} />
+        <Route path="/credits" element={<PhotoCreditsScreen />} />
+        <Route path="/community/wildlife-help" element={<WildlifeHelpScreen />} />
+        <Route path="/community/needs-volunteers" element={<CommunityScreen />} />
+        <Route path="/account/:section" element={<RequireAuth><AccountScreen /></RequireAuth>} />
         <Route path="/map" element={<MapScreen />} />
         <Route path="/beach/:beachId" element={<BeachScreen />} />
         <Route path="/beach/:beachId/gallery" element={<GalleryScreen />} />
         <Route path="/method" element={<MethodScreen />} />
         <Route path="/method/ai" element={<AiMethodScreen />} />
         <Route path="/background" element={<BackgroundScreen />} />
+        <Route path="/about" element={<BackgroundScreen />} />
 
         <Route path="/community" element={<CommunityScreen />} />
         <Route path="/events/:eventId" element={<EventScreen />} />
@@ -293,7 +335,7 @@ export default function App() {
         </div>
       )}
 
-      {TAB_ROUTES.includes(pathname) && <TabBar />}
+      {(TAB_ROUTES.includes(pathname) || pathname.startsWith('/insights') || pathname.startsWith('/account/') || pathname.startsWith('/community/')) && <TabBar />}
       {toast && <Toast message={toast} />}
     </DeviceFrame>
   );

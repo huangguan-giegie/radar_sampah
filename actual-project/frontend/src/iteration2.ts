@@ -628,7 +628,7 @@ export function formatEventDate(date: string): string {
     weekday: 'short',
     timeZone: 'Asia/Kuala_Lumpur',
   });
-  return `${date} (${weekday})`;
+  return `${date.split('-').reverse().join('-')} (${weekday})`;
 }
 
 /** "09:00" → "9:00 AM". The API keeps 24-hour times so they sort and compare

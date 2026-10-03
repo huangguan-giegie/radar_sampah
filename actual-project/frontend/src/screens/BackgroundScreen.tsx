@@ -15,7 +15,8 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { SectionLabel } from '../components/ds';
 import { Close, RadarMark } from '../components/Icon';
-import { TextButton } from '../components/ui';
+import { BackButton, TextButton } from '../components/ui';
+import { useAppBack } from '../navigation';
 import {
   MALAYSIA_NOTE,
   OCEAN_PLASTIC_IMAGE,
@@ -42,6 +43,7 @@ const IMAGE_ALT =
 
 export default function BackgroundScreen({ intro = false }: { intro?: boolean }) {
   const nav = useNavigate();
+  const goBack = useAppBack('/home');
   const [region, setRegion] = useState<RegionShare | null>(null);
   const countries = intro ? TOP_COUNTRIES.slice(0, 3) : TOP_COUNTRIES;
   const widest = TOP_COUNTRIES[0].percent;
@@ -49,6 +51,7 @@ export default function BackgroundScreen({ intro = false }: { intro?: boolean })
   return (
     <div className="screen scroll-y" style={{ zIndex: 26, background: C.bg }}>
       <div className="measure i2-page anim-fade-up" style={{ paddingBottom: 'calc(var(--safe-bottom) + 34px)', gap: 14 }}>
+        {!intro && <BackButton onClick={goBack} />}
         <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
           <span style={{ width: 26, height: 26, borderRadius: 13, background: C.deep, display: 'grid', placeItems: 'center', flex: 'none' }}>
             <RadarMark size={18} />
@@ -66,19 +69,20 @@ export default function BackgroundScreen({ intro = false }: { intro?: boolean })
               padding: '5px 9px',
             }}
           >
-            BACKGROUND
+            ABOUT US
           </span>
         </div>
 
         <div>
-          <h1 className="i2-title">{intro ? 'Where ocean plastic comes from' : 'From plastic waste to the ocean'}</h1>
+          <h1 className="i2-title">{intro ? 'Where ocean plastic comes from' : 'About Us'}</h1>
           <p className="i2-subtitle" style={{ fontSize: 13.5 }}>
             {intro
               ? 'Malaysia is the third largest source in the world. That is the problem behind every beach report here.'
-              : 'A wider view of the problem behind our beach reports.'}
+              : 'Who we are, and why beach litter matters.'}
           </p>
         </div>
 
+        {!intro && <><section className="coastal-summary"><p className="eyebrow">Radar Sampah</p><h2 style={{color:'white',fontSize:24,margin:0}}>Beach litter reports for Malaysia</h2><p style={{fontSize:14,lineHeight:1.5,color:'#ffffffcc'}}>Sampah means rubbish in Malay. Anyone can take part with an anonymous ID.</p>{['Report litter with a photo. AI suggests the type.','See which beaches need help.','Join a Saturday cleanup and log what you cleared.'].map((line,i)=><div key={line} style={{display:'flex',gap:10,alignItems:'center',marginTop:15,fontSize:14,lineHeight:1.4}}><span style={{color:C.lime,fontWeight:700}}>{i+1}</span>{line}</div>)}<p style={{color:'#ffffff99',fontSize:11,marginTop:22}}>Built by a student team at Monash University Malaysia.</p></section><SectionLabel>BACKGROUND</SectionLabel><h2 style={{margin:0,fontSize:22,color:C.navy}}>From plastic waste to the ocean</h2></>}
         <div className="i2-card" style={{ padding: 13 }}>
           {/* On the intro the whole map is one link to the live chart. On the
               full page it is a map you can question: each continent is a tap

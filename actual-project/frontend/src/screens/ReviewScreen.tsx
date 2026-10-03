@@ -5,7 +5,7 @@
 // New reports and corrections both land here; buildReportSubmission in
 // flowRules.ts decides which, so this screen never has to branch on it.
 import { useLocation, useNavigate } from 'react-router-dom';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { createReport, getBeaches, getMyReports, photoPreviewUrl, updateReport } from '../api';
 import { ArrowRight, Check, Info, Shield } from '../components/Icon';
 import { BackButton, ErrorNote, PrimaryButton, StepBadge, TextButton } from '../components/ui';
@@ -13,13 +13,22 @@ import { C, formatDate } from '../theme';
 import { Alert, InfoChip, OverlayChip, StatusBadge } from '../components/ds';
 import { useApp } from '../AppContext';
 import type { BeachSummary, LitterCategory, LitterReport, QuantityBand } from '../types';
-import { backFromReview, buildReportSubmission, findExactDuplicateReport, finishReportSubmission, isSmallOnlyRejection } from '../flowRules';
+import { buildReportSubmission, findExactDuplicateReport, finishReportSubmission, isSmallOnlyRejection } from '../flowRules';
 import { linkEventReportData } from '../iteration2Api';
+import { useAppBack } from '../navigation';
+import { pendingReportSave } from '../pendingReportSave';
 
 export default function ReviewScreen() {
   const nav = useNavigate();
   const location = useLocation();
+  const back = useAppBack((location.state as { from?: string } | null)?.from === 'suggestions' ? '/report/suggestions' : '/report/details');
   const { draft, user, setLastSavedReport, bumpReports, showToast } = useApp();
+  const active = useRef(true);
+  const submitting = useRef(false);
+  useEffect(() => {
+    active.current = true;
+    return () => { active.current = false; };
+  }, []);
   const [beaches, setBeaches] = useState<BeachSummary[]>([]);
   // busy disables the submit button while the request is in flight - the one
   // place a disabled button is right, since a second tap would file twice.
@@ -55,6 +64,7 @@ export default function ReviewScreen() {
     draft.photo?.previewUrl || photoPreviewUrl(draft.photo?.photoKey) || draft.existingPhotoUrl;
 
   async function submit() {
+    if (submitting.current) return;
     // Two try blocks on purpose. This one is about the DRAFT being wrong, and
     // the user can fix that here. The one below is about the REQUEST failing,
     // which they can only retry. Merged, an outage would read as their fault.
@@ -70,13 +80,17 @@ export default function ReviewScreen() {
       return;
     }
 
+    submitting.current = true;
     setBusy(true);
     setError(null);
     try {
-      const saved =
+      const saved = await pendingReportSave(JSON.stringify([user?.participantId, submission]), () =>
         submission.kind === 'update'
-          ? await updateReport(submission.reportId, submission.changes)
-          : await createReport(submission.payload);
+          ? updateReport(submission.reportId, submission.changes)
+          : createReport(submission.payload));
+      // A browser Back can leave even while the page controls are disabled.
+      // Refresh saved data, but never redirect or clear a later draft.
+      bumpReports();
       const linkedEventId = draft.linkedEventId ?? draft.eventId;
       if (linkedEventId && user) {
         try {
@@ -85,7 +99,7 @@ export default function ReviewScreen() {
           // A successful report must not be presented as failed merely because
           // the event context expired while the form was open. Attendance is
           // never inferred from a report, so there is no unsafe fallback here.
-          showToast('Report saved. Return to the activity to check your attendance steps.');
+          if (active.current) showToast('Report saved. Return to the activity to check your attendance steps.');
         }
       }
       // Order matters. Keep the saved report first, so the next screen needs no
@@ -93,10 +107,11 @@ export default function ReviewScreen() {
       // finishReportSubmission, which commits the move before the confirmation
       // screen clears the draft - clear it first and this page's route guard
       // sees an empty draft and bounces the user back to step 1.
+      if (!active.current) return;
       setLastSavedReport(saved);
-      bumpReports();
       finishReportSubmission(nav);
     } catch (err) {
+      if (!active.current) return;
       if (isSmallOnlyRejection(err)) {
         setSmallOnly(true);
         return;
@@ -104,27 +119,16 @@ export default function ReviewScreen() {
       setError(err instanceof Error ? err.message : 'Could not save this report.');
       showToast('Save failed');
     } finally {
-      setBusy(false);
+      submitting.current = false;
+      if (active.current) setBusy(false);
     }
   }
 
 
-  /*
-   * Going back to details should pop this page off the history, not push
-   * another one. Pushing leaves [..., details, details], so the back arrow on
-   * the details screen appears to do nothing - it lands on an identical page.
-   *
-   * Whether there is anything to pop is read from the router state that the
-   * details screen stamps on the navigation. A refreshed tab can open straight
-   * on this review page with no such state; backFromReview() in flowRules.ts
-   * turns that case into a replace. It lives there because it is tested there
-   * - inline, an edit once turned its fallback into a call to itself and locked
-   * the screen with a stack overflow.
-   */
+  // Pop the previous step when available; a direct link replaces with the
+  // relevant edit step. Never push a second copy of the same form.
   const backToDetails = () => {
-    const action = backFromReview(location.state as { from?: string } | null);
-    if (action.pop) nav(-1);
-    else nav(action.to, { replace: true });
+    if (!submitting.current) back();
   };
 
 
@@ -140,6 +144,7 @@ export default function ReviewScreen() {
       key={label}
       type="button"
       onClick={action}
+      disabled={busy && Boolean(action)}
       className={action ? 'row-hover' : undefined}
       style={{
         display: 'flex',
@@ -179,7 +184,7 @@ export default function ReviewScreen() {
         style={{ paddingInline: 20, paddingBottom: 'calc(var(--safe-bottom) + 32px)', display: 'flex', flexDirection: 'column', gap: 16 }}
       >
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <BackButton onClick={() => backToDetails()} />
+          <BackButton onClick={backToDetails} disabled={busy} />
           <StepBadge>STEP 6 OF 6 · REVIEW</StepBadge>
         </div>
 
@@ -242,6 +247,7 @@ export default function ReviewScreen() {
                 would squeeze the chips into a narrow column on a phone. */}
             <button
               type="button"
+              disabled={busy}
               onClick={() => nav(`/reports/${duplicateMatch.id}`)}
               style={{ display: 'inline-flex', alignItems: 'center', gap: 6, minHeight: 44, marginTop: 4, color: 'inherit', fontSize: 13, fontWeight: 760 }}
             >
@@ -275,7 +281,7 @@ export default function ReviewScreen() {
                 {busy ? 'Saving…' : duplicateMatch ? 'Submit anyway — new observation' : 'Submit Report'}
                 {!busy && <ArrowRight />}
               </PrimaryButton>
-              <TextButton onClick={() => backToDetails()}>
+              <TextButton onClick={backToDetails} disabled={busy}>
                 {draft.aiDecision === 'confirmed' ? 'Change category or band' : 'Back to details'}
               </TextButton>
             </div>

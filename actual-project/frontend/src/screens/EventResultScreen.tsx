@@ -8,16 +8,19 @@ import { fetchCleanupEvent, fetchEventCleanups } from '../iteration2Api';
 import { C, MONO } from '../theme';
 import type { LitterCategory } from '../types';
 import { useAsyncData } from '../useAsyncData';
+import { CoastalPage, DataUnavailable } from '../components/CoastalUI';
+import { useAppBack } from '../navigation';
 
 export default function EventResultScreen() {
   const { eventId = '' } = useParams();
   const nav = useNavigate();
-  const { data: event, loading, error } = useAsyncData(
+  const back = useAppBack(`/events/${encodeURIComponent(eventId)}`);
+  const { data: event, loading, error, refresh } = useAsyncData(
     () => fetchCleanupEvent(eventId),
     [eventId],
     getCleanupEvent(eventId),
   );
-  const { data, loading: cleanupsLoading, error: cleanupsError } = useAsyncData(
+  const { data, loading: cleanupsLoading, error: cleanupsError, refresh: refreshCleanups } = useAsyncData(
     () => fetchEventCleanups(eventId),
     [eventId],
     eventCleanups(eventId),
@@ -35,15 +38,14 @@ export default function EventResultScreen() {
     });
     return result;
   }, [cleanups]);
-  const score = cleanupResultsReady ? cleanups.reduce((sum, cleanup) => sum + cleanup.score, 0) : null;
 
-  if (loading && !event) return <div className="screen scroll-y"><div className="measure i2-page"><Alert title="Loading event result" tone="caution">Checking the latest recorded activity.</Alert></div></div>;
-  if (!event) return <div className="screen scroll-y"><div className="measure i2-page"><EmptyState title="Event result not found" body={error ?? undefined} action="View activities" onAction={() => nav('/community')} /></div></div>;
+  if (loading && !event) return <CoastalPage title="Event Results" back="/community" tabs={false}><div role="status">Loading event results…</div></CoastalPage>;
+  if (!event) return <CoastalPage title="Event Results" back="/community" tabs={false}><DataUnavailable title="Event result not found" retry={error ? () => void refresh() : undefined}>{error}</DataUnavailable></CoastalPage>;
 
   return (
     <div className="screen scroll-y" style={{ zIndex: 26 }}>
       <div className="measure i2-page anim-fade-up" style={{ paddingBottom: 'calc(var(--safe-bottom) + 34px)' }}>
-        <BackButton onClick={() => nav(`/events/${event.id}`)} />
+        <BackButton onClick={back} />
         <div>
           {/* Closed events read COMPLETED, as in the prototype. An open event
               says OPEN, so a result page never claims an activity is over
@@ -55,8 +57,7 @@ export default function EventResultScreen() {
 
         <div className="i2-result-score">
           <div className="anim-pop-in" style={{ width: 38, height: 38, borderRadius: 19, margin: '0 auto 10px', background: C.lime, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Check color={C.navy} /></div>
-          <strong>{score ?? '—'}</strong>
-          <span style={{ display: 'block', marginTop: 5, color: 'rgba(255,255,255,.76)', fontSize: 12 }}>EVENT CLEANUP SCORE</span>
+          <h2 style={{margin:'8px 0 0',fontSize:23,color:C.white}}>{cleanupResultsReady && cleanups.length > 0 ? 'Cleanup Recorded' : 'Cleanup Results'}</h2>
           <div className="i2-stat-grid" style={{ marginTop: 17 }}>
             <div className="i2-stat"><strong>{event.participantCount}</strong><span>PARTICIPANTS</span></div>
             <div className="i2-stat"><strong>{event.attendanceCount}</strong><span>RECORDED ATTENDANCE</span></div>
@@ -65,17 +66,17 @@ export default function EventResultScreen() {
         </div>
 
         {cleanupsError ? (
-          <Alert title="Could not load cleanup results" tone="error">{cleanupsError}</Alert>
+          <DataUnavailable title="Could not load cleanup results" retry={() => void refreshCleanups()}>{cleanupsError}</DataUnavailable>
         ) : cleanupsLoading ? (
           <Alert title="Loading cleanup results" tone="caution">Checking the recorded cleanups.</Alert>
         ) : cleanups.length === 0 ? (
           <EmptyState title="No cleanup result yet" body="The activity is listed, but no linked cleanup has been recorded." />
         ) : (
           <div className="i2-card">
-            <SectionLabel size="sm">RECORDED AT THIS EVENT</SectionLabel>
+            <SectionLabel size="sm">CLEANED AT THIS EVENT</SectionLabel>
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, marginTop: 6 }}>
               <SectionLabel size="sm">CATEGORY</SectionLabel>
-              <SectionLabel size="sm">RECORDED BANDS</SectionLabel>
+              <SectionLabel size="sm">BEFORE → AFTER</SectionLabel>
             </div>
             <div style={{ marginTop: 2 }}>
               {(Object.entries(recordedBands) as [LitterCategory, string[]][]).map(([category, bands]) => (
@@ -98,10 +99,10 @@ export default function EventResultScreen() {
         )}
 
         <Callout title="Recorded evidence only" tone="quiet" icon={<Info color={C.navy} />}>
-          These are cleanup scores from confirmed bands. They are not contribution points, impact evidence or proof that the beach is clean.
+          Results come from the amounts people confirmed. They don’t prove the beach is clean.
         </Callout>
 
-        <PrimaryButton onClick={() => nav(`/events/${event.id}`)} trailingArrow>Back to event</PrimaryButton>
+        <PrimaryButton onClick={back} trailingArrow>Back to event</PrimaryButton>
         <GhostButton onClick={() => nav(`/beach/${event.beachId}`)}>View beach data</GhostButton>
       </div>
     </div>

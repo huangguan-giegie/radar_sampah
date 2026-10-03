@@ -32,8 +32,8 @@ beforeEach(() => storage.clear());
 
 describe('Iteration 2 date presentation', () => {
   it('prints the exact date first and the verified weekday in brackets', () => {
-    expect(formatEventDate('2026-09-12')).toBe('2026-09-12 (Sat)');
-    expect(formatEventDate('2026-09-16')).toBe('2026-09-16 (Wed)');
+    expect(formatEventDate('2026-09-12')).toBe('12-09-2026 (Sat)');
+    expect(formatEventDate('2026-09-16')).toBe('16-09-2026 (Wed)');
   });
 });
 

@@ -26,3 +26,4 @@ Thumbs.db
 # 截图是自动生成的（tools/screenshots.mjs）。
 # 这次留在仓库里，因为课程报告要用；不想要的话把下面这行的注释去掉。
 # screenshots/
+.figma-import/

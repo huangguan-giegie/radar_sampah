@@ -1,0 +1,4678 @@
+{
+  "species": [
+    {
+      "id": "green-sea-turtle",
+      "figmaId": "1314:271",
+      "name": "Green Sea Turtle",
+      "subtitle": "Penyu agar · Chelonia mydas",
+      "intro": "Nests on Malaysian beaches. Adults graze on seagrass.",
+      "evidence": "From published sources · not a live sighting",
+      "answers": [
+        {
+          "title": "Where It Lives",
+          "text": "Green turtles forage in shallow coastal waters and seagrass meadows; females nest on sandy beaches."
+        },
+        {
+          "title": "Litter Impact",
+          "text": "They can swallow plastic or become tangled in discarded gear, but this page does not document an injured turtle here."
+        },
+        {
+          "title": "What You Can Do",
+          "text": "Keep plastic off the beach, report lost gear, and watch turtles from a distance."
+        }
+      ],
+      "sources": [
+        {
+          "label": "NOAA Fisheries · green turtle",
+          "url": "https://www.fisheries.noaa.gov/species/green-turtle"
+        },
+        {
+          "label": "NOAA · marine-life viewing",
+          "url": "https://www.fisheries.noaa.gov/topic/marine-life-viewing-guidelines"
+        }
+      ],
+      "credit": "Photo · Christoph Schuetzenhofer · CC BY-SA 3.0",
+      "image": "/species/green-sea-turtle.jpg",
+      "photoSource": "https://commons.wikimedia.org/wiki/File:Chelonia_mydas_2005-06-11_Andaman_sea.jpg",
+      "category": "animal"
+    },
+    {
+      "id": "dugong",
+      "figmaId": "2199:11993",
+      "name": "Dugong",
+      "subtitle": "Dugong dugon",
+      "intro": "Feeding trails have been documented in Sibu–Tinggi seagrass meadows since 2014.",
+      "evidence": "From published sources · not a live sighting",
+      "answers": [
+        {
+          "title": "Where It Lives",
+          "text": "Dugongs graze in shallow seagrass meadows; feeding trails have been recorded around Sibu–Tinggi."
+        },
+        {
+          "title": "Litter Impact",
+          "text": "Marine debris and fishing gear can harm dugongs, but the local record is of feeding, not injury."
+        },
+        {
+          "title": "What You Can Do",
+          "text": "Keep waste out of the sea and report lost gear without approaching a dugong."
+        }
+      ],
+      "sources": [
+        {
+          "label": "Fisheries Malaysia · dugong record",
+          "url": "https://www.dof.gov.my/wp-content/uploads/2024/03/SIARAN-MEDIA_RUMPUT-LAUT-PUPUS-ANCAM-POPULASI-DUGONG-.pdf"
+        },
+        {
+          "label": "WWF Australia · dugong threats",
+          "url": "https://wwf.org.au/what-we-do/species/dugong"
+        }
+      ],
+      "credit": "Photo · Jerome Paillet / IFREMER · CC BY 4.0",
+      "image": "/images/coastal/dugong.jpg",
+      "photoSource": "https://commons.wikimedia.org/wiki/File:Dugong_(Dugong_dugon)_(Ifremer_00617-72913).jpg",
+      "category": "animal"
+    },
+    {
+      "id": "giant-mudskipper",
+      "figmaId": "2201:12429",
+      "name": "Giant Mudskipper",
+      "subtitle": "Periophthalmodon schlosseri",
+      "intro": "Observed hunting fiddler crabs on Kuala Gula mudflats at low tide.",
+      "evidence": "From published sources · not a live sighting",
+      "answers": [
+        {
+          "title": "Where It Lives",
+          "text": "Giant mudskippers live in burrows on estuarine mudflats and emerge at low tide."
+        },
+        {
+          "title": "Litter Impact",
+          "text": "Litter can pollute mudflats, but the sources here do not show litter injury to this species at Kuala Gula."
+        },
+        {
+          "title": "What You Can Do",
+          "text": "Take litter away and avoid trampling the mudflat or burrows."
+        }
+      ],
+      "sources": [
+        {
+          "label": "FishBase · giant mudskipper",
+          "url": "https://www.fishbase.se/FieldGuide/FieldGuideSummary.php?c_code=356&genusname=Periophthalmodon&speciesname=schlosseri"
+        },
+        {
+          "label": "NOAA · shore cleanup",
+          "url": "https://marinedebris.noaa.gov/how-help/shore"
+        }
+      ],
+      "credit": "Photo · Pavel Kirillov · CC BY-SA 2.0",
+      "image": "/images/coastal/periophthalmodon-schlosseri.jpg",
+      "photoSource": "https://commons.wikimedia.org/wiki/File:Giant_mudskipper_Periophthalmodon_schlosseri_(8035170931).jpg",
+      "category": "animal"
+    },
+    {
+      "id": "mangrove-crabs",
+      "figmaId": "2201:12502",
+      "name": "Mangrove Crabs",
+      "subtitle": "Crabs · species vary",
+      "intro": "Crabs are listed in Kilim’s mangrove ecosystem; the guide does not identify one species here.",
+      "evidence": "From published sources · not a live sighting",
+      "answers": [
+        {
+          "title": "Where It Lives",
+          "text": "Different crab species live among mangrove roots and tidal mud in Kilim."
+        },
+        {
+          "title": "Litter Impact",
+          "text": "Crabs in other mangroves have taken in human-made microparticles; no Kilim-specific harm is shown here."
+        },
+        {
+          "title": "What You Can Do",
+          "text": "Remove reachable litter without damaging roots or handling crabs."
+        }
+      ],
+      "sources": [
+        {
+          "label": "Kilim park guide · fauna",
+          "url": "https://kilimgeoforestpark.com/biodiversity/fauna/"
+        },
+        {
+          "label": "Mangrove crab microplastics study",
+          "url": "https://aslopubs.onlinelibrary.wiley.com/doi/10.1002/lol2.10143"
+        }
+      ],
+      "credit": "Tracy Enright, U.S. Geological Survey · Public Domain",
+      "image": "/images/coastal/mangrove-crab-usgs.jpg",
+      "photoSource": "https://www.usgs.gov/media/images/mangrove-crab",
+      "category": "animal"
+    },
+    {
+      "id": "painted-terrapin",
+      "figmaId": "2201:12575",
+      "name": "Painted Terrapin",
+      "subtitle": "Batagur borneoensis",
+      "intro": "Recorded in the Setiu wetland and coastal complex.",
+      "evidence": "From published sources · not a live sighting",
+      "answers": [
+        {
+          "title": "Where It Lives",
+          "text": "Painted terrapins use Setiu’s coastal wetlands and nesting beaches."
+        },
+        {
+          "title": "Litter Impact",
+          "text": "No source here documents a painted terrapin harmed by litter at Setiu."
+        },
+        {
+          "title": "What You Can Do",
+          "text": "Keep nesting shores clean and leave terrapins and nests undisturbed."
+        }
+      ],
+      "sources": [
+        {
+          "label": "WWF-Malaysia · Setiu terrapins",
+          "url": "https://www.wwf.org.my/?11602%2FPEWANIS-Making-a-Difference="
+        },
+        {
+          "label": "PLANMalaysia · Setiu wetlands",
+          "url": "https://myplan.planmalaysia.gov.my/portal-main/publication-log?id=203&type=pdf"
+        }
+      ],
+      "credit": "Photo · Bernard DUPONT · CC BY-SA 2.0",
+      "image": "/images/coastal/batagur-borneoensis.jpg",
+      "photoSource": "https://commons.wikimedia.org/wiki/File:Painted_Terrapin_(Batagur_borneoensis)_(7781281590).jpg",
+      "category": "animal"
+    },
+    {
+      "id": "southern-river-terrapin",
+      "figmaId": "2201:12648",
+      "name": "Southern River Terrapin",
+      "subtitle": "Batagur affinis",
+      "intro": "Recorded in Sungai Setiu and Sungai Chalok.",
+      "evidence": "From published sources · not a live sighting",
+      "answers": [
+        {
+          "title": "Where It Lives",
+          "text": "Southern river terrapins live in large rivers and estuaries and nest on river sandbanks."
+        },
+        {
+          "title": "Litter Impact",
+          "text": "Pollution can damage their habitat, but the cited account does not document litter injury at Setiu."
+        },
+        {
+          "title": "What You Can Do",
+          "text": "Keep riverbanks clean and do not disturb nesting sandbanks."
+        }
+      ],
+      "sources": [
+        {
+          "label": "IUCN TFTSG · Batagur affinis",
+          "url": "https://iucn-tftsg.org/cbftt/species-accounts/batagur-affinis-090/"
+        },
+        {
+          "label": "PLANMalaysia · Setiu wetlands",
+          "url": "https://myplan.planmalaysia.gov.my/portal-main/publication-log?id=203&type=pdf"
+        }
+      ],
+      "credit": "Photo · Mohd Hafiz Noor Shams · CC BY 2.5",
+      "image": "/images/coastal/batagur-affinis.jpg",
+      "photoSource": "https://commons.wikimedia.org/wiki/File:BatagurPasirKumpal.jpg",
+      "category": "animal"
+    },
+    {
+      "id": "estuarine-crocodile",
+      "figmaId": "2201:12721",
+      "name": "Estuarine Crocodile",
+      "subtitle": "Crocodylus porosus",
+      "intro": "Recorded in Kuching Wetlands’ 2005 Ramsar designation information.",
+      "evidence": "From published sources · not a live sighting",
+      "answers": [
+        {
+          "title": "Where It Lives",
+          "text": "Estuarine crocodiles use tidal rivers and mangroves, including Kuching Wetlands."
+        },
+        {
+          "title": "Litter Impact",
+          "text": "Plastic was found in crocodile stomachs elsewhere in Sarawak; this is not a Kuching Wetlands finding."
+        },
+        {
+          "title": "What You Can Do",
+          "text": "Report litter from a safe distance; never enter the water or approach a crocodile to clean up."
+        }
+      ],
+      "sources": [
+        {
+          "label": "Ramsar · Kuching Wetlands",
+          "url": "https://rsis.ramsar.org/ris/1568?language=en"
+        },
+        {
+          "label": "Sarawak crocodile study",
+          "url": "https://ir.unimas.my/id/eprint/51009/"
+        },
+        {
+          "label": "Queensland · crocodile safety",
+          "url": "https://www.qld.gov.au/environment/plants-animals/animals/living-with/crocodiles/becrocwise/be-crocwise-top-tips"
+        }
+      ],
+      "credit": "Photo · Fernando Pérez Peralta · CC0 1.0",
+      "image": "/images/coastal/crocodylus-porosus.jpg",
+      "photoSource": "https://commons.wikimedia.org/wiki/File:Crocodylus_porosus_248308231.jpg",
+      "category": "animal"
+    },
+    {
+      "id": "tube-dwelling-worm",
+      "figmaId": "2201:12794",
+      "name": "Tube-Dwelling Worm",
+      "subtitle": "Diopatra claparedii",
+      "intro": "Collected from Morib mudflat tubes and studied for nervous-system regeneration.",
+      "evidence": "From published sources · not a live sighting",
+      "answers": [
+        {
+          "title": "Where It Lives",
+          "text": "This tube-dwelling worm was sampled in Morib’s intertidal mudflat."
+        },
+        {
+          "title": "Litter Impact",
+          "text": "Related worms can encounter microplastics, but the Morib study did not test this worm for litter effects."
+        },
+        {
+          "title": "What You Can Do",
+          "text": "Keep plastic off mudflats and leave worm tubes undisturbed."
+        }
+      ],
+      "sources": [
+        {
+          "label": "Heliyon · Morib worm study",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7930291/"
+        },
+        {
+          "label": "Related-worm microplastic study",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC8536658/"
+        }
+      ],
+      "credit": "Wibowo et al. (2025), Figure 1 · CC BY-SA 4.0",
+      "image": "/images/coastal/tube-dwelling-worm.jpg",
+      "photoSource": "https://ejournal.undip.ac.id/index.php/ijms/article/view/60038",
+      "category": "animal"
+    },
+    {
+      "id": "bakau-kurap",
+      "figmaId": "2201:12867",
+      "name": "Bakau Kurap",
+      "subtitle": "Rhizophora mucronata",
+      "intro": "The Kilim park guide lists this tree as a dominant mangrove.",
+      "evidence": "From published sources · not a live sighting",
+      "answers": [
+        {
+          "title": "Where It Lives",
+          "text": "Bakau kurap is one of the main mangrove trees in Kilim’s tidal forest."
+        },
+        {
+          "title": "Litter Impact",
+          "text": "Plastic can accumulate in mangroves, but no damage to this tree at Kilim is documented here."
+        },
+        {
+          "title": "What You Can Do",
+          "text": "Keep waste out of mangroves and do not damage the roots."
+        }
+      ],
+      "sources": [
+        {
+          "label": "Kilim park guide · mangrove flora",
+          "url": "https://kilimgeoforestpark.com/biodiversity/mangrove-flora/"
+        },
+        {
+          "label": "UNEP · mangrove litter risk",
+          "url": "https://www.unep.org/news-and-stories/story/coastal-crisis-mangroves-risk"
+        }
+      ],
+      "credit": "Photo · Shagil Kannur · CC BY-SA 3.0",
+      "image": "/images/coastal/rhizophora-mucronata.jpg",
+      "photoSource": "https://commons.wikimedia.org/wiki/File:Rhizophora_mucronata_with_propagule_at_Muzhappilangad.jpg",
+      "category": "plant"
+    },
+    {
+      "id": "nipa-palm",
+      "figmaId": "2201:12940",
+      "name": "Nipa Palm",
+      "subtitle": "Nypa fruticans",
+      "intro": "The Kilim guide lists this palm in scattered swamp-forest stands.",
+      "evidence": "From published sources · not a live sighting",
+      "answers": [
+        {
+          "title": "Where It Lives",
+          "text": "Nipa palms grow in scattered stands in Kilim’s swamp forest."
+        },
+        {
+          "title": "Litter Impact",
+          "text": "Litter threatens mangrove habitats generally, but this source does not show harm to Kilim’s nipa palms."
+        },
+        {
+          "title": "What You Can Do",
+          "text": "Take litter away without cutting or trampling the plants."
+        }
+      ],
+      "sources": [
+        {
+          "label": "Kilim park guide · mangrove flora",
+          "url": "https://kilimgeoforestpark.com/biodiversity/mangrove-flora/"
+        },
+        {
+          "label": "UNEP · mangrove litter risk",
+          "url": "https://www.unep.org/news-and-stories/story/coastal-crisis-mangroves-risk"
+        }
+      ],
+      "credit": "Photo · Scott Edmunds · CC0 1.0",
+      "image": "/images/coastal/nypa-fruticans.jpg",
+      "photoSource": "https://commons.wikimedia.org/wiki/File:Nypa_fruticans_251538575.jpg",
+      "category": "plant"
+    },
+    {
+      "id": "rhizophora-apiculata",
+      "figmaId": "2204:12632",
+      "name": "Rhizophora apiculata",
+      "subtitle": "Mangrove tree",
+      "intro": "The most densely recorded tree in a surveyed Matang forest strip.",
+      "evidence": "From published sources · not a live sighting",
+      "answers": [
+        {
+          "title": "Where It Lives",
+          "text": "This mangrove was the most abundant tree in the studied Matang forest stands."
+        },
+        {
+          "title": "Litter Impact",
+          "text": "Plastic pollution threatens mangrove forests, but no Matang-specific injury to this species is shown."
+        },
+        {
+          "title": "What You Can Do",
+          "text": "Keep rubbish out of tidal channels and protect the roots."
+        }
+      ],
+      "sources": [
+        {
+          "label": "JIRCAS · Matang forest survey",
+          "url": "https://www.jircas.go.jp/en/publication/jarq/34/2/147"
+        },
+        {
+          "label": "UNEP · mangrove litter risk",
+          "url": "https://www.unep.org/news-and-stories/story/coastal-crisis-mangroves-risk"
+        }
+      ],
+      "credit": "Photo · Ariefrahman · CC BY-SA 4.0",
+      "image": "/images/coastal/rhizophora-apiculata.jpg",
+      "photoSource": "https://commons.wikimedia.org/wiki/File:Rhizophora_apiculata_-_Manado.JPG",
+      "category": "plant"
+    },
+    {
+      "id": "bruguiera-parviflora",
+      "figmaId": "2204:12705",
+      "name": "Bruguiera parviflora",
+      "subtitle": "Mangrove tree",
+      "intro": "The second most densely recorded tree in the same Matang survey.",
+      "evidence": "From published sources · not a live sighting",
+      "answers": [
+        {
+          "title": "Where It Lives",
+          "text": "This mangrove was recorded in the studied Matang forest stands."
+        },
+        {
+          "title": "Litter Impact",
+          "text": "Plastic can build up in mangroves, but no Matang-specific injury to this tree is shown."
+        },
+        {
+          "title": "What You Can Do",
+          "text": "Remove accessible rubbish without disturbing young mangroves."
+        }
+      ],
+      "sources": [
+        {
+          "label": "JIRCAS · Matang forest survey",
+          "url": "https://www.jircas.go.jp/en/publication/jarq/34/2/147"
+        },
+        {
+          "label": "UNEP · mangrove litter risk",
+          "url": "https://www.unep.org/news-and-stories/story/coastal-crisis-mangroves-risk"
+        }
+      ],
+      "credit": "Photo · Wibowo Djatmiko (Wie146) · CC BY-SA 3.0",
+      "image": "/images/coastal/bruguiera-parviflora.jpg",
+      "photoSource": "https://commons.wikimedia.org/wiki/File:Brugu_parvi_111021-18698_Fr_kbu.jpg",
+      "category": "plant"
+    },
+    {
+      "id": "enhalus-acoroides",
+      "figmaId": "2204:12778",
+      "name": "Enhalus acoroides",
+      "subtitle": "Seagrass",
+      "intro": "Researchers planted its seedlings at Merambong during habitat recovery.",
+      "evidence": "From published sources · not a live sighting",
+      "answers": [
+        {
+          "title": "Where It Lives",
+          "text": "This seagrass grows in Sungai Pulai estuary and was used in a restoration study."
+        },
+        {
+          "title": "Litter Impact",
+          "text": "Debris occurs in seagrass meadows, but that study did not show litter damage to this species."
+        },
+        {
+          "title": "What You Can Do",
+          "text": "Keep rubbish out of the water and do not trample seagrass."
+        }
+      ],
+      "sources": [
+        {
+          "label": "Frontiers · Sungai Pulai study",
+          "url": "https://www.frontiersin.org/journals/conservation-science/articles/10.3389/fcosc.2025.1646399/full"
+        },
+        {
+          "label": "Seagrass debris survey",
+          "url": "https://jurnal.usk.ac.id/depik/article/view/34027"
+        }
+      ],
+      "credit": "Photo · Christian Gloor · CC BY 2.0",
+      "image": "/images/coastal/enhalus-acoroides.jpg",
+      "photoSource": "https://commons.wikimedia.org/wiki/File:Enhalus_acoroides_(30774220094).jpg",
+      "category": "plant"
+    },
+    {
+      "id": "halophila-ovalis",
+      "figmaId": "2204:12851",
+      "name": "Halophila ovalis",
+      "subtitle": "Seagrass",
+      "intro": "Included as ground cover in Sungai Pulai seagrass recovery plots.",
+      "evidence": "From published sources · not a live sighting",
+      "answers": [
+        {
+          "title": "Where It Lives",
+          "text": "This low-growing seagrass forms cover within Sungai Pulai’s seagrass meadow."
+        },
+        {
+          "title": "Litter Impact",
+          "text": "Debris can collect in seagrass habitat, but no local litter damage to this species is documented here."
+        },
+        {
+          "title": "What You Can Do",
+          "text": "Keep the shallows clean and avoid stepping on seagrass."
+        }
+      ],
+      "sources": [
+        {
+          "label": "Frontiers · Sungai Pulai study",
+          "url": "https://www.frontiersin.org/journals/conservation-science/articles/10.3389/fcosc.2025.1646399/full"
+        },
+        {
+          "label": "Seagrass debris survey",
+          "url": "https://jurnal.usk.ac.id/depik/article/view/34027"
+        }
+      ],
+      "credit": "Photo · Dr Catherine Collier / TropWATER · CC BY 3.0 AU",
+      "image": null,
+      "photoSource": "https://eatlas.org.au/media/4026",
+      "category": "plant"
+    },
+    {
+      "id": "thalassia-hemprichii",
+      "figmaId": "2204:12924",
+      "name": "Thalassia hemprichii",
+      "subtitle": "Seagrass",
+      "intro": "Recorded in seagrass communities across the Sungai Pulai estuary.",
+      "evidence": "From published sources · not a live sighting",
+      "answers": [
+        {
+          "title": "Where It Lives",
+          "text": "This seagrass is recorded in Sungai Pulai estuary’s mixed meadow."
+        },
+        {
+          "title": "Litter Impact",
+          "text": "Seagrass meadows can trap debris, but the local study did not document damage to this species."
+        },
+        {
+          "title": "What You Can Do",
+          "text": "Take waste home and avoid trampling the meadow."
+        }
+      ],
+      "sources": [
+        {
+          "label": "Frontiers · Sungai Pulai study",
+          "url": "https://www.frontiersin.org/journals/conservation-science/articles/10.3389/fcosc.2025.1646399/full"
+        },
+        {
+          "label": "Seagrass debris survey",
+          "url": "https://jurnal.usk.ac.id/depik/article/view/34027"
+        }
+      ],
+      "credit": "Photo · Mudasir Zainuddin · CC BY-SA 4.0",
+      "image": "/images/coastal/thalassia-hemprichii.jpg",
+      "photoSource": "https://commons.wikimedia.org/wiki/File:Thalassia_Hemprichii.jpg",
+      "category": "plant"
+    },
+    {
+      "id": "halodule-pinifolia",
+      "figmaId": "2204:12997",
+      "name": "Halodule pinifolia",
+      "subtitle": "Seagrass",
+      "intro": "The most abundant seagrass in a 2009–2010 Lawas survey.",
+      "evidence": "From published sources · not a live sighting",
+      "answers": [
+        {
+          "title": "Where It Lives",
+          "text": "This seagrass was the most abundant species in the Lawas survey."
+        },
+        {
+          "title": "Litter Impact",
+          "text": "Microplastics were found on this species in Sri Lanka, but Lawas survey did not measure litter effects."
+        },
+        {
+          "title": "What You Can Do",
+          "text": "Keep plastic out of shallow water and avoid trampling seagrass."
+        }
+      ],
+      "sources": [
+        {
+          "label": "Lawas seagrass study",
+          "url": "https://doi.org/10.1155/2013/892746"
+        },
+        {
+          "label": "Halodule microplastics study",
+          "url": "https://www.mdpi.com/2073-4441/17/2/157"
+        }
+      ],
+      "credit": "Photo · Joselito Balbosa Chavez, Jr. · CC BY-NC 4.0",
+      "image": "/images/coastal/halodule-pinifolia.jpg",
+      "photoSource": "https://commons.wikimedia.org/wiki/File:Halodule_pinifolia_(Miki)_Hartog.jpg",
+      "category": "plant"
+    },
+    {
+      "id": "blood-cockle",
+      "figmaId": "2204:13070",
+      "name": "Blood Cockle",
+      "subtitle": "Pantai Remis record · species named in study",
+      "intro": "Pantai Remis samples showed microplastics in a 2024 study.",
+      "evidence": "From published sources · not a live sighting",
+      "answers": [
+        {
+          "title": "Where It Lives",
+          "text": "Blood cockles live in soft tidal mud; samples were studied at Pantai Remis."
+        },
+        {
+          "title": "Litter Impact",
+          "text": "Microplastics were detected in local samples, but effects on those animals were not measured."
+        },
+        {
+          "title": "What You Can Do",
+          "text": "Reduce plastic waste and join safe shore cleanups."
+        }
+      ],
+      "sources": [
+        {
+          "label": "Pantai Remis cockle study",
+          "url": "https://doi.org/10.20473/jkl.v16i4.2024.321-330"
+        },
+        {
+          "label": "JIRCAS · cockle habitat",
+          "url": "https://www.jircas.go.jp/en/publication/research_results/2014_c09"
+        }
+      ],
+      "credit": "Photo · Al Kordesch · CC0 1.0",
+      "image": "/images/coastal/blood-cockle.jpg",
+      "photoSource": "https://commons.wikimedia.org/wiki/File:Tegillarca_granosa_360013509.jpg",
+      "category": "animal"
+    },
+    {
+      "id": "shorebirds",
+      "figmaId": "2204:13143",
+      "name": "Shorebirds",
+      "subtitle": "Bird group · species not identified",
+      "intro": "A local guide records shorebirds at Pantai Redang without naming species.",
+      "evidence": "From published sources · not a live sighting",
+      "answers": [
+        {
+          "title": "Where It Lives",
+          "text": "Shorebirds feed and rest on beaches and tidal flats; a guide lists them at Pantai Redang."
+        },
+        {
+          "title": "Litter Impact",
+          "text": "Litter can harm coastal birds, but these sources identify no injured bird or Redang species."
+        },
+        {
+          "title": "What You Can Do",
+          "text": "Keep the shore litter-free and give resting birds space."
+        }
+      ],
+      "sources": [
+        {
+          "label": "Selangor Travel · Redang Beach",
+          "url": "https://selangor.travel/listing/redang-beach/"
+        },
+        {
+          "label": "NOAA · wildlife entanglement",
+          "url": "https://marinedebris.noaa.gov/why-marine-debris-problem/wildlife-entanglement-and-ghost-fishing"
+        }
+      ],
+      "credit": "Photo · Nepenthes · CC BY-SA 3.0",
+      "image": null,
+      "photoSource": "https://commons.wikimedia.org/wiki/File:Charadrius_alexandrinus.jpg",
+      "category": "animal"
+    },
+    {
+      "id": "macaques",
+      "figmaId": "2204:13216",
+      "name": "Macaques",
+      "subtitle": "Mammal group · species not identified",
+      "intro": "Documented around Monkey Beach; the guide does not identify a species.",
+      "evidence": "From published sources · not a live sighting",
+      "answers": [
+        {
+          "title": "Where It Lives",
+          "text": "Macaques live around the forested coast near Monkey Beach."
+        },
+        {
+          "title": "Litter Impact",
+          "text": "Food litter can attract macaques, but no injury at Monkey Beach is documented here."
+        },
+        {
+          "title": "What You Can Do",
+          "text": "Secure food and rubbish; never feed or touch macaques."
+        }
+      ],
+      "sources": [
+        {
+          "label": "Penang guide · Monkey Beach",
+          "url": "https://mypenang.gov.my/uploads/downloads/SFA_Teluk-Bahang_Eng_V03Aug24.pdf"
+        },
+        {
+          "label": "NParks · macaque guidance",
+          "url": "https://avs.nparks.gov.sg/wildlife/encountering-wildlife/macaques/"
+        }
+      ],
+      "credit": "Photo · Gary Houston · CC0 1.0",
+      "image": "/images/coastal/macaques.jpg",
+      "photoSource": "https://commons.wikimedia.org/wiki/File:Macaca-fascicularis-20070216-019.jpg",
+      "category": "animal"
+    },
+    {
+      "id": "black-sea-cucumber",
+      "figmaId": "2204:13289",
+      "name": "Black Sea Cucumber",
+      "subtitle": "Holothuria leucospilota · linked record",
+      "intro": "Collected at Teluk Nipah in November 2011.",
+      "evidence": "From published sources · not a live sighting",
+      "answers": [
+        {
+          "title": "Where It Lives",
+          "text": "This seafloor invertebrate was collected at Teluk Nipah in November 2011."
+        },
+        {
+          "title": "Litter Impact",
+          "text": "Microplastics affected larvae in an experiment, but pollution was not measured at Teluk Nipah."
+        },
+        {
+          "title": "What You Can Do",
+          "text": "Keep plastic out of water and leave sea cucumbers where they are."
+        }
+      ],
+      "sources": [
+        {
+          "label": "Teluk Nipah original record",
+          "url": "https://irep.iium.edu.my/29832/1/2013_GenBank_KC405565-KC405568_-_Outlook_Web_Access_Light.pdf"
+        },
+        {
+          "label": "Larval microplastics experiment",
+          "url": "https://www.sciencedirect.com/science/article/pii/S277273512400101X"
+        }
+      ],
+      "credit": "Photo · Philippe Bourjon · CC BY-SA 3.0",
+      "image": "/images/coastal/black-long-sea-cucumber.jpg",
+      "photoSource": "https://commons.wikimedia.org/wiki/File:Holothuria_leucospilota_R%C3%A9union_2.jpg",
+      "category": "animal"
+    },
+    {
+      "id": "sea-cucumber",
+      "figmaId": "2204:13362",
+      "name": "Sea Cucumber",
+      "subtitle": "Stichopus horrens · linked Pangkor record",
+      "intro": "Collected at Pangkor Laut in 2011, not specifically Emerald Bay.",
+      "evidence": "From published sources · not a live sighting",
+      "answers": [
+        {
+          "title": "Where It Lives",
+          "text": "This sea cucumber was collected at Pangkor Laut, not specifically Emerald Bay."
+        },
+        {
+          "title": "Litter Impact",
+          "text": "A later study found microplastics in this species around Pulau Pangkor, not in the 2011 individual."
+        },
+        {
+          "title": "What You Can Do",
+          "text": "Keep litter out of coastal water and do not remove sea cucumbers."
+        }
+      ],
+      "sources": [
+        {
+          "label": "Pangkor Laut original record",
+          "url": "https://irep.iium.edu.my/29832/1/2013_GenBank_KC405565-KC405568_-_Outlook_Web_Access_Light.pdf"
+        },
+        {
+          "label": "Pangkor sea-cucumber study",
+          "url": "https://pubmed.ncbi.nlm.nih.gov/34181157/"
+        }
+      ],
+      "credit": "Photo · Cricket Raspet · CC BY 4.0",
+      "image": "/images/coastal/sea-cucumber.jpg",
+      "photoSource": "https://commons.wikimedia.org/wiki/File:Stichopus_horrens_265884830.jpg",
+      "category": "animal"
+    },
+    {
+      "id": "hawksbill-turtle",
+      "figmaId": "2204:13435",
+      "name": "Hawksbill Turtle",
+      "subtitle": "Eretmochelys imbricata",
+      "intro": "Nesting records exist at Malaysian coastal sites; the record is not a current sighting.",
+      "evidence": "From published sources · not a live sighting",
+      "answers": [
+        {
+          "title": "Where It Lives",
+          "text": "Hawksbills use coral reefs and nest on sandy coasts, including Malaysian sites."
+        },
+        {
+          "title": "Litter Impact",
+          "text": "Plastic and lost gear can harm hawksbills, but these records show no locally injured turtle."
+        },
+        {
+          "title": "What You Can Do",
+          "text": "Keep nesting beaches clear of litter and do not disturb turtles or nests."
+        }
+      ],
+      "sources": [
+        {
+          "label": "NOAA Fisheries · hawksbill turtle",
+          "url": "https://www.fisheries.noaa.gov/species/hawksbill-turtle"
+        },
+        {
+          "label": "Malaysian nesting record",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC13127984/"
+        }
+      ],
+      "credit": "Photo · Profmauri · CC BY-SA 3.0",
+      "image": "/images/coastal/hawksbill-turtle.jpg",
+      "photoSource": "https://commons.wikimedia.org/wiki/File:Hawksbill_turtle_on_Pom_Pom_Island.jpg",
+      "category": "animal"
+    },
+    {
+      "id": "faunus-snail",
+      "figmaId": "2204:13508",
+      "name": "Faunus Snail",
+      "subtitle": "Faunus ater",
+      "intro": "Collected at Pantai Bisikan Bayu in a 2007 study.",
+      "evidence": "From published sources · not a live sighting",
+      "answers": [
+        {
+          "title": "Where It Lives",
+          "text": "This brackish-water snail was collected at Pantai Bisikan Bayu in 2007."
+        },
+        {
+          "title": "Litter Impact",
+          "text": "That study measured heavy metals, not plastic litter; no local litter effect is documented."
+        },
+        {
+          "title": "What You Can Do",
+          "text": "Keep rubbish off tidal mud and leave living snails undisturbed."
+        }
+      ],
+      "sources": [
+        {
+          "label": "Faunus original record",
+          "url": "https://www.jelsciences.com/articles/jbres1581.php"
+        },
+        {
+          "label": "NOAA · shore cleanup",
+          "url": "https://marinedebris.noaa.gov/how-help/shore"
+        }
+      ],
+      "credit": "Photo · H. Zell · CC BY-SA 3.0",
+      "image": "/images/coastal/black-faunus-snail.jpg",
+      "photoSource": "https://commons.wikimedia.org/wiki/File:Faunus_ater_01.JPG",
+      "category": "animal"
+    },
+    {
+      "id": "horseshoe-crab",
+      "figmaId": "2204:13581",
+      "name": "Horseshoe Crab",
+      "subtitle": "Balok spawning record · species named in study",
+      "intro": "Spawning was recorded at Pantai Balok during 2009–2013.",
+      "evidence": "From published sources · not a live sighting",
+      "answers": [
+        {
+          "title": "Where It Lives",
+          "text": "Horseshoe crabs spawn on the sandy shore at Balok."
+        },
+        {
+          "title": "Litter Impact",
+          "text": "A local study reported crabs tangled in crab nets but did not say the nets were abandoned."
+        },
+        {
+          "title": "What You Can Do",
+          "text": "Report lost nets and keep spawning sand clear without handling crabs."
+        }
+      ],
+      "sources": [
+        {
+          "label": "Balok spawning study",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC4957986/"
+        },
+        {
+          "label": "Horseshoe crab net study",
+          "url": "https://www.longdom.org/open-access/trailing-the-spawning-horseshoe-crab-tachypleus-gigas-m252ller-1785-at-designated-natal-beaches-on-the-east-coast-of-pen-13922.html"
+        }
+      ],
+      "credit": "Photo · Doreen · CC BY 4.0",
+      "image": "/images/coastal/horseshoe-crab.jpg",
+      "photoSource": "https://commons.wikimedia.org/wiki/File:Tachypleus_gigas_214513978_(cropped).jpg",
+      "category": "animal"
+    },
+    {
+      "id": "clownfish",
+      "figmaId": "2212:13960",
+      "name": "Clownfish",
+      "subtitle": "Organism group · species not identified",
+      "intro": "Clownfish shelter among sea anemones. This card does not identify a species.",
+      "evidence": "From published sources · not a live sighting",
+      "answers": [
+        {
+          "title": "Where It Lives",
+          "text": "Clownfish live with host anemones in shallow reef habitats. This card does not establish a local species record."
+        },
+        {
+          "title": "Litter Impact",
+          "text": "Marine debris can damage reef habitat, but no injured clownfish is documented at this location."
+        },
+        {
+          "title": "What You Can Do",
+          "text": "Keep litter out of the sea and do not touch anemones or reefs."
+        }
+      ],
+      "sources": [
+        {
+          "label": "FishBase · clownfish",
+          "url": "https://www.fishbase.se/FieldGuide/FieldGuideSummary.php?c_code=704&genusname=Amphiprion&speciesname=ocellaris"
+        },
+        {
+          "label": "NOAA · habitat damage",
+          "url": "https://marinedebris.noaa.gov/why-marine-debris-problem/habitat-damage"
+        }
+      ],
+      "credit": "Photo · Ocellaris clownfish · Zoltán Stekkelpak · CC0 1.0",
+      "image": "/images/coastal/ocellaris-clownfish.jpg",
+      "photoSource": "https://commons.wikimedia.org/wiki/File:Amphiprion_ocellaris_354353067.jpg",
+      "category": "animal"
+    },
+    {
+      "id": "corals",
+      "figmaId": "2212:14035",
+      "name": "Corals",
+      "subtitle": "Organism group · species not identified",
+      "intro": "Corals are animals. Many reef-building kinds create shelter for marine life.",
+      "evidence": "From published sources · not a live sighting",
+      "answers": [
+        {
+          "title": "Where It Lives",
+          "text": "Corals live in marine reef habitats. This card does not identify a coral species or a beach survey."
+        },
+        {
+          "title": "Litter Impact",
+          "text": "Nets and other debris can smother, scrape, or break corals; no local damage is documented by this card."
+        },
+        {
+          "title": "What You Can Do",
+          "text": "Never stand on coral. Report large tangled gear rather than pulling it off yourself."
+        }
+      ],
+      "sources": [
+        {
+          "label": "NOAA · what are corals?",
+          "url": "https://oceanservice.noaa.gov/education/tutorial_corals/coral01_intro.html"
+        },
+        {
+          "label": "NOAA · debris and coral damage",
+          "url": "https://oceanservice.noaa.gov/education/tutorial_corals/coral12_other_threats.html"
+        },
+        {
+          "label": "Malaysia Travel Guide · Pulau Kapas photo",
+          "url": "https://ebrochures.malaysia.travel/en/malaysia-travel-guide/terengganu/"
+        }
+      ],
+      "credit": "Photo · Existing Pulau Kapas card · source below",
+      "image": "/images/coastal/coral-reef.jpg",
+      "photoSource": "https://commons.wikimedia.org/wiki/File:Underwater_photo_of_coral_reef.jpg",
+      "category": "animal"
+    },
+    {
+      "id": "seagrass",
+      "figmaId": "2212:14110",
+      "name": "Seagrass",
+      "subtitle": "Organism group · species not identified",
+      "intro": "Seagrasses are rooted, flowering marine plants that form underwater meadows.",
+      "evidence": "From published sources · not a live sighting",
+      "answers": [
+        {
+          "title": "Where It Lives",
+          "text": "Seagrasses grow on the seabed in shallow coastal waters. This card does not identify a species."
+        },
+        {
+          "title": "Litter Impact",
+          "text": "Lost gear can shade, scrape, or crush seagrass, but this card does not document local damage."
+        },
+        {
+          "title": "What You Can Do",
+          "text": "Keep waste out of the water and avoid walking on seagrass beds."
+        }
+      ],
+      "sources": [
+        {
+          "label": "NOAA · seagrass meadows",
+          "url": "https://sanctuaries.noaa.gov/visit/ecosystems/seagrass.html"
+        },
+        {
+          "label": "NOAA · debris habitat damage",
+          "url": "https://marinedebris.noaa.gov/why-marine-debris-problem/habitat-damage"
+        }
+      ],
+      "credit": "Photo · Enhalus acoroides · Christian Gloor · CC BY 2.0",
+      "image": "/images/coastal/seagrass-illustration.jpg",
+      "photoSource": "https://commons.wikimedia.org/wiki/File:Sanc0209_-_Flickr_-_NOAA_Photo_Library.jpg",
+      "category": "plant"
+    },
+    {
+      "id": "mangroves",
+      "figmaId": "2212:14185",
+      "name": "Mangroves",
+      "subtitle": "Organism group · species not identified",
+      "intro": "Mangroves are coastal plants that form tidal forests and support wildlife.",
+      "evidence": "From published sources · not a live sighting",
+      "answers": [
+        {
+          "title": "Where It Lives",
+          "text": "They grow along sheltered tidal coasts and estuaries. This card does not identify a species."
+        },
+        {
+          "title": "Litter Impact",
+          "text": "Plastic can collect in mangroves and harm the ecosystem; no local tree injury is recorded here."
+        },
+        {
+          "title": "What You Can Do",
+          "text": "Take litter away without damaging roots or seedlings."
+        }
+      ],
+      "sources": [
+        {
+          "label": "UNEP · mangroves at risk",
+          "url": "https://www.unep.org/news-and-stories/story/coastal-crisis-mangroves-risk"
+        },
+        {
+          "label": "Kilim · mangrove flora",
+          "url": "https://kilimgeoforestpark.com/biodiversity/mangrove-flora/"
+        }
+      ],
+      "credit": "Photo · Bakau kurap mangrove · Shagil Kannur · CC BY-SA 3.0",
+      "image": "/images/coastal/rhizophora-mucronata.jpg",
+      "photoSource": "https://commons.wikimedia.org/wiki/File:Rhizophora_mucronata_with_propagule_at_Muzhappilangad.jpg",
+      "category": "plant"
+    },
+    {
+      "id": "sea-turtles",
+      "figmaId": "2212:14260",
+      "name": "Sea Turtles",
+      "subtitle": "Organism group · species not identified",
+      "intro": "Sea turtles use marine waters and return to land to nest. This card does not name a species.",
+      "evidence": "From published sources · not a live sighting",
+      "answers": [
+        {
+          "title": "Where It Lives",
+          "text": "Sea turtles live at sea, and females nest on beaches. Exact habitats vary by species."
+        },
+        {
+          "title": "Litter Impact",
+          "text": "Sea turtles can ingest debris; no local injured turtle is shown on this card."
+        },
+        {
+          "title": "What You Can Do",
+          "text": "Take beach litter home and observe turtles and nests from a distance."
+        }
+      ],
+      "sources": [
+        {
+          "label": "NOAA · debris ingestion",
+          "url": "https://marinedebris.noaa.gov/why-marine-debris-problem/ingestion"
+        },
+        {
+          "label": "NOAA · marine-life viewing",
+          "url": "https://www.fisheries.noaa.gov/topic/marine-life-viewing-guidelines"
+        }
+      ],
+      "credit": "Photo · Green sea turtle · Christoph Schuetzenhofer · CC BY-SA 3.0",
+      "image": "/images/coastal/green-turtle.jpg",
+      "photoSource": "https://commons.wikimedia.org/wiki/File:Chelonia_mydas_2005-06-11_Andaman_sea.jpg",
+      "category": "animal"
+    },
+    {
+      "id": "grubeulepis-malayensis",
+      "figmaId": "2213:14237",
+      "name": "Grubeulepis malayensis",
+      "subtitle": "Morib scaleworm · historical local record",
+      "intro": "A small scaleworm first described from specimens collected at Morib Beach.",
+      "evidence": "From published sources · not a live sighting",
+      "answers": [
+        {
+          "title": "Where It Lives",
+          "text": "It was found in empty tubes made by another worm on Morib’s sandy shore; a wider range is not established here."
+        },
+        {
+          "title": "Litter Impact",
+          "text": "The Morib study did not test how plastic litter affects this species."
+        },
+        {
+          "title": "What You Can Do",
+          "text": "Keep the shore clean and leave worm tubes undisturbed."
+        }
+      ],
+      "sources": [
+        {
+          "label": "Original Morib species study",
+          "url": "https://doi.org/10.12782/specdiv.6.1"
+        }
+      ],
+      "credit": "Photo · no verified image available",
+      "image": null,
+      "photoSource": null,
+      "category": "animal"
+    },
+    {
+      "id": "thalassina-kelanang",
+      "figmaId": "2213:14312",
+      "name": "Thalassina kelanang",
+      "subtitle": "Mud lobster · historical local record",
+      "intro": "A mud lobster species described from Kelanang Beach.",
+      "evidence": "From published sources · not a live sighting",
+      "answers": [
+        {
+          "title": "Where It Lives",
+          "text": "Researchers collected it from burrow mounds inside or near Kelanang’s mangrove fringe in 2006–2007."
+        },
+        {
+          "title": "Litter Impact",
+          "text": "The species description did not measure litter exposure or harm; its collection net is not evidence of discarded gear."
+        },
+        {
+          "title": "What You Can Do",
+          "text": "Keep litter off mangrove mud and avoid disturbing burrow mounds."
+        }
+      ],
+      "sources": [
+        {
+          "label": "Original Kelanang species study",
+          "url": "https://lkcnhm.nus.edu.sg/app/uploads/2017/06/57rbz465-473.pdf"
+        }
+      ],
+      "credit": "Photo · no verified image available",
+      "image": null,
+      "photoSource": null,
+      "category": "animal"
+    },
+    {
+      "id": "indo-pacific-finless-porpoise",
+      "figmaId": "2213:14387",
+      "name": "Indo-Pacific Finless Porpoise",
+      "subtitle": "Neophocaena phocaenoides · regional record",
+      "intro": "A small coastal porpoise recorded in Kuching Bay surveys, without a documented Damai Beach sighting.",
+      "evidence": "From published sources · not a live sighting",
+      "answers": [
+        {
+          "title": "Where It Lives",
+          "text": "The linked survey recorded this species in Kuching Bay’s coastal waters during 2010–2011."
+        },
+        {
+          "title": "Litter Impact",
+          "text": "Fishing gear ingestion was documented elsewhere, but the Kuching Bay survey reports no local litter injury."
+        },
+        {
+          "title": "What You Can Do",
+          "text": "Report lost gear and watch porpoises from a distance."
+        }
+      ],
+      "sources": [
+        {
+          "label": "Kuching Bay survey",
+          "url": "https://ir.unimas.my/id/eprint/6588/1/Gianna.pdf"
+        },
+        {
+          "label": "Finless porpoise gear study",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC11129503/"
+        },
+        {
+          "label": "Wikimedia Commons · porpoise photo",
+          "url": "https://commons.wikimedia.org/wiki/File:Finless_Porpoise.JPG"
+        }
+      ],
+      "credit": "Photo · Cipher01 · CC BY-SA 3.0 · Japan aquarium · cropped",
+      "image": null,
+      "photoSource": null,
+      "category": "animal"
+    },
+    {
+      "id": "syringodium-isoetifolium",
+      "figmaId": "2213:14463",
+      "name": "Syringodium isoetifolium",
+      "subtitle": "Seagrass · Teluk Kemang record",
+      "intro": "A seagrass recorded at Teluk Kemang in a Port Dickson survey.",
+      "evidence": "From published sources · not a live sighting",
+      "answers": [
+        {
+          "title": "Where It Lives",
+          "text": "It grows in shallow coastal water; the surveyed Teluk Kemang site was a rocky intertidal shore."
+        },
+        {
+          "title": "Litter Impact",
+          "text": "Derelict gear can damage seagrass beds, but the survey did not measure damage to this species there."
+        },
+        {
+          "title": "What You Can Do",
+          "text": "Keep waste out of the water and avoid trampling seagrass."
+        }
+      ],
+      "sources": [
+        {
+          "label": "Port Dickson seagrass survey abstract",
+          "url": "https://irep.iium.edu.my/97098/7/97098_%20Abundance%20and%20size%20composition%20of%20the%20billfishes.pdf"
+        },
+        {
+          "label": "NOAA · seagrass habitat damage",
+          "url": "https://marinedebris.noaa.gov/why-marine-debris-problem/habitat-damage"
+        },
+        {
+          "label": "Wikimedia Commons · Syringodium photo",
+          "url": "https://commons.wikimedia.org/wiki/File:Syringodium_isoetifolium_ployant_sous_la_houle.jpg"
+        }
+      ],
+      "credit": "Photo · Philippe Bourjon · CC BY-SA 3.0 · cropped",
+      "image": null,
+      "photoSource": null,
+      "category": "plant"
+    },
+    {
+      "id": "rhizophora-stylosa",
+      "figmaId": "2213:14539",
+      "name": "Rhizophora stylosa",
+      "subtitle": "Mangrove tree · Bagan Lalang record",
+      "intro": "A mangrove tree documented on Bagan Lalang’s seafront in March 2012.",
+      "evidence": "From published sources · not a live sighting",
+      "answers": [
+        {
+          "title": "Where It Lives",
+          "text": "Researchers found scattered trees on seafront sand flats and in mixed stands farther inland."
+        },
+        {
+          "title": "Litter Impact",
+          "text": "Plastic threatens mangrove habitats, but the survey did not document litter injury to these trees."
+        },
+        {
+          "title": "What You Can Do",
+          "text": "Keep rubbish out of mangroves without damaging roots or seedlings."
+        }
+      ],
+      "sources": [
+        {
+          "label": "Bagan Lalang field survey",
+          "url": "https://glomis.com/ej/pdf/EJ_10-2.pdf"
+        },
+        {
+          "label": "UNEP · mangroves at risk",
+          "url": "https://www.unep.org/news-and-stories/story/coastal-crisis-mangroves-risk"
+        },
+        {
+          "label": "Wikimedia Commons · Rhizophora photo",
+          "url": "https://commons.wikimedia.org/wiki/File:Rhizophora_stylosa.jpg"
+        }
+      ],
+      "credit": "Photo · CRCHF · CC BY-SA 3.0 · cropped",
+      "image": null,
+      "photoSource": null,
+      "category": "plant"
+    },
+    {
+      "id": "coastal-shellfish",
+      "figmaId": "2214:14587",
+      "name": "Coastal Shellfish",
+      "subtitle": "Blood cockles & clams · group record",
+      "intro": "A Pantai Remis study examined blood cockles and other coastal clams; this card covers several shellfish.",
+      "evidence": "From published sources · not a live sighting",
+      "answers": [
+        {
+          "title": "Where It Lives",
+          "text": "These shellfish live in coastal sediments. The study sampled them at Pantai Remis, Jeram; exact habitats differ by species."
+        },
+        {
+          "title": "Litter Impact",
+          "text": "Microplastics were detected in the local samples, but the study did not measure harm to those animals."
+        },
+        {
+          "title": "What You Can Do",
+          "text": "Reduce plastic waste and join safe shore cleanups."
+        }
+      ],
+      "sources": [
+        {
+          "label": "Pantai Remis shellfish study",
+          "url": "https://doi.org/10.20473/jkl.v16i4.2024.321-330"
+        },
+        {
+          "label": "JIRCAS · cockle habitat",
+          "url": "https://www.jircas.go.jp/en/publication/research_results/2014_c09"
+        }
+      ],
+      "credit": "Photo · Blood cockle · Al Kordesch · CC0 1.0",
+      "image": "/images/coastal/blood-cockle.jpg",
+      "photoSource": "https://commons.wikimedia.org/wiki/File:Tegillarca_granosa_360013509.jpg",
+      "category": "animal"
+    },
+    {
+      "id": "irrawaddy-dolphin",
+      "figmaId": "1314:55",
+      "name": "Irrawaddy Dolphin",
+      "subtitle": "Lumba-lumba Irrawaddy · Orcaella brevirostris",
+      "intro": "A round head and no beak. Lives close to shore.",
+      "evidence": "Published evidence · not a local sighting",
+      "answers": [
+        {
+          "title": "Where It Lives",
+          "text": "Irrawaddy dolphins use shallow coastal waters and river mouths."
+        },
+        {
+          "title": "Litter Impact",
+          "text": "Entanglement in fishing nets is documented; no local injured dolphin is shown, and active nets are not necessarily litter."
+        },
+        {
+          "title": "What You Can Do",
+          "text": "Report lost nets and watch dolphins from a distance."
+        }
+      ],
+      "sources": [
+        {
+          "label": "IUCN · dolphin threats",
+          "url": "https://iucn.org/news/species/201712/unsustainable-food-systems-threaten-wild-crop-and-dolphin-species-%E2%80%93-iucn-red-list"
+        },
+        {
+          "label": "NOAA · marine-life viewing",
+          "url": "https://www.fisheries.noaa.gov/topic/marine-life-viewing-guidelines"
+        }
+      ],
+      "credit": "Photo · Dan Koehl · CC BY 3.0",
+      "image": "/species/irrawaddy-dolphin.jpg",
+      "photoSource": "https://commons.wikimedia.org/wiki/File:DKoehl_Irrawaddi_Dolphin_jumping.jpg",
+      "category": "animal"
+    },
+    {
+      "id": "moorish-idol",
+      "figmaId": "1314:163",
+      "name": "Moorish Idol",
+      "subtitle": "Zanclus cornutus",
+      "intro": "Long white fin and bold black bands. Grazes on reef sponges.",
+      "evidence": "Published evidence · not a local sighting",
+      "answers": [
+        {
+          "title": "Where It Lives",
+          "text": "Moorish idols inhabit lagoons, reef flats, and rocky or coral reefs."
+        },
+        {
+          "title": "Litter Impact",
+          "text": "Marine litter can harm reef habitats, but no species-specific or local injury record is shown here."
+        },
+        {
+          "title": "What You Can Do",
+          "text": "Take your litter away and do not step on coral."
+        }
+      ],
+      "sources": [
+        {
+          "label": "FishBase · Zanclus cornutus",
+          "url": "https://www.fishbase.se/Fieldguide/FieldGuideSummary.php?c_code=392&genusname=Zanclus&speciesname=cornutus"
+        },
+        {
+          "label": "UNEP · marine litter assessment",
+          "url": "https://www.unep.org/resources/pollution-solution-global-assessment-marine-litter-and-plastic-pollution"
+        }
+      ],
+      "credit": "Photo · Diego Delso · CC BY-SA 4.0",
+      "image": "/species/moorish-idol.jpg",
+      "photoSource": null,
+      "category": "animal"
+    },
+    {
+      "id": "ocellaris-clownfish",
+      "figmaId": "1314:376",
+      "name": "Ocellaris Clownfish",
+      "subtitle": "Ikan badut · Amphiprion ocellaris",
+      "intro": "Shelters in sea anemones and rarely strays far from them.",
+      "evidence": "Published evidence · not a local sighting",
+      "answers": [
+        {
+          "title": "Where It Lives",
+          "text": "Ocellaris clownfish live among sea anemones on shallow coral reefs."
+        },
+        {
+          "title": "Litter Impact",
+          "text": "Lab-reared juveniles ingested microplastics, but this does not show harm at this reef."
+        },
+        {
+          "title": "What You Can Do",
+          "text": "Keep plastic out of the sea and avoid touching anemones or corals."
+        }
+      ],
+      "sources": [
+        {
+          "label": "FishBase · Amphiprion ocellaris",
+          "url": "https://www.fishbase.se/FieldGuide/FieldGuideSummary.php?c_code=704&genusname=Amphiprion&speciesname=ocellaris"
+        },
+        {
+          "label": "Clownfish microplastics experiment",
+          "url": "https://www.sciencedirect.com/science/article/pii/S0269749119361688"
+        }
+      ],
+      "credit": "Photo · Zoltán Stekkelpak · CC0 1.0",
+      "image": "/species/ocellaris-clownfish.jpg",
+      "photoSource": "https://commons.wikimedia.org/wiki/File:Amphiprion_ocellaris_354353067.jpg",
+      "category": "animal"
+    }
+  ],
+  "beaches": [
+    {
+      "id": "pantai-batu-laut",
+      "figmaId": "2010:469",
+      "name": "Pantai Batu Laut",
+      "area": "Kuala Langat, Selangor",
+      "region": "selangor",
+      "severity": "Moderate",
+      "validReports": 5,
+      "reported": "Reported 37 days ago",
+      "image": "/images/coastal/pantai-batu-laut.jpg",
+      "photoSource": "https://commons.wikimedia.org/wiki/File:Pantai_Batu_Laut_(230617).jpg",
+      "credit": "Photo · *angys* · CC BY-SA 4.0 · cropped",
+      "species": [
+        "blood-cockle"
+      ],
+      "habitat": null
+    },
+    {
+      "id": "pantai-redang",
+      "figmaId": "2010:556",
+      "name": "Pantai Redang",
+      "area": "Sekinchan, Selangor",
+      "region": "selangor",
+      "severity": "High",
+      "validReports": 7,
+      "reported": "Reported 4 days ago",
+      "image": "/images/coastal/pantai-redang.jpg",
+      "photoSource": "https://commons.wikimedia.org/wiki/File:Sekinchan_Old_Jetty_and_Fishing_Village.jpg",
+      "credit": "Photo · Fikku fiq · CC0 · cropped",
+      "species": [
+        "shorebirds",
+        "blood-cockle"
+      ],
+      "habitat": null
+    },
+    {
+      "id": "pantai-sungai-kajang-baru",
+      "figmaId": "2010:648",
+      "name": "Pantai Sungai Kajang Baru",
+      "area": "Tanjung Karang, Selangor",
+      "region": "selangor",
+      "severity": null,
+      "validReports": 0,
+      "reported": "Not recently reported",
+      "image": "/images/coastal/pantai-sungai-kajang-baru.jpg",
+      "photoSource": "https://commons.wikimedia.org/wiki/File:Sungai_Kajang_Baru_Beach_(230316)_01.jpg",
+      "credit": "Photo · *angys* · CC BY-SA 4.0 · cropped",
+      "species": [
+        "blood-cockle"
+      ],
+      "habitat": null
+    },
+    {
+      "id": "pantai-acheh",
+      "figmaId": "2010:735",
+      "name": "Pantai Acheh",
+      "area": "Pulau Indah, Selangor",
+      "region": "selangor",
+      "severity": "High",
+      "validReports": 7,
+      "reported": "Reported 2 days ago",
+      "image": null,
+      "photoSource": null,
+      "credit": "",
+      "species": [
+        "blood-cockle"
+      ],
+      "habitat": null
+    },
+    {
+      "id": "pantai-bagan-nakhoda-omar",
+      "figmaId": "2010:822",
+      "name": "Pantai Bagan Nakhoda Omar",
+      "area": "Sabak Bernam, Selangor",
+      "region": "selangor",
+      "severity": "High",
+      "validReports": 5,
+      "reported": "Reported 9 days ago",
+      "image": "/images/coastal/pantai-bagan-nakhoda-omar.jpg",
+      "photoSource": "https://commons.wikimedia.org/wiki/File:Playa_de_Bagan_Nakhoda_Omar.JPG",
+      "credit": "Photo · Khairi Ahmad · CC BY-SA 4.0 · cropped",
+      "species": [
+        "blood-cockle"
+      ],
+      "habitat": null
+    },
+    {
+      "id": "pantai-tanjung-rhu-pulau-carey",
+      "figmaId": "2011:479",
+      "name": "Pantai Tanjung Rhu, Pulau Carey",
+      "area": "Pulau Carey, Selangor",
+      "region": "selangor",
+      "severity": "Moderate",
+      "validReports": 5,
+      "reported": "Reported 6 days ago",
+      "image": null,
+      "photoSource": null,
+      "credit": "",
+      "species": [
+        "blood-cockle"
+      ],
+      "habitat": null
+    },
+    {
+      "id": "pantai-batu-23",
+      "figmaId": "2011:571",
+      "name": "Pantai Batu 23",
+      "area": "Sungai Nibong, Selangor",
+      "region": "selangor",
+      "severity": "High",
+      "validReports": 7,
+      "reported": "Reported 26 days ago",
+      "image": null,
+      "photoSource": null,
+      "credit": "",
+      "species": [
+        "blood-cockle"
+      ],
+      "habitat": null
+    },
+    {
+      "id": "pantai-sungai-lang",
+      "figmaId": "2011:658",
+      "name": "Pantai Sungai Lang",
+      "area": "Sabak Bernam, Selangor",
+      "region": "selangor",
+      "severity": null,
+      "validReports": 0,
+      "reported": "Not recently reported",
+      "image": null,
+      "photoSource": null,
+      "credit": "",
+      "species": [
+        "blood-cockle"
+      ],
+      "habitat": null
+    },
+    {
+      "id": "pantai-sungai-burung",
+      "figmaId": "2011:745",
+      "name": "Pantai Sungai Burung",
+      "area": "Bagan Sungai Burung, Selangor",
+      "region": "selangor",
+      "severity": "High",
+      "validReports": 8,
+      "reported": "Reported 37 days ago",
+      "image": null,
+      "photoSource": null,
+      "credit": "",
+      "species": [
+        "blood-cockle"
+      ],
+      "habitat": null
+    },
+    {
+      "id": "pantai-sungai-haji-dorani",
+      "figmaId": "2011:837",
+      "name": "Pantai Sungai Haji Dorani",
+      "area": "Sabak Bernam, Selangor",
+      "region": "selangor",
+      "severity": "High",
+      "validReports": 9,
+      "reported": "Reported 19 days ago",
+      "image": null,
+      "photoSource": null,
+      "credit": "",
+      "species": [
+        "blood-cockle"
+      ],
+      "habitat": null
+    },
+    {
+      "id": "pantai-kok",
+      "figmaId": "2011:929",
+      "name": "Pantai Kok",
+      "area": "Langkawi, Kedah",
+      "region": "north",
+      "severity": "High",
+      "validReports": 9,
+      "reported": "Reported 40 days ago",
+      "image": "/images/coastal/pantai-kok.jpg",
+      "photoSource": "https://commons.wikimedia.org/wiki/File:Langkawi_beach.jpg",
+      "credit": "Photo · Anton Zelenov · CC BY-SA 3.0 · cropped",
+      "species": [
+        "mangrove-crabs"
+      ],
+      "habitat": null
+    },
+    {
+      "id": "pantai-teluk-datai",
+      "figmaId": "2011:1021",
+      "name": "Pantai Teluk Datai",
+      "area": "Langkawi, Kedah",
+      "region": "north",
+      "severity": null,
+      "validReports": 2,
+      "reported": "Not recently reported",
+      "image": "/images/coastal/pantai-teluk-datai.jpg",
+      "photoSource": "https://commons.wikimedia.org/wiki/File:Teluk_Datai_-_panoramio.jpg",
+      "credit": "Photo · alhafis · CC BY 3.0 · cropped",
+      "species": [
+        "mangrove-crabs"
+      ],
+      "habitat": null
+    },
+    {
+      "id": "pantai-tanjung-rhu",
+      "figmaId": "2011:1113",
+      "name": "Pantai Tanjung Rhu",
+      "area": "Langkawi, Kedah",
+      "region": "north",
+      "severity": "Moderate",
+      "validReports": 3,
+      "reported": "Reported 13 days ago",
+      "image": "/images/coastal/pantai-tanjung-rhu.jpg",
+      "photoSource": "https://commons.wikimedia.org/wiki/File:Tanjung_Rhu_Beach.jpg",
+      "credit": "Photo · Tim Parkinson · CC BY 2.0 · cropped",
+      "species": [
+        "mangrove-crabs"
+      ],
+      "habitat": null
+    },
+    {
+      "id": "pantai-pasir-hitam",
+      "figmaId": "2011:1205",
+      "name": "Pantai Pasir Hitam",
+      "area": "Langkawi, Kedah",
+      "region": "north",
+      "severity": "High",
+      "validReports": 6,
+      "reported": "Reported 11 days ago",
+      "image": "/images/coastal/pantai-pasir-hitam.jpg",
+      "photoSource": "https://commons.wikimedia.org/wiki/File:Black_Sand_Beach_Langkawi._(50820020372).jpg",
+      "credit": "Photo · Bernard Spragg. NZ  from Christchurch, New Zealand · CC0 · cropped",
+      "species": [
+        "mangrove-crabs"
+      ],
+      "habitat": null
+    },
+    {
+      "id": "pantai-pasir-tengkorak",
+      "figmaId": "2011:1297",
+      "name": "Pantai Pasir Tengkorak",
+      "area": "Langkawi, Kedah",
+      "region": "north",
+      "severity": null,
+      "validReports": 0,
+      "reported": "Not recently reported",
+      "image": null,
+      "photoSource": "https://naturallylangkawi.my/portfolio/pantai-pasir-tengkorak/",
+      "credit": "Langkawi Development Authority (Naturally Langkawi) · Source website · rights not specified · cropped",
+      "species": [
+        "mangrove-crabs"
+      ],
+      "habitat": "Rocky shore"
+    },
+    {
+      "id": "pantai-merdeka",
+      "figmaId": "2011:1476",
+      "name": "Pantai Merdeka",
+      "area": "Kuala Muda, Kedah",
+      "region": "north",
+      "severity": "Severe",
+      "validReports": 13,
+      "reported": "Reported 2 days ago",
+      "image": "/images/coastal/pantai-merdeka.jpg",
+      "photoSource": "https://commons.wikimedia.org/wiki/File:Pantai_Merdeka_(12185357735).jpg",
+      "credit": "Photo · Marufish  from Alor Setar, Malaysia · CC BY-SA 2.0 · cropped",
+      "species": [
+        "mangrove-crabs"
+      ],
+      "habitat": null
+    },
+    {
+      "id": "pantai-datuk-syed-omar",
+      "figmaId": "2011:1563",
+      "name": "Pantai Datuk Syed Omar",
+      "area": "Langkawi, Kedah",
+      "region": "north",
+      "severity": null,
+      "validReports": 0,
+      "reported": "Not recently reported",
+      "image": null,
+      "photoSource": null,
+      "credit": "",
+      "species": [
+        "mangrove-crabs"
+      ],
+      "habitat": "Sandy shore"
+    },
+    {
+      "id": "pantai-tanjung-bungah",
+      "figmaId": "2011:1655",
+      "name": "Pantai Tanjung Bungah",
+      "area": "Tanjung Bungah, Penang",
+      "region": "north",
+      "severity": "High",
+      "validReports": 5,
+      "reported": "Reported 17 days ago",
+      "image": "/images/coastal/pantai-tanjung-bungah.jpg",
+      "photoSource": "https://commons.wikimedia.org/wiki/File:Tanjung_Bungah_Beach_(24309528503).jpg",
+      "credit": "Photo · Jan  from Singapore, Singapore · CC BY-SA 2.0 · cropped",
+      "species": [
+        "mangrove-crabs"
+      ],
+      "habitat": null
+    },
+    {
+      "id": "monkey-beach",
+      "figmaId": "2011:1742",
+      "name": "Monkey Beach",
+      "area": "Penang National Park, Penang",
+      "region": "north",
+      "severity": null,
+      "validReports": 0,
+      "reported": "Not recently reported",
+      "image": "/images/coastal/monkey-beach.jpg",
+      "photoSource": "https://commons.wikimedia.org/wiki/File:Monkeybeach08.jpg",
+      "credit": "Photo · Asiadetailfeed · CC BY-SA 3.0 · cropped",
+      "species": [
+        "macaques",
+        "mangrove-crabs"
+      ],
+      "habitat": null
+    },
+    {
+      "id": "pantai-pasir-panjang",
+      "figmaId": "2011:1834",
+      "name": "Pantai Pasir Panjang",
+      "area": "Balik Pulau, Penang",
+      "region": "north",
+      "severity": "High",
+      "validReports": 9,
+      "reported": "Reported 25 days ago",
+      "image": null,
+      "photoSource": null,
+      "credit": "",
+      "species": [
+        "mangrove-crabs"
+      ],
+      "habitat": null
+    },
+    {
+      "id": "pantai-bersih",
+      "figmaId": "2011:1921",
+      "name": "Pantai Bersih",
+      "area": "Butterworth, Penang",
+      "region": "north",
+      "severity": "High",
+      "validReports": 9,
+      "reported": "Reported 22 days ago",
+      "image": "/images/coastal/pantai-bersih.jpg",
+      "photoSource": "https://commons.wikimedia.org/wiki/File:Pantai_Bersih,_Penang_03.jpg",
+      "credit": "Photo · Wiki Farazi · CC BY-SA 4.0 · cropped",
+      "species": [
+        "mangrove-crabs"
+      ],
+      "habitat": null
+    },
+    {
+      "id": "pantai-teluk-aman",
+      "figmaId": "2011:2008",
+      "name": "Pantai Teluk Aman",
+      "area": "Penang",
+      "region": "north",
+      "severity": "High",
+      "validReports": 7,
+      "reported": "Reported 11 days ago",
+      "image": null,
+      "photoSource": null,
+      "credit": "",
+      "species": [
+        "mangrove-crabs"
+      ],
+      "habitat": null
+    },
+    {
+      "id": "pasir-belanda",
+      "figmaId": "2011:2095",
+      "name": "Pasir Belanda",
+      "area": "Penang Island, Penang",
+      "region": "north",
+      "severity": null,
+      "validReports": 2,
+      "reported": "Not recently reported",
+      "image": "/images/coastal/pasir-belanda.jpg",
+      "photoSource": "https://commons.wikimedia.org/wiki/File:Cmglee_Penang_Pasir_Belanda.jpg",
+      "credit": "Photo · Cmglee · CC BY-SA 4.0 · cropped",
+      "species": [
+        "mangrove-crabs"
+      ],
+      "habitat": null
+    },
+    {
+      "id": "pantai-teluk-batik",
+      "figmaId": "2011:2182",
+      "name": "Pantai Teluk Batik",
+      "area": "Lumut, Perak",
+      "region": "perak",
+      "severity": "High",
+      "validReports": 9,
+      "reported": "Reported 17 days ago",
+      "image": "/images/coastal/pantai-teluk-batik.jpg",
+      "photoSource": "https://commons.wikimedia.org/wiki/File:Pantai_Teluk_Batik_-_Perak,_Malaysia.jpg",
+      "credit": "Photo · Ryan Albrey  from Perth, Australia · CC BY 2.0 · cropped",
+      "species": [
+        "giant-mudskipper",
+        "black-sea-cucumber"
+      ],
+      "habitat": "Sandy shore"
+    },
+    {
+      "id": "pantai-pasir-bogak",
+      "figmaId": "2011:2269",
+      "name": "Pantai Pasir Bogak",
+      "area": "Pangkor Island, Perak",
+      "region": "perak",
+      "severity": "Moderate",
+      "validReports": 5,
+      "reported": "Reported 16 days ago",
+      "image": null,
+      "photoSource": null,
+      "credit": "",
+      "species": [
+        "giant-mudskipper",
+        "black-sea-cucumber"
+      ],
+      "habitat": "Sandy shore"
+    },
+    {
+      "id": "pantai-teluk-nipah",
+      "figmaId": "2011:2356",
+      "name": "Pantai Teluk Nipah",
+      "area": "Pangkor Island, Perak",
+      "region": "perak",
+      "severity": "High",
+      "validReports": 7,
+      "reported": "Reported 22 days ago",
+      "image": "/images/coastal/pantai-teluk-nipah.jpg",
+      "photoSource": "https://commons.wikimedia.org/wiki/File:Teluk_Nipah_Beach_-_panoramio.jpg",
+      "credit": "Photo · Richard Horvath · CC BY-SA 3.0 · cropped",
+      "species": [
+        "black-sea-cucumber",
+        "giant-mudskipper"
+      ],
+      "habitat": null
+    },
+    {
+      "id": "pantai-teluk-senangin",
+      "figmaId": "2011:2448",
+      "name": "Pantai Teluk Senangin",
+      "area": "Lumut, Perak",
+      "region": "perak",
+      "severity": null,
+      "validReports": 2,
+      "reported": "Not recently reported",
+      "image": "/images/coastal/pantai-teluk-senangin.jpg",
+      "photoSource": "https://commons.wikimedia.org/wiki/File:Pantai_Teluk_Senangin,_Kampung_Teluk_Senangin_20231222_112432.jpg",
+      "credit": "Photo · Wiki Farazi · CC0 · cropped",
+      "species": [
+        "giant-mudskipper",
+        "black-sea-cucumber"
+      ],
+      "habitat": null
+    },
+    {
+      "id": "pantai-teluk-segadas",
+      "figmaId": "2011:2540",
+      "name": "Pantai Teluk Segadas",
+      "area": "Pangkor Island, Perak",
+      "region": "perak",
+      "severity": "Moderate",
+      "validReports": 6,
+      "reported": "Reported 4 days ago",
+      "image": null,
+      "photoSource": null,
+      "credit": "",
+      "species": [
+        "giant-mudskipper",
+        "black-sea-cucumber"
+      ],
+      "habitat": "Sandy bay"
+    },
+    {
+      "id": "pantai-pasir-panjang-segari",
+      "figmaId": "2011:2627",
+      "name": "Pantai Pasir Panjang, Segari",
+      "area": "Segari, Perak",
+      "region": "perak",
+      "severity": "Moderate",
+      "validReports": 5,
+      "reported": "Reported 32 days ago",
+      "image": "/images/coastal/pantai-pasir-panjang-segari.jpg",
+      "photoSource": "https://commons.wikimedia.org/wiki/File:Pantai_Pasir_Panjang,_Segari_20231222_131024.jpg",
+      "credit": "Photo · Wiki Farazi · CC0 · cropped",
+      "species": [
+        "green-sea-turtle",
+        "giant-mudskipper"
+      ],
+      "habitat": null
+    },
+    {
+      "id": "emerald-bay-pangkor-laut",
+      "figmaId": "2011:2719",
+      "name": "Emerald Bay, Pangkor Laut",
+      "area": "Pangkor Laut, Perak",
+      "region": "perak",
+      "severity": null,
+      "validReports": 0,
+      "reported": "Not recently reported",
+      "image": null,
+      "photoSource": null,
+      "credit": "",
+      "species": [
+        "sea-cucumber",
+        "giant-mudskipper"
+      ],
+      "habitat": null
+    },
+    {
+      "id": "pantai-cahaya-negeri",
+      "figmaId": "2011:2811",
+      "name": "Pantai Cahaya Negeri",
+      "area": "Port Dickson, Negeri Sembilan",
+      "region": "nsm",
+      "severity": "Moderate",
+      "validReports": 5,
+      "reported": "Reported 6 days ago",
+      "image": "/images/coastal/pantai-cahaya-negeri.jpg",
+      "photoSource": "https://commons.wikimedia.org/wiki/File:Pantai_Cahaya_Negeri_(030324)_01.jpg",
+      "credit": "Photo · Zahirulnukman · CC BY-SA 4.0 · cropped",
+      "species": [
+        "hawksbill-turtle",
+        "seagrass"
+      ],
+      "habitat": null
+    },
+    {
+      "id": "pantai-bagan-pinang",
+      "figmaId": "2011:2898",
+      "name": "Pantai Bagan Pinang",
+      "area": "Port Dickson, Negeri Sembilan",
+      "region": "nsm",
+      "severity": "Severe",
+      "validReports": 10,
+      "reported": "Reported 11 days ago",
+      "image": null,
+      "photoSource": "https://n9tourism.ns.gov.my/tarikan/pantai-bagan-pinang/",
+      "credit": "Negeri Sembilan Tourism · Source website · rights not specified · cropped",
+      "species": [
+        "hawksbill-turtle",
+        "seagrass"
+      ],
+      "habitat": null
+    },
+    {
+      "id": "pantai-tanjung-gemuk",
+      "figmaId": "2011:2985",
+      "name": "Pantai Tanjung Gemuk",
+      "area": "Port Dickson, Negeri Sembilan",
+      "region": "nsm",
+      "severity": "High",
+      "validReports": 6,
+      "reported": "Reported 3 days ago",
+      "image": "/images/coastal/pantai-tanjung-gemuk.jpg",
+      "photoSource": "https://commons.wikimedia.org/wiki/File:Tanjung_Gemok,_Port_Dickson.jpg",
+      "credit": "Photo · Wiki Farazi · Public domain · cropped",
+      "species": [
+        "hawksbill-turtle",
+        "seagrass"
+      ],
+      "habitat": null
+    },
+    {
+      "id": "pantai-tanjung-biru",
+      "figmaId": "2011:3072",
+      "name": "Pantai Tanjung Biru",
+      "area": "Port Dickson, Negeri Sembilan",
+      "region": "nsm",
+      "severity": "High",
+      "validReports": 6,
+      "reported": "Reported 40 days ago",
+      "image": "/images/coastal/pantai-tanjung-biru.jpg",
+      "photoSource": "https://commons.wikimedia.org/wiki/File:Tanjung_Biru_beach,_low_tide.jpg",
+      "credit": "Photo · AyyanD · CC BY-SA 3.0 · cropped",
+      "species": [
+        "hawksbill-turtle",
+        "seagrass"
+      ],
+      "habitat": "Sandy shore"
+    },
+    {
+      "id": "pantai-pengkalan-balak",
+      "figmaId": "2011:3159",
+      "name": "Pantai Pengkalan Balak",
+      "area": "Alor Gajah, Melaka",
+      "region": "nsm",
+      "severity": "Moderate",
+      "validReports": 3,
+      "reported": "Reported 5 days ago",
+      "image": "/images/coastal/pantai-pengkalan-balak.jpg",
+      "photoSource": "https://commons.wikimedia.org/wiki/File:Coconut_trees_at_Pengkalan_Balak_beach.JPG",
+      "credit": "Photo · Adiput at en.wikipedia · Public domain · cropped",
+      "species": [
+        "hawksbill-turtle",
+        "seagrass"
+      ],
+      "habitat": "Sandy coast"
+    },
+    {
+      "id": "pantai-kundor",
+      "figmaId": "2011:3251",
+      "name": "Pantai Kundor",
+      "area": "Tanjung Kling, Melaka",
+      "region": "nsm",
+      "severity": "Moderate",
+      "validReports": 5,
+      "reported": "Reported 38 days ago",
+      "image": null,
+      "photoSource": null,
+      "credit": "",
+      "species": [
+        "hawksbill-turtle",
+        "seagrass"
+      ],
+      "habitat": "Sandy shore"
+    },
+    {
+      "id": "pantai-klebang",
+      "figmaId": "2011:3338",
+      "name": "Pantai Klebang",
+      "area": "Klebang, Melaka Tengah",
+      "region": "nsm",
+      "severity": "Moderate",
+      "validReports": 6,
+      "reported": "Reported 37 days ago",
+      "image": "/images/coastal/pantai-klebang.jpg",
+      "photoSource": "https://commons.wikimedia.org/wiki/File:Klebang_Beach.JPG",
+      "credit": "Photo · Chongkian · CC BY-SA 4.0 · cropped",
+      "species": [
+        "hawksbill-turtle",
+        "seagrass"
+      ],
+      "habitat": "Sandy shore"
+    },
+    {
+      "id": "pantai-tanjung-bidara",
+      "figmaId": "2011:3430",
+      "name": "Pantai Tanjung Bidara",
+      "area": "Masjid Tanah, Alor Gajah, Melaka",
+      "region": "nsm",
+      "severity": "High",
+      "validReports": 7,
+      "reported": "Reported 9 days ago",
+      "image": "/images/coastal/pantai-tanjung-bidara.jpg",
+      "photoSource": "https://commons.wikimedia.org/wiki/File:Tanjung_Bidara_Beach.JPG",
+      "credit": "Photo · Chongkian · CC BY-SA 4.0 · cropped",
+      "species": [
+        "hawksbill-turtle",
+        "seagrass"
+      ],
+      "habitat": null
+    },
+    {
+      "id": "pulau-besar-melaka",
+      "figmaId": "2011:3522",
+      "name": "Pulau Besar, Melaka",
+      "area": "Off mainland Melaka",
+      "region": "nsm",
+      "severity": "Moderate",
+      "validReports": 6,
+      "reported": "Reported 21 days ago",
+      "image": "/images/coastal/pulau-besar-melaka.jpg",
+      "photoSource": "https://commons.wikimedia.org/wiki/File:Pulau_Besar_beach.jpg",
+      "credit": "Photo · Adiputera · CC BY-SA 4.0 · cropped",
+      "species": [
+        "hawksbill-turtle",
+        "seagrass"
+      ],
+      "habitat": "Sandy beaches"
+    },
+    {
+      "id": "pantai-siring",
+      "figmaId": "2011:3609",
+      "name": "Pantai Siring",
+      "area": "Jasin, Melaka",
+      "region": "nsm",
+      "severity": "Moderate",
+      "validReports": 5,
+      "reported": "Reported 41 days ago",
+      "image": null,
+      "photoSource": "https://www.melakahariini.my/pantai-siring-bakal-jadi-permata-pelancongan-pesisir-selatan-melaka/",
+      "credit": "Melaka Hari Ini · Source website · rights not specified · cropped",
+      "species": [
+        "hawksbill-turtle",
+        "seagrass"
+      ],
+      "habitat": null
+    },
+    {
+      "id": "pantai-desaru",
+      "figmaId": "2011:3696",
+      "name": "Pantai Desaru",
+      "area": "Kota Tinggi, Johor",
+      "region": "johor",
+      "severity": "Moderate",
+      "validReports": 3,
+      "reported": "Reported 29 days ago",
+      "image": "/images/coastal/pantai-desaru.jpg",
+      "photoSource": "https://commons.wikimedia.org/wiki/File:Desaru_Beach.jpg",
+      "credit": "Photo · Chongkian · CC BY-SA 4.0 · cropped",
+      "species": [
+        "dugong"
+      ],
+      "habitat": null
+    },
+    {
+      "id": "pantai-air-papan",
+      "figmaId": "2011:3783",
+      "name": "Pantai Air Papan",
+      "area": "Kampung Air Papan, Mersing, Johor",
+      "region": "johor",
+      "severity": "High",
+      "validReports": 9,
+      "reported": "Reported 23 days ago",
+      "image": "/images/coastal/pantai-air-papan.jpg",
+      "photoSource": "https://commons.wikimedia.org/wiki/File:Pantai_Air_Papan,_Kampung_Air_Papan_Laut_20221219_183642.jpg",
+      "credit": "Photo · Wiki Farazi · CC0 · cropped",
+      "species": [
+        "dugong"
+      ],
+      "habitat": null
+    },
+    {
+      "id": "pantai-tanjung-balau",
+      "figmaId": "2011:3870",
+      "name": "Pantai Tanjung Balau",
+      "area": "Kota Tinggi, Johor",
+      "region": "johor",
+      "severity": null,
+      "validReports": 1,
+      "reported": "Not recently reported",
+      "image": "/images/coastal/pantai-tanjung-balau.jpg",
+      "photoSource": "https://commons.wikimedia.org/wiki/File:Tanjung_Balau_Beach.JPG",
+      "credit": "Photo · Chongkian · CC BY-SA 4.0 · cropped",
+      "species": [
+        "dugong"
+      ],
+      "habitat": null
+    },
+    {
+      "id": "pantai-minyak-beku",
+      "figmaId": "2011:3957",
+      "name": "Pantai Minyak Beku",
+      "area": "Batu Pahat, Johor",
+      "region": "johor",
+      "severity": null,
+      "validReports": 2,
+      "reported": "Not recently reported",
+      "image": "/images/coastal/pantai-minyak-beku.jpg",
+      "photoSource": "https://commons.wikimedia.org/wiki/File:Minyak_Beku_Beach.JPG",
+      "credit": "Photo · Chongkian · CC BY-SA 4.0 · cropped",
+      "species": [
+        "dugong"
+      ],
+      "habitat": null
+    },
+    {
+      "id": "pantai-stulang",
+      "figmaId": "2011:4044",
+      "name": "Pantai Stulang",
+      "area": "Stulang Laut, Johor Bahru",
+      "region": "johor",
+      "severity": "High",
+      "validReports": 6,
+      "reported": "Reported 27 days ago",
+      "image": "/images/coastal/pantai-stulang.jpg",
+      "photoSource": "https://commons.wikimedia.org/wiki/File:Stulang_Beach.jpg",
+      "credit": "Photo · Chongkian · CC BY-SA 4.0 · cropped",
+      "species": [
+        "dugong"
+      ],
+      "habitat": null
+    },
+    {
+      "id": "pantai-teluk-gorek",
+      "figmaId": "2011:4131",
+      "name": "Pantai Teluk Gorek",
+      "area": "Mersing, Johor",
+      "region": "johor",
+      "severity": "Moderate",
+      "validReports": 5,
+      "reported": "Reported 10 days ago",
+      "image": null,
+      "photoSource": null,
+      "credit": "",
+      "species": [
+        "dugong"
+      ],
+      "habitat": "Sandy coastline"
+    },
+    {
+      "id": "pasir-gemang",
+      "figmaId": "2011:4218",
+      "name": "Pasir Gemang",
+      "area": "Muar District, Johor",
+      "region": "johor",
+      "severity": "High",
+      "validReports": 9,
+      "reported": "Reported 2 days ago",
+      "image": null,
+      "photoSource": null,
+      "credit": "",
+      "species": [
+        "dugong"
+      ],
+      "habitat": null
+    },
+    {
+      "id": "pantai-semanyir",
+      "figmaId": "2011:4305",
+      "name": "Pantai Semanyir",
+      "area": "Endau, Mersing, Johor",
+      "region": "johor",
+      "severity": null,
+      "validReports": 0,
+      "reported": "Not recently reported",
+      "image": null,
+      "photoSource": null,
+      "credit": "",
+      "species": [
+        "dugong"
+      ],
+      "habitat": null
+    },
+    {
+      "id": "pasir-bunga",
+      "figmaId": "2011:4392",
+      "name": "Pasir Bunga",
+      "area": "Johor",
+      "region": "johor",
+      "severity": "Moderate",
+      "validReports": 4,
+      "reported": "Reported 26 days ago",
+      "image": null,
+      "photoSource": null,
+      "credit": "",
+      "species": [
+        "dugong"
+      ],
+      "habitat": null
+    },
+    {
+      "id": "pulau-rawa",
+      "figmaId": "2011:4479",
+      "name": "Pulau Rawa",
+      "area": "Mersing, Johor",
+      "region": "johor",
+      "severity": "Moderate",
+      "validReports": 4,
+      "reported": "Reported 16 days ago",
+      "image": "/images/coastal/pulau-rawa.jpg",
+      "photoSource": "https://commons.wikimedia.org/wiki/File:Rawa_Island,_Johor,_Malaysia.jpg",
+      "credit": "Photo · Mohd Fazlin Mohd Effendy Ooi from Kuala Lumpur, Malaysia · CC BY 2.0 · cropped",
+      "species": [
+        "dugong"
+      ],
+      "habitat": "Coral reefs"
+    },
+    {
+      "id": "pulau-tinggi",
+      "figmaId": "2011:4571",
+      "name": "Pulau Tinggi",
+      "area": "Mersing, Johor",
+      "region": "johor",
+      "severity": "Moderate",
+      "validReports": 4,
+      "reported": "Reported 23 days ago",
+      "image": null,
+      "photoSource": "https://johornationalparks.gov.my/taman-laut-sultan-iskandar/",
+      "credit": "Johor National Parks Corporation · Source website · rights not specified · cropped",
+      "species": [
+        "dugong"
+      ],
+      "habitat": null
+    },
+    {
+      "id": "pulau-besar-mersing",
+      "figmaId": "2011:4663",
+      "name": "Pulau Besar, Mersing",
+      "area": "Mersing, Johor",
+      "region": "johor",
+      "severity": null,
+      "validReports": 0,
+      "reported": "Not recently reported",
+      "image": "/images/coastal/pulau-besar-mersing.jpg",
+      "photoSource": "https://commons.wikimedia.org/wiki/File:Besar_Island.jpg",
+      "credit": "Photo · Chongkian · CC BY-SA 4.0 · cropped",
+      "species": [
+        "dugong"
+      ],
+      "habitat": null
+    },
+    {
+      "id": "pulau-sibu",
+      "figmaId": "2011:4750",
+      "name": "Pulau Sibu",
+      "area": "Mersing, Johor",
+      "region": "johor",
+      "severity": null,
+      "validReports": 1,
+      "reported": "Not recently reported",
+      "image": "/images/coastal/pulau-sibu.jpg",
+      "photoSource": "https://commons.wikimedia.org/wiki/File:Pulau_Sibu_-_panoramio.jpg",
+      "credit": "Photo · Lee Jee Tshoon Lee · CC BY-SA 3.0 · cropped",
+      "species": [
+        "dugong"
+      ],
+      "habitat": "Seagrass meadows"
+    },
+    {
+      "id": "pantai-teluk-mahkota",
+      "figmaId": "2011:4842",
+      "name": "Pantai Teluk Mahkota",
+      "area": "Tanjung Sedili, Kota Tinggi, Johor",
+      "region": "johor",
+      "severity": "High",
+      "validReports": 7,
+      "reported": "Reported 23 days ago",
+      "image": null,
+      "photoSource": "https://www.mdkt.gov.my/ms/mdkt/pusat-media/berita/majlis-serah-terima-projek-naiktaraf-dan-penyerahan-kunci-kepada-peniaga-di",
+      "credit": "Majlis Daerah Kota Tinggi · Source website · rights not specified · cropped",
+      "species": [
+        "dugong"
+      ],
+      "habitat": null
+    },
+    {
+      "id": "pantai-batu-layar",
+      "figmaId": "2011:4929",
+      "name": "Pantai Batu Layar",
+      "area": "Pengerang, Kota Tinggi, Johor",
+      "region": "johor",
+      "severity": "High",
+      "validReports": 7,
+      "reported": "Reported 40 days ago",
+      "image": null,
+      "photoSource": null,
+      "credit": "",
+      "species": [
+        "dugong"
+      ],
+      "habitat": null
+    },
+    {
+      "id": "pantai-tanjung-leman",
+      "figmaId": "2011:5016",
+      "name": "Pantai Tanjung Leman",
+      "area": "Mersing, Johor",
+      "region": "johor",
+      "severity": "High",
+      "validReports": 10,
+      "reported": "Reported 31 days ago",
+      "image": "/images/coastal/pantai-tanjung-leman.jpg",
+      "photoSource": "https://commons.wikimedia.org/wiki/File:Tanjung_Leman_Beach.jpg",
+      "credit": "Photo · Chongkian · CC BY-SA 4.0 · cropped",
+      "species": [
+        "dugong"
+      ],
+      "habitat": null
+    },
+    {
+      "id": "pantai-cahaya-bulan",
+      "figmaId": "2014:581",
+      "name": "Pantai Cahaya Bulan",
+      "area": "Kota Bharu, Kelantan",
+      "region": "kelantan",
+      "severity": null,
+      "validReports": 1,
+      "reported": "Not recently reported",
+      "image": null,
+      "photoSource": null,
+      "credit": "",
+      "species": [
+        "faunus-snail"
+      ],
+      "habitat": null
+    },
+    {
+      "id": "pantai-irama",
+      "figmaId": "2014:668",
+      "name": "Pantai Irama",
+      "area": "Bachok, Kelantan",
+      "region": "kelantan",
+      "severity": "Moderate",
+      "validReports": 5,
+      "reported": "Reported 29 days ago",
+      "image": "/images/coastal/pantai-irama.jpg",
+      "photoSource": "https://commons.wikimedia.org/wiki/File:Pantai_Irama,_Bachok,_Kelantan.jpg",
+      "credit": "Photo · Azmin/Az08ProGamers · Public domain · cropped",
+      "species": [
+        "faunus-snail"
+      ],
+      "habitat": null
+    },
+    {
+      "id": "pantai-senok",
+      "figmaId": "2014:755",
+      "name": "Pantai Senok",
+      "area": "Kelantan",
+      "region": "kelantan",
+      "severity": "Moderate",
+      "validReports": 3,
+      "reported": "Reported 41 days ago",
+      "image": null,
+      "photoSource": null,
+      "credit": "",
+      "species": [
+        "faunus-snail"
+      ],
+      "habitat": null
+    },
+    {
+      "id": "pantai-kuda",
+      "figmaId": "2014:842",
+      "name": "Pantai Kuda",
+      "area": "Kelantan",
+      "region": "kelantan",
+      "severity": "Moderate",
+      "validReports": 6,
+      "reported": "Reported 2 days ago",
+      "image": null,
+      "photoSource": null,
+      "credit": "",
+      "species": [
+        "faunus-snail"
+      ],
+      "habitat": null
+    },
+    {
+      "id": "pantai-mek-mas",
+      "figmaId": "2014:929",
+      "name": "Pantai Mek Mas",
+      "area": "Kelantan",
+      "region": "kelantan",
+      "severity": "Moderate",
+      "validReports": 4,
+      "reported": "Reported 11 days ago",
+      "image": null,
+      "photoSource": null,
+      "credit": "",
+      "species": [
+        "faunus-snail"
+      ],
+      "habitat": null
+    },
+    {
+      "id": "pantai-tok-bali",
+      "figmaId": "2014:1016",
+      "name": "Pantai Tok Bali",
+      "area": "Pasir Puteh, Kelantan",
+      "region": "kelantan",
+      "severity": null,
+      "validReports": 0,
+      "reported": "Not recently reported",
+      "image": "/images/coastal/pantai-tok-bali.jpg",
+      "photoSource": "https://commons.wikimedia.org/wiki/File:Pantai_Tok_Bali,_Pasir_Puteh.jpg",
+      "credit": "Photo · Malayan Law · CC BY 4.0 · cropped",
+      "species": [
+        "faunus-snail"
+      ],
+      "habitat": null
+    },
+    {
+      "id": "pantai-bisikan-bayu",
+      "figmaId": "2014:1103",
+      "name": "Pantai Bisikan Bayu",
+      "area": "Semerak, Pasir Puteh, Kelantan",
+      "region": "kelantan",
+      "severity": "High",
+      "validReports": 9,
+      "reported": "Reported 3 days ago",
+      "image": "/images/coastal/pantai-bisikan-bayu.jpg",
+      "photoSource": "https://commons.wikimedia.org/wiki/File:Pantai_Bisikan_Bayu_05.jpg",
+      "credit": "Photo · CyberTroopers · CC BY-SA 4.0 · cropped",
+      "species": [
+        "faunus-snail"
+      ],
+      "habitat": null
+    },
+    {
+      "id": "pantai-penarik",
+      "figmaId": "2014:1195",
+      "name": "Pantai Penarik",
+      "area": "Terengganu",
+      "region": "tganu",
+      "severity": "High",
+      "validReports": 10,
+      "reported": "Reported 13 days ago",
+      "image": null,
+      "photoSource": null,
+      "credit": "",
+      "species": [
+        "green-sea-turtle",
+        "corals"
+      ],
+      "habitat": null
+    },
+    {
+      "id": "pantai-teluk-lipat",
+      "figmaId": "2014:1282",
+      "name": "Pantai Teluk Lipat",
+      "area": "Dungun, Terengganu",
+      "region": "tganu",
+      "severity": "Severe",
+      "validReports": 14,
+      "reported": "Reported 32 days ago",
+      "image": null,
+      "photoSource": null,
+      "credit": "",
+      "species": [
+        "green-sea-turtle",
+        "corals"
+      ],
+      "habitat": null
+    },
+    {
+      "id": "pantai-kemasik",
+      "figmaId": "2014:1369",
+      "name": "Pantai Kemasik",
+      "area": "Terengganu",
+      "region": "tganu",
+      "severity": "High",
+      "validReports": 10,
+      "reported": "Reported 24 days ago",
+      "image": "/images/coastal/pantai-kemasik.jpg",
+      "photoSource": "https://commons.wikimedia.org/wiki/File:Pantai_Kemasik_(22316849933).jpg",
+      "credit": "Photo · Marufish from Alor Setar, Malaysia · CC BY-SA 2.0 · cropped",
+      "species": [
+        "green-sea-turtle",
+        "corals"
+      ],
+      "habitat": null
+    },
+    {
+      "id": "pantai-pandak",
+      "figmaId": "2014:1543",
+      "name": "Pantai Pandak",
+      "area": "Terengganu",
+      "region": "tganu",
+      "severity": "High",
+      "validReports": 6,
+      "reported": "Reported 12 days ago",
+      "image": null,
+      "photoSource": null,
+      "credit": "",
+      "species": [
+        "green-sea-turtle",
+        "corals"
+      ],
+      "habitat": null
+    },
+    {
+      "id": "pantai-bukit-keluang",
+      "figmaId": "2014:1630",
+      "name": "Pantai Bukit Keluang",
+      "area": "Near Kuala Besut, Terengganu",
+      "region": "tganu",
+      "severity": null,
+      "validReports": 1,
+      "reported": "Not recently reported",
+      "image": null,
+      "photoSource": null,
+      "credit": "",
+      "species": [
+        "green-sea-turtle",
+        "corals"
+      ],
+      "habitat": "Coastal forest"
+    },
+    {
+      "id": "pulau-kapas",
+      "figmaId": "2014:1717",
+      "name": "Pulau Kapas",
+      "area": "Kapas Island, Terengganu",
+      "region": "tganu",
+      "severity": "Moderate",
+      "validReports": 3,
+      "reported": "Reported 9 days ago",
+      "image": "/images/coastal/pulau-kapas.jpg",
+      "photoSource": "https://commons.wikimedia.org/wiki/File:%22Beautiful_White_Sandy_Beach%22,_Kapas_Island.jpg",
+      "credit": "Photo · Pro QueeNia · CC BY-SA 4.0 · cropped",
+      "species": [
+        "green-sea-turtle"
+      ],
+      "habitat": null
+    },
+    {
+      "id": "long-beach-perhentian",
+      "figmaId": "2014:1809",
+      "name": "Long Beach, Perhentian",
+      "area": "Perhentian Kecil, Terengganu",
+      "region": "tganu",
+      "severity": "Moderate",
+      "validReports": 5,
+      "reported": "Reported 35 days ago",
+      "image": null,
+      "photoSource": null,
+      "credit": "",
+      "species": [
+        "green-sea-turtle",
+        "corals"
+      ],
+      "habitat": null
+    },
+    {
+      "id": "pasir-panjang-redang",
+      "figmaId": "2014:1901",
+      "name": "Pasir Panjang, Redang",
+      "area": "Redang Island, Terengganu",
+      "region": "tganu",
+      "severity": "Severe",
+      "validReports": 11,
+      "reported": "Reported 15 days ago",
+      "image": "/images/coastal/pasir-panjang-redang.jpg",
+      "photoSource": "https://commons.wikimedia.org/wiki/File:Pasir_Panjang.JPG",
+      "credit": "Photo · Singaporean · Public domain · cropped",
+      "species": [
+        "green-sea-turtle",
+        "corals"
+      ],
+      "habitat": null
+    },
+    {
+      "id": "chagar-hutang-redang",
+      "figmaId": "2014:1993",
+      "name": "Chagar Hutang, Redang",
+      "area": "Redang Island, Terengganu",
+      "region": "tganu",
+      "severity": "Severe",
+      "validReports": 15,
+      "reported": "Reported 38 days ago",
+      "image": null,
+      "photoSource": null,
+      "credit": "",
+      "species": [
+        "green-sea-turtle",
+        "corals"
+      ],
+      "habitat": null
+    },
+    {
+      "id": "pasir-besar-lang-tengah",
+      "figmaId": "2014:2085",
+      "name": "Pasir Besar, Lang Tengah",
+      "area": "Lang Tengah, Terengganu",
+      "region": "tganu",
+      "severity": "Severe",
+      "validReports": 15,
+      "reported": "Reported 13 days ago",
+      "image": null,
+      "photoSource": null,
+      "credit": "",
+      "species": [
+        "green-sea-turtle"
+      ],
+      "habitat": "Offshore reef"
+    },
+    {
+      "id": "pantai-cherating",
+      "figmaId": "2014:2177",
+      "name": "Pantai Cherating",
+      "area": "Kuantan area, Pahang",
+      "region": "pahang",
+      "severity": "Moderate",
+      "validReports": 6,
+      "reported": "Reported 30 days ago",
+      "image": "/images/coastal/pantai-cherating.jpg",
+      "photoSource": "https://commons.wikimedia.org/wiki/File:Cherating,_Pantai_Cherating.jpg",
+      "credit": "Photo · Kondephy · CC BY-SA 4.0 · cropped",
+      "species": [
+        "horseshoe-crab",
+        "hawksbill-turtle"
+      ],
+      "habitat": null
+    },
+    {
+      "id": "pantai-balok",
+      "figmaId": "2014:2269",
+      "name": "Pantai Balok",
+      "area": "Kuantan area, Pahang",
+      "region": "pahang",
+      "severity": null,
+      "validReports": 1,
+      "reported": "Not recently reported",
+      "image": "/images/coastal/pantai-balok.jpg",
+      "photoSource": "https://commons.wikimedia.org/wiki/File:Balok_1.jpg",
+      "credit": "Photo · Slleong · CC0 · cropped",
+      "species": [
+        "horseshoe-crab",
+        "hawksbill-turtle"
+      ],
+      "habitat": null
+    },
+    {
+      "id": "pantai-chendor",
+      "figmaId": "2014:2361",
+      "name": "Pantai Chendor",
+      "area": "Pahang",
+      "region": "pahang",
+      "severity": null,
+      "validReports": 0,
+      "reported": "Not recently reported",
+      "image": null,
+      "photoSource": null,
+      "credit": "",
+      "species": [
+        "sea-turtles",
+        "horseshoe-crab"
+      ],
+      "habitat": null
+    },
+    {
+      "id": "pantai-paya-tioman",
+      "figmaId": "2014:2453",
+      "name": "Pantai Paya, Tioman",
+      "area": "Tioman Island, Pahang",
+      "region": "pahang",
+      "severity": "Moderate",
+      "validReports": 4,
+      "reported": "Reported 40 days ago",
+      "image": "/images/coastal/pantai-paya-tioman.jpg",
+      "photoSource": "https://commons.wikimedia.org/wiki/File:Paya_Beach_Resort_Pulau_Tioman_-_panoramio.jpg",
+      "credit": "Photo · TMbux · CC BY-SA 3.0 · cropped",
+      "species": [
+        "horseshoe-crab"
+      ],
+      "habitat": null
+    },
+    {
+      "id": "pantai-air-batang-tioman",
+      "figmaId": "2014:2545",
+      "name": "Pantai Air Batang, Tioman",
+      "area": "Tioman Island, Pahang",
+      "region": "pahang",
+      "severity": "Moderate",
+      "validReports": 5,
+      "reported": "Reported 2 days ago",
+      "image": "/images/coastal/pantai-air-batang-tioman.jpg",
+      "photoSource": "https://commons.wikimedia.org/wiki/File:The_view_from_Air_Batang_Bay_jetty,_Tioman.jpg",
+      "credit": "Photo · Jake.sparrow22 · Public domain · cropped",
+      "species": [
+        "horseshoe-crab",
+        "hawksbill-turtle"
+      ],
+      "habitat": null
+    },
+    {
+      "id": "pantai-juara-tioman",
+      "figmaId": "2014:2637",
+      "name": "Pantai Juara, Tioman",
+      "area": "Tioman Island, Pahang",
+      "region": "pahang",
+      "severity": null,
+      "validReports": 1,
+      "reported": "Not recently reported",
+      "image": "/images/coastal/pantai-juara-tioman.jpg",
+      "photoSource": "https://commons.wikimedia.org/wiki/File:Tioman_(Malaysia)_banner_hammock.jpg",
+      "credit": "Photo · Emmanuel Campos · CC BY-SA 3.0 · cropped",
+      "species": [
+        "hawksbill-turtle",
+        "horseshoe-crab"
+      ],
+      "habitat": null
+    },
+    {
+      "id": "pantai-kelambu",
+      "figmaId": "2014:2729",
+      "name": "Pantai Kelambu",
+      "area": "Kudat, Sabah",
+      "region": "borneo",
+      "severity": "Severe",
+      "validReports": 13,
+      "reported": "Reported 10 days ago",
+      "image": null,
+      "photoSource": null,
+      "credit": "",
+      "species": [
+        "irrawaddy-dolphin",
+        "clownfish"
+      ],
+      "habitat": null
+    },
+    {
+      "id": "pantai-merakit",
+      "figmaId": "2014:2816",
+      "name": "Pantai Merakit",
+      "area": "Sabah",
+      "region": "borneo",
+      "severity": "High",
+      "validReports": 9,
+      "reported": "Reported 32 days ago",
+      "image": null,
+      "photoSource": null,
+      "credit": "",
+      "species": [
+        "irrawaddy-dolphin",
+        "clownfish"
+      ],
+      "habitat": null
+    },
+    {
+      "id": "pantai-larai-larai",
+      "figmaId": "2014:2903",
+      "name": "Pantai Larai-Larai",
+      "area": "Pulau Tiga, Sabah",
+      "region": "borneo",
+      "severity": "High",
+      "validReports": 10,
+      "reported": "Reported 22 days ago",
+      "image": null,
+      "photoSource": null,
+      "credit": "",
+      "species": [
+        "irrawaddy-dolphin"
+      ],
+      "habitat": null
+    },
+    {
+      "id": "pantai-dalit",
+      "figmaId": "2014:2995",
+      "name": "Pantai Dalit",
+      "area": "Tuaran, Sabah",
+      "region": "borneo",
+      "severity": null,
+      "validReports": 2,
+      "reported": "Not recently reported",
+      "image": null,
+      "photoSource": null,
+      "credit": "",
+      "species": [
+        "irrawaddy-dolphin",
+        "clownfish"
+      ],
+      "habitat": null
+    },
+    {
+      "id": "pulau-mantanani",
+      "figmaId": "2014:3082",
+      "name": "Pulau Mantanani",
+      "area": "Kota Belud, Sabah",
+      "region": "borneo",
+      "severity": "Moderate",
+      "validReports": 4,
+      "reported": "Reported 26 days ago",
+      "image": "/images/coastal/pulau-mantanani.jpg",
+      "photoSource": "https://commons.wikimedia.org/wiki/File:Mantanani_Island_Sabah_Borneo_(32633361660).jpg",
+      "credit": "Photo · Eddie Yip from Groningen, the Netherlands · CC BY-SA 2.0 · cropped",
+      "species": [
+        "clownfish",
+        "irrawaddy-dolphin"
+      ],
+      "habitat": "Coral reefs"
+    },
+    {
+      "id": "pantai-tanjong-lobang",
+      "figmaId": "2014:3174",
+      "name": "Pantai Tanjong Lobang",
+      "area": "Miri, Sarawak",
+      "region": "borneo",
+      "severity": "Moderate",
+      "validReports": 6,
+      "reported": "Reported 15 days ago",
+      "image": "/images/coastal/pantai-tanjong-lobang.jpg",
+      "photoSource": "https://commons.wikimedia.org/wiki/File:Rocky_Beach_Sunset,_Miri.jpg",
+      "credit": "Photo · Clayborneoguy · CC BY-SA 4.0 · cropped",
+      "species": [
+        "irrawaddy-dolphin",
+        "clownfish"
+      ],
+      "habitat": null
+    },
+    {
+      "id": "pantai-tusan",
+      "figmaId": "2014:3261",
+      "name": "Pantai Tusan",
+      "area": "Subis, Sarawak",
+      "region": "borneo",
+      "severity": "Moderate",
+      "validReports": 5,
+      "reported": "Reported 32 days ago",
+      "image": null,
+      "photoSource": "https://www.sarawaktourism.com/web/places-to-visit/town-view/miri/major-attractions/tusan-beach-subis",
+      "credit": "Sarawak Tourism Board · Source website · rights not specified · cropped",
+      "species": [
+        "irrawaddy-dolphin",
+        "clownfish"
+      ],
+      "habitat": null
+    },
+    {
+      "id": "pantai-tanjong-batu",
+      "figmaId": "2014:3353",
+      "name": "Pantai Tanjong Batu",
+      "area": "Bintulu, Sarawak",
+      "region": "borneo",
+      "severity": "Moderate",
+      "validReports": 5,
+      "reported": "Reported 12 days ago",
+      "image": "/images/coastal/pantai-tanjong-batu.jpg",
+      "photoSource": "https://commons.wikimedia.org/wiki/File:Pantai_Tanjung_Batu,_Bintulu_Sarawak.jpg",
+      "credit": "Photo · Acapbob123 · CC BY-SA 4.0 · cropped",
+      "species": [
+        "irrawaddy-dolphin",
+        "clownfish"
+      ],
+      "habitat": "Rocky and sandy shoreline"
+    },
+    {
+      "id": "pantai-mukah",
+      "figmaId": "2014:3440",
+      "name": "Pantai Mukah",
+      "area": "Mukah, Sarawak",
+      "region": "borneo",
+      "severity": null,
+      "validReports": 0,
+      "reported": "Not recently reported",
+      "image": null,
+      "photoSource": "https://mtcp.sarawak.gov.my/web/subpage/webpage_view/78",
+      "credit": "Ministry of Tourism, Creative Industry & Performing Arts Sarawak · Source website · rights not specified · cropped",
+      "species": [
+        "irrawaddy-dolphin",
+        "clownfish"
+      ],
+      "habitat": null
+    },
+    {
+      "id": "pantai-pandan",
+      "figmaId": "2014:3527",
+      "name": "Pantai Pandan",
+      "area": "Lundu, Sarawak",
+      "region": "borneo",
+      "severity": "Moderate",
+      "validReports": 4,
+      "reported": "Reported 15 days ago",
+      "image": null,
+      "photoSource": "https://lundudc.sarawak.gov.my/web/subpage/webpage_view/133",
+      "credit": "Lundu District Council · Source website · rights not specified · cropped",
+      "species": [
+        "irrawaddy-dolphin",
+        "clownfish"
+      ],
+      "habitat": null
+    },
+    {
+      "id": "pantai-cenang",
+      "figmaId": "2227:14669",
+      "name": "Pantai Cenang",
+      "area": "Langkawi, Kedah",
+      "region": "north",
+      "severity": "High",
+      "validReports": 7,
+      "reported": "Reported 25 days ago",
+      "image": "/images/coastal/pantai-cenang.jpg",
+      "photoSource": "https://commons.wikimedia.org/wiki/File:Pantai_Cenang,_Langkawi_01.jpg",
+      "credit": "Nahid Sultan · CC BY-SA 4.0 · cropped",
+      "species": [
+        "mangrove-crabs"
+      ],
+      "habitat": "Sandy Shore"
+    },
+    {
+      "id": "morib",
+      "figmaId": "2229:14823",
+      "name": "Pantai Morib",
+      "area": "Banting, Selangor",
+      "region": "selangor",
+      "severity": "High",
+      "validReports": 8,
+      "reported": "Reported 39 days ago",
+      "image": "/home/pantai-morib.jpg",
+      "photoSource": null,
+      "credit": "Photo · Wiki Farazi · CC0 1.0",
+      "species": [
+        "grubeulepis-malayensis",
+        "tube-dwelling-worm"
+      ],
+      "habitat": "Mudflat"
+    },
+    {
+      "id": "remis",
+      "figmaId": "2229:15014",
+      "name": "Pantai Remis",
+      "area": "Jeram, Kuala Selangor",
+      "region": "selangor",
+      "severity": "Moderate",
+      "validReports": 6,
+      "reported": "Reported 21 days ago",
+      "image": null,
+      "photoSource": "https://selangor.travel/listing/remis-beach/",
+      "credit": "Tourism Selangor · Source website · rights not specified · cropped",
+      "species": [
+        "coastal-shellfish",
+        "blood-cockle"
+      ],
+      "habitat": "Mudflat"
+    },
+    {
+      "id": "kelanang",
+      "figmaId": "2229:15201",
+      "name": "Pantai Kelanang",
+      "area": "Banting, Selangor",
+      "region": "selangor",
+      "severity": null,
+      "validReports": 0,
+      "reported": "Not recently reported",
+      "image": null,
+      "photoSource": null,
+      "credit": "",
+      "species": [
+        "thalassina-kelanang",
+        "mangroves"
+      ],
+      "habitat": "Mangrove"
+    },
+    {
+      "id": "pantai-batu-buruk",
+      "figmaId": "2230:15188",
+      "name": "Pantai Batu Buruk",
+      "area": "Kuala Terengganu, Terengganu",
+      "region": "tganu",
+      "severity": "Severe",
+      "validReports": 12,
+      "reported": "Reported 16 days ago",
+      "image": null,
+      "photoSource": null,
+      "credit": "Photo · Airil anuar · CC BY-SA 3.0",
+      "species": [
+        "green-sea-turtle",
+        "corals"
+      ],
+      "habitat": "Sandy Shore"
+    },
+    {
+      "id": "pantai-batu-ferringhi",
+      "figmaId": "2230:15373",
+      "name": "Pantai Batu Ferringhi",
+      "area": "Batu Ferringhi, Penang",
+      "region": "north",
+      "severity": "High",
+      "validReports": 9,
+      "reported": "Reported 23 days ago",
+      "image": null,
+      "photoSource": null,
+      "credit": "Photo · Jonatan Forsberg · Public domain",
+      "species": [
+        "green-sea-turtle",
+        "mangrove-crabs"
+      ],
+      "habitat": "Sandy Shore"
+    },
+    {
+      "id": "pantai-tanjung-aru",
+      "figmaId": "2230:15574",
+      "name": "Pantai Tanjung Aru",
+      "area": "Kota Kinabalu, Sabah",
+      "region": "borneo",
+      "severity": "High",
+      "validReports": 6,
+      "reported": "Reported 26 days ago",
+      "image": null,
+      "photoSource": null,
+      "credit": "",
+      "species": [
+        "irrawaddy-dolphin",
+        "clownfish"
+      ],
+      "habitat": "Sandy Shore"
+    },
+    {
+      "id": "teluk-cempedak",
+      "figmaId": "2230:15793",
+      "name": "Teluk Cempedak",
+      "area": "Kuantan, Pahang",
+      "region": "pahang",
+      "severity": "Moderate",
+      "validReports": 4,
+      "reported": "Reported 23 days ago",
+      "image": null,
+      "photoSource": "https://www.pahangtourism.org.my/index.php/destination/islands-beaches/kuantan/teluk-cempedak",
+      "credit": "Tourism Pahang · Source website · rights not specified · cropped",
+      "species": [
+        "horseshoe-crab",
+        "hawksbill-turtle"
+      ],
+      "habitat": "Sandy Shore"
+    },
+    {
+      "id": "pantai-damai",
+      "figmaId": "2230:15978",
+      "name": "Pantai Damai",
+      "area": "Santubong, Sarawak",
+      "region": "borneo",
+      "severity": "Moderate",
+      "validReports": 3,
+      "reported": "Reported 25 days ago",
+      "image": null,
+      "photoSource": null,
+      "credit": "",
+      "species": [
+        "irrawaddy-dolphin",
+        "indo-pacific-finless-porpoise"
+      ],
+      "habitat": "Sandy Shore"
+    },
+    {
+      "id": "teluk-kemang",
+      "figmaId": "2230:16179",
+      "name": "Teluk Kemang",
+      "area": "Port Dickson, Negeri Sembilan",
+      "region": "nsm",
+      "severity": "High",
+      "validReports": 6,
+      "reported": "Reported 24 days ago",
+      "image": null,
+      "photoSource": null,
+      "credit": "",
+      "species": [
+        "syringodium-isoetifolium",
+        "seagrass"
+      ],
+      "habitat": "Sandy Shore"
+    },
+    {
+      "id": "pantai-kuala-perlis",
+      "figmaId": "2230:16395",
+      "name": "Pantai Kuala Perlis",
+      "area": "Kuala Perlis, Perlis",
+      "region": "north",
+      "severity": null,
+      "validReports": 0,
+      "reported": "Not recently reported",
+      "image": null,
+      "photoSource": null,
+      "credit": "",
+      "species": [
+        "mangroves",
+        "mangrove-crabs"
+      ],
+      "habitat": "Mudflat"
+    },
+    {
+      "id": "bagan",
+      "figmaId": "2230:16593",
+      "name": "Pantai Bagan Lalang",
+      "area": "Sepang, Selangor",
+      "region": "selangor",
+      "severity": "High",
+      "validReports": 7,
+      "reported": "Reported 17 days ago",
+      "image": "/images/coastal/pantai-bagan-lalang.jpg",
+      "photoSource": "https://commons.wikimedia.org/wiki/File:Bagan_Lalang_Beach_1.jpg",
+      "credit": "Photo · Wiki Farazi · CC0 1.0",
+      "species": [
+        "rhizophora-stylosa",
+        "blood-cockle"
+      ],
+      "habitat": "Seafront mangroves"
+    }
+  ],
+  "habitats": [
+    {
+      "id": "langkawi",
+      "figmaId": "1855:108",
+      "title": "Kilim Mangroves",
+      "area": "LANGKAWI, KEDAH",
+      "intro": "Kilim’s mangroves grow over shallow limestone and include trees and palms adapted to a tidal coast.",
+      "species": [
+        "mangrove-crabs",
+        "bakau-kurap",
+        "nipa-palm"
+      ],
+      "sources": [
+        {
+          "label": "Kilim park guide · Mangrove Flora ↗",
+          "url": "https://kilimgeoforestpark.com/biodiversity/mangrove-flora/"
+        },
+        {
+          "label": "Kilim park guide · Fauna ↗",
+          "url": "https://kilimgeoforestpark.com/biodiversity/fauna/"
+        }
+      ],
+      "texts": [
+        "9:41",
+        "Habitat",
+        "Map",
+        "HABITAT TYPE",
+        "LANGKAWI, KEDAH",
+        "Kilim Mangroves",
+        "Kilim’s mangroves grow over shallow limestone and include trees and palms adapted to a tidal coast.",
+        "Tidal forest",
+        "Limestone setting",
+        "Mangrove palms",
+        "Life in This Habitat",
+        "Species of this habitat · not local sightings",
+        "Mangrove crabs",
+        "Crabs · species vary",
+        "Listed in Kilim’s mangrove ecosystem by the park guide.",
+        "Bakau kurap",
+        "Rhizophora mucronata",
+        "The park guide lists this tree as one of Kilim’s two dominant mangroves.",
+        "Nipa palm",
+        "Nypa fruticans",
+        "This palm is listed among the scattered plants lining Kilim’s swamp forest.",
+        "Help Protect This Habitat",
+        "Leave roots and burrows undisturbed.",
+        "Back to Beach",
+        "Browse Cleanups",
+        "Sources & scope",
+        "Kilim park guide, undated and checked September 2026; this describes Kilim, not every Langkawi beach.",
+        "Kilim park guide · Mangrove Flora ↗",
+        "Kilim park guide · Fauna ↗",
+        "Habitat photo · Florida / NOAA · Public domain · cropped",
+        "Habitat photo credits",
+        "Crabs · species vary · photo ↗ / Tracy Enright, U.S. Geological Survey · Public Domain · cropped",
+        "Rhizophora mucronata · photo ↗ / Shagil Kannur · CC BY-SA 3.0 · cropped",
+        "Nypa fruticans · photo ↗ / Scott Edmunds · CC0 1.0 · cropped"
+      ]
+    },
+    {
+      "id": "matang",
+      "figmaId": "1855:109",
+      "title": "Matang Mangroves",
+      "area": "PERAK",
+      "intro": "A Matang survey found riverside Rhizophora stands changing into mixed mangrove forest farther inland.",
+      "species": [
+        "giant-mudskipper",
+        "rhizophora-apiculata",
+        "bruguiera-parviflora"
+      ],
+      "sources": [
+        {
+          "label": "JIRCAS · Matang forest survey, 2000 ↗",
+          "url": "https://www.jircas.go.jp/en/publication/jarq/34/2/147"
+        },
+        {
+          "label": "Kuala Gula mudskipper study · 2006 ↗",
+          "url": "https://doi.org/10.15083/00040787"
+        }
+      ],
+      "texts": [
+        "9:41",
+        "Habitat",
+        "Map",
+        "HABITAT TYPE",
+        "PERAK",
+        "Matang Mangroves",
+        "A Matang survey found riverside Rhizophora stands changing into mixed mangrove forest farther inland.",
+        "Riverside stands",
+        "Mixed inland forest",
+        "Mangrove trees",
+        "Life in This Habitat",
+        "Species of this habitat · not local sightings",
+        "Giant mudskipper",
+        "Periophthalmodon schlosseri",
+        "Observed hunting fiddler crabs on Kuala Gula’s mudflats at low tide.",
+        "Rhizophora apiculata",
+        "Mangrove tree",
+        "This was the most densely recorded tree in the surveyed forest strip.",
+        "Bruguiera parviflora",
+        "Mangrove tree",
+        "This was the second most densely recorded tree in the same survey.",
+        "Help Protect This Habitat",
+        "Leave roots and burrows undisturbed.",
+        "Back to Beach",
+        "Browse Cleanups",
+        "Sources & scope",
+        "Plant survey: compartment 46 (2000). Animal study: Kuala Gula (2006). Publication years; current sightings unverified.",
+        "JIRCAS · Matang forest survey, 2000 ↗",
+        "Kuala Gula mudskipper study · 2006 ↗",
+        "Habitat photo · Florida / NOAA · Public domain · cropped",
+        "Habitat photo credits",
+        "Periophthalmodon schlosseri · photo ↗ / Pavel Kirillov · CC BY-SA 2.0 · full image",
+        "Rhizophora apiculata · photo ↗ / Ariefrahman · CC BY-SA 4.0 · full image",
+        "Bruguiera parviflora · photo ↗ / Wibowo Djatmiko (Wie146) · CC BY-SA 3.0 · cropped"
+      ]
+    },
+    {
+      "id": "sungai-pulai",
+      "figmaId": "1855:110",
+      "title": "Sungai Pulai Seagrass",
+      "area": "JOHOR",
+      "intro": "Sungai Pulai’s estuary contains seagrass shoals where researchers monitored plant communities and tested habitat recovery.",
+      "species": [
+        "enhalus-acoroides",
+        "halophila-ovalis",
+        "thalassia-hemprichii"
+      ],
+      "sources": [
+        {
+          "label": "Frontiers · Seagrass monitoring, 2025 ↗",
+          "url": "https://www.frontiersin.org/journals/conservation-science/articles/10.3389/fcosc.2025.1646399/full"
+        }
+      ],
+      "texts": [
+        "9:41",
+        "Habitat",
+        "Map",
+        "HABITAT TYPE",
+        "JOHOR",
+        "Sungai Pulai Seagrass",
+        "Sungai Pulai’s estuary contains seagrass shoals where researchers monitored plant communities and tested habitat recovery.",
+        "Estuary shoals",
+        "Seagrass meadows",
+        "Recovery plots",
+        "Life in This Habitat",
+        "Species of this habitat · not local sightings",
+        "Enhalus acoroides",
+        "Seagrass",
+        "Researchers planted its seedlings at Merambong to help stabilise sediment during habitat recovery.",
+        "Halophila ovalis",
+        "Seagrass",
+        "This species was included as ground cover in the study’s seagrass recovery plots.",
+        "Thalassia hemprichii",
+        "Seagrass",
+        "This species appears in the study’s records of seagrass communities across the estuary.",
+        "Help Protect This Habitat",
+        "Keep litter out of coastal habitats.",
+        "Back to Beach",
+        "Browse Cleanups",
+        "Sources & scope",
+        "Monitoring covered 2015–2025 at selected estuary shoals, not every location within Sungai Pulai.",
+        "Frontiers · Seagrass monitoring, 2025 ↗",
+        "Habitat photo · Florida Keys / Heather Dine / NOAA · CC BY 2.0 · cropped",
+        "Habitat photo credits",
+        "Enhalus acoroides · photo ↗ / Christian Gloor · CC BY 2.0 · cropped",
+        "Halophila ovalis · photo ↗ / Dr Catherine Collier (James Cook University), TropWATER · CC BY 3.0 AU · cropped",
+        "Thalassia hemprichii · photo ↗ / Mudasir Zainuddin · CC BY-SA 4.0 · cropped"
+      ]
+    },
+    {
+      "id": "setiu",
+      "figmaId": "1855:111",
+      "title": "Setiu Wetlands",
+      "area": "TERENGGANU",
+      "intro": "A connected lagoon, river and mangrove landscape supports terrapins and turtle nesting along parts of the Setiu coast.",
+      "species": [
+        "painted-terrapin",
+        "green-sea-turtle",
+        "southern-river-terrapin"
+      ],
+      "sources": [
+        {
+          "label": "PLANMalaysia · 2022 ↗",
+          "url": "https://myplan.planmalaysia.gov.my/portal-main/publication-log?id=203&type=pdf"
+        },
+        {
+          "label": "WWF-Malaysia · 2016 ↗",
+          "url": "https://www.wwf.org.my/?21805%2FWWF-Malaysia-dan-Jabatan-Perhutanan-Negeri-Terengganu-Bekerjasama-Sempena-Sambutan-Hari-Hutan-Antarabangsa-2016="
+        },
+        {
+          "label": "Turtle photo & licence ↗",
+          "url": "https://commons.wikimedia.org/wiki/File:Chelonia_mydas_2005-06-11_Andaman_sea.jpg"
+        }
+      ],
+      "texts": [
+        "9:41",
+        "Habitat",
+        "Map",
+        "HABITAT TYPE",
+        "TERENGGANU",
+        "Setiu Wetlands",
+        "A connected lagoon, river and mangrove landscape supports terrapins and turtle nesting along parts of the Setiu coast.",
+        "Brackish lagoon",
+        "River habitats",
+        "Nesting coast",
+        "Life in This Habitat",
+        "Species of this habitat · not local sightings",
+        "Painted terrapin",
+        "Batagur borneoensis",
+        "Recorded in the Setiu wetland and coastal complex.",
+        "Green turtle",
+        "Chelonia mydas",
+        "Nests along parts of Setiu’s sandy coast.",
+        "Southern river terrapin",
+        "Batagur affinis",
+        "Recorded in Sungai Setiu and Sungai Chalok.",
+        "Help Protect This Habitat",
+        "Keep litter out of coastal habitats.",
+        "Back to Beach",
+        "Browse Cleanups",
+        "Sources & scope",
+        "Setiu complex; sources from 2016 and 2022, with current sightings unverified.",
+        "PLANMalaysia · 2022 ↗",
+        "WWF-Malaysia · 2016 ↗",
+        "Habitat photo · Florida / NOAA · Public domain · cropped",
+        "Habitat photo credits",
+        "Photos show the species, not sightings at this site.",
+        "Christoph Schuetzenhofer · CC BY-SA 3.0 · cropped",
+        "Turtle photo & licence ↗",
+        "Batagur borneoensis · photo ↗ / Bernard DUPONT · CC BY-SA 2.0 · cropped",
+        "Batagur affinis · photo ↗ / Mohd Hafiz Noor Shams (User __earth) · CC BY 2.5 · cropped"
+      ]
+    },
+    {
+      "id": "pulau-tinggi",
+      "figmaId": "1855:112",
+      "title": "Pulau Tinggi",
+      "area": "SIBU–TINGGI WATERS, JOHOR",
+      "intro": "Seagrass meadows around Pulau Sibu and Pulau Tinggi are documented dugong feeding grounds.",
+      "species": [
+        "dugong"
+      ],
+      "sources": [
+        {
+          "label": "Fisheries Malaysia · 2024 ↗",
+          "url": "https://www.dof.gov.my/wp-content/uploads/2024/03/SIARAN-MEDIA_RUMPUT-LAUT-PUPUS-ANCAM-POPULASI-DUGONG-.pdf"
+        },
+        {
+          "label": "Dugong photo & licence ↗",
+          "url": "https://commons.wikimedia.org/wiki/File:Dugong_(Dugong_dugon)_(Ifremer_00617-72913).jpg"
+        }
+      ],
+      "texts": [
+        "9:41",
+        "Habitat",
+        "Map",
+        "HABITAT TYPE",
+        "SIBU–TINGGI WATERS, JOHOR",
+        "Pulau Tinggi",
+        "Seagrass meadows around Pulau Sibu and Pulau Tinggi are documented dugong feeding grounds.",
+        "Seagrass meadows",
+        "Feeding trails",
+        "Island waters",
+        "Life in This Habitat",
+        "Species of this habitat · not local sightings",
+        "Dugong",
+        "Dugong dugon",
+        "Feeding trails have been documented in Sibu–Tinggi seagrass meadows since 2014.",
+        "Help Protect This Habitat",
+        "Keep litter out of coastal habitats.",
+        "Back to Beach",
+        "Browse Cleanups",
+        "Sources & scope",
+        "Sibu–Tinggi waters; a 2024 fisheries report documents feeding trails since 2014.",
+        "Fisheries Malaysia · 2024 ↗",
+        "Habitat photo · Florida Keys / Heather Dine / NOAA · CC BY 2.0 · cropped",
+        "Habitat photo credits",
+        "Dugong · photo from the Red Sea / Jerome Paillet / IFREMER · CC BY 4.0 · cropped",
+        "Dugong photo & licence ↗"
+      ]
+    },
+    {
+      "id": "kuching-wetlands",
+      "figmaId": "1855:113",
+      "title": "Kuching Wetlands",
+      "area": "SARAWAK",
+      "intro": "A protected mangrove and tidal-flat system with documented Irrawaddy dolphins and estuarine crocodiles.",
+      "species": [
+        "irrawaddy-dolphin",
+        "estuarine-crocodile"
+      ],
+      "sources": [
+        {
+          "label": "Ramsar · 2005 ↗",
+          "url": "https://www.ramsar.org/news/malaysia-names-mangrove-ramsar-site"
+        },
+        {
+          "label": "MyBIS · undated ↗",
+          "url": "https://www.mybis.gov.my/ramsar/"
+        },
+        {
+          "label": "Dolphin photo & licence ↗",
+          "url": "https://commons.wikimedia.org/wiki/File:DKoehl_Irrawaddi_Dolphin_jumping.jpg"
+        }
+      ],
+      "texts": [
+        "9:41",
+        "Habitat",
+        "Map",
+        "HABITAT TYPE",
+        "SARAWAK",
+        "Kuching Wetlands",
+        "A protected mangrove and tidal-flat system with documented Irrawaddy dolphins and estuarine crocodiles.",
+        "Saline mangroves",
+        "Tidal flats",
+        "Protected wetland",
+        "Life in This Habitat",
+        "Species of this habitat · not local sightings",
+        "Irrawaddy dolphin",
+        "Orcaella brevirostris",
+        "Listed for Kuching Wetlands in official biodiversity information.",
+        "Estuarine crocodile",
+        "Crocodylus porosus",
+        "Recorded in the wetland’s 2005 Ramsar designation information.",
+        "Help Protect This Habitat",
+        "Keep litter out of coastal habitats.",
+        "Back to Beach",
+        "Browse Cleanups",
+        "Sources & scope",
+        "Wetland-wide records: Ramsar 2005 and undated MyBIS information, with current sightings unverified.",
+        "Ramsar · 2005 ↗",
+        "MyBIS · undated ↗",
+        "Habitat photo · Florida / NOAA · Public domain · cropped",
+        "Habitat photo credits",
+        "Photos show the species, not sightings at this site.",
+        "Dan Koehl / Wikimedia Commons · CC BY 3.0 · cropped",
+        "Dolphin photo & licence ↗",
+        "Crocodylus porosus · photo ↗ / Fernando Pérez Peralta · CC0 1.0 · cropped"
+      ]
+    },
+    {
+      "id": "lawas",
+      "figmaId": "1855:114",
+      "title": "Lawas Seagrass",
+      "area": "SARAWAK",
+      "intro": "Historical surveys recorded diverse seagrasses across sampled intertidal meadows on the Lawas coast.",
+      "species": [
+        "halodule-pinifolia",
+        "halophila-ovalis",
+        "enhalus-acoroides"
+      ],
+      "sources": [
+        {
+          "label": "Lawas seagrass study · 2013 ↗",
+          "url": "https://doi.org/10.1155/2013/892746"
+        }
+      ],
+      "texts": [
+        "9:41",
+        "Habitat",
+        "Map",
+        "HABITAT TYPE",
+        "SARAWAK",
+        "Lawas Seagrass",
+        "Historical surveys recorded diverse seagrasses across sampled intertidal meadows on the Lawas coast.",
+        "Seagrass meadows",
+        "Intertidal coast",
+        "Mixed sediments",
+        "Life in This Habitat",
+        "Species of this habitat · not local sightings",
+        "Halodule pinifolia",
+        "Seagrass",
+        "The most abundant seagrass in the 2009–2010 survey.",
+        "Halophila ovalis",
+        "Seagrass",
+        "One of the species recorded at sampled coastal sites.",
+        "Enhalus acoroides",
+        "Seagrass",
+        "Recorded within the surveyed intertidal meadow.",
+        "Help Protect This Habitat",
+        "Keep litter out of coastal habitats.",
+        "Back to Beach",
+        "Browse Cleanups",
+        "Sources & scope",
+        "Sampled Lawas coast; surveyed June 2009–May 2010 and published in 2013.",
+        "Lawas seagrass study · 2013 ↗",
+        "Habitat photo · Florida Keys / Heather Dine / NOAA · CC BY 2.0 · cropped",
+        "Habitat photo credits",
+        "Halodule pinifolia · photo ↗ / Joselito Balbosa Chavez, Jr. · CC BY-NC 4.0 · cropped",
+        "Halophila ovalis · photo ↗ / Dr Catherine Collier (James Cook University), TropWATER · CC BY 3.0 AU · cropped",
+        "Enhalus acoroides · photo ↗ / Christian Gloor · CC BY 2.0 · cropped"
+      ]
+    },
+    {
+      "id": "sandakan-bay",
+      "figmaId": "1855:115",
+      "title": "Sandakan Bay",
+      "area": "SABAH",
+      "intro": "Mangroves fringe Sandakan Bay, where historical research recorded dugongs.",
+      "species": [],
+      "sources": [
+        {
+          "label": "UMS thesis · 2009 ↗",
+          "url": "https://eprints.ums.edu.my/id/eprint/38299/"
+        },
+        {
+          "label": "SFD–ISME · 2015 ↗",
+          "url": "https://mangrove.or.jp/img/publications/book_pdf/Rehabilitation-in-Sabah.pdf"
+        },
+        {
+          "label": "Dugong photo & licence ↗",
+          "url": "https://commons.wikimedia.org/wiki/File:Dugong_(Dugong_dugon)_(Ifremer_00617-72913).jpg"
+        }
+      ],
+      "texts": [
+        "9:41",
+        "Habitat",
+        "Map",
+        "HABITAT TYPE",
+        "SABAH",
+        "Sandakan Bay",
+        "Mangroves fringe Sandakan Bay, where historical research recorded dugongs.",
+        "Mangrove coast",
+        "Bay waters",
+        "Elopura forest",
+        "Life in This Habitat",
+        "Species of this habitat · not local sightings",
+        "Dugong",
+        "Dugong dugon",
+        "Sandakan Bay was identified as a dugong area in a 2009 thesis.",
+        "Help Protect This Habitat",
+        "Keep litter out of coastal habitats.",
+        "Back to Beach",
+        "Browse Cleanups",
+        "Sources & scope",
+        "Bay-level evidence was published in 2009 and 2015; survey dates remain unverified.",
+        "UMS thesis · 2009 ↗",
+        "SFD–ISME · 2015 ↗",
+        "Habitat photo · Florida / NOAA · Public domain · cropped",
+        "Habitat photo credits",
+        "Dugong · photo from the Red Sea / Jerome Paillet / IFREMER · CC BY 4.0 · cropped",
+        "Dugong photo & licence ↗"
+      ]
+    },
+    {
+      "id": "morib-mudflat",
+      "figmaId": "1855:116",
+      "title": "Morib Mudflat",
+      "area": "BANTING, SELANGOR",
+      "intro": "Researchers collected tube-dwelling marine worms from sandy mud at an intertidal site they identified as Morib.",
+      "species": [
+        "tube-dwelling-worm"
+      ],
+      "sources": [
+        {
+          "label": "Heliyon · Marine worm study, 2021 ↗",
+          "url": "https://doi.org/10.1016/j.heliyon.2021.e06307"
+        }
+      ],
+      "texts": [
+        "9:41",
+        "Habitat",
+        "Map",
+        "HABITAT TYPE",
+        "BANTING, SELANGOR",
+        "Morib Mudflat",
+        "Researchers collected tube-dwelling marine worms from sandy mud at an intertidal site they identified as Morib.",
+        "Intertidal mudflat",
+        "Sandy mud",
+        "Worm tubes",
+        "Life in This Habitat",
+        "Species of this habitat · not local sightings",
+        "Tube-dwelling worm",
+        "Diopatra claparedii",
+        "Collected from mudflat tubes, this worm was studied for its ability to regenerate its nervous system.",
+        "Help Protect This Habitat",
+        "Leave roots and burrows undisturbed.",
+        "Back to Beach",
+        "Browse Cleanups",
+        "Sources & scope",
+        "Published in 2021, this records one collection site; the collection date and present population remain unverified.",
+        "Heliyon · Marine worm study, 2021 ↗",
+        "Habitat photo · Bako, Sarawak / Bernard DUPONT · CC BY-SA 2.0 · cropped",
+        "Habitat photo credits",
+        "Diopatra claparedii · photo ↗ / E. S. Wibowo et al. · CC BY-SA 4.0 · full image"
+      ]
+    }
+  ],
+  "regions": [
+    {
+      "id": "north",
+      "figmaId": "2065:1263",
+      "name": "North Coast",
+      "records": [
+        {
+          "name": "Mangrove crabs",
+          "place": "Kilim, Langkawi",
+          "description": "Crabs are listed in the Kilim park guide.",
+          "speciesId": "mangrove-crabs",
+          "image": "/images/coastal/mangrove-crab-usgs.jpg"
+        },
+        {
+          "name": "Coral restoration",
+          "place": "Pantai Teluk Datai",
+          "description": "Coral nurseries support restoration in Datai Bay.",
+          "speciesId": "corals",
+          "image": "/images/coastal/coral-reef.jpg"
+        },
+        {
+          "name": "Green turtle",
+          "place": "Pantai Batu Ferringhi",
+          "description": "Batu Ferringhi tracks and nests documented during 1995–2009.",
+          "speciesId": "green-sea-turtle",
+          "image": "/species/green-sea-turtle.jpg"
+        },
+        {
+          "name": "Macaques",
+          "place": "Monkey Beach",
+          "description": "Macaques are documented here; the guide does not identify species.",
+          "speciesId": "macaques",
+          "image": "/images/coastal/macaques.jpg"
+        },
+        {
+          "name": "Mangroves",
+          "place": "Sungai Perlis estuary",
+          "description": "Estuary habitat description, 2020; not beach animal sightings.",
+          "speciesId": "mangroves",
+          "image": "/images/coastal/rhizophora-mucronata.jpg"
+        }
+      ],
+      "sources": [
+        {
+          "label": "Record · Pantai Teluk Datai · Coral restoration",
+          "url": "https://www.thedatai.com/sustainability/key-initiatives/coral-restoration-programme/"
+        },
+        {
+          "label": "View source ↗",
+          "url": "https://ejournal.usm.my/tlsr/article/download/tlsr_vol23-no-1-2012_6/pdf/1122"
+        },
+        {
+          "label": "View source ↗",
+          "url": "https://mypenang.gov.my/uploads/downloads/SFA_Teluk-Bahang_Eng_V03Aug24.pdf"
+        },
+        {
+          "label": "View source ↗",
+          "url": "https://www.ukm.my/jem/wp-content/uploads/2021/05/jeko_543-7.pdf"
+        }
+      ]
+    },
+    {
+      "id": "perak",
+      "figmaId": "2065:1391",
+      "name": "Perak",
+      "records": [
+        {
+          "name": "Giant mudskipper",
+          "place": "Kuala Gula, Matang",
+          "description": "Observed hunting crabs on Kuala Gula mudflats.",
+          "speciesId": "giant-mudskipper",
+          "image": "/images/coastal/periophthalmodon-schlosseri.jpg"
+        },
+        {
+          "name": "Black sea cucumber",
+          "place": "Pantai Teluk Nipah",
+          "description": "Collected at Teluk Nipah in November 2011.",
+          "speciesId": "black-sea-cucumber",
+          "image": "/images/coastal/black-long-sea-cucumber.jpg"
+        },
+        {
+          "name": "Green turtle",
+          "place": "Pantai Pasir Panjang, Segari",
+          "description": "Segari records include green turtles; beach sightings remain unconfirmed.",
+          "speciesId": "green-sea-turtle",
+          "image": "/species/green-sea-turtle.jpg"
+        },
+        {
+          "name": "Sea cucumber",
+          "place": "Pangkor Laut",
+          "description": "Collected at Pangkor Laut in 2011, not specifically Emerald Bay.",
+          "speciesId": "sea-cucumber",
+          "image": "/images/coastal/sea-cucumber.jpg"
+        }
+      ],
+      "sources": [
+        {
+          "label": "View source ↗",
+          "url": "https://irep.iium.edu.my/29832/1/2013_GenBank_KC405565-KC405568_-_Outlook_Web_Access_Light.pdf"
+        },
+        {
+          "label": "View source ↗",
+          "url": "https://www.dof.gov.my/wp-content/uploads/2023/07/KENYATAAN-MEDIA-PUSAT-KONVENSYEN-DAN-PENERANGAN-PENYU-SEGARI.pdf"
+        },
+        {
+          "label": "View source ↗",
+          "url": "https://irep.iium.edu.my/29832/1/2013_GenBank_KC405565-KC405568_-_Outlook_Web_Access_Light.pdf"
+        }
+      ]
+    },
+    {
+      "id": "selangor",
+      "figmaId": "2065:1562",
+      "name": "Selangor",
+      "records": [
+        {
+          "name": "Blood cockle",
+          "place": "Pantai Remis",
+          "description": "Remis, Selangor samples; microplastics reported in a 2024 study.",
+          "speciesId": "blood-cockle",
+          "image": "/images/coastal/blood-cockle.jpg"
+        },
+        {
+          "name": "Mangrove restoration",
+          "place": "Pantai Sungai Haji Dorani",
+          "description": "Mangrove restoration on this coastline was studied in 2011.",
+          "speciesId": null,
+          "image": null
+        },
+        {
+          "name": "Tube-dwelling worm",
+          "place": "Pantai Morib",
+          "description": "One Morib collection site; study published 2021.",
+          "speciesId": "tube-dwelling-worm",
+          "image": "/images/coastal/tube-dwelling-worm.jpg"
+        },
+        {
+          "name": "Mangrove restoration",
+          "place": "Pantai Tanjung Rhu, Pulau Carey",
+          "description": "273 mangrove seedlings were planted on this shoreline in 2025.",
+          "speciesId": null,
+          "image": null
+        },
+        {
+          "name": "Shorebirds",
+          "place": "Pantai Redang",
+          "description": "The local guide records shorebirds, without identifying individual species.",
+          "speciesId": "shorebirds",
+          "image": null
+        },
+        {
+          "name": "Mangroves",
+          "place": "Pantai Bagan Lalang",
+          "description": "Landward mangroves recorded at Bagan Lalang in March 2012.",
+          "speciesId": "mangroves",
+          "image": "/images/coastal/rhizophora-mucronata.jpg"
+        },
+        {
+          "name": "Mangroves",
+          "place": "Pantai Kelanang",
+          "description": "Kelanang mangroves documented; study published 2019.",
+          "speciesId": "mangroves",
+          "image": "/images/coastal/rhizophora-mucronata.jpg"
+        },
+        {
+          "name": "Tube-dwelling worm",
+          "place": "Morib Mudflat",
+          "description": "Collected from mudflat tubes at a Morib study site.",
+          "speciesId": "tube-dwelling-worm",
+          "image": "/images/coastal/tube-dwelling-worm.jpg"
+        }
+      ],
+      "sources": [
+        {
+          "label": "View source ↗",
+          "url": "https://doi.org/10.20473/jkl.v16i4.2024.321-330"
+        },
+        {
+          "label": "Record · Pantai Sungai Haji Dorani · Mangrove restoration",
+          "url": "https://eprints.um.edu.my/8861/"
+        },
+        {
+          "label": "Record · Pantai Tanjung Rhu, Pulau Carey · Mangrove restoration",
+          "url": "https://news.uitm.edu.my/2025/10/uitm-petronas-dagangan-dan-mmcv-jayakan-program-pemuliharaan-bakau-di-pulau-carey/"
+        },
+        {
+          "label": "View source ↗",
+          "url": "https://selangor.travel/listing/redang-beach/"
+        },
+        {
+          "label": "View source ↗",
+          "url": "https://glomis.com/ej/pdf/EJ_10-2.pdf"
+        },
+        {
+          "label": "View source ↗",
+          "url": "https://jms.mabjournal.com/index.php/mab/article/download/2319/637/1878"
+        }
+      ]
+    },
+    {
+      "id": "nsm",
+      "figmaId": "2065:1721",
+      "name": "Negeri Sembilan & Melaka",
+      "records": [
+        {
+          "name": "Hawksbill turtle",
+          "place": "Pantai Pengkalan Balak",
+          "description": "Hawksbill nests were recorded here during 2015–2019.",
+          "speciesId": "hawksbill-turtle",
+          "image": "/images/coastal/hawksbill-turtle.jpg"
+        },
+        {
+          "name": "Seagrass",
+          "place": "Teluk Kemang",
+          "description": "Syringodium recorded at Teluk Kemang; research presented 2022.",
+          "speciesId": "seagrass",
+          "image": "/images/coastal/seagrass-illustration.jpg"
+        },
+        {
+          "name": "Hawksbill turtle",
+          "place": "Pantai Klebang",
+          "description": "Earlier nesting reported; none recorded here during 2015–2019.",
+          "speciesId": "hawksbill-turtle",
+          "image": "/images/coastal/hawksbill-turtle.jpg"
+        },
+        {
+          "name": "Hawksbill turtle",
+          "place": "Pantai Tanjung Bidara",
+          "description": "A few hawksbill nests were recorded here during 2015–2019.",
+          "speciesId": "hawksbill-turtle",
+          "image": "/images/coastal/hawksbill-turtle.jpg"
+        }
+      ],
+      "sources": [
+        {
+          "label": "View source ↗",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC13127984/"
+        },
+        {
+          "label": "View source ↗",
+          "url": "https://irep.iium.edu.my/97098/7/97098_%20Abundance%20and%20size%20composition%20of%20the%20billfishes.pdf"
+        },
+        {
+          "label": "View source ↗",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC13127984/"
+        },
+        {
+          "label": "View source ↗",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC13127984/"
+        }
+      ]
+    },
+    {
+      "id": "johor",
+      "figmaId": "2065:1890",
+      "name": "Johor",
+      "records": [
+        {
+          "name": "Dugong",
+          "place": "Pulau Tinggi",
+          "description": "Seagrass around southwest Tinggi supports dugongs.",
+          "speciesId": "dugong",
+          "image": "/images/coastal/dugong.jpg"
+        },
+        {
+          "name": "Seagrass meadows",
+          "place": "Pulau Sibu",
+          "description": "Seagrass around Sibu provides dugong feeding habitat.",
+          "speciesId": null,
+          "image": null
+        },
+        {
+          "name": "Seagrass",
+          "place": "Merambong, Sungai Pulai",
+          "description": "Enhalus seedlings were planted for habitat recovery.",
+          "speciesId": "seagrass",
+          "image": "/images/coastal/seagrass-illustration.jpg"
+        },
+        {
+          "name": "Dugong",
+          "place": "Sibu–Tinggi waters",
+          "description": "Feeding trails recorded in seagrass meadows since 2014.",
+          "speciesId": "dugong",
+          "image": "/images/coastal/dugong.jpg"
+        }
+      ],
+      "sources": []
+    },
+    {
+      "id": "kelantan",
+      "figmaId": "2065:2028",
+      "name": "Kelantan",
+      "records": [
+        {
+          "name": "Faunus snail",
+          "place": "Pantai Bisikan Bayu",
+          "description": "Faunus ater was collected here in 2007.",
+          "speciesId": "faunus-snail",
+          "image": "/images/coastal/black-faunus-snail.jpg"
+        }
+      ],
+      "sources": [
+        {
+          "label": "View source ↗",
+          "url": "https://www.jelsciences.com/articles/jbres1581.php"
+        }
+      ]
+    },
+    {
+      "id": "tganu",
+      "figmaId": "2065:2182",
+      "name": "Terengganu",
+      "records": [
+        {
+          "name": "Green turtle",
+          "place": "Chagar Hutang, Redang",
+          "description": "Green turtles are documented in Chagar Hutang Bay.",
+          "speciesId": "green-sea-turtle",
+          "image": "/species/green-sea-turtle.jpg"
+        },
+        {
+          "name": "Corals",
+          "place": "Pulau Kapas",
+          "description": "Hard and soft corals are documented around Kapas.",
+          "speciesId": "corals",
+          "image": "/images/coastal/coral-reef.jpg"
+        },
+        {
+          "name": "Corals",
+          "place": "Pasir Besar, Lang Tengah",
+          "description": "Coral research covers Pasir Besar and Batu Kuching reefs.",
+          "speciesId": "corals",
+          "image": "/images/coastal/coral-reef.jpg"
+        },
+        {
+          "name": "Painted terrapin",
+          "place": "Setiu Wetlands",
+          "description": "Recorded in the wetland and coastal complex.",
+          "speciesId": "painted-terrapin",
+          "image": "/images/coastal/batagur-borneoensis.jpg"
+        }
+      ],
+      "sources": [
+        {
+          "label": "View source ↗",
+          "url": "https://journal.umt.edu.my/index.php/umtjur/article/view/493"
+        },
+        {
+          "label": "View source ↗",
+          "url": "https://ebrochures.malaysia.travel/en/malaysia-travel-guide/terengganu/"
+        },
+        {
+          "label": "View source ↗",
+          "url": "https://opus.lib.uts.edu.au/rest/bitstreams/f4882097-3cdb-4a3e-bf63-2f841afe1827/retrieve"
+        }
+      ]
+    },
+    {
+      "id": "pahang",
+      "figmaId": "2065:2310",
+      "name": "Pahang",
+      "records": [
+        {
+          "name": "Horseshoe crab",
+          "place": "Pantai Balok",
+          "description": "Spawning was recorded at Pantai Balok during 2009–2013.",
+          "speciesId": "horseshoe-crab",
+          "image": "/images/coastal/horseshoe-crab.jpg"
+        },
+        {
+          "name": "Hawksbill turtle",
+          "place": "Pantai Juara, Tioman",
+          "description": "Nesting recorded in the Kampung Juara area in 2012.",
+          "speciesId": "hawksbill-turtle",
+          "image": "/images/coastal/hawksbill-turtle.jpg"
+        },
+        {
+          "name": "Corals",
+          "place": "Pantai Paya, Tioman",
+          "description": "Coral formations are documented around Tioman, beyond this beach.",
+          "speciesId": "corals",
+          "image": "/images/coastal/coral-reef.jpg"
+        },
+        {
+          "name": "Sea turtles",
+          "place": "Pantai Chendor",
+          "description": "Official guide identifies turtle nesting here; species are not named.",
+          "speciesId": "sea-turtles",
+          "image": "/images/coastal/green-turtle.jpg"
+        }
+      ],
+      "sources": [
+        {
+          "label": "View source ↗",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC4957986/"
+        },
+        {
+          "label": "View source ↗",
+          "url": "https://www.juaraturtleproject.com/wp-content/uploads/2012/04/2012-Summary_-Juara-Turtle-Project.pdf"
+        },
+        {
+          "label": "View source ↗",
+          "url": "https://storage.ebrochures.malaysia.travel/storage/PAHANGMAPGUIDE_english_0916.pdf"
+        },
+        {
+          "label": "View source ↗",
+          "url": "https://ebrochures.malaysia.travel/en/islands-and-beaches/cherating-pahang/"
+        }
+      ]
+    },
+    {
+      "id": "borneo",
+      "figmaId": "2065:2459",
+      "name": "Sabah & Sarawak",
+      "records": [
+        {
+          "name": "Irrawaddy dolphin",
+          "place": "Kuching Bay",
+          "description": "Kuching Bay surveys, 2007–2011; not Damai sightings.",
+          "speciesId": "irrawaddy-dolphin",
+          "image": "/species/irrawaddy-dolphin.jpg"
+        },
+        {
+          "name": "Clownfish",
+          "place": "Pulau Mantanani",
+          "description": "Clownfish are documented around Mantanani, not at a specific beach.",
+          "speciesId": "clownfish",
+          "image": "/images/coastal/ocellaris-clownfish.jpg"
+        },
+        {
+          "name": "Corals",
+          "place": "Pulau Tiga Park waters",
+          "description": "Coral reefs are documented around Pulau Tiga Park.",
+          "speciesId": "corals",
+          "image": "/images/coastal/coral-reef.jpg"
+        },
+        {
+          "name": "Irrawaddy dolphin",
+          "place": "Kuching Wetlands",
+          "description": "Listed in official information for these wetlands.",
+          "speciesId": "irrawaddy-dolphin",
+          "image": "/species/irrawaddy-dolphin.jpg"
+        },
+        {
+          "name": "Seagrass",
+          "place": "Lawas coast",
+          "description": "Halodule pinifolia dominated the sampled meadows.",
+          "speciesId": "seagrass",
+          "image": "/images/coastal/seagrass-illustration.jpg"
+        },
+        {
+          "name": "Dugong",
+          "place": "Sandakan Bay",
+          "description": "Identified as a dugong area in a 2009 thesis.",
+          "speciesId": "dugong",
+          "image": "/images/coastal/dugong.jpg"
+        }
+      ],
+      "sources": [
+        {
+          "label": "View source ↗",
+          "url": "https://ir.unimas.my/id/eprint/6588/1/Gianna.pdf"
+        },
+        {
+          "label": "View source ↗",
+          "url": "https://sabahtourism.com/destination/mantanani-island/?locale=fr"
+        },
+        {
+          "label": "View source ↗",
+          "url": "https://www.sabahparks.org.my/pulau-tiga-park"
+        }
+      ]
+    }
+  ],
+  "photos": [
+    {
+      "name": "Bagan Lalang",
+      "source": "https://commons.wikimedia.org/wiki/File:Bagan_Lalang_Beach_1.jpg",
+      "credit": "Wiki Farazi · CC0 1.0 · cropped to fit",
+      "image": "/images/coastal/bagan-lalang.jpg"
+    },
+    {
+      "name": "Batu Buruk",
+      "source": "https://commons.wikimedia.org/wiki/File:Pantai_batu_buruk.jpg",
+      "credit": "Airil anuar · CC BY-SA 3.0 · cropped to fit",
+      "image": "/images/coastal/batu-buruk.jpg"
+    },
+    {
+      "name": "Batu Ferringhi",
+      "source": "https://commons.wikimedia.org/wiki/File:Beaches_at_Batu_Ferringhi.jpg",
+      "credit": "Jonatan Forsberg · Public domain · cropped to fit",
+      "image": "/images/coastal/batu-ferringhi.jpg"
+    },
+    {
+      "name": "Mangrove illustration",
+      "source": "https://commons.wikimedia.org/wiki/File:Mangrove_forest_in_Loxahatchee,_Florida.jpg",
+      "credit": "NOAA · Public domain · cropped to fit",
+      "image": "/images/coastal/mangrove-illustration.jpg"
+    },
+    {
+      "name": "Seagrass illustration",
+      "source": "https://commons.wikimedia.org/wiki/File:Sanc0209_-_Flickr_-_NOAA_Photo_Library.jpg",
+      "credit": "Heather Dine / NOAA · CC BY 2.0 · cropped to fit",
+      "image": "/images/coastal/seagrass-illustration.jpg"
+    },
+    {
+      "name": "Mudflat illustration",
+      "source": "https://commons.wikimedia.org/wiki/File:Mudflat_at_Low_Tide_with_Santubong_Peninsula_in_the_background_(15735828941).jpg",
+      "credit": "Bernard DUPONT · CC BY-SA 2.0 · cropped to fit",
+      "image": "/images/coastal/mudflat-illustration.jpg"
+    },
+    {
+      "name": "Rhizophora mucronata",
+      "source": "https://commons.wikimedia.org/wiki/File:Rhizophora_mucronata_with_propagule_at_Muzhappilangad.jpg",
+      "credit": "Shagil Kannur · CC BY-SA 3.0 · cropped",
+      "image": "/images/coastal/rhizophora-mucronata.jpg"
+    },
+    {
+      "name": "Nypa fruticans",
+      "source": "https://commons.wikimedia.org/wiki/File:Nypa_fruticans_251538575.jpg",
+      "credit": "Scott Edmunds · CC0 1.0 · cropped",
+      "image": "/images/coastal/nypa-fruticans.jpg"
+    },
+    {
+      "name": "Rhizophora apiculata",
+      "source": "https://commons.wikimedia.org/wiki/File:Rhizophora_apiculata_-_Manado.JPG",
+      "credit": "Ariefrahman · CC BY-SA 4.0 · cropped",
+      "image": "/images/coastal/rhizophora-apiculata.jpg"
+    },
+    {
+      "name": "Bruguiera parviflora",
+      "source": "https://commons.wikimedia.org/wiki/File:Brugu_parvi_111021-18698_Fr_kbu.jpg",
+      "credit": "Wibowo Djatmiko (Wie146) · CC BY-SA 3.0 · cropped",
+      "image": "/images/coastal/bruguiera-parviflora.jpg"
+    },
+    {
+      "name": "Crabs · species vary",
+      "source": "https://www.usgs.gov/media/images/mangrove-crab",
+      "credit": "Tracy Enright, U.S. Geological Survey · Public Domain",
+      "image": "/images/coastal/mangrove-crab-usgs.jpg"
+    },
+    {
+      "name": "Periophthalmodon schlosseri",
+      "source": "https://commons.wikimedia.org/wiki/File:Giant_mudskipper_Periophthalmodon_schlosseri_(8035170931).jpg",
+      "credit": "Pavel Kirillov · CC BY-SA 2.0 · cropped",
+      "image": "/images/coastal/periophthalmodon-schlosseri.jpg"
+    },
+    {
+      "name": "Batagur borneoensis",
+      "source": "https://commons.wikimedia.org/wiki/File:Painted_Terrapin_(Batagur_borneoensis)_(7781281590).jpg",
+      "credit": "Bernard DUPONT · CC BY-SA 2.0 · cropped",
+      "image": "/images/coastal/batagur-borneoensis.jpg"
+    },
+    {
+      "name": "Batagur affinis",
+      "source": "https://commons.wikimedia.org/wiki/File:BatagurPasirKumpal.jpg",
+      "credit": "Mohd Hafiz Noor Shams (User __earth) · CC BY 2.5 · cropped",
+      "image": "/images/coastal/batagur-affinis.jpg"
+    },
+    {
+      "name": "Crocodylus porosus",
+      "source": "https://commons.wikimedia.org/wiki/File:Crocodylus_porosus_248308231.jpg",
+      "credit": "Fernando Pérez Peralta · CC0 1.0 · cropped",
+      "image": "/images/coastal/crocodylus-porosus.jpg"
+    },
+    {
+      "name": "Enhalus acoroides",
+      "source": "https://commons.wikimedia.org/wiki/File:Enhalus_acoroides_(30774220094).jpg",
+      "credit": "Christian Gloor · CC BY 2.0 · cropped",
+      "image": "/images/coastal/enhalus-acoroides.jpg"
+    },
+    {
+      "name": "Halophila ovalis",
+      "source": "https://eatlas.org.au/media/4026",
+      "credit": "Dr Catherine Collier (James Cook University), TropWATER · CC BY 3.0 AU (site image policy; item marked Attribution) · cropped",
+      "image": null
+    },
+    {
+      "name": "Thalassia hemprichii",
+      "source": "https://commons.wikimedia.org/wiki/File:Thalassia_Hemprichii.jpg",
+      "credit": "Mudasir Zainuddin · CC BY-SA 4.0 · cropped",
+      "image": "/images/coastal/thalassia-hemprichii.jpg"
+    },
+    {
+      "name": "Halodule pinifolia",
+      "source": "https://commons.wikimedia.org/wiki/File:Halodule_pinifolia_(Miki)_Hartog.jpg",
+      "credit": "Joselito Balbosa Chavez, Jr. · CC BY-NC 4.0 (original media record; Commons lists conflicting CC BY 4.0) · cropped",
+      "image": "/images/coastal/halodule-pinifolia.jpg"
+    },
+    {
+      "name": "Diopatra claparedii",
+      "source": "https://ejournal.undip.ac.id/index.php/ijms/article/view/60038",
+      "credit": "Wibowo et al. (2025), Figure 1 · CC BY-SA 4.0",
+      "image": "/images/coastal/tube-dwelling-worm.jpg"
+    },
+    {
+      "name": "Green turtle",
+      "source": "https://commons.wikimedia.org/wiki/File:Chelonia_mydas_2005-06-11_Andaman_sea.jpg",
+      "credit": "Christoph Schuetzenhofer · CC BY-SA 3.0 · cropped",
+      "image": "/images/coastal/green-turtle.jpg"
+    },
+    {
+      "name": "Dugong",
+      "source": "https://commons.wikimedia.org/wiki/File:Dugong_(Dugong_dugon)_(Ifremer_00617-72913).jpg",
+      "credit": "Jerome Paillet / IFREMER · CC BY 4.0 · cropped",
+      "image": "/images/coastal/dugong.jpg"
+    },
+    {
+      "name": "Irrawaddy dolphin",
+      "source": "https://commons.wikimedia.org/wiki/File:DKoehl_Irrawaddi_Dolphin_jumping.jpg",
+      "credit": "Dan Koehl · CC BY 3.0 · cropped",
+      "image": "/images/coastal/irrawaddy-dolphin.jpg"
+    },
+    {
+      "name": "Blood cockle",
+      "source": "https://commons.wikimedia.org/wiki/File:Tegillarca_granosa_360013509.jpg",
+      "credit": "Al Kordesch · CC0 · cropped",
+      "image": "/images/coastal/blood-cockle.jpg"
+    },
+    {
+      "name": "Black faunus snail",
+      "source": "https://commons.wikimedia.org/wiki/File:Faunus_ater_01.JPG",
+      "credit": "H. Zell · CC BY-SA 3.0 · cropped",
+      "image": "/images/coastal/black-faunus-snail.jpg"
+    },
+    {
+      "name": "Black long sea cucumber",
+      "source": "https://commons.wikimedia.org/wiki/File:Holothuria_leucospilota_R%C3%A9union_2.jpg",
+      "credit": "Philippe Bourjon · CC BY-SA 3.0 · cropped",
+      "image": "/images/coastal/black-long-sea-cucumber.jpg"
+    },
+    {
+      "name": "Sea cucumber",
+      "source": "https://commons.wikimedia.org/wiki/File:Stichopus_horrens_265884830.jpg",
+      "credit": "Cricket Raspet · CC BY 4.0 · cropped",
+      "image": "/images/coastal/sea-cucumber.jpg"
+    },
+    {
+      "name": "Coral reef",
+      "source": "https://commons.wikimedia.org/wiki/File:Underwater_photo_of_coral_reef.jpg",
+      "credit": "Jerry Reid, U.S. Fish and Wildlife Service · Public domain · cropped",
+      "image": "/images/coastal/coral-reef.jpg"
+    },
+    {
+      "name": "Horseshoe crab",
+      "source": "https://commons.wikimedia.org/wiki/File:Tachypleus_gigas_214513978_(cropped).jpg",
+      "credit": "Doreen · CC BY 4.0 · cropped",
+      "image": "/images/coastal/horseshoe-crab.jpg"
+    },
+    {
+      "name": "Hawksbill turtle",
+      "source": "https://commons.wikimedia.org/wiki/File:Hawksbill_turtle_on_Pom_Pom_Island.jpg",
+      "credit": "Profmauri · CC BY-SA 3.0 · cropped",
+      "image": "/images/coastal/hawksbill-turtle.jpg"
+    },
+    {
+      "name": "Shorebirds",
+      "source": "https://commons.wikimedia.org/wiki/File:Charadrius_alexandrinus.jpg",
+      "credit": "Nepenthes · CC BY-SA 3.0 · cropped",
+      "image": null
+    },
+    {
+      "name": "Macaques",
+      "source": "https://commons.wikimedia.org/wiki/File:Macaca-fascicularis-20070216-019.jpg",
+      "credit": "Gary Houston · CC0 · cropped",
+      "image": "/images/coastal/macaques.jpg"
+    },
+    {
+      "name": "Pantai Pasir Tengkorak",
+      "source": "https://naturallylangkawi.my/portfolio/pantai-pasir-tengkorak/",
+      "credit": "Langkawi Development Authority (Naturally Langkawi) · Source website · rights not specified · cropped",
+      "image": null
+    },
+    {
+      "name": "Pantai Remis",
+      "source": "https://selangor.travel/listing/remis-beach/",
+      "credit": "Tourism Selangor · Source website · rights not specified · cropped",
+      "image": null
+    },
+    {
+      "name": "Teluk Cempedak",
+      "source": "https://www.pahangtourism.org.my/index.php/destination/islands-beaches/kuantan/teluk-cempedak",
+      "credit": "Tourism Pahang · Source website · rights not specified · cropped",
+      "image": null
+    },
+    {
+      "name": "Pantai Pandan",
+      "source": "https://lundudc.sarawak.gov.my/web/subpage/webpage_view/133",
+      "credit": "Lundu District Council · Source website · rights not specified · cropped",
+      "image": null
+    },
+    {
+      "name": "Tanjung Aru",
+      "source": "https://sabahtourism.com/destination/tanjung-aru-beach/?locale=en",
+      "credit": "Sabah Tourism Board · Source website · rights not specified · cropped",
+      "image": null
+    },
+    {
+      "name": "Pantai Mukah",
+      "source": "https://mtcp.sarawak.gov.my/web/subpage/webpage_view/78",
+      "credit": "Ministry of Tourism, Creative Industry & Performing Arts Sarawak · Source website · rights not specified · cropped",
+      "image": null
+    },
+    {
+      "name": "Pantai Cenang",
+      "source": "https://commons.wikimedia.org/wiki/File:Pantai_Cenang,_Langkawi_01.jpg",
+      "credit": "Nahid Sultan · CC BY-SA 4.0 · cropped",
+      "image": "/images/coastal/pantai-cenang.jpg"
+    },
+    {
+      "name": "Pantai Bagan Pinang",
+      "source": "https://n9tourism.ns.gov.my/tarikan/pantai-bagan-pinang/",
+      "credit": "Negeri Sembilan Tourism · Source website · rights not specified · cropped",
+      "image": null
+    },
+    {
+      "name": "Pantai Siring",
+      "source": "https://www.melakahariini.my/pantai-siring-bakal-jadi-permata-pelancongan-pesisir-selatan-melaka/",
+      "credit": "Melaka Hari Ini · Source website · rights not specified · cropped",
+      "image": null
+    },
+    {
+      "name": "Pantai Tusan",
+      "source": "https://www.sarawaktourism.com/web/places-to-visit/town-view/miri/major-attractions/tusan-beach-subis",
+      "credit": "Sarawak Tourism Board · Source website · rights not specified · cropped",
+      "image": null
+    },
+    {
+      "name": "Pulau Tinggi",
+      "source": "https://johornationalparks.gov.my/taman-laut-sultan-iskandar/",
+      "credit": "Johor National Parks Corporation · Source website · rights not specified · cropped",
+      "image": null
+    },
+    {
+      "name": "Pantai Teluk Mahkota",
+      "source": "https://www.mdkt.gov.my/ms/mdkt/pusat-media/berita/majlis-serah-terima-projek-naiktaraf-dan-penyerahan-kunci-kepada-peniaga-di",
+      "credit": "Majlis Daerah Kota Tinggi · Source website · rights not specified · cropped",
+      "image": null
+    },
+    {
+      "name": "Ocellaris clownfish",
+      "source": "https://commons.wikimedia.org/wiki/File:Amphiprion_ocellaris_354353067.jpg",
+      "credit": "Zoltán Stekkelpak · CC0 1.0 · cropped",
+      "image": "/images/coastal/ocellaris-clownfish.jpg"
+    },
+    {
+      "name": "Pantai Batu Laut",
+      "source": "https://commons.wikimedia.org/wiki/File:Pantai_Batu_Laut_(230617).jpg",
+      "credit": "Photo · *angys* · CC BY-SA 4.0 · cropped",
+      "image": "/images/coastal/pantai-batu-laut.jpg"
+    },
+    {
+      "name": "Pantai Redang",
+      "source": "https://commons.wikimedia.org/wiki/File:Sekinchan_Old_Jetty_and_Fishing_Village.jpg",
+      "credit": "Photo · Fikku fiq · CC0 · cropped",
+      "image": "/images/coastal/pantai-redang.jpg"
+    },
+    {
+      "name": "Pantai Sungai Kajang Baru",
+      "source": "https://commons.wikimedia.org/wiki/File:Sungai_Kajang_Baru_Beach_(230316)_01.jpg",
+      "credit": "Photo · *angys* · CC BY-SA 4.0 · cropped",
+      "image": "/images/coastal/pantai-sungai-kajang-baru.jpg"
+    },
+    {
+      "name": "Pantai Bagan Nakhoda Omar",
+      "source": "https://commons.wikimedia.org/wiki/File:Playa_de_Bagan_Nakhoda_Omar.JPG",
+      "credit": "Photo · Khairi Ahmad · CC BY-SA 4.0 · cropped",
+      "image": "/images/coastal/pantai-bagan-nakhoda-omar.jpg"
+    },
+    {
+      "name": "Pantai Kok",
+      "source": "https://commons.wikimedia.org/wiki/File:Langkawi_beach.jpg",
+      "credit": "Photo · Anton Zelenov · CC BY-SA 3.0 · cropped",
+      "image": "/images/coastal/pantai-kok.jpg"
+    },
+    {
+      "name": "Pantai Teluk Datai",
+      "source": "https://commons.wikimedia.org/wiki/File:Teluk_Datai_-_panoramio.jpg",
+      "credit": "Photo · alhafis · CC BY 3.0 · cropped",
+      "image": "/images/coastal/pantai-teluk-datai.jpg"
+    },
+    {
+      "name": "Pantai Tanjung Rhu",
+      "source": "https://commons.wikimedia.org/wiki/File:Tanjung_Rhu_Beach.jpg",
+      "credit": "Photo · Tim Parkinson · CC BY 2.0 · cropped",
+      "image": "/images/coastal/pantai-tanjung-rhu.jpg"
+    },
+    {
+      "name": "Pantai Pasir Hitam",
+      "source": "https://commons.wikimedia.org/wiki/File:Black_Sand_Beach_Langkawi._(50820020372).jpg",
+      "credit": "Photo · Bernard Spragg. NZ  from Christchurch, New Zealand · CC0 · cropped",
+      "image": "/images/coastal/pantai-pasir-hitam.jpg"
+    },
+    {
+      "name": "Pantai Merdeka",
+      "source": "https://commons.wikimedia.org/wiki/File:Pantai_Merdeka_(12185357735).jpg",
+      "credit": "Photo · Marufish  from Alor Setar, Malaysia · CC BY-SA 2.0 · cropped",
+      "image": "/images/coastal/pantai-merdeka.jpg"
+    },
+    {
+      "name": "Pantai Tanjung Bungah",
+      "source": "https://commons.wikimedia.org/wiki/File:Tanjung_Bungah_Beach_(24309528503).jpg",
+      "credit": "Photo · Jan  from Singapore, Singapore · CC BY-SA 2.0 · cropped",
+      "image": "/images/coastal/pantai-tanjung-bungah.jpg"
+    },
+    {
+      "name": "Monkey Beach",
+      "source": "https://commons.wikimedia.org/wiki/File:Monkeybeach08.jpg",
+      "credit": "Photo · Asiadetailfeed · CC BY-SA 3.0 · cropped",
+      "image": "/images/coastal/monkey-beach.jpg"
+    },
+    {
+      "name": "Pantai Bersih",
+      "source": "https://commons.wikimedia.org/wiki/File:Pantai_Bersih,_Penang_03.jpg",
+      "credit": "Photo · Wiki Farazi · CC BY-SA 4.0 · cropped",
+      "image": "/images/coastal/pantai-bersih.jpg"
+    },
+    {
+      "name": "Pasir Belanda",
+      "source": "https://commons.wikimedia.org/wiki/File:Cmglee_Penang_Pasir_Belanda.jpg",
+      "credit": "Photo · Cmglee · CC BY-SA 4.0 · cropped",
+      "image": "/images/coastal/pasir-belanda.jpg"
+    },
+    {
+      "name": "Pantai Teluk Batik",
+      "source": "https://commons.wikimedia.org/wiki/File:Pantai_Teluk_Batik_-_Perak,_Malaysia.jpg",
+      "credit": "Photo · Ryan Albrey  from Perth, Australia · CC BY 2.0 · cropped",
+      "image": "/images/coastal/pantai-teluk-batik.jpg"
+    },
+    {
+      "name": "Pantai Teluk Nipah",
+      "source": "https://commons.wikimedia.org/wiki/File:Teluk_Nipah_Beach_-_panoramio.jpg",
+      "credit": "Photo · Richard Horvath · CC BY-SA 3.0 · cropped",
+      "image": "/images/coastal/pantai-teluk-nipah.jpg"
+    },
+    {
+      "name": "Pantai Teluk Senangin",
+      "source": "https://commons.wikimedia.org/wiki/File:Pantai_Teluk_Senangin,_Kampung_Teluk_Senangin_20231222_112432.jpg",
+      "credit": "Photo · Wiki Farazi · CC0 · cropped",
+      "image": "/images/coastal/pantai-teluk-senangin.jpg"
+    },
+    {
+      "name": "Pantai Pasir Panjang, Segari",
+      "source": "https://commons.wikimedia.org/wiki/File:Pantai_Pasir_Panjang,_Segari_20231222_131024.jpg",
+      "credit": "Photo · Wiki Farazi · CC0 · cropped",
+      "image": "/images/coastal/pantai-pasir-panjang-segari.jpg"
+    },
+    {
+      "name": "Pantai Cahaya Negeri",
+      "source": "https://commons.wikimedia.org/wiki/File:Pantai_Cahaya_Negeri_(030324)_01.jpg",
+      "credit": "Photo · Zahirulnukman · CC BY-SA 4.0 · cropped",
+      "image": "/images/coastal/pantai-cahaya-negeri.jpg"
+    },
+    {
+      "name": "Pantai Tanjung Gemuk",
+      "source": "https://commons.wikimedia.org/wiki/File:Tanjung_Gemok,_Port_Dickson.jpg",
+      "credit": "Photo · Wiki Farazi · Public domain · cropped",
+      "image": "/images/coastal/pantai-tanjung-gemuk.jpg"
+    },
+    {
+      "name": "Pantai Tanjung Biru",
+      "source": "https://commons.wikimedia.org/wiki/File:Tanjung_Biru_beach,_low_tide.jpg",
+      "credit": "Photo · AyyanD · CC BY-SA 3.0 · cropped",
+      "image": "/images/coastal/pantai-tanjung-biru.jpg"
+    },
+    {
+      "name": "Pantai Pengkalan Balak",
+      "source": "https://commons.wikimedia.org/wiki/File:Coconut_trees_at_Pengkalan_Balak_beach.JPG",
+      "credit": "Photo · Adiput at en.wikipedia · Public domain · cropped",
+      "image": "/images/coastal/pantai-pengkalan-balak.jpg"
+    },
+    {
+      "name": "Pantai Klebang",
+      "source": "https://commons.wikimedia.org/wiki/File:Klebang_Beach.JPG",
+      "credit": "Photo · Chongkian · CC BY-SA 4.0 · cropped",
+      "image": "/images/coastal/pantai-klebang.jpg"
+    },
+    {
+      "name": "Pantai Tanjung Bidara",
+      "source": "https://commons.wikimedia.org/wiki/File:Tanjung_Bidara_Beach.JPG",
+      "credit": "Photo · Chongkian · CC BY-SA 4.0 · cropped",
+      "image": "/images/coastal/pantai-tanjung-bidara.jpg"
+    },
+    {
+      "name": "Pulau Besar, Melaka",
+      "source": "https://commons.wikimedia.org/wiki/File:Pulau_Besar_beach.jpg",
+      "credit": "Photo · Adiputera · CC BY-SA 4.0 · cropped",
+      "image": "/images/coastal/pulau-besar-melaka.jpg"
+    },
+    {
+      "name": "Pantai Desaru",
+      "source": "https://commons.wikimedia.org/wiki/File:Desaru_Beach.jpg",
+      "credit": "Photo · Chongkian · CC BY-SA 4.0 · cropped",
+      "image": "/images/coastal/pantai-desaru.jpg"
+    },
+    {
+      "name": "Pantai Air Papan",
+      "source": "https://commons.wikimedia.org/wiki/File:Pantai_Air_Papan,_Kampung_Air_Papan_Laut_20221219_183642.jpg",
+      "credit": "Photo · Wiki Farazi · CC0 · cropped",
+      "image": "/images/coastal/pantai-air-papan.jpg"
+    },
+    {
+      "name": "Pantai Tanjung Balau",
+      "source": "https://commons.wikimedia.org/wiki/File:Tanjung_Balau_Beach.JPG",
+      "credit": "Photo · Chongkian · CC BY-SA 4.0 · cropped",
+      "image": "/images/coastal/pantai-tanjung-balau.jpg"
+    },
+    {
+      "name": "Pantai Minyak Beku",
+      "source": "https://commons.wikimedia.org/wiki/File:Minyak_Beku_Beach.JPG",
+      "credit": "Photo · Chongkian · CC BY-SA 4.0 · cropped",
+      "image": "/images/coastal/pantai-minyak-beku.jpg"
+    },
+    {
+      "name": "Pantai Stulang",
+      "source": "https://commons.wikimedia.org/wiki/File:Stulang_Beach.jpg",
+      "credit": "Photo · Chongkian · CC BY-SA 4.0 · cropped",
+      "image": "/images/coastal/pantai-stulang.jpg"
+    },
+    {
+      "name": "Pulau Rawa",
+      "source": "https://commons.wikimedia.org/wiki/File:Rawa_Island,_Johor,_Malaysia.jpg",
+      "credit": "Photo · Mohd Fazlin Mohd Effendy Ooi from Kuala Lumpur, Malaysia · CC BY 2.0 · cropped",
+      "image": "/images/coastal/pulau-rawa.jpg"
+    },
+    {
+      "name": "Pulau Besar, Mersing",
+      "source": "https://commons.wikimedia.org/wiki/File:Besar_Island.jpg",
+      "credit": "Photo · Chongkian · CC BY-SA 4.0 · cropped",
+      "image": "/images/coastal/pulau-besar-mersing.jpg"
+    },
+    {
+      "name": "Pulau Sibu",
+      "source": "https://commons.wikimedia.org/wiki/File:Pulau_Sibu_-_panoramio.jpg",
+      "credit": "Photo · Lee Jee Tshoon Lee · CC BY-SA 3.0 · cropped",
+      "image": "/images/coastal/pulau-sibu.jpg"
+    },
+    {
+      "name": "Pantai Tanjung Leman",
+      "source": "https://commons.wikimedia.org/wiki/File:Tanjung_Leman_Beach.jpg",
+      "credit": "Photo · Chongkian · CC BY-SA 4.0 · cropped",
+      "image": "/images/coastal/pantai-tanjung-leman.jpg"
+    },
+    {
+      "name": "Pantai Irama",
+      "source": "https://commons.wikimedia.org/wiki/File:Pantai_Irama,_Bachok,_Kelantan.jpg",
+      "credit": "Photo · Azmin/Az08ProGamers · Public domain · cropped",
+      "image": "/images/coastal/pantai-irama.jpg"
+    },
+    {
+      "name": "Pantai Tok Bali",
+      "source": "https://commons.wikimedia.org/wiki/File:Pantai_Tok_Bali,_Pasir_Puteh.jpg",
+      "credit": "Photo · Malayan Law · CC BY 4.0 · cropped",
+      "image": "/images/coastal/pantai-tok-bali.jpg"
+    },
+    {
+      "name": "Pantai Bisikan Bayu",
+      "source": "https://commons.wikimedia.org/wiki/File:Pantai_Bisikan_Bayu_05.jpg",
+      "credit": "Photo · CyberTroopers · CC BY-SA 4.0 · cropped",
+      "image": "/images/coastal/pantai-bisikan-bayu.jpg"
+    },
+    {
+      "name": "Pantai Kemasik",
+      "source": "https://commons.wikimedia.org/wiki/File:Pantai_Kemasik_(22316849933).jpg",
+      "credit": "Photo · Marufish from Alor Setar, Malaysia · CC BY-SA 2.0 · cropped",
+      "image": "/images/coastal/pantai-kemasik.jpg"
+    },
+    {
+      "name": "Pulau Kapas",
+      "source": "https://commons.wikimedia.org/wiki/File:%22Beautiful_White_Sandy_Beach%22,_Kapas_Island.jpg",
+      "credit": "Photo · Pro QueeNia · CC BY-SA 4.0 · cropped",
+      "image": "/images/coastal/pulau-kapas.jpg"
+    },
+    {
+      "name": "Pasir Panjang, Redang",
+      "source": "https://commons.wikimedia.org/wiki/File:Pasir_Panjang.JPG",
+      "credit": "Photo · Singaporean · Public domain · cropped",
+      "image": "/images/coastal/pasir-panjang-redang.jpg"
+    },
+    {
+      "name": "Pantai Cherating",
+      "source": "https://commons.wikimedia.org/wiki/File:Cherating,_Pantai_Cherating.jpg",
+      "credit": "Photo · Kondephy · CC BY-SA 4.0 · cropped",
+      "image": "/images/coastal/pantai-cherating.jpg"
+    },
+    {
+      "name": "Pantai Balok",
+      "source": "https://commons.wikimedia.org/wiki/File:Balok_1.jpg",
+      "credit": "Photo · Slleong · CC0 · cropped",
+      "image": "/images/coastal/pantai-balok.jpg"
+    },
+    {
+      "name": "Pantai Paya, Tioman",
+      "source": "https://commons.wikimedia.org/wiki/File:Paya_Beach_Resort_Pulau_Tioman_-_panoramio.jpg",
+      "credit": "Photo · TMbux · CC BY-SA 3.0 · cropped",
+      "image": "/images/coastal/pantai-paya-tioman.jpg"
+    },
+    {
+      "name": "Pantai Air Batang, Tioman",
+      "source": "https://commons.wikimedia.org/wiki/File:The_view_from_Air_Batang_Bay_jetty,_Tioman.jpg",
+      "credit": "Photo · Jake.sparrow22 · Public domain · cropped",
+      "image": "/images/coastal/pantai-air-batang-tioman.jpg"
+    },
+    {
+      "name": "Pantai Juara, Tioman",
+      "source": "https://commons.wikimedia.org/wiki/File:Tioman_(Malaysia)_banner_hammock.jpg",
+      "credit": "Photo · Emmanuel Campos · CC BY-SA 3.0 · cropped",
+      "image": "/images/coastal/pantai-juara-tioman.jpg"
+    },
+    {
+      "name": "Pulau Mantanani",
+      "source": "https://commons.wikimedia.org/wiki/File:Mantanani_Island_Sabah_Borneo_(32633361660).jpg",
+      "credit": "Photo · Eddie Yip from Groningen, the Netherlands · CC BY-SA 2.0 · cropped",
+      "image": "/images/coastal/pulau-mantanani.jpg"
+    },
+    {
+      "name": "Pantai Tanjong Lobang",
+      "source": "https://commons.wikimedia.org/wiki/File:Rocky_Beach_Sunset,_Miri.jpg",
+      "credit": "Photo · Clayborneoguy · CC BY-SA 4.0 · cropped",
+      "image": "/images/coastal/pantai-tanjong-lobang.jpg"
+    },
+    {
+      "name": "Pantai Tanjong Batu",
+      "source": "https://commons.wikimedia.org/wiki/File:Pantai_Tanjung_Batu,_Bintulu_Sarawak.jpg",
+      "credit": "Photo · Acapbob123 · CC BY-SA 4.0 · cropped",
+      "image": "/images/coastal/pantai-tanjong-batu.jpg"
+    },
+    {
+      "name": "Pantai Bagan Lalang",
+      "source": "https://commons.wikimedia.org/wiki/File:Bagan_Lalang_Beach_1.jpg",
+      "credit": "Photo · Wiki Farazi · CC0 1.0",
+      "image": "/images/coastal/pantai-bagan-lalang.jpg"
+    }
+  ]
+}

@@ -1,0 +1,266 @@
+{
+  "pantai-acheh": {
+    "lat": 2.8856,
+    "lng": 101.2831,
+    "sourceUrl": "https://www.beachworldmap.org/en/malaysia",
+    "sourceName": "OpenStreetMap via Beach World Map"
+  },
+  "pantai-redang": {
+    "lat": 3.5028,
+    "lng": 101.094,
+    "sourceUrl": "https://www.beachworldmap.org/en/malaysia",
+    "sourceName": "OpenStreetMap via Beach World Map"
+  },
+  "pantai-teluk-batik": {
+    "lat": 4.187,
+    "lng": 100.607,
+    "sourceUrl": "https://www.beachworldmap.org/en/malaysia",
+    "sourceName": "OpenStreetMap via Beach World Map"
+  },
+  "pantai-pasir-bogak": {
+    "lat": 4.2104,
+    "lng": 100.5528,
+    "sourceUrl": "https://www.beachworldmap.org/en/malaysia",
+    "sourceName": "OpenStreetMap via Beach World Map"
+  },
+  "pantai-teluk-nipah": {
+    "lat": 4.2303,
+    "lng": 100.5431,
+    "sourceUrl": "https://www.beachworldmap.org/en/malaysia",
+    "sourceName": "OpenStreetMap via Beach World Map"
+  },
+  "pantai-teluk-senangin": {
+    "lat": 4.3052,
+    "lng": 100.5761,
+    "sourceUrl": "https://www.beachworldmap.org/en/malaysia",
+    "sourceName": "OpenStreetMap via Beach World Map"
+  },
+  "pantai-teluk-segadas": {
+    "lat": 4.191,
+    "lng": 100.5732,
+    "sourceUrl": "https://www.beachworldmap.org/en/malaysia",
+    "sourceName": "OpenStreetMap via Beach World Map"
+  },
+  "pantai-cahaya-negeri": {
+    "lat": 2.491,
+    "lng": 101.8407,
+    "sourceUrl": "https://www.beachworldmap.org/en/malaysia",
+    "sourceName": "OpenStreetMap via Beach World Map"
+  },
+  "pantai-bagan-pinang": {
+    "lat": 2.5105,
+    "lng": 101.8279,
+    "sourceUrl": "https://www.beachworldmap.org/en/malaysia",
+    "sourceName": "OpenStreetMap via Beach World Map"
+  },
+  "pantai-tanjung-gemuk": {
+    "lat": 2.5456,
+    "lng": 101.7986,
+    "sourceUrl": "https://www.beachworldmap.org/en/malaysia",
+    "sourceName": "OpenStreetMap via Beach World Map"
+  },
+  "pantai-tanjung-biru": {
+    "lat": 2.4154,
+    "lng": 101.8559,
+    "sourceUrl": "https://www.beachworldmap.org/en/malaysia",
+    "sourceName": "OpenStreetMap via Beach World Map"
+  },
+  "pantai-pengkalan-balak": {
+    "lat": 2.314,
+    "lng": 102.0722,
+    "sourceUrl": "https://www.beachworldmap.org/en/malaysia",
+    "sourceName": "OpenStreetMap via Beach World Map"
+  },
+  "pantai-kundor": {
+    "lat": 2.234,
+    "lng": 102.1456,
+    "sourceUrl": "https://www.beachworldmap.org/en/malaysia",
+    "sourceName": "OpenStreetMap via Beach World Map"
+  },
+  "teluk-kemang": {
+    "lat": 2.454,
+    "lng": 101.8539,
+    "sourceUrl": "https://www.beachworldmap.org/en/malaysia",
+    "sourceName": "OpenStreetMap via Beach World Map"
+  },
+  "pantai-desaru": {
+    "lat": 1.5506,
+    "lng": 104.2656,
+    "sourceUrl": "https://www.beachworldmap.org/en/malaysia",
+    "sourceName": "OpenStreetMap via Beach World Map"
+  },
+  "pantai-tanjung-balau": {
+    "lat": 1.6292,
+    "lng": 104.2515,
+    "sourceUrl": "https://www.beachworldmap.org/en/malaysia",
+    "sourceName": "OpenStreetMap via Beach World Map"
+  },
+  "pantai-stulang": {
+    "lat": 1.4675,
+    "lng": 103.7795,
+    "sourceUrl": "https://www.beachworldmap.org/en/malaysia",
+    "sourceName": "OpenStreetMap via Beach World Map"
+  },
+  "pantai-teluk-gorek": {
+    "lat": 2.5734,
+    "lng": 103.8172,
+    "sourceUrl": "https://www.beachworldmap.org/en/malaysia",
+    "sourceName": "OpenStreetMap via Beach World Map"
+  },
+  "pasir-gemang": {
+    "lat": 1.8575,
+    "lng": 102.7024,
+    "sourceUrl": "https://www.beachworldmap.org/en/malaysia",
+    "sourceName": "OpenStreetMap via Beach World Map"
+  },
+  "pantai-semanyir": {
+    "lat": 2.6608,
+    "lng": 103.6432,
+    "sourceUrl": "https://www.beachworldmap.org/en/malaysia",
+    "sourceName": "OpenStreetMap via Beach World Map"
+  },
+  "pasir-bunga": {
+    "lat": 1.4068,
+    "lng": 104.1059,
+    "sourceUrl": "https://www.beachworldmap.org/en/malaysia",
+    "sourceName": "OpenStreetMap via Beach World Map"
+  },
+  "pantai-cherating": {
+    "lat": 4.1212,
+    "lng": 103.3921,
+    "sourceUrl": "https://www.beachworldmap.org/en/malaysia",
+    "sourceName": "OpenStreetMap via Beach World Map"
+  },
+  "pantai-balok": {
+    "lat": 3.9252,
+    "lng": 103.3731,
+    "sourceUrl": "https://www.beachworldmap.org/en/malaysia",
+    "sourceName": "OpenStreetMap via Beach World Map"
+  },
+  "pantai-paya-tioman": {
+    "lat": 2.7871,
+    "lng": 104.1206,
+    "sourceUrl": "https://www.beachworldmap.org/en/malaysia",
+    "sourceName": "OpenStreetMap via Beach World Map"
+  },
+  "pantai-air-batang-tioman": {
+    "lat": 2.8475,
+    "lng": 104.1587,
+    "sourceUrl": "https://www.beachworldmap.org/en/malaysia",
+    "sourceName": "OpenStreetMap via Beach World Map"
+  },
+  "teluk-cempedak": {
+    "lat": 3.8098,
+    "lng": 103.3729,
+    "sourceUrl": "https://www.beachworldmap.org/en/malaysia",
+    "sourceName": "OpenStreetMap via Beach World Map"
+  },
+  "pantai-penarik": {
+    "lat": 5.5921,
+    "lng": 102.8534,
+    "sourceUrl": "https://www.beachworldmap.org/en/malaysia",
+    "sourceName": "OpenStreetMap via Beach World Map"
+  },
+  "pantai-teluk-lipat": {
+    "lat": 4.768,
+    "lng": 103.4229,
+    "sourceUrl": "https://www.beachworldmap.org/en/malaysia",
+    "sourceName": "OpenStreetMap via Beach World Map"
+  },
+  "pantai-kemasik": {
+    "lat": 4.416,
+    "lng": 103.4566,
+    "sourceUrl": "https://www.beachworldmap.org/en/malaysia",
+    "sourceName": "OpenStreetMap via Beach World Map"
+  },
+  "pantai-bukit-keluang": {
+    "lat": 5.8017,
+    "lng": 102.6046,
+    "sourceUrl": "https://www.beachworldmap.org/en/malaysia",
+    "sourceName": "OpenStreetMap via Beach World Map"
+  },
+  "pasir-panjang-redang": {
+    "lat": 5.7739,
+    "lng": 103.0338,
+    "sourceUrl": "https://www.beachworldmap.org/en/malaysia",
+    "sourceName": "OpenStreetMap via Beach World Map"
+  },
+  "pantai-batu-buruk": {
+    "lat": 5.3126,
+    "lng": 103.1616,
+    "sourceUrl": "https://www.beachworldmap.org/en/malaysia",
+    "sourceName": "OpenStreetMap via Beach World Map"
+  },
+  "pantai-cahaya-bulan": {
+    "lat": 6.1935,
+    "lng": 102.2794,
+    "sourceUrl": "https://www.beachworldmap.org/en/malaysia",
+    "sourceName": "OpenStreetMap via Beach World Map"
+  },
+  "pantai-irama": {
+    "lat": 6.0777,
+    "lng": 102.3949,
+    "sourceUrl": "https://www.beachworldmap.org/en/malaysia",
+    "sourceName": "OpenStreetMap via Beach World Map"
+  },
+  "pantai-senok": {
+    "lat": 6.1643,
+    "lng": 102.3477,
+    "sourceUrl": "https://www.beachworldmap.org/en/malaysia",
+    "sourceName": "OpenStreetMap via Beach World Map"
+  },
+  "pantai-kuda": {
+    "lat": 6.2169,
+    "lng": 102.2316,
+    "sourceUrl": "https://www.beachworldmap.org/en/malaysia",
+    "sourceName": "OpenStreetMap via Beach World Map"
+  },
+  "pantai-bisikan-bayu": {
+    "lat": 5.8647,
+    "lng": 102.5144,
+    "sourceUrl": "https://www.beachworldmap.org/en/malaysia",
+    "sourceName": "OpenStreetMap via Beach World Map"
+  },
+  "pantai-kelambu": {
+    "lat": 6.984,
+    "lng": 116.725,
+    "sourceUrl": "https://www.beachworldmap.org/en/malaysia",
+    "sourceName": "OpenStreetMap via Beach World Map"
+  },
+  "pantai-merakit": {
+    "lat": 6.3567,
+    "lng": 116.3146,
+    "sourceUrl": "https://www.beachworldmap.org/en/malaysia",
+    "sourceName": "OpenStreetMap via Beach World Map"
+  },
+  "pantai-larai-larai": {
+    "lat": 5.7329,
+    "lng": 115.6321,
+    "sourceUrl": "https://www.beachworldmap.org/en/malaysia",
+    "sourceName": "OpenStreetMap via Beach World Map"
+  },
+  "pantai-tanjong-lobang": {
+    "lat": 4.37,
+    "lng": 113.9678,
+    "sourceUrl": "https://www.beachworldmap.org/en/malaysia",
+    "sourceName": "OpenStreetMap via Beach World Map"
+  },
+  "pantai-tusan": {
+    "lat": 4.1261,
+    "lng": 113.822,
+    "sourceUrl": "https://www.beachworldmap.org/en/malaysia",
+    "sourceName": "OpenStreetMap via Beach World Map"
+  },
+  "pantai-tanjong-batu": {
+    "lat": 3.2109,
+    "lng": 113.0467,
+    "sourceUrl": "https://www.beachworldmap.org/en/malaysia",
+    "sourceName": "OpenStreetMap via Beach World Map"
+  },
+  "pantai-mukah": {
+    "lat": 2.9114,
+    "lng": 112.0908,
+    "sourceUrl": "https://www.beachworldmap.org/en/malaysia",
+    "sourceName": "OpenStreetMap via Beach World Map"
+  }
+}

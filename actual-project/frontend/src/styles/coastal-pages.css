@@ -1,0 +1,689 @@
+.coastal-map {
+  background: #dce9ed;
+  display: flex;
+  flex-direction: column;
+}
+.coastal-map-viewport {
+  position: relative;
+  flex: 1;
+  min-height: 140px;
+}
+.coastal-map-canvas {
+  position: absolute;
+  inset: 0;
+}
+.map-coastal-header {
+  position: relative;
+  flex: none;
+  z-index: 850;
+  top: 0;
+  left: 0;
+  right: 0;
+  padding: 48px 20px 14px;
+  background: #f7f8fa;
+  box-shadow: 0 2px 10px #0b216110;
+}
+.map-coastal-header > div {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.map-coastal-header > div + div {
+  margin-top: 18px;
+}
+.map-coastal-header h1 {
+  flex: 1;
+  font-size: 23px;
+  line-height: 1.12;
+  margin: 0;
+  color: #0b2161;
+  letter-spacing: -0.6px;
+}
+.map-coastal-header .coastal-segments {
+  flex: 1;
+}
+.map-pill {
+  border-radius: 24px;
+  background: white;
+  border: 1px solid #0b216116;
+  padding: 10px 14px;
+  font-size: 12px;
+  color: #0b2161;
+  font-weight: 650;
+  box-shadow: 0 2px 5px #0b216110;
+  white-space: nowrap;
+}
+.map-hint {
+  position: absolute;
+  z-index: 800;
+  top: 12px;
+  left: 14px;
+  right: 14px;
+  width: fit-content;
+  max-width: calc(100% - 28px);
+  border-radius: 20px;
+  background: #fffffff2;
+  padding: 8px 12px;
+  font-size: 11px;
+  color: #3e4f6e;
+  box-shadow: 0 2px 8px #0b216120;
+}
+.map-controls {
+  position: absolute;
+  bottom: 22px;
+  right: 12px;
+  z-index: 800;
+  display: flex;
+  align-items: flex-end;
+  gap: 7px;
+  flex-direction: column;
+}
+.map-controls .icon-button {
+  width: 36px;
+  height: 36px;
+  font-size: 20px;
+}
+.map-controls .icon-button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.map-bottom-card {
+  position: relative;
+  flex: none;
+  z-index: 850;
+  margin: 0 16px calc(90px + env(safe-area-inset-bottom, 0px));
+  padding: 16px;
+  background: white;
+  border-radius: 20px;
+  box-shadow: 0 5px 18px #0b216118;
+}
+.map-bottom-card > div {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+}
+.map-bottom-card > div > span {
+  min-width: 0;
+  flex: 1;
+}
+.map-bottom-card strong {
+  display: block;
+  font-size: 17px;
+  color: #0b2161;
+}
+.map-bottom-card small {
+  display: block;
+  font-size: 12px;
+  line-height: 1.4;
+  color: #5a6474;
+  margin-top: 6px;
+}
+.map-bottom-card button {
+  width: auto;
+  padding-inline: 17px;
+  white-space: nowrap;
+  font-size: 12px;
+}
+.map-bottom-card .demo-label {
+  margin-top: 9px;
+}
+.region-map-pin {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: 4px solid #ce6b45;
+  background: #0b2161;
+  box-shadow: 0 3px 12px #0b21614a;
+  color: white;
+  font:
+    700 15px/34px Inter,
+    Arial,
+    sans-serif;
+  text-align: center;
+  margin: 0 auto 4px;
+}
+.bio-pin {
+  border-color: #b8ff36;
+  font-size: 28px;
+}
+.region-pin-name {
+  display: block;
+  color: #0b2161;
+  font:
+    bold 10px/1.15 Inter,
+    Arial,
+    sans-serif;
+  text-align: center;
+  background: #ffffffe8;
+  border-radius: 7px;
+  padding: 3px;
+}
+.beach-map-label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  filter: drop-shadow(0 2px 4px #0b216130);
+  height: 42px;
+}
+.beach-map-label span {
+  padding: 4px 7px;
+  background: #0b2161;
+  color: white;
+  border-radius: 6px;
+  font-size: 10px;
+  line-height: 13px;
+  white-space: nowrap;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.beach-map-label small {
+  background: white;
+  border-radius: 5px;
+  font-size: 8px;
+  line-height: 12px;
+  padding: 2px 6px;
+  text-transform: uppercase;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.beach-map-label small i {
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  margin-right: 4px;
+}
+.beach-map-label.compact {
+  height: 34px;
+  gap: 1px;
+}
+.beach-map-label.compact span {
+  font-size: 9px;
+  line-height: 12px;
+  padding: 3px 5px;
+}
+.beach-map-label.compact small {
+  font-size: 7px;
+  line-height: 10px;
+  padding: 1px 5px;
+}
+.beach-coast-dot {
+  position: absolute;
+  left: 7px;
+  top: 7px;
+  width: 10px;
+  height: 10px;
+  border: 2px solid white;
+  border-radius: 50%;
+  box-shadow: 0 1px 3px #0b216155;
+}
+.beach-cluster-pin {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid white;
+  border-radius: 50%;
+  background: #0b2161;
+  color: white;
+  box-shadow: 0 3px 12px #0b216140;
+  font-size: 10px;
+  font-weight: 700;
+}
+.map-full-overview {
+  position: absolute;
+  left: 14px;
+  bottom: 22px;
+  z-index: 800;
+}
+.legend-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px;
+  color: #3e4f6e;
+  font-size: 14px;
+}
+.legend-row i {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+}
+.coastal-map .leaflet-control-attribution {
+  font-size: 9px;
+}
+.coastal-beach-hero {
+  height: 254px;
+  background: #0b2161;
+  position: relative;
+  color: white;
+  overflow: hidden;
+}
+.coastal-beach-hero > img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.coastal-beach-hero:after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(transparent, #071942cc);
+  pointer-events: none;
+}
+.coastal-beach-hero > div:last-child {
+  position: absolute;
+  bottom: 25px;
+  left: 20px;
+  right: 20px;
+  z-index: 1;
+}
+.coastal-beach-hero h1 {
+  font-size: 31px;
+  line-height: 1.1;
+  margin: 0;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+.coastal-beach-hero p {
+  font-size: 13px;
+  margin: 9px 0 0;
+  color: #ffffffcc;
+}
+.beach-hero-top {
+  position: absolute;
+  top: 56px;
+  left: 18px;
+  right: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  z-index: 2;
+}
+.beach-hero-top > a,
+.beach-hero-top > span {
+  color: white;
+  font-size: 10px;
+  max-width: 240px;
+  text-align: right;
+  line-height: 1.4;
+}
+.beach-body {
+  padding-top: 28px;
+  padding-bottom: 64px;
+  gap: 26px;
+}
+.beach-body .section-heading h2 {
+  font-size: 20px;
+}
+.beach-body .section-heading button {
+  font-size: 12px;
+  white-space: nowrap;
+}
+.beach-gallery {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  margin-top: 18px;
+}
+.beach-gallery > button {
+  flex: 0 0 238px;
+  border-radius: 16px;
+  overflow: hidden;
+  background: white;
+}
+.beach-gallery img {
+  width: 100%;
+  height: 124px;
+  object-fit: cover;
+}
+.beach-gallery span {
+  display: block;
+  padding: 12px;
+  font-size: 14px;
+}
+.dashed-empty {
+  border: 1px dashed #aab4c2;
+  border-radius: 20px;
+  padding: 20px 16px;
+  color: #5a6474;
+  line-height: 1.5;
+  font-size: 14px;
+  margin-top: 16px;
+}
+.beach-band-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.beach-band-header .eyebrow {
+  font-size: 11px;
+  margin: 0;
+}
+.beach-band-header small {
+  background: #e8ecf0;
+  padding: 6px 9px;
+  border-radius: 20px;
+  font-size: 10px;
+  color: #5a6474;
+}
+.beach-band-value {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+  margin-top: 8px;
+}
+.beach-band-value strong {
+  font-size: 31px;
+  line-height: 1.15;
+}
+.beach-freshness {
+  width: fit-content;
+  font-size: 11px;
+  border-radius: 20px;
+  background: #eef1f5;
+  padding: 6px 10px;
+  color: #5a6474;
+  margin: 14px 0 0;
+}
+.composition-row {
+  margin-bottom: 16px;
+}
+.composition-row > div {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  color: #3e4f6e;
+  margin-bottom: 7px;
+}
+.composition-row > i {
+  height: 9px;
+  background: #e8ecf0;
+  display: block;
+  border-radius: 7px;
+  overflow: hidden;
+}
+.composition-row b {
+  display: block;
+  height: 100%;
+  border-radius: 7px;
+}
+.event-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.coastal-event {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 16px;
+  background: white;
+  border-radius: 20px;
+  border: 1px solid #0b216110;
+  text-align: left;
+}
+.event-calendar {
+  width: 52px;
+  flex: none;
+  border-radius: 15px;
+  background: #eef1f5;
+  text-align: center;
+  padding: 10px 5px;
+  color: #0b2161;
+}
+.event-calendar strong {
+  display: block;
+  font-size: 25px;
+}
+.event-calendar small {
+  font-size: 10px;
+}
+.coastal-event h3 {
+  font-size: 15px;
+  margin: 0;
+}
+.coastal-event p {
+  font-size: 12px;
+  color: #5a6474;
+  margin: 5px 0;
+}
+.coastal-event .event-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 8px;
+}
+.event-tags > span:not(.ds-badge) {
+  border-radius: 12px;
+  padding: 4px 7px;
+  background: #eef1f5;
+  color: #5a6474;
+  font-size: 10px;
+}
+.account-id {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+.account-id strong {
+  display: block;
+  font-size: 32px;
+  color: white;
+}
+.account-id > div:last-child {
+  text-align: right;
+}
+.account-id > div:last-child strong {
+  color: #b8ff36;
+}
+.account-divider {
+  border-top: 1px solid #ffffff29;
+  padding-top: 13px;
+  font-size: 12px;
+  color: #ffffffb3;
+  margin: 18px 0 0;
+}
+.coastal-input {
+  display: block;
+  width: 100%;
+  border: 1px solid #0b2161;
+  border-radius: 15px;
+  padding: 14px 12px;
+  background: white;
+  color: #0b2161;
+  font-size: 16px;
+  margin: 12px 0 10px;
+}
+.leaderboard-row {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+  border-bottom: 1px solid #0b216110;
+  padding: 17px 0;
+  font-size: 14px;
+}
+.leaderboard-row > span:first-child {
+  color: #7a879b;
+  min-width: 28px;
+}
+.leaderboard-row strong {
+  flex: 1;
+  color: #26303f;
+}
+.leaderboard-row > span:last-child {
+  font-weight: 700;
+  color: #0b2161;
+}
+.coastal-link-row:focus-visible,
+.action-tile:focus-visible,
+.map-pill:focus-visible {
+  outline: 3px solid #729df3;
+  outline-offset: 3px;
+}
+.coastal-map-canvas {
+  z-index: 0;
+}
+.map-bottom-card button {
+  width: auto !important;
+  flex: none;
+}
+.map-bottom-card strong {
+  line-height: 1.2;
+}
+.volunteer-banner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  background: #0b2161;
+  color: white;
+  border-radius: 20px;
+  padding: 18px;
+  text-align: left;
+}
+.volunteer-banner strong {
+  display: block;
+  font-size: 17px;
+}
+.volunteer-banner small {
+  display: block;
+  font-size: 12px;
+  color: #ffffffbf;
+  margin-top: 6px;
+}
+.coastal-sheet .coastal-link-row {
+  flex-wrap: wrap;
+}
+.coastal-sheet .coastal-link-row .grow {
+  min-width: 130px;
+}
+.borneo-inset {
+  position: absolute;
+  left: 14px;
+  bottom: 26px;
+  width: 133px;
+  height: 98px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: white;
+  border: 3px solid white;
+  z-index: 700;
+  box-shadow: 0 2px 12px #0b216125;
+}
+.borneo-inset > div {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.borneo-inset-open strong {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #ffffffec;
+  color: #0b2161;
+  font-size: 10px;
+  padding: 5px;
+  z-index: 800;
+}
+@media (max-height: 700px) {
+  .map-coastal-header { padding-top: 24px; }
+  .map-coastal-header > div + div { margin-top: 10px; }
+  .map-bottom-card { padding: 12px; margin-bottom: 84px; }
+  .map-bottom-card strong { font-size: 15px; }
+  .map-bottom-card small { font-size: 11px; }
+  .map-bottom-card .coastal-footnote { font-size: 10px; }
+  .borneo-inset { width: 100px; height: 74px; }
+  .borneo-inset-open strong { font-size: 8px; }
+}
+.row-thumb .species-placeholder {
+  height: 100%;
+  width: 100%;
+}
+.habitat-photo {
+  position: relative;
+  height: 170px;
+  overflow: hidden;
+  border-radius: 22px;
+}
+.habitat-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.habitat-photo > span {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 9px 12px;
+  background: #0b2161c9;
+  color: white;
+  font-size: 10px;
+}
+.habitat-photo a {
+  color: white;
+}
+.insights-hub .coastal-header .eyebrow {
+  text-transform: none;
+  font-size: 13px;
+  letter-spacing: 0;
+  font-weight: 400;
+  margin-bottom: 8px;
+}
+.insights-hub .summary-headline > strong {
+  font-size: 36px;
+}
+.insights-hub .summary-headline > span {
+  font-size: 14px;
+}
+.insights-hub .coastal-summary > .eyebrow {
+  font-size: 12px;
+  letter-spacing: 0.7px;
+  white-space: nowrap;
+}
+.insights-hub .summary-stats > div:last-child {
+  background: #b8ff3616;
+}
+.insights-hub .summary-stats > div:last-child span {
+  color: #b8ff36;
+}
+.marine-map-pin{height:100%;display:flex;align-items:center;flex-direction:column;justify-content:center;filter:drop-shadow(0 2px 4px #17344d25)}
+.marine-map-photo{display:flex;align-items:center;justify-content:center;width:44px;height:44px;min-height:44px;border-radius:50%;border:3px solid white;object-fit:cover;background:#e4efdf;color:#0b2161;font-size:26px}
+.marine-map-text{max-width:100%;background:#0b2161;color:white;border-radius:10px;padding:4px 12px;text-align:center;line-height:1.2;font-size:11px}
+.marine-map-text b{font-weight:700}
+.marine-map-pin.regional .marine-map-text{background:white;color:#0b2161;width:100%;padding:6px 8px}
+.marine-map-text small{display:block;color:#617083;font-size:10px;margin-top:3px;line-height:1.15}
+.marine-map-pin.compact{flex-direction:row;gap:0}
+.marine-map-pin.compact .marine-map-photo{width:32px;height:32px;min-height:32px;flex-shrink:0;border-width:2px}
+.marine-map-pin.compact .marine-map-text{padding:5px;font-size:10px}
+.marine-map-pin.compact .marine-map-text small{font-size:9px}
+.marine-coast-dot{display:block;width:10px;height:10px;margin:6px;border:2px solid white;border-radius:50%;background:#0b2161;box-shadow:0 1px 4px #17344d66}
+.marine-record-card{padding:0;overflow:hidden}
+.marine-record-main{display:block;width:100%;padding:0;text-align:left;color:inherit}
+.marine-record-body{display:flex;flex-direction:column;gap:7px;padding:16px;line-height:1.5;font-size:14px}
+.marine-record-body strong{font-size:19px;color:#0b2161;line-height:1.2}
+.marine-record-body>span:first-of-type{font-size:12px;color:#667587}
+.marine-record-body b,.marine-record-habitat{color:#0b2161;font-size:13px;font-weight:650}
+.marine-record-habitat{margin:0 16px 16px}
+.marine-record-main:hover .marine-record-body strong{text-decoration:underline;text-underline-offset:3px}
+.leaflet-container .leaflet-marker-pane .marine-map-photo{width:44px}
+.leaflet-container .leaflet-marker-pane .marine-map-pin.compact .marine-map-photo{width:32px}
+.borneo-inset-open{position:absolute;inset:0;z-index:800;width:100%;height:100%}
+.borneo-habitats{display:flex;justify-content:space-around;position:absolute;left:4px;right:4px;top:18px;z-index:801;pointer-events:none}
+.borneo-habitats button{width:26px;height:26px;border-radius:50%;background:white;display:grid;place-items:center;box-shadow:0 1px 4px #17344d22;pointer-events:auto}
+.borneo-habitats button:nth-child(2){transform:translateY(-5px)}
+.borneo-habitats button:nth-child(3){transform:translateY(-10px)}
+.wildlife-beach-card{display:flex;flex-direction:column;gap:12px;width:100%;padding:18px 16px;background:white;border-radius:24px;text-align:left;color:#252d2c}
+.wildlife-beach-card>span:first-child{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:15px}
+.wildlife-beach-card small{color:#63707e;font-size:12px}
+.wildlife-species{display:flex;gap:7px;flex-wrap:wrap}
+.wildlife-species>span{padding:7px 11px;border:1px solid #d9dee5;border-radius:30px;font-size:12px}

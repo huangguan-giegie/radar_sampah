@@ -21,7 +21,7 @@ describe('composition caption', () => {
     // the current day, which would make the expected string depend on the
     // calendar rather than on the helper.
     const single = { method: 'reported_quantity_estimate' as const, reportId: 'r_1', createdAt: '2026-08-19T18:00:00+08:00' };
-    expect(compositionFooter(single)).toBe('REPORT 2026-08-19 (WED)');
+    expect(compositionFooter(single)).toBe('REPORT 19-08-2026 (WED)');
     expect(compositionFooter(null)).toBe('BACKEND CALCULATED');
   });
 });

@@ -19,6 +19,24 @@ afterEach(() => {
   vi.unstubAllEnvs();
 });
 
+describe('local viewer-scoped events', () => {
+  it('shows Joined after one tap and never shares it with another participant', async () => {
+    vi.stubEnv('VITE_API_BASE_URL', '');
+    const { fetchCleanupEvents, joinCleanupEventData, leaveCleanupEventData, recordCheckInData } = await import('./iteration2Api');
+    const event = (await fetchCleanupEvents('1111'))[0];
+    const joined = await joinCleanupEventData(event.id, '1111');
+    expect(joined.joined).toBe(true);
+    expect((await fetchCleanupEvents('1111', true)).map(e => e.id)).toContain(event.id);
+    expect(await fetchCleanupEvents('2222', true)).toEqual([]);
+    const checked = await recordCheckInData(event.id, '1111', 'within_area');
+    expect(checked.checkedIn).toBe(true);
+    const other = (await fetchCleanupEvents('2222')).find(e => e.id === event.id);
+    expect(other?.checkedIn).toBe(false);
+    expect(other?.attendanceConfirmed).toBe(false);
+    expect((await leaveCleanupEventData(event.id, '1111')).joined).toBe(false);
+  });
+});
+
 describe('v3 real API integration', () => {
   it('sends measured coordinates for server-validated check-in', async () => {
     const fetchMock = vi.fn().mockResolvedValue(new Response('{}'));
