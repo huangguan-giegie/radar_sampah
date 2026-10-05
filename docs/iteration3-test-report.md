@@ -121,7 +121,7 @@ The map displays only source-backed locations; missing coordinates do not create
 
 ## Data boundary and remaining evidence
 
-The supplied [82-beach CSV](https://drive.google.com/file/d/14SaJV_6mz6nvKhZuhNI6hDyk28JPOxUK/view) contains names only. Four unambiguous matches use source-labelled coordinates already in the catalogue; 78 new entries lack verified coordinates. Individual regions and water types are also absent where the source does not supply them. Those entries are supported in lists and manual reporting, but cannot yet receive GPS map pins or proximity check-in. Full AC4.4.4 location enrichment remains incomplete; passing tests do not resolve that source-data gap.
+At the initial release `3563497`, the supplied [82-beach CSV](https://drive.google.com/file/d/14SaJV_6mz6nvKhZuhNI6hDyk28JPOxUK/view) contained names only. Four source-labelled coordinates were available and 78 rows lacked verified coordinates. Those entries supported lists and manual reporting, but could not receive GPS map pins or proximity check-in. The later coordinate enrichment and its new coverage are recorded below; the initial release result is retained as a historical snapshot.
 
 Local database tests use SQLite. PostgreSQL SQL compilation is an additional review check, not a substitute for deployment startup and live database-backed endpoint verification. No new optional AI provider was configured; approved templates and prepared answers are the release fallback.
 
@@ -141,3 +141,22 @@ npm run build
 ```
 
 Use a new workspace-local pytest temporary directory for each run on Windows. Never reuse a production database for automated fixture tests.
+
+## Coordinate enrichment follow-up — 6 October 2026
+
+The [coordinate audit](beach-coordinate-enrichment-20261006.md) records all 82 names, accepted points, source links, precision and unresolved identities. There are now **52 located export rows**, including **48 newly located rows**, and **30 unresolved coordinate pairs**. Together with the four validated MVP beaches, the API has **56 located records out of 86**. Regions are established for 78 export rows and marine water type for 81; ambiguous identities retain their limitations. Resort shoreline reference points are explicitly approximate. Batu Layar's former marine sampling coordinate is corrected to the actual named beach marker.
+
+| Round | Actual result | Evidence and interpretation |
+| --- | --- | --- |
+| Existing-database refresh, first and second runs | 2 passed in 5.63 seconds; 2 passed in 5.25 seconds | Backfills previously seeded null coordinates, retains report references and core beach records, and performs one batch followed by no writes on a repeated refresh. |
+| Initial enrichment integration | 2 failed, 9 passed in 16.33 seconds | A data-generation invocation used the wrong working directory, leaving the old four-coordinate dataset. The new coverage and Rawa fixtures correctly failed; the invocation was corrected. |
+| Partial research import | 1 failed, 10 passed in 16.54 seconds | The first research snapshot had 38 locations but had not yet imported the later Rawa Google marker. The Rawa journey remained blocked until the completed research snapshot was imported. |
+| Complete-source focused journeys | 11 passed in 16.49 seconds | Covers all 52 coordinate pairs resolving to their own beach id, Rawa GPS reporting and event check-in, rejection of out-of-range check-in, unchanged contribution rules, privacy, restart persistence, legacy nullable-coordinate migration and manual evidence on an unlocated beach. |
+| Full backend regression | 246 passed in 207.20 seconds | All previous Iteration 3 API, privacy, scoring, cleanup, recurrence, wildlife and migration checks plus the five new location regressions passed. |
+| Frontend regression and production build | 227 passed in 36 files (4.51 seconds); TypeScript and Vite build passed (557 ms) | The existing map guards, API positions, live screens and compiled application continue to pass. |
+
+All 82 names, original order, stable identifiers and empty biodiversity records were compared with the previous main-branch catalogue and preserved. Source identity review excluded Johor Rawa from the Perhentian row, Port Dickson Monkey Bay from the Tioman row, mainland Langkawi Black Sand from the Tanjung Dendang candidate, and the two unrelated Golden Beach map entries from the Kuching row. No island, village or viewport centre was used to force a coordinate match.
+
+The interactive Google Maps service is disabled for the current school Workspace account. Public map links and embedded named-place records supplied the accepted Google coordinates. One batch of four shell map lookups (Tulai II, Lanting, Bidung and Golden Beach) was rejected by automatic approval review before execution; the only stated reason was `blocked by policy`. That batch was not retried. Ordinary public web research continued, and entries without a verified beach marker remain unresolved.
+
+Local evidence and migration fixtures use SQLite. The source refresh uses schema-translated SQLAlchemy queries for PostgreSQL, preserving the configured schema. Production deployment and database-backed read verification are recorded after this follow-up is live. Public pollution evidence, event joins and cleanup history are not created by the production smoke checks.
