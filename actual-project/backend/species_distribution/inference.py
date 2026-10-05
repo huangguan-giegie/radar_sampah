@@ -134,6 +134,14 @@ class SpeciesDistributionModel:
             model = artifact.get("model") if isinstance(artifact, dict) else artifact
             if model is None or not hasattr(model, "predict_proba"):
                 raise RuntimeError(f"Species model cannot produce probabilities: {path.name}")
+            # scikit-learn 1.8 no longer serializes the LogisticRegression
+            # ``multi_class`` parameter, while older runtimes still read it
+            # during ``predict_proba``. Restore the default only when the
+            # loaded estimator is missing the attribute, keeping the packaged
+            # model usable across the supported runtime versions.
+            estimator = model.steps[-1][1] if hasattr(model, "steps") and model.steps else model
+            if estimator.__class__.__name__ == "LogisticRegression" and not hasattr(estimator, "multi_class"):
+                estimator.multi_class = "auto"
             self.models.append({"entry": entry, "model": model})
         if len(self.models) != 4:
             raise RuntimeError("Exactly four species models are required.")
