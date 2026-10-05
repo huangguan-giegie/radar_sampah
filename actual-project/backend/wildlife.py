@@ -93,7 +93,12 @@ def wildlife_panel(application: Any, engine: Any, impl: Any) -> dict[str, Any]:
         try:
             result = application.extensions["species_distribution_model"].predict(beach["lat"], beach["lng"])
             predictions = result.get("predictions", [])
-        except (KeyError, ValueError, RuntimeError):
+        # The packaged model is optional at runtime.  In particular, a model
+        # serialized by a newer scikit-learn release can raise AttributeError
+        # while being loaded by an older local runtime.  Keep the public
+        # wildlife panel available with an explicit unavailable state rather
+        # than turning the whole Insights response into a 500.
+        except (AttributeError, KeyError, ValueError, RuntimeError):
             pass
         modelled = []
         for prediction in sorted(predictions, key=lambda value: value.get("relativeOccurrenceScore", 0), reverse=True):
