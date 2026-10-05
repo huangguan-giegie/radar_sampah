@@ -142,6 +142,31 @@ def _monthly_reports(impl: Any, reports: list[Any], now: datetime):
     }
 
 
+def _weekly_reporting(impl: Any, reports: list[Any], now: datetime):
+    """Return privacy-preserving Counted-report activity for the last 12 weeks."""
+    local_now = now.astimezone(impl.KUALA_LUMPUR)
+    current_week = local_now.date() - timedelta(days=local_now.weekday())
+    weeks = [current_week - timedelta(days=7 * offset) for offset in range(11, -1, -1)]
+    buckets: dict[Any, list[Any]] = {week: [] for week in weeks}
+    for report in reports:
+        if report.status != "Counted":
+            continue
+        local_date = impl.utc_datetime(report.created_at).astimezone(impl.KUALA_LUMPUR).date()
+        week = local_date - timedelta(days=local_date.weekday())
+        if week in buckets:
+            buckets[week].append(report)
+    return {
+        "weeks": [{
+            "weekStart": week.isoformat(),
+            "countedReports": public_count(len(rows)),
+            "distinctReporters": public_count(len({row.reporter_id for row in rows})),
+        } for week, rows in buckets.items()],
+        "timezone": "Asia/Kuala_Lumpur",
+        "smallCountLabel": "Fewer than 3",
+        "caption": "Counted reports describe reporting activity, not the true amount of litter. Smaller weekly counts are withheld.",
+    }
+
+
 def _cleanup_context(impl: Any, reports: list[Any], cleanups: list[Any], beach_names: dict[str, str], now: datetime):
     from recurrence import calculate_recurrence
 
@@ -371,6 +396,7 @@ def build_insights_summary(engine: Any, impl: Any, now: datetime | None = None) 
     cleanup = _cleanup_context(impl, reports, cleanups, {key: value["name"] for key, value in beach_map.items()}, now)
     cleanup["recurrence"] = _recurrence(reports, cleanups, now)
     participation = _participation(impl, cleanups, events, members, recorded_attendance, now)
+    participation["weeklyReporting"] = _weekly_reporting(impl, reports, now)
     sufficient = sum(beach["band"] is not None for beach in beaches)
     headlines = _headlines(beaches, cleanup)
     return {
