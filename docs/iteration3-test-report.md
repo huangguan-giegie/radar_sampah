@@ -152,6 +152,7 @@ The [coordinate audit](beach-coordinate-enrichment-20261006.md) records all 82 n
 | Initial enrichment integration | 2 failed, 9 passed in 16.33 seconds | A data-generation invocation used the wrong working directory, leaving the old four-coordinate dataset. The new coverage and Rawa fixtures correctly failed; the invocation was corrected. |
 | Partial research import | 1 failed, 10 passed in 16.54 seconds | The first research snapshot had 38 locations but had not yet imported the later Rawa Google marker. The Rawa journey remained blocked until the completed research snapshot was imported. |
 | Complete-source focused journeys | 11 passed in 16.49 seconds | Covers all 52 coordinate pairs resolving to their own beach id, Rawa GPS reporting and event check-in, rejection of out-of-range check-in, unchanged contribution rules, privacy, restart persistence, legacy nullable-coordinate migration and manual evidence on an unlocated beach. |
+| Integrated iteration3 retest | 11 passed in 16.38 seconds | Repeated the same acceptance and migration journeys after PR #57 merged. The application tree is identical to the fully tested feature tree. |
 | Full backend regression | 246 passed in 207.20 seconds | All previous Iteration 3 API, privacy, scoring, cleanup, recurrence, wildlife and migration checks plus the five new location regressions passed. |
 | Frontend regression and production build | 227 passed in 36 files (4.51 seconds); TypeScript and Vite build passed (557 ms) | The existing map guards, API positions, live screens and compiled application continue to pass. |
 
@@ -159,4 +160,24 @@ All 82 names, original order, stable identifiers and empty biodiversity records 
 
 The interactive Google Maps service is disabled for the current school Workspace account. Public map links and embedded named-place records supplied the accepted Google coordinates. One batch of four shell map lookups (Tulai II, Lanting, Bidung and Golden Beach) was rejected by automatic approval review before execution; the only stated reason was `blocked by policy`. That batch was not retried. Ordinary public web research continued, and entries without a verified beach marker remain unresolved.
 
-Local evidence and migration fixtures use SQLite. The source refresh uses schema-translated SQLAlchemy queries for PostgreSQL, preserving the configured schema. Production deployment and database-backed read verification are recorded after this follow-up is live. Public pollution evidence, event joins and cleanup history are not created by the production smoke checks.
+Local evidence and migration fixtures use SQLite. The source refresh uses schema-translated SQLAlchemy queries for PostgreSQL, preserving the configured schema. Public pollution evidence, event joins and cleanup history are not created by the production smoke checks.
+
+Implementation [PR #57](https://github.com/huangguan-giegie/radar_sampah/pull/57) merged into `iteration3` as `3859a5cd9889e8a6e046f8e714f35bfe3d275716`. Release [PR #58](https://github.com/huangguan-giegie/radar_sampah/pull/58) merged into `main` as `5b5a71d2760e51e724e81008c15e1d51d38f7b74`. The fully tested tree is `9ea5544b8095464ae214a28befad240a071801a8`. The previous version is preserved by `release/pre-beach-coordinates-20261006` at `1a3349128e23a8169a3b6779ab6169caf4d14bc8`.
+
+### Coordinate deployment verification
+
+Render API deploy `dep-db1uamjl550s73bpbldg` is **live** at release `5b5a71d2760e51e724e81008c15e1d51d38f7b74`, finished at **6 October 2026, 03:02:17 Asia/Seoul** (`2026-10-05T18:02:17Z`). The frontend remains on its verified `3563497` build because this release changes only backend reference data and startup behaviour.
+
+The final production smoke completed **84 API requests with their expected statuses**. All **52 sourced export points resolved back to their own stable beach id**, using an opted-out smoke participant for authenticated read operations. The live database-backed catalogue returned 86 unique records, four core beaches, 52 located export rows and 30 null coordinate pairs. Every located export row returned source and precision metadata. Unknown-location detail and recurrence, all six public Insights routes, source cards/prepared answers, wildlife guidance, guest recommendations, CORS, deliberately rejected private requests, profile write/recovery/read, zero private contributions and the actual frontend bundles also passed. The smoke nickname was cleared; no production litter report, event join, attendance or cleanup was added.
+
+An initial attempt to read the old deployment's baseline before this release timed out after 30 seconds. It did not produce a valid baseline and is not used to claim an unchanged production row count. Deployment status, the successful final smoke and local history-preservation tests are the verification evidence.
+
+Browser checks confirmed the added regional entries, named Terengganu markers, the searchable Rawa row, and its correct Perhentian/Terengganu area. Rawa still displays zero counted reports and insufficient data, rather than inferring a cleanliness rating from its newly available position. The checked browser session had no console warnings or errors.
+
+### Coordinate follow-up screenshots
+
+These are actual captures of the live frontend after the coordinate deployment, taken on 6 October 2026. The existing first-release screenshots above remain as their original evidence.
+
+![Live Terengganu map after location enrichment](screenshots/iteration3-map-terengganu-enriched.jpg)
+
+![Live Rawa Island Beach showing the verified area and insufficient pollution evidence](screenshots/iteration3-rawa-enriched.jpg)
