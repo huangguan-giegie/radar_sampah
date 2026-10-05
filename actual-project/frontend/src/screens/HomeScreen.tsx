@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getBeach, getBeaches, USE_MOCK } from "../api";
 import { useApp } from "../AppContext";
@@ -24,6 +24,8 @@ import { formatEventDate } from "../iteration2";
 import { useAsyncData } from "../useAsyncData";
 import { C } from "../theme";
 import { eventIsAvailable, useEventClock } from "../eventAvailability";
+import { iteration3Request } from "../iteration3Api";
+import { dismissNextAction, dismissedNextActions, fallbackNextAction, type NextAction } from "../iteration3Personal";
 
 export default function HomeScreen() {
   const nav = useNavigate();
@@ -31,11 +33,19 @@ export default function HomeScreen() {
     user,
     draft,
     resetDraft,
+    patchDraft,
     setLastSavedReport,
     reportsVersion,
   } = useApp();
   const [draftChoice, setDraftChoice] = useState(false);
   const [chooseCleanupBeach, setChooseCleanupBeach] = useState(false);
+  const [dismissedActions, setDismissedActions] = useState<string[]>(() => dismissedNextActions(user?.participantId));
+  useEffect(() => setDismissedActions(dismissedNextActions(user?.participantId)), [user?.participantId]);
+  const { data: loadedAction, loading: actionLoading } = useAsyncData(
+    () => iteration3Request<NextAction>('/recommendations/next-action'),
+    [user?.participantId, reportsVersion], null,
+  );
+  const nextAction = loadedAction ?? (!actionLoading ? fallbackNextAction(Boolean(user)) : null);
   const now = useEventClock();
   const {
     data: beaches,
@@ -106,6 +116,29 @@ export default function HomeScreen() {
           <UserIcon size={28} color="white" />
         </button>
       </header>
+      {nextAction && !dismissedActions.includes(nextAction.id) && (
+        <WhiteCard>
+          <p className="eyebrow">Next Action</p>
+          <h2>{nextAction.actionLabel}</h2>
+          <p className="subtle">{nextAction.reason}</p>
+          <PrimaryButton onClick={() => {
+            if (nextAction.destination.type === 'report') {
+              if (hasDraftProgress(draft)) { setDraftChoice(true); return; }
+              resetDraft();
+              setLastSavedReport(null);
+              if (nextAction.destination.beachId) {
+                const targetBeach = beaches.find(item => item.id === nextAction.destination.beachId);
+                if (targetBeach) patchDraft({ beachId: targetBeach.id, beachName: targetBeach.name, locationSource: 'manual', coords: null });
+              }
+            }
+            nav(nextAction.destination.path);
+          }}>{nextAction.actionLabel}</PrimaryButton>
+          {nextAction.loginPrompt && <button onClick={() => nav(nextAction.loginPath ?? '/identity?next=/home')}>{nextAction.loginPrompt}</button>}
+          <button onClick={() => {
+            setDismissedActions(dismissNextAction(nextAction.id, user?.participantId));
+          }}>Dismiss suggestion</button>
+        </WhiteCard>
+      )}
       <div className="action-grid">
         <ActionTile
           title="Report Litter"
@@ -195,7 +228,7 @@ export default function HomeScreen() {
               {user && event ? "View Event" : "View Events"}
             </PrimaryButton>
             <div className="button-pair">
-              <GhostButton height={44} onClick={() => nav("/map")}>
+              <GhostButton height={44} onClick={() => nav("/map", { state: { fromHome: true } })}>
                 See Other Beaches
               </GhostButton>
               <GhostButton

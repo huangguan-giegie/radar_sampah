@@ -1,7 +1,10 @@
 import { useNavigate } from "react-router-dom";
 import { CLEANUP_GUIDE as guide } from "../content/cleanupGuide";
 import { WhiteCard } from "./CoastalUI";
-export function CleanupGuide({ recorded = false }: { recorded?: boolean }) {
+import { iteration3Request } from "../iteration3Api";
+import type { WildlifeGuidance } from "../iteration3Personal";
+import { useAsyncData } from "../useAsyncData";
+export function CleanupGuide({ recorded = false, imageFree = false }: { recorded?: boolean; imageFree?: boolean }) {
   return (
     <section>
       <p className="eyebrow">{recorded ? "Last step" : "Before you go"}</p>
@@ -9,10 +12,10 @@ export function CleanupGuide({ recorded = false }: { recorded?: boolean }) {
         {!recorded && (
           <>
             <div className="guide-photo">
-              <img
+              {!imageFree && <img
                 src="/images/cleanup/volunteers.jpg"
                 alt="Volunteers gathering litter on a beach"
-              />
+              />}
               <div>
                 <span>No organiser on site</span>
                 <h2>Everyone runs it together</h2>
@@ -25,7 +28,7 @@ export function CleanupGuide({ recorded = false }: { recorded?: boolean }) {
               <div className="guide-equipment">
                 {guide.equipment.map(([image, label]) => (
                   <div key={image}>
-                    <img src={"/images/cleanup/" + image + ".jpg"} alt="" />
+                    {!imageFree && <img src={"/images/cleanup/" + image + ".jpg"} alt="" />}
                     <span>{label}</span>
                   </div>
                 ))}
@@ -43,10 +46,10 @@ export function CleanupGuide({ recorded = false }: { recorded?: boolean }) {
               <div className="guide-sorting">
                 {guide.sorting.map((item) => (
                   <div key={item.title}>
-                    <img
+                    {!imageFree && <img
                       src={"/images/cleanup/" + item.image + ".jpg"}
                       alt=""
-                    />
+                    />}
                     <small>{item.eyebrow}</small>
                     <strong>{item.title}</strong>
                     <p>{item.text}</p>
@@ -62,7 +65,7 @@ export function CleanupGuide({ recorded = false }: { recorded?: boolean }) {
             {recorded ? "Drop off your bags" : "Drop off"}
           </h3>
           <div className="guide-dropoff">
-            <img src="/images/cleanup/bintop.jpg" alt="Litter bin" />
+            {!imageFree && <img src="/images/cleanup/bintop.jpg" alt="Litter bin" />}
             <div>
               <strong>{guide.dropOffName}</strong>
               <small>Checked by Radar Sampah · {guide.checkedDate}</small>
@@ -104,16 +107,18 @@ export function CleanupGuide({ recorded = false }: { recorded?: boolean }) {
 }
 export function WildlifeGuide() {
   const nav = useNavigate();
+  const { data: guidance } = useAsyncData(() => iteration3Request<WildlifeGuidance>('/wildlife-guidance'), [], null);
   return (
     <section>
       <p className="eyebrow">Wildlife-friendly cleanup</p>
       <WhiteCard>
-        {guide.wildlife.map((text, i) => (
+        {(guidance?.tips ?? guide.wildlife).slice(0, 5).map((text, i) => (
           <div key={text} className="wildlife-rule">
             <span>{i + 1}</span>
             <p>{text}</p>
           </div>
         ))}
+        {guidance && <p className="coastal-footnote">Reviewed {guidance.reviewDate} · {guidance.note}</p>}
         <button
           className="coastal-link-row"
           onClick={() => nav("/community/wildlife-help")}

@@ -26,6 +26,7 @@ import { fetchCleanupEvent, fetchCleanupTarget, fetchLatestCleanupForBeach } fro
 import { SCORING_METHOD } from '../scoring';
 import { MODEL_SPECIES_MEDIA } from '../speciesMedia';
 import { useAsyncData } from '../useAsyncData';
+import { hasMapCoordinates } from '../mapGeometry';
 
 /*
  * relativeOccurrenceScore stays on the API's 0..1 scale, and the card prints it
@@ -111,7 +112,7 @@ export default function BeachScreen() {
     getBeach(beachId)
       .then((data) => {
         setB(data);
-        if (!USE_MOCK) {
+        if (!USE_MOCK && hasMapCoordinates(data)) {
           getSpeciesDistribution(data.lat, data.lng)
             .then(setModelResult)
             .catch(() => setModelResult(null));

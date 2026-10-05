@@ -1,16 +1,17 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import L from "leaflet";
 import { useLeafletMap } from "../components/useLeafletMap";
 import { getCoastalBeaches, REGIONS } from "../coastalData";
 import { useApp } from "../AppContext";
-import { getMyReports, USE_MOCK } from "../api";
+import { USE_MOCK } from "../api";
+import { iteration3Request } from "../iteration3Api";
+import { canAutoShowPersonalPopup, personalPopupKey, readSessionValue, saveSessionValue, type PersonalInsights } from "../iteration3Personal";
 import { useAsyncData } from "../useAsyncData";
 import {
   DataUnavailable,
   LinkRow,
   Sheet,
-  SummaryCard,
   WhiteCard,
 } from "../components/CoastalUI";
 import { GhostButton, PrimaryButton } from "../components/ui";
@@ -54,6 +55,7 @@ function BorneoInset({ onClick, onHabitat }: { onClick: () => void; onHabitat?: 
 }
 export default function MapScreen() {
   const nav = useNavigate();
+  const location = useLocation();
   const [params, setParams] = useSearchParams();
   const regionId = params.get("region") ?? "";
   const layer = params.get("layer") === "bio" ? "bio" : "litter";
@@ -95,11 +97,19 @@ export default function MapScreen() {
     error,
     refresh,
   } = useAsyncData(getCoastalBeaches, [reportsVersion], []);
-  const { data: reports } = useAsyncData(
-    () => (user ? getMyReports() : Promise.resolve([])),
+  const { data: personal, loading: personalLoading, error: personalError, refresh: refreshPersonal } = useAsyncData(
+    () => (user ? iteration3Request<PersonalInsights>('/personal-insights') : Promise.resolve(null)),
     [user?.participantId, reportsVersion],
-    [],
+    null,
   );
+  useEffect(() => {
+    if (!user) return;
+    const key = personalPopupKey(user.participantId);
+    if (canAutoShowPersonalPopup(location.state?.fromHome === true, readSessionValue(key) === '1')) {
+      saveSessionValue(key, '1');
+      setSheet('personal');
+    }
+  }, [user?.participantId, location.key]);
   const { elRef, mapRef, ready } = useLeafletMap({
     center: region ? [region.lat, region.lng] : [4.05, 102],
     zoom: region?.zoom ?? 6,
@@ -365,10 +375,6 @@ export default function MapScreen() {
       group.remove();
     };
   }, [ready, regionId, layer, beaches, zoom, viewSize, viewRevision, nav, setRegion, marinePins, beachId]);
-  const counted = reports.filter((r) => r.status === "Counted");
-  const ownBeaches = beaches.filter((b) =>
-    counted.some((r) => r.beachId === b.id),
-  );
   return (
     <main className="screen coastal-map">
       <header className="map-coastal-header">
@@ -383,9 +389,9 @@ export default function MapScreen() {
             </button>
           )}
           <h1>{layer === "bio" ? "Explore the Coast" : "Choose a Beach"}</h1>
-          <button className="map-pill" onClick={() => setSheet("personal")}>
+          {user && <button className="map-pill" onClick={() => setSheet("personal")}>
             Insights
-          </button>
+          </button>}
         </div>
         <div>
           <div className="coastal-segments">
@@ -581,74 +587,36 @@ export default function MapScreen() {
           {!visible.length && <DataUnavailable title="No matching beaches" />}
         </Sheet>
       )}
-      {sheet === "personal" && (
-        <Sheet title="Your Insights" onClose={() => setSheet(null)}>
+      {sheet === "personal" && user && (
+        <Sheet title="Your Insights" onClose={() => {
+          saveSessionValue(personalPopupKey(user.participantId), '1');
+          setSheet(null);
+        }}>
           <p className="eyebrow">Private · only you see this</p>
-          {ownBeaches.length ? (
-            <>
-              <WhiteCard>
-                <p className="eyebrow">Your Litter and Wildlife</p>
-                <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
-                  <span className="grow">
-                    <strong style={{ fontSize: 40, color: "#0b2161" }}>
-                      {counted.filter((r) => r.quantities.Plastic).length} of{" "}
-                      {counted.length}
-                    </strong>
-                    <p className="subtle">reports contain plastic</p>
-                  </span>
-                  <img
-                    src="/species/green-sea-turtle.jpg"
-                    alt="Green sea turtle"
-                    style={{
-                      width: 76,
-                      height: 76,
-                      objectFit: "cover",
-                      borderRadius: 16,
-                    }}
-                  />
-                </div>
-                {counted.some((r) => r.quantities.Plastic) && (
-                  <SummaryCard eyebrow="May affect">
-                    <strong>Sea turtles · possible swallowing risk</strong>
-                    <p style={{ fontSize: 12, color: "#ffffffb3" }}>
-                      General research · no local harm shown
-                    </p>
-                  </SummaryCard>
-                )}
-                <p className="coastal-footnote">
-                  Your counted reports ·{" "}
-                  <a
-                    href="https://www.fisheries.noaa.gov/species/green-turtle"
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    NOAA Fisheries
-                  </a>
-                </p>
-              </WhiteCard>
-              <p className="subtle">Beaches you’ve reported on</p>
-              {ownBeaches.map((b) => (
-                <WhiteCard key={b.id}>
-                  <LinkRow
-                    title={b.name}
-                    subtitle={
-                      b.severity ? b.severity + " litter" : "Insufficient data"
-                    }
-                    onClick={() => nav("/beach/" + b.id)}
-                  />
-                </WhiteCard>
-              ))}
-            </>
-          ) : (
-            <DataUnavailable title="Your story starts with a report">
-              Counted reports help build insights for the beaches you visit.
+          {personalLoading ? <p role="status">Loading your insights…</p> : personalError ? (
+            <DataUnavailable title="Your insights could not be loaded" retry={() => void refreshPersonal()} />
+          ) : personal?.sections.length ? personal.sections.map(section => (
+            <WhiteCard key={section.id}>
+              <p className="eyebrow">{section.title}</p>
+              {section.aiAssisted && <p className="coastal-footnote">AI-assisted</p>}
+              <p className="subtle">{section.text}</p>
+              {section.sources.map(source => <p className="coastal-footnote" key={source.url}>
+                <a href={source.url} target={source.url.startsWith('https://') ? '_blank' : undefined} rel="noreferrer">{source.label}</a>
+                {section.reviewDate && ' · Reviewed ' + section.reviewDate}
+              </p>)}
+              <PrimaryButton onClick={() => nav(section.action.path)}>{section.action.label}</PrimaryButton>
+            </WhiteCard>
+          )) : (
+            <DataUnavailable title="Your Insights">
+              {personal?.emptyStateMessage ?? 'Report litter or finish a cleanup to unlock personal insights.'}
             </DataUnavailable>
           )}
+          <GhostButton onClick={() => { setSheet(null); nav('/insights'); }}>View Beach Insights</GhostButton>
           <GhostButton
             style={{ marginTop: 16 }}
-            onClick={() => nav(user ? "/reports" : "/identity?next=/reports")}
+            onClick={() => nav('/reports')}
           >
-            {user ? "My Reports" : "Log In"}
+            My Reports
           </GhostButton>
         </Sheet>
       )}

@@ -16,6 +16,7 @@ import { useApp } from '../AppContext';
 import type { BeachSummary } from '../types';
 import type { ReportDraft } from '../AppContext';
 import { useAppBack } from '../navigation';
+import { hasMapCoordinates } from '../mapGeometry';
 
 /**
  * What to say when locating did not work out. Six causes get six sentences:
@@ -58,11 +59,10 @@ export default function ConfirmBeachScreen() {
 
   // Which face to show. The `|| !suggested` earns its keep: with nothing to
   // display we fall back to the list instead of an empty confirmation card.
-  const manual = draft.locationSource !== 'gps' || !suggested;
+  const manual = draft.locationSource !== 'gps' || !hasMapCoordinates(suggested);
 
   // Search by name or by area, because a volunteer may know "Banting" without
-  // knowing which beach sits there. Filtering stays in the browser - with four
-  // beaches a server round trip is slower and dies with the connection.
+  // knowing which beach sits there. Filtering stays in the browser.
   const q = query.trim().toLowerCase();
   const filtered = q
     ? beaches.filter(
@@ -70,14 +70,14 @@ export default function ConfirmBeachScreen() {
       )
     : beaches;
 
-  const center = draft.coords ?? (suggested ? { lat: suggested.lat, lng: suggested.lng } : { lat: 2.95, lng: 101.42 });
+  const located = hasMapCoordinates(draft.coords) ? draft.coords : hasMapCoordinates(suggested) ? suggested : null;
+  const center = located ?? { lat: 4.05, lng: 109.5 };
 
   return (
     <div className="screen" style={{ zIndex: 26, background: C.cloud, overflow: 'hidden' }}>
-      {/* Zoom follows how much we know. 12 when GPS gave us a spot, so the user
-          can recognise the place; 9 when picking by hand, so the whole coast
-          and every option is in view. */}
-      <MiniMap lat={center.lat} lng={center.lng} zoom={manual ? 9 : 12} />
+      {/* Missing beach coordinates keep a broad navigation view. They never
+          become an invented beach location. */}
+      <MiniMap lat={center.lat} lng={center.lng} zoom={located ? manual ? 9 : 12 : 4} />
 
       {/* Above Leaflet's own layers, which occupy 400 to 700. */}
       <div style={{ position: 'absolute', inset: 0, zIndex: 800, background: 'linear-gradient(180deg,rgba(221,227,236,.3) 0%,transparent 30%,rgba(12,28,58,.4) 100%)', pointerEvents: 'none' }} />

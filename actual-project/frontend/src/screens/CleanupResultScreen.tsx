@@ -9,6 +9,7 @@ import { GhostButton, PrimaryButton, Skeleton } from "../components/ui";
 import { cleanupDoneDestination } from "../cleanupFlow";
 import { fetchCleanup } from "../iteration2Api";
 import { useAsyncData } from "../useAsyncData";
+import { RecurrenceEvidence } from "../components/RecurrenceEvidence";
 export default function CleanupResultScreen() {
   const { cleanupId = "" } = useParams();
   const nav = useNavigate();
@@ -72,6 +73,10 @@ export default function CleanupResultScreen() {
           </div>
         ))}
       </WhiteCard>
+      {cleanup.resolved && (
+        <p className="coastal-footnote">Resolved — source report kept in history</p>
+      )}
+      <RecurrenceEvidence evidence={cleanup.recurrence} />
       <WhiteCard>
         <h3>What this means</h3>
         <p className="subtle">

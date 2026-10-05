@@ -46,6 +46,12 @@ describe("cleanup journey", () => {
     expect(after).toContain("disabled=");
     expect(after).toContain('href="tel:999"');
   });
+  it('keeps the event cleanup guidance image-free', () => {
+    const eventGuide = renderToStaticMarkup(<CleanupGuide imageFree />);
+    expect(eventGuide).not.toContain('<img');
+    expect(eventGuide).toContain('Prepare');
+    expect(eventGuide).toContain('Sort as you go');
+  });
 });
 describe("preview profile", () => {
   it("rejects short names and contact details", () => {

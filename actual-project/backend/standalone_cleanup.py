@@ -253,6 +253,8 @@ def install_cleanup_route(application: Any, engine: Any, jwt_secret: str, impl: 
             for category, _weight in weighted
         ]
 
+    impl.active_composition_percentages = active_composition_percentages
+
     def recent_report_bands(beach_id: str, limit: int = 4) -> list[dict[str, Any]]:
         """Bands the newest Counted reports recorded, newest first.
 
