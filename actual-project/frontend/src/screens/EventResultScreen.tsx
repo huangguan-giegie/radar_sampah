@@ -10,6 +10,7 @@ import type { LitterCategory } from '../types';
 import { useAsyncData } from '../useAsyncData';
 import { CoastalPage, DataUnavailable } from '../components/CoastalUI';
 import { useAppBack } from '../navigation';
+import { RecurrenceEvidence } from '../components/RecurrenceEvidence';
 
 export default function EventResultScreen() {
   const { eventId = '' } = useParams();
@@ -27,6 +28,9 @@ export default function EventResultScreen() {
   );
   const cleanups = data ?? [];
   const cleanupResultsReady = !cleanupsLoading && !cleanupsError;
+  const latestCleanup = cleanups.reduce<(typeof cleanups)[number] | undefined>((latest, cleanup) =>
+    !latest || Date.parse(cleanup.createdAt) > Date.parse(latest.createdAt) || (Date.parse(cleanup.createdAt) === Date.parse(latest.createdAt) && cleanup.id > latest.id) ? cleanup : latest,
+  undefined);
   // Keep each recorded transition separate; a band difference is not a
   // measured amount removed, and unrelated cleanup bands cannot be added.
   const recordedBands = useMemo(() => {
@@ -98,6 +102,7 @@ export default function EventResultScreen() {
           </div>
         )}
 
+        {cleanupResultsReady && <RecurrenceEvidence evidence={latestCleanup?.recurrence} />}
         <Callout title="Recorded evidence only" tone="quiet" icon={<Info color={C.navy} />}>
           Results come from the amounts people confirmed. They don’t prove the beach is clean.
         </Callout>

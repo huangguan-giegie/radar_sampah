@@ -24,6 +24,7 @@
 
 import { BEACHES, MOCK_USER, SEED_REPORTS } from './mockData';
 import { categoryScoresFor, reportScoreFor, SCORING_METHOD } from './scoring';
+import { hasMapCoordinates } from './mapGeometry';
 import type {
   AuthSession,
   BeachDetail,
@@ -734,9 +735,11 @@ export async function getScoringMethod(): Promise<ScoringMethod> {
 export async function resolveBeach(lat: number, lng: number): Promise<BeachSummary | null> {
   if (USE_MOCK) {
     await delay(600);
-    let nearest = BEACHES[0];
+    const locatedBeaches = BEACHES.filter(hasMapCoordinates);
+    if (!locatedBeaches.length) return null;
+    let nearest = locatedBeaches[0];
     let nearestDistance = distanceKm(lat, lng, nearest.lat, nearest.lng);
-    for (const beach of BEACHES) {
+    for (const beach of locatedBeaches) {
       const d = distanceKm(lat, lng, beach.lat, beach.lng);
       if (d < nearestDistance) {
         nearest = beach;

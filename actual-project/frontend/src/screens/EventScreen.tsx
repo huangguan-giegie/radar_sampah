@@ -220,7 +220,7 @@ export default function EventScreen() {
           <GhostButton onClick={() => nav(`/beach/${event.beachId}`)} style={{ marginTop: 12 }}>View beach data <ArrowRight color={C.navy} /></GhostButton>
         </div>
 
-        <CleanupGuide recorded={cleanupRecorded} />
+        <CleanupGuide recorded={cleanupRecorded} imageFree />
         <WildlifeGuide />
         <div className="i2-card">
           <SectionLabel size="sm">SHARE</SectionLabel>

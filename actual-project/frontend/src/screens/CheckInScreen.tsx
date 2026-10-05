@@ -11,6 +11,8 @@ import { useAsyncData } from '../useAsyncData';
 import { CoastalPage, DataUnavailable, Sheet } from '../components/CoastalUI';
 import { useAppBack } from '../navigation';
 import { eventCanCheckIn, eventPhase, useEventClock } from '../eventAvailability';
+import { iteration3Request } from '../iteration3Api';
+import type { WildlifeGuidance } from '../iteration3Personal';
 
 /** The grey shield banner: one short line about what check-in does or asks. */
 function ShieldBanner({ children }: { children: ReactNode }) {
@@ -28,6 +30,7 @@ export default function CheckInScreen() {
   const back = useAppBack(`/events/${encodeURIComponent(eventId)}`);
   const now = useEventClock();
   const { user } = useApp();
+  const { data: wildlife } = useAsyncData(() => iteration3Request<WildlifeGuidance>('/wildlife-guidance'), [], null);
   const { data: event, setData: setEvent, loading, error, refresh } = useAsyncData(
     () => fetchCleanupEvent(eventId),
     [eventId, user?.participantId],
@@ -86,7 +89,7 @@ export default function CheckInScreen() {
           if (currentRequest !== request.current) return;
           setEvent(updated);
           setState(updated.checkedIn ? 'within_area' : 'idle');
-          if (updated.checkedIn) setReminder(true);
+          if (updated.attendanceConfirmed) setReminder(true);
         } catch (reason) {
           if (currentRequest !== request.current) return;
           setState('denied');
@@ -142,7 +145,7 @@ export default function CheckInScreen() {
 
   return (
     <div className="screen scroll-y" style={{ zIndex: 26 }}>
-      {reminder && <Sheet title="Two Quick Reminders" onClose={() => setReminder(false)}><div className="wildlife-rule"><span>1</span><p>Keep away from nests and burrows</p></div><div className="wildlife-rule"><span>2</span><p>Do not handle stranded or entangled animals</p></div><PrimaryButton onClick={() => setReminder(false)}>Got It</PrimaryButton></Sheet>}
+      {reminder && <Sheet title="Two Quick Reminders" onClose={() => setReminder(false)}>{(wildlife?.reminder ?? ['Do not handle stranded or entangled animals', 'Keep away from nests and burrows']).map((tip, index) => <div key={tip} className="wildlife-rule"><span>{index + 1}</span><p>{tip}</p></div>)}<PrimaryButton onClick={() => setReminder(false)}>Got It</PrimaryButton></Sheet>}
       <div className="measure i2-page anim-fade-up" style={{ paddingBottom: 'calc(var(--safe-bottom) + 34px)' }}>
         <BackButton onClick={back} />
         <div>

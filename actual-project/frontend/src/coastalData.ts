@@ -44,7 +44,7 @@ export async function getCoastalBeaches(): Promise<CoastalBeach[]> {
     id: b.id,
     name: b.name,
     area: b.area,
-    region: content.beaches.find((x) => x.id === b.id)?.region ?? "",
+    region: (b as typeof b & { region?: string }).region ?? content.beaches.find((x) => x.id === b.id)?.region ?? "",
     severity: b.insufficientData ? null : b.severity,
     validReports: b.validReports,
     lat: b.lat,

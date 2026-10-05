@@ -23,6 +23,7 @@ import { GhostButton, PrimaryButton, Skeleton } from "../components/ui";
 import { SeverityBadge } from "../components/ds";
 import { INSIGHTS_PREVIEW as preview } from "../content/insightsPreview";
 import { C, severityLabel } from "../theme";
+import LiveInsightsScreen from './LiveInsightsScreen';
 
 export function MetricBars({ rows }: { rows: [string, number][] }) {
   return (
@@ -42,6 +43,10 @@ export function MetricBars({ rows }: { rows: [string, number][] }) {
   );
 }
 export default function InsightsScreen() {
+  return USE_MOCK ? <PreviewInsightsScreen /> : <LiveInsightsScreen />;
+}
+
+function PreviewInsightsScreen() {
   const { topic = "", beachId } = useParams();
   const nav = useNavigate();
   const [params, setParams] = useSearchParams();

@@ -153,8 +153,8 @@ export interface BeachSummary {
   id: string;
   name: string;
   area: string;
-  lat: number;
-  lng: number;
+  lat: number | null;
+  lng: number | null;
   /** null when there are fewer than 3 active reports. null does NOT mean
    *  "clean" - it means "not enough evidence". The UI must say so. */
   severity: SeverityBand | null;
@@ -208,12 +208,27 @@ export interface BeachSummary {
  * the names can be read from there. The same fact is never stored twice, or
  * the two copies will disagree one day.
  */
+export interface RecurrenceEvidence {
+  cleanupAt: string;
+  cleanupDate: string;
+  intervalDays: number | null;
+  daysSinceCleanup: number;
+  status: string;
+  calloutStatus: string;
+  medianDays?: number | null;
+  provisional?: boolean;
+  medianLabel?: string | null;
+  evidenceNote?: string;
+}
+
 export interface BeachDetail extends Omit<BeachSummary, 'speciesNames'> {
   composition: CompositionSlice[] | null;
   /** null exactly when composition is null - they are always sent together. */
   compositionSource: CompositionSource | null;
   species: Species[];
   ecologicalNote: string;
+  recurrence?: RecurrenceEvidence | null;
+  cleanupStatus?: string;
 }
 
 /** One public beach-gallery item. It deliberately carries no reporter identity,
