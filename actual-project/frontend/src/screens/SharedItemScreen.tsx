@@ -6,6 +6,7 @@ import { BackButton, GhostButton, PrimaryButton } from '../components/ui';
 import { sharedBandRows } from '../sharedReportPresentation';
 import { C, formatDate } from '../theme';
 import type { QuantityByCategory } from '../types';
+import { useAppBack } from '../navigation';
 
 type SharedItems = {
   event: {
@@ -23,6 +24,7 @@ type SharedItems = {
 export default function SharedItemScreen() {
   const { token = '' } = useParams();
   const nav = useNavigate();
+  const back = useAppBack('/home');
   const [items, setItems] = useState<SharedItems | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [photoFailed, setPhotoFailed] = useState(false);
@@ -42,9 +44,9 @@ export default function SharedItemScreen() {
   return (
     <div className="screen scroll-y">
       <div className="measure i2-page" style={{ paddingBottom: 'calc(var(--safe-bottom) + 34px)' }}>
-        <BackButton onClick={() => nav('/home')} />
+        <BackButton onClick={back} />
         <SectionLabel size="sm">RADAR SAMPAH · SHARED ITEM</SectionLabel>
-        {error ? <EmptyState title="Shared item unavailable" body={error} /> : !items ? (
+        {error || (items && !report && !event) ? <EmptyState title="Shared item unavailable" body={error ?? 'This link has no available item.'} /> : !items ? (
           <div role="status">Loading shared item...</div>
         ) : (
           <>

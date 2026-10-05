@@ -2290,7 +2290,7 @@ def create_app(
         if event.status != "Open" or not (utc_datetime(event.starts_at) <= now <= utc_datetime(event.ends_at)):
             return error_response(409, "EVENT_NOT_ACTIVE", "Check-in is available only while the event is active.")
         beach = next((item for item in beaches if item["id"] == event.beach_id), None)
-        if beach is None or distance_km(lat, lng, beach["lat"], beach["lng"]) > EVENT_CHECKIN_RADIUS_KM:
+        if beach is None or beach["lat"] is None or beach["lng"] is None or distance_km(lat, lng, beach["lat"], beach["lng"]) > EVENT_CHECKIN_RADIUS_KM:
             return error_response(403, "LOCATION_OUT_OF_RANGE", "You must be within 25 km of the event beach to check in.")
         with engine.begin() as connection:
             connection.execute(event_members_table.update().where(
@@ -2467,6 +2467,8 @@ def create_app(
         nearest: dict[str, Any] | None = None
         nearest_distance = float("inf")
         for beach in beaches:
+            if beach["lat"] is None or beach["lng"] is None:
+                continue
             phi1, phi2 = math.radians(lat), math.radians(beach["lat"])
             dphi = math.radians(beach["lat"] - lat)
             dlambda = math.radians(beach["lng"] - lng)

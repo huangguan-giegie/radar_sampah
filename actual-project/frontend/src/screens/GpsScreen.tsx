@@ -8,7 +8,7 @@
 // Every path out of this screen goes to /report/confirm, where the user
 // confirms or changes the beach. Location never chooses on its own - the
 // person always gets the last word.
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { resolveBeach } from '../api';
 import { MiniMap } from '../components/MiniMap';
@@ -17,6 +17,7 @@ import { BackButton, GhostButton, PrimaryButton, StepBadge, TextButton } from '.
 import { PrivacySheet } from '../components/PrivacySheet';
 import { C } from '../theme';
 import { useApp } from '../AppContext';
+import { useAppBack } from '../navigation';
 
 
 /** Where the little map sits before we know anything: the Selangor coast.
@@ -25,11 +26,15 @@ const FALLBACK: [number, number] = [2.95, 101.42];
 
 export default function GpsScreen() {
   const nav = useNavigate();
+  const back = useAppBack('/report/photo');
   const { draft, patchDraft } = useApp();
+  const request = useRef(0);
+  useEffect(() => () => { request.current += 1; }, []);
   const [sheet, setSheet] = useState(false);
   const [busy, setBusy] = useState(false);
 
   async function allowOnce() {
+    const currentRequest = ++request.current;
     // Some browsers have no geolocation at all, and any page served over
     // plain http does not get it either. Fall through to picking by hand
     // rather than crashing on an undefined API.
@@ -41,6 +46,7 @@ export default function GpsScreen() {
     setBusy(true);
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
+        if (request.current !== currentRequest) return;
         // Keep temporary precision for the 10 metre duplicate check. The API
         // converts it to a private proximity reference and discards the raw
         // coordinates; public responses remain beach-level only.
@@ -59,6 +65,7 @@ export default function GpsScreen() {
 
         try {
           const beach = await resolveBeach(coords.lat, coords.lng);
+          if (request.current !== currentRequest) return;
           // A beach was found: pre-select it, and remember this came from GPS.
           // The backend needs that flag for its duplicate check.
           if (beach) {
@@ -67,13 +74,17 @@ export default function GpsScreen() {
             patchDraft({ locationSource: 'manual', coords: null, gpsIssue: 'noBeach' });
           }
         } catch {
+          if (request.current !== currentRequest) return;
           patchDraft({ locationSource: 'manual', coords: null, gpsIssue: 'failed' });
         } finally {
-          setBusy(false);
-          nav('/report/confirm');
+          if (request.current === currentRequest) {
+            setBusy(false);
+            nav('/report/confirm');
+          }
         }
       },
       (err) => {
+        if (request.current !== currentRequest) return;
         setBusy(false);
         // "You refused", "your device cannot get a fix" and "it timed out" are
         // three different problems. Reporting all of them as "permission
@@ -97,6 +108,7 @@ export default function GpsScreen() {
   // not hidden as a fallback: some volunteers simply will not share location,
   // and their reports are worth just as much.
   function chooseManually() {
+    request.current += 1;
     patchDraft({ locationSource: 'manual', gpsIssue: null, coords: null });
     nav('/report/confirm');
   }
@@ -114,7 +126,7 @@ export default function GpsScreen() {
       <div style={{ position: 'absolute', inset: 0, zIndex: 800, pointerEvents: 'none', backdropFilter: 'blur(4px)', background: 'linear-gradient(180deg,rgba(221,227,236,.55) 0%,rgba(221,227,236,.25) 40%,rgba(14,30,64,.45) 100%)' }} />
 
       <BackButton
-        onClick={() => nav(-1)}
+        onClick={() => { request.current += 1; back(); }}
         style={{
           position: 'absolute',
           top: 'var(--top-inset)',

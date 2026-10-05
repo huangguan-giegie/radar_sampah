@@ -63,7 +63,8 @@ def test_startup_seeds_reference_tables_idempotently(tmp_path):
     second = create_app(database_url=database_url, testing=True, photo_storage_dir=tmp_path / "photos")
     engine = second.extensions["marine_engine"]
     with engine.connect() as connection:
-        assert connection.execute(text("SELECT COUNT(*) FROM beaches")).scalar_one() == 4
+        assert connection.execute(text("SELECT COUNT(*) FROM beaches")).scalar_one() == 86
+        assert connection.execute(text("SELECT COUNT(*) FROM beaches WHERE id IN ('morib', 'remis', 'kelanang', 'bagan')")).scalar_one() == 4
         assert connection.execute(text("SELECT COUNT(*) FROM area_species")).scalar_one() == 11
         assert connection.execute(text("SELECT COUNT(*) FROM reports")).scalar_one() == 0
 
@@ -76,7 +77,8 @@ def test_startup_repairs_partial_reference_seed_without_touching_reports(tmp_pat
         connection.execute(text("DELETE FROM beaches WHERE id <> 'morib'"))
     second = create_app(database_url=database_url, testing=True, photo_storage_dir=tmp_path / "photos")
     with second.extensions["marine_engine"].connect() as connection:
-        assert connection.execute(text("SELECT COUNT(*) FROM beaches")).scalar_one() == 4
+        assert connection.execute(text("SELECT COUNT(*) FROM beaches")).scalar_one() == 86
+        assert connection.execute(text("SELECT COUNT(*) FROM beaches WHERE id IN ('morib', 'remis', 'kelanang', 'bagan')")).scalar_one() == 4
         assert connection.execute(text("SELECT COUNT(*) FROM area_species")).scalar_one() == 11
         assert connection.execute(text("SELECT COUNT(*) FROM reports")).scalar_one() == 0
 
@@ -507,12 +509,15 @@ def test_beach_summary_and_detail_shapes_are_strict(api):
     response = client.get("/beaches")
     assert response.status_code == 200
     beaches = response.get_json()
-    assert len(beaches) == 4
+    assert len(beaches) == 86
+    assert {"morib", "remis", "kelanang", "bagan"} <= {beach["id"] for beach in beaches}
+    assert len({beach["id"] for beach in beaches}) == len(beaches)
     expected_summary_fields = {
         "id", "name", "area", "lat", "lng", "severity", "band", "insufficientData",
         "validReports", "lastReportedAt", "freshnessKind", "habitat", "habitatTag",
         "sensitivity", "primarySpeciesGlyph", "speciesNames", "coverImageUrl", "scene",
         "attentionScore", "eligibleReportCount", "newestCountedReportAt", "latestContributingReportAt",
+        "validatedCore", "region", "locationSource", "catalogueSource", "locationStatus",
     }
     assert set(beaches[0]) == expected_summary_fields
     assert beaches[0]["severity"] is None

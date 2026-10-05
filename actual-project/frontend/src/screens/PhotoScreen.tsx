@@ -12,6 +12,7 @@ import { BackButton, ErrorNote, PrimaryButton, StepBadge } from '../components/u
 import { C, MONO } from '../theme';
 import { OverlayChip } from '../components/ds';
 import { useApp } from '../AppContext';
+import { useAppBack } from '../navigation';
 
 
 /**
@@ -44,6 +45,9 @@ const MAX_PHOTO_BYTES = 10 * 1024 * 1024;
 
 export default function PhotoScreen() {
   const nav = useNavigate();
+  const back = useAppBack('/home');
+  const uploadRequest = useRef(0);
+  useEffect(() => () => { uploadRequest.current += 1; }, []);
   const { draft, patchDraft } = useApp();
   const cameraRef = useRef<HTMLInputElement>(null);
   const libraryRef = useRef<HTMLInputElement>(null);
@@ -89,7 +93,7 @@ export default function PhotoScreen() {
   // nothing at all. Zero bytes earns its own case: it uploads happily and only
   // shows up later as a broken picture. Every failure uses the same red panel.
   async function handleFile(file: File | undefined) {
-    if (!file) return;
+    if (!file || uploading) return;
 
 
 
@@ -113,9 +117,11 @@ export default function PhotoScreen() {
     }
 
     setUploading(true);
+    const request = ++uploadRequest.current;
     setUploadError(null);
     try {
       const photo = await uploadPhoto(file);
+      if (request !== uploadRequest.current) return;
       // AC2.2.3 - check the stored photo really opens before we call it added.
       // Nothing else in the flow verified this, so an undecodable file reached
       // the review screen and the submitted report as a blank box.
@@ -125,6 +131,7 @@ export default function PhotoScreen() {
           'This browser could not open that photo. HEIC photos often only open on an iPhone — please choose a JPG or PNG.',
         );
       }
+      if (request !== uploadRequest.current) return;
       // Refuse the photo if the location is still baked into it. Phone photos
       // carry the exact spot they were taken, and publishing that would break
       // the promise made two screens earlier.
@@ -133,12 +140,13 @@ export default function PhotoScreen() {
       }
       patchDraft({ photo, existingPhotoUnavailable: false, aiDecision: null, aiModelVersion: null });
     } catch (error) {
+      if (request !== uploadRequest.current) return;
       setUploadError(error instanceof Error ? error.message : 'Please try again.');
       // Clear the photo as well as showing the error. A half-failed upload left
       // in the draft would let Continue submit a report pointing at nothing.
       patchDraft({ photo: null, aiDecision: null, aiModelVersion: null });
     } finally {
-      setUploading(false);
+      if (request === uploadRequest.current) setUploading(false);
     }
   }
 
@@ -172,7 +180,7 @@ export default function PhotoScreen() {
         style={{ paddingInline: 20, paddingBottom: 'calc(var(--safe-bottom) + 32px)', display: 'flex', flexDirection: 'column', gap: 18 }}
       >
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <BackButton onClick={() => nav(-1)} />
+          <BackButton onClick={() => { uploadRequest.current += 1; back(); }} />
           <StepBadge>STEP 1 OF 6 · PHOTO</StepBadge>
         </div>
 

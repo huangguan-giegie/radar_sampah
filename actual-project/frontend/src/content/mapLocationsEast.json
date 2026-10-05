@@ -1,0 +1,140 @@
+{
+  "pantai-air-papan": {
+    "lat": 2.524505,
+    "lng": 103.829224,
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Pantai_Air_Papan,_Kampung_Air_Papan_Laut_20221219_183326.jpg",
+    "sourceName": "Wikimedia Commons - geotagged beach photograph by Wiki Farazi"
+  },
+  "pantai-minyak-beku": {
+    "lat": 1.7951,
+    "lng": 102.88796,
+    "sourceUrl": "https://www.penang-traveltips.com/malaysia/johor/batu-pahat/pantai-minyak-beku.htm",
+    "sourceName": "Penang Travel Tips - on-site beach GPS"
+  },
+  "pulau-rawa": {
+    "lat": 2.51994,
+    "lng": 103.97599,
+    "sourceUrl": "https://mapcarta.com/15815456",
+    "sourceName": "Mapcarta / OpenStreetMap - Rawa island reference point"
+  },
+  "pulau-tinggi": {
+    "lat": 2.29917,
+    "lng": 104.11803,
+    "sourceUrl": "https://mapcarta.com/15811270",
+    "sourceName": "Mapcarta / OpenStreetMap - Tinggi island reference point"
+  },
+  "pulau-besar-mersing": {
+    "lat": 2.4393,
+    "lng": 103.9835,
+    "sourceUrl": "https://mapcarta.com/15811326",
+    "sourceName": "Mapcarta / GeoNames - Pulau Babi Besar island reference point"
+  },
+  "pulau-sibu": {
+    "lat": 2.2148,
+    "lng": 104.0705,
+    "sourceUrl": "https://mapcarta.com/Sibu_Island",
+    "sourceName": "Mapcarta / OpenStreetMap - Sibu island reference point"
+  },
+  "pantai-teluk-mahkota": {
+    "lat": 1.898,
+    "lng": 104.105,
+    "sourceUrl": "https://www.engineeringletters.com/issues_v34/issue_5/EL_34_5_12.pdf",
+    "sourceName": "Engineering Letters 34(5), 2026 - Table I coastal sampling site S9"
+  },
+  "pantai-batu-layar": {
+    "lat": 1.446,
+    "lng": 104.298,
+    "sourceUrl": "https://www.engineeringletters.com/issues_v34/issue_5/EL_34_5_12.pdf",
+    "sourceName": "Engineering Letters 34(5), 2026 - Table I coastal sampling site S2"
+  },
+  "pantai-tanjung-leman": {
+    "lat": 2.147,
+    "lng": 104.011,
+    "sourceUrl": "https://www.engineeringletters.com/issues_v34/issue_5/EL_34_5_12.pdf",
+    "sourceName": "Engineering Letters 34(5), 2026 - Table I coastal sampling site S16"
+  },
+  "pantai-chendor": {
+    "lat": 4.1764576,
+    "lng": 103.4241628,
+    "sourceUrl": "https://beach-spot.com/beach/pantai-chendor/",
+    "sourceName": "Beach-Spot - named beach GPS"
+  },
+  "pantai-juara-tioman": {
+    "lat": 2.7953,
+    "lng": 104.2047,
+    "sourceUrl": "https://mapcarta.com/15890184",
+    "sourceName": "Mapcarta / GeoNames - Pasir Juara beach"
+  },
+  "pantai-pandak": {
+    "lat": 5.2718504,
+    "lng": 103.1826955,
+    "sourceUrl": "https://beach-spot.com/beach/pantai-pandak/",
+    "sourceName": "Beach-Spot - named beach GPS"
+  },
+  "pulau-kapas": {
+    "lat": 5.2190041,
+    "lng": 103.2649049,
+    "sourceUrl": "https://beach-spot.com/beach/pulau-kapas-3/",
+    "sourceName": "Beach-Spot - Kapas island beach GPS"
+  },
+  "long-beach-perhentian": {
+    "lat": 5.9183806,
+    "lng": 102.7221365,
+    "sourceUrl": "https://beach-spot.com/beach/long-beach-3/",
+    "sourceName": "Beach-Spot - Long Beach, Perhentian Kecil GPS"
+  },
+  "chagar-hutang-redang": {
+    "lat": 5.81287,
+    "lng": 103.0083,
+    "sourceUrl": "https://mapcarta.com/15900984",
+    "sourceName": "Mapcarta / OpenStreetMap - Pasir Chagar Hutang beach, Redang"
+  },
+  "pasir-besar-lang-tengah": {
+    "lat": 5.80051,
+    "lng": 102.89353,
+    "sourceUrl": "https://mapcarta.com/15904192",
+    "sourceName": "Mapcarta / GeoNames - Pasir Besar beach, Lang Tengah"
+  },
+  "pantai-mek-mas": {
+    "lat": 6.21642,
+    "lng": 102.24322,
+    "sourceUrl": "https://mycoast.nahrim.gov.my/portal-main/metadata-directory?search_type=TBEACHPROFILE",
+    "sourceName": "NAHRIM MyCoast - Pantai Mek Mas beach profile survey, February 2018"
+  },
+  "pantai-tok-bali": {
+    "lat": 5.90209,
+    "lng": 102.48017,
+    "sourceUrl": "https://mapcarta.com/35737884",
+    "sourceName": "Mapcarta / GeoNames - Pantai Tok Bali beach"
+  },
+  "pantai-dalit": {
+    "lat": 6.15868,
+    "lng": 116.15096,
+    "sourceUrl": "https://mapcarta.com/34454504",
+    "sourceName": "Mapcarta / GeoNames - Pantai Dalit beach"
+  },
+  "pulau-mantanani": {
+    "lat": 6.711898,
+    "lng": 116.352439,
+    "sourceUrl": "https://www.geonames.org/advanced-search.html?country=MY&featureClass=T&q=&startRow=150",
+    "sourceName": "GeoNames - Pulau Mantanani Besar island reference point"
+  },
+  "pantai-pandan": {
+    "lat": 1.7645227,
+    "lng": 109.8625902,
+    "sourceUrl": "https://lundudc.sarawak.gov.my/web/subpage/webpage_view/133",
+    "sourceName": "Lundu District Council - linked Google Maps place coordinates for Pantai Pandan"
+  },
+  "pantai-tanjung-aru": {
+    "lat": 5.946994,
+    "lng": 116.045601,
+    "sourceUrl": "https://commons.wikimedia.org/wiki/Category:Tanjung_Aru_Beach",
+    "sourceName": "Wikimedia Commons / Wikidata - Tanjung Aru beach object location"
+  },
+  "pantai-damai": {
+    "lat": 1.74955,
+    "lng": 110.3127,
+    "sourceUrl": "https://mapcarta.com/34454480",
+    "sourceName": "Mapcarta / GeoNames - Damai beach, Sarawak"
+  }
+}

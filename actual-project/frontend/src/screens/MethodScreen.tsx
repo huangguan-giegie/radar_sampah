@@ -13,6 +13,7 @@ import { useNavigate } from 'react-router-dom';
 import { getScoringMethod } from '../api';
 import { SCORING_METHOD } from '../scoring';
 import { BackButton, GhostButton, Label } from '../components/ui';
+import { useAppBack } from '../navigation';
 import { C, MONO, severityLabel } from '../theme';
 import type { ScoringMethod } from '../types';
 
@@ -76,6 +77,7 @@ const limitations = (m: ScoringMethod) => [
 
 export default function MethodScreen() {
   const nav = useNavigate();
+  const goBack = useAppBack('/home');
 
 
   // Start from the frontend's own copy, then quietly upgrade if the backend
@@ -116,7 +118,7 @@ export default function MethodScreen() {
             edge. */}
         <div className="measure">
           <BackButton
-            onClick={() => nav(-1)}
+            onClick={goBack}
             dark
             style={{ background: 'rgba(255,255,255,.1)', border: '1px solid rgba(255,255,255,.2)' }}
           />
@@ -272,7 +274,7 @@ export default function MethodScreen() {
           </div>
         </div>
 
-        <GhostButton onClick={() => nav(-1)} height={54} style={{ borderRadius: 17, fontSize: 14.5 }}>
+        <GhostButton onClick={goBack} height={54} style={{ borderRadius: 17, fontSize: 14.5 }}>
           Back
         </GhostButton>
       </div>

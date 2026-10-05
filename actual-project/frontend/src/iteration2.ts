@@ -1,4 +1,4 @@
-import type { LitterCategory, QuantityBand, QuantityByCategory } from './types';
+import type { LitterCategory, QuantityBand, QuantityByCategory, RecurrenceEvidence } from './types';
 import { recognizeCleanupPhoto, recognizeReportPhoto, USE_MOCK } from './api';
 
 export type EventStatus = 'Open' | 'Closed';
@@ -60,7 +60,10 @@ export interface CleanupAction {
   score: number;
   handling: CleanupHandling;
   note: string;
-  status: 'Cleanup recorded — awaiting follow-up';
+  status: string;
+  recurrence?: RecurrenceEvidence;
+  eventFollowUpStatus?: string;
+  resolutionStatus?: string;
   remainingQuantities?: QuantityByCategory | null;
   removedQuantities?: QuantityByCategory | null;
   resolved?: boolean;
@@ -628,7 +631,7 @@ export function formatEventDate(date: string): string {
     weekday: 'short',
     timeZone: 'Asia/Kuala_Lumpur',
   });
-  return `${date} (${weekday})`;
+  return `${date.split('-').reverse().join('-')} (${weekday})`;
 }
 
 /** "09:00" → "9:00 AM". The API keeps 24-hour times so they sort and compare

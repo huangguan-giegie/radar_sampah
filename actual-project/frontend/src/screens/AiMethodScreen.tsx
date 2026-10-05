@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom';
+import { useAppBack } from '../navigation';
 import { Shield } from '../components/Icon';
 import { BulletList, Callout, SectionLabel } from '../components/ds';
 import { BackButton } from '../components/ui';
@@ -15,11 +15,11 @@ function ModelRow({ label, value }: { label: string; value: string }) {
 }
 
 export default function AiMethodScreen() {
-  const nav = useNavigate();
+  const goBack = useAppBack('/method');
   return (
     <div className="screen scroll-y" style={{ zIndex: 27 }}>
       <div className="measure i2-page anim-fade-up" style={{ paddingBottom: 'calc(var(--safe-bottom) + 34px)' }}>
-        <BackButton onClick={() => nav(-1)} />
+        <BackButton onClick={goBack} />
         <div>
           <SectionLabel size="sm">MODEL PROVENANCE</SectionLabel>
           <h1 className="i2-title" style={{ marginTop: 7 }}>How the AI suggestion works</h1>

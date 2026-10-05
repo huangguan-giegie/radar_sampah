@@ -1,0 +1,254 @@
+{
+  "species": [
+    {
+      "id": "green-sea-turtle",
+      "name": "Green Sea Turtle",
+      "intro": "Nests on Malaysian beaches. Adults graze on seagrass.",
+      "answers": [
+        {
+          "title": "Where It Lives",
+          "text": "Green turtles forage in shallow coastal waters and seagrass meadows; females nest on sandy beaches."
+        },
+        {
+          "title": "Litter Impact",
+          "text": "They can swallow plastic or become tangled in discarded gear, but this page does not document an injured turtle here."
+        },
+        {
+          "title": "What You Can Do",
+          "text": "Keep plastic off the beach, report lost gear, and watch turtles from a distance."
+        }
+      ],
+      "sources": [
+        {
+          "label": "NOAA Fisheries · green turtle",
+          "url": "https://www.fisheries.noaa.gov/species/green-turtle"
+        },
+        {
+          "label": "NOAA · marine-life viewing",
+          "url": "https://www.fisheries.noaa.gov/topic/marine-life-viewing-guidelines"
+        }
+      ],
+      "credit": "Photo · Christoph Schuetzenhofer · CC BY-SA 3.0",
+      "image": "/species/green-sea-turtle.jpg",
+      "photoSource": "https://commons.wikimedia.org/wiki/File:Chelonia_mydas_2005-06-11_Andaman_sea.jpg",
+      "category": "animal",
+      "scientificName": "Chelonia mydas",
+      "approved": true,
+      "reviewDate": "2026-10-05",
+      "conservationMessage": "Reducing discarded litter may reduce general wildlife risks. This card does not record local harm or ecological recovery.",
+      "habitat": "Green turtles forage in shallow coastal waters and seagrass meadows; females nest on sandy beaches.",
+      "threatStatus": "See approved sources; no local threat assessment is made.",
+      "photoPermission": {
+        "label": "CC BY-SA 3.0",
+        "url": "https://creativecommons.org/licenses/by-sa/3.0/"
+      }
+    },
+    {
+      "id": "irrawaddy-dolphin",
+      "name": "Irrawaddy Dolphin",
+      "intro": "A round head and no beak. Lives close to shore.",
+      "answers": [
+        {
+          "title": "Where It Lives",
+          "text": "Irrawaddy dolphins use shallow coastal waters and river mouths."
+        },
+        {
+          "title": "Litter Impact",
+          "text": "Entanglement in fishing nets is documented; no local injured dolphin is shown, and active nets are not necessarily litter."
+        },
+        {
+          "title": "What You Can Do",
+          "text": "Report lost nets and watch dolphins from a distance."
+        }
+      ],
+      "sources": [
+        {
+          "label": "IUCN · dolphin threats",
+          "url": "https://iucn.org/news/species/201712/unsustainable-food-systems-threaten-wild-crop-and-dolphin-species-%E2%80%93-iucn-red-list"
+        },
+        {
+          "label": "NOAA · marine-life viewing",
+          "url": "https://www.fisheries.noaa.gov/topic/marine-life-viewing-guidelines"
+        }
+      ],
+      "credit": "Photo · Dan Koehl · CC BY 3.0",
+      "image": "/species/irrawaddy-dolphin.jpg",
+      "photoSource": "https://commons.wikimedia.org/wiki/File:DKoehl_Irrawaddi_Dolphin_jumping.jpg",
+      "category": "animal",
+      "scientificName": "Orcaella brevirostris",
+      "approved": true,
+      "reviewDate": "2026-10-05",
+      "conservationMessage": "Reducing discarded litter may reduce general wildlife risks. This card does not record local harm or ecological recovery.",
+      "habitat": "Irrawaddy dolphins use shallow coastal waters and river mouths.",
+      "threatStatus": "See approved sources; no local threat assessment is made.",
+      "photoPermission": {
+        "label": "CC BY 3.0",
+        "url": "https://creativecommons.org/licenses/by/3.0/"
+      }
+    },
+    {
+      "id": "moorish-idol",
+      "name": "Moorish Idol",
+      "intro": "Long white fin and bold black bands. Grazes on reef sponges.",
+      "answers": [
+        {
+          "title": "Where It Lives",
+          "text": "Moorish idols inhabit lagoons, reef flats, and rocky or coral reefs."
+        },
+        {
+          "title": "Litter Impact",
+          "text": "Marine litter can harm reef habitats, but no species-specific or local injury record is shown here."
+        },
+        {
+          "title": "What You Can Do",
+          "text": "Take your litter away and do not step on coral."
+        }
+      ],
+      "sources": [
+        {
+          "label": "FishBase · Zanclus cornutus",
+          "url": "https://www.fishbase.se/Fieldguide/FieldGuideSummary.php?c_code=392&genusname=Zanclus&speciesname=cornutus"
+        },
+        {
+          "label": "UNEP · marine litter assessment",
+          "url": "https://www.unep.org/resources/pollution-solution-global-assessment-marine-litter-and-plastic-pollution"
+        }
+      ],
+      "credit": "Photo · Diego Delso · CC BY-SA 4.0",
+      "image": "/species/moorish-idol.jpg",
+      "photoSource": "https://commons.wikimedia.org/wiki/File:%C3%8Ddolo_moro_(Zanclus_cornutus),_Anilao,_Filipinas,_2023-08-22,_DD_189.jpg",
+      "category": "animal",
+      "scientificName": "Zanclus cornutus",
+      "approved": true,
+      "reviewDate": "2026-10-05",
+      "conservationMessage": "Reducing discarded litter may reduce general wildlife risks. This card does not record local harm or ecological recovery.",
+      "habitat": "Moorish idols inhabit lagoons, reef flats, and rocky or coral reefs.",
+      "threatStatus": "See approved sources; no local threat assessment is made.",
+      "photoPermission": {
+        "label": "CC BY-SA 4.0",
+        "url": "https://creativecommons.org/licenses/by-sa/4.0/"
+      }
+    },
+    {
+      "id": "ocellaris-clownfish",
+      "name": "Ocellaris Clownfish",
+      "intro": "Shelters in sea anemones and rarely strays far from them.",
+      "answers": [
+        {
+          "title": "Where It Lives",
+          "text": "Ocellaris clownfish live among sea anemones on shallow coral reefs."
+        },
+        {
+          "title": "Litter Impact",
+          "text": "Lab-reared juveniles ingested microplastics, but this does not show harm at this reef."
+        },
+        {
+          "title": "What You Can Do",
+          "text": "Keep plastic out of the sea and avoid touching anemones or corals."
+        }
+      ],
+      "sources": [
+        {
+          "label": "FishBase · Amphiprion ocellaris",
+          "url": "https://www.fishbase.se/FieldGuide/FieldGuideSummary.php?c_code=704&genusname=Amphiprion&speciesname=ocellaris"
+        },
+        {
+          "label": "Clownfish microplastics experiment",
+          "url": "https://www.sciencedirect.com/science/article/pii/S0269749119361688"
+        }
+      ],
+      "credit": "Photo · Zoltán Stekkelpak · CC0 1.0",
+      "image": "/species/ocellaris-clownfish.jpg",
+      "photoSource": "https://commons.wikimedia.org/wiki/File:Amphiprion_ocellaris_354353067.jpg",
+      "category": "animal",
+      "scientificName": "Amphiprion ocellaris",
+      "approved": true,
+      "reviewDate": "2026-10-05",
+      "conservationMessage": "Reducing discarded litter may reduce general wildlife risks. This card does not record local harm or ecological recovery.",
+      "habitat": "Ocellaris clownfish live among sea anemones on shallow coral reefs.",
+      "threatStatus": "See approved sources; no local threat assessment is made.",
+      "photoPermission": {
+        "label": "CC0 1.0",
+        "url": "https://creativecommons.org/publicdomain/zero/1.0/"
+      }
+    }
+  ],
+  "risks": [
+    {
+      "category": "Plastic",
+      "riskType": "Ingestion",
+      "speciesGroups": [
+        "Sea turtles",
+        "Marine birds",
+        "Fish"
+      ],
+      "explanation": "Reported plastic may create an ingestion risk for sea turtles, marine birds and fish. General literature does not establish harm at this beach.",
+      "practicalTip": "Collect discarded plastic where safe, and keep away from wildlife.",
+      "source": {
+        "label": "NOAA Marine Debris Program: ingestion",
+        "url": "https://marinedebris.noaa.gov/why-marine-debris-problem/ingestion"
+      },
+      "reviewDate": "2026-10-05",
+      "approved": true
+    },
+    {
+      "category": "Fishing gear",
+      "riskType": "Entanglement",
+      "speciesGroups": [
+        "Sea turtles",
+        "Marine mammals",
+        "Marine birds",
+        "Fish"
+      ],
+      "explanation": "Discarded fishing gear may entangle sea turtles, marine mammals, marine birds and fish. This is general risk context, not evidence of local injury.",
+      "practicalTip": "Report lost fishing gear; do not handle an entangled animal and contact the relevant authority.",
+      "source": {
+        "label": "NOAA Marine Debris Program: wildlife entanglement and ghost fishing",
+        "url": "https://marinedebris.noaa.gov/why-marine-debris-problem/wildlife-entanglement-and-ghost-fishing"
+      },
+      "reviewDate": "2026-10-05",
+      "approved": true
+    }
+  ],
+  "guidance": {
+    "tips": [
+      "Keep away from nests and burrows",
+      "Leave seaweed and driftwood in place",
+      "Do not handle stranded or entangled animals",
+      "Keep people and dogs away from wildlife",
+      "Avoid walking on seagrass and dunes"
+    ],
+    "reminder": [
+      "Do not handle stranded or entangled animals",
+      "Keep away from nests and burrows"
+    ],
+    "incident": "Do not touch, move or disentangle the animal. Keep people and dogs back and contact the relevant authority.",
+    "authorities": [
+      {
+        "name": "PERHILITAN: Peninsular Malaysia",
+        "phone": "1-800-88-5151",
+        "telephoneUri": "tel:1800885151",
+        "hours": "Daily, 8:00 AM to 6:00 PM Malaysia time",
+        "url": "https://wildpedia.wildlife.gov.my/page/help",
+        "lastChecked": "2026-10-05"
+      },
+      {
+        "name": "Department of Fisheries Malaysia: marine animals",
+        "url": "https://www.dof.gov.my/en/contact-us/",
+        "lastChecked": "2026-10-05"
+      }
+    ],
+    "sources": [
+      {
+        "label": "NOAA: marine-life viewing guidelines",
+        "url": "https://www.fisheries.noaa.gov/topic/marine-life-viewing-guidelines"
+      },
+      {
+        "label": "PERHILITAN official contact",
+        "url": "https://wildpedia.wildlife.gov.my/page/help"
+      }
+    ],
+    "reviewDate": "2026-10-05",
+    "note": "General guidance; follow the relevant authority. Radar Sampah does not report incidents on your behalf."
+  }
+}
