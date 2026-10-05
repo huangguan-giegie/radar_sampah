@@ -63,9 +63,61 @@ The independent API journey records at least three attendances, creates another 
 
 ## Release and production verification
 
-Release commit, PRs, rollback tags, Render deployment identifiers and production checks will be recorded here after release. Production checks must confirm the new revision is live before interpreting a successful endpoint response as evidence for this release.
+The release was integrated through [PR #54](https://github.com/huangguan-giegie/radar_sampah/pull/54) into `iteration3`, then [PR #55](https://github.com/huangguan-giegie/radar_sampah/pull/55) into `main`. Implementation commit: `975ff5e`; tested source tree plus unchanged main merge: `b5c2072e0469aa11a706fa9d7242f04f8abf77fb`. Main application release: `3563497ff6c417dab0cfce5386b9265295ec1f9d`. Git comparison confirmed identical source content between the tested tree, merged `iteration3` and the release on `main`.
 
-The deployment smoke test checks health, persisted beach catalogue, the four-beach Insights boundary, public privacy, private endpoint authentication, wildlife content, recommendations, cross-origin access and the built frontend. It does not insert synthetic public reports or cleanups into production.
+Rollback tags were pushed before main changed:
+
+- `release/pre-iteration3-main-20261006` → `d7b57519b145a96305f639a264c8c25cac347ab6`.
+- `release/pre-iteration3-api-20261006` → `368212375a25b3443ac002e7526a657dca2e35f2`.
+
+| Render service | Release deployment | Observed result |
+| --- | --- | --- |
+| API, `srv-d9v00r3ncjis73amjvi0` | `dep-db1td9btqb8s739qc510` | Live at 6 October 2026, 01:59:31 KST, on release commit `3563497`. |
+| Frontend, `srv-d9v01afqj5pc738lpi5g` | `dep-db1td9btqb8s739qc4ug` | Live at 6 October 2026, 01:56:39 KST, on release commit `3563497`. |
+
+Live addresses: [frontend](https://team04-marine-observation-frontend.onrender.com) and [API health](https://team04-marine-observation-api.onrender.com/health). The deployments were confirmed live before final checks.
+
+The pre-release health request exceeded 90 seconds while waking the old service; the next beach request returned the four original records. After the release went live, health returned HTTP 200 and catalogue requests returned 86 unique records, including exactly four validated core beaches and 78 entries without coordinates.
+
+Production checks cover the public summary and five topic endpoints, recursive privacy assertions, empty recurrence on a beach without cleanup, species cards and prepared questions, wildlife guidance/risk mappings, recommendations, leaderboard response fields, private endpoint HTTP 401 responses and CORS preflight. Private checks create only opted-out empty smoke participants, patch a nickname, restore with a recovery token, reread the persisted profile, verify zero contributions and the private empty-insight response, reject another-user selection with HTTP 400, and clear the smoke nickname. No report, event join, attendance or cleanup is inserted into production; no authentication material is recorded in this document.
+
+The initial smoke harness contained three incorrect assumptions, which were corrected without application changes: no-cleanup recurrence legitimately returns JSON null; a timestamp nickname is correctly rejected as phone-like private data; and Vite places the API configuration and Insights/personal-insight paths in separate chunks. The final bundle check follows the actual compiled asset references and checks the API, Insights and Map chunks.
+
+Browser checks confirmed the real map, Insights overview, evidence status counts, a separate biodiversity panel, species introduction with photo/source credits, a sourced prepared answer, and the live Account contribution display. The checked browser session reported no console warnings or errors. Public overview values observed during this check were 118 Counted reports and 95 recorded cleanups; these were existing system records, not smoke fixtures.
+
+Final production smoke result: **PASS**, all 32 API requests returned their expected status, including the deliberate HTTP 401/400 cases. Health, all topic endpoints, source content, profile write/recovery/read, zero private contributions, consent privacy and actual compiled frontend chunks passed. A filtered Render log query was temporarily unavailable with a provider 502/503; deployment status and successful live endpoint/browser checks are independent evidence of runtime behaviour.
+
+## Live screenshots
+
+Captured from the deployed frontend on 6 October 2026, after release `3563497` was confirmed live. These are actual browser captures, not design previews. Account identifiers and recovery credentials are excluded.
+
+### Insights overview
+
+The overview reads the four validated beaches and existing recorded system data. The limitation wording remains visible.
+
+![Live Insights overview](screenshots/iteration3-insights-overview.jpg)
+
+### Evidence and freshness
+
+The four evidence states and latest contributing dates are shown for each MVP beach. Counted evidence is explicitly distinguished from expert verification.
+
+![Live evidence and freshness](screenshots/iteration3-evidence.jpg)
+
+![Live evidence status detail](screenshots/iteration3-evidence-details.jpg)
+
+### Species introduction and sourced answer
+
+The species guide shows the scientific name, photo licence, reviewed sources and a prepared answer. It does not turn general literature into a claim of local harm.
+
+![Live species introduction](screenshots/iteration3-species-introduction.jpg)
+
+![Live species guide and reviewed answer](screenshots/iteration3-species-answer.jpg)
+
+### Live map
+
+The map displays only source-backed locations; missing coordinates do not create invented pins. The 82-name catalogue and its remaining coordinate gap are documented below.
+
+![Live beach map](screenshots/iteration3-map.jpg)
 
 ## Data boundary and remaining evidence
 
