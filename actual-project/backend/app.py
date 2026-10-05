@@ -36,7 +36,7 @@ from standalone_cleanup import (
     install_cleanup_route,
 )
 from v3_contract import install_v3_contract
-from expanded_beaches import configure_expanded_beaches, ensure_optional_beach_coordinates
+from expanded_beaches import configure_expanded_beaches, ensure_optional_beach_coordinates, refresh_expanded_beach_locations
 from contributions import install_contributions
 from recurrence import install_recurrence
 from wildlife import install_wildlife
@@ -214,6 +214,7 @@ def _initialise_database(engine: Any) -> None:
     _repair_exact_duplicate_statuses(engine)
     _ensure_postgres_iteration2_contract(engine)
     ensure_optional_beach_coordinates(engine, _impl)
+    refresh_expanded_beach_locations(engine, _impl)
 
 
 def _candidate_quantities(connection: Any, exclude_report_id: str | None) -> dict[str, str] | None:

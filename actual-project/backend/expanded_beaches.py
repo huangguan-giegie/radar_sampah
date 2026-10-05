@@ -2,7 +2,7 @@
 
 import json
 from pathlib import Path
-from sqlalchemy import MetaData, inspect, text
+from sqlalchemy import MetaData, bindparam, inspect, select, text, update
 from sqlalchemy.schema import CreateTable
 
 
@@ -31,6 +31,30 @@ def configure_expanded_beaches(impl):
     impl.beaches_table.c.lat.nullable = True
     impl.beaches_table.c.lng.nullable = True
     impl.BEACH_SUMMARY_FIELDS += ('validatedCore', 'region', 'locationSource', 'catalogueSource', 'locationStatus')
+
+
+def refresh_expanded_beach_locations(engine, impl):
+    """Refresh curated locations on existing export rows without replacing evidence."""
+    catalogue = json.loads((Path(__file__).parent / 'data' / 'expanded_beaches.json').read_text(encoding='utf-8'))
+    locations = {row['id']: row for row in catalogue['beaches']
+                 if row.get('catalogueSource', {}).get('sourceRow') in range(1, 83)
+                 and row['id'] not in {'morib', 'remis', 'kelanang', 'bagan'}}
+    if not locations:
+        return
+    table = impl.beaches_table
+    with engine.begin() as connection:
+        existing = connection.execute(select(table.c.id, table.c.lat, table.c.lng, table.c.area)
+                                      .where(table.c.id.in_(locations))).mappings().all()
+        changes = []
+        for row in existing:
+            location = locations[row['id']]
+            if (row['lat'], row['lng'], row['area']) != (location['lat'], location['lng'], location['area']):
+                changes.append({'beach_key': row['id'], 'latitude': location['lat'],
+                                'longitude': location['lng'], 'beach_area': location['area']})
+        if changes:
+            connection.execute(update(table).where(table.c.id == bindparam('beach_key'))
+                               .values(lat=bindparam('latitude'), lng=bindparam('longitude'),
+                                       area=bindparam('beach_area')), changes)
 
 
 def ensure_optional_beach_coordinates(engine, impl):
