@@ -4,20 +4,22 @@ import { ArrowRight, Check, ChevronRight, Clock, Pin } from '../components/Icon'
 import { EmptyState, InfoChip, SectionLabel } from '../components/ds';
 import { BackButton, GhostButton, PrimaryButton, TextButton } from '../components/ui';
 import { useApp } from '../AppContext';
-import { createIteration2ShareLink, USE_MOCK } from '../api';
+import { createIteration2ShareLink, getBeach, getIteration2MyCleanups, USE_MOCK } from '../api';
 import {
   formatEventDate,
   formatEventTimeRange,
-  getCleanupTarget,
+  eventCleanups,
   getCleanupEvent,
 } from '../iteration2';
-import { fetchCleanupEvent, fetchCleanupTarget, joinCleanupEventData, leaveCleanupEventData } from '../iteration2Api';
-import { C } from '../theme';
+import { fetchCleanupEvent, joinCleanupEventData, leaveCleanupEventData } from '../iteration2Api';
+import { attentionStateFor, C } from '../theme';
+import type { BeachDetail } from '../types';
 import { useAsyncData } from '../useAsyncData';
 import { CleanupGuide, WildlifeGuide } from '../components/CleanupGuide';
 import { fetchEventCleanups } from '../iteration2Api';
 import { eventCanCheckIn, eventIsAvailable, eventPhase, useEventClock } from '../eventAvailability';
 import { useAppBack } from '../navigation';
+import '../styles/community-alignment.css';
 
 export default function EventScreen() {
   const { eventId = '' } = useParams();
@@ -30,25 +32,29 @@ export default function EventScreen() {
     active.current = true;
     return () => { active.current = false; };
   }, [eventId]);
-  const { user, showToast } = useApp();
+  const { user, showToast, reportsVersion } = useApp();
   const { data: event, setData: setEvent, loading, error } = useAsyncData(
     () => fetchCleanupEvent(eventId),
     [eventId, user?.participantId],
     getCleanupEvent(eventId),
   );
-  const { data: cleanupTarget } = useAsyncData(
-    () => event ? fetchCleanupTarget(event.beachId) : Promise.resolve(null),
-    [event?.beachId],
-    event ? getCleanupTarget(event.beachId) : null,
+  const { data: cleanups } = useAsyncData(() => fetchEventCleanups(eventId), [eventId, reportsVersion], []);
+  const { data: beach, loading: beachLoading, error: beachError, refresh: refreshBeach } = useAsyncData<BeachDetail | null>(
+    () => event ? getBeach(event.beachId) : Promise.resolve(null),
+    [event?.beachId, reportsVersion], null,
   );
-  const [sharing, setSharing] = useState(false);
-  const { data: cleanups } = useAsyncData(() => fetchEventCleanups(eventId), [eventId, user?.participantId], []);
-  const cleanupRecorded = Boolean(user && cleanups.some(cleanup => cleanup.participantId === user.participantId));
-  const [copied, setCopied] = useState(false);
+  const { data: ownCleanups } = useAsyncData<{ eventId: string | null }[]>(
+    () => !user ? Promise.resolve([]) : USE_MOCK
+      ? Promise.resolve(eventCleanups(eventId).filter(cleanup => cleanup.participantId === user.participantId))
+      : getIteration2MyCleanups(),
+    [eventId, user?.participantId, reportsVersion], [],
+  );
+  const cleanupRecorded = Boolean(user && ownCleanups.some(cleanup => cleanup.eventId === eventId));
   const [sharePath, setSharePath] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
+    setSharePath(null);
     if (USE_MOCK) return;
     createIteration2ShareLink({ eventId })
       .then((link) => { if (active) setSharePath(link.path); })
@@ -117,36 +123,6 @@ export default function EventScreen() {
   const shareText = `${event.beachName} cleanup · ${formatEventDate(event.date)}`;
   const whatsapp = `https://wa.me/?text=${encodeURIComponent(`${shareText}\n${shareUrl}`)}`;
 
-  async function copyLink() {
-    if (!shareUrl) {
-      showToast('Share link is still being prepared');
-      return;
-    }
-    try {
-      await navigator.clipboard.writeText(shareUrl);
-      setCopied(true);
-      showToast('Link copied');
-    } catch {
-      setCopied(false);
-      showToast('Could not copy the link');
-    }
-  }
-
-  async function systemShare() {
-    if (!navigator.share) {
-      await copyLink();
-      return;
-    }
-    setSharing(true);
-    try {
-      await navigator.share({ title: 'Radar Sampah cleanup', text: shareText, url: shareUrl });
-    } catch {
-      // Closing the native share sheet needs no recovery message.
-    } finally {
-      setSharing(false);
-    }
-  }
-
   const participation = [
     { label: 'Join', done: joined },
     { label: 'Check in on the day', done: checkedIn },
@@ -154,7 +130,7 @@ export default function EventScreen() {
   ];
 
   return (
-    <div className="screen scroll-y" style={{ zIndex: 24 }}>
+    <div className="screen scroll-y event-alignment" style={{ zIndex: 24 }}>
       <div className="measure i2-page anim-fade-up" style={{ paddingBottom: 'calc(var(--safe-bottom) + 34px)' }}>
         <BackButton onClick={goBack} />
 
@@ -166,9 +142,9 @@ export default function EventScreen() {
             <span><Pin color={C.lime} />{event.area}</span>
           </div>
           <div className="i2-stat-grid" style={{ marginTop: 15 }}>
-            <div className="i2-stat"><strong>{event.participantCount}</strong><span>PARTICIPANTS</span></div>
-            <div className="i2-stat"><strong>{event.attendanceCount}</strong><span>RECORDED ATTENDANCE</span></div>
-            <div className="i2-stat"><strong style={{ fontSize: 15 }}>{status}</strong><span>STATUS</span></div>
+            <div className="i2-stat"><span>Participants</span><strong>{event.participantCount}</strong></div>
+            <div className="i2-stat"><span>Recorded Attendance</span><strong>{event.attendanceCount}</strong></div>
+            <div className="i2-stat event-status-tile"><span>Status</span><strong style={{ fontSize: 20 }}>{status}</strong></div>
           </div>
         </div>
 
@@ -193,17 +169,15 @@ export default function EventScreen() {
           ) : !available && !checkedIn ? (
             <PrimaryButton disabled>{status === 'Ended' ? 'Event Ended' : 'Event Unavailable'}</PrimaryButton>
           ) : !joined ? (
-            <PrimaryButton onClick={join} disabled={updating}>{updating ? 'Joining…' : 'Join Cleanup'}</PrimaryButton>
+            <PrimaryButton onClick={join} disabled={updating}>{updating ? 'Joining…' : 'Join This Cleanup'}</PrimaryButton>
           ) : !checkedIn ? (
             <PrimaryButton disabled={!eventCanCheckIn(event, now)} onClick={() => eventCanCheckIn(event) && nav(`/events/${eventId}/check-in`)}>{eventCanCheckIn(event, now) ? 'Check in' : 'Check-in opens when the event starts'}</PrimaryButton>
-          ) : cleanupTarget ? (
-            <PrimaryButton onClick={() => nav(`/cleanup/${event.beachId}?event=${encodeURIComponent(event.id)}`)}>
-              Log Your Cleanup <ChevronRight color={C.lime} />
-            </PrimaryButton>
           ) : (
-              <PrimaryButton onClick={() => nav(`/beach/${event.beachId}?event=${encodeURIComponent(event.id)}`)}>Report litter here <ChevronRight color={C.lime} /></PrimaryButton>
+            <PrimaryButton onClick={() => nav(`/cleanup/${event.beachId}?event=${encodeURIComponent(event.id)}`)}>
+              Record Your Cleanup Result <ChevronRight color={C.lime} />
+            </PrimaryButton>
           )}
-          {!cleanupRecorded && (event.cleanupIds?.length ?? 0) > 0 && (
+          {!cleanupRecorded && cleanups.length > 0 && (
             <GhostButton onClick={() => nav(`/events/${event.id}/result`)}>View recorded result</GhostButton>
           )}
         </div>
@@ -215,22 +189,25 @@ export default function EventScreen() {
               <strong style={{ display: 'block', color: C.ink2, fontSize: 14.5 }}>{event.beachName}</strong>
               <span style={{ display: 'block', marginTop: 4, color: C.muted, fontSize: 11.5 }}>{event.area}</span>
             </div>
-            <InfoChip>{event.cleanupIds?.length ?? 0} cleanups</InfoChip>
+            <InfoChip>{cleanups.length} {cleanups.length === 1 ? 'cleanup' : 'cleanups'}</InfoChip>
           </div>
+          {beachLoading ? <p className="coastal-footnote" role="status">Loading current Beach Attention…</p> : beachError ? (
+            <div>
+              <p className="coastal-footnote">Current Beach Attention could not be loaded.</p>
+              <TextButton onClick={() => void refreshBeach()}>Retry beach data</TextButton>
+            </div>
+          ) : beach && (
+            <p className="coastal-footnote">Current Beach Attention: <strong>{attentionStateFor(beach.severity, beach.insufficientData, beach.validReports).pageLabel}</strong></p>
+          )}
+          {event.source === 'weekly' && <p className="coastal-footnote">Weekly cleanups are scheduled for Moderate, High or Severe Beach Attention. Low or insufficient data pauses new scheduling; already planned activities and registrations remain.</p>}
           <GhostButton onClick={() => nav(`/beach/${event.beachId}`)} style={{ marginTop: 12 }}>View beach data <ArrowRight color={C.navy} /></GhostButton>
         </div>
 
-        <CleanupGuide recorded={cleanupRecorded} imageFree />
+        <CleanupGuide recorded={cleanupRecorded} />
         <WildlifeGuide />
         <div className="i2-card">
           <SectionLabel size="sm">SHARE</SectionLabel>
-          <div className="i2-share-grid">
-            <a href={shareUrl ? whatsapp : undefined} target="_blank" rel="noreferrer" aria-disabled={!shareUrl} className="btn-ghost press i2-share-button">WhatsApp</a>
-            <button type="button" className="btn-ghost press i2-share-button" onClick={systemShare} disabled={sharing || !shareUrl}>{sharing ? 'Opening…' : 'Share…'}</button>
-            <button type="button" className={`btn-primary press i2-share-button${copied ? ' i2-copy-success' : ''}`} onClick={copyLink} disabled={!shareUrl}>
-              {copied ? 'Copied' : 'Copy link'}
-            </button>
-          </div>
+          <a href={shareUrl ? whatsapp : undefined} target="_blank" rel="noreferrer" aria-disabled={!shareUrl} className="btn-primary press event-share-details">Share Event Details</a>
           {USE_MOCK && <p className="coastal-footnote">Public sharing is available when connected to the shared service.</p>}
         </div>
 
