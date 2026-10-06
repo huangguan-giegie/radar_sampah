@@ -27,6 +27,10 @@ The active persona is Amirah, a regular volunteer in the Selangor pilot.
   These two iterations define the practical MVP direction.
 - I3 Connect & Prepare covers Epics 6–8 and remains Future/TBD unless the team
   moves an item earlier with evidence.
+- The confirmed Iteration 3 AC excludes the marine-life quiz, beach-specific
+  wildlife-risk cards, weekly reporting activity, and first-cleanup badge.
+  Source-branch API contracts for these items are historical references, not
+  Iteration 3 deliverables.
 - Public views use broad areas only. GPS is one-time assistance; exact points
   are never public. If private storage is added for review, it must stay
   restricted and out of screenshots.
