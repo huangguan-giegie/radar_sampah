@@ -66,7 +66,7 @@ export const SEVERITY: Record<SeverityBand, { col: string; text: string; tint: s
  * records the same mapping: contract value 'Severe', displayed "Very high".
  */
 export function severityLabel(band: SeverityBand): string {
-  return band === 'Severe' ? 'Very high' : band;
+  return band;
 }
 
 /**
