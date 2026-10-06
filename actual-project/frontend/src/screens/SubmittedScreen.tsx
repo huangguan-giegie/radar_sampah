@@ -126,6 +126,11 @@ export default function SubmittedScreen() {
           {/* One Findings row, not a Category row and a Quantity row: a single
               report can hold several categories at once. */}
           {row('Findings', formatReportComposition(saved.quantities, saved.itemCounts))}
+          {/* The actual number this report contributed. Showing it lets a
+              volunteer follow their own report through to the beach's score
+              instead of taking it on trust. Two decimals, because the weights
+              produce values like 1.70 and rounding would hide the difference. */}
+          {row('Report score', saved.reportScore.toFixed(2))}
           {row('Location', 'Beach level only', undefined, true)}
         </div>
 
@@ -139,13 +144,13 @@ export default function SubmittedScreen() {
         >
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
             <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '.16em', color: C.slate }}>
-              HOW BEACH RATINGS WORK
+              HOW IT AFFECTS THE MAP
             </div>
             <ChevronRight color={C.slate} />
           </div>
           <div style={{ fontSize: 13, lineHeight: 1.6, color: C.ink2, marginTop: 7 }}>
-            Active counted reports shape the beach rating within the reporting window.
-            Duplicate, incomplete and resolved reports do not affect the current rating.
+            Reports use the highest category score, and each beach uses the median of counted
+            report scores over the reporting window. Duplicate or incomplete reports are excluded.
           </div>
         </button>
 
@@ -161,7 +166,7 @@ export default function SubmittedScreen() {
               nav('/report/photo');
             }}
           >
-            Add Another Report
+            Add another report
             <ArrowRight />
           </PrimaryButton>
           <PrimaryButton onClick={() => nav(`/beach/${saved.beachId}`)}>
@@ -205,7 +210,7 @@ export default function SubmittedScreen() {
                 nav('/report/details', { replace: true });
               }}
             >
-              Fix This Report
+              Correct report
             </GhostButton>
             <GhostButton height={50} style={{ borderRadius: 16, fontSize: 13.5 }} onClick={() => nav('/reports')}>
               My Reports

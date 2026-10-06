@@ -15,11 +15,14 @@ import { StatusBadge, type BadgeStatus } from '../components/ds';
 import { useApp } from '../AppContext';
 import { formatReportComposition } from '../flowRules';
 import { reportStateLabel, type BeachSummary, type LitterReport } from '../types';
-import { countsTowardBeach, newestReports, REPORT_TABS, reportTab } from './participantFlowContent';
 
 // Three tabs, not four. Duplicate and Incomplete both sit under "Excluded"
 // because from the user's side they are the same question - "why is this not
 // counted?" - and the badge on each row still gives the exact reason.
+type Tab = 'All' | 'Counted' | 'Excluded';
+
+const TABS: Tab[] = ['All', 'Counted', 'Excluded'];
+
 export default function MyReportsScreen() {
   const nav = useNavigate();
   const goBack = useAppBack('/account');
@@ -29,7 +32,7 @@ export default function MyReportsScreen() {
   // The tab lives in the URL, not in useState. That makes /reports?tab=Counted
   // a real link, which is how the tiles on the home and account pages jump
   // straight to the right filter, and it survives a refresh.
-  const tab = reportTab(params.get('tab'));
+  const tab = (params.get('tab') as Tab) ?? 'All';
   const [reports, setReports] = useState<LitterReport[]>([]);
   const [beaches, setBeaches] = useState<BeachSummary[]>([]);
   const [loading, setLoading] = useState(true);
@@ -41,7 +44,7 @@ export default function MyReportsScreen() {
     setLoading(true);
     setFailed(false);
     getMyReports()
-      .then((list) => setReports(newestReports(list)))
+      .then((list) => setReports(list))
       .catch(() => setFailed(true))
       .finally(() => setLoading(false));
   }
@@ -72,9 +75,8 @@ export default function MyReportsScreen() {
   // Filter in the browser. The full list is already here, so re-asking the
   // server for a subset would make switching tabs slower than it needs to be.
   let rows = reports;
-  if (tab === 'Counted') rows = reports.filter(countsTowardBeach);
-  if (tab === 'Excluded') rows = reports.filter((report) => !countsTowardBeach(report));
-  const counted = reports.filter(countsTowardBeach).length;
+  if (tab === 'Counted') rows = reports.filter((r) => r.status === 'Counted' && r.currentState !== 'resolved' && r.currentState !== 'excluded');
+  if (tab === 'Excluded') rows = reports.filter((r) => r.status !== 'Counted' || r.currentState === 'resolved' || r.currentState === 'excluded');
 
   return (
     <div className="screen scroll-y" style={{ zIndex: 24 }}>
@@ -87,18 +89,8 @@ export default function MyReportsScreen() {
           <div style={{ fontSize: 26, fontWeight: 650, letterSpacing: '-.6px' }}>My Reports</div>
         </div>
 
-        <div style={{ background: C.navy, borderRadius: 22, padding: '18px 20px', color: C.bg }}>
-          <div style={{ fontSize: 10, fontWeight: 650, letterSpacing: '.12em', color: 'rgba(255,255,255,.62)' }}>YOUR REPORTS</div>
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, marginTop: 7 }}>
-            <strong style={{ fontSize: 36, lineHeight: 1, color: C.lime }}>{loading || failed ? '—' : counted}</strong>
-            <span style={{ fontSize: 13, lineHeight: 1.5, color: 'rgba(255,255,255,.85)' }}>
-              {loading ? 'Loading your reports…' : failed ? 'Report totals unavailable' : reports.length ? `counted of ${reports.length} saved · ${reports.length - counted} excluded or resolved` : 'reports saved so far'}
-            </span>
-          </div>
-        </div>
-
         <div style={{ display: 'flex', gap: 5, background: C.white, border: `1px solid ${C.line}`, padding: 4, borderRadius: 999 }}>
-          {REPORT_TABS.map((t) => {
+          {TABS.map((t) => {
             const active = tab === t;
             return (
               <button
@@ -163,7 +155,7 @@ export default function MyReportsScreen() {
           </div>
         )}
 
-        {!loading && !failed && <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {rows.map((r) => {
             return (
               <button
@@ -195,7 +187,7 @@ export default function MyReportsScreen() {
                 </BeachCover>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'space-between' }}>
-                    <span style={{ fontSize: 14.5, fontWeight: 650, minWidth: 0, overflowWrap: 'anywhere' }}>{r.beachName}</span>
+                    <span style={{ fontSize: 14.5, fontWeight: 650 }}>{r.beachName}</span>
                     <StatusBadge status={reportStateLabel(r).toLowerCase() as BadgeStatus} indicator>{reportStateLabel(r)}</StatusBadge>
                   </div>
                   {/* A report holds a count per litter category, so the row
@@ -219,7 +211,7 @@ export default function MyReportsScreen() {
               </button>
             );
           })}
-        </div>}
+        </div>
 
         {/* The legend explains the badges, so it only earns its place once
             there are badges to explain - not over a skeleton, an error panel or
@@ -227,7 +219,7 @@ export default function MyReportsScreen() {
         {!loading && !failed && reports.length > 0 && (
           <div style={{ marginTop: 4, padding: '13px 15px', borderRadius: 16, background: 'rgba(11,33,97,.03)', border: '1px solid rgba(11,33,97,.07)' }}>
             <div style={{ fontSize: 12, lineHeight: 1.5, color: C.muted }}>
-              <b style={{ color: C.green }}>Counted</b> reports shape the beach rating while active within the reporting window. <b>Excluded</b> and resolved reports do not affect the current rating.
+              <b style={{ color: C.green }}>Counted</b> affects beach status. <b>Excluded</b> does not.
             </div>
           </div>
         )}

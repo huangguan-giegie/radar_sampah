@@ -243,7 +243,7 @@ export default function MethodScreen() {
                   rating means absence of evidence. Read the other way round,
                   our own data would be used to call an unmonitored beach
                   clean. */}
-              No band does not mean the beach is clean.
+              No band is never the same as a clean beach.
             </div>
           </div>
         </div>

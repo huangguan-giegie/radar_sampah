@@ -9,7 +9,7 @@ import {
   WhiteCard,
 } from "../components/CoastalUI";
 import { Alert, InfoChip } from "../components/ds";
-import { Camera, Check, Info, Pin } from "../components/Icon";
+import { Camera, Check, Pin } from "../components/Icon";
 import {
   DraftChoiceDialog,
   GhostButton,
@@ -38,7 +38,6 @@ import { hasDraftProgress, resumePath } from "../flowRules";
 import { useAsyncData } from "../useAsyncData";
 import { C, QUANTITY_DESC } from "../theme";
 import type { LitterCategory, QuantityBand } from "../types";
-import "../styles/community-alignment.css";
 
 export default function CleanupScreen() {
   const { beachId = "" } = useParams();
@@ -85,8 +84,9 @@ export default function CleanupScreen() {
   const scope = cleanupDraftScope(user?.participantId ?? "guest", beachId, eventId);
   const context = target ? scope + cleanupTargetVersion(target) : null;
   const [restoredContext, setRestoredContext] = useState<string | null>(null);
-  const categories = (Object.keys(target?.remainingBands ?? {}) as LitterCategory[])
-    .filter(c => CLEANUP_BAND_UNITS[target!.remainingBands[c]!] > 1);
+  const categories = Object.keys(
+    target?.remainingBands ?? {},
+  ) as LitterCategory[];
   const selected =
     category && categories.includes(category)
       ? category
@@ -238,12 +238,11 @@ export default function CleanupScreen() {
   if (!target)
     return (
       <CoastalPage
-        title="Start with a Litter Report"
+        title="Add a Litter Report First"
         eyebrow="Log cleanup"
-        subtitle="Record what you found, then log what remains after cleaning."
+        subtitle={beach?.name}
         back={back}
         tabs={false}
-        className="cleanup-alignment"
       >
         {draftChoice && (
           <DraftChoiceDialog
@@ -256,26 +255,23 @@ export default function CleanupScreen() {
           />
         )}
         <WhiteCard>
-          <div className="cleanup-beach-row">
-            <span className="cleanup-beach-icon"><Pin color={C.lime} size={24} /></span>
-            <div><strong>{beach?.name ?? beachId}</strong><small>Cleanup at this beach</small></div>
-          </div>
+          <span className="empty-symbol">
+            <Pin size={26} />
+          </span>
+          <h2>A cleanup needs a report</h2>
+          <p className="subtle">
+            Add a counted litter report at this beach first. It records the
+            litter type and amount so you can compare what remains after
+            cleaning.
+          </p>
         </WhiteCard>
-        <WhiteCard>
-          <p className="eyebrow">Two steps</p>
-          <div className="cleanup-start-steps">
-            <div><span>1</span><div><strong>Report the litter</strong><small>Photo and amounts, before you clean</small></div></div>
-            <div><span>2</span><div><strong>Log what remains</strong><small>After cleaning, compare with your report</small></div></div>
-          </div>
-        </WhiteCard>
-        <div className="cleanup-information"><Info size={17} /><span>Before and after stay linked to this beach.</span></div>
         <PrimaryButton
           onClick={() =>
             hasDraftProgress(draft) ? setDraftChoice(true) : startReport()
           }
           trailingArrow
         >
-          <Camera color={C.lime} size={18} /> Report Litter Here
+          Report Litter Here
         </PrimaryButton>
         <GhostButton onClick={() => nav(back, { replace: true })}>
           {eventId ? "Back to Event" : "Back to Beach"}
@@ -462,7 +458,6 @@ export default function CleanupScreen() {
       back={back}
       backDisabled={busy}
       tabs={false}
-      className="cleanup-alignment"
     >
       <WhiteCard>
         <div
@@ -549,7 +544,13 @@ export default function CleanupScreen() {
           Estimate the amount left. Exact counts are not needed.
         </p>
       </WhiteCard>
-      <div className="cleanup-information"><Info size={17} /><span>A later litter report is needed to show whether the beach improved.</span></div>
+      <WhiteCard>
+        <h3>What this records</h3>
+        <p className="subtle">
+          The remaining amount updates the linked report. A later report helps
+          track how beach conditions change.
+        </p>
+      </WhiteCard>
       {error && <Alert tone="error">{error}</Alert>}
       <PrimaryButton disabled={busy} onClick={() => void save()} trailingArrow>
         {busy ? "Saving…" : "Save Cleanup"}

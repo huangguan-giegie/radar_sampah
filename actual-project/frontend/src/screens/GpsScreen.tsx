@@ -136,7 +136,7 @@ export default function GpsScreen() {
           backdropFilter: 'blur(10px)',
         }}
       />
-      <div style={{ position: 'absolute', top: 'var(--top-inset)', right: 18, zIndex: 820 }}><StepBadge>STEP 2 OF 5 · LOCATION</StepBadge></div>
+      <div style={{ position: 'absolute', top: 'var(--top-inset)', right: 18, zIndex: 820 }}><StepBadge>STEP 2 OF 6 · LOCATION</StepBadge></div>
 
       <div
         className="anim-sheet-up measure"
@@ -158,7 +158,7 @@ export default function GpsScreen() {
           <Pin size={23} />
         </div>
         <div style={{ fontSize: 24, fontWeight: 650, letterSpacing: '-.5px', marginTop: 14 }}>
-          Help Us Locate the Beach
+          Help us locate the beach
         </div>
         <div style={{ fontSize: 13.5, lineHeight: 1.55, color: C.muted, marginTop: 8 }}>
           Location is used once to suggest which supported beach you're on.

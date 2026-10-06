@@ -18,11 +18,10 @@ import { useAppBack } from "../navigation";
 import { SpeciesPicture } from "../components/SpeciesPicture";
 import { MarineRecordCard } from "../components/MarineRecordCard";
 import { originBeachId, withBeach } from "../biodiversity";
-import { ApiError, USE_MOCK } from "../api";
+import { USE_MOCK } from "../api";
 import { iteration3Request } from "../iteration3Api";
 import type { ConservationCard } from "../iteration3Personal";
 import { useAsyncData } from "../useAsyncData";
-import '../styles/reference-pages.css';
 export default function MarineLifeScreen() {
   const nav = useNavigate();
   const [params, setParams] = useSearchParams();
@@ -37,10 +36,7 @@ export default function MarineLifeScreen() {
     else next.delete(key);
     return next;
   }, { replace: true });
-  const available = USE_MOCK ? content.species : [
-    ...content.species.filter(species => !approved.some(card => card.id === species.id)),
-    ...approved.map(card => ({ ...card, subtitle: card.scientificName })),
-  ];
+  const available = USE_MOCK ? content.species : approved.map(card => ({ ...card, subtitle: card.scientificName }));
   const list = available.filter(
     (s) =>
       (filter === "all" || s.category === filter) &&
@@ -49,7 +45,7 @@ export default function MarineLifeScreen() {
   return (
     <CoastalPage
       title="Marine Life"
-      subtitle="Species & groups · Published sources, not live sightings"
+      subtitle={USE_MOCK ? 'Preview · species & groups' : 'Approved conservation cards · Tap to explore'}
       back="/home"
     >
       <div className="filter-chips" style={{ margin: 0 }}>
@@ -78,7 +74,7 @@ export default function MarineLifeScreen() {
         />
       </label>
       {!USE_MOCK && loading && <p role="status">Loading conservation cards…</p>}
-      {!USE_MOCK && error && <DataUnavailable title="Updated conservation cards could not be loaded" retry={() => void refresh()}>The published species guides below are still available.</DataUnavailable>}
+      {!USE_MOCK && error && <DataUnavailable title="Conservation cards could not be loaded" retry={() => void refresh()} />}
       {(["animal", "plant"] as const).map((category) => {
         const rows = list.filter((s) => s.category === category);
         return rows.length ? (
@@ -100,7 +96,7 @@ export default function MarineLifeScreen() {
           </section>
         ) : null;
       })}
-      {!loading && !error && !list.length && (
+      {!list.length && (
         <DataUnavailable title="No matching species">
           Try a different name.
         </DataUnavailable>
@@ -129,13 +125,50 @@ export function SpeciesScreen() {
 function ApprovedSpeciesScreen() {
   const { speciesId } = useParams();
   const goBack = useAppBack('/marine-life');
+  const [selectedQuestion, setSelectedQuestion] = useState<string | null>(null);
+  const [answer, setAnswer] = useState<{ answer: string; sources: { label: string; url: string }[]; aiAssisted: boolean } | null>(null);
+  const [answerLoading, setAnswerLoading] = useState(false);
   const { data: card, loading, error, refresh } = useAsyncData(
-    () => loadSpeciesIntroduction(speciesId ?? ''),
+    () => iteration3Request<ConservationCard>('/species-cards/' + encodeURIComponent(speciesId ?? '')),
     [speciesId], null,
   );
+  const ask = async (questionId: string) => {
+    if (!card) return;
+    setSelectedQuestion(questionId);
+    setAnswerLoading(true);
+    try {
+      setAnswer(await iteration3Request('/species-cards/' + card.id + '/answers', 'POST', { questionId }));
+    } catch {
+      const prepared = card.answers[Number(questionId)];
+      if (prepared) setAnswer({ answer: prepared.text, sources: card.sources, aiAssisted: false });
+    } finally { setAnswerLoading(false); }
+  };
   if (loading) return <CoastalPage title="Marine Life" back="/marine-life"><p role="status">Loading conservation card…</p></CoastalPage>;
   if (error || !card) return <CoastalPage title="Marine Life" back="/marine-life"><DataUnavailable title="Species card could not be loaded" retry={() => void refresh()} /></CoastalPage>;
-  return <SpeciesIntroductionView species={card} goBack={goBack} />;
+  return <CoastalPage title={card.name} back="/marine-life">
+    <SpeciesPicture image={card.image} name={card.name} />
+    <p className="coastal-footnote">{card.credit}</p>
+    <p className="subtle" style={{ fontStyle: 'italic' }}>{card.scientificName}</p>
+    <p>{card.intro}</p>
+    <p className="coastal-footnote">{card.evidence}</p>
+    <WhiteCard><p>{card.conservationMessage}</p></WhiteCard>
+    <SummaryCard eyebrow="Explore this species">
+      {card.questions.map(question => <button key={question.id} className="coastal-link-row" disabled={answerLoading} aria-pressed={selectedQuestion === question.id} onClick={() => void ask(question.id)}>{question.text}</button>)}
+    </SummaryCard>
+    {answerLoading && <p role="status">Loading answer…</p>}
+    {answer && !answerLoading && <WhiteCard>
+      <p>{answer.answer}</p>
+      {answer.aiAssisted && <p className="coastal-footnote">AI-assisted</p>}
+      {answer.sources.map(source => <p key={source.url} className="coastal-footnote"><a href={source.url} target="_blank" rel="noreferrer">{source.label} ↗</a></p>)}
+    </WhiteCard>}
+    <section><h3>Sources & Photo Credit</h3>
+      {card.sources.map(source => <p key={source.url}><a className="species-source" href={source.url} target="_blank" rel="noreferrer">{source.label} ↗</a></p>)}
+      <p className="coastal-footnote">Reviewed {card.reviewDate} · {card.credit}</p>
+      <a className="species-source" href={card.photoSource} target="_blank" rel="noreferrer">Photo source ↗</a>
+      <a className="species-source" href={card.photoPermission.url} target="_blank" rel="noreferrer">{card.photoPermission.label} ↗</a>
+    </section>
+    <PrimaryButton onClick={goBack}>Back</PrimaryButton>
+  </CoastalPage>;
 }
 
 function PreviewSpeciesScreen() {
@@ -161,26 +194,13 @@ type SpeciesIntroduction = {
   sources: { label: string; url: string }[];
   credit: string;
   photoSource: string | null;
-  photoPermission?: { label: string; url: string };
-  reviewDate?: string;
 };
-
-export async function loadSpeciesIntroduction(speciesId: string): Promise<SpeciesIntroduction> {
-  try {
-    const card = await iteration3Request<ConservationCard>('/species-cards/' + encodeURIComponent(speciesId));
-    return { ...card, subtitle: card.scientificName };
-  } catch (error) {
-    const published = content.species.find(species => species.id === speciesId);
-    if (error instanceof ApiError && error.status === 404 && published) return published;
-    throw error;
-  }
-}
 
 export function SpeciesIntroductionView({ species: s, goBack }: { species: SpeciesIntroduction; goBack: () => void }) {
   return (
-    <main className="screen scroll-y coastal-screen reference-species">
+    <main className="screen scroll-y coastal-screen">
       <div className="species-hero">
-        {s.image ? <SpeciesPicture image={s.image} name={s.name} /> : <div className="reference-species-no-photo">No verified photo available yet</div>}
+        <SpeciesPicture image={s.image} name={s.name} />
         <div className="back-overlay">
           <BackButton onClick={goBack} />
         </div>
@@ -220,12 +240,8 @@ export function SpeciesIntroductionView({ species: s, goBack }: { species: Speci
           ))}
         </SummaryCard>
         {s.answers.map((a, i) => (
-          <section
-            key={a.title}
-            id={"answer-" + i}
-            style={{ scrollMarginTop: 22 }}
-          >
-            <WhiteCard className="reference-species-answer">
+          <section key={a.title} id={"answer-" + i} style={{ scrollMarginTop: 22 }}>
+            <WhiteCard>
               <h3>{a.title}</h3>
               <p className="subtle">{a.text}</p>
             </WhiteCard>
@@ -234,29 +250,16 @@ export function SpeciesIntroductionView({ species: s, goBack }: { species: Speci
         <section>
           <h3>Sources & Photo Credit</h3>
           {s.sources.map((source, i) => (
-            <a
-              key={i}
-              className="species-source"
-              href={source.url}
-              target="_blank"
-              rel="noreferrer"
-            >
+            <a key={i} className="species-source" href={source.url} target="_blank" rel="noreferrer">
               {source.label} ↗
             </a>
           ))}
           {s.credit && <p className="coastal-footnote">{s.credit}</p>}
-          {s.reviewDate && <p className="coastal-footnote">Reviewed {s.reviewDate}</p>}
           {s.photoSource && (
-            <a
-              className="species-source"
-              href={s.photoSource}
-              target="_blank"
-              rel="noreferrer"
-            >
+            <a className="species-source" href={s.photoSource} target="_blank" rel="noreferrer">
               Photo source ↗
             </a>
           )}
-          {s.photoPermission && <a className="species-source" href={s.photoPermission.url} target="_blank" rel="noreferrer">{s.photoPermission.label} ↗</a>}
         </section>
         <PrimaryButton onClick={goBack}>Back</PrimaryButton>
       </div>
@@ -314,7 +317,6 @@ export function HabitatScreen() {
   return (
     <CoastalPage
       title="Habitat"
-      className="reference-habitat"
       back="/habitats"
       tabs={false}
       action={<button onClick={() => nav(mapPath)}>Map</button>}
@@ -333,8 +335,7 @@ export function HabitatScreen() {
           </span>
         </section>
       )}
-      <SummaryCard eyebrow={h.area}>
-        <h2>{h.title}</h2>
+      <SummaryCard eyebrow={h.area} description={h.title}>
         <p style={{ lineHeight: 1.5, color: "#ffffffcf" }}>{h.intro}</p>
       </SummaryCard>
       <SectionHeading>Life in This Habitat</SectionHeading>
@@ -345,7 +346,7 @@ export function HabitatScreen() {
         <WhiteCard key={s.id}>
           <LinkRow
             title={s.name}
-              subtitle={s.subtitle + ' · ' + s.intro}
+            subtitle={s.intro}
             leading={
               <span className="row-thumb">
                 <SpeciesPicture image={s.image} name={s.name} />
@@ -355,14 +356,13 @@ export function HabitatScreen() {
           />
         </WhiteCard>
       ))}
-      <WhiteCard className="reference-habitat-help">
-        <h2>Help Protect This Habitat</h2>
+      <SummaryCard eyebrow="Help Protect This Habitat">
         <p>
           {helpIndex >= 0
             ? h.texts[helpIndex + 1]
             : "Leave roots and burrows undisturbed."}
         </p>
-        <PrimaryButton
+        <GhostButton
           onClick={() =>
             nav(
               beachId ? "/beach/" + beachId : mapPath,
@@ -370,14 +370,14 @@ export function HabitatScreen() {
           }
         >
           {beachId ? "Back to Beach" : "View Map"}
-        </PrimaryButton>
+        </GhostButton>
         <GhostButton
           style={{ marginTop: 10 }}
           onClick={() => nav("/community")}
         >
           Browse Cleanups
         </GhostButton>
-      </WhiteCard>
+      </SummaryCard>
       <WhiteCard>
         <h3>Sources & Scope</h3>
         <p className="subtle">

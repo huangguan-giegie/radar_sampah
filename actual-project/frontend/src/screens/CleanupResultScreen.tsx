@@ -80,7 +80,8 @@ export default function CleanupResultScreen() {
       <WhiteCard>
         <h3>What this means</h3>
         <p className="subtle">
-          Your cleanup is recorded. A later report is needed to confirm a change in beach condition.
+          Your cleanup is recorded. The remaining amount updates the linked
+          report. A later report helps track changes in beach condition.
         </p>
         <p className="coastal-footnote">
           These records do not prove the beach is clean.

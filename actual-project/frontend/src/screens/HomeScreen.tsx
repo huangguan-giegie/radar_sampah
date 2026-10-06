@@ -23,12 +23,9 @@ import { fetchCleanupEvents } from "../iteration2Api";
 import { formatEventDate } from "../iteration2";
 import { useAsyncData } from "../useAsyncData";
 import { C } from "../theme";
-import { cleanupDestination } from "../cleanupFlow";
 import { eventIsAvailable, useEventClock } from "../eventAvailability";
 import { iteration3Request } from "../iteration3Api";
 import { dismissNextAction, dismissedNextActions, fallbackNextAction, type NextAction } from "../iteration3Personal";
-import "../styles/home-map-alignment.css";
-import { getPreferredBeachId } from "../locationPreference";
 
 export default function HomeScreen() {
   const nav = useNavigate();
@@ -42,7 +39,6 @@ export default function HomeScreen() {
   } = useApp();
   const [draftChoice, setDraftChoice] = useState(false);
   const [chooseCleanupBeach, setChooseCleanupBeach] = useState(false);
-  const [preferredBeachId] = useState(getPreferredBeachId);
   const [dismissedActions, setDismissedActions] = useState<string[]>(() => dismissedNextActions(user?.participantId));
   useEffect(() => setDismissedActions(dismissedNextActions(user?.participantId)), [user?.participantId]);
   const { data: loadedAction, loading: actionLoading } = useAsyncData(
@@ -57,21 +53,16 @@ export default function HomeScreen() {
     error,
     refresh,
   } = useAsyncData(getBeaches, [reportsVersion], []);
-  const { data: events } = useAsyncData(
-    () => fetchCleanupEvents(user?.participantId),
-    [user?.participantId, reportsVersion],
-    [],
-  );
-  const recommendedEvent = events.find((item) => item.id === nextAction?.destination.id && eventIsAvailable(item, now));
-  const recommendedBeachId = nextAction?.destination.beachId ?? recommendedEvent?.beachId;
-  const beach = beaches.find((item) => item.id === preferredBeachId)
-    ?? beaches.find((item) => item.id === recommendedBeachId)
-    ?? beaches.find((item) => item.id === "morib")
-    ?? beaches[0];
+  const beach = beaches.find((b) => b.id === "morib") ?? beaches[0];
   const { data: detail } = useAsyncData(
     () => (beach ? getBeach(beach.id) : Promise.resolve(null)),
     [beach?.id, reportsVersion],
     null,
+  );
+  const { data: events } = useAsyncData(
+    () => fetchCleanupEvents(user?.participantId),
+    [user?.participantId, reportsVersion],
+    [],
   );
   const event = events.find(
     (e) => e.beachId === beach?.id && eventIsAvailable(e, now),
@@ -82,24 +73,12 @@ export default function HomeScreen() {
   const beginReport = () => {
     resetDraft();
     setLastSavedReport(null);
-    if (beach) patchDraft({ beachId: beach.id, beachName: beach.name, locationSource: "manual", coords: null });
     nav("/report/photo");
-  };
-  const openNextAction = () => {
-    if (!nextAction) return;
-    if (nextAction.destination.type === "report") {
-      if (hasDraftProgress(draft)) { setDraftChoice(true); return; }
-      resetDraft();
-      setLastSavedReport(null);
-      const target = beaches.find((item) => item.id === nextAction.destination.beachId);
-      if (target) patchDraft({ beachId: target.id, beachName: target.name, locationSource: "manual", coords: null });
-    }
-    nav(nextAction.destination.path);
   };
   const exploreBeaches = () => nav("/map?panel=beaches", { state: { fromHome: true } });
   const h = new Date().getHours();
   return (
-    <CoastalPage className="home-aligned">
+    <CoastalPage>
       {draftChoice && (
         <DraftChoiceDialog
           onCancel={() => setDraftChoice(false)}
@@ -114,8 +93,8 @@ export default function HomeScreen() {
         <Sheet title="Where did you clean?" onClose={() => setChooseCleanupBeach(false)}>
           {loading ? <Skeleton h={160} /> : error ? (
             <DataUnavailable title="Could not load beaches" retry={() => void refresh()}>{error}</DataUnavailable>
-          ) : beaches.length ? [beach, ...beaches.filter((item) => item.id !== beach?.id)].filter((item) => !!item).map((item) => (
-            <LinkRow key={item.id} title={item.name} subtitle={item.area + (item.id === beach?.id ? " · Featured beach" : "")} onClick={() => nav(cleanupDestination(item.id))} />
+          ) : beaches.length ? beaches.map((item) => (
+            <LinkRow key={item.id} title={item.name} subtitle={item.area} onClick={() => nav("/cleanup/" + item.id)} />
           )) : <DataUnavailable title="No beaches available" />}
         </Sheet>
       )}
@@ -138,11 +117,56 @@ export default function HomeScreen() {
           <UserIcon size={28} color="white" />
         </button>
       </header>
+      {nextAction && !dismissedActions.includes(nextAction.id) && (
+        <WhiteCard>
+          <p className="eyebrow">Next Action</p>
+          <h2>{nextAction.actionLabel}</h2>
+          <p className="subtle">{nextAction.reason}</p>
+          <PrimaryButton onClick={() => {
+            if (nextAction.destination.type === 'report') {
+              if (hasDraftProgress(draft)) { setDraftChoice(true); return; }
+              resetDraft();
+              setLastSavedReport(null);
+              if (nextAction.destination.beachId) {
+                const targetBeach = beaches.find(item => item.id === nextAction.destination.beachId);
+                if (targetBeach) patchDraft({ beachId: targetBeach.id, beachName: targetBeach.name, locationSource: 'manual', coords: null });
+              }
+            }
+            nav(nextAction.destination.path);
+          }}>{nextAction.actionLabel}</PrimaryButton>
+          {nextAction.loginPrompt && <button onClick={() => nav(nextAction.loginPath ?? '/identity?next=/home')}>{nextAction.loginPrompt}</button>}
+          <button onClick={() => {
+            setDismissedActions(dismissNextAction(nextAction.id, user?.participantId));
+          }}>Dismiss suggestion</button>
+        </WhiteCard>
+      )}
       {(!beach || error) && (
         <GhostButton height={44} onClick={exploreBeaches}>
           Explore Beaches
         </GhostButton>
       )}
+      <div className="action-grid">
+        <ActionTile
+          title="Report Litter"
+          subtitle="Take a photo"
+          icon={<Camera color={C.navy} size={18} />}
+          onClick={() =>
+            hasDraftProgress(draft) ? setDraftChoice(true) : beginReport()
+          }
+        />
+        <ActionTile
+          title="Join Cleanup"
+          subtitle="Choose an event"
+          icon={<CommunityIcon color={C.navy} size={19} />}
+          onClick={() => nav("/community")}
+        />
+        <ActionTile
+          title="Log Cleanup"
+          subtitle="What you cleared"
+          icon={<Check color={C.navy} size={21} />}
+          onClick={() => setChooseCleanupBeach(true)}
+        />
+      </div>
       {loading && !beach ? (
         <Skeleton h={340} />
       ) : error ? (
@@ -162,7 +186,7 @@ export default function HomeScreen() {
               />
             )}
             <div className="home-beach-overlay">
-              <span className="photo-pill">{beach.id === preferredBeachId ? "You’re now in" : "Featured Beach"}</span>
+              <span className="photo-pill">Featured Beach</span>
               <div className="home-place">{beach.name}</div>
               <small>{beach.area}</small>
               <div className="home-band">
@@ -220,26 +244,11 @@ export default function HomeScreen() {
                 View Beach Details
               </GhostButton>
             </div>
-            {user && nextAction && !dismissedActions.includes(nextAction.id) && !(event && nextAction.destination.type === "event" && nextAction.destination.id === event.id) && (
-              <div className="home-next-action">
-                <button onClick={openNextAction}>{nextAction.actionLabel} →</button>
-                <p>{nextAction.reason}</p>
-                <button className="home-dismiss" onClick={() => setDismissedActions(dismissNextAction(nextAction.id, user.participantId))}>Dismiss suggestion</button>
-              </div>
-            )}
           </div>
         </section>
       ) : (
         <DataUnavailable title="No beaches available" />
       )}
-      <div className="action-grid">
-        <ActionTile title="Report Litter" subtitle="Take a photo" icon={<Camera color={C.navy} size={18} />}
-          onClick={() => hasDraftProgress(draft) ? setDraftChoice(true) : beginReport()} />
-        <ActionTile title="Join Cleanup" subtitle="Choose an event" icon={<CommunityIcon color={C.navy} size={19} />}
-          onClick={() => nav("/community")} />
-        <ActionTile title="Log Cleanup" subtitle="What you cleared" icon={<Check color={C.navy} size={21} />}
-          onClick={() => setChooseCleanupBeach(true)} />
-      </div>
       <button
         className="marine-banner press"
         onClick={() => nav("/marine-life")}

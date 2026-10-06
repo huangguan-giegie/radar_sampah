@@ -5,6 +5,10 @@ import { iteration3Request } from "../iteration3Api";
 import type { WildlifeGuidance } from "../iteration3Personal";
 import { useAsyncData } from "../useAsyncData";
 export function CleanupGuide({ recorded = false, imageFree = false }: { recorded?: boolean; imageFree?: boolean }) {
+  const dropOffName = guide.dropOffName && !guide.dropOffName.startsWith("[") ? guide.dropOffName : null;
+  const checkedDate = guide.checkedDate && !guide.checkedDate.startsWith("[") ? guide.checkedDate : null;
+  const recyclingName = guide.recyclingName && !guide.recyclingName.startsWith("[") ? guide.recyclingName : null;
+  const mapsUrl = guide.mapsUrl && !guide.mapsUrl.startsWith("[") ? guide.mapsUrl : null;
   return (
     <section>
       <p className="eyebrow">{recorded ? "Last step" : "Before you go"}</p>
@@ -67,22 +71,22 @@ export function CleanupGuide({ recorded = false, imageFree = false }: { recorded
           <div className="guide-dropoff">
             {!imageFree && <img src="/images/cleanup/bintop.jpg" alt="Litter bin" />}
             <div>
-              <strong>{guide.dropOffName ?? "Drop-off point not confirmed"}</strong>
-              <small>{guide.checkedDate
-                ? `Checked by Radar Sampah · ${guide.checkedDate}`
+              <strong>{dropOffName ?? "Drop-off point not confirmed"}</strong>
+              <small>{checkedDate
+                ? `Checked by Radar Sampah · ${checkedDate}`
                 : "No confirmed drop-off or recycling details are available."}</small>
             </div>
           </div>
           <p className="subtle">
-            Tie every bag. {guide.recyclingName
-              ? `Recycling goes to ${guide.recyclingName}.`
+            Tie every bag. {recyclingName
+              ? `Recycling goes to ${recyclingName}.`
               : "A recycling point has not been confirmed. Check disposal arrangements with the local council."}{" "}
             If no suitable bin is available or it is full, take your bags with you.
           </p>
-          {guide.mapsUrl ? (
+          {mapsUrl ? (
             <a
               className="lime-button"
-              href={guide.mapsUrl}
+              href={mapsUrl}
               target="_blank"
               rel="noreferrer"
             >

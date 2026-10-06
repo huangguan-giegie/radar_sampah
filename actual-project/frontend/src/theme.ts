@@ -56,7 +56,14 @@ export const SEVERITY: Record<SeverityBand, { col: string; text: string; tint: s
 };
 
 /**
- * Use the published band names on every screen, matching the API contract.
+ * The word a screen shows for a band. The data keeps 'Severe', because that is
+ * the word in the contract and in the database, and every screen asks this one
+ * function so the wording can change without touching the backend.
+ *
+ * The top band is shown as "Very high". "Severe" reads like an official hazard
+ * warning, which volunteer litter counts cannot support, and the team settled
+ * on the softer label for everything a volunteer sees. The scoring document
+ * records the same mapping: contract value 'Severe', displayed "Very high".
  */
 export function severityLabel(band: SeverityBand): string {
   return band;
