@@ -33,7 +33,7 @@ def package(destination: Path) -> None:
             digest = hashlib.file_digest(source, "sha256").hexdigest()
         entries.append({"path": path.relative_to(root).as_posix(), "bytes": path.stat().st_size, "sha256": digest})
     manifest = {
-        "frontendBase": "ca566fa", "backendBranch": "codex/iteration3-backend-v1",
+        "frontendBase": "ca566fa", "backendBranch": "iteration3-backend-v1",
         "contents": "Source, built v2 UI, real ONNX detector and four species models. No secrets or user database.",
         "files": entries,
     }
