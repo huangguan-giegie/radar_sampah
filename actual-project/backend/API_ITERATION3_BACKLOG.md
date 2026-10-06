@@ -1,32 +1,7 @@
-# Historical API contracts excluded from the confirmed Iteration 3 AC
+# Iteration 3 backlog API interfaces
 
-The contracts in this document came from the teammate source branch linked below. They are
-retained as historical interface references and use the existing JSON error shape:
-`{ "code": "...", "message": "..." }`.
-
-## Delivery status and source
-
-This document describes four interface groups from the teammate backend source branch
-[`iteration3-backend`](https://github.com/huangguan-giegie/radar_sampah/tree/iteration3-backend)
-at source commit `bc382988d0dd6e9221861a60b0d5d41a2f1911e5`.
-
-The team removed all four groups below from the confirmed Iteration 3 acceptance criteria.
-They are out of scope, not queued for implementation or frontend integration. Their
-application behavior is not implemented on the current `main` or `iteration3` branches or in
-production release `1fd13e06819973002ceebd30d861d4eb06c5238c`.
-
-The deployed species feature continues to provide approved, prepared species Q&A through the
-existing flows. That content is separate from the excluded marine-life quiz proposal below.
-Likewise, the deployed public `/wildlife-risks` resource is a general approved risk library;
-the beach-specific risk-card proposal below is excluded. The excluded weekly-reporting field
-and first-cleanup badge are not Iteration 3 deliverables.
-
-Related project documents:
-
-- [`docs/iteration3-backend-release.md`](../../docs/iteration3-backend-release.md)
-- [`docs/iteration3-test-report.md`](../../docs/iteration3-test-report.md)
-- [`docs/iteration3-model-integration-test-report.md`](../../docs/iteration3-model-integration-test-report.md)
-- [`docs/beach-coordinate-sources-52.md`](../../docs/beach-coordinate-sources-52.md)
+These read/write contracts are ready for the frontend to integrate. They use the existing JSON
+error shape: `{ "code": "...", "message": "..." }`.
 
 ## Marine-life quiz
 
@@ -79,8 +54,7 @@ local wildlife harm. Unknown beaches return 404.
 }
 ```
 
-There are always twelve Monday-starting weeks in the `Asia/Kuala_Lumpur` timezone. Counts below
-three are withheld and displayed as `Fewer than 3`.
+There are always twelve Monday-starting weeks. Counts below three are withheld.
 
 ## First-cleanup badge
 
@@ -98,6 +72,5 @@ non-empty cleanup earns:
 ]
 ```
 
-Before the first cleanup the response is an empty array. The endpoint derives the badge from
-the participant's earliest recorded non-empty cleanup and returns it once. It is private and
-uses `Cache-Control: private, no-store`.
+Before the first cleanup the response is an empty array. The endpoint is private and uses
+`Cache-Control: private, no-store`.

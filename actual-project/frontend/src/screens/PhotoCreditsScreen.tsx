@@ -1,5 +1,9 @@
 import content from "../content/coastalContent.json";
+import photoOverrides from "../content/speciesPhotoOverrides.json";
 import { CoastalPage, WhiteCard } from "../components/CoastalUI";
+const imageLicenseUrls = Object.fromEntries(
+  Object.values(photoOverrides).map((media) => [media.image, media.imageLicenseUrl]),
+);
 const cleanupCredits = [
   ["volunteers", "Petty Officer 1st Class NPASEWest Hawaii", "Public domain"],
   ["gloves", "Roman Kraft", "CC0"],
@@ -35,6 +39,16 @@ export default function PhotoCreditsScreen() {
               >
                 Original source ↗
               </a>
+              {imageLicenseUrls[p.image ?? ""] && (
+                <a
+                  className="species-source"
+                  href={imageLicenseUrls[p.image ?? ""]}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Image license ↗
+                </a>
+              )}
             </span>
           </div>
         ))}

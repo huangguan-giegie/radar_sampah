@@ -556,7 +556,7 @@ def create_app(
     install_v3_contract(application, engine, jwt_secret, _impl)
     install_contributions(application, engine, jwt_secret, _impl)
     install_recurrence(application, engine, jwt_secret, _impl)
-    install_wildlife(application, engine, _impl)
+    install_wildlife(application, engine, _impl, jwt_secret)
 
     reviewed_scheduler = _reviewed_event_scheduler(engine)
     application.extensions["ensure_scheduled_events"] = reviewed_scheduler
