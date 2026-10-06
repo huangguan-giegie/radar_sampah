@@ -26,7 +26,6 @@ import {
 } from "../components/CoastalUI";
 import { Camera, Check, CommunityIcon } from "../components/Icon";
 import { SpeciesPicture } from "../components/SpeciesPicture";
-import { ConservationCards } from "../components/ConservationCards";
 import { attentionStateFor, C, formatDate, SEVERITY, severityLabel } from "../theme";
 import { hasDraftProgress, resumePath } from "../flowRules";
 import { compositionFooter } from "./BeachScreen";
@@ -35,8 +34,6 @@ import { cleanupDestination } from "../cleanupFlow";
 import type { SeverityBand } from "../types";
 import { useAppBack } from "../navigation";
 import { eventIsAvailable, useEventClock } from "../eventAvailability";
-import { RecurrenceEvidence } from "../components/RecurrenceEvidence";
-import { NearbyMarineSpecies } from "../components/NearbyMarineSpecies";
 
 export default function CoastalBeachScreen() {
   const { beachId = "" } = useParams();
@@ -310,11 +307,6 @@ export default function CoastalBeachScreen() {
             </button>
           </div>
         </section>
-        <section id="species-model">
-          <SectionHeading>Modelled Nearby Marine Species</SectionHeading>
-          <NearbyMarineSpecies beach={{ id: beachId, lat: detail?.lat ?? null, lng: detail?.lng ?? null, scene: detail?.scene ?? "#edf2f8" }} />
-        </section>
-        {pilot && <ConservationCards beachId={beachId} />}
         <section>
           <SectionHeading>Litter Composition</SectionHeading>
           {detail?.composition?.length ? (
@@ -349,7 +341,6 @@ export default function CoastalBeachScreen() {
           <WhiteCard>
             <p className="eyebrow">Latest Recorded Cleanup</p>
             <h2>{formatDate(cleanup.createdAt)}</h2>
-            <p className="subtle">{detail?.cleanupStatus ?? cleanup.recurrence?.calloutStatus ?? cleanup.status}</p>
             <p className="subtle">
               A new counted report helps show what happened after the cleanup.
             </p>
@@ -361,7 +352,6 @@ export default function CoastalBeachScreen() {
             </button>
           </WhiteCard>
         )}
-        <RecurrenceEvidence evidence={detail?.recurrence ?? cleanup?.recurrence} />
         <GhostButton onClick={goMap}>Back to Map</GhostButton>
         {USE_MOCK && <p className="demo-label">Preview · example data</p>}
       </div>

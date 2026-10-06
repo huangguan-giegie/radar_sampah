@@ -166,27 +166,26 @@ def wildlife_panel(application: Any, engine: Any, impl: Any) -> dict[str, Any]:
         if beach["id"] not in MVP_BEACHES:
             continue
         predictions = []
-        result = {}
         try:
-            result = application.extensions["species_distribution_model"].predict_nearby_marine(
-                beach["lat"], beach["lng"], max_distance_km=15, top_k=40,
-            )
-            predictions = result.get("topPredictions", [])
+            result = application.extensions["species_distribution_model"].predict(beach["lat"], beach["lng"])
+            predictions = result.get("predictions", [])
+        # The packaged model is optional at runtime.  In particular, a model
+        # serialized by a newer scikit-learn release can raise AttributeError
+        # while being loaded by an older local runtime.  Keep the public
+        # wildlife panel available with an explicit unavailable state rather
+        # than turning the whole Insights response into a 500.
         except (AttributeError, KeyError, ValueError, RuntimeError):
             pass
         modelled = []
-        for prediction in predictions:
+        for prediction in sorted(predictions, key=lambda value: value.get("relativeOccurrenceScore", 0), reverse=True):
             card = cards.get(prediction.get("scientificName"))
             if card is None:
                 continue
             modelled.append({"id": card["id"], "name": card["name"], "scientificName": card["scientificName"],
                              "relativeOccurrenceScore": prediction.get("relativeOccurrenceScore"),
-                             "locationMatchScore": prediction.get("locationMatchScore"),
                              "source": {"label": "OBIS packaged relative-occurrence model", "url": "https://obis.org/"},
                              "sources": card["sources"], "reviewDate": card["reviewDate"], "destination": card["destination"]})
         rows.append({"beachId": beach["id"], "beachName": beach["name"], "species": modelled[:2],
-                     "coordinateContext": result.get("coordinateContext"),
-                     "modelCount": result.get("modelCount"), "modelVersion": result.get("modelVersion"),
                      "ecologicalNote": "Approved species cards provide general conservation context; this panel does not record local sightings.",
                      "sourceStatus": "ready" if modelled else "unavailable"})
     return {"beaches": rows, "note": "Modelled relative scores are not probabilities or confirmed sightings and do not change Beach Attention."}
