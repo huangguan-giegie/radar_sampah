@@ -90,6 +90,25 @@ for f in frames:
     species.append({'id':slug(name),'figmaId':f['id'],'name':name,'subtitle':subtitle,'intro':intro,'evidence':next((t for t in ts if 'not a live sighting' in t or 'not a local sighting' in t),'From published sources · not a live sighting'),'answers':answers,'sources':sources,'credit':next((t for t in ts if t.startswith('Photo · ')),''),'image':existing.get(name) or (photo['image'] if photo else None),'photoSource':photo['source'] if photo else None,'category':category})
 species.sort(key=lambda s: 0 if s['name']=='Green Sea Turtle' else 1)
 
+# Keep verified local media when the design handoff lacks a download/link.
+# This also keeps list, detail, region cards and photo credits on the same asset.
+overrides_path = OUT / 'speciesPhotoOverrides.json'
+overrides = json.loads(overrides_path.read_text(encoding='utf-8')) if overrides_path.exists() else {}
+for species_item in species:
+    media = overrides.get(species_item['id'])
+    if not media or not (FRONT / 'public' / media['image'].lstrip('/')).is_file():
+        continue
+    species_item.update({key: media[key] for key in ('image', 'photoSource', 'credit')})
+    if species_item['id'] == 'indo-pacific-finless-porpoise':
+        for source in species_item['sources']:
+            if 'commons.wikimedia.org' in source['url']:
+                source['url'] = media['photoSource']
+    photo = next((p for p in photos if p['name'] == species_item['name']), None)
+    if photo is None:
+        photo = {'name': species_item['name']}
+        photos.append(photo)
+    photo.update(image=media['image'], source=media['photoSource'], credit=media['credit'])
+
 beaches=[]
 pilot_ids={'Pantai Morib':'morib','Pantai Bagan Lalang':'bagan','Pantai Remis':'remis','Pantai Kelanang':'kelanang'}
 for f in frames:

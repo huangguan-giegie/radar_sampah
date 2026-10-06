@@ -503,8 +503,8 @@
           "url": "https://jurnal.usk.ac.id/depik/article/view/34027"
         }
       ],
-      "credit": "Photo · Dr Catherine Collier / TropWATER · CC BY 3.0 AU",
-      "image": null,
+      "credit": "Photo · Dr Catherine Collier (James Cook University), TropWATER · CC BY 3.0 AU · resized; displayed crop",
+      "image": "/images/coastal/halophila-ovalis.jpg",
       "photoSource": "https://eatlas.org.au/media/4026",
       "category": "plant"
     },
@@ -647,8 +647,8 @@
           "url": "https://marinedebris.noaa.gov/why-marine-debris-problem/wildlife-entanglement-and-ghost-fishing"
         }
       ],
-      "credit": "Photo · Nepenthes · CC BY-SA 3.0",
-      "image": null,
+      "credit": "Photo · Kentish plover, a shorebird example · Nepenthes · CC BY-SA 3.0 · resized; displayed crop",
+      "image": "/images/coastal/shorebirds.jpg",
       "photoSource": "https://commons.wikimedia.org/wiki/File:Charadrius_alexandrinus.jpg",
       "category": "animal"
     },
@@ -1079,9 +1079,9 @@
           "url": "https://doi.org/10.12782/specdiv.6.1"
         }
       ],
-      "credit": "Photo · no verified image available",
-      "image": null,
-      "photoSource": null,
+      "credit": "Original schematic · Radar Sampah · CC BY 4.0 · based on the morphology described by Nishi (2001); not a photograph or an identification guide",
+      "image": "/images/coastal/grubeulepis-malayensis.svg",
+      "photoSource": "https://doi.org/10.12782/specdiv.6.1",
       "category": "animal"
     },
     {
@@ -1111,9 +1111,9 @@
           "url": "https://lkcnhm.nus.edu.sg/app/uploads/2017/06/57rbz465-473.pdf"
         }
       ],
-      "credit": "Photo · no verified image available",
-      "image": null,
-      "photoSource": null,
+      "credit": "Specimen photo · Moh H. H. & Chong V. C. (2009), Figure 1 · CC BY 4.0 via Plazi / Zenodo · resized; displayed crop",
+      "image": "/images/coastal/thalassina-kelanang.jpg",
+      "photoSource": "https://zenodo.org/records/4509165",
       "category": "animal"
     },
     {
@@ -1148,12 +1148,12 @@
         },
         {
           "label": "Wikimedia Commons · porpoise photo",
-          "url": "https://commons.wikimedia.org/wiki/File:Finless_Porpoise.JPG"
+          "url": "https://commons.wikimedia.org/wiki/File:Neophocaena_phocaenoides_31299614.jpg"
         }
       ],
-      "credit": "Photo · Cipher01 · CC BY-SA 3.0 · Japan aquarium · cropped",
-      "image": null,
-      "photoSource": null,
+      "credit": "Photo · portioid / iNaturalist · CC BY-SA 4.0 · Hong Kong specimen · resized; displayed crop",
+      "image": "/images/coastal/indo-pacific-finless-porpoise.jpg",
+      "photoSource": "https://commons.wikimedia.org/wiki/File:Neophocaena_phocaenoides_31299614.jpg",
       "category": "animal"
     },
     {
@@ -1191,9 +1191,9 @@
           "url": "https://commons.wikimedia.org/wiki/File:Syringodium_isoetifolium_ployant_sous_la_houle.jpg"
         }
       ],
-      "credit": "Photo · Philippe Bourjon · CC BY-SA 3.0 · cropped",
-      "image": null,
-      "photoSource": null,
+      "credit": "Photo · Philippe Bourjon · CC BY-SA 3.0 · resized; displayed crop",
+      "image": "/images/coastal/syringodium-isoetifolium.jpg",
+      "photoSource": "https://commons.wikimedia.org/wiki/File:Syringodium_isoetifolium_ployant_sous_la_houle.jpg",
       "category": "plant"
     },
     {
@@ -1231,9 +1231,9 @@
           "url": "https://commons.wikimedia.org/wiki/File:Rhizophora_stylosa.jpg"
         }
       ],
-      "credit": "Photo · CRCHF · CC BY-SA 3.0 · cropped",
-      "image": null,
-      "photoSource": null,
+      "credit": "Photo · CRCHF · CC BY-SA 3.0 · resized; displayed crop",
+      "image": "/images/coastal/rhizophora-stylosa.jpg",
+      "photoSource": "https://commons.wikimedia.org/wiki/File:Rhizophora_stylosa.jpg",
       "category": "plant"
     },
     {
@@ -3789,7 +3789,7 @@
           "place": "Pantai Redang",
           "description": "The local guide records shorebirds, without identifying individual species.",
           "speciesId": "shorebirds",
-          "image": null
+          "image": "/images/coastal/shorebirds.jpg"
         },
         {
           "name": "Mangroves",
@@ -4215,8 +4215,8 @@
     {
       "name": "Halophila ovalis",
       "source": "https://eatlas.org.au/media/4026",
-      "credit": "Dr Catherine Collier (James Cook University), TropWATER · CC BY 3.0 AU (site image policy; item marked Attribution) · cropped",
-      "image": null
+      "credit": "Photo · Dr Catherine Collier (James Cook University), TropWATER · CC BY 3.0 AU · resized; displayed crop",
+      "image": "/images/coastal/halophila-ovalis.jpg"
     },
     {
       "name": "Thalassia hemprichii",
@@ -4299,8 +4299,8 @@
     {
       "name": "Shorebirds",
       "source": "https://commons.wikimedia.org/wiki/File:Charadrius_alexandrinus.jpg",
-      "credit": "Nepenthes · CC BY-SA 3.0 · cropped",
-      "image": null
+      "credit": "Photo · Kentish plover, a shorebird example · Nepenthes · CC BY-SA 3.0 · resized; displayed crop",
+      "image": "/images/coastal/shorebirds.jpg"
     },
     {
       "name": "Macaques",
@@ -4673,6 +4673,36 @@
       "source": "https://commons.wikimedia.org/wiki/File:Bagan_Lalang_Beach_1.jpg",
       "credit": "Photo · Wiki Farazi · CC0 1.0",
       "image": "/images/coastal/pantai-bagan-lalang.jpg"
+    },
+    {
+      "name": "Grubeulepis malayensis",
+      "image": "/images/coastal/grubeulepis-malayensis.svg",
+      "source": "https://doi.org/10.12782/specdiv.6.1",
+      "credit": "Original schematic · Radar Sampah · CC BY 4.0 · based on the morphology described by Nishi (2001); not a photograph or an identification guide"
+    },
+    {
+      "name": "Thalassina kelanang",
+      "image": "/images/coastal/thalassina-kelanang.jpg",
+      "source": "https://zenodo.org/records/4509165",
+      "credit": "Specimen photo · Moh H. H. & Chong V. C. (2009), Figure 1 · CC BY 4.0 via Plazi / Zenodo · resized; displayed crop"
+    },
+    {
+      "name": "Indo-Pacific Finless Porpoise",
+      "image": "/images/coastal/indo-pacific-finless-porpoise.jpg",
+      "source": "https://commons.wikimedia.org/wiki/File:Neophocaena_phocaenoides_31299614.jpg",
+      "credit": "Photo · portioid / iNaturalist · CC BY-SA 4.0 · Hong Kong specimen · resized; displayed crop"
+    },
+    {
+      "name": "Syringodium isoetifolium",
+      "image": "/images/coastal/syringodium-isoetifolium.jpg",
+      "source": "https://commons.wikimedia.org/wiki/File:Syringodium_isoetifolium_ployant_sous_la_houle.jpg",
+      "credit": "Photo · Philippe Bourjon · CC BY-SA 3.0 · resized; displayed crop"
+    },
+    {
+      "name": "Rhizophora stylosa",
+      "image": "/images/coastal/rhizophora-stylosa.jpg",
+      "source": "https://commons.wikimedia.org/wiki/File:Rhizophora_stylosa.jpg",
+      "credit": "Photo · CRCHF · CC BY-SA 3.0 · resized; displayed crop"
     }
   ]
 }

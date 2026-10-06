@@ -145,6 +145,27 @@ def contribution_histories(
     return result
 
 
+def contribution_badges(engine: Any, impl: Any, user_id: str) -> list[dict[str, Any]]:
+    """Derive the first-cleanup badge from a recorded, non-empty cleanup."""
+    with engine.connect() as connection:
+        cleanups = connection.execute(select(impl.cleanup_actions_table).where(
+            impl.cleanup_actions_table.c.participant_id == user_id,
+        )).all()
+    valid = [
+        row for row in cleanups
+        if (getattr(row, "cleanup_score", None) or getattr(row, "total_removed", None) or 0) > 0
+    ]
+    if not valid:
+        return []
+    first = min(valid, key=lambda row: (row.created_at, row.id))
+    return [{
+        "id": "shoreline-scout",
+        "name": "Shoreline Scout",
+        "description": "Recorded your first cleanup.",
+        "earnedAt": impl.contract_timestamp(first.created_at),
+    }]
+
+
 def install_contributions(application: Any, engine: Any, jwt_secret: str, impl: Any) -> None:
     """Install profile preference, signup, history and consent-controlled reads."""
     if application.extensions.get("iteration3_contributions_installed"):
@@ -235,6 +256,12 @@ def install_contributions(application: Any, engine: Any, jwt_secret: str, impl: 
             previous_points = points
         return jsonify(public)
 
+    def read_badges():
+        user = current_user()
+        if user is None:
+            return impl.error_response(401, "UNAUTHENTICATED", "Sign in to view your badges.")
+        return jsonify(contribution_badges(engine, impl, user.id))
+
     original_signup = application.view_functions["create_anonymous_participant"]
 
     def signup_with_profile():
@@ -274,10 +301,11 @@ def install_contributions(application: Any, engine: Any, jwt_secret: str, impl: 
     application.add_url_rule("/profile", "update_contribution_profile", update_profile, methods=["PATCH"])
     application.add_url_rule("/contributions", "get_contributions", read_contributions, methods=["GET"])
     application.add_url_rule("/leaderboard", "get_leaderboard", read_leaderboard, methods=["GET"])
+    application.add_url_rule("/badges", "get_badges", read_badges, methods=["GET"])
 
     @application.after_request
     def contribution_cache_policy(response):
-        if request.endpoint in {"get_contribution_profile", "update_contribution_profile", "get_contributions"}:
+        if request.endpoint in {"get_contribution_profile", "update_contribution_profile", "get_contributions", "get_badges"}:
             response.headers["Cache-Control"] = "private, no-store"
             response.vary.add("Authorization")
         elif request.endpoint == "get_leaderboard":

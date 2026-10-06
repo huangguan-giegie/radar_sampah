@@ -1,0 +1,60 @@
+{
+  "halophila-ovalis": {
+    "image": "/images/coastal/halophila-ovalis.jpg",
+    "photoSource": "https://eatlas.org.au/media/4026",
+    "credit": "Photo · Dr Catherine Collier (James Cook University), TropWATER · CC BY 3.0 AU · resized; displayed crop",
+    "imageLicenseUrl": "https://creativecommons.org/licenses/by/3.0/au/",
+    "imageAlt": "Halophila ovalis seagrass with small oval leaves growing on a sandy seabed.",
+    "imageCaption": null
+  },
+  "shorebirds": {
+    "image": "/images/coastal/shorebirds.jpg",
+    "photoSource": "https://commons.wikimedia.org/wiki/File:Charadrius_alexandrinus.jpg",
+    "credit": "Photo · Kentish plover, a shorebird example · Nepenthes · CC BY-SA 3.0 · resized; displayed crop",
+    "imageLicenseUrl": "https://creativecommons.org/licenses/by-sa/3.0/",
+    "imageAlt": "A Kentish plover on a sandy shore, illustrating the shorebird group rather than a local species identification.",
+    "imageCaption": null
+  },
+  "indo-pacific-finless-porpoise": {
+    "image": "/images/coastal/indo-pacific-finless-porpoise.jpg",
+    "photoSource": "https://commons.wikimedia.org/wiki/File:Neophocaena_phocaenoides_31299614.jpg",
+    "credit": "Photo · portioid / iNaturalist · CC BY-SA 4.0 · Hong Kong specimen · resized; displayed crop",
+    "imageLicenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+    "imageAlt": "An Indo-Pacific finless porpoise specimen photographed on a shore in Hong Kong, showing its rounded head and lack of a dorsal fin.",
+    "imageCaption": "Specimen photo · Hong Kong · not a local sighting"
+  },
+  "syringodium-isoetifolium": {
+    "image": "/images/coastal/syringodium-isoetifolium.jpg",
+    "photoSource": "https://commons.wikimedia.org/wiki/File:Syringodium_isoetifolium_ployant_sous_la_houle.jpg",
+    "credit": "Photo · Philippe Bourjon · CC BY-SA 3.0 · resized; displayed crop",
+    "imageLicenseUrl": "https://creativecommons.org/licenses/by-sa/3.0/",
+    "imageAlt": "Long cylindrical leaves of Syringodium isoetifolium seagrass bending underwater.",
+    "imageCaption": null
+  },
+  "rhizophora-stylosa": {
+    "image": "/images/coastal/rhizophora-stylosa.jpg",
+    "photoSource": "https://commons.wikimedia.org/wiki/File:Rhizophora_stylosa.jpg",
+    "credit": "Photo · CRCHF · CC BY-SA 3.0 · resized; displayed crop",
+    "imageLicenseUrl": "https://creativecommons.org/licenses/by-sa/3.0/",
+    "imageAlt": "Rhizophora stylosa mangrove showing glossy green leaves and elongated propagules.",
+    "imageCaption": null
+  },
+  "thalassina-kelanang": {
+    "image": "/images/coastal/thalassina-kelanang.jpg",
+    "objectFit": "contain",
+    "photoSource": "https://zenodo.org/records/4509165",
+    "credit": "Specimen photo · Moh H. H. & Chong V. C. (2009), Figure 1 · CC BY 4.0 via Plazi / Zenodo · resized; displayed crop",
+    "imageLicenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+    "imageAlt": "The male holotype of Thalassina kelanang photographed from above against a blue background, from the original species description.",
+    "imageCaption": "Holotype specimen · original species study, 2009"
+  },
+  "grubeulepis-malayensis": {
+    "image": "/images/coastal/grubeulepis-malayensis.svg",
+    "objectFit": "contain",
+    "photoSource": "https://doi.org/10.12782/specdiv.6.1",
+    "credit": "Original schematic · Radar Sampah · CC BY 4.0 · based on the morphology described by Nishi (2001); not a photograph or an identification guide",
+    "imageLicenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+    "imageAlt": "A simplified dorsal schematic of a scaleworm with paired overlapping scales and lateral bristles, based on the description of Grubeulepis malayensis; not a photograph.",
+    "imageCaption": "Scientific schematic · not a photograph or identification guide"
+  }
+}
