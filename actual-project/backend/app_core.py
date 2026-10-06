@@ -1571,14 +1571,14 @@ def create_app(
     engine = create_engine_for_url(normalise_database_url(database_url or os.getenv("DATABASE_URL")))
     initialise_database(engine)
     recognizer = _LazyLitterRecognizer()
-    species_distribution_model = lazy_species_distribution_model()
+    species_distribution_model = load_species_distribution_model()
     directory = photo_storage_path(photo_storage_dir)
     seed_reference_data(engine, load_beaches())
     beaches = load_beaches(engine)
     beach_names = {beach["id"]: beach["name"] for beach in beaches}
     application.extensions["marine_engine"] = engine
     application.extensions["photo_storage_dir"] = directory
-    # Load the four validated offline models once at startup. Prediction never
+    # Load the 40 packaged species models once at startup. Prediction never
     # queries OBIS and does not write coordinates or scores to the database.
     application.extensions["photo_cleanup_timers"] = []
     application.extensions["litter_recognizer"] = recognizer
