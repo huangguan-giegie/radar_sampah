@@ -153,8 +153,18 @@ beach-summary query was running. The psycopg error was
 The immediately following single recheck returned HTTP 200 for
 `/insights/participation`, `/insights/summary`, `/insights/cleanup` and
 `/health`. Logs were checked through `01:37:31 UTC`. This is one recovered
-transient observation, distinct from the original 183 successful checks, and
-was not reproduced as an outage.
+transient observation, distinct from the original 183 successful checks.
+
+During the documentation commit rollout, the old Render instance logged a
+second psycopg SSL connection-closed error at `2026-10-06 01:47:55 UTC`.
+The application log confirmed the SSL failure, but the available request log
+did not identify the failing route. After the new instance became live on documentation commit
+`4a29eae3112bc0dfe0a673f97a3eb0feace6e4b5`, two read-only rounds passed for
+`/health`, the 40-species catalog, the four approved species cards and the
+general wildlife-risk library. Both rounds returned health `ok`, 40 species,
+four cards and two risk entries. These isolated errors did not create a
+continuous outage in the observed checks, but the repeated SSL disconnect is
+recorded for follow-up rather than treated as a permanent fix.
 
 Render one-minute memory samples for the new instance
 `srv-d9v00r3ncjis73amjvi0-r65vz` ranged from 387,907,600 to 498,249,730 bytes
