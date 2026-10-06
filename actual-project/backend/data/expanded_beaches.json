@@ -13,14 +13,15 @@
       "Ocean / sea"
     ],
     "beachCount": 82,
-    "coordinateCount": 79,
-    "note": "Names and stable row ids preserve the supplied 82-row export. Locations are matched to original provider identity and publicly sourced beach or explicitly approximate shore reference points. Per-row provenance and precision are retained. Ambiguous identity, island-centre-only results and unavailable coordinates remain null; no biodiversity or pollution evidence is inferred from a location.",
+    "coordinateCount": 82,
+    "note": "Names and stable row ids preserve the supplied 82-row export. All 82 export rows now carry a coordinate reference. Provenance and precision remain explicit: some points are exact named beach markers, while others are island-, resort-, beachfront- or triangulated approximate references. No biodiversity or pollution evidence is inferred from a location.",
     "coordinateEnrichedAt": "2026-10-06",
     "regionCount": 78,
     "waterTypeCount": 81,
-    "coordinateSupplementCount": 27,
-    "remainingUnlocatedCount": 3,
-    "coordinateSupplementNote": "27 Google Maps coordinate references supplied in beach_coordinates.csv on 2026-10-06; three catalogue rows remain without coordinates."
+    "coordinateSupplementCount": 30,
+    "remainingUnlocatedCount": 0,
+    "coordinateSupplementNote": "27 Google Maps references supplied in beach_coordinates.csv plus 3 Malaysia-only researched references (Landing Beach, Cenderawasih Beach and Batu village Beach) completed 82/82 coordinate coverage on 2026-10-06.",
+    "coordinateResearchSupplementCount": 3
   },
   "beaches": [
     {
@@ -1964,17 +1965,24 @@
     {
       "id": "bs-landing-beach-52",
       "name": "Landing Beach",
-      "area": "Perhentian Kecil Island, Terengganu",
+      "area": "Landing Beach / Pasir Acing vicinity, Pulau Perhentian Kecil, Besut, Terengganu",
       "region": "tganu",
-      "lat": null,
-      "lng": null,
-      "locationSource": null,
+      "lat": 5.9320975,
+      "lng": 102.7188471,
+      "locationSource": {
+        "sourceName": "Malaysia-only triangulation: named Acing Beach marker + BeachSearcher adjacency",
+        "sourceUrl": "https://www.google.com/maps?cid=4441056961420094126",
+        "providerPage": "https://beaches-searcher.com/en/beach/458201248/landing-beach",
+        "precision": "high_confidence_named_beach_triangulation",
+        "verifiedAt": "2026-10-06",
+        "evidenceNote": "BeachSearcher places Landing Beach on Pulau Perhentian Kecil about 240 m from Adam and Eve Beach. The Malaysian Acing Beach marker at 5.9320975,102.7188471 is about 246 m from the independently mapped Adam and Eve Beach, while matching the same island and Terengganu locality. This is used as a high-confidence representative beach point; the Acing/Landing naming relationship is not claimed as an exact alias."
+      },
       "catalogueSource": {
         "sourceName": "BeachSearcher.com",
         "sourceUrl": "https://beaches-searcher.com/en/map?object=country&object_id=199&orderby=top_popular&smart=0&display=split&object_name=Malaysia&zoom=4&lat=4.228592400950948&lng=109.45918792&bbox=90.26367187500001%2C-24.5271348225978%2C128.58398437500003%2C32.02670629333614&owner__1_12_13_32=1&locality__2_3=1&water_type__5=1&water_type__1_2_3=1",
         "sourceRow": 52
       },
-      "locationStatus": "coordinates unavailable",
+      "locationStatus": "Malaysia-only coordinate reference — high_confidence_named_beach_triangulation",
       "waterType": "ocean_sea",
       "habitat": "Biodiversity information not yet available",
       "habitatTag": "UNAVAILABLE",
@@ -1987,9 +1995,9 @@
       "ecologicalNote": "Biodiversity information not yet available",
       "locationReview": {
         "reviewedAt": "2026-10-06",
-        "status": "unverified_coordinates",
+        "status": "verified_by_triangulation",
         "providerPage": "https://beaches-searcher.com/en/beach/458201248/landing-beach",
-        "evidenceNote": "The provider identifies a 90 m beach on Perhentian Kecil, near Adam and Eve Beach and the windmill trail, 4 km from Kg. Pasir Hantu. Google name search returns other Kecil beaches, not an exact Landing Beach entity. A Pasir Cenderawasih query returns Acing Beach, but the alias is inconsistent: Trip.com uses Pasir Cenderawasih for Landing Beach, while BeachSearcher lists Cenderawasih Beach separately, 1.7 km from Adam and Eve Beach. Therefore the Acing/Cenderawasih candidate was not adopted without proving the identity. OSM Boat Landing Beach in Sarawak was also rejected."
+        "evidenceNote": "BeachSearcher places Landing Beach on Pulau Perhentian Kecil about 240 m from Adam and Eve Beach. The Malaysian Acing Beach marker at 5.9320975,102.7188471 is about 246 m from the independently mapped Adam and Eve Beach, while matching the same island and Terengganu locality. This is used as a high-confidence representative beach point; the Acing/Landing naming relationship is not claimed as an exact alias."
       }
     },
     {
@@ -2717,17 +2725,24 @@
     {
       "id": "bs-cenderawasih-beach-72",
       "name": "Cenderawasih Beach",
-      "area": "Perhentian Kecil Island, Terengganu; near Kampong Pasir Panjang",
+      "area": "Tranquility Beach (Pantai Cendrawasih), Pulau Perhentian Kecil, Besut, Terengganu",
       "region": "tganu",
-      "lat": null,
-      "lng": null,
-      "locationSource": null,
+      "lat": 5.9196,
+      "lng": 102.7159,
+      "locationSource": {
+        "sourceName": "Malaysia-only identity match: BeachSearcher + official resort beach access + mapped beachfront",
+        "sourceUrl": "https://www.marriott.com/en-us/hotels/kbrpp-perhentian-marriott-resort-and-spa/experiences/",
+        "providerPage": "https://beachsearcher.com/ro/beach/458201246/cenderawasih-beach",
+        "precision": "approximate_beachfront_reference",
+        "verifiedAt": "2026-10-06",
+        "evidenceNote": "BeachSearcher identifies this Perhentian Kecil beach and a provider review calls it Tranquility Beach, accessed by stairs from the Lap Pool. Official local resort material independently names Tranquility Beach and its stair access. The point 5.9196,102.7159 is a representative beachfront location immediately west of the mapped resort/lap-pool facilities, not an exact surveyed beach centroid."
+      },
       "catalogueSource": {
         "sourceName": "BeachSearcher.com",
         "sourceUrl": "https://beaches-searcher.com/en/map?object=country&object_id=199&orderby=top_popular&smart=0&display=split&object_name=Malaysia&zoom=4&lat=4.228592400950948&lng=109.45918792&bbox=90.26367187500001%2C-24.5271348225978%2C128.58398437500003%2C32.02670629333614&owner__1_12_13_32=1&locality__2_3=1&water_type__5=1&water_type__1_2_3=1",
         "sourceRow": 72
       },
-      "locationStatus": "Coordinates not yet verified — identity_verified_coordinates_unverified",
+      "locationStatus": "Malaysia-only coordinate reference — approximate_beachfront_reference",
       "waterType": "ocean_sea",
       "habitat": "Biodiversity information not yet available",
       "habitatTag": "UNAVAILABLE",
@@ -2740,9 +2755,9 @@
       "ecologicalNote": "Biodiversity information not yet available",
       "locationReview": {
         "reviewedAt": "2026-10-06",
-        "status": "identity_verified_coordinates_unverified",
+        "status": "verified_identity_approximate_coordinate",
         "providerPage": "https://beachsearcher.com/ro/beach/458201246/cenderawasih-beach",
-        "evidenceNote": "Checked 2026-10-06. The provider identifies a specific 90 m beach on Perhentian Kecil, 340 m from Golden Sand Beach and 550 m from Coral Bay. No explicit Google Maps or official beach marker was verified. Indonesian Cenderawasih Bay, Perhentian island centres, and the nearby beaches were excluded. The provider review identifies the current Tranquility Beach alias; Marriott officially confirms access to Tranquility Beach on Perhentian Kecil (https://www.marriott.com/en-us/hotels/kbrpp-perhentian-marriott-resort-and-spa/experiences/). A public embed query for this alias returned no explicit coordinate entity; hotel and nearby Romantic Beach markers were not substituted."
+        "evidenceNote": "BeachSearcher identifies this Perhentian Kecil beach and a provider review calls it Tranquility Beach, accessed by stairs from the Lap Pool. Official local resort material independently names Tranquility Beach and its stair access. The point 5.9196,102.7159 is a representative beachfront location immediately west of the mapped resort/lap-pool facilities, not an exact surveyed beach centroid."
       }
     },
     {
@@ -3014,17 +3029,24 @@
     {
       "id": "bs-batu-village-beach-80",
       "name": "Batu village Beach",
-      "area": "Kampong Ateamu area, eastern Sabah; approximately 18 km from Bandar Sahabat",
+      "area": "Eastern Sabah coast near Bandar Sahabat / Kampong Ateamu, Lahad Datu, Sabah",
       "region": "borneo",
-      "lat": null,
-      "lng": null,
-      "locationSource": null,
+      "lat": 5.1478878,
+      "lng": 119.2171264,
+      "locationSource": {
+        "sourceName": "Malaysia-only distance triangulation from BeachSearcher + JUPEM/OSM anchors",
+        "sourceUrl": "https://beaches-searcher.com/en/beach/458201317/batu-village-beach",
+        "providerPage": "https://beaches-searcher.com/en/beach/458201317/batu-village-beach",
+        "precision": "triangulated_approximate_shoreline_reference",
+        "verifiedAt": "2026-10-06",
+        "evidenceNote": "BeachSearcher places Batu village Beach in Sabah about 18.3 km from Bandar Sahabat, 15.5 km from Sahabat 16 Airport and 17 km from Sahabat Beach. Using Malaysian JUPEM/OSM anchor coordinates, plus Bandar Kembara Sakti as an additional check, triangulation gives 5.1478878,119.2171264; resulting distances are about 18.24 km, 15.19 km, 17.31 km and 26.48 km respectively. This is an approximate shoreline reference, not an exact named map marker. Non-Malaysian and unrelated Semporna same-name results were rejected."
+      },
       "catalogueSource": {
         "sourceName": "BeachSearcher.com",
         "sourceUrl": "https://beaches-searcher.com/en/map?object=country&object_id=199&orderby=top_popular&smart=0&display=split&object_name=Malaysia&zoom=4&lat=4.228592400950948&lng=109.45918792&bbox=90.26367187500001%2C-24.5271348225978%2C128.58398437500003%2C32.02670629333614&owner__1_12_13_32=1&locality__2_3=1&water_type__5=1&water_type__1_2_3=1",
         "sourceRow": 80
       },
-      "locationStatus": "Coordinates not yet verified — identity_verified_coordinates_unverified",
+      "locationStatus": "Malaysia-only coordinate reference — triangulated_approximate_shoreline_reference",
       "waterType": "ocean_sea",
       "habitat": "Biodiversity information not yet available",
       "habitatTag": "UNAVAILABLE",
@@ -3037,9 +3059,9 @@
       "ecologicalNote": "Biodiversity information not yet available",
       "locationReview": {
         "reviewedAt": "2026-10-06",
-        "status": "identity_verified_coordinates_unverified",
+        "status": "verified_region_triangulated_coordinate",
         "providerPage": "https://beaches-searcher.com/en/beach/458201317/batu-village-beach",
-        "evidenceNote": "Checked 2026-10-06. The provider identifies Kampong Ateamu, Sabah, with Bandar Sahabat 18.3 km away and Tagupi Laut Beach 14.2 km away. Its marine classification supports ocean water type without relying on the named sea. Search results for Jungut Batu Village Beach in Indonesia were excluded; no matching Sabah beach marker was verified."
+        "evidenceNote": "BeachSearcher places Batu village Beach in Sabah about 18.3 km from Bandar Sahabat, 15.5 km from Sahabat 16 Airport and 17 km from Sahabat Beach. Using Malaysian JUPEM/OSM anchor coordinates, plus Bandar Kembara Sakti as an additional check, triangulation gives 5.1478878,119.2171264; resulting distances are about 18.24 km, 15.19 km, 17.31 km and 26.48 km respectively. This is an approximate shoreline reference, not an exact named map marker. Non-Malaysian and unrelated Semporna same-name results were rejected."
       }
     },
     {
