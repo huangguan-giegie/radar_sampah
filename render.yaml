@@ -1,33 +1,17 @@
+# One public service serves v2 UI and /api from the same origin.
+# Connect an existing PostgreSQL database during Blueprint setup.
 services:
   - type: web
-    name: radar-sampah-api
-    runtime: python
-    rootDir: actual-project/backend
-    buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn --bind 0.0.0.0:$PORT 'app:create_app()'
-    healthCheckPath: /health
+    name: radar-sampah-v2
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /api/health
     plan: free
     envVars:
-      - key: FRONTEND_ORIGINS
-        value: https://team04-marine-observation-frontend.onrender.com
-      # Enter the Render PostgreSQL connection string in the dashboard.
-      # It is intentionally not stored in this repository.
       - key: DATABASE_URL
         sync: false
       - key: AUTH_JWT_SECRET
         generateValue: true
-      # Optional legacy photo directory. New report photos are stored privately
-      # in PostgreSQL; no persistent disk is required for new uploads.
-      - key: PHOTO_STORAGE_DIR
-        sync: false
-
-  - type: web
-    name: radar-sampah-frontend
-    runtime: static
-    rootDir: actual-project/frontend
-    buildCommand: npm ci && npm run build
-    staticPublishPath: dist
-    plan: free
-    envVars:
-      - key: VITE_API_BASE_URL
-        value: https://team04-marine-observation-api.onrender.com
+      - key: GEO_PRIVACY_HMAC_KEY
+        generateValue: true

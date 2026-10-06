@@ -1,14 +1,19 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
-  getMyReportCounts,
-  getMyReports,
   storedRecoveryToken,
   USE_MOCK,
-  apiRequest,
 } from "../api";
 import { useApp } from "../AppContext";
-import { fetchCleanupEvents } from "../iteration2Api";
+import {
+  getAccountProfile,
+  getContributions,
+  getLeaderboard,
+  updateAccountProfile,
+  type AccountProfile,
+  type Contributions,
+  type Leaderboard,
+} from "../accountApi";
 import { useAsyncData } from "../useAsyncData";
 import {
   CoastalPage,
@@ -32,146 +37,69 @@ import {
   UserIcon,
 } from "../components/Icon";
 import { formatDate } from "../theme";
-import {
-  readPreviewProfile,
-  savePreviewProfile,
-  validNickname,
-} from "../accountPreview";
-const TOP = [
-  ["PenyuPal", 184],
-  ["KakiPantai", 176],
-  ["PantaiPatrol", 151],
-  ["SabahShores", 139],
-  ["TerengganuTides", 127],
-];
-interface Profile {
-  nickname: string;
-  joinedLeaderboard: boolean;
-}
-interface ContributionSummary {
-  points: number;
-  countedReports: number;
-  recordedAttendances: number;
-  history: {
-    kind: "report" | "attendance";
-    points: number;
-    createdAt: string;
-    beachName: string;
-    reportId?: string;
-    eventId?: string;
-  }[];
-}
-interface LeaderboardRow {
-  rank: number;
-  nickname: string;
-  points: number;
-}
+import { validNickname } from "../accountPreview";
 export default function AccountScreen() {
   const { section } = useParams();
   const nav = useNavigate();
   const { user, signOut, reportsVersion, showToast } = useApp();
   const id = user?.participantId ?? "";
-  const { data: counts, loading: countsLoading, error: countsError, refresh: refreshCounts } = useAsyncData(
-    () => USE_MOCK ? getMyReportCounts() : Promise.resolve(null),
+  const { data: contributions, loading, error, refresh: refreshContributions } = useAsyncData<Contributions | null>(
+    () => getContributions(id),
     [reportsVersion, id],
     null,
   );
-  const { data: events, loading: eventsLoading, error: eventsError, refresh: refreshEvents } = useAsyncData(
-    () => USE_MOCK ? fetchCleanupEvents(id, true) : Promise.resolve([]),
-    [id, reportsVersion],
-    [],
+  const { data: profile, setData: setProfile, loading: profileLoading, error: profileError, refresh: refreshProfile } = useAsyncData<AccountProfile | null>(
+    () => getAccountProfile(id),
+    [reportsVersion, id],
+    null,
   );
-  const { data: reports, loading: reportsLoading, error: reportsError, refresh: refreshReports } = useAsyncData(
-    getMyReports,
-    [id, reportsVersion],
-    [],
+  const { data: leaderboard, loading: leaderboardLoading, error: leaderboardError, refresh: refreshLeaderboard } = useAsyncData<Leaderboard | null>(
+    () => section === "leaderboard" ? getLeaderboard() : Promise.resolve(null),
+    [id, reportsVersion, section, profile?.joinedLeaderboard],
+    null,
   );
-  const {
-    data: liveProfile, setData: setLiveProfile, loading: profileLoading,
-    error: profileError, refresh: refreshProfile,
-  } = useAsyncData<Profile | null>(
-    () => USE_MOCK ? Promise.resolve(null) : apiRequest<Profile>("/profile"),
-    [id], null,
-  );
-  const { data: contributions, loading: contributionsLoading, error: contributionsError, refresh: refreshContributions } = useAsyncData<ContributionSummary | null>(
-    () => USE_MOCK ? Promise.resolve(null) : apiRequest<ContributionSummary>("/contributions"),
-    [id, reportsVersion], null,
-  );
-  const { data: leaderboard, loading: leaderboardLoading, error: leaderboardError, refresh: refreshLeaderboard } = useAsyncData<LeaderboardRow[]>(
-    () => !USE_MOCK && section === "leaderboard" ? apiRequest<LeaderboardRow[]>("/leaderboard") : Promise.resolve([]),
-    [section, id], [],
-  );
-  const attendance = events.filter(
-    (e) => e.attendanceConfirmed || e.attendanceBy?.includes(id),
-  );
-  const loading = USE_MOCK ? countsLoading || eventsLoading || reportsLoading : contributionsLoading;
-  const error = USE_MOCK ? countsError || eventsError || reportsError : contributionsError;
-  const ready = !loading && !error;
-  const points = USE_MOCK ? ready && counts ? counts.counted + attendance.length * 5 : null : ready ? contributions?.points ?? null : null;
-  const counted = ready ? (USE_MOCK ? counts?.counted : contributions?.countedReports) ?? "—" : "—";
-  const attendanceCount = USE_MOCK ? attendance.length : contributions?.recordedAttendances ?? 0;
-  const contributionSummary = loading ? "Loading contributions…" : error ? "Contributions unavailable" : `${attendanceCount} recorded attendance at recorded cleanups · ${counted} counted reports`;
+  const ready = !loading && !error && contributions !== null;
+  const points = ready ? contributions.points : null;
+  const counted = ready ? contributions.countedReports : "—";
+  const contributionSummary = loading ? "Loading contributions…" : error ? "Contributions unavailable" : `${contributions?.attendanceCount ?? 0} recorded attendance · ${counted} counted reports`;
   const loadError = error ? (
-    <DataUnavailable title="Couldn’t Load Contributions" retry={() => { if (USE_MOCK) { void refreshCounts(); void refreshEvents(); void refreshReports(); } else void refreshContributions(); }}>Please try again.</DataUnavailable>
+    <DataUnavailable title="Couldn’t Load Contributions" retry={() => { void refreshContributions(); void refreshProfile(); }}>{error}</DataUnavailable>
   ) : null;
-  const [previewProfile, setPreviewProfile] = useState(() => USE_MOCK ? readPreviewProfile(id) : { nickname: "", joinedLeaderboard: false });
-  const profile = USE_MOCK ? previewProfile : liveProfile ?? { nickname: "", joinedLeaderboard: false };
-  const [nickname, setNickname] = useState(profile.nickname);
-  useEffect(() => { if (!USE_MOCK && liveProfile) setNickname(liveProfile.nickname); }, [liveProfile]);
+  const profileLoadError = profileError ? (
+    <DataUnavailable title="Couldn’t Load Your Profile" retry={() => { void refreshProfile(); }}>{profileError}</DataUnavailable>
+  ) : null;
+  const [nickname, setNickname] = useState("");
   const [validation, setValidation] = useState("");
   const [saving, setSaving] = useState(false);
   const [privacy, setPrivacy] = useState(false);
   const recoveryToken = storedRecoveryToken();
+  useEffect(() => {
+    setNickname(profile?.nickname ?? "");
+  }, [id, profile?.nickname]);
   async function save(join?: boolean) {
-    if (nickname.trim() && !validNickname(nickname)) {
+    if (saving || profileLoading || !profile || profileError) return;
+    if (join !== false && !validNickname(nickname)) {
       setValidation(
         "Use 3–30 characters. Don’t use an email address or phone number.",
       );
       return;
     }
-    const next = {
-      nickname: nickname.trim(),
-      joinedLeaderboard: join ?? profile.joinedLeaderboard,
+    const input = join === false ? { joinedLeaderboard: false } : {
+      nickname: nickname.trim(), ...(join === true ? { joinedLeaderboard: true } : {}),
     };
     setSaving(true);
+    setValidation("");
     try {
-      if (USE_MOCK) {
-        savePreviewProfile(id, next);
-        setPreviewProfile(next);
-      } else {
-        const saved = await apiRequest<Profile>("/profile", "PATCH", join === undefined ? { nickname: next.nickname } : next);
-        setLiveProfile(saved);
-        if (join !== undefined) await refreshLeaderboard();
-      }
-      setValidation("");
-      showToast(USE_MOCK ? "Saved on this device" : "Profile saved");
+      const next = await updateAccountProfile(id, input);
+      setProfile(next);
+      showToast(USE_MOCK ? "Saved on this device" : join === false ? "You left the leaderboard" : "Profile saved");
       if (join === undefined) nav("/account");
     } catch (reason) {
-      setValidation(USE_MOCK ? "Could not save on this device. Please enable browser storage." : reason instanceof Error ? reason.message : "Could not save your profile. Please try again.");
+      setValidation(reason instanceof Error ? reason.message : "Could not save. Please try again.");
     } finally {
       setSaving(false);
     }
   }
-  async function leaveLeaderboard() {
-    setSaving(true);
-    try {
-      if (USE_MOCK) {
-        const next = { ...profile, joinedLeaderboard: false };
-        savePreviewProfile(id, next);
-        setPreviewProfile(next);
-      } else {
-        setLiveProfile(await apiRequest<Profile>("/profile", "PATCH", { joinedLeaderboard: false }));
-        await refreshLeaderboard();
-      }
-      setValidation("");
-      showToast("Leaderboard participation turned off");
-    } catch (reason) {
-      setValidation(reason instanceof Error ? reason.message : "Could not save your preference.");
-    } finally {
-      setSaving(false);
-    }
-  }
-  const profileFailure = profileError ? <DataUnavailable title="Could not load your profile" retry={() => void refreshProfile()}>{profileError}</DataUnavailable> : null;
   const icon = (child: JSX.Element) => (
     <span
       className="row-thumb"
@@ -191,6 +119,7 @@ export default function AccountScreen() {
         maxLength={30}
         autoComplete="off"
         value={nickname}
+        disabled={saving || profileLoading || !!profileError}
         onChange={(e) => setNickname(e.target.value)}
       />
       <p className="coastal-footnote">
@@ -214,10 +143,10 @@ export default function AccountScreen() {
         back="/account"
         subtitle="Only shown on the leaderboard if you join."
       >
-        {!USE_MOCK && profileLoading ? <Skeleton h={160} /> : profileError ? profileFailure : (
+        {profileLoading ? <Skeleton h={160} /> : profileLoadError || (
           <>
             {nicknameInput}
-            <PrimaryButton disabled={saving} onClick={() => void save()}>{saving ? "Saving…" : "Save Nickname"}</PrimaryButton>
+            <PrimaryButton disabled={saving || !profile} onClick={() => { void save(); }}>{saving ? "Saving…" : "Save Nickname"}</PrimaryButton>
             {USE_MOCK && <p className="demo-label">Preview · saved only on this device</p>}
           </>
         )}
@@ -236,48 +165,24 @@ export default function AccountScreen() {
           </p>
         </SummaryCard>
         {loading ? <Skeleton h={160} /> : loadError}
-        {ready && !USE_MOCK && contributions?.history.map((entry, index) => (
-          <WhiteCard key={`${entry.kind}-${entry.reportId ?? entry.eventId ?? index}`}>
+        {ready && contributions.history.map((entry) => (
+          <WhiteCard key={entry.kind + ":" + entry.id}>
             <LinkRow
-              title={entry.kind === "report" ? "Counted report" : "Recorded attendance"}
+              title={entry.kind === "attendance" ? "Recorded attendance" : "Counted report"}
               subtitle={entry.beachName + " · " + formatDate(entry.createdAt)}
               trailing={<b>+{entry.points}</b>}
-              onClick={() => { if (entry.reportId) nav("/reports/" + entry.reportId); else if (entry.eventId) nav("/events/" + entry.eventId); }}
+              onClick={() => nav((entry.kind === "attendance" ? "/events/" : "/reports/") + entry.id)}
             />
           </WhiteCard>
         ))}
-        {ready && USE_MOCK && attendance.map((e) => (
-          <WhiteCard key={e.id}>
-            <LinkRow
-              title="Recorded attendance"
-              subtitle={e.beachName + " · " + formatDate(e.date)}
-              trailing={USE_MOCK ? <b>+5</b> : undefined}
-              onClick={() => nav("/events/" + e.id)}
-            />
-          </WhiteCard>
-        ))}
-        {ready && USE_MOCK && reports
-          .filter((r) => r.status === "Counted")
-          .map((r) => (
-            <WhiteCard key={r.id}>
-              <LinkRow
-                title="Counted report"
-                subtitle={r.beachName + " · " + formatDate(r.createdAt)}
-                trailing={USE_MOCK ? <b>+1</b> : undefined}
-                onClick={() => nav("/reports/" + r.id)}
-              />
-            </WhiteCard>
-          ))}
-        {ready && (USE_MOCK ? !attendance.length && !reports.some((r) => r.status === "Counted") : !contributions?.history.length) && (
+        {ready && !contributions.history.length && (
           <DataUnavailable title="Your History Starts Here">
             Counted reports and recorded attendance will appear here.
           </DataUnavailable>
         )}
         <p className="coastal-footnote">
-          Duplicate and incomplete reports are not included. Attendance earns points once the event has a recorded cleanup.{" "}
-          {USE_MOCK
-            ? "Preview points: recorded attendance +5, counted report +1."
-            : ""}
+          Duplicate and incomplete reports are not included.{" "}
+          Recorded attendance +5, counted report +1.
         </p>
       </CoastalPage>
     );
@@ -287,42 +192,42 @@ export default function AccountScreen() {
         title="Leaderboard"
         back="/account"
         subtitle={
-          profile.joinedLeaderboard
+          profile?.joinedLeaderboard
             ? "Nicknames only. You opted in."
             : "Off until you join. Leave any time."
         }
       >
         {loadError}
-        {!USE_MOCK && profileLoading ? <Skeleton h={160} /> : profileError ? profileFailure : profile.joinedLeaderboard ? (
+        {profileLoading ? <Skeleton h={160} /> : profileLoadError || (profile?.joinedLeaderboard ? (
           <>
             <SummaryCard
               eyebrow={USE_MOCK ? "Your Preview Profile" : "Your Profile"}
-              description={profile.nickname || `Volunteer ${id}`}
+              description={profile.nickname}
               value={points ?? "—"}
             >
               <p className="account-divider">
-                points{USE_MOCK ? " · personal rank not calculated" : ""}
+                {USE_MOCK ? "points · personal rank not calculated" : `points · ${profile.rank === null ? "rank unavailable" : "rank #" + profile.rank}`}
               </p>
             </SummaryCard>
-            {!USE_MOCK && leaderboardLoading ? <Skeleton h={160} /> : !USE_MOCK && leaderboardError ? (
-              <DataUnavailable title="Could not load the leaderboard" retry={() => void refreshLeaderboard()}>{leaderboardError}</DataUnavailable>
+            {leaderboardLoading ? <Skeleton h={160} /> : leaderboardError ? (
+              <DataUnavailable title="Couldn’t Load Leaderboard" retry={() => { void refreshLeaderboard(); }}>{leaderboardError}</DataUnavailable>
             ) : <WhiteCard>
-              {(USE_MOCK ? TOP.map(([name, value], i) => ({ rank: i + 1, nickname: String(name), points: Number(value) })) : leaderboard).map((row) => (
-                <div className="leaderboard-row" key={row.nickname}>
-                  <span>#{row.rank}</span>
-                  <strong>{row.nickname}</strong>
-                  <span>{row.points}</span>
+              {leaderboard?.entries.map((entry, i) => (
+                <div className="leaderboard-row" key={entry.nickname + ":" + i}>
+                  <span>#{entry.rank}</span>
+                  <strong>{entry.nickname}</strong>
+                  <span>{entry.points}</span>
                 </div>
               ))}
-              {!USE_MOCK && !leaderboard.length && <p className="subtle">No participants have joined the leaderboard yet.</p>}
+              {!leaderboard?.entries.length && <p className="subtle">No volunteers have joined yet.</p>}
             </WhiteCard>}
             {USE_MOCK && <p className="demo-label">Example leaderboard · as of 27-09-2026</p>}
-            {validation && <p role="alert" className="coastal-footnote">{validation}</p>}
+            {validation && <p role="alert" className="coastal-footnote" style={{ color: "#9c4237" }}>{validation}</p>}
             <GhostButton
               disabled={saving}
-              onClick={() => void leaveLeaderboard()}
+              onClick={() => { void save(false); }}
             >
-              Leave Leaderboard
+              {saving ? "Saving…" : "Leave Leaderboard"}
             </GhostButton>
           </>
         ) : (
@@ -331,19 +236,17 @@ export default function AccountScreen() {
             <SummaryCard eyebrow="Others Will See">
               <div className="leaderboard-row">
                 <strong style={{ color: "white" }}>
-                  {nickname || `Volunteer ${id}`}
+                  {nickname || "Your nickname"}
                 </strong>
                 <span style={{ color: "#b8ff36" }}>{points ?? "—"} pts</span>
               </div>
             </SummaryCard>
-            <PrimaryButton disabled={saving} onClick={() => void save(true)}>
+            <PrimaryButton disabled={saving || !profile} onClick={() => { void save(true); }}>
               {saving ? "Saving…" : "Join Leaderboard"}
             </PrimaryButton>
-            {USE_MOCK && <p className="demo-label">
-              Preview · this choice stays on your device
-            </p>}
+            {USE_MOCK ? <p className="demo-label">Preview · this choice stays on your device</p> : <p className="coastal-footnote">Only your nickname, rank and points are public. You can leave any time.</p>}
           </>
-        )}
+        ))}
       </CoastalPage>
     );
   return (
@@ -366,7 +269,7 @@ export default function AccountScreen() {
         </p>
       </SummaryCard>
       {loadError}
-      {profileFailure}
+      {profileLoadError}
       <WhiteCard>
         <LinkRow
           title="Marine Life"
@@ -378,7 +281,7 @@ export default function AccountScreen() {
       <WhiteCard>
         <LinkRow
           title="Public Nickname"
-          trailing={<small>{profile.nickname || "Not set"}</small>}
+          trailing={<small>{profileLoading ? "Loading…" : profileError ? "Unavailable" : profile?.nickname || "Not set"}</small>}
           leading={icon(<UserIcon />)}
           onClick={() => nav("/account/nickname")}
         />
@@ -394,7 +297,7 @@ export default function AccountScreen() {
         />
         <LinkRow
           title="My Reports"
-          trailing={<small>{reportsLoading || reportsError ? "—" : reports.length}</small>}
+          trailing={<small>{loading || error ? "—" : contributions?.reportCount ?? "—"}</small>}
           leading={icon(<BookmarkIcon />)}
           onClick={() => nav("/reports")}
         />

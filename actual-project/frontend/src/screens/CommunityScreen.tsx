@@ -14,13 +14,12 @@ import { GhostButton, Skeleton } from "../components/ui";
 import { useApp } from "../AppContext";
 import { getBeaches, USE_MOCK } from "../api";
 import { formatEventDate, formatEventTimeRange } from "../iteration2";
-import { fetchCleanupEvents, fetchLatestCleanupForBeach } from "../iteration2Api";
+import { fetchCleanupEvents, fetchLatestCleanupDates } from "../iteration2Api";
 import { useAsyncData } from "../useAsyncData";
 import { C } from "../theme";
 import { eventIsAvailable, eventPhase, useEventClock } from "../eventAvailability";
 import content from "../content/coastalContent.json";
 import { beachNeedsVolunteers } from "../volunteerNeeds";
-import { hasMapCoordinates } from "../mapGeometry";
 
 type Filter = "All" | "Near Me" | "Joined";
 // Keep the last result only in this tab's memory so a detail-page return does not ask again.
@@ -70,14 +69,14 @@ export default function CommunityScreen() {
   );
   const { data: beaches, loading: beachesLoading, error: beachesError, refresh: refreshBeaches } = useAsyncData(getBeaches, [reportsVersion], []);
   const { data: recentCleanups, loading: historyLoading, error: historyError, refresh: refreshHistory } = useAsyncData(
-    async () => needs ? Object.fromEntries(await Promise.all(beaches.map(async b => [b.id, (await fetchLatestCleanupForBeach(b.id))?.createdAt ?? null]))) as Record<string, string | null> : {},
+    () => needs && beaches.length ? fetchLatestCleanupDates(beaches.map(b => b.id)) : Promise.resolve({} as Record<string, string | null>),
     [needs, beaches, reportsVersion], {} as Record<string, string | null>,
   );
   const nextEvents = [...events].filter(e => eventIsAvailable(e, now)).sort((a, b) => a.startsAt.localeCompare(b.startsAt));
   const needsHelp = (b: typeof beaches[number]) => beachNeedsVolunteers(b, recentCleanups?.[b.id], nextEvents.find(e => e.beachId === b.id)?.participantCount, now);
   const withoutEvent = needs && filter !== "Joined" ? beaches.filter(b =>
     (!selectedBeach || b.id === selectedBeach.id) && needsHelp(b) && !nextEvents.some(e => e.beachId === b.id) &&
-    (filter !== "Near Me" || !!position && hasMapCoordinates(b) && distanceKm(position, b) <= 50)) : [];
+    (filter !== "Near Me" || !!position && distanceKm(position, b) <= 50)) : [];
   const needsBeachData = needs || filter === "Near Me";
   function chooseFilter(value: Filter) {
     const next = new URLSearchParams(search);
@@ -127,7 +126,7 @@ export default function CommunityScreen() {
       )
         return false;
       if (filter === "Near Me")
-        return !!position && hasMapCoordinates(b) && distanceKm(position, b) <= 50;
+        return !!position && !!b && distanceKm(position, b) <= 50;
       return true;
     });
   const grouped = filtered.reduce<Record<string, typeof events>>((all, e) => {

@@ -1,4 +1,4 @@
-import { useEffect, useState, type DependencyList } from 'react';
+import { useEffect, useRef, useState, type DependencyList } from 'react';
 import { USE_MOCK } from './api';
 
 /**
@@ -19,40 +19,35 @@ export function useAsyncData<T>(load: () => Promise<T>, dependencies: Dependency
   const [data, setData] = useState<T>(USE_MOCK ? initial : initialFor(initial));
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const requestVersion = useRef(0);
 
   function refresh() {
+    const version = ++requestVersion.current;
     setLoading(true);
     setError(null);
     return load()
       .then((value) => {
+        if (version !== requestVersion.current) return undefined;
         setData(value);
         return value;
       })
       .catch((reason) => {
-        setError(reason instanceof Error ? reason.message : 'Could not load this information.');
+        if (version === requestVersion.current) {
+          setError(reason instanceof Error ? reason.message : 'Could not load this information.');
+        }
         return undefined;
       })
-      .finally(() => setLoading(false));
+      .finally(() => {
+        if (version === requestVersion.current) setLoading(false);
+      });
   }
 
   useEffect(() => {
-    let active = true;
     // Do not leave the previous beach/event visible while a route parameter
     // changes and the next request is in flight.
     setData(USE_MOCK ? initial : initialFor(initial));
-    setLoading(true);
-    setError(null);
-    load()
-      .then((value) => {
-        if (active) setData(value);
-      })
-      .catch((reason) => {
-        if (active) setError(reason instanceof Error ? reason.message : 'Could not load this information.');
-      })
-      .finally(() => {
-        if (active) setLoading(false);
-      });
-    return () => { active = false; };
+    void refresh();
+    return () => { requestVersion.current += 1; };
     // Callers supply the exact data dependencies; including the inline loader
     // itself would restart every request after every render.
     // eslint-disable-next-line react-hooks/exhaustive-deps
