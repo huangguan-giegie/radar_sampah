@@ -65,6 +65,46 @@ def _seed_morib_weekly_event(client):
     )
 
 
+def test_retained_database_beach_without_json_reference_loads_public_pages(api, tmp_path):
+    from app import beaches_table
+    from sqlalchemy import insert, select
+
+    application, _ = api
+    engine = application.extensions["marine_engine"]
+    reference = next(beach for beach in load_beaches() if beach.get("speciesNames"))
+    legacy_id = "legacy-retained-beach"
+    assert all(beach["id"] != legacy_id for beach in load_beaches())
+    with engine.begin() as connection:
+        legacy = dict(connection.execute(select(beaches_table).where(
+            beaches_table.c.id == reference["id"],
+        )).mappings().one())
+        legacy.update(id=legacy_id, name="Retained beach", area="Sabah")
+        connection.execute(insert(beaches_table).values(**legacy))
+
+    restarted = create_app(
+        database_url=f"sqlite:///{tmp_path / 'radar_test.db'}",
+        testing=True,
+        photo_storage_dir=tmp_path / "private-photos",
+    )
+    client = restarted.test_client()
+    response = client.get("/beaches")
+    assert response.status_code == 200
+    cards = {beach["id"]: beach for beach in response.get_json()}
+    assert cards[legacy_id]["speciesNames"] == []
+    assert cards[legacy_id]["lat"] == legacy["lat"]
+    assert cards[reference["id"]]["speciesNames"] == reference["speciesNames"]
+    detail = client.get(f"/beaches/{legacy_id}")
+    assert detail.status_code == 200
+    assert detail.get_json()["speciesNames"] == detail.get_json()["species"] == []
+    for path in ("/insights", f"/insights?beachId={legacy_id}", "/events"):
+        assert client.get(path).status_code == 200, path
+    with engine.connect() as connection:
+        retained = dict(connection.execute(select(beaches_table).where(
+            beaches_table.c.id == legacy_id,
+        )).mappings().one())
+    assert retained == legacy
+
+
 def test_iteration2_scoring_metadata_publishes_active_report_rule(api):
     _application, client = api
     body = client.get("/scoring-method/iteration2").get_json()
