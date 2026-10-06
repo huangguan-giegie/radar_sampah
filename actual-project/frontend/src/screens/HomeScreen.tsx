@@ -75,6 +75,7 @@ export default function HomeScreen() {
     setLastSavedReport(null);
     nav("/report/photo");
   };
+  const exploreBeaches = () => nav("/map?panel=beaches", { state: { fromHome: true } });
   const h = new Date().getHours();
   return (
     <CoastalPage>
@@ -138,6 +139,11 @@ export default function HomeScreen() {
             setDismissedActions(dismissNextAction(nextAction.id, user?.participantId));
           }}>Dismiss suggestion</button>
         </WhiteCard>
+      )}
+      {(!beach || error) && (
+        <GhostButton height={44} onClick={exploreBeaches}>
+          Explore Beaches
+        </GhostButton>
       )}
       <div className="action-grid">
         <ActionTile
@@ -228,7 +234,7 @@ export default function HomeScreen() {
               {user && event ? "View Event" : "View Events"}
             </PrimaryButton>
             <div className="button-pair">
-              <GhostButton height={44} onClick={() => nav("/map", { state: { fromHome: true } })}>
+              <GhostButton height={44} onClick={exploreBeaches}>
                 See Other Beaches
               </GhostButton>
               <GhostButton
