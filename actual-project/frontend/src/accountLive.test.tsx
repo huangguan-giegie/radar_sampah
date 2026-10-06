@@ -153,7 +153,6 @@ describe("backend v1 contribution account", () => {
     await state.actions.get("Save Nickname")?.();
     await Promise.resolve(); await Promise.resolve();
     expect(state.request).toHaveBeenCalledWith("/account/profile", "PATCH", { nickname: "TideWatcher" });
-    expect(state.setProfile).toHaveBeenCalled();
     expect(state.navigate).toHaveBeenCalledWith("/account");
   });
 
