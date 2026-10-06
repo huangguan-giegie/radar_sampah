@@ -2007,16 +2007,30 @@ def create_app(
     @application.post("/api/species-distribution/predict")
     def predict_species_distribution():
         payload = request.get_json(silent=True)
-        if not isinstance(payload, dict) or set(payload) != {"latitude", "longitude"}:
+        if (not isinstance(payload, dict)
+                or not {"latitude", "longitude"} <= set(payload)
+                or set(payload) - {"latitude", "longitude", "mode", "topK"}):
             return error_response(400, "VALIDATION_FAILED", "latitude and longitude are required.")
         if not is_json_number(payload["latitude"]) or not is_json_number(payload["longitude"]):
             return error_response(400, "VALIDATION_FAILED", "latitude and longitude must be numbers.")
         try:
             latitude, longitude = float(payload["latitude"]), float(payload["longitude"])
-        except (TypeError, ValueError):
+        except (TypeError, ValueError, OverflowError):
             return error_response(400, "VALIDATION_FAILED", "latitude and longitude must be numbers.")
+        mode = payload.get("mode", "exact")
+        if mode not in ("exact", "nearby_marine"):
+            return error_response(400, "VALIDATION_FAILED", "mode must be exact or nearby_marine.")
         try:
-            result = application.extensions["species_distribution_model"].predict(latitude, longitude)
+            model = application.extensions["species_distribution_model"]
+            if mode == "nearby_marine":
+                result = model.predict_nearby_marine(
+                    latitude,
+                    longitude,
+                    max_distance_km=15,
+                    top_k=payload.get("topK", 5),
+                )
+            else:
+                result = model.predict(latitude, longitude, top_k=payload.get("topK", 5))
         except ModelInputError as error:
             return error_response(400, "VALIDATION_FAILED", str(error))
         except ModelAreaError as error:
