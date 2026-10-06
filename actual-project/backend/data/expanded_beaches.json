@@ -13,14 +13,14 @@
       "Ocean / sea"
     ],
     "beachCount": 82,
-    "coordinateCount": 79,
+    "coordinateCount": 78,
     "note": "Names and stable row ids preserve the supplied 82-row export. Locations are matched to original provider identity and publicly sourced beach or explicitly approximate shore reference points. Per-row provenance and precision are retained. Ambiguous identity, island-centre-only results and unavailable coordinates remain null; no biodiversity or pollution evidence is inferred from a location.",
     "coordinateEnrichedAt": "2026-10-06",
     "regionCount": 78,
     "waterTypeCount": 81,
     "coordinateSupplementCount": 27,
-    "remainingUnlocatedCount": 3,
-    "coordinateSupplementNote": "27 Google Maps coordinate references supplied in beach_coordinates.csv on 2026-10-06; three catalogue rows remain without coordinates."
+    "remainingUnlocatedCount": 4,
+    "coordinateSupplementNote": "27 Google Maps coordinate references supplied in beach_coordinates.csv on 2026-10-06; four catalogue rows remain without distinct verified coordinates."
   },
   "beaches": [
     {
@@ -2377,22 +2377,15 @@
       "name": "Pulau Tulai Beach II",
       "area": "Pulau Tulai, Tioman, Pahang",
       "region": "pahang",
-      "lat": 2.9109512,
-      "lng": 104.1073929,
-      "locationSource": {
-        "sourceName": "Google Maps place reference (supplied CSV)",
-        "sourceUrl": "https://www.google.com/maps/place/?q=place_id:ChIJU8_csfYFxTERJatBf684ggI",
-        "providerPage": "https://beaches-searcher.com/en/beach/458201215/pulau-tulai-beach-ii",
-        "precision": "supplied_google_maps_reference",
-        "verifiedAt": "2026-10-06",
-        "evidenceNote": "Island-level; same island as #12, no second beach marker on Google"
-      },
+      "lat": null,
+      "lng": null,
+      "locationSource": null,
       "catalogueSource": {
         "sourceName": "BeachSearcher.com",
         "sourceUrl": "https://beaches-searcher.com/en/map?object=country&object_id=199&orderby=top_popular&smart=0&display=split&object_name=Malaysia&zoom=4&lat=4.228592400950948&lng=109.45918792&bbox=90.26367187500001%2C-24.5271348225978%2C128.58398437500003%2C32.02670629333614&owner__1_12_13_32=1&locality__2_3=1&water_type__5=1&water_type__1_2_3=1",
         "sourceRow": 63
       },
-      "locationStatus": "Supplied coordinate reference — Island-level; same island as #12, no second beach marker on Google",
+      "locationStatus": "Coordinates unavailable — no distinct beach marker verified",
       "waterType": "ocean_sea",
       "habitat": "Biodiversity information not yet available",
       "habitatTag": "UNAVAILABLE",
@@ -2405,9 +2398,9 @@
       "ecologicalNote": "Biodiversity information not yet available",
       "locationReview": {
         "reviewedAt": "2026-10-06",
-        "status": "supplied_coordinate_reference",
+        "status": "identity_verified_coordinates_unverified",
         "providerPage": "https://beaches-searcher.com/en/beach/458201215/pulau-tulai-beach-ii",
-        "evidenceNote": "Island-level; same island as #12, no second beach marker on Google"
+        "evidenceNote": "No distinct beach marker verified; the available Google Maps place ID maps to Pulau Tulai Beach (#12)."
       }
     },
     {
@@ -2572,7 +2565,7 @@
       "locationSource": {
         "sourceName": "Google Maps place reference (supplied CSV)",
         "sourceUrl": "https://www.google.com/maps/place/?q=place_id:ChIJkUKHVlkQtzERrJz6W4ePJU4",
-        "providerPage": null,
+        "providerPage": "https://www.google.com/maps/place/?q=place_id:ChIJkUKHVlkQtzERrJz6W4ePJU4",
         "precision": "supplied_google_maps_reference",
         "verifiedAt": "2026-10-06",
         "evidenceNote": "Exact beach marker (Redang); chosen to distinguish from #1"
@@ -2596,7 +2589,7 @@
       "locationReview": {
         "reviewedAt": "2026-10-06",
         "status": "supplied_coordinate_reference",
-        "providerPage": null,
+        "providerPage": "https://www.google.com/maps/place/?q=place_id:ChIJkUKHVlkQtzERrJz6W4ePJU4",
         "evidenceNote": "Exact beach marker (Redang); chosen to distinguish from #1"
       }
     },
