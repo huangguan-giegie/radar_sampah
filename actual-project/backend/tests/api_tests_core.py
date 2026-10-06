@@ -173,12 +173,14 @@ def test_species_distribution_predicts_from_packaged_models(api):
     assert payload["insideMalaysianEez"] is True
     assert payload["scoreType"] == "relative_occurrence"
     assert payload["calibratedProbability"] is False
-    assert {prediction["speciesSlug"] for prediction in payload["predictions"]} == {
+    slugs = {prediction["speciesSlug"] for prediction in payload["predictions"]}
+    assert len(slugs) == 40
+    assert {
         "green_sea_turtle",
         "ocellaris_clownfish",
         "irrawaddy_dolphin",
         "moorish_idol",
-    }
+    }.issubset(slugs)
 
 
 def test_species_distribution_rejects_coordinates_outside_model_area(api):
