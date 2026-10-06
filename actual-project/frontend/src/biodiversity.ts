@@ -31,6 +31,22 @@ export function withBeach(path: string, beachId?: string) {
   return beachId ? path + (path.includes("?") ? "&" : "?") + "beach=" + encodeURIComponent(beachId) : path;
 }
 
+export function marineAreaPath(regionId: string, speciesId: string | null, beachId?: string) {
+  return withBeach("/marine-area/" + regionId + (speciesId ? "?species=" + encodeURIComponent(speciesId) : ""), beachId);
+}
+
+export function groupMarineRecords(records: readonly MarineRecord[], selectedSpeciesId?: string | null) {
+  const groups = new Map<string, { id: string; name: string; records: MarineRecord[] }>();
+  for (const record of records) {
+    const item = marineRecordDetails(record);
+    const id = item.speciesId ?? record.name;
+    const group = groups.get(id);
+    if (group) group.records.push(record);
+    else groups.set(id, { id, name: content.species.find(s => s.id === id)?.name ?? record.name, records: [record] });
+  }
+  return [...groups.values()].sort((a, b) => Number(b.id === selectedSpeciesId) - Number(a.id === selectedSpeciesId));
+}
+
 // Region-map photo pins: the prototype intentionally displays selected records,
 // while the region page retains the complete published record collection.
 export const MARINE_PIN_REFERENCES: Record<string, readonly [number, string, string][]> = {

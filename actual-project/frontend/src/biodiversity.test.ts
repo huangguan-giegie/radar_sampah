@@ -1,9 +1,19 @@
 import { describe, expect, it } from "vitest";
 import content from "./content/coastalContent.json";
-import { marineRecordDetails, regionalMarinePins, overviewMarinePins, originBeachId, withBeach, MARINE_PIN_REFERENCES } from "./biodiversity";
+import { groupMarineRecords, marineAreaPath, marineRecordDetails, regionalMarinePins, overviewMarinePins, originBeachId, withBeach, MARINE_PIN_REFERENCES } from "./biodiversity";
 
 const pilots = [{ id: "morib", lat: 2.751, lng: 101.442 }, { id: "remis", lat: 3.2, lng: 101.31 }];
 describe("prototype biodiversity navigation", () => {
+  it("opens the selected species first without losing distinct published places", () => {
+    const johor = content.regions.find(r => r.id === "johor")!;
+    const groups = groupMarineRecords(johor.records, "seagrass");
+    expect(groups.map(group => group.id)).toEqual(["seagrass", "dugong"]);
+    expect(groups[0].records.map(record => record.place)).toEqual(["Pulau Sibu", "Merambong, Sungai Pulai"]);
+    expect(groups.flatMap(group => group.records)).toHaveLength(johor.records.length);
+    expect(groupMarineRecords(johor.records, "unknown")[0].id).toBe("dugong");
+    expect(marineAreaPath("johor", "seagrass")).toBe("/marine-area/johor?species=seagrass");
+    expect(marineAreaPath("johor", "dugong", "pulau-tinggi")).toBe("/marine-area/johor?species=dugong&beach=pulau-tinggi");
+  });
   it("resolves every regional pin to its own record and species introduction", () => {
     const counts = [2, 2, 3, 2, 1, 1, 2, 2, 1];
     Object.keys(MARINE_PIN_REFERENCES).forEach((region, i) => {
