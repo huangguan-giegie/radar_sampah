@@ -49,6 +49,27 @@ role needs CREATE permission for this first startup (or a DBA can create and
 grant access to the schema in advance). New photos are stored privately in the database and
 survive redeployment with report records.
 
+The active database contract is `schema.sql`, not the historical Iteration 1
+data plan or the unused `participant_profiles`/quiz modules. Existing databases
+can apply `migrations/003_add_account_attendance.sql` after migration 002,
+using the configured application schema on `search_path`. Startup also creates
+these tables and the optional meeting point idempotently.
+
+| API data | PostgreSQL tables |
+| --- | --- |
+| Anonymous sign-in and recovery | `users` |
+| Beach and biodiversity references | `beaches`, `dim_threat`, `dim_species`, `area_species` |
+| Reports and private uploaded photos | `reports`, `report_photos` |
+| Cleanup records | `cleanup_actions` |
+| Events, membership and successful check-in | `community_events`, `community_event_members`, `community_event_attendance` |
+| Account nickname and leaderboard consent | `account_profiles` |
+
+Retained beach rows without coordinates remain readable and selectable manually.
+GPS resolution skips these rows; event check-in returns `409 LOCATION_UNAVAILABLE`
+without recording attendance. The connection pool checks idle connections before
+reuse so a server-closed connection is replaced before a new query starts. A
+connection lost during an active transaction still returns an error.
+
 For another Docker host, run from the repository root:
 
 ```text

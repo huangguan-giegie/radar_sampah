@@ -401,7 +401,7 @@ def normalise_database_url(database_url: str | None) -> str:
 
 def create_engine_for_url(database_url: str) -> Engine:
     connect_args = {"check_same_thread": False} if database_url.startswith("sqlite") else {}
-    engine = create_engine(database_url, future=True, connect_args=connect_args)
+    engine = create_engine(database_url, future=True, connect_args=connect_args, pool_pre_ping=True)
     if database_url.startswith("sqlite"):
         return engine
     # Neon poolers can reset session settings between transactions. Translate
@@ -2361,6 +2361,8 @@ def create_app(
         if event.status != "Open" or not (utc_datetime(event.starts_at) <= now <= utc_datetime(event.ends_at)):
             return error_response(409, "EVENT_NOT_ACTIVE", "Check-in is available only while the event is active.")
         beach = next((item for item in beaches if item["id"] == event.beach_id), None)
+        if beach is not None and (beach["lat"] is None or beach["lng"] is None):
+            return error_response(409, "LOCATION_UNAVAILABLE", "This beach has no published coordinates for check-in.")
         if beach is None or distance_km(lat, lng, beach["lat"], beach["lng"]) > EVENT_CHECKIN_RADIUS_KM:
             return error_response(403, "LOCATION_OUT_OF_RANGE", "You must be within 25 km of the event beach to check in.")
         with engine.begin() as connection:
@@ -2538,6 +2540,8 @@ def create_app(
         nearest: dict[str, Any] | None = None
         nearest_distance = float("inf")
         for beach in beaches:
+            if beach["lat"] is None or beach["lng"] is None:
+                continue
             phi1, phi2 = math.radians(lat), math.radians(beach["lat"])
             dphi = math.radians(beach["lat"] - lat)
             dlambda = math.radians(beach["lng"] - lng)

@@ -1,7 +1,7 @@
 -- ============================================================================
 -- Radar Sampah — schema.sql
 --
--- Latest main contract plus additive Iteration 2 fields and tables.
+-- Current app:create_app() contract, including account profiles and attendance.
 -- PostgreSQL. Keep this file aligned with the deployed database.
 -- ============================================================================
 
@@ -128,6 +128,7 @@ CREATE TABLE community_events (
   ends_at     timestamptz NOT NULL,
   status      text NOT NULL CHECK (status IN ('Open','Closed')),
   source      text NOT NULL CHECK (source IN ('scheduled','moderator')),
+  meeting_point varchar(160),
   created_by  text REFERENCES users(id),
   created_at  timestamptz NOT NULL DEFAULT now(),
   updated_at  timestamptz NOT NULL DEFAULT now(),
@@ -145,6 +146,20 @@ CREATE TABLE community_event_members (
   location_passed boolean NOT NULL DEFAULT false,
   PRIMARY KEY (event_id, participant_id),
   CONSTRAINT community_event_members_location_check CHECK (location_passed = (checked_in_at IS NOT NULL))
+);
+
+CREATE TABLE community_event_attendance (
+  event_id       varchar(100) NOT NULL,
+  participant_id varchar(80) NOT NULL,
+  confirmed_at   timestamptz NOT NULL,
+  PRIMARY KEY (event_id, participant_id)
+);
+
+CREATE TABLE account_profiles (
+  user_id            text PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+  nickname           varchar(30) NOT NULL,
+  joined_leaderboard boolean NOT NULL DEFAULT false,
+  updated_at         timestamptz NOT NULL
 );
 
 CREATE TABLE cleanup_actions (
