@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { photoPreviewUrl, USE_MOCK } from '../api';
+import { photoPreviewUrl } from '../api';
 import { Check, Shield } from '../components/Icon';
 import { Alert, Callout, OverlayChip, SectionLabel } from '../components/ds';
 import { BackButton, GhostButton, PrimaryButton, StepBadge, TextButton } from '../components/ui';
@@ -52,7 +52,7 @@ export default function AiSuggestionScreen() {
         setEditable(suggestion.suggestions);
         patchDraft({
           ...(suggestion.modelState === 'ready' ? { quantities: suggestion.suggestions } : {}),
-          aiModelState: suggestion.modelState,
+          aiModelState: suggestion.modelState === 'ready' ? 'ready' : suggestion.modelState === 'empty' ? 'empty' : 'unavailable',
           aiModelVersion: suggestion.modelVersion,
           aiDecision: null,
         }, key);
@@ -73,7 +73,7 @@ export default function AiSuggestionScreen() {
       setLoading(false);
     } else {
       // Optional demo states apply only to the first attempt.
-      const requestedState = USE_MOCK ? params.get('ai') : null;
+      const requestedState = params.get('ai');
       run(requestedState === 'unreadable' ? 'unreadable' : requestedState === 'fail' ? 'unavailable' : null);
     }
     return () => {
@@ -125,7 +125,7 @@ export default function AiSuggestionScreen() {
 
   // No usable suggestion. The details already entered stay; the user checks
   // them on the details step, and Continue there goes on to Review as manual.
-  function continueManually(state: 'empty' | 'unavailable' | 'unreadable') {
+  function continueManually(state: 'empty' | 'unavailable') {
     patchDraft({ aiDecision: null, aiModelState: state, aiModelVersion: modelVersion });
     nav('/report/details', { replace: true });
   }
@@ -141,11 +141,11 @@ export default function AiSuggestionScreen() {
   const title = loading
     ? 'Checking your photo…'
     : result?.modelState === 'ready'
-      ? 'Check the AI Suggestion'
+      ? 'Check the AI suggestion'
       : result?.modelState === 'unreadable'
-        ? 'We Couldn’t Read That Photo'
+        ? 'We couldn’t read that photo.'
         : result?.modelState === 'unavailable'
-          ? 'AI Check Unavailable'
+          ? 'AI check unavailable'
           : "We're not sure";
 
   return (
@@ -153,7 +153,9 @@ export default function AiSuggestionScreen() {
       <div className="measure i2-page anim-fade-up" style={{ paddingBottom: 'calc(var(--safe-bottom) + 34px)' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
           <BackButton onClick={back} />
-          <StepBadge>STEP 3 OF 5 · AI CHECK</StepBadge>
+          {/* The suggestion itself is checked on the review step, so a ready
+              result is step 4; checking and every fallback are step 3. */}
+          <StepBadge>STEP 4 OF 6 · AI CHECK</StepBadge>
         </div>
         <div>
           <SectionLabel size="sm">AI SUGGESTION · REVIEW BEFORE SAVING</SectionLabel>
@@ -216,22 +218,22 @@ export default function AiSuggestionScreen() {
             </div>
 
             {Object.keys(editable).length === 0 && <Alert title="Choose at least one category" tone="caution">You can enter the categories and quantity bands manually.</Alert>}
-            <PrimaryButton onClick={confirm} disabled={Object.keys(editable).length === 0}>Confirm Suggestions</PrimaryButton>
-            <GhostButton onClick={changeCategoryOrBand}>Change Category or Band</GhostButton>
-            <TextButton onClick={keepManual}>Enter Manually</TextButton>
+            <PrimaryButton onClick={confirm} disabled={Object.keys(editable).length === 0}>Confirm suggestions</PrimaryButton>
+            <GhostButton onClick={changeCategoryOrBand}>Change category or band</GhostButton>
+            <TextButton onClick={keepManual}>Enter manually</TextButton>
           </>
         ) : result?.modelState === 'unreadable' ? (
           <>
             <p style={{ margin: 0, color: C.muted, fontSize: 13, lineHeight: 1.55 }}>Nothing has been submitted.</p>
             <KeptRow>{`${draft.beachName ?? 'Beach'} and draft kept`}</KeptRow>
-            <PrimaryButton onClick={() => nav('/report/photo', { replace: true })}>Choose Another Photo</PrimaryButton>
-            <GhostButton onClick={() => continueManually('unreadable')}>Continue Manually</GhostButton>
+            <PrimaryButton onClick={() => nav('/report/photo', { replace: true })}>Choose another photo</PrimaryButton>
+            <GhostButton onClick={() => continueManually('unavailable')}>Continue manually</GhostButton>
           </>
         ) : result?.modelState === 'unavailable' ? (
           <>
             <KeptRow>Photo, beach and draft kept</KeptRow>
-            <PrimaryButton onClick={() => continueManually('unavailable')}>Continue Manually</PrimaryButton>
-            <GhostButton onClick={() => run(null)}>Try Again</GhostButton>
+            <PrimaryButton onClick={() => continueManually('unavailable')}>Continue manually</PrimaryButton>
+            <GhostButton onClick={() => run(null)}>Try again</GhostButton>
           </>
         ) : (
           <>

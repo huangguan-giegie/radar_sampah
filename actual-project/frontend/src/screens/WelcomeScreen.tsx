@@ -1,11 +1,21 @@
-// Browsing comes before identity. A profile is requested when contributing.
+// The welcome screen. Its one job is to offer two doors:
+//
+//   "See What's Out There"  -> the map, with no account at all
+//   "Count Me In"           -> get a participant number, then the home page
+//
+// Looking comes first on purpose. Asking a stranger to sign up before they
+// have seen anything is the fastest way to lose them, and browsing genuinely
+// needs no identity in this app - only filing a report does.
+//
+// The small line under the two buttons says the same thing in plain words.
+// People hesitate at a sign up button because they expect to be asked for an
+// email; that line answers it before they have to worry about it.
 import { useNavigate } from 'react-router-dom';
 import { C, MONO, NOISE } from '../theme';
 import { Pin } from '../components/Icon';
-import { markWelcomeSeen } from '../welcomeEntry';
 
 // Morib Beach at dusk, the walk the headline is talking about. Like the photo
-// on Home it is one of the supported beaches and ships with the app, so
+// on Home it is one of the four beaches in this app and ships with the app, so
 // opening it sends nothing to a photo site. The file was only resized.
 //
 // CC BY-SA 4.0 requires credit, shown under the buttons. The author has no
@@ -21,10 +31,6 @@ const WELCOME_PHOTO = {
 
 export default function WelcomeScreen() {
   const nav = useNavigate();
-  const continueTo = (path: string) => {
-    markWelcomeSeen();
-    nav(path);
-  };
 
   return (
     <div
@@ -74,7 +80,7 @@ export default function WelcomeScreen() {
         }}
       >
         <i style={{ width: 6, height: 6, borderRadius: 3, background: C.lime, display: 'block' }} />
-        MALAYSIA · COMMUNITY COASTAL MONITORING
+        SELANGOR · STRAIT OF MALACCA
       </div>
 
       <div
@@ -100,12 +106,12 @@ export default function WelcomeScreen() {
           can count for something.
         </div>
         <div style={{ fontSize: 14.5, lineHeight: 1.55, color: 'rgba(232,238,245,.82)', maxWidth: 310 }}>
-          Explore your beach, discover coastal life, and help reduce litter.
+          Four Selangor beaches, mapped by volunteers like you.
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 8 }}>
           <button
             type="button"
-            onClick={() => continueTo('/home')}
+            onClick={() => nav('/map')}
             className="press"
             style={{
               height: 56,
@@ -122,10 +128,30 @@ export default function WelcomeScreen() {
             }}
           >
             <Pin size={16} color={C.navy} strokeWidth={2} />
-            Explore Your Beach
+            See What's Out There
+          </button>
+          <button
+            type="button"
+            onClick={() => nav('/identity?next=/home')}
+            className="press"
+            style={{
+              height: 56,
+              borderRadius: 18,
+              background: 'rgba(255,255,255,.12)',
+              backdropFilter: 'blur(8px)',
+              border: '1.5px solid rgba(255,255,255,.35)',
+              color: C.bg,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: 15.5,
+              fontWeight: 600,
+            }}
+          >
+            Count Me In
           </button>
           <div style={{ textAlign: 'center', fontSize: 12, color: 'rgba(221,227,236,.7)', lineHeight: 1.5 }}>
-            Create a profile when you contribute.
+            You'll only need an ID when you add something.
           </div>
           {/* Same credit format as Home and the species cards. */}
           <div style={{ textAlign: 'center', fontSize: 9.5, color: 'rgba(221,227,236,.55)', lineHeight: 1.5 }}>

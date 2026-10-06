@@ -52,12 +52,9 @@ export default function AiMethodScreen() {
             explaining one would describe a number nobody can see. */}
         <div className="i2-card">
           <SectionLabel size="sm">CATEGORY &amp; SIZE</SectionLabel>
-          <BulletList items={[
-            'Category means the litter type.',
-            'Quantity uses Small, Medium, Large or Very Large.',
-            'A new report with only Small bands is not counted as active evidence.',
-            'Small still records what remains after cleanup.',
-          ]} />
+          <p style={{ margin: '8px 0 0', color: C.muted, fontSize: 12.5, lineHeight: 1.55 }}>
+            Category means litter type. Quantity uses Small, Medium, Large or Very Large. A new report with only Small bands is not counted as active evidence; Small is still used to record what remains after cleanup.
+          </p>
         </div>
 
         <Callout title="Photo privacy" tone="quiet" icon={<Shield color={C.navy} />}>
@@ -66,7 +63,7 @@ export default function AiMethodScreen() {
 
         {/* The checkpoint is the file the backend actually loads
             (sea_taco_yolo11m_best), so the name here can be checked. */}
-        <div className="i2-card">
+        <div style={{ borderTop: `1px solid ${C.line2}`, paddingTop: 14 }}>
           <SectionLabel size="sm">MODEL &amp; LIMITATIONS</SectionLabel>
           <div style={{ marginTop: 8 }}>
             <ModelRow label="CHECKPOINT" value="sea-taco-yolo11m-best" />

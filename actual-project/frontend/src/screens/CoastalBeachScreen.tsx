@@ -26,7 +26,7 @@ import {
 } from "../components/CoastalUI";
 import { SpeciesPicture } from "../components/SpeciesPicture";
 import { ConservationCards } from "../components/ConservationCards";
-import { attentionStateFor, daysAgo, formatDate, reportWord, SEVERITY, severityLabel } from "../theme";
+import { attentionStateFor, formatDate, SEVERITY, severityLabel } from "../theme";
 import { hasDraftProgress, resumePath } from "../flowRules";
 import { compositionFooter } from "./BeachScreen";
 import { BandMeter } from "../components/ds";
@@ -36,8 +36,6 @@ import { useAppBack } from "../navigation";
 import { eventIsAvailable, useEventClock } from "../eventAvailability";
 import { RecurrenceEvidence } from "../components/RecurrenceEvidence";
 import { NearbyMarineSpecies } from "../components/NearbyMarineSpecies";
-import { beachReference } from "../beachReference";
-import "../styles/home-map-alignment.css";
 
 export default function CoastalBeachScreen() {
   const { beachId = "" } = useParams();
@@ -137,14 +135,13 @@ export default function CoastalBeachScreen() {
   );
   const image = detail?.coverImageUrl ?? fixture?.image;
   const region = fixture?.region ?? "selangor";
-  const reference = beachReference(beachId);
-  const newestCountedAt = detail?.newestCountedReportAt
-    ?? detail?.latestContributingReportAt
-    ?? detail?.lastReportedAt;
-  const reportAge = daysAgo(newestCountedAt ?? null);
+  const species = (fixture?.species ?? [])
+    .map((id) => content.species.find((s) => s.id === id))
+    .filter((s) => !!s);
+  const regional = content.regions.find((r) => r.id === region)?.records ?? [];
   const goMap = () => nav("/map?region=" + region);
   return (
-    <main className="screen scroll-y coastal-screen beach-aligned">
+    <main className="screen scroll-y coastal-screen">
       <header className="coastal-beach-hero">
         {image && <img src={image} alt={b.name} />}
         <div className="beach-hero-top">
@@ -192,10 +189,10 @@ export default function CoastalBeachScreen() {
             <div className="dashed-empty">No public report photos yet.</div>
           )}
         </section>
-        <button className="coastal-card beach-severity-card" onClick={() => nav("/method")} aria-label="How this litter band is rated">
+        <WhiteCard>
           <div className="beach-band-header">
             <p className="eyebrow">Litter Severity</p>
-            <small>{attention.hasBand ? "✓ " : "ⓘ "}{b.validReports} counted {reportWord(b.validReports)}</small>
+            <small>{b.validReports} counted reports</small>
           </div>
           <div
             className="beach-band-value"
@@ -222,14 +219,42 @@ export default function CoastalBeachScreen() {
           </div>
           <p className="beach-freshness">
             ●{" "}
-            {newestCountedAt
-              ? reportAge === 0 ? "Reported today" : "Reported " + reportAge + (reportAge === 1 ? " day ago" : " days ago")
+            {detail?.lastReportedAt
+              ? "Reported " + formatDate(detail.lastReportedAt)
               : (fixture?.reported ?? "Not recently reported")}
           </p>
           {!attention.hasBand && (
             <p className="coastal-footnote">{attention.detail}</p>
           )}
-        </button>
+          <button className="coastal-footnote" onClick={() => nav("/method")}>
+            How it’s rated →
+          </button>
+        </WhiteCard>
+        <SummaryCard eyebrow="What You Can Do Here">
+          <LinkRow
+            title="Report Litter Here"
+            subtitle="Photo, beach and what you saw"
+            onClick={startReport}
+          />
+          <LinkRow
+            title="Join a Cleanup"
+            subtitle={
+              event
+                ? "Contribute at an upcoming cleanup"
+                : "No cleanup here yet · contribute at one nearby"
+            }
+            onClick={() => nav(event ? "/events/" + event.id : "/community")}
+          />
+          <LinkRow
+            title="Log Your Cleanup"
+            subtitle="Confirm what is left after cleaning"
+            onClick={() =>
+              previewOnly
+                ? setUnsupported(true)
+                : nav(cleanupDestination(beachId, linkedEvent))
+            }
+          />
+        </SummaryCard>
         <section>
           <SectionHeading
             action="Species Guide →"
@@ -243,30 +268,50 @@ export default function CoastalBeachScreen() {
             </p>
           )}
           <div className="coastal-grid-two" style={{ marginTop: 16 }}>
-            {reference?.cards.map((card) => (
-              <button key={card.name} onClick={() => nav(card.speciesId
-                ? "/species/" + card.speciesId
-                : "/marine-area/" + region + "?beach=" + beachId)}>
-                {card.image ? <SpeciesPicture image={card.image} name={card.name} />
-                  : <div className="beach-reference-no-photo">No verified photo</div>}
-                <strong>{card.name}</strong>
+            {species.slice(0, 2).map((s) => (
+              <button key={s.id} onClick={() => nav("/species/" + s.id)}>
+                <SpeciesPicture image={s.image} name={s.name} />
+                <strong>{s.name}</strong>
               </button>
             ))}
+            {species.length < 2 &&
+              regional
+                .filter((r) => !species.some((s) => s.id === r.speciesId))
+                .slice(0, 2 - species.length)
+                .map((r, i) => (
+                  <button
+                    key={i}
+                    onClick={() =>
+                      nav(
+                        r.speciesId
+                          ? "/species/" + r.speciesId
+                          : "/marine-area/" + region + "?beach=" + beachId,
+                      )
+                    }
+                  >
+                    <SpeciesPicture image={r.image} name={r.name} />
+                    <strong>{r.name}</strong>
+                  </button>
+                ))}
           </div>
-          {reference?.caption && <p className="beach-local-record">{reference.caption}</p>}
           <div className="section-heading" style={{ marginTop: 12 }}>
             <p className="coastal-footnote">
-              {reference?.caption ? "Examples · not sightings" : "Regional examples · not sightings"}
+              Regional examples · not sightings
             </p>
-            {reference?.source ? <a href={reference.source} target="_blank" rel="noreferrer">Sources ↗</a> : <button
+            <button
               onClick={() =>
                 nav("/marine-area/" + region + "?beach=" + beachId)
               }
             >
               Sources ↗
-            </button>}
+            </button>
           </div>
         </section>
+        <section id="species-model">
+          <SectionHeading>Modelled Nearby Marine Species</SectionHeading>
+          <NearbyMarineSpecies beach={{ id: beachId, lat: detail?.lat ?? null, lng: detail?.lng ?? null, scene: detail?.scene ?? "#edf2f8" }} />
+        </section>
+        {pilot && <ConservationCards beachId={beachId} />}
         <section>
           <SectionHeading>Litter Composition</SectionHeading>
           {detail?.composition?.length ? (
@@ -297,22 +342,24 @@ export default function CoastalBeachScreen() {
             </div>
           )}
         </section>
-        <SummaryCard eyebrow="What You Can Do Here">
-          <LinkRow title="Report Litter Here" subtitle="Photo, beach and what you saw" onClick={startReport} />
-          <LinkRow title="Join a Cleanup" subtitle={event ? "Contribute at an upcoming cleanup" : "No cleanup here yet · contribute at one nearby"}
-            onClick={() => nav(event ? "/events/" + event.id : "/community")} />
-          <LinkRow title="Log Your Cleanup" subtitle="Confirm what is left after cleaning"
-            onClick={() => previewOnly ? setUnsupported(true) : nav(cleanupDestination(beachId, linkedEvent))} />
-        </SummaryCard>
+        {cleanup && (
+          <WhiteCard>
+            <p className="eyebrow">Latest Recorded Cleanup</p>
+            <h2>{formatDate(cleanup.createdAt)}</h2>
+            <p className="subtle">{detail?.cleanupStatus ?? cleanup.recurrence?.calloutStatus ?? cleanup.status}</p>
+            <p className="subtle">
+              A new counted report helps show what happened after the cleanup.
+            </p>
+            <button
+              style={{ marginTop: 14 }}
+              onClick={() => nav("/cleanup/result/" + cleanup.id)}
+            >
+              View Recorded Change →
+            </button>
+          </WhiteCard>
+        )}
         <RecurrenceEvidence evidence={detail?.recurrence ?? cleanup?.recurrence} />
-        {cleanup && <LinkRow title="View Recorded Change" subtitle={formatDate(cleanup.createdAt)} onClick={() => nav("/cleanup/result/" + cleanup.id)} />}
         <GhostButton onClick={goMap}>Back to Map</GhostButton>
-        <details className="beach-more-context" id="species-model">
-          <summary>More marine context</summary>
-          <SectionHeading>Modelled Nearby Marine Species</SectionHeading>
-          <NearbyMarineSpecies beach={{ id: beachId, lat: detail?.lat ?? null, lng: detail?.lng ?? null, scene: detail?.scene ?? "#edf2f8" }} />
-          {pilot && <ConservationCards beachId={beachId} />}
-        </details>
         {USE_MOCK && <p className="demo-label">Preview · example data</p>}
       </div>
       {draftChoice && (

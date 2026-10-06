@@ -37,7 +37,6 @@ import {
   savePreviewProfile,
   validNickname,
 } from "../accountPreview";
-import { contributionMonths } from "./participantFlowContent";
 const TOP = [
   ["PenyuPal", 184],
   ["KakiPantai", 176],
@@ -107,11 +106,11 @@ export default function AccountScreen() {
   );
   const loading = USE_MOCK ? countsLoading || eventsLoading || reportsLoading : contributionsLoading;
   const error = USE_MOCK ? countsError || eventsError || reportsError : contributionsError;
-  const ready = !loading && !error && (USE_MOCK || contributions !== null);
+  const ready = !loading && !error;
   const points = USE_MOCK ? ready && counts ? counts.counted + attendance.length * 5 : null : ready ? contributions?.points ?? null : null;
   const counted = ready ? (USE_MOCK ? counts?.counted : contributions?.countedReports) ?? "—" : "—";
   const attendanceCount = USE_MOCK ? attendance.length : contributions?.recordedAttendances ?? 0;
-  const contributionSummary = loading ? "Loading contributions…" : !ready ? "Contributions unavailable" : `${attendanceCount} recorded attendance · ${counted} counted reports`;
+  const contributionSummary = loading ? "Loading contributions…" : error ? "Contributions unavailable" : `${attendanceCount} recorded attendance at recorded cleanups · ${counted} counted reports`;
   const loadError = error ? (
     <DataUnavailable title="Couldn’t Load Contributions" retry={() => { if (USE_MOCK) { void refreshCounts(); void refreshEvents(); void refreshReports(); } else void refreshContributions(); }}>Please try again.</DataUnavailable>
   ) : null;
@@ -123,16 +122,6 @@ export default function AccountScreen() {
   const [saving, setSaving] = useState(false);
   const [privacy, setPrivacy] = useState(false);
   const recoveryToken = storedRecoveryToken();
-  const history: ContributionSummary["history"] = USE_MOCK ? [
-    ...attendance.map((event) => ({
-      kind: "attendance" as const, points: 5, createdAt: event.date,
-      beachName: event.beachName, eventId: event.id,
-    })),
-    ...reports.filter((report) => report.status === "Counted").map((report) => ({
-      kind: "report" as const, points: 1, createdAt: report.createdAt,
-      beachName: report.beachName, reportId: report.id,
-    })),
-  ] : contributions?.history ?? [];
   async function save(join?: boolean) {
     if (nickname.trim() && !validNickname(nickname)) {
       setValidation(
@@ -238,7 +227,7 @@ export default function AccountScreen() {
     return (
       <CoastalPage title="Contribution History" back="/account">
         <SummaryCard
-          eyebrow={USE_MOCK ? "Your Points · Preview" : "Your Points"}
+          eyebrow={USE_MOCK ? "Your Points · Preview" : "Your Contributions"}
           value={points ?? "—"}
           description="points"
         >
@@ -247,23 +236,39 @@ export default function AccountScreen() {
           </p>
         </SummaryCard>
         {loading ? <Skeleton h={160} /> : loadError}
-        {ready && contributionMonths(history).map((group) => (
-          <section key={group.month}>
-            <p className="eyebrow" style={{ marginBottom: 10 }}>{group.month.toUpperCase()}</p>
-            <WhiteCard>
-              {group.entries.map((entry, index) => (
-                <LinkRow
-                  key={`${entry.kind}-${entry.reportId ?? entry.eventId ?? index}`}
-                  title={entry.kind === "report" ? "Counted report" : "Recorded attendance"}
-                  subtitle={entry.beachName + " · " + formatDate(entry.createdAt)}
-                  trailing={<b>+{entry.points}</b>}
-                  onClick={() => { if (entry.reportId) nav("/reports/" + entry.reportId); else if (entry.eventId) nav("/events/" + entry.eventId); }}
-                />
-              ))}
-            </WhiteCard>
-          </section>
+        {ready && !USE_MOCK && contributions?.history.map((entry, index) => (
+          <WhiteCard key={`${entry.kind}-${entry.reportId ?? entry.eventId ?? index}`}>
+            <LinkRow
+              title={entry.kind === "report" ? "Counted report" : "Recorded cleanup attendance"}
+              subtitle={entry.beachName + " · " + formatDate(entry.createdAt)}
+              trailing={<b>+{entry.points}</b>}
+              onClick={() => { if (entry.reportId) nav("/reports/" + entry.reportId); else if (entry.eventId) nav("/events/" + entry.eventId); }}
+            />
+          </WhiteCard>
         ))}
-        {ready && history.length === 0 && (
+        {ready && USE_MOCK && attendance.map((e) => (
+          <WhiteCard key={e.id}>
+            <LinkRow
+              title="Recorded attendance"
+              subtitle={e.beachName + " · " + formatDate(e.date)}
+              trailing={USE_MOCK ? <b>+5</b> : undefined}
+              onClick={() => nav("/events/" + e.id)}
+            />
+          </WhiteCard>
+        ))}
+        {ready && USE_MOCK && reports
+          .filter((r) => r.status === "Counted")
+          .map((r) => (
+            <WhiteCard key={r.id}>
+              <LinkRow
+                title="Counted report"
+                subtitle={r.beachName + " · " + formatDate(r.createdAt)}
+                trailing={USE_MOCK ? <b>+1</b> : undefined}
+                onClick={() => nav("/reports/" + r.id)}
+              />
+            </WhiteCard>
+          ))}
+        {ready && (USE_MOCK ? !attendance.length && !reports.some((r) => r.status === "Counted") : !contributions?.history.length) && (
           <DataUnavailable title="Your History Starts Here">
             Counted reports and recorded attendance will appear here.
           </DataUnavailable>
@@ -303,7 +308,7 @@ export default function AccountScreen() {
               <DataUnavailable title="Could not load the leaderboard" retry={() => void refreshLeaderboard()}>{leaderboardError}</DataUnavailable>
             ) : <WhiteCard>
               {(USE_MOCK ? TOP.map(([name, value], i) => ({ rank: i + 1, nickname: String(name), points: Number(value) })) : leaderboard).map((row) => (
-                <div className="leaderboard-row" key={`${row.rank}-${row.nickname}`}>
+                <div className="leaderboard-row" key={row.nickname}>
                   <span>#{row.rank}</span>
                   <strong>{row.nickname}</strong>
                   <span>{row.points}</span>
@@ -373,7 +378,7 @@ export default function AccountScreen() {
       <WhiteCard>
         <LinkRow
           title="Public Nickname"
-          trailing={<small>{profileLoading ? "Loading…" : profileError ? "Unavailable" : profile.nickname || "Not set"}</small>}
+          trailing={<small>{profile.nickname || "Not set"}</small>}
           leading={icon(<UserIcon />)}
           onClick={() => nav("/account/nickname")}
         />

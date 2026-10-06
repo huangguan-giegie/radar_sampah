@@ -25,18 +25,13 @@ import { getLocatedMapBeaches, PRIMARY_MAP_BEACHES } from "../mapCatalogue";
 import { placeMapLabels } from "../mapLabels";
 import { originBeachId, overviewMarinePins, regionalMarinePins, withBeach } from "../biodiversity";
 import { MarineRecordCard } from "../components/MarineRecordCard";
-import { fetchCleanupEvents } from "../iteration2Api";
-import { formatEventDate } from "../iteration2";
-import { eventIsAvailable, useEventClock } from "../eventAvailability";
-import { reportWord } from "../theme";
-import "../styles/home-map-alignment.css";
 const COLORS: Record<string, string> = {
   Low: "#6e9d80",
   Moderate: "#d5a04f",
   High: "#ce6b45",
   Severe: "#b84a3f",
 };
-function BorneoInset({ onClick, onHabitat, counts }: { onClick: () => void; onHabitat?: () => void; counts?: { sabah: number; sarawak: number } }) {
+function BorneoInset({ onClick, onHabitat }: { onClick: () => void; onHabitat?: () => void }) {
   const { elRef, mapRef, ready } = useLeafletMap({
     center: [4, 114.5],
     zoom: 4,
@@ -50,7 +45,6 @@ function BorneoInset({ onClick, onHabitat, counts }: { onClick: () => void; onHa
     <div className="borneo-inset">
       <div ref={elRef} />
       <button className="borneo-inset-open" aria-label="Sabah & Sarawak" onClick={onClick}><strong>Sabah & Sarawak ↗</strong></button>
-      {counts && <div className="borneo-report-counts"><span>Sabah <b>{counts.sabah}</b></span><span>Sarawak <b>{counts.sarawak}</b></span></div>}
       {onHabitat && <span className="borneo-habitats">
         <button aria-label="Kuching Wetlands · Mangrove" onClick={onHabitat}><SpeciesIcon glyph="mangrove" size={18} /></button>
         <button aria-label="Lawas · Seagrass" onClick={onHabitat}><SpeciesIcon glyph="grass" size={18} /></button>
@@ -67,7 +61,6 @@ export default function MapScreen() {
   const layer = params.get("layer") === "bio" ? "bio" : "litter";
   const region = REGIONS.find((r) => r.id === regionId);
   const { user, reportsVersion, offline } = useApp();
-  const now = useEventClock();
   const [zoom, setZoom] = useState(6);
   const [minZoom, setMinZoom] = useState(5);
   const [viewSize, setViewSize] = useState("");
@@ -104,12 +97,6 @@ export default function MapScreen() {
     error,
     refresh,
   } = useAsyncData(getCoastalBeaches, [reportsVersion], []);
-  const { data: events, loading: eventsLoading, error: eventsError, refresh: refreshEvents } = useAsyncData(
-    () => fetchCleanupEvents(user?.participantId),
-    [user?.participantId, reportsVersion],
-    [],
-  );
-  const upcomingEvents = events.filter(event => eventIsAvailable(event, now));
   const { data: personal, loading: personalLoading, error: personalError, refresh: refreshPersonal } = useAsyncData(
     () => (user ? iteration3Request<PersonalInsights>('/personal-insights') : Promise.resolve(null)),
     [user?.participantId, reportsVersion],
@@ -118,7 +105,7 @@ export default function MapScreen() {
   useEffect(() => {
     if (!user) return;
     const key = personalPopupKey(user.participantId);
-    if (canAutoShowPersonalPopup(location.state?.fromHome === true, readSessionValue(key) === '1', sheet !== null)) {
+    if (canAutoShowPersonalPopup(location.state?.fromHome === true, readSessionValue(key) === '1')) {
       saveSessionValue(key, '1');
       setSheet('personal');
     }
@@ -402,9 +389,9 @@ export default function MapScreen() {
             </button>
           )}
           <h1>{layer === "bio" ? "Explore the Coast" : "Choose a Beach"}</h1>
-          <button className="map-pill" onClick={() => setSheet("personal")}>
+          {user && <button className="map-pill" onClick={() => setSheet("personal")}>
             Insights
-          </button>
+          </button>}
         </div>
         <div>
           <div className="coastal-segments">
@@ -463,11 +450,7 @@ export default function MapScreen() {
           −
         </button>
       </div>
-      {!region && <BorneoInset onClick={() => setRegion("borneo")} onHabitat={layer === "bio" ? () => nav("/marine-area/borneo") : undefined}
-        counts={layer === "litter" && !loading ? {
-          sabah: beaches.filter(beach => beach.region === "borneo" && beach.area.includes("Sabah")).reduce((count, beach) => count + beach.validReports, 0),
-          sarawak: beaches.filter(beach => beach.region === "borneo" && beach.area.includes("Sarawak")).reduce((count, beach) => count + beach.validReports, 0),
-        } : undefined} />}
+      {!region && <BorneoInset onClick={() => setRegion("borneo")} onHabitat={layer === "bio" ? () => nav("/marine-area/borneo") : undefined} />}
       {region && <button className="map-pill map-full-overview" onClick={() => setRegion("")}>Full Map</button>}
       </div>
       <div className="map-bottom-card">
@@ -535,21 +518,24 @@ export default function MapScreen() {
         <PrimaryButton onClick={() => setSheet(null)}>Got It</PrimaryButton>
       </Sheet>}
       {sheet === "key" && layer === "litter" && (
-        <Sheet title="Reading the Map" onClose={() => setSheet(null)}>
-          <div className="map-key-explanation"><span className="region-map-pin">22</span><p>Number = counted reports in the area.</p></div>
-          <div className="map-key-explanation"><span className="region-map-pin" aria-hidden="true" /><p>Ring = highest litter band in the area.</p></div>
-          <div className="map-key-bands">{Object.entries(COLORS).map(([label, color]) => (
-            <span className="legend-row" key={label}>
+        <Sheet title="Map Key" onClose={() => setSheet(null)}>
+          <p className="subtle">
+            Numbers show counted reports in this view. The ring shows the
+            highest available litter band in that region.
+          </p>
+          {Object.entries(COLORS).map(([label, color]) => (
+            <div className="legend-row" key={label}>
               <i style={{ background: color }} />
               {severityLabel(label as SeverityBand)}
-            </span>
+            </div>
           ))}
-          <span className="legend-row">
+          <div className="legend-row">
             <i style={{ background: "#98a4b5" }} />
-            Insufficient Data
-          </span></div>
+            Insufficient data
+          </div>
           <p className="subtle">
-            Based on counted reports from the last 90 days. Tap a region to explore its beaches.
+            No band does not mean a clean beach. Biodiversity records describe
+            published sources, not live sightings.
           </p>
           <PrimaryButton
             style={{ marginTop: 18 }}
@@ -575,7 +561,6 @@ export default function MapScreen() {
       )}
       {sheet === "beaches" && (
         <Sheet title={region?.name ?? "Beaches"} onClose={() => setSheet(null)}>
-          {loading ? <p className="subtle" role="status">Loading beaches…</p> : !error && <p className="subtle">{areaBeaches.reduce((count, beach) => count + beach.validReports, 0)} {reportWord(areaBeaches.reduce((count, beach) => count + beach.validReports, 0))} · {upcomingEvents.filter(event => areaBeaches.some(beach => beach.id === event.beachId)).length} upcoming cleanups</p>}
           <label className="coastal-search">
             <Search />
             <input
@@ -585,34 +570,30 @@ export default function MapScreen() {
               aria-label="Search beaches"
             />
           </label>
-          {error && <DataUnavailable title="Could not load beaches" retry={() => void refresh()}>{error}</DataUnavailable>}
-          {eventsError && <p className="coastal-footnote" role="alert">Cleanup dates could not be loaded. <button onClick={() => void refreshEvents()}>Try again</button></p>}
-          {visible.map((beach) => {
-            const event = upcomingEvents.find(item => item.beachId === beach.id);
-            return <section key={beach.id} className="map-beach-list-row">
-              <div><button onClick={() => nav("/beach/" + beach.id)}>{beach.name}</button>
-                <SeverityBadge band={beach.severity} label={beach.severity ? undefined : "Insufficient Data"} />
-              </div>
-              {event ? <button className="map-cleanup-link" onClick={() => nav("/events/" + event.id)}>
-                <span>Cleanup {formatEventDate(event.date)} · {event.participantCount} joined{event.joined && <small>You joined</small>}</span><b>›</b>
-              </button> : <p className="coastal-footnote">{beach.area} · {eventsLoading ? "Loading cleanup dates…" : eventsError ? "Cleanup dates unavailable" : "No cleanup scheduled yet"}</p>}
-            </section>;
-          })}
-          {!loading && !error && !visible.length && <DataUnavailable title="No matching beaches" />}
-          <div className="button-pair"><PrimaryButton onClick={() => nav("/community")}>See All Cleanups</PrimaryButton>
-            <GhostButton onClick={() => nav("/insights/trends" + (regionId ? "?region=" + regionId : ""))}>Beach List</GhostButton></div>
+          {visible.map((b) => (
+            <LinkRow
+              key={b.id}
+              title={b.name}
+              subtitle={b.validReports + " counted reports"}
+              trailing={
+                <SeverityBadge
+                  band={b.severity}
+                  label={b.severity ? undefined : "Insufficient Data"}
+                />
+              }
+              onClick={() => nav("/beach/" + b.id)}
+            />
+          ))}
+          {!visible.length && <DataUnavailable title="No matching beaches" />}
         </Sheet>
       )}
-      {sheet === "personal" && (
+      {sheet === "personal" && user && (
         <Sheet title="Your Insights" onClose={() => {
-          if (user) saveSessionValue(personalPopupKey(user.participantId), '1');
+          saveSessionValue(personalPopupKey(user.participantId), '1');
           setSheet(null);
         }}>
           <p className="eyebrow">Private · only you see this</p>
-          <p className="subtle">Built only from your own records</p>
-          {!user ? <DataUnavailable title="Sign in for Your Insights"><p>Use your anonymous participant ID to see your own reports and cleanups.</p>
-            <PrimaryButton onClick={() => nav("/identity?next=" + encodeURIComponent(location.pathname + location.search))}>Continue with an ID</PrimaryButton></DataUnavailable>
-          : personalLoading ? <p role="status">Loading your insights…</p> : personalError ? (
+          {personalLoading ? <p role="status">Loading your insights…</p> : personalError ? (
             <DataUnavailable title="Your insights could not be loaded" retry={() => void refreshPersonal()} />
           ) : personal?.sections.length ? personal.sections.map(section => (
             <WhiteCard key={section.id}>
@@ -626,14 +607,17 @@ export default function MapScreen() {
               <PrimaryButton onClick={() => nav(section.action.path)}>{section.action.label}</PrimaryButton>
             </WhiteCard>
           )) : (
-            <DataUnavailable title="No Insights Yet">
+            <DataUnavailable title="Your Insights">
               {personal?.emptyStateMessage ?? 'Report litter or finish a cleanup to unlock personal insights.'}
-              <div className="personal-empty-actions"><button onClick={() => nav("/report/photo")}>Report Litter<small>Counted reports</small></button>
-                <button onClick={() => { setSheet(null); nav("/home"); }}>Finish a Cleanup<small>Recorded cleanups</small></button></div>
             </DataUnavailable>
           )}
-          <PrimaryButton onClick={() => nav("/insights/trends")}>View Insights</PrimaryButton>
-          <GhostButton style={{ marginTop: 12 }} onClick={() => setSheet(null)}>Back to Map</GhostButton>
+          <GhostButton onClick={() => { setSheet(null); nav('/insights'); }}>View Beach Insights</GhostButton>
+          <GhostButton
+            style={{ marginTop: 16 }}
+            onClick={() => nav('/reports')}
+          >
+            My Reports
+          </GhostButton>
         </Sheet>
       )}
     </main>

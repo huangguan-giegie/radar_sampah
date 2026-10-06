@@ -69,19 +69,27 @@ function PreviewInsightsScreen() {
     trends: beachId ? "Beach Trend" : "Beach Trends",
     cleanup: beachId ? "Cleanup History" : "Cleanup Results",
     participation: "Participation",
-    evidence: "Evidence",
     wildlife: "Wildlife Nearby",
   };
-  const active = topic === "cleanup-history" ? "cleanup" : topic;
+  const active =
+    topic === "participation"
+      ? "participation"
+      : topic === "cleanup" || topic === "cleanup-history"
+        ? "cleanup"
+        : "trends";
   const chips = (
-    <div className="filter-chips" aria-label="Insight topics" style={{ margin: 0 }}>
-      {["trends", "cleanup", "participation", "evidence", "wildlife"].map((t) => (
+    <div className="coastal-segments" aria-label="Insight topics">
+      {["trends", "cleanup", "participation"].map((t) => (
         <button
           key={t}
           aria-pressed={active === t}
           onClick={() => nav("/insights/" + t)}
         >
-          {t.charAt(0).toUpperCase() + t.slice(1)}
+          {t === "trends"
+            ? "Trends"
+            : t === "cleanup"
+              ? "Cleanup"
+              : "Participation"}
         </button>
       ))}
     </div>
@@ -181,7 +189,7 @@ function PreviewInsightsScreen() {
         <p className="eyebrow" style={{ margin: "2px 0 -4px" }}>
           Explore insights
         </p>
-        <div className="action-grid">
+        <div className="action-grid five">
           <ActionTile
             title="Trends"
             subtitle="Band changes"
@@ -199,12 +207,6 @@ function PreviewInsightsScreen() {
             subtitle="Who joined"
             icon={<CommunityIcon size={19} />}
             onClick={() => nav("/insights/participation")}
-          />
-          <ActionTile
-            title="Evidence"
-            subtitle="Reports and freshness"
-            icon={<Info size={19} />}
-            onClick={() => nav("/insights/evidence")}
           />
           <ActionTile
             title="Wildlife"
@@ -400,13 +402,6 @@ function PreviewInsightsScreen() {
         {demo}
       </>
     );
-  } else if (topic === "evidence") {
-    body = (
-      <DataUnavailable title="Evidence needs live report data">
-        Report status, sufficiency and freshness are available from the live
-        Insights summary. This design preview does not include evidence counts.
-      </DataUnavailable>
-    );
   } else if (topic === "participation") {
     const selection = params.get("beach") ?? "all";
     const values =
@@ -567,7 +562,6 @@ function PreviewInsightsScreen() {
     );
   return (
     <CoastalPage
-      key={`${topic}/${beachId ?? ''}`}
       title={
         titles[topic] ??
         (topic === "cleanup-history" ? "Cleanup History" : "Insights")
@@ -613,7 +607,7 @@ function PreviewInsightsScreen() {
           </div>
           <p className="eyebrow">Band</p>
           <div className="filter-chips">
-            {["Severe", "High", "Moderate", "Low", "Insufficient Data"].map(
+            {["Very high", "High", "Moderate", "Low", "Insufficient Data"].map(
               (s) => (
                 <button
                   key={s}

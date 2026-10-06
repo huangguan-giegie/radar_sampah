@@ -91,10 +91,10 @@ export default function ConfirmBeachScreen() {
         onClick={back}
         style={{ position: 'absolute', top: 'var(--top-inset)', left: 18, zIndex: 820, background: 'rgba(255,255,255,.85)', backdropFilter: 'blur(10px)' }}
       />
-      <div style={{ position: 'absolute', top: 'var(--top-inset)', right: 18, zIndex: 820 }}><StepBadge>STEP 2 OF 5 · BEACH</StepBadge></div>
+      <div style={{ position: 'absolute', top: 'var(--top-inset)', right: 18, zIndex: 820 }}><StepBadge>STEP 3 OF 6 · BEACH</StepBadge></div>
       <OverlayChip
         tone="light"
-        style={{ position: 'absolute', top: 'calc(var(--top-inset) + 58px)', left: 18, zIndex: 820 }}
+        style={{ position: 'absolute', top: 'var(--top-inset)', left: '50%', transform: 'translateX(-50%)', zIndex: 820 }}
       >
         {/* Says how this report was located. The same wording turns up on the
             review screen, so the user always knows what they are attesting to. */}
@@ -138,10 +138,10 @@ export default function ConfirmBeachScreen() {
           {!manual && suggested ? (
             <>
               <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '.16em', color: C.dim }}>
-                SELECTED BEACH
+                SUGGESTED FROM YOUR LOCATION
               </div>
               <div style={{ fontSize: 22, fontWeight: 650, letterSpacing: '-.4px', marginTop: 8 }}>
-                Is This the Correct Beach?
+                Is this the correct beach?
               </div>
               <div
                 style={{
@@ -188,13 +188,13 @@ export default function ConfirmBeachScreen() {
                     patchDraft({ locationSource: 'manual', coords: null, beachId: null, beachName: null })
                   }
                 >
-                  Change Beach
+                  Choose Another Beach
                 </TextButton>
               </div>
             </>
           ) : (
             <>
-              <div style={{ fontSize: 22, fontWeight: 650, letterSpacing: '-.4px' }}>Choose Your Beach</div>
+              <div style={{ fontSize: 22, fontWeight: 650, letterSpacing: '-.4px' }}>Choose your beach</div>
               <div
                 style={{
                   display: 'flex',
@@ -214,7 +214,7 @@ export default function ConfirmBeachScreen() {
                 <input
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  placeholder={failed ? 'Beach list unavailable' : beaches.length ? `Search ${beaches.length} beaches` : 'Search beaches'}
+                  placeholder={failed ? 'Beach list unavailable' : 'Search beaches'}
                   style={{ flex: 1, border: 'none', background: 'transparent', fontSize: 13.5, color: C.ink }}
                 />
               </div>

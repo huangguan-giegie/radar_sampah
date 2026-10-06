@@ -10,7 +10,7 @@
 // It also keeps the browser tab title and a spoken page name in step with the
 // route, and shows the session-trouble banner. See pageTitle below.
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
-import { lazy, Suspense, useEffect, useRef } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
 import { DeviceFrame } from './components/DeviceFrame';
 import { TabBar } from './components/TabBar';
 import { Toast } from './components/Toast';
@@ -18,8 +18,6 @@ import { useApp } from './AppContext';
 import { guardStep, type ReportStep } from './flowRules';
 import { useAppBack } from './navigation';
 import { BackButton } from './components/ui';
-import { shouldShowWelcomeBeforeHome } from './welcomeEntry';
-import { LocationPrompt } from './components/LocationPrompt';
 
 import WelcomeScreen from './screens/WelcomeScreen';
 import IdentityScreen from './screens/IdentityScreen';
@@ -136,7 +134,6 @@ function RequireStep({ step, children }: { step: ReportStep; children: JSX.Eleme
 
 export default function App() {
   const { pathname } = useLocation();
-  const initialEntryPath = useRef(pathname).current;
   const { toast, authSyncError, retryAuth } = useApp();
   // A plain name for the page the user is on, worked out from the URL.
   //
@@ -236,7 +233,7 @@ export default function App() {
         <Route path="/welcome" element={<WelcomeScreen />} />
         <Route path="/identity" element={<IdentityScreen />} />
 
-        <Route path="/home" element={shouldShowWelcomeBeforeHome(initialEntryPath) ? <Navigate to="/welcome" replace /> : <LocationPrompt><HomeScreen /></LocationPrompt>} />
+        <Route path="/home" element={<HomeScreen />} />
         <Route path="/insights" element={<InsightsScreen />} />
         <Route path="/insights/:topic" element={<InsightsScreen />} />
         <Route path="/insights/:topic/:beachId" element={<InsightsScreen />} />
