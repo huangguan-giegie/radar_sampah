@@ -5,7 +5,7 @@ import { useAsyncData } from '../useAsyncData';
 import { CoastalPage, DataUnavailable, LinkRow, SummaryCard, SummaryStats, WhiteCard } from '../components/CoastalUI';
 import { GhostButton, Skeleton } from '../components/ui';
 import { SeverityBadge } from '../components/ds';
-import type { SeverityBand } from '../types';
+import type { SeverityBand, SpeciesCoordinateContext } from '../types';
 import { formatDate } from '../theme';
 
 type PublicCount = number | 'Fewer than 3';
@@ -34,7 +34,11 @@ type Summary = {
   };
   participation: { steps: { key: string; label: string; count: PublicCount; beaches: { beachId: string; count: number }[] | null }[]; conversions: { from: string; to: string; percentage: number | null; beaches?: { beachId: string; percentage: number }[] | null }[]; caption: string };
   evidence: { sufficientBeachCount: number; countedNote: string; beaches: { beachId: string; statuses: { countedActive: number; countedResolved: number; duplicate: number; incomplete: number } }[] };
-  wildlife?: { beaches?: { beachId: string; beachName: string; species: { id: string; name: string; relativeOccurrenceScore: number | null; source: { label: string; url: string }; reviewDate: string; destination: string }[]; sourceStatus: string }[] };
+  wildlife?: { beaches?: {
+    beachId: string; beachName: string;
+    species: { id: string; name: string; relativeOccurrenceScore: number | null; locationMatchScore?: number | null; source: { label: string; url: string }; reviewDate: string; destination: string }[];
+    sourceStatus: string; coordinateContext?: SpeciesCoordinateContext | null; modelVersion?: string | null; modelCount?: number | null;
+  }[] };
 };
 
 function Shares({ rows }: { rows: { category: string; percentage: number }[] }) {
@@ -95,8 +99,9 @@ export default function LiveInsightsScreen() {
       {topic === 'volunteers' && <>{data.beaches.filter(beach => beach.needsVolunteers.flag).map(beach => <WhiteCard key={beach.id}><LinkRow title={beach.name} subtitle={volunteerReasons(beach.needsVolunteers.reasons)} onClick={() => nav(beach.needsVolunteers.href)} /><p>Joined: {beach.needsVolunteers.nextEventJoinedCount}</p>{beach.needsVolunteers.eventMessage && <p>{beach.needsVolunteers.eventMessage}</p>}</WhiteCard>)}{!data.beaches.some(beach => beach.needsVolunteers.flag) && <DataUnavailable title="No beaches currently flagged for volunteers" />}</>}
       {topic === 'wildlife' && <>{data.beaches.map(beach => {
         const wildlife = data.wildlife?.beaches?.find(row => row.beachId === beach.id);
-        return <WhiteCard key={beach.id}><h3>{beach.name}</h3><p>Beach Attention: <SeverityBadge band={beach.severity} /></p><p className="coastal-footnote">Biodiversity is separate from Beach Attention. Modelled relative scores are not probabilities or confirmed sightings.</p>
-          {wildlife?.species.length ? wildlife.species.map(species => <div key={species.id}><LinkRow title={species.name} subtitle={species.relativeOccurrenceScore === null ? 'Model unavailable' : `Relative model score: ${species.relativeOccurrenceScore}`} onClick={() => nav(species.destination)} /><p className="coastal-footnote"><a href={species.source.url} target="_blank" rel="noreferrer">{species.source.label}</a> · reviewed {formatDate(species.reviewDate)}</p></div>) : <p>Biodiversity information not yet available</p>}
+        return <WhiteCard key={beach.id}><h3>{beach.name}</h3><p>Beach Attention: <SeverityBadge band={beach.severity} /></p><p className="coastal-footnote">Biodiversity is separate from Beach Attention. Historical marine context is not confirmed sightings. Location match compares reference locations for each species; neither location match nor raw model score is an occurrence probability.</p>
+          {wildlife?.coordinateContext && <p className="coastal-footnote">Marine-grid reference: {wildlife.coordinateContext.usedLatitude.toFixed(4)}, {wildlife.coordinateContext.usedLongitude.toFixed(4)} · {wildlife.coordinateContext.distanceKm.toFixed(1)} km from the beach · 15 km search limit</p>}
+          {wildlife?.species.length ? wildlife.species.map(species => <div key={species.id}><LinkRow title={species.name} subtitle={species.locationMatchScore == null ? 'Location match unavailable' : `Location match: ${Math.round(species.locationMatchScore * 100)}/100`} onClick={() => nav(species.destination)} /><p className="coastal-footnote">{species.relativeOccurrenceScore !== null && <>Raw relative model score: {species.relativeOccurrenceScore.toFixed(2)} (0–1) · </>}<a href={species.source.url} target="_blank" rel="noreferrer">{species.source.label}</a> · reviewed {formatDate(species.reviewDate)}</p></div>) : <p>Biodiversity information not yet available</p>}
           <LinkRow title="View beach biodiversity" onClick={() => nav('/beach/' + beach.id)} /></WhiteCard>;
       })}</>}
       <p className="coastal-footnote">Counted reports are accepted community evidence, not expert verification. These summaries do not establish cleanliness or ecological recovery.</p>

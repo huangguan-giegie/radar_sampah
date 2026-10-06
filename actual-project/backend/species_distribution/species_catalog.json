@@ -1,0 +1,918 @@
+{
+  "schemaVersion": 1,
+  "modelVersion": "iteration3-upgrade-40-species-20261003",
+  "modelCount": 40,
+  "scoreType": "relative_occurrence",
+  "calibratedProbability": false,
+  "species": [
+    {
+      "speciesSlug": "green_sea_turtle",
+      "scientificName": "Chelonia mydas",
+      "commonNameEn": "Green sea turtle",
+      "category": "sea_turtle",
+      "introEn": "Adult green turtles mainly eat seagrass and algae; shallow feeding areas and nesting beaches are important parts of their life cycle.",
+      "introZh": "成体绿海龟主要吃海草和藻类，浅海觅食地与产卵海滩都是它生命周期的重要部分。",
+      "imageAvailable": false,
+      "recordYears": {
+        "min": 1993.0,
+        "max": 2003.0
+      },
+      "presenceCells": 113,
+      "testPresences": 23,
+      "sources": [
+        {
+          "title": "NOAA Fisheries: Green Turtle",
+          "url": "https://www.fisheries.noaa.gov/species/green-turtle"
+        }
+      ]
+    },
+    {
+      "speciesSlug": "ocellaris_clownfish",
+      "scientificName": "Amphiprion ocellaris",
+      "commonNameEn": "Ocellaris clownfish",
+      "category": "reef_anemonefish",
+      "introEn": "This clownfish lives around coral reefs and sheltered lagoons, often among the tentacles of large sea anemones.",
+      "introZh": "公子小丑鱼栖息在珊瑚礁与庇护泻湖，常藏身大型海葵的触手间。",
+      "imageAvailable": false,
+      "recordYears": {
+        "min": 1975.0,
+        "max": 2026.0
+      },
+      "presenceCells": 39,
+      "testPresences": 8,
+      "sources": [
+        {
+          "title": "FishBase: Amphiprion ocellaris",
+          "url": "https://www.fishbase.se/Fieldguide/FieldGuideSummary.php?c_code=036&genusname=Amphiprion&speciesname=ocellaris"
+        },
+        {
+          "title": "Smithsonian Ocean: Clownfish in their Host Anemone",
+          "url": "https://ocean.si.edu/ocean-life/fish/clownfish-their-host-anemone"
+        }
+      ]
+    },
+    {
+      "speciesSlug": "irrawaddy_dolphin",
+      "scientificName": "Orcaella brevirostris",
+      "commonNameEn": "Irrawaddy dolphin",
+      "category": "coastal_marine_mammal",
+      "introEn": "Irrawaddy dolphins occur in parts of South and Southeast Asia, including coastal waters and separate river populations.",
+      "introZh": "伊洛瓦底海豚分布于南亚和东南亚部分近岸水域，也有生活在河流中的独立种群。",
+      "imageAvailable": false,
+      "recordYears": {
+        "min": 2008.0,
+        "max": 2009.0
+      },
+      "presenceCells": 11,
+      "testPresences": 2,
+      "sources": [
+        {
+          "title": "IUCN SSC Cetacean Specialist Group: Mekong River Irrawaddy dolphins",
+          "url": "https://iucn-csg.org/mekong-dolphins/"
+        }
+      ]
+    },
+    {
+      "speciesSlug": "moorish_idol",
+      "scientificName": "Zanclus cornutus",
+      "commonNameEn": "Moorish idol",
+      "category": "reef_fish",
+      "introEn": "This black, white and yellow reef fish has an elongated snout and dorsal fin, and feeds on algae and sponges around reef crevices.",
+      "introZh": "这种黑白黄相间的礁鱼长有细长背鳍和吻部，会在礁石缝隙间取食藻类和海绵。",
+      "imageAvailable": false,
+      "recordYears": {
+        "min": 1950.0,
+        "max": 2026.0
+      },
+      "presenceCells": 17,
+      "testPresences": 3,
+      "sources": [
+        {
+          "title": "Australian Museum: Moorish Idol, Zanclus cornutus",
+          "url": "https://australian.museum/learn/animals/fishes/moorish-idol-zanclus-cornutus-linnaeus-1758/"
+        }
+      ]
+    },
+    {
+      "speciesSlug": "neophocaena_phocaenoides",
+      "scientificName": "Neophocaena phocaenoides",
+      "commonNameEn": "Indo-Pacific finless porpoise",
+      "category": "coastal_marine_mammal",
+      "introEn": "This porpoise is associated with shallow coastal waters and is one of the marine mammals found in the wider coastal environment.",
+      "introZh": "这种鼠海豚与近岸浅海环境相关，可用于认识海滩周边海域的海洋哺乳动物。",
+      "imageAvailable": false,
+      "recordYears": {
+        "min": 1999.0,
+        "max": 2009.0
+      },
+      "presenceCells": 13,
+      "testPresences": 3,
+      "sources": [
+        {
+          "title": "IUCN Red List: Neophocaena phocaenoides",
+          "url": "https://doi.org/10.2305/IUCN.UK.2017-3.RLTS.T198920A50386795.en"
+        },
+        {
+          "title": "IWC Journal: Nearshore cetaceans in the Bay of Bengal",
+          "url": "https://journal.iwc.int/index.php/jcrm/article/view/659"
+        }
+      ]
+    },
+    {
+      "speciesSlug": "thalassoma_lunare",
+      "scientificName": "Thalassoma lunare",
+      "commonNameEn": "Moon wrasse",
+      "category": "reef_fish",
+      "introEn": "This colourful wrasse lives on shallow coral or rocky reefs, feeding by day and sheltering in reef crevices at night.",
+      "introZh": "这种色彩鲜明的隆头鱼生活于浅水珊瑚礁或岩礁，白天活动，夜间躲进礁石缝隙。",
+      "imageAvailable": false,
+      "recordYears": {
+        "min": 1929.0,
+        "max": 2026.0
+      },
+      "presenceCells": 37,
+      "testPresences": 7,
+      "sources": [
+        {
+          "title": "Western Australian Museum: Moon Wrasse",
+          "url": "https://museum.wa.gov.au/online-collections/names/Thalassoma-lunare"
+        }
+      ]
+    },
+    {
+      "speciesSlug": "chelmon_rostratus",
+      "scientificName": "Chelmon rostratus",
+      "commonNameEn": "Copperband butterflyfish",
+      "category": "coastal_reef_fish",
+      "introEn": "This long-snouted butterflyfish occurs around rocky shores, coral reefs and estuaries.",
+      "introZh": "这种长吻蝶鱼可见于岩岸、珊瑚礁和河口，是适合介绍的近岸鱼类。",
+      "imageAvailable": false,
+      "recordYears": {
+        "min": 2004.0,
+        "max": 2026.0
+      },
+      "presenceCells": 27,
+      "testPresences": 5,
+      "sources": [
+        {
+          "title": "FishBase: Chelmon rostratus",
+          "url": "https://www.fishbase.se/FieldGuide/FieldGuideSummary.php?c_code=608&genusname=Chelmon&print=1&speciesname=rostratus"
+        }
+      ]
+    },
+    {
+      "speciesSlug": "taeniura_lymma",
+      "scientificName": "Taeniura lymma",
+      "commonNameEn": "Bluespotted fantail ray",
+      "category": "ray",
+      "introEn": "This blue-spotted ray feeds on shallow sandy areas, seagrass beds and muddy flats; its tail carries venomous spines.",
+      "introZh": "这种身带蓝斑的魟鱼会在浅沙地、海草床与碎屑泥滩觅食，尾部有毒棘。",
+      "imageAvailable": false,
+      "recordYears": {
+        "min": 1929.0,
+        "max": 2026.0
+      },
+      "presenceCells": 26,
+      "testPresences": 5,
+      "sources": [
+        {
+          "title": "Museums Victoria: Fishes of Australia — Taeniura lymma",
+          "url": "https://fishesofaustralia.net.au/home/species/2030"
+        }
+      ]
+    },
+    {
+      "speciesSlug": "gnathanodon_speciosus",
+      "scientificName": "Gnathanodon speciosus",
+      "commonNameEn": "Golden trevally",
+      "category": "coastal_reef_fish",
+      "introEn": "This reef-associated trevally is bright yellow with dark bands as a juvenile and usually becomes silvery as an adult.",
+      "introZh": "这种与礁区环境有关的鲹鱼，幼鱼呈鲜黄色并有深色条带，成鱼多为银灰色。",
+      "imageAvailable": false,
+      "recordYears": {
+        "min": 1929.0,
+        "max": 2026.0
+      },
+      "presenceCells": 10,
+      "testPresences": 2,
+      "sources": [
+        {
+          "title": "Museums Victoria / Fishes of Australia: Golden Trevally, Gnathanodon speciosus",
+          "url": "https://fishesofaustralia.net.au/home/species/4274"
+        }
+      ]
+    },
+    {
+      "speciesSlug": "linckia_laevigata",
+      "scientificName": "Linckia laevigata",
+      "commonNameEn": "Blue sea star",
+      "category": "sea_star",
+      "introEn": "The blue sea star is a bottom-dwelling animal of shallow coral reefs in the Indo-West Pacific.",
+      "introZh": "蓝海星是印度—西太平洋浅水珊瑚礁中的海星，可用于介绍礁区底栖动物。",
+      "imageAvailable": false,
+      "recordYears": {
+        "min": 2004.0,
+        "max": 2026.0
+      },
+      "presenceCells": 20,
+      "testPresences": 4,
+      "sources": [
+        {
+          "title": "WoRMS IMIS: Genetic population structure of Linckia laevigata",
+          "url": "https://www.marinespecies.org/imis.php?module=ref&refid=285422"
+        },
+        {
+          "title": "WoRMS IMIS: Blue sea star Linckia laevigata",
+          "url": "https://www.marinespecies.org/imis.php?module=ref&refid=256628"
+        }
+      ]
+    },
+    {
+      "speciesSlug": "protoreaster_nodosus",
+      "scientificName": "Protoreaster nodosus",
+      "commonNameEn": "Knobbly sea star",
+      "category": "sea_star",
+      "introEn": "This sea star has distinctive dark conical knobs on its upper surface and inhabits sandy shores and shallow reef flats.",
+      "introZh": "这种海星上表面有明显深色锥状突起，生活环境包括沙质海岸和浅海礁坪。",
+      "imageAvailable": false,
+      "recordYears": {
+        "min": 2005.0,
+        "max": 2026.0
+      },
+      "presenceCells": 13,
+      "testPresences": 3,
+      "sources": [
+        {
+          "title": "NParks Flora & Fauna Web: Protoreaster nodosus",
+          "url": "https://www.nparks.gov.sg/florafaunaweb/fauna/4/3/435"
+        }
+      ]
+    },
+    {
+      "speciesSlug": "diadema_setosum",
+      "scientificName": "Diadema setosum",
+      "commonNameEn": "Longspine sea urchin",
+      "category": "sea_urchin",
+      "introEn": "Small fish and shrimp sometimes shelter among the spines of this long-spined sea urchin on shallow coral reefs.",
+      "introZh": "浅水珊瑚礁中，这种长棘海胆的棘刺之间有时可见小型鱼类和虾。",
+      "imageAvailable": false,
+      "recordYears": {
+        "min": 1993.0,
+        "max": 2026.0
+      },
+      "presenceCells": 24,
+      "testPresences": 5,
+      "sources": [
+        {
+          "title": "NUS Biodiversity Record: Longspine sea urchins with commensal fish and shrimps",
+          "url": "https://lkcnhm.nus.edu.sg/app/uploads/2017/04/sbr2014-179-180.pdf"
+        }
+      ]
+    },
+    {
+      "speciesSlug": "holothuria_atra",
+      "scientificName": "Holothuria atra",
+      "commonNameEn": "Lollyfish",
+      "category": "sea_cucumber",
+      "introEn": "This usually black sea cucumber lives in shallow lagoons, sandy or muddy seabeds and seagrass habitats.",
+      "introZh": "这种通常全身黑色的海参生活于浅泻湖、沙泥海底与海草床等浅海环境。",
+      "imageAvailable": false,
+      "recordYears": {
+        "min": 1993.0,
+        "max": 2026.0
+      },
+      "presenceCells": 15,
+      "testPresences": 3,
+      "sources": [
+        {
+          "title": "FAO: Commercially important sea cucumbers of the world, pp.42–43",
+          "url": "https://www.fao.org/4/i1918e/i1918e.pdf#page=52"
+        }
+      ]
+    },
+    {
+      "speciesSlug": "paratectonatica_tigrina",
+      "scientificName": "Paratectonatica tigrina",
+      "commonNameEn": "Tiger moon snail",
+      "category": "sandy_bottom_sea_snail",
+      "introEn": "This patterned moon snail lives on sandy and muddy bottoms from intertidal areas into shallow water.",
+      "introZh": "这种有斑纹的月螺生活于潮间带至浅海的沙泥底，可用于介绍容易被忽略的底栖软体动物。",
+      "imageAvailable": false,
+      "recordYears": {
+        "min": 1962.0,
+        "max": 2024.0
+      },
+      "presenceCells": 10,
+      "testPresences": 2,
+      "sources": [
+        {
+          "title": "NUS Nature in Singapore: Moon snails of the family Naticidae at Changi",
+          "url": "https://lkcnhm.nus.edu.sg/wp-content/uploads/sites/11/2026/02/NIS-2026-0015.pdf"
+        },
+        {
+          "title": "Ehime Prefecture Red Data Book: Paratectonatica tigrina",
+          "url": "https://www.pref.ehime.jp/reddatabook2014/detail/07_03_003850_1.html"
+        }
+      ]
+    },
+    {
+      "speciesSlug": "cypraea_tigris",
+      "scientificName": "Cypraea tigris",
+      "commonNameEn": "Tiger cowrie",
+      "category": "coral_reef_sea_snail",
+      "introEn": "This large cowrie is associated with coral reefs, making it relevant to reef conservation and responsible shell collecting.",
+      "introZh": "这种大型宝螺与珊瑚礁生境相关，可结合减少贝壳采集和保护礁区介绍。",
+      "imageAvailable": false,
+      "recordYears": {
+        "min": 1960.0,
+        "max": 2026.0
+      },
+      "presenceCells": 26,
+      "testPresences": 5,
+      "sources": [
+        {
+          "title": "NParks Flora & Fauna Web: Cypraea tigris",
+          "url": "https://www.nparks.gov.sg/florafaunaweb/fauna/1/9/194"
+        }
+      ]
+    },
+    {
+      "speciesSlug": "calidris_ruficollis",
+      "scientificName": "Calidris ruficollis",
+      "commonNameEn": "Red-necked stint",
+      "category": "migratory_shorebird",
+      "introEn": "This small migratory shorebird feeds on small invertebrates in places such as estuarine mudflats.",
+      "introZh": "这是一种小型迁徙岸鸟，会在河口泥滩等环境啄食小型无脊椎动物。",
+      "imageAvailable": false,
+      "recordYears": {
+        "min": 2016.0,
+        "max": 2025.0
+      },
+      "presenceCells": 13,
+      "testPresences": 3,
+      "sources": [
+        {
+          "title": "NZ Birds Online: Red-necked stint",
+          "url": "https://www.nzbirdsonline.org.nz/species/red-necked-stint"
+        }
+      ]
+    },
+    {
+      "speciesSlug": "abudefduf_vaigiensis",
+      "scientificName": "Abudefduf vaigiensis",
+      "commonNameEn": "Indo-Pacific sergeant",
+      "category": "coastal_reef_fish",
+      "introEn": "This small tropical fish has five dark vertical bands and usually occurs in coastal and coral-reef waters.",
+      "introZh": "这种身体有五条黑色竖带的小型热带鱼，通常生活在近岸与珊瑚礁水域。",
+      "imageAvailable": false,
+      "recordYears": {
+        "min": 2004.0,
+        "max": 2026.0
+      },
+      "presenceCells": 22,
+      "testPresences": 4,
+      "sources": [
+        {
+          "title": "Australian Museum: Indo-Pacific Sergeant",
+          "url": "https://australian.museum/learn/animals/fishes/indo-pacific-sergeant-abudefduf-vaigiensis-quoy-gaimard-1825/"
+        }
+      ]
+    },
+    {
+      "speciesSlug": "siganus_guttatus",
+      "scientificName": "Siganus guttatus",
+      "commonNameEn": "Orange-spotted spinefoot",
+      "category": "coastal_herbivorous_fish",
+      "introEn": "This rabbitfish can live on turbid coastal reefs near mangroves and feeds on bottom-growing algae.",
+      "introZh": "这种兔鱼可生活于红树林附近的浑浊近岸礁区，以海底藻类为食。",
+      "imageAvailable": false,
+      "recordYears": {
+        "min": 1929.0,
+        "max": 2026.0
+      },
+      "presenceCells": 23,
+      "testPresences": 5,
+      "sources": [
+        {
+          "title": "FishBase: Siganus guttatus",
+          "url": "https://www.fishbase.se/Fieldguide/FieldGuideSummary.php?c_code=356&genusname=Siganus&speciesname=guttatus"
+        },
+        {
+          "title": "Australian Museum: Golden Rabbitfish",
+          "url": "https://australian.museum/learn/animals/fishes/golden-rabbitfish-siganus-guttatus/"
+        }
+      ]
+    },
+    {
+      "speciesSlug": "gymnothorax_javanicus",
+      "scientificName": "Gymnothorax javanicus",
+      "commonNameEn": "Giant moray",
+      "category": "reef_moray_eel",
+      "introEn": "This brown, dark-spotted moray often shelters between corals, in caves and beneath reef ledges.",
+      "introZh": "这种褐色带深斑的海鳝常藏身珊瑚间隙、洞穴和礁石下方。",
+      "imageAvailable": false,
+      "recordYears": {
+        "min": 1950.0,
+        "max": 2026.0
+      },
+      "presenceCells": 27,
+      "testPresences": 5,
+      "sources": [
+        {
+          "title": "Australian Museum: Giant Moray, Gymnothorax javanicus",
+          "url": "https://australian.museum/learn/animals/fishes/giant-moray-gymnothorax-javanicus-bleeker-1859/"
+        }
+      ]
+    },
+    {
+      "speciesSlug": "arothron_nigropunctatus",
+      "scientificName": "Arothron nigropunctatus",
+      "commonNameEn": "Blackspotted puffer",
+      "category": "reef_pufferfish",
+      "introEn": "This black-spotted puffer lives on coastal or outer reefs and feeds on invertebrates including sponges and molluscs.",
+      "introZh": "这种带黑色斑点的鲀鱼生活在沿岸或外缘礁区，取食海绵、软体动物等无脊椎动物。",
+      "imageAvailable": false,
+      "recordYears": {
+        "min": 1950.0,
+        "max": 2026.0
+      },
+      "presenceCells": 20,
+      "testPresences": 4,
+      "sources": [
+        {
+          "title": "Museums Victoria / Fishes of Australia: Blackspotted Puffer, Arothron nigropunctatus",
+          "url": "https://fishesofaustralia.net.au/Home/species/850"
+        }
+      ]
+    },
+    {
+      "speciesSlug": "scarus_ghobban",
+      "scientificName": "Scarus ghobban",
+      "commonNameEn": "Bluebarred parrotfish",
+      "category": "coastal_parrotfish",
+      "introEn": "This parrotfish occurs in shallow lagoons, seagrass beds and reef habitats, with colour patterns that change as it grows.",
+      "introZh": "这种鹦嘴鱼会在浅泻湖、海草床和礁区活动，体色会随生长阶段改变。",
+      "imageAvailable": false,
+      "recordYears": {
+        "min": 2004.0,
+        "max": 2026.0
+      },
+      "presenceCells": 15,
+      "testPresences": 3,
+      "sources": [
+        {
+          "title": "Australian Museum: Bluebarred Parrotfish, Scarus ghobban",
+          "url": "https://australian.museum/learn/animals/fishes/bluebarred-parrotfish-scarus-ghobban-forsskl-1775/"
+        }
+      ]
+    },
+    {
+      "speciesSlug": "pterois_volitans",
+      "scientificName": "Pterois volitans",
+      "commonNameEn": "Common lionfish",
+      "category": "reef_lionfish",
+      "introEn": "This lionfish spreads its fan-like pectoral fins to corner small fish and crustaceans; its long fin spines are venomous.",
+      "introZh": "这种狮子鱼会展开扇状胸鳍围捕小鱼和甲壳动物，长鳍棘带有毒液。",
+      "imageAvailable": false,
+      "recordYears": {
+        "min": 2000.0,
+        "max": 2026.0
+      },
+      "presenceCells": 14,
+      "testPresences": 3,
+      "sources": [
+        {
+          "title": "Museums Victoria / Fishes of Australia: Common Lionfish, Pterois volitans",
+          "url": "https://fishesofaustralia.net.au/home/species/2113"
+        }
+      ]
+    },
+    {
+      "speciesSlug": "ascarosepion_latimanus",
+      "scientificName": "Ascarosepion latimanus",
+      "commonNameEn": "Broadclub cuttlefish",
+      "category": "reef_cuttlefish",
+      "introEn": "This large cuttlefish lives on tropical shallow-water coral reefs and represents the cephalopod group of molluscs.",
+      "introZh": "这种大型乌贼生活在热带浅水珊瑚礁区，可用于介绍与海螺、贝类不同的头足类动物。",
+      "imageAvailable": false,
+      "recordYears": {
+        "min": 2005.0,
+        "max": 2026.0
+      },
+      "presenceCells": 18,
+      "testPresences": 4,
+      "sources": [
+        {
+          "title": "OBIS: Sepia latimanus, accepted as Ascarosepion latimanus",
+          "url": "https://obis.org/taxon/220305"
+        },
+        {
+          "title": "WoRMS: Ascarosepion latimanus (accepted AphiaID 1667002)",
+          "url": "https://www.marinespecies.org/aphia.php?id=1667002&p=taxdetails"
+        },
+        {
+          "title": "FAO: Cephalopods of the World, Sepia latimanus species account (printed pp. 91–92)",
+          "url": "https://www.fao.org/4/a0150e/a0150e10.pdf"
+        }
+      ]
+    },
+    {
+      "speciesSlug": "tridacna_crocea",
+      "scientificName": "Tridacna crocea",
+      "commonNameEn": "Boring giant clam",
+      "category": "reef_giant_clam",
+      "introEn": "This relatively small giant clam embeds itself in coral rock, usually leaving only its shell edges and colourful mantle exposed.",
+      "introZh": "这种体形较小的砗磲嵌居在珊瑚岩块中，通常只有贝壳边缘和彩色外套膜露在外面。",
+      "imageAvailable": false,
+      "recordYears": {
+        "min": 1960.0,
+        "max": 2026.0
+      },
+      "presenceCells": 18,
+      "testPresences": 4,
+      "sources": [
+        {
+          "title": "ACIAR giant clam manual: Tridacna crocea species box (printed p. 11)",
+          "url": "https://www.aciar.gov.au/sites/default/files/legacy/node/2116/mn16_pdf_47915.pdf"
+        },
+        {
+          "title": "NParks: Mollusca species checklist, Tridacna crocea",
+          "url": "https://www.nparks.gov.sg/nature/species-list/mollusca-molluscs"
+        }
+      ]
+    },
+    {
+      "speciesSlug": "chromodoris_annae",
+      "scientificName": "Chromodoris annae",
+      "commonNameEn": "Anna's Chromodoris",
+      "category": "reef_nudibranch",
+      "introEn": "This nudibranch typically has blue areas with tiny dark spots, black longitudinal lines and an orange border.",
+      "introZh": "这种裸鳃海蛞蝓常见蓝色区域、黑色纵线和橙色边缘，蓝色区域密布细小深色斑点。",
+      "imageAvailable": false,
+      "recordYears": {
+        "min": 1988.0,
+        "max": 2026.0
+      },
+      "presenceCells": 16,
+      "testPresences": 3,
+      "sources": [
+        {
+          "title": "Okinawa Churaumi Aquarium: Anna's Chromodoris, Chromodoris annae",
+          "url": "https://churaumi.okinawa/fishbook/1651473769/"
+        },
+        {
+          "title": "Australian Museum Sea Slug Forum: Chromodoris annae species account",
+          "url": "https://www.seaslugforum.net/showall/chroanna"
+        }
+      ]
+    },
+    {
+      "speciesSlug": "phyllidia_varicosa",
+      "scientificName": "Phyllidia varicosa",
+      "commonNameEn": "Varicose wart slug",
+      "category": "nudibranch",
+      "introEn": "This nudibranch has blue-grey ridges and yellow tubercles on its back, with a central dark stripe along the underside of its foot.",
+      "introZh": "这种裸鳃海蛞蝓的背部有蓝灰色纵脊和黄色疣状突起，足底中央带一条黑色纵纹。",
+      "imageAvailable": false,
+      "recordYears": {
+        "min": 1988.0,
+        "max": 2026.0
+      },
+      "presenceCells": 23,
+      "testPresences": 5,
+      "sources": [
+        {
+          "title": "GBIF Backbone Taxonomy: Phyllidia varicosa Lamarck, 1801",
+          "url": "https://www.gbif.org/species/4359788"
+        },
+        {
+          "title": "Brunckhorst (1993): The Systematics and Phylogeny of Phyllidiid Nudibranchs (Doridoidea), Records of the Australian Museum, Supplement 16",
+          "url": "https://journals.australian.museum/media/Uploads/Journals/17777/79_complete.pdf"
+        }
+      ]
+    },
+    {
+      "speciesSlug": "stenopus_hispidus",
+      "scientificName": "Stenopus hispidus",
+      "commonNameEn": "Red-banded coral shrimp",
+      "category": "cleaner_shrimp",
+      "introEn": "This red-and-white reef shrimp establishes cleaning stations near rock or coral crevices, removing parasites and damaged tissue from fish.",
+      "introZh": "这种红白相间的珊瑚礁虾会在岩礁或珊瑚缝隙附近建立清洁站，替鱼类去除寄生物和坏死组织。",
+      "imageAvailable": false,
+      "recordYears": {
+        "min": 2005.0,
+        "max": 2026.0
+      },
+      "presenceCells": 14,
+      "testPresences": 3,
+      "sources": [
+        {
+          "title": "Western Australian Museum Collections: Stenopus hispidus — Banded cleaner shrimp",
+          "url": "https://museum.wa.gov.au/online-collections/names/Stenopus-hispidus"
+        },
+        {
+          "title": "University of the West Indies: Stenopus hispidus (Red-banded Coral Shrimp), The Online Guide to the Animals of Trinidad and Tobago",
+          "url": "https://sta.uwi.edu/fst/lifesciences/sites/default/files/lifesciences/documents/ogatt/Stenopus_hispidus%20-%20Red-banded%20Coral%20Shrimp.pdf"
+        }
+      ]
+    },
+    {
+      "speciesSlug": "radianthus_magnifica",
+      "scientificName": "Radianthus magnifica",
+      "commonNameEn": "Magnificent sea anemone",
+      "category": "sea_anemone",
+      "introEn": "This sea anemone attaches to hard reef surfaces and has a colourful column and many long tentacles that can shelter anemonefish.",
+      "introZh": "这种海葵附着在珊瑚礁的坚硬底质上，常有鲜艳的柱体和密集长触手，并能为共生小丑鱼提供栖身处。",
+      "imageAvailable": false,
+      "recordYears": {
+        "min": 1975.0,
+        "max": 2025.0
+      },
+      "presenceCells": 19,
+      "testPresences": 4,
+      "sources": [
+        {
+          "title": "WoRMS: Heteractis magnifica — accepted name Radianthus magnifica",
+          "url": "https://www.marinespecies.org/aphia.php?id=290090&p=taxdetails"
+        },
+        {
+          "title": "Titus et al. (2024): Radianthus magnifica, taxonomic treatment in The clownfish-hosting sea anemones: updated nomenclature, biogeography, and practical field guide, Zootaxa 5506(1)",
+          "url": "https://zenodo.org/records/13760333"
+        }
+      ]
+    },
+    {
+      "speciesSlug": "galaxea_fascicularis",
+      "scientificName": "Galaxea fascicularis",
+      "commonNameEn": "Galaxy coral",
+      "category": "reef_building_coral",
+      "introEn": "This reef-building stony coral forms cushion-like, massive or columnar colonies, often in areas sheltered from strong waves, with conspicuous white tentacle tips.",
+      "introZh": "这种造礁硬珊瑚形成垫状、块状或柱状群体，常见于受强浪影响较小的礁区，触手尖端常呈醒目的白色。",
+      "imageAvailable": false,
+      "recordYears": {
+        "min": 1992.0,
+        "max": 2026.0
+      },
+      "presenceCells": 12,
+      "testPresences": 2,
+      "sources": [
+        {
+          "title": "NOAA CoRIS: Coral Health and Disease in the Pacific — Physiology and Pathology, Galaxea fascicularis account",
+          "url": "https://www.coris.noaa.gov/activities/cdh_vision/pdfs/phys_pathol.pdf"
+        },
+        {
+          "title": "Corals of the World: Galaxea fascicularis species factsheet",
+          "url": "https://www.coralsoftheworld.org/species_factsheets/species_factsheet_summary/galaxea-fascicularis/"
+        }
+      ]
+    },
+    {
+      "speciesSlug": "xestospongia_testudinaria",
+      "scientificName": "Xestospongia testudinaria",
+      "commonNameEn": "Giant barrel sponge",
+      "category": "sponge",
+      "introEn": "This large barrel-shaped sponge lives on Indo-Pacific reefs and filters food from seawater flowing through its internal channels.",
+      "introZh": "巨型桶状海绵是一种印度—太平洋礁区的海绵，靠让海水流经体内孔道来滤食。",
+      "imageAvailable": false,
+      "recordYears": {
+        "min": 2004.0,
+        "max": 2025.0
+      },
+      "presenceCells": 16,
+      "testPresences": 3,
+      "sources": [
+        {
+          "title": "Setiawan et al. (2016): MtDNA diversity of the Indonesian giant barrel sponge Xestospongia testudinaria — implications from partial cytochrome oxidase 1 sequences, University of Munich repository",
+          "url": "https://epub.ub.uni-muenchen.de/48901/1/Setiawan_mtdna_diversity_of_the_indonesian_giant_barrel_sponge_xestospongia.pdf"
+        },
+        {
+          "title": "Ryu et al. (2016): Hologenome analysis of two marine sponges with different microbiomes, BMC Genomics 17:158",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC4772301/"
+        }
+      ]
+    },
+    {
+      "speciesSlug": "onychoprion_anaethetus",
+      "scientificName": "Onychoprion anaethetus",
+      "commonNameEn": "Bridled tern",
+      "category": "tropical_seabird",
+      "introEn": "Bridled terns forage over tropical open seas, catching small schooling fish at or just below the surface.",
+      "introZh": "这种热带燕鸥主要在开阔海面觅食，会从水面附近捕捉小鱼。",
+      "imageAvailable": false,
+      "recordYears": {
+        "min": 2019.0,
+        "max": 2026.0
+      },
+      "presenceCells": 10,
+      "testPresences": 2,
+      "sources": [
+        {
+          "title": "NZ Birds Online: Bridled tern",
+          "url": "https://www.nzbirdsonline.org.nz/species/bridled-tern"
+        }
+      ]
+    },
+    {
+      "speciesSlug": "panulirus_versicolor",
+      "scientificName": "Panulirus versicolor",
+      "commonNameEn": "Painted spiny lobster",
+      "category": "spiny_lobster",
+      "introEn": "Painted spiny lobsters live in shallow water, sheltering in rock cavities during the day and becoming active at night.",
+      "introZh": "这种浅水龙虾主要在夜间活动，白天常躲在岩洞和岩石孔隙中。",
+      "imageAvailable": false,
+      "recordYears": {
+        "min": 1998.0,
+        "max": 2026.0
+      },
+      "presenceCells": 10,
+      "testPresences": 2,
+      "sources": [
+        {
+          "title": "FAO lobster species guide: Panulirus versicolor (printed p. 145)",
+          "url": "https://www.fao.org/4/r7066e/r7066e27.pdf#page=3"
+        },
+        {
+          "title": "NParks St John’s Island trail: Painted Spiny Lobster",
+          "url": "https://www.nparks.gov.sg/-/media/nparks-real-content/gardens-parks-and-nature/diy-walk/diy-walk-pdf-files/st-johns-island-trail.pdf"
+        }
+      ]
+    },
+    {
+      "speciesSlug": "laticauda_colubrina",
+      "scientificName": "Laticauda colubrina",
+      "commonNameEn": "Yellow-lipped sea krait",
+      "category": "sea_krait",
+      "introEn": "Yellow-lipped sea kraits hunt fish around coral reefs and rocky shores, returning to land to rest and lay eggs.",
+      "introZh": "这种海环蛇会在珊瑚礁和岩岸捕食鱼类，也会上岸休息和产卵。",
+      "imageAvailable": false,
+      "recordYears": {
+        "min": 2004.0,
+        "max": 2026.0
+      },
+      "presenceCells": 13,
+      "testPresences": 3,
+      "sources": [
+        {
+          "title": "NParks Flora & Fauna Web: Laticauda colubrina",
+          "url": "https://www.nparks.gov.sg/florafaunaweb/fauna/2/4/247"
+        }
+      ]
+    },
+    {
+      "speciesSlug": "echinothrix_calamaris",
+      "scientificName": "Echinothrix calamaris",
+      "commonNameEn": "Banded sea urchin",
+      "category": "sea_urchin",
+      "introEn": "Banded sea urchins have thick and fine spines and emerge from rock crevices at night to graze algae.",
+      "introZh": "这种海胆有粗细两类棘刺，通常白天藏于岩穴，夜间刮食礁石上的藻类。",
+      "imageAvailable": false,
+      "recordYears": {
+        "min": 2001.0,
+        "max": 2026.0
+      },
+      "presenceCells": 13,
+      "testPresences": 3,
+      "sources": [
+        {
+          "title": "National Museum of Natural Science: Echinothrix calamaris",
+          "url": "https://www.nmns.edu.tw/en/our-research/featured/Collection-E00434/"
+        },
+        {
+          "title": "NUS LKCNHM: The banded sea urchin, Echinothrix calamaris, in Singapore",
+          "url": "https://lkcnhm.nus.edu.sg/nis/biodiversity-record-the-banded-sea-urchin-echinothrix-calamaris-in-singapore/"
+        }
+      ]
+    },
+    {
+      "speciesSlug": "stichopus_chloronotus",
+      "scientificName": "Stichopus chloronotus",
+      "commonNameEn": "Greenfish",
+      "category": "sea_cucumber",
+      "introEn": "This dark green sea cucumber has pointed papillae and lives on shallow coral reef flats and upper reef slopes.",
+      "introZh": "这种深绿色海参身上有锥形突起，生活在浅水礁坪和礁坡上部。",
+      "imageAvailable": false,
+      "recordYears": {
+        "min": 1998.0,
+        "max": 2026.0
+      },
+      "presenceCells": 14,
+      "testPresences": 3,
+      "sources": [
+        {
+          "title": "FAO: Commercially important sea cucumbers of the world, Stichopus chloronotus (printed pp. 100–101)",
+          "url": "https://www.fao.org/4/i1918e/i1918e.pdf#page=110"
+        }
+      ]
+    },
+    {
+      "speciesSlug": "tridacna_maxima",
+      "scientificName": "Tridacna maxima",
+      "commonNameEn": "Elongate giant clam",
+      "category": "reef_giant_clam",
+      "introEn": "Elongate giant clams attach firmly to coral or sit partly embedded in it, exposing a brightly coloured mantle.",
+      "introZh": "这种砗磲部分嵌入或牢固附着在珊瑚上，彩色外套膜和一侧较长的贝壳是其特点。",
+      "imageAvailable": false,
+      "recordYears": {
+        "min": 1960.0,
+        "max": 2026.0
+      },
+      "presenceCells": 16,
+      "testPresences": 3,
+      "sources": [
+        {
+          "title": "ACIAR: Ocean culture of giant clams, Tridacna maxima species box",
+          "url": "https://www.aciar.gov.au/sites/default/files/legacy/node/2116/mn16_pdf_47915.pdf"
+        },
+        {
+          "title": "NParks Mollusca species checklist: Tridacna maxima",
+          "url": "https://www.nparks.gov.sg/nature/species-list/mollusca-molluscs"
+        }
+      ]
+    },
+    {
+      "speciesSlug": "pomacanthus_annularis",
+      "scientificName": "Pomacanthus annularis",
+      "commonNameEn": "Blue-ringed angelfish",
+      "category": "reef_angelfish",
+      "introEn": "Adult blue-ringed angelfish have curved blue body lines and a ring above the gill cover, and inhabit coral reefs.",
+      "introZh": "这种神仙鱼的成鱼身上有弧形蓝线，鳃盖上方有蓝环，常在珊瑚礁洞穴附近活动。",
+      "imageAvailable": false,
+      "recordYears": {
+        "min": 1963.0,
+        "max": 2026.0
+      },
+      "presenceCells": 23,
+      "testPresences": 5,
+      "sources": [
+        {
+          "title": "Australian Museum: Blue-ringed Angelfish, Pomacanthus annularis",
+          "url": "https://australian.museum/learn/animals/fishes/blue-ringed-angelfish-pomacanthus-annularis/"
+        }
+      ]
+    },
+    {
+      "speciesSlug": "dascyllus_trimaculatus",
+      "scientificName": "Dascyllus trimaculatus",
+      "commonNameEn": "Threespot humbug",
+      "category": "reef_damselfish",
+      "introEn": "Juvenile threespot humbugs are dark with white spots on the forehead and sides that become smaller or disappear as they grow.",
+      "introZh": "这种雀鲷的幼鱼呈黑色，额部和两侧有白斑，这些白斑会随成长变小或消失。",
+      "imageAvailable": false,
+      "recordYears": {
+        "min": 1909.0,
+        "max": 2026.0
+      },
+      "presenceCells": 23,
+      "testPresences": 5,
+      "sources": [
+        {
+          "title": "Museums Victoria / Fishes of Australia: Threespot Humbug, Dascyllus trimaculatus",
+          "url": "https://fishesofaustralia.net.au/home/species/349"
+        }
+      ]
+    },
+    {
+      "speciesSlug": "scolopsis_bilineata",
+      "scientificName": "Scolopsis bilineata",
+      "commonNameEn": "Two-line monocle bream",
+      "category": "reef_monocle_bream",
+      "introEn": "Two-line monocle bream feed on bottom-dwelling invertebrates and small fish, while juveniles often use inshore lagoons and reef rubble.",
+      "introZh": "这种礁鱼取食底栖无脊椎动物和小鱼，幼鱼常活动于近岸、泻湖和碎珊瑚区。",
+      "imageAvailable": false,
+      "recordYears": {
+        "min": 2000.0,
+        "max": 2026.0
+      },
+      "presenceCells": 25,
+      "testPresences": 5,
+      "sources": [
+        {
+          "title": "Museums Victoria / Fishes of Australia: Two-line Monocle Bream, Scolopsis bilineata",
+          "url": "https://fishesofaustralia.net.au/home/species/618"
+        }
+      ]
+    },
+    {
+      "speciesSlug": "chaetodon_octofasciatus",
+      "scientificName": "Chaetodon octofasciatus",
+      "commonNameEn": "Eightband butterflyfish",
+      "category": "coral_feeding_butterflyfish",
+      "introEn": "Eightband butterflyfish inhabit shallow protected lagoons and inner reefs, where they feed on coral polyps.",
+      "introZh": "这种带窄黑条纹的蝶鱼生活在浅泻湖和内礁，并以珊瑚虫为食。",
+      "imageAvailable": false,
+      "recordYears": {
+        "min": 2001.0,
+        "max": 2026.0
+      },
+      "presenceCells": 26,
+      "testPresences": 5,
+      "sources": [
+        {
+          "title": "Museums Victoria / Fishes of Australia: Eightband Butterflyfish, Chaetodon octofasciatus",
+          "url": "https://fishesofaustralia.net.au/home/species/2390"
+        }
+      ]
+    }
+  ],
+  "imageNote": "This standalone model package contains no photographs or application UI assets."
+}

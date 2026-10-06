@@ -37,6 +37,8 @@ import type {
   ReportCounts,
   ReportStatus,
   ScoringMethod,
+  SpeciesCatalog,
+  SpeciesDistributionOptions,
   SpeciesDistributionResult,
   UploadedPhoto,
   User,
@@ -655,12 +657,37 @@ export async function getMe(): Promise<User | null> {
   }
 }
 
-export async function getSpeciesDistribution(latitude: number, longitude: number): Promise<SpeciesDistributionResult> {
+export async function getSpeciesCatalog(): Promise<SpeciesCatalog> {
+  if (USE_MOCK) throw new Error('Species distribution model is not enabled in mock mode.');
+  return request('/api/species-distribution/species');
+}
+
+export async function getSpeciesDistribution(
+  latitude: number,
+  longitude: number,
+  options: SpeciesDistributionOptions = {},
+): Promise<SpeciesDistributionResult> {
   if (USE_MOCK) {
     throw new Error('Species distribution model is not enabled in mock mode.');
   }
   // The model receives a beach's broad-area coordinate and returns context, not a litter score.
-  return request('/api/species-distribution/predict', 'POST', { latitude, longitude });
+  const result = await request('/api/species-distribution/predict', 'POST', { latitude, longitude, ...options });
+  // An older raw-only response cannot be presented as a location-match result.
+  if (!result || result.scoreType !== 'relative_occurrence'
+    || result.calibratedProbability !== false
+    || result.crossSpeciesRankingValidated !== false
+    || result.rankingMethod !== 'heuristic_within_species_percentile'
+    || !Array.isArray(result.predictions)
+    || !Array.isArray(result.topPredictions)
+    || !result.coordinateContext
+    || ['requestedLatitude', 'requestedLongitude', 'usedLatitude', 'usedLongitude', 'distanceKm'].some((key) => !Number.isFinite(result.coordinateContext[key]))
+    || [...result.predictions, ...result.topPredictions].some((row) =>
+      !row || !row.scientificName
+      || !Number.isFinite(row.locationMatchScore) || row.locationMatchScore < 0 || row.locationMatchScore > 1
+      || !Number.isFinite(row.relativeOccurrenceScore) || row.relativeOccurrenceScore < 0 || row.relativeOccurrenceScore > 1)) {
+    throw new Error('Species information is temporarily unavailable. Please try again.');
+  }
+  return result;
 }
 
 // ============================================================

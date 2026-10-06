@@ -181,3 +181,11 @@ These are actual captures of the live frontend after the coordinate deployment, 
 ![Live Terengganu map after location enrichment](screenshots/iteration3-map-terengganu-enriched.jpg)
 
 ![Live Rawa Island Beach showing the verified area and insufficient pollution evidence](screenshots/iteration3-rawa-enriched.jpg)
+
+## 40-species model upgrade follow-up
+
+The later model integration is documented separately in
+[Iteration 3 model integration test report](iteration3-model-integration-test-report.md),
+including the 275-test backend regression, 243-test frontend regression, actual
+routed-page checks and model screenshots. The coordinate references are now
+also available as a dedicated [52-location source register](beach-coordinate-sources-52.md).

@@ -1,7 +1,7 @@
 import type { SpeciesGlyph } from './types';
 
 /**
- * Curated, reusable media for the four species in the packaged OBIS model.
+ * Curated media for species with existing licensed photographs.
  *
  * Scientific name is the join key. The backend can change a display label or
  * the order of its predictions without breaking the image match. Attribution
@@ -71,3 +71,18 @@ export const MODEL_SPECIES_MEDIA: readonly ModelSpeciesMedia[] = [
     imageLicenseUrl: 'https://creativecommons.org/licenses/by-sa/4.0/',
   },
 ];
+
+/** Media is optional: never borrow another species' photograph. */
+export function mediaForScientificName(scientificName: string): ModelSpeciesMedia | undefined {
+  return MODEL_SPECIES_MEDIA.find((item) => item.scientificName === scientificName);
+}
+
+/** Unmatched categories use a neutral icon instead of an incorrect animal. */
+export function glyphForSpeciesCategory(category = ''): SpeciesGlyph | null {
+  if (category.includes('turtle')) return 'turtle';
+  if (category.includes('bird')) return 'bird';
+  if (category.includes('crab')) return 'crab';
+  // A fish category token is distinct from names such as "cuttlefish".
+  if (category.split('_').includes('fish') || category === 'ray') return 'fish';
+  return null;
+}
