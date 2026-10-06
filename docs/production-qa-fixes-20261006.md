@@ -6,10 +6,24 @@ This follow-up addresses the findings in `Production_QA_Report_2026-10-06.docx`
 against the corrected Iteration 3 acceptance criteria. The original report is
 retained as a record of the deployed version observed before these repairs.
 
-The changes below have been implemented and checked locally. Production
-deployment and production browser verification are pending. Local browser
-checks use an isolated SQLite database and synthetic test photos; those records
-are not production evidence and are not included in the release.
+The changes below are deployed to both production services. PR #71 was merged
+as commit `bce433963da233a495c7f0f0c90c5216d5dd0981` on 6 October 2026.
+Targeted production verification passed for the affected browsing and display
+flows. This is a repair verification record, not a new exhaustive AC audit.
+Local checks used an isolated SQLite database and synthetic test photos; those
+records are not production evidence and are not included in the release.
+
+## Production release
+
+| Service | Release status | Deployment | Completed |
+|---|---|---|---|
+| Frontend | Live at the release commit | dep-db2a6amq1p3s73eemm7g | 6 October 2026, 16:29:11 KST |
+| Backend | Live at the release commit | dep-db2a6amq1p3s73eemm2g | 6 October 2026, 16:32:10 KST |
+
+- [Merged PR #71](https://github.com/huangguan-giegie/radar_sampah/pull/71)
+- [Production Home](https://team04-marine-observation-frontend.onrender.com/home)
+- [Production API health](https://team04-marine-observation-api.onrender.com/health): `ok`.
+- Both deployments were triggered automatically by the merge to `main`.
 
 ## Findings and resolution
 
@@ -39,7 +53,7 @@ and first-cleanup badge remain outside this repair scope.
 - An independent code review found the hidden-photo eligibility gap; it was
   repaired and its focused regression passed before the final integrated run.
 
-## Browser inspection
+## Local browser inspection
 
 The repaired frontend was exercised against the local API at a **390 × 844**
 mobile viewport. Captures are available inline in the working conversation;
@@ -58,9 +72,73 @@ they are not embedded in this text record.
 The live scoring-method text was also checked against all four exact AC ranges.
 These local observations do not establish the production release status.
 
-## Deployment dependency
+## Production browser verification
 
-Deploy the backend containing `/cleanups/latest-by-beach` before, or alongside,
-the frontend that consumes it. Confirm both services use the release commit,
-then repeat the six affected production flows. Do not rewrite existing event
-registrations or replace production photos as part of this release.
+The production site was inspected at a 390 × 844 mobile viewport and a
+1280 × 900 desktop viewport. The following observations use the deployed
+frontend and production API. Screenshots are saved in
+`evidence/redeploy-qa-2026-10-06/production-repair` and embedded in the companion
+English Word report. The Home capture excludes the participant identifier.
+
+| Check | Result | Evidence |
+|---|---|---|
+| Home-to-list navigation | Pass. Explore Beaches appeared while loading. After loading, See Other Beaches opened the list directly in a signed-in session, without an automatic personal panel taking over. | P01–P03 |
+| Catalogue and search | Pass. The live API and unfiltered list both contained 86 beaches; the 85-entry regression fixture remains valid. Morib search opened its detail page. | P02–P04 |
+| Missing coordinates | Pass. Pulau Tulai Beach II remained searchable and its detail page loaded with honest empty-data states. It has no verified distinct marker. | P15–P16 |
+| Needs Volunteers | Pass. Activity cards loaded and Low Remis was excluded. Browser network capture recorded one GET to `/cleanups/latest-by-beach`, returning HTTP 200; the endpoint returned 86 beach dates. | P06 |
+| Gallery limit | Pass. Morib's gallery displayed 5 available photos, including historical resolved photos. Ranking, eligibility and hidden-link privacy are additionally covered by backend tests. | P04–P05 |
+| Evidence insights | Pass. The overview included Evidence. Navigation opened at the top. Four pilot beach cards showed Active, Resolved, Duplicate and Incomplete counts, active eligible counts, sufficiency and latest contributing dates. Coverage displayed 4 of 4. | P10–P11, P17 |
+| Severity and ranges | Pass. Overview displayed Severe and the method page showed all four exact AC boundaries. | P09, P12 |
+| Event context and disposal | Pass. Current Beach Attention and the retention policy displayed. Disposal guidance stated that locations are unconfirmed, with no invented location/date or unusable map action. | P07–P08 |
+| Map visual inspection | Pass. Selangor displayed all four pilot beach names, band markers, tiles and a usable regional list. | P13–P14 |
+| Runtime errors | No browser error logs were captured during these checks. A focused Render error-log query after the backend went live returned no errors. | Browser and Render log observations |
+
+### Production screenshot index
+
+| Capture | Observed result |
+|---|---|
+| P01 — Home entry | Featured beach and See Other Beaches on the repaired mobile Home; participant identifier excluded. |
+| P02 — Complete beach list | The searchable list opens directly from Home. The rendered list contains 86 API beaches. |
+| P03 — Morib search | Search narrows the list to Pantai Morib with its activity link. |
+| P04 — Morib detail | Search selection opens the detail page; repaired gallery and beach context load. |
+| P05 — Gallery | The live gallery displays 5 available photos and retains resolved history. |
+| P06 — Needs Volunteers | Activity groups render without a cleanup-history error. |
+| P07 — Event context | The activity, participation action, current band and scheduling retention context render. |
+| P08 — Disposal guidance | Explicit unconfirmed drop-off details replace the placeholders. |
+| P09 — Severe wording | The overview displays Severe in a recorded band-change card. |
+| P10 — Topic navigation | All five AC topics and the volunteer shortcut fit the mobile grid. |
+| P11 — Evidence mobile | Coverage and real lifecycle counts render; navigation starts at the top. |
+| P12 — Score boundaries | Low, Moderate, High and Severe use the exact AC ranges. |
+| P13 — Regional map | Selangor tiles, four beach labels, band markers and list entry are visible. |
+| P14 — Regional list | The four pilot beaches remain accessible from the map. |
+| P15 — Beach without coordinates | Pulau Tulai Beach II appears in search alongside the other Pulau Tulai beach. |
+| P16 — Empty beach detail | The beach without coordinates loads with no photo, insufficient-data and no-report states. |
+| P17 — Evidence desktop | The real Evidence page renders in the wider viewport. |
+
+## Verification limits
+
+The production checks were read-only: no reports, photo uploads, joins, check-ins
+or cleanup records were submitted. Failure/retry states and hidden-photo access
+were covered by automated tests rather than forced production failures. The
+original Remis event's creation-time band is still not established; existing
+events and registrations remain under the documented retention policy. Disposal
+locations remain unconfirmed until real local arrangements are supplied.
+
+## First-visit location prompt repair
+
+The earlier production pass began from an already-dismissed location prompt, so
+it did not cover the first-visit state. On a fresh local browser session, loaded
+Leaflet panes could sit above the prompt because the decorative `MiniMap`
+container did not establish a stacking context. The prompt remained in the DOM,
+but the map layer could obscure its controls.
+
+The repair gives the `MiniMap` root an explicit `z-index: 0`, keeping Leaflet's
+internal panes inside the background layer while the prompt's existing content
+layer remains above it. A focused SSR regression protects this style contract.
+
+The fresh local browser check loaded real OpenStreetMap tiles and showed the
+complete `Find Beaches Near You` card, including `Allow Location`, `Not Now` and
+the explanation control, above the map. Selecting `Not Now` returned to Home
+with the bottom navigation visible. The list/detail continuation is covered by
+the existing production QA captures; the local API returned a transient beach
+list loading error during this isolated check and no production data was changed.

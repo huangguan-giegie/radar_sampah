@@ -34,5 +34,6 @@ export function MiniMap({ lat, lng, zoom }: { lat: number; lng: number; zoom: nu
     };
   }, [ready, lat, lng, zoom, mapRef]);
 
-  return <div ref={elRef} style={{ position: 'absolute', inset: 0 }} />;
+  // Keep Leaflet's internal panes inside this decorative background layer.
+  return <div ref={elRef} style={{ position: 'absolute', inset: 0, zIndex: 0 }} />;
 }
