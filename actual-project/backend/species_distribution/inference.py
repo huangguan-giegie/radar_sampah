@@ -111,6 +111,13 @@ class SpeciesDistributionModel:
                 raise RuntimeError(f"Species model cannot produce scores: {path.name}")
             if isinstance(artifact, dict) and artifact.get("features", manifest["features"]) != manifest["features"]:
                 raise RuntimeError(f"Species model feature order is unsupported: {path.name}")
+            # Keep packaged LogisticRegression estimators usable when a model
+            # produced by a newer scikit-learn is loaded by an older runtime.
+            # Older predict_proba implementations still read multi_class even
+            # when newer serializers omit it from the estimator state.
+            estimator = model.steps[-1][1] if hasattr(model, "steps") and model.steps else model
+            if estimator.__class__.__name__ == "LogisticRegression" and not hasattr(estimator, "multi_class"):
+                estimator.multi_class = "auto"
             self.models.append({"entry": entry, "model": model})
         if not self.models:
             raise RuntimeError("The species registry contains no models.")
