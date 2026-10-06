@@ -4,11 +4,16 @@ from __future__ import annotations
 
 import json
 from copy import deepcopy
-from datetime import date
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
 from flask import jsonify, request
+from sqlalchemy import Column, DateTime, String, Table, insert, select
+from sqlalchemy.exc import IntegrityError
+
+from standalone_cleanup import _active_quantities, _current_band_state
+from v3_contract import _user
 
 
 MVP_BEACHES = frozenset({"morib", "remis", "kelanang", "bagan"})
@@ -17,6 +22,10 @@ QUESTIONS = (
     "Where does it usually live?",
     "How can marine litter affect it?",
     "What can I do?",
+)
+QUIZ_DISTRACTORS = (
+    "The card does not provide this information.",
+    "This would be a confirmed local sighting.",
 )
 
 
@@ -83,6 +92,73 @@ def wildlife_guidance() -> dict[str, Any]:
     return guidance
 
 
+def quiz_payload(card: dict[str, Any], completed: bool = False) -> dict[str, Any]:
+    """Build quiz questions only from the approved species-card answers."""
+    questions = []
+    for index, question in enumerate(card["questions"]):
+        questions.append({
+            "id": str(index),
+            "question": question["text"],
+            "options": [
+                {"id": "approved", "text": card["answers"][index]["text"]},
+                {"id": "context", "text": QUIZ_DISTRACTORS[0]},
+                {"id": "sighting", "text": QUIZ_DISTRACTORS[1]},
+            ],
+        })
+    return {
+        "cardId": card["id"],
+        "title": "Check your understanding",
+        "questions": questions,
+        "completed": completed,
+        "completionNote": "This is an educational activity, not a scientific certification.",
+    }
+
+
+def beach_risk_entries(engine: Any, impl: Any, beach_id: str) -> list[dict[str, Any]]:
+    """Return up to three approved risk cards for active beach categories."""
+    if not any(beach["id"] == beach_id for beach in impl.load_beaches(engine)):
+        return []
+    now = datetime.now(timezone.utc)
+    with engine.connect() as connection:
+        reports = connection.execute(select(impl.reports_table).where(
+            impl.reports_table.c.beach_id == beach_id,
+            impl.reports_table.c.status == "Counted",
+            impl.reports_table.c.created_at >= now - timedelta(days=90),
+            impl.reports_table.c.created_at <= now,
+            impl.reports_table.c.deleted_at.is_(None),
+        )).all()
+        actions = connection.execute(select(impl.cleanup_actions_table).where(
+            impl.cleanup_actions_table.c.target_report_id.in_([row.id for row in reports])
+        )).all() if reports else []
+    actions_by_report: dict[str, list[Any]] = {}
+    for action in actions:
+        actions_by_report.setdefault(action.target_report_id, []).append(action)
+    active = [
+        (report, _active_quantities(_current_band_state(impl, report, actions_by_report.get(report.id, []))))
+        for report in reports
+    ]
+    active = [(report, quantities) for report, quantities in active if quantities]
+    shares = impl.active_composition_percentages(active) if active else []
+    approved = {entry["category"]: entry for entry in risk_entries()}
+    result = []
+    for share in sorted(shares, key=lambda item: (-item["percentage"], item["category"])):
+        entry = approved.get(share["category"])
+        if entry is None:
+            continue
+        result.append({
+            "category": entry["category"],
+            "riskType": entry["riskType"],
+            "speciesGroups": entry["speciesGroups"],
+            "explanation": entry["explanation"],
+            "practicalTip": entry["practicalTip"],
+            "source": entry["source"],
+            "reviewDate": entry["reviewDate"],
+            "reportedShare": share["percentage"],
+            "evidence": "Beach-level reported category context; not evidence of local harm.",
+        })
+    return result[:3]
+
+
 def wildlife_panel(application: Any, engine: Any, impl: Any) -> dict[str, Any]:
     cards = {card["scientificName"]: card for card in conservation_cards(engine, impl)}
     rows = []
@@ -96,7 +172,7 @@ def wildlife_panel(application: Any, engine: Any, impl: Any) -> dict[str, Any]:
                 beach["lat"], beach["lng"], max_distance_km=15, top_k=40,
             )
             predictions = result.get("topPredictions", [])
-        except (KeyError, ValueError, RuntimeError):
+        except (AttributeError, KeyError, ValueError, RuntimeError):
             pass
         modelled = []
         for prediction in predictions:
@@ -116,7 +192,17 @@ def wildlife_panel(application: Any, engine: Any, impl: Any) -> dict[str, Any]:
     return {"beaches": rows, "note": "Modelled relative scores are not probabilities or confirmed sightings and do not change Beach Attention."}
 
 
-def install_wildlife(application: Any, engine: Any, impl: Any) -> None:
+def install_wildlife(application: Any, engine: Any, impl: Any, jwt_secret: str | None = None) -> None:
+    completions = impl.metadata.tables.get("species_quiz_completions")
+    if completions is None:
+        completions = Table(
+            "species_quiz_completions", impl.metadata,
+            Column("user_id", String(80), primary_key=True),
+            Column("card_id", String(100), primary_key=True),
+            Column("completed_at", DateTime(timezone=True), nullable=False),
+        )
+    completions.create(engine, checkfirst=True)
+
     application.extensions["insights_wildlife"] = lambda: wildlife_panel(application, engine, impl)
     def cards_for_request():
         beach_id = request.args.get("beachId")
@@ -146,10 +232,86 @@ def install_wildlife(application: Any, engine: Any, impl: Any) -> None:
             "validation": "approved_prepared_answer", "fallback": True,
         })
 
+    def read_quiz(card_id: str):
+        card = card_by_id(card_id)
+        if card is None:
+            return impl.error_response(404, "NOT_FOUND", "Species card not found.")
+        completed = False
+        if jwt_secret:
+            user = _user(engine, impl, jwt_secret)
+            if user is not None:
+                with engine.connect() as connection:
+                    completed = connection.execute(select(completions).where(
+                        completions.c.user_id == user.id,
+                        completions.c.card_id == card_id,
+                    )).first() is not None
+        return jsonify(quiz_payload(card, completed))
+
+    def answer_quiz(card_id: str):
+        card = card_by_id(card_id)
+        if card is None:
+            return impl.error_response(404, "NOT_FOUND", "Species card not found.")
+        payload = request.get_json(silent=True)
+        if not isinstance(payload, dict) or set(payload) != {"questionId", "optionId"}:
+            return impl.error_response(400, "VALIDATION_FAILED", "questionId and optionId are required.")
+        question_id = str(payload["questionId"])
+        if question_id not in {"0", "1", "2"} or not isinstance(payload["optionId"], str) or payload["optionId"] not in {"approved", "context", "sighting"}:
+            return impl.error_response(400, "VALIDATION_FAILED", "Choose an option for one of the three quiz questions.")
+        return jsonify({
+            "questionId": question_id,
+            "correct": payload["optionId"] == "approved",
+            "explanation": card["answers"][int(question_id)]["text"],
+            "sources": card["sources"],
+            "complete": False,
+        })
+
+    def complete_quiz(card_id: str):
+        card = card_by_id(card_id)
+        if card is None:
+            return impl.error_response(404, "NOT_FOUND", "Species card not found.")
+        user = _user(engine, impl, jwt_secret) if jwt_secret else None
+        if user is None:
+            return impl.error_response(401, "UNAUTHENTICATED", "Sign in to save quiz completion.")
+        payload = request.get_json(silent=True)
+        answers = payload.get("answers") if isinstance(payload, dict) and set(payload) == {"answers"} else None
+        valid_options = {"approved", "context", "sighting"}
+        valid_rows = isinstance(answers, list) and all(
+            isinstance(row, dict)
+            and set(row) == {"questionId", "optionId"}
+            and isinstance(row["optionId"], str)
+            and row["optionId"] in valid_options
+            for row in answers
+        )
+        ids = [str(row["questionId"]) for row in answers] if valid_rows else []
+        if len(ids) != 3 or set(ids) != {"0", "1", "2"}:
+            return impl.error_response(400, "VALIDATION_FAILED", "Answer each quiz question exactly once.")
+        recorded = False
+        try:
+            with engine.begin() as connection:
+                with connection.begin_nested():
+                    connection.execute(insert(completions).values(
+                        user_id=user.id,
+                        card_id=card_id,
+                        completed_at=datetime.now(timezone.utc),
+                    ))
+                    recorded = True
+        except IntegrityError:
+            recorded = False
+        return jsonify({"cardId": card_id, "completed": True, "recorded": recorded})
+
+    def beach_risks(beach_id: str):
+        if not any(beach["id"] == beach_id for beach in impl.load_beaches(engine)):
+            return impl.error_response(404, "NOT_FOUND", "Beach not found.")
+        return jsonify(beach_risk_entries(engine, impl, beach_id))
+
     application.add_url_rule("/species-cards", "list_species_cards", cards_for_request)
     application.add_url_rule("/species-cards/<card_id>", "read_species_card", read_card)
     application.add_url_rule("/species-cards/<card_id>/answers", "answer_species_question", answer_question, methods=["POST"])
+    application.add_url_rule("/species-cards/<card_id>/quiz", "read_species_quiz", read_quiz, methods=["GET"])
+    application.add_url_rule("/species-cards/<card_id>/quiz/answer", "answer_species_quiz", answer_quiz, methods=["POST"])
+    application.add_url_rule("/species-cards/<card_id>/quiz/complete", "complete_species_quiz", complete_quiz, methods=["POST"])
     application.add_url_rule("/wildlife-risks", "read_wildlife_risks", lambda: jsonify(risk_entries()))
+    application.add_url_rule("/beaches/<beach_id>/wildlife-risks", "read_beach_wildlife_risks", beach_risks)
     application.add_url_rule("/wildlife-guidance", "read_wildlife_guidance", lambda: jsonify(wildlife_guidance()))
     application.add_url_rule("/insights/wildlife", "read_insights_wildlife", lambda: jsonify(wildlife_panel(application, engine, impl)))
 
@@ -168,4 +330,11 @@ def install_wildlife(application: Any, engine: Any, impl: Any) -> None:
         else:
             return response
         response.set_data(impl.json.dumps(body, separators=(",", ":")))
+        return response
+
+    @application.after_request
+    def protect_personal_quiz_state(response: Any):
+        if request.endpoint == "read_species_quiz" and response.status_code == 200:
+            response.headers["Cache-Control"] = "private, no-store"
+            response.vary.add("Authorization")
         return response
