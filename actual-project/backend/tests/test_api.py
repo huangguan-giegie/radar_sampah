@@ -40,6 +40,7 @@ for _obsolete in (
     "test_duplicate_rule_and_counts",
     "test_events_require_join_location_and_evidence_for_attendance",
     "test_unlinked_counted_report_does_not_confirm_event_attendance",
+    "test_species_distribution_predicts_from_packaged_models",
 ):
     globals().pop(_obsolete, None)
 
@@ -500,3 +501,21 @@ def test_fully_cleared_reports_are_excluded_from_five_report_median(api):
     assert morib["validReports"] == 3
     assert morib["attentionScore"] == 2.0
     assert morib["severity"] == "Moderate"
+
+
+def test_species_distribution_predicts_from_backend_v1_registry(api):
+    _application, client = api
+    response = client.post(
+        "/api/species-distribution/predict",
+        json={"latitude": 2.746, "longitude": 101.44},
+    )
+    assert response.status_code == 200
+    payload = response.get_json()
+    slugs = {prediction["speciesSlug"] for prediction in payload["predictions"]}
+    assert len(slugs) == 40
+    assert {
+        "green_sea_turtle",
+        "ocellaris_clownfish",
+        "irrawaddy_dolphin",
+        "moorish_idol",
+    }.issubset(slugs)
