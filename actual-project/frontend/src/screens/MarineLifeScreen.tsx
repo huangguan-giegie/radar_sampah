@@ -216,6 +216,46 @@ export function SpeciesScreen() {
   );
 }
 
+
+type SpeciesIntroduction = {
+  name: string;
+  subtitle: string;
+  intro: string;
+  evidence: string;
+  image: string | null;
+  answers: { title: string; text: string }[];
+  sources: { label: string; url: string }[];
+  credit: string;
+  photoSource: string | null;
+};
+
+/**
+ * Compatibility export for the published-answer contract test.
+ * The routed SpeciesScreen above remains the teammate v2 implementation.
+ */
+export function SpeciesIntroductionView({ species: s, goBack }: { species: SpeciesIntroduction; goBack: () => void }) {
+  return (
+    <main className="screen scroll-y coastal-screen">
+      <div className="species-hero">
+        <SpeciesPicture image={s.image} name={s.name} />
+        <div className="back-overlay"><BackButton onClick={goBack} /></div>
+      </div>
+      <div className="coastal-page measure species-body">
+        <h1>{s.name}</h1>
+        <p className="subtle" style={{ fontStyle: "italic" }}>{s.subtitle}</p>
+        <p>{s.intro}</p>
+        <p className="coastal-footnote">{s.evidence}</p>
+        <SummaryCard eyebrow="Read answers">
+          <p style={{ margin: "0 0 8px", fontSize: 12, color: "#ffffffad" }}>
+            Answers use this card’s published sources
+          </p>
+        </SummaryCard>
+        {s.answers.map((a) => <WhiteCard key={a.title}><h3>{a.title}</h3><p className="subtle">{a.text}</p></WhiteCard>)}
+      </div>
+    </main>
+  );
+}
+
 export function HabitatScreen() {
   const { habitatId } = useParams();
   const nav = useNavigate();
