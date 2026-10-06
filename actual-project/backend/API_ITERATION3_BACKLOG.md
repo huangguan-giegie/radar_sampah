@@ -1,7 +1,8 @@
-# Iteration 3 backlog API interfaces
+# Historical API contracts excluded from the confirmed Iteration 3 AC
 
-These read/write contracts are ready for frontend integration. They use the existing JSON
-error shape: `{ "code": "...", "message": "..." }`.
+The contracts in this document came from the teammate source branch linked below. They are
+retained as historical interface references and use the existing JSON error shape:
+`{ "code": "...", "message": "..." }`.
 
 ## Delivery status and source
 
@@ -9,18 +10,16 @@ This document describes four interface groups from the teammate backend source b
 [`iteration3-backend`](https://github.com/huangguan-giegie/radar_sampah/tree/iteration3-backend)
 at source commit `bc382988d0dd6e9221861a60b0d5d41a2f1911e5`.
 
-The four groups below are backlog interfaces. They are not included in the current `main` or
-`iteration3` deployment, and the current frontend does not call them. The current production
-release is `1fd13e06819973002ceebd30d861d4eb06c5238c`.
+The team removed all four groups below from the confirmed Iteration 3 acceptance criteria.
+They are out of scope, not queued for implementation or frontend integration. Their
+application behavior is not implemented on the current `main` or `iteration3` branches or in
+production release `1fd13e06819973002ceebd30d861d4eb06c5238c`.
 
-The deployed species feature provides approved, prepared species Q&A content through the
-existing species and wildlife flows. That prepared content is separate from the marine-life
-quiz endpoints below, which still need frontend integration. Likewise, the deployed public
-`/wildlife-risks` resource is a general approved risk library; the beach-specific
-`/beaches/:beachId/wildlife-risks` route below still needs to be connected.
-
-Suggested frontend entry points are Species detail for the quiz, Beach detail for beach risk
-cards, Insights participation for weekly reporting, and Account or Contributions for badges.
+The deployed species feature continues to provide approved, prepared species Q&A through the
+existing flows. That content is separate from the excluded marine-life quiz proposal below.
+Likewise, the deployed public `/wildlife-risks` resource is a general approved risk library;
+the beach-specific risk-card proposal below is excluded. The excluded weekly-reporting field
+and first-cleanup badge are not Iteration 3 deliverables.
 
 Related project documents:
 

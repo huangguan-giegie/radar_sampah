@@ -77,3 +77,11 @@ invented from validation metrics.
 
 Deferred: Iteration 3 recurrence prediction, contribution points, badges, and
 leaderboards. No broad redesign or framework replacement is required.
+
+## Current Iteration 3 scope note - 6 October 2026
+
+The deferral above records the plan as of 17 September. The team's confirmed
+Iteration 3 AC has since removed the marine-life quiz, beach-specific
+wildlife-risk cards, weekly reporting activity, and first-cleanup badge. These
+items are out of scope, not pending implementation. The earlier generic mention
+of badges does not make the first-cleanup badge a current Iteration 3 requirement.
