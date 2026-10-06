@@ -144,6 +144,18 @@ reference and working green-turtle conservation answer. Browser warning/error
 logs were empty. Render application-error logs were empty for the queried
 `01:20:46–01:25:53 UTC` release window.
 
+### Dated follow-up observation
+
+At `2026-10-06 01:37:29 UTC` (`10:37:29` Asia/Seoul), one read-only public
+`/insights/participation` request returned HTTP 500 while the event-scheduler
+beach-summary query was running. The psycopg error was
+`SSL connection has been closed unexpectedly`; no write mutation occurred.
+The immediately following single recheck returned HTTP 200 for
+`/insights/participation`, `/insights/summary`, `/insights/cleanup` and
+`/health`. Logs were checked through `01:37:31 UTC`. This is one recovered
+transient observation, distinct from the original 183 successful checks, and
+was not reproduced as an outage.
+
 Render one-minute memory samples for the new instance
 `srv-d9v00r3ncjis73amjvi0-r65vz` ranged from 387,907,600 to 498,249,730 bytes
 (approximately **369.94–475.17 MiB**) during release verification, below the
