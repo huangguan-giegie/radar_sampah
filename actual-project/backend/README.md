@@ -98,6 +98,13 @@ Normal anonymous signup creates `volunteer` accounts only.
 Custom species questions use the shared published guide at
 `../frontend/src/content/coastalContent.json`; deploy the repository with that
 file present. The three prepared questions are answered locally in the frontend.
+The guide identifies the selected species and supplies reference context; custom
+answers may also use the model's general scientific knowledge. Relevant questions
+are answered even when the guide lacks the answer, while possible general causes
+are distinguished from established species-specific findings. Unrelated questions
+receive only a statement that they have no relation to this species. All custom
+answers use the question's language, including the unrelated-question statement.
+Returned `sources` are species guide references, not citations for every AI claim.
 Only the custom question calls TeamoRouter's native Gemini endpoint, using
 `gemini-3.5-flash-lite` first and `gemini-3.8-flash` if the primary call fails.
 Each model has a 20-second timeout and 1,500-token output budget. Authentication

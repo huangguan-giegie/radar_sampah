@@ -43,11 +43,12 @@ export function SpeciesQuestions({ species }: { species: SpeciesGuide }) {
       </form>
     </SummaryCard>
     {reply && <Sheet title={reply.question} onClose={close}>
-      <p className="coastal-footnote">{reply.custom ? "AI-generated · based on this species guide" : "From this guide’s published sources"}</p>
+      <p className="coastal-footnote">{reply.custom ? "AI-generated · species knowledge" : "From this guide’s published sources"}</p>
       <div aria-live="polite" role={reply.error ? "alert" : "status"}>
         {reply.loading ? <p>Preparing your answer…</p> : <p className="subtle" style={{ whiteSpace: "pre-wrap" }}>{reply.text}</p>}
       </div>
       {reply.error && <PrimaryButton onClick={() => void ask(reply.question)}>Try again</PrimaryButton>}
+      {reply.custom && !reply.loading && !reply.error && <p className="coastal-footnote">Species guide references</p>}
       {!reply.loading && !reply.error && species.sources.map(source => <a key={source.url} className="species-source" href={source.url} target="_blank" rel="noreferrer">{source.label} ↗</a>)}
     </Sheet>}
   </>;
