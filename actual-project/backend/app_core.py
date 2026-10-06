@@ -57,6 +57,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.engine import Engine
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.schema import CreateSchema
 from werkzeug.exceptions import HTTPException
 from werkzeug.exceptions import RequestEntityTooLarge
 from species_distribution import ModelAreaError, ModelInputError, SpeciesDistributionModel
@@ -118,10 +119,10 @@ REPORT_STATUS_NOTES = {
     "Incomplete": "Photo unreadable — excluded until you correct and save the record.",
 }
 SCORING_BANDS = (
-    {"band": "Low", "range": "0.35 ≤ x < 1.50", "color": "#7CA98B"},
-    {"band": "Moderate", "range": "1.50 ≤ x < 2.50", "color": "#D9A24B"},
-    {"band": "High", "range": "2.50 ≤ x < 3.50", "color": "#CE6B45"},
-    {"band": "Severe", "range": "3.50 ≤ x ≤ 4.00", "color": "#B84A3F"},
+    {"band": "Low", "range": "below 1.5", "color": "#7CA98B"},
+    {"band": "Moderate", "range": "1.5 – <2.5", "color": "#D9A24B"},
+    {"band": "High", "range": "2.5 – <3.5", "color": "#CE6B45"},
+    {"band": "Severe", "range": "3.5 and above", "color": "#B84A3F"},
 )
 PHOTO_MIME_TYPES = {"image/jpeg", "image/png", "image/heic", "image/heif"}
 REPORT_INPUT_FIELDS = {"beachId", "quantities", "photoKey", "locationSource", "coords"}
@@ -421,6 +422,11 @@ def database_schema() -> str | None:
 
 def initialise_database(engine: Engine) -> None:
     """Create the schema and preserve reports written under the former name."""
+    schema = database_schema() if engine.dialect.name == "postgresql" else None
+    if schema:
+        with engine.begin() as connection:
+            if not inspect(connection).has_schema(schema):
+                connection.execute(CreateSchema(schema, if_not_exists=True))
     migrate_legacy_reports_table(engine)
     metadata.create_all(engine)
     ensure_user_columns(engine)
@@ -1269,7 +1275,7 @@ def signed_photo_url(
         jwt_secret,
         algorithm=AUTH_JWT_ALGORITHM,
     )
-    return request.host_url.rstrip("/") + "/uploads/photos/" + photo_key + "?" + urlencode({"token": token})
+    return request.url_root.rstrip("/") + "/uploads/photos/" + photo_key + "?" + urlencode({"token": token})
 
 
 def delete_photo(directory: Path, photo_key: str) -> None:
@@ -1526,7 +1532,8 @@ def create_app(
     beach_names = {beach["id"]: beach["name"] for beach in beaches}
     application.extensions["marine_engine"] = engine
     application.extensions["photo_storage_dir"] = directory
-    # Reuse the offline registry; prediction never persists coordinates or scores.
+    # Load the four validated offline models once at startup. Prediction never
+    # queries OBIS and does not write coordinates or scores to the database.
     application.extensions["photo_cleanup_timers"] = []
     application.extensions["litter_recognizer"] = recognizer
     application.extensions["species_distribution_model"] = species_distribution_model
@@ -1807,11 +1814,17 @@ def create_app(
 
     @application.get("/")
     def root():
-        return jsonify({"project": "Radar Sampah", "status": "ready", "apiVersion": "1.0.0"})
+        return jsonify({"project": "Radar Sampah", "status": "ready", "apiVersion": "3.0.0"})
 
     @application.get("/health")
     def health():
-        return jsonify({"status": "ok", "database": "configured"})
+        try:
+            with engine.connect() as connection:
+                connection.execute(text("SELECT 1"))
+        except Exception:
+            application.logger.exception("Database health check failed")
+            return jsonify({"status": "unavailable", "database": "unavailable"}), 503
+        return jsonify({"status": "ok", "database": "connected", "apiVersion": "3.0.0"})
 
     @application.post("/auth/anonymous")
     def create_anonymous_participant():
@@ -1945,32 +1958,19 @@ def create_app(
             }
         )
 
-    @application.get("/api/species-distribution/species")
-    def get_species_distribution_catalog():
-        return jsonify(application.extensions["species_distribution_model"].catalog())
-
     @application.post("/api/species-distribution/predict")
     def predict_species_distribution():
         payload = request.get_json(silent=True)
-        if (not isinstance(payload, dict)
-                or not {"latitude", "longitude"} <= set(payload)
-                or set(payload) - {"latitude", "longitude", "mode", "topK"}):
+        if not isinstance(payload, dict) or set(payload) != {"latitude", "longitude"}:
             return error_response(400, "VALIDATION_FAILED", "latitude and longitude are required.")
         if not is_json_number(payload["latitude"]) or not is_json_number(payload["longitude"]):
             return error_response(400, "VALIDATION_FAILED", "latitude and longitude must be numbers.")
         try:
             latitude, longitude = float(payload["latitude"]), float(payload["longitude"])
-        except (TypeError, ValueError, OverflowError):
+        except (TypeError, ValueError):
             return error_response(400, "VALIDATION_FAILED", "latitude and longitude must be numbers.")
-        mode = payload.get("mode", "exact")
-        if mode not in ("exact", "nearby_marine"):
-            return error_response(400, "VALIDATION_FAILED", "mode must be exact or nearby_marine.")
         try:
-            model = application.extensions["species_distribution_model"]
-            if mode == "nearby_marine":
-                result = model.predict_nearby_marine(latitude, longitude, max_distance_km=15, top_k=payload.get("topK", 5))
-            else:
-                result = model.predict(latitude, longitude, top_k=payload.get("topK", 5))
+            result = application.extensions["species_distribution_model"].predict(latitude, longitude)
         except ModelInputError as error:
             return error_response(400, "VALIDATION_FAILED", str(error))
         except ModelAreaError as error:
@@ -2301,7 +2301,7 @@ def create_app(
         if event.status != "Open" or not (utc_datetime(event.starts_at) <= now <= utc_datetime(event.ends_at)):
             return error_response(409, "EVENT_NOT_ACTIVE", "Check-in is available only while the event is active.")
         beach = next((item for item in beaches if item["id"] == event.beach_id), None)
-        if beach is None or beach["lat"] is None or beach["lng"] is None or distance_km(lat, lng, beach["lat"], beach["lng"]) > EVENT_CHECKIN_RADIUS_KM:
+        if beach is None or distance_km(lat, lng, beach["lat"], beach["lng"]) > EVENT_CHECKIN_RADIUS_KM:
             return error_response(403, "LOCATION_OUT_OF_RANGE", "You must be within 25 km of the event beach to check in.")
         with engine.begin() as connection:
             connection.execute(event_members_table.update().where(
@@ -2478,8 +2478,6 @@ def create_app(
         nearest: dict[str, Any] | None = None
         nearest_distance = float("inf")
         for beach in beaches:
-            if beach["lat"] is None or beach["lng"] is None:
-                continue
             phi1, phi2 = math.radians(lat), math.radians(beach["lat"])
             dphi = math.radians(beach["lat"] - lat)
             dlambda = math.radians(beach["lng"] - lng)

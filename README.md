@@ -1,5 +1,7 @@
 # Team 04 Real Project Migration
 
+Current delivery: [Iteration 3 backend for frontend v2](actual-project/backend/README_V2.md).
+
 This folder holds the active Radar Sampah project. The migration audit record
 is maintained locally only.
 

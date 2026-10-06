@@ -44,10 +44,10 @@ describe('v3 real API integration', () => {
     const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify(dates)));
     vi.stubGlobal('fetch', fetchMock);
     const { fetchLatestCleanupDates } = await import('./iteration2Api');
-    expect(await fetchLatestCleanupDates()).toEqual(dates);
+    expect(await fetchLatestCleanupDates(Object.keys(dates))).toEqual(dates);
     expect(fetchMock).toHaveBeenCalledTimes(1);
     const [url, init] = fetchMock.mock.calls[0];
-    expect(url).toBe('https://api.example.test/cleanups/latest-by-beach');
+    expect(url).toBe('https://api.example.test/beaches/cleanup-history');
     expect(init.headers.Authorization).toBeUndefined();
   });
 

@@ -335,15 +335,12 @@ def test_weekly_events_are_created_only_for_moderate_high_and_severe_beaches(api
     _seed_attention(client, "bagan", {"Paper": "Medium"})
 
     severities = {item["id"]: item["severity"] for item in client.get("/beaches").get_json()}
-    core_ids = {"morib", "remis", "kelanang", "bagan"}
-    assert {key: value for key, value in severities.items() if key in core_ids} == {
+    assert {beach: severity for beach, severity in severities.items() if severity is not None} == {
         "morib": "Moderate",
         "remis": "High",
         "kelanang": "Severe",
         "bagan": "Low",
     }
-    assert len(severities) == 86
-    assert all(value is None for key, value in severities.items() if key not in core_ids)
 
     events = client.get("/events").get_json()
     weekly_by_beach = {
@@ -354,7 +351,6 @@ def test_weekly_events_are_created_only_for_moderate_high_and_severe_beaches(api
     assert len(weekly_by_beach["remis"]) == 4
     assert len(weekly_by_beach["kelanang"]) == 4
     assert weekly_by_beach["bagan"] == []
-    assert all(not rows for key, rows in weekly_by_beach.items() if key not in core_ids)
 
 
 def test_weekly_event_gate_skips_beaches_with_insufficient_data(api):

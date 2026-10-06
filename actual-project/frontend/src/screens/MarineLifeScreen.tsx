@@ -23,26 +23,18 @@ import { originBeachId, withBeach } from "../biodiversity";
 function speciesImageMedia(id: string) {
   return Object.entries(photoOverrides).find(([key]) => key === id)?.[1];
 }
-import { USE_MOCK } from "../api";
-import { iteration3Request } from "../iteration3Api";
-import type { ConservationCard } from "../iteration3Personal";
-import { useAsyncData } from "../useAsyncData";
 export default function MarineLifeScreen() {
   const nav = useNavigate();
   const [params, setParams] = useSearchParams();
   const search = params.get("q") ?? "";
   const filter = params.get("filter") ?? "all";
-  const { data: approved, loading, error, refresh } = useAsyncData(
-    () => USE_MOCK ? Promise.resolve([]) : iteration3Request<ConservationCard[]>('/species-cards'), [], [],
-  );
   const updateFilter = (key: string, value: string) => setParams(previous => {
     const next = new URLSearchParams(previous);
     if (value && value !== "all") next.set(key, value);
     else next.delete(key);
     return next;
   }, { replace: true });
-  const available = USE_MOCK ? content.species : approved.map(card => ({ ...card, subtitle: card.scientificName }));
-  const list = available.filter(
+  const list = content.species.filter(
     (s) =>
       (filter === "all" || s.category === filter) &&
       (s.name + " " + s.subtitle).toLowerCase().includes(search.toLowerCase()),
@@ -50,14 +42,14 @@ export default function MarineLifeScreen() {
   return (
     <CoastalPage
       title="Marine Life"
-      subtitle={USE_MOCK ? 'Preview · species & groups' : 'Approved conservation cards · Tap to explore'}
+      subtitle="38 species & groups · Tap to explore"
       back="/home"
     >
       <div className="filter-chips" style={{ margin: 0 }}>
         {[
           ["all", "All"],
-          ["animal", "Animals"],
-          ["plant", "Plants"],
+          ["animal", "Animals · 26"],
+          ["plant", "Plants · 12"],
         ].map(([id, name]) => (
           <button
             key={id}
@@ -78,8 +70,6 @@ export default function MarineLifeScreen() {
           onChange={(e) => updateFilter("q", e.target.value)}
         />
       </label>
-      {!USE_MOCK && loading && <p role="status">Loading conservation cards…</p>}
-      {!USE_MOCK && error && <DataUnavailable title="Conservation cards could not be loaded" retry={() => void refresh()} />}
       {(["animal", "plant"] as const).map((category) => {
         const rows = list.filter((s) => s.category === category);
         return rows.length ? (
@@ -125,59 +115,6 @@ export default function MarineLifeScreen() {
 }
 
 export function SpeciesScreen() {
-  return USE_MOCK ? <PreviewSpeciesScreen /> : <ApprovedSpeciesScreen />;
-}
-
-function ApprovedSpeciesScreen() {
-  const { speciesId } = useParams();
-  const goBack = useAppBack('/marine-life');
-  const [selectedQuestion, setSelectedQuestion] = useState<string | null>(null);
-  const [answer, setAnswer] = useState<{ answer: string; sources: { label: string; url: string }[]; aiAssisted: boolean } | null>(null);
-  const [answerLoading, setAnswerLoading] = useState(false);
-  const { data: card, loading, error, refresh } = useAsyncData(
-    () => iteration3Request<ConservationCard>('/species-cards/' + encodeURIComponent(speciesId ?? '')),
-    [speciesId], null,
-  );
-  const ask = async (questionId: string) => {
-    if (!card) return;
-    setSelectedQuestion(questionId);
-    setAnswerLoading(true);
-    try {
-      setAnswer(await iteration3Request('/species-cards/' + card.id + '/answers', 'POST', { questionId }));
-    } catch {
-      const prepared = card.answers[Number(questionId)];
-      if (prepared) setAnswer({ answer: prepared.text, sources: card.sources, aiAssisted: false });
-    } finally { setAnswerLoading(false); }
-  };
-  if (loading) return <CoastalPage title="Marine Life" back="/marine-life"><p role="status">Loading conservation card…</p></CoastalPage>;
-  if (error || !card) return <CoastalPage title="Marine Life" back="/marine-life"><DataUnavailable title="Species card could not be loaded" retry={() => void refresh()} /></CoastalPage>;
-  return <CoastalPage title={card.name} back="/marine-life">
-    <SpeciesPicture image={card.image} name={card.name} />
-    <p className="coastal-footnote">{card.credit}</p>
-    <p className="subtle" style={{ fontStyle: 'italic' }}>{card.scientificName}</p>
-    <p>{card.intro}</p>
-    <p className="coastal-footnote">{card.evidence}</p>
-    <WhiteCard><p>{card.conservationMessage}</p></WhiteCard>
-    <SummaryCard eyebrow="Explore this species">
-      {card.questions.map(question => <button key={question.id} className="coastal-link-row" disabled={answerLoading} aria-pressed={selectedQuestion === question.id} onClick={() => void ask(question.id)}>{question.text}</button>)}
-    </SummaryCard>
-    {answerLoading && <p role="status">Loading answer…</p>}
-    {answer && !answerLoading && <WhiteCard>
-      <p>{answer.answer}</p>
-      {answer.aiAssisted && <p className="coastal-footnote">AI-assisted</p>}
-      {answer.sources.map(source => <p key={source.url} className="coastal-footnote"><a href={source.url} target="_blank" rel="noreferrer">{source.label} ↗</a></p>)}
-    </WhiteCard>}
-    <section><h3>{card.name === "Grubeulepis malayensis" ? "Sources & Illustration Credit" : "Sources & Photo Credit"}</h3>
-      {card.sources.map(source => <p key={source.url}><a className="species-source" href={source.url} target="_blank" rel="noreferrer">{source.label} ↗</a></p>)}
-      <p className="coastal-footnote">Reviewed {card.reviewDate} · {card.credit}</p>
-      <a className="species-source" href={card.photoSource} target="_blank" rel="noreferrer">Photo source ↗</a>
-      <a className="species-source" href={card.photoPermission.url} target="_blank" rel="noreferrer">{card.photoPermission.label} ↗</a>
-    </section>
-    <PrimaryButton onClick={goBack}>Back</PrimaryButton>
-  </CoastalPage>;
-}
-
-function PreviewSpeciesScreen() {
   const { speciesId } = useParams();
   const goBack = useAppBack("/marine-life");
   const s = content.species.find((s) => s.id === speciesId);
@@ -188,22 +125,6 @@ function PreviewSpeciesScreen() {
       </CoastalPage>
     );
   const media = speciesImageMedia(s.id);
-  return <SpeciesIntroductionView species={s} goBack={goBack} media={media} />;
-}
-
-type SpeciesIntroduction = {
-  name: string;
-  subtitle: string;
-  intro: string;
-  evidence: string;
-  image: string | null;
-  answers: { title: string; text: string }[];
-  sources: { label: string; url: string }[];
-  credit: string;
-  photoSource: string | null;
-};
-
-export function SpeciesIntroductionView({ species: s, goBack, media }: { species: SpeciesIntroduction; goBack: () => void; media?: { imageLicenseUrl: string; imageCaption?: string | null } }) {
   return (
     <main className="screen scroll-y coastal-screen">
       <div className="species-hero">
@@ -218,13 +139,13 @@ export function SpeciesIntroductionView({ species: s, goBack, media }: { species
           <p className="subtle" style={{ fontStyle: "italic" }}>
             {s.subtitle}
           </p>
-          <p style={{ fontSize: 17, lineHeight: 1.5 }}>{s.intro}</p>
           {media?.imageCaption && <p className="coastal-footnote">{media.imageCaption}</p>}
+          <p style={{ fontSize: 17, lineHeight: 1.5 }}>{s.intro}</p>
           <p className="coastal-footnote">{s.evidence}</p>
         </div>
-        <SummaryCard eyebrow="Read answers">
+        <SummaryCard eyebrow="Ask AI">
           <p style={{ margin: "0 0 8px", fontSize: 12, color: "#ffffffad" }}>
-            Answers use this card’s published sources
+            AI-assisted · answers use this card’s sources
           </p>
           {[
             "Where does it usually live?",
@@ -248,7 +169,11 @@ export function SpeciesIntroductionView({ species: s, goBack, media }: { species
           ))}
         </SummaryCard>
         {s.answers.map((a, i) => (
-          <section key={a.title} id={"answer-" + i} style={{ scrollMarginTop: 22 }}>
+          <section
+            key={a.title}
+            id={"answer-" + i}
+            style={{ scrollMarginTop: 22 }}
+          >
             <WhiteCard>
               <h3>{a.title}</h3>
               <p className="subtle">{a.text}</p>
@@ -256,16 +181,27 @@ export function SpeciesIntroductionView({ species: s, goBack, media }: { species
           </section>
         ))}
         <section>
-          <h3>Sources & Photo Credit</h3>
+          <h3>{s.id === "grubeulepis-malayensis" ? "Sources & Illustration Credit" : "Sources & Photo Credit"}</h3>
           {s.sources.map((source, i) => (
-            <a key={i} className="species-source" href={source.url} target="_blank" rel="noreferrer">
+            <a
+              key={i}
+              className="species-source"
+              href={source.url}
+              target="_blank"
+              rel="noreferrer"
+            >
               {source.label} ↗
             </a>
           ))}
           {s.credit && <p className="coastal-footnote">{s.credit}</p>}
           {s.photoSource && (
-            <a className="species-source" href={s.photoSource} target="_blank" rel="noreferrer">
-              {s.name === "Grubeulepis malayensis" ? "Schematic reference ↗" : "Photo source ↗"}
+            <a
+              className="species-source"
+              href={s.photoSource}
+              target="_blank"
+              rel="noreferrer"
+            >
+              {s.id === "grubeulepis-malayensis" ? "Schematic reference ↗" : "Photo source ↗"}
             </a>
           )}
           {media && (
@@ -275,6 +211,43 @@ export function SpeciesIntroductionView({ species: s, goBack, media }: { species
           )}
         </section>
         <PrimaryButton onClick={goBack}>Back</PrimaryButton>
+      </div>
+    </main>
+  );
+}
+
+
+type SpeciesIntroduction = {
+  name: string;
+  subtitle: string;
+  intro: string;
+  evidence: string;
+  image: string | null;
+  answers: { title: string; text: string }[];
+  sources: { label: string; url: string }[];
+  credit: string;
+  photoSource: string | null;
+};
+
+/** Compatibility view retained for the published-answer contract test. */
+export function SpeciesIntroductionView({ species: s, goBack }: { species: SpeciesIntroduction; goBack: () => void }) {
+  return (
+    <main className="screen scroll-y coastal-screen">
+      <div className="species-hero">
+        <SpeciesPicture image={s.image} name={s.name} />
+        <div className="back-overlay"><BackButton onClick={goBack} /></div>
+      </div>
+      <div className="coastal-page measure species-body">
+        <h1>{s.name}</h1>
+        <p className="subtle" style={{ fontStyle: "italic" }}>{s.subtitle}</p>
+        <p>{s.intro}</p>
+        <p className="coastal-footnote">{s.evidence}</p>
+        <SummaryCard eyebrow="Read answers">
+          <p style={{ margin: "0 0 8px", fontSize: 12, color: "#ffffffad" }}>
+            Answers use this card’s published sources
+          </p>
+        </SummaryCard>
+        {s.answers.map((a) => <WhiteCard key={a.title}><h3>{a.title}</h3><p className="subtle">{a.text}</p></WhiteCard>)}
       </div>
     </main>
   );

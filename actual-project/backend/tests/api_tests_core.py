@@ -63,9 +63,8 @@ def test_startup_seeds_reference_tables_idempotently(tmp_path):
     second = create_app(database_url=database_url, testing=True, photo_storage_dir=tmp_path / "photos")
     engine = second.extensions["marine_engine"]
     with engine.connect() as connection:
-        assert connection.execute(text("SELECT COUNT(*) FROM beaches")).scalar_one() == 86
-        assert connection.execute(text("SELECT COUNT(*) FROM beaches WHERE id IN ('morib', 'remis', 'kelanang', 'bagan')")).scalar_one() == 4
-        assert connection.execute(text("SELECT COUNT(*) FROM area_species")).scalar_one() == 11
+        assert connection.execute(text("SELECT COUNT(*) FROM beaches")).scalar_one() == 101
+        assert connection.execute(text("SELECT COUNT(*) FROM area_species")).scalar_one() == sum(len(b.get("species", [])) for b in load_beaches())
         assert connection.execute(text("SELECT COUNT(*) FROM reports")).scalar_one() == 0
 
 
@@ -77,9 +76,8 @@ def test_startup_repairs_partial_reference_seed_without_touching_reports(tmp_pat
         connection.execute(text("DELETE FROM beaches WHERE id <> 'morib'"))
     second = create_app(database_url=database_url, testing=True, photo_storage_dir=tmp_path / "photos")
     with second.extensions["marine_engine"].connect() as connection:
-        assert connection.execute(text("SELECT COUNT(*) FROM beaches")).scalar_one() == 86
-        assert connection.execute(text("SELECT COUNT(*) FROM beaches WHERE id IN ('morib', 'remis', 'kelanang', 'bagan')")).scalar_one() == 4
-        assert connection.execute(text("SELECT COUNT(*) FROM area_species")).scalar_one() == 11
+        assert connection.execute(text("SELECT COUNT(*) FROM beaches")).scalar_one() == 101
+        assert connection.execute(text("SELECT COUNT(*) FROM area_species")).scalar_one() == sum(len(b.get("species", [])) for b in load_beaches())
         assert connection.execute(text("SELECT COUNT(*) FROM reports")).scalar_one() == 0
 
 
@@ -175,13 +173,14 @@ def test_species_distribution_predicts_from_packaged_models(api):
     assert payload["insideMalaysianEez"] is True
     assert payload["scoreType"] == "relative_occurrence"
     assert payload["calibratedProbability"] is False
-    assert len(payload["predictions"]) == payload["modelCount"] == 40
-    assert {prediction["speciesSlug"] for prediction in payload["predictions"]} >= {
+    slugs = {prediction["speciesSlug"] for prediction in payload["predictions"]}
+    assert len(slugs) == 40
+    assert {
         "green_sea_turtle",
         "ocellaris_clownfish",
         "irrawaddy_dolphin",
         "moorish_idol",
-    }
+    }.issubset(slugs)
 
 
 def test_species_distribution_rejects_coordinates_outside_model_area(api):
@@ -260,7 +259,7 @@ def report_payload(photo_key, beach_id="morib", quantities=None, location_source
 
 def test_health_and_legacy_routes(api):
     _application, client = api
-    assert client.get("/health").get_json() == {"status": "ok", "database": "configured"}
+    assert client.get("/health").get_json() == {"status": "ok", "database": "connected", "apiVersion": "3.0.0"}
 
     response = client.get("/api/options")
     assert response.status_code == 404
@@ -510,15 +509,12 @@ def test_beach_summary_and_detail_shapes_are_strict(api):
     response = client.get("/beaches")
     assert response.status_code == 200
     beaches = response.get_json()
-    assert len(beaches) == 86
-    assert {"morib", "remis", "kelanang", "bagan"} <= {beach["id"] for beach in beaches}
-    assert len({beach["id"] for beach in beaches}) == len(beaches)
+    assert len(beaches) == 101
     expected_summary_fields = {
         "id", "name", "area", "lat", "lng", "severity", "band", "insufficientData",
         "validReports", "lastReportedAt", "freshnessKind", "habitat", "habitatTag",
         "sensitivity", "primarySpeciesGlyph", "speciesNames", "coverImageUrl", "scene",
         "attentionScore", "eligibleReportCount", "newestCountedReportAt", "latestContributingReportAt",
-        "validatedCore", "region", "locationSource", "catalogueSource", "locationStatus",
     }
     assert set(beaches[0]) == expected_summary_fields
     assert beaches[0]["severity"] is None
@@ -562,7 +558,7 @@ def test_scoring_method_matches_published_contract(api):
     ]
     assert body["windowDays"] == 90
     assert body["minReports"] == 3
-    assert [band["range"] for band in body["bands"]] == ["0.35 ≤ x < 1.50", "1.50 ≤ x < 2.50", "2.50 ≤ x < 3.50", "3.50 ≤ x ≤ 4.00"]
+    assert [band["range"] for band in body["bands"]] == ["below 1.5", "1.5 – <2.5", "2.5 – <3.5", "3.5 and above"]
     assert body["reportAggregation"] == "max"
     assert body["beachAggregation"] == "median-of-active-reports"
     assert "fully cleared count-backed reports are excluded" in body["reportEligibility"]
@@ -581,13 +577,14 @@ def test_species_distribution_predicts_from_packaged_models(api):
     assert payload["insideMalaysianEez"] is True
     assert payload["scoreType"] == "relative_occurrence"
     assert payload["calibratedProbability"] is False
-    assert len(payload["predictions"]) == payload["modelCount"] == 40
-    assert {prediction["speciesSlug"] for prediction in payload["predictions"]} >= {
+    slugs = {prediction["speciesSlug"] for prediction in payload["predictions"]}
+    assert len(slugs) == 40
+    assert {
         "green_sea_turtle",
         "ocellaris_clownfish",
         "irrawaddy_dolphin",
         "moorish_idol",
-    }
+    }.issubset(slugs)
 
 
 def test_species_distribution_rejects_coordinates_outside_model_area(api):

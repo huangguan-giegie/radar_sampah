@@ -65,7 +65,7 @@ def test_v3_partial_cleanup_uses_canonical_state_and_retry_identity(api):
     for path in (f"/cleanups/{second.get_json()['id']}", f"/cleanups/by-target/{target}", "/beaches/morib/cleanups/latest"):
         result = client.get(path)
         assert result.status_code == 200
-        assert result.get_json() == second.get_json()
+        assert result.get_json() == {key: value for key, value in second.get_json().items() if key != "participantId"}
     with application.extensions["marine_engine"].connect() as connection:
         rows = connection.execute(select(cleanup_actions_table)).all()
         assert len(rows) == 2

@@ -1,5 +1,8 @@
 # Radar Sampah API
 
+For the frontend v2 backend, local review and same-origin deployment, start with
+[README_V2.md](README_V2.md). The notes below describe the earlier API contracts.
+
 This Flask API keeps the frontend contract from commit `1a113fbb1f900192e4cf0ec0d1620abc7cba309f` in
 [`../frontend/API.en.md`](../frontend/API.en.md) and adds Iteration 2 endpoints
 specified in [`API_ITERATION2.md`](API_ITERATION2.md): local litter recognition,

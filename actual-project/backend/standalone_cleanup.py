@@ -5,7 +5,7 @@ import hashlib
 import json
 import secrets
 import time
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Any
 
 from flask import g, jsonify, request
@@ -114,6 +114,17 @@ def _active_quantities(quantities: dict[str, str]) -> dict[str, str]:
     return {category: band for category, band in quantities.items() if band != "Small"}
 
 
+def _eligible_target_report(impl: Any, report: Any, now: datetime | None = None) -> bool:
+    """Use the same non-deleted, recent Counted evidence as beach attention."""
+    cutoff = (now or datetime.now(timezone.utc)) - timedelta(days=90)
+    return bool(
+        report is not None
+        and report.status == "Counted"
+        and getattr(report, "deleted_at", None) is None
+        and impl.utc_datetime(report.created_at) >= cutoff
+    )
+
+
 def install_cleanup_route(application: Any, engine: Any, jwt_secret: str, impl: Any) -> None:
     """Install the final Iteration 2 cleanup and active-evidence contract."""
     ensure_cleanup_band_columns(engine, impl)
@@ -124,7 +135,7 @@ def install_cleanup_route(application: Any, engine: Any, jwt_secret: str, impl: 
     # composition, and cleanup targets all consume the same state.
     def active_band_rows(active_engine: Any, rows: list[Any]):
         filtered: list[tuple[Any, dict[str, str]]] = []
-        counted = [row for row in rows if row.status == "Counted"]
+        counted = [row for row in rows if row.status == "Counted" and getattr(row, "deleted_at", None) is None]
         if not counted:
             return filtered
         actions_by_report: dict[str, list[Any]] = defaultdict(list)
@@ -253,8 +264,6 @@ def install_cleanup_route(application: Any, engine: Any, jwt_secret: str, impl: 
             for category, _weight in weighted
         ]
 
-    impl.active_composition_percentages = active_composition_percentages
-
     def recent_report_bands(beach_id: str, limit: int = 4) -> list[dict[str, Any]]:
         """Bands the newest Counted reports recorded, newest first.
 
@@ -271,6 +280,7 @@ def install_cleanup_route(application: Any, engine: Any, jwt_secret: str, impl: 
                 .where(
                     impl.reports_table.c.beach_id == beach_id,
                     impl.reports_table.c.status == "Counted",
+                    impl.reports_table.c.deleted_at.is_(None),
                 )
                 .order_by(impl.reports_table.c.created_at.desc(), impl.reports_table.c.id.desc())
                 .limit(limit)
@@ -303,6 +313,7 @@ def install_cleanup_route(application: Any, engine: Any, jwt_secret: str, impl: 
                 select(impl.reports_table).where(
                     impl.reports_table.c.beach_id == beach_id,
                     impl.reports_table.c.status == "Counted",
+                    impl.reports_table.c.deleted_at.is_(None),
                 )
             ).all()
         eligible = [row for row in all_counted if impl.utc_datetime(row.created_at) >= cutoff]
@@ -327,7 +338,11 @@ def install_cleanup_route(application: Any, engine: Any, jwt_secret: str, impl: 
         report_id = request.args.get("reportId")
         if beach_id and not any(beach["id"] == beach_id for beach in impl.load_beaches()):
             return impl.error_response(404, "NOT_FOUND", "Beach not found.")
-        query = select(impl.reports_table).where(impl.reports_table.c.status == "Counted").order_by(
+        query = select(impl.reports_table).where(
+            impl.reports_table.c.status == "Counted",
+            impl.reports_table.c.deleted_at.is_(None),
+            impl.reports_table.c.created_at >= datetime.now(timezone.utc) - timedelta(days=90),
+        ).order_by(
             impl.reports_table.c.created_at.desc()
         )
         if beach_id:
@@ -489,7 +504,7 @@ def install_cleanup_route(application: Any, engine: Any, jwt_secret: str, impl: 
                     .where(impl.reports_table.c.id == target_report_id)
                     .with_for_update()
                 ).first()
-                if target is None or target.status != "Counted":
+                if not _eligible_target_report(impl, target):
                     return impl.error_response(404, "CLEANUP_TARGET_NOT_FOUND", "The cleanup target is no longer available.")
                 beach_id = target.beach_id
                 if requested_beach_id is not None and requested_beach_id != beach_id:

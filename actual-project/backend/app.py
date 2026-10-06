@@ -36,16 +36,11 @@ from standalone_cleanup import (
     install_cleanup_route,
 )
 from v3_contract import install_v3_contract
-from expanded_beaches import configure_expanded_beaches, ensure_optional_beach_coordinates, refresh_expanded_beach_locations
-from contributions import install_contributions
-from recurrence import install_recurrence
-from wildlife import install_wildlife
+from account import install_account
 from insights import install_insights
-from recommendations import install_recommendations
 
 
 configure_cleanup_schema(_impl)
-configure_expanded_beaches(_impl)
 
 _original_create_app = _impl.create_app
 _original_initialise_database = _impl.initialise_database
@@ -213,8 +208,6 @@ def _initialise_database(engine: Any) -> None:
         _impl.repair_existing_reports = original_repair_existing_reports
     _repair_exact_duplicate_statuses(engine)
     _ensure_postgres_iteration2_contract(engine)
-    ensure_optional_beach_coordinates(engine, _impl)
-    refresh_expanded_beach_locations(engine, _impl)
 
 
 def _candidate_quantities(connection: Any, exclude_report_id: str | None) -> dict[str, str] | None:
@@ -554,14 +547,11 @@ def create_app(
     install_cleanup_route(application, engine, jwt_secret, _impl)
     install_litter_gallery(application, engine, jwt_secret, _impl)
     install_v3_contract(application, engine, jwt_secret, _impl)
-    install_contributions(application, engine, jwt_secret, _impl)
-    install_recurrence(application, engine, jwt_secret, _impl)
-    install_wildlife(application, engine, _impl, jwt_secret)
+    install_account(application, engine, jwt_secret, _impl)
+    install_insights(application, engine, jwt_secret, _impl)
 
     reviewed_scheduler = _reviewed_event_scheduler(engine)
     application.extensions["ensure_scheduled_events"] = reviewed_scheduler
-    install_insights(application, engine, _impl)
-    install_recommendations(application, engine, jwt_secret, _impl)
     application.extensions["gps_proximity_decision"] = lambda payload, report_id: _gps_proximity_decision(engine, payload, geo_secret, report_id)
     for endpoint in ("list_events", "get_event"):
         route = application.view_functions.get(endpoint)
