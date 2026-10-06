@@ -65,7 +65,7 @@ jobs:
 
           python - <<'PY'
           import base64
-          data = base64.b64decode("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Wl5Z1sAAAAASUVORK5CYII=")
+          data = base64.b64decode("iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAFElEQVR42mNk+M9Qz0AEYBxVSFIAANMABfT9dN8AAAAASUVORK5CYII=")
           open("/tmp/radar-test.png","wb").write(data)
           PY
 
@@ -73,7 +73,7 @@ jobs:
           curl -sS -o /tmp/litter-cold.json -w "LITTER_COLD status=%{http_code} total=%{time_total} ttfb=%{time_starttransfer}\n"             -H "Authorization: Bearer $TOKEN"             -F "photo=@/tmp/radar-test.png;type=image/png"             "$BASE/recognitions/cleanup-photo"
           curl -sS -o /tmp/litter-warm.json -w "LITTER_WARM status=%{http_code} total=%{time_total} ttfb=%{time_starttransfer}\n"             -H "Authorization: Bearer $TOKEN"             -F "photo=@/tmp/radar-test.png;type=image/png"             "$BASE/recognitions/cleanup-photo"
 
-          echo "--- result states ---"
+          echo "--- raw litter results ---"\n          cat /tmp/litter-cold.json; echo\n          cat /tmp/litter-warm.json; echo\n          echo "--- result states ---"
           python - <<'PY'
           import json
           for name in ("species-cold","species-warm","litter-cold","litter-warm"):
