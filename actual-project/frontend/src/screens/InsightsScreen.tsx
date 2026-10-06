@@ -607,7 +607,7 @@ function PreviewInsightsScreen() {
           </div>
           <p className="eyebrow">Band</p>
           <div className="filter-chips">
-            {["Very high", "High", "Moderate", "Low", "Insufficient Data"].map(
+            {["Severe", "High", "Moderate", "Low", "Insufficient Data"].map(
               (s) => (
                 <button
                   key={s}
