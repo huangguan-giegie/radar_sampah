@@ -239,7 +239,7 @@ export default function AccountScreen() {
         {ready && !USE_MOCK && contributions?.history.map((entry, index) => (
           <WhiteCard key={`${entry.kind}-${entry.reportId ?? entry.eventId ?? index}`}>
             <LinkRow
-              title={entry.kind === "report" ? "Counted report" : "Recorded cleanup attendance"}
+              title={entry.kind === "report" ? "Counted report" : "Recorded attendance"}
               subtitle={entry.beachName + " · " + formatDate(entry.createdAt)}
               trailing={<b>+{entry.points}</b>}
               onClick={() => { if (entry.reportId) nav("/reports/" + entry.reportId); else if (entry.eventId) nav("/events/" + entry.eventId); }}
