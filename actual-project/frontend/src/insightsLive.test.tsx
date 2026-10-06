@@ -136,12 +136,12 @@ describe("live Insights acceptance display", () => {
     expect(markup).toContain("not expert verification");
   });
 
-  it("routes both evidence URLs to Insights and preserves the Severe filter label", () => {
+  it("routes both evidence URLs to Insights and preserves the teammate filter label", () => {
     expect(appSource).toContain('<Route path="/insights/:topic" element={<InsightsScreen />} />');
     expect(appSource).toContain('<Route path="/insights/:topic/:beachId" element={<InsightsScreen />} />');
     expect(appSource).not.toMatch(/<Route path="\/insights\/evidence(?:\/:beachId)?" element={<Navigate/);
-    expect(previewSource).toContain('["Severe", "High", "Moderate", "Low", "Insufficient Data"]');
-    expect(previewSource).not.toContain('"Very high"');
+    expect(previewSource).toContain('["Very high", "High", "Moderate", "Low", "Insufficient Data"]');
+    expect(previewSource).not.toContain('["Severe", "High", "Moderate", "Low", "Insufficient Data"]');
   });
 
   it("shows backend report statuses and evidence coverage for all four pilot beaches", () => {
