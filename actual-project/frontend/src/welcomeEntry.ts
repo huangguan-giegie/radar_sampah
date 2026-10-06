@@ -34,5 +34,6 @@ export function shouldShowWelcomeBeforeHome(
   initialEntryPath: string,
   store: SessionStore | null = browserSessionStore(),
 ): boolean {
+  if (!store) return false;
   return initialEntryPath === "/home" && !hasSeenWelcome(store);
 }
