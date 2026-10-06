@@ -26,6 +26,7 @@ questions remain separate from the model catalog.
 | Upstream artifacts | Passed | Exactly 40 actual weights; every SHA matches the upstream manifest and validation record. Direct inference matches the 4,227-by-40 saved grid scores. |
 | First integrated API focus | 87 passed in 102.28 s | Catalog, score identities, direct/nearby semantics, Top-K, validation and existing API contracts. |
 | Final focused regression | 52 passed in 58.71 s | Model upgrade, marine area gate, approved wildlife cards/questions and complete Iteration 3 journeys. |
+| Integrated iteration3 retest | 52 passed in 67.79 s | Repeated focused journeys after PR #60 merged; the released tree matches the tested feature tree exactly. |
 | Complete backend regression | **275 passed in 255.70 s** | All backend tests, including privacy, reference migrations, evidence, contributions, cleanup, recurrence and existing litter model contracts. |
 | First frontend regression | 238 passed in 37 files, 4.61 s; build passed | API options, score semantics, card renderer and existing frontend journeys. Actual browser testing subsequently identified the routed-page omission described below. |
 | Final actual-route frontend regression | **243 passed in 38 files, 4.74 s; TypeScript and Vite build passed, 547 ms** | Production CoastalBeachScreen, shared card renderer, all-40 inspection, loading/errors, null coordinates, stale requests, source links and existing screens. |
@@ -92,3 +93,73 @@ the first visible cards/list rows; the DOM and API checks establish all 40 rows.
 ![Actual routed beach page showing nearby marine context and new species](screenshots/iteration3-model-local-top5.jpg)
 
 ![Expanded 40-species result list with distinct raw and location-match scores](screenshots/iteration3-model-local-all40.jpg)
+
+## Merge and deployment verification
+
+Implementation [PR #60](https://github.com/huangguan-giegie/radar_sampah/pull/60)
+merged into iteration3 as `cd4e29c53b2c6edffadb79b744e3f0568e940edb`.
+Release [PR #61](https://github.com/huangguan-giegie/radar_sampah/pull/61)
+merged into main as `1fd13e06819973002ceebd30d861d4eb06c5238c`.
+The feature, integrated and released Git trees are identical:
+`59846cee0fa08c032a2b477951e0975566ee8bf9`.
+The prior main version is preserved by
+`release/pre-40-species-integration-20261006` at
+`53ab5df7c0a14d7b5d2a205795d8e2546bf8c3da`.
+
+Both existing Render services are **live** on the release commit:
+
+| Service | Deployment | Finished (Asia/Seoul) |
+| --- | --- | --- |
+| Backend | `dep-db24oarl550s73c1qu8g` | 6 October 2026, 10:20:46 (`2026-10-06T01:20:46Z`) |
+| Frontend | `dep-db24oarl550s73c1qud0` | 6 October 2026, 10:18:01 (`2026-10-06T01:18:01Z`) |
+
+### Live automated checks
+
+**183 API requests completed with their expected statuses** in two smoke suites:
+
+- **98 model and conservation requests** verified the complete live registry and
+  catalog; all 56 located beaches returned exactly 40 scores, each raw score
+  and percentile independently matching the frozen matrix at the disclosed
+  grid cell. Checks included default strict coordinates, explicit nearby mode,
+  Top-K options, rejected invalid inputs/search-limit overrides, 400/422
+  responses, wildlife panel links and all 12 prepared answers.
+- **85 integrated requests** covered all 52 export points resolving to their own
+  stable IDs, public Insights privacy, recommendations, profile update and
+  restore, opt-out leaderboard behaviour, private history, rejected
+  cross-owner access, CORS and live frontend bundles. This includes an actual
+  ephemeral cleanup-photo request to the existing ONNX detector: it returned
+  HTTP 200 and `state: empty` for a blank fixture, with the expected
+  `sea-taco-yolo11m-best-onnx/1` version. Empty means inference ran but found no
+  supported litter; it was not unavailable. The photo was not stored.
+
+The integration smoke used a new opted-out participant, cleared its temporary
+nickname and added no public reports, joins, attendance or cleanup evidence.
+The model suite used public reads and non-persisting prediction/prepared-answer
+requests. The live dataset still contains 82 export entries, 52 located export
+points, 30 null pairs and four separate core beaches.
+
+Browser checks on the deployed URL confirmed the actual route, new-species
+Top 5, expanded all-40 list, source links, explicit 8.4 km Kelanang marine-grid
+reference and working green-turtle conservation answer. Browser warning/error
+logs were empty. Render application-error logs were empty for the queried
+`01:20:46–01:25:53 UTC` release window.
+
+Render one-minute memory samples for the new instance
+`srv-d9v00r3ncjis73amjvi0-r65vz` ranged from 387,907,600 to 498,249,730 bytes
+(approximately **369.94–475.17 MiB**) during release verification, below the
+reported approximately **512 MiB** limit. These samples do not establish
+stress-load capacity; they include real serving and the litter inference check.
+
+### Actual deployed screenshots
+
+Captured on 6 October 2026 from
+[the live Kelanang beach page](https://team04-marine-observation-frontend.onrender.com/beach/kelanang).
+The visible subset of cards reflects the current viewport; API and DOM checks
+verify the full registry. The two earlier screenshots above are explicitly
+local; the following three are production captures.
+
+![Live Top 5 showing nearby marine coordinates, distance and new species](screenshots/iteration3-model-live-top5.jpg)
+
+![Live expanded all-40 list with species sources and distinct model scores](screenshots/iteration3-model-live-all40.jpg)
+
+![Existing sourced conservation question still works after model integration](screenshots/iteration3-model-live-conservation-answer.jpg)

@@ -43,3 +43,17 @@ Baseline: 149 backend tests and 195 frontend tests passed. Subsequent rounds cov
 The integrated acceptance journey starts with at least three recorded attendances, opts a participant into the leaderboard, records an event-linked cleanup, checks contribution points and participation, adds a later Counted report, checks recurrence on Insights and the beach, changes the nickname, and withdraws consent while retaining private history.
 
 Current integration test results and deployment revisions are recorded in [iteration3-test-report.md](iteration3-test-report.md). The initial release passed 241 backend tests and 227 frontend tests. Coordinate enrichment passed 246 backend tests, 227 frontend tests, production build, repeated focused integration journeys and 84 live API requests, including all 52 sourced export points resolving to their own ids. Rollback versions are preserved by release tags.
+
+The subsequent [40-species model integration](iteration3-model-integration-test-report.md)
+imports the frozen standalone package without changing the website deployment
+configuration. It passed 275 backend tests, 243 frontend tests, production build
+and two 52-test focused regression rounds. The actual CoastalBeachScreen route
+shows explicit nearby marine-grid context, Top 5 and all 40 scores. The four
+approved conservation cards and litter scoring remain separate. Individual
+coordinate provenance is available in the [52-location source register](beach-coordinate-sources-52.md).
+
+The 40-model release is live on both existing Render services at
+`1fd13e06819973002ceebd30d861d4eb06c5238c`. Post-release verification passed
+183 API requests, all 56 located beach/model comparisons, all 12 prepared
+answers, live detector inference and browser checks. The model report includes
+two local and three deployed screenshots.
