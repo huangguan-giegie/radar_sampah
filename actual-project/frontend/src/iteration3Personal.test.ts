@@ -9,6 +9,11 @@ describe('private personal insight sessions', () => {
     expect(canAutoShowPersonalPopup(false, false)).toBe(false);
   });
 
+  it('keeps an explicitly requested beach list visible on the first entry from Home', () => {
+    expect(canAutoShowPersonalPopup(true, false, true)).toBe(false);
+    expect(canAutoShowPersonalPopup(true, false, false)).toBe(true);
+  });
+
   it('keeps Home dismissal separate from the map popup and separate for each participant', () => {
     expect(nextActionDismissalKey('1001')).not.toBe(personalPopupKey('1001'));
     expect(nextActionDismissalKey('1001')).not.toBe(nextActionDismissalKey('1002'));

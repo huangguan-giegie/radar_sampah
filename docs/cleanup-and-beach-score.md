@@ -85,9 +85,8 @@ For one beach (`app_core.py:1064-1144`):
 3. per report, `Report Score = max(category weight x current band level)`
    (`category_scores_for` / `report_score_for`, `app_core.py:814-825`);
 4. with three or more active reports, the beach score is their **median**;
-5. `Low < 1.50`, `Moderate < 2.50`, `High < 3.50`, `Very High >= 3.50`
-   (`app_core.py:1052-1061`; the contract value for the top band is `Severe`
-   and the interface displays "Very high").
+5. `Low [0.35, 1.50)`, `Moderate [1.50, 2.50)`, `High [2.50, 3.50)`,
+   `Severe [3.50, 4.00]`. The contract and interface use the same band names.
 
 Category weights are `Fishing gear 1.00, Plastic 0.85, Glass 0.70, Metal 0.60,
 Other 0.50, Paper 0.35`; band levels are `Small 1 ... Very Large 4`.

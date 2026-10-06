@@ -118,7 +118,7 @@ export default function MapScreen() {
   useEffect(() => {
     if (!user) return;
     const key = personalPopupKey(user.participantId);
-    if (canAutoShowPersonalPopup(location.state?.fromHome === true, readSessionValue(key) === '1')) {
+    if (canAutoShowPersonalPopup(location.state?.fromHome === true, readSessionValue(key) === '1', sheet !== null)) {
       saveSessionValue(key, '1');
       setSheet('personal');
     }
@@ -575,7 +575,7 @@ export default function MapScreen() {
       )}
       {sheet === "beaches" && (
         <Sheet title={region?.name ?? "Beaches"} onClose={() => setSheet(null)}>
-          <p className="subtle">{areaBeaches.reduce((count, beach) => count + beach.validReports, 0)} {reportWord(areaBeaches.reduce((count, beach) => count + beach.validReports, 0))} · {upcomingEvents.filter(event => areaBeaches.some(beach => beach.id === event.beachId)).length} upcoming cleanups</p>
+          {loading ? <p className="subtle" role="status">Loading beaches…</p> : !error && <p className="subtle">{areaBeaches.reduce((count, beach) => count + beach.validReports, 0)} {reportWord(areaBeaches.reduce((count, beach) => count + beach.validReports, 0))} · {upcomingEvents.filter(event => areaBeaches.some(beach => beach.id === event.beachId)).length} upcoming cleanups</p>}
           <label className="coastal-search">
             <Search />
             <input
@@ -585,6 +585,7 @@ export default function MapScreen() {
               aria-label="Search beaches"
             />
           </label>
+          {error && <DataUnavailable title="Could not load beaches" retry={() => void refresh()}>{error}</DataUnavailable>}
           {eventsError && <p className="coastal-footnote" role="alert">Cleanup dates could not be loaded. <button onClick={() => void refreshEvents()}>Try again</button></p>}
           {visible.map((beach) => {
             const event = upcomingEvents.find(item => item.beachId === beach.id);
@@ -597,7 +598,7 @@ export default function MapScreen() {
               </button> : <p className="coastal-footnote">{beach.area} · {eventsLoading ? "Loading cleanup dates…" : eventsError ? "Cleanup dates unavailable" : "No cleanup scheduled yet"}</p>}
             </section>;
           })}
-          {!visible.length && <DataUnavailable title="No matching beaches" />}
+          {!loading && !error && !visible.length && <DataUnavailable title="No matching beaches" />}
           <div className="button-pair"><PrimaryButton onClick={() => nav("/community")}>See All Cleanups</PrimaryButton>
             <GhostButton onClick={() => nav("/insights/trends" + (regionId ? "?region=" + regionId : ""))}>Beach List</GhostButton></div>
         </Sheet>

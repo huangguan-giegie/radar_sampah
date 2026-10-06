@@ -57,8 +57,8 @@ export function personalPopupKey(participantId: string): string {
   return 'radar-personal-insights-shown:' + participantId;
 }
 
-export function canAutoShowPersonalPopup(fromHome: boolean, alreadyShown: boolean): boolean {
-  return fromHome && !alreadyShown;
+export function canAutoShowPersonalPopup(fromHome: boolean, alreadyShown: boolean, hasOpenPanel = false): boolean {
+  return fromHome && !alreadyShown && !hasOpenPanel;
 }
 
 export function readSessionValue(key: string): string | null {

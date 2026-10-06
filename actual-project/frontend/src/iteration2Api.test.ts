@@ -38,6 +38,19 @@ describe('local viewer-scoped events', () => {
 });
 
 describe('v3 real API integration', () => {
+  it('loads the public cleanup dates in one request for the entire catalogue', async () => {
+    const dates = Object.fromEntries(Array.from({ length: 85 }, (_, index) =>
+      [`beach-${index}`, index === 0 ? '2026-10-06T01:00:00+00:00' : null]));
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify(dates)));
+    vi.stubGlobal('fetch', fetchMock);
+    const { fetchLatestCleanupDates } = await import('./iteration2Api');
+    expect(await fetchLatestCleanupDates()).toEqual(dates);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toBe('https://api.example.test/cleanups/latest-by-beach');
+    expect(init.headers.Authorization).toBeUndefined();
+  });
+
   it('sends measured coordinates for server-validated check-in', async () => {
     const fetchMock = vi.fn().mockResolvedValue(new Response('{}'));
     vi.stubGlobal('fetch', fetchMock);

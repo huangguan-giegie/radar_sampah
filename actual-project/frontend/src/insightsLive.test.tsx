@@ -1,21 +1,25 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import appSource from "./App.tsx?raw";
+import previewSource from "./screens/InsightsScreen.tsx?raw";
 
 const state = vi.hoisted(() => ({
   topic: "",
+  beachId: undefined as string | undefined,
   loading: false,
   error: null as string | null,
   data: null as any,
   actions: new Map<string, () => unknown>(),
   refresh: vi.fn(),
   request: vi.fn(),
+  navigate: vi.fn(),
 }));
 
 vi.mock("react-router-dom", async (original) => ({
   ...await original<typeof import("react-router-dom")>(),
-  useNavigate: () => vi.fn(),
-  useParams: () => ({ topic: state.topic }),
+  useNavigate: () => state.navigate,
+  useParams: () => ({ topic: state.topic, beachId: state.beachId }),
   useSearchParams: () => [new URLSearchParams()],
 }));
 vi.mock("./AppContext", () => ({ useApp: () => ({ reportsVersion: 1 }) }));
@@ -23,14 +27,21 @@ vi.mock("./iteration3Api", () => ({ iteration3Request: (...args: unknown[]) => s
 vi.mock("./useAsyncData", () => ({
   useAsyncData: () => ({ data: state.data, loading: state.loading, error: state.error, refresh: state.refresh }),
 }));
-vi.mock("./components/CoastalUI", async (original) => ({
-  ...await original<typeof import("./components/CoastalUI")>(),
-  CoastalPage: ({ children }: { children: ReactNode }) => <main>{children}</main>,
-  DataUnavailable: ({ title, retry }: { title: string; retry?: () => unknown }) => {
-    if (retry) state.actions.set("Retry", retry);
-    return <section>{title}{retry && <button>Retry</button>}</section>;
-  },
-}));
+vi.mock("./components/CoastalUI", async (original) => {
+  const components = await original<typeof import("./components/CoastalUI")>();
+  return {
+    ...components,
+    CoastalPage: ({ children, title }: { children: ReactNode; title: string }) => <main><h1>{title}</h1>{children}</main>,
+    ActionTile: (props: { title: string; subtitle: string; icon: ReactNode; onClick: () => void }) => {
+      state.actions.set(props.title, props.onClick);
+      return <components.ActionTile {...props} />;
+    },
+    DataUnavailable: ({ title, retry }: { title: string; retry?: () => unknown }) => {
+      if (retry) state.actions.set("Retry", retry);
+      return <section>{title}{retry && <button>Retry</button>}</section>;
+    },
+  };
+});
 vi.mock("./components/ui", async (original) => ({
   ...await original<typeof import("./components/ui")>(),
   Skeleton: () => <span>Loading placeholder</span>,
@@ -62,7 +73,7 @@ function summary() {
       conversions: [{ from: "joined", to: "recordedAttendance", percentage: null }],
       caption: "Recorded attendance does not prove cleanup work was completed.",
     },
-    evidence: { sufficientBeachCount: 1, countedNote: "Counted is community evidence, not expert verification.", beaches: [{ beachId: "morib", statuses: { countedActive: 3, countedResolved: 2, duplicate: 1, incomplete: 0 } }] },
+    evidence: { windowDays: 90, sufficientBeachCount: 1, countedNote: "Counted is community evidence accepted for calculation, not expert verification.", beaches: [{ beachId: "morib", beachName: "Pantai Morib", statuses: { countedActive: 3, countedResolved: 2, duplicate: 1, incomplete: 0 }, eligibleReportCount: 3, latestContributingReportAt: "2026-10-04T12:00:00Z", sufficiency: "Sufficient data", freshnessLabel: "Recently reported" }] },
     wildlife: { beaches: [{ beachId: "morib", beachName: "Pantai Morib", species: [{ id: "green-sea-turtle", name: "Green Sea Turtle", relativeOccurrenceScore: 0.73, locationMatchScore: 0.91, source: { label: "OBIS model", url: "https://obis.org/" }, reviewDate: "2026-10-05", destination: "/species/green-sea-turtle" }], sourceStatus: "ready", coordinateContext: { requestedLatitude: 2.746, requestedLongitude: 101.44, usedLatitude: 2.75, usedLongitude: 101.35, method: 'nearest_marine_grid', moved: true, distanceKm: 10, maxDistanceKm: 15, requestedInsideMalaysianEez: false } }] },
   };
 }
@@ -70,6 +81,7 @@ function summary() {
 beforeEach(() => {
   vi.clearAllMocks();
   state.topic = "";
+  state.beachId = undefined;
   state.loading = false;
   state.error = null;
   state.data = summary();
@@ -113,15 +125,86 @@ describe("live Insights acceptance display", () => {
     expect(markup).toContain("Zero means no reports, not zero litter");
   });
 
-  it("offers the five current insight tiles and removes the evidence-quality entry", () => {
+  it("offers every required insight topic and keeps volunteers as a supplemental entry", () => {
     const markup = renderToStaticMarkup(<LiveInsightsScreen />);
-    expect(markup.match(/class="action-tile press"/g)).toHaveLength(5);
-    expect(markup).toContain('action-grid five');
-    expect(markup).toContain('Volunteers');
-    expect(markup).toContain('Wildlife');
-    expect(markup).not.toContain('Evidence Quality');
-    expect(markup).not.toContain('Evidence coverage');
+    expect(markup.match(/class="action-tile press"/g)).toHaveLength(6);
+    for (const topic of ['Trends', 'Cleanup', 'Participation', 'Evidence', 'Wildlife', 'Volunteers']) {
+      expect(state.actions.has(topic)).toBe(true);
+    }
+    state.actions.get('Evidence')?.();
+    expect(state.navigate).toHaveBeenCalledWith('/insights/evidence');
     expect(markup).toContain("not expert verification");
+  });
+
+  it("routes both evidence URLs to Insights and preserves the Severe filter label", () => {
+    expect(appSource).toContain('<Route path="/insights/:topic" element={<InsightsScreen />} />');
+    expect(appSource).toContain('<Route path="/insights/:topic/:beachId" element={<InsightsScreen />} />');
+    expect(appSource).not.toMatch(/<Route path="\/insights\/evidence(?:\/:beachId)?" element={<Navigate/);
+    expect(previewSource).toContain('["Severe", "High", "Moderate", "Low", "Insufficient Data"]');
+    expect(previewSource).not.toContain('"Very high"');
+  });
+
+  it("shows backend report statuses and evidence coverage for all four pilot beaches", () => {
+    state.topic = "evidence";
+    const otherBeaches = [
+      { beachId: 'bagan', beachName: 'Pantai Bagan Lalang', statuses: { countedActive: 2, countedResolved: 0, duplicate: 0, incomplete: 1 }, eligibleReportCount: 2, latestContributingReportAt: '2026-08-17T08:00:00Z', sufficiency: 'Insufficient data', freshnessLabel: 'Reported 50 days ago' },
+      { beachId: 'remis', beachName: 'Pantai Remis', statuses: { countedActive: 0, countedResolved: 0, duplicate: 0, incomplete: 0 }, eligibleReportCount: 0, latestContributingReportAt: null, sufficiency: 'Insufficient data', freshnessLabel: 'Not recently reported' },
+      { beachId: 'kelanang', beachName: 'Pantai Kelanang', statuses: { countedActive: 4, countedResolved: 1, duplicate: 0, incomplete: 0 }, eligibleReportCount: 4, latestContributingReportAt: '2026-10-05T06:00:00Z', sufficiency: 'Sufficient data', freshnessLabel: 'Recently reported' },
+    ];
+    state.data.evidence.beaches.push(...otherBeaches);
+    state.data.beaches.push(...otherBeaches.map(beach => ({ ...state.data.beaches[0], id: beach.beachId, name: beach.beachName })));
+    state.data.evidence.sufficientBeachCount = 2;
+    const markup = renderToStaticMarkup(<LiveInsightsScreen />);
+    expect(markup).toContain('<h1>Evidence</h1>');
+    expect(markup).toContain('Evidence coverage · last 90 days');
+    expect(markup).toContain('<strong>2</strong><span>of 4 pilot beaches have sufficient data</span>');
+    expect(markup).toContain('Pantai Morib report status counts in the last 90 days: Counted Active: 3, Counted Resolved: 2, Duplicate: 1, Incomplete: 0');
+    expect(markup).toContain('width:50%');
+    expect(markup.match(/report status counts in the last 90 days:/g)).toHaveLength(4);
+    expect(markup).toContain('active eligible Counted reports in the last 90 days');
+    expect(markup).toContain('04/10/2026');
+    expect(markup).toContain('Sufficient data');
+    expect(markup).toContain('Insufficient data');
+    expect(markup).toContain('Recently reported');
+    expect(markup).toContain('Reported 50 days ago');
+    expect(markup).toContain('Not recently reported');
+    expect(markup).toContain('No contributing report');
+    expect(markup).toContain('No reports recorded in the last 90 days.');
+    expect(markup).not.toContain('NaN');
+    expect(markup).toContain('Counted is community evidence accepted for calculation, not expert verification.');
+  });
+
+  it("shows only the requested beach evidence without inferring another beach's counts", () => {
+    state.topic = "evidence";
+    state.beachId = "missing-beach";
+    const markup = renderToStaticMarkup(<LiveInsightsScreen />);
+    expect(markup).toContain("Beach evidence not found");
+    expect(markup).not.toContain("Pantai Morib report status counts");
+  });
+
+  it.each([undefined, { windowDays: 90, beaches: [], sufficientBeachCount: 0, countedNote: "" }])("offers retry when the evidence aggregate is missing or empty", (evidence) => {
+    state.topic = "evidence";
+    state.data.evidence = evidence;
+    const markup = renderToStaticMarkup(<LiveInsightsScreen />);
+    expect(markup).toContain("Evidence is not available yet");
+    state.actions.get("Retry")?.();
+    expect(state.refresh).toHaveBeenCalledTimes(1);
+    expect(markup).not.toContain("0 of");
+  });
+
+  it("keeps the evidence loading and error states recoverable without displaying stale counts", () => {
+    state.topic = "evidence";
+    state.loading = true;
+    const pending = renderToStaticMarkup(<LiveInsightsScreen />);
+    expect(pending).toContain("Loading placeholder");
+    expect(pending).not.toContain("report status counts");
+    state.loading = false;
+    state.error = "Connection unavailable";
+    const failed = renderToStaticMarkup(<LiveInsightsScreen />);
+    expect(failed).toContain("Insights could not be loaded");
+    expect(failed).not.toContain("report status counts");
+    state.actions.get("Retry")?.();
+    expect(state.refresh).toHaveBeenCalledTimes(1);
   });
 
   it("displays suppressed small participation counts without inferring conversion percentages", () => {

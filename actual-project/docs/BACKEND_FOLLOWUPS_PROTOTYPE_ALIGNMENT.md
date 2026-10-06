@@ -139,7 +139,6 @@ it, without weakening the report-location rule.
 
 ### 4. Terminology
 
-The contract value stays `Severe`. The app displays **Very high**, decided by the team
-because "Severe" reads like an official hazard warning that volunteer counts cannot
-support. The scoring document should record that mapping in one sentence so the two words
-are never mistaken for two bands.
+The contract and interface both use `Severe`, matching the corrected acceptance
+criteria. Beach Attention describes recorded community litter evidence and is
+not an official hazard assessment.

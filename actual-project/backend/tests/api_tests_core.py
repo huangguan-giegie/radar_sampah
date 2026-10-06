@@ -562,7 +562,7 @@ def test_scoring_method_matches_published_contract(api):
     ]
     assert body["windowDays"] == 90
     assert body["minReports"] == 3
-    assert [band["range"] for band in body["bands"]] == ["below 1.5", "1.5 – <2.5", "2.5 – <3.5", "3.5 and above"]
+    assert [band["range"] for band in body["bands"]] == ["0.35 ≤ x < 1.50", "1.50 ≤ x < 2.50", "2.50 ≤ x < 3.50", "3.50 ≤ x ≤ 4.00"]
     assert body["reportAggregation"] == "max"
     assert body["beachAggregation"] == "median-of-active-reports"
     assert "fully cleared count-backed reports are excluded" in body["reportEligibility"]

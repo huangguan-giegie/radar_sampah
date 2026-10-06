@@ -96,6 +96,7 @@ export default function HomeScreen() {
     }
     nav(nextAction.destination.path);
   };
+  const exploreBeaches = () => nav("/map?panel=beaches", { state: { fromHome: true } });
   const h = new Date().getHours();
   return (
     <CoastalPage className="home-aligned">
@@ -137,6 +138,11 @@ export default function HomeScreen() {
           <UserIcon size={28} color="white" />
         </button>
       </header>
+      {(!beach || error) && (
+        <GhostButton height={44} onClick={exploreBeaches}>
+          Explore Beaches
+        </GhostButton>
+      )}
       {loading && !beach ? (
         <Skeleton h={340} />
       ) : error ? (
@@ -204,7 +210,7 @@ export default function HomeScreen() {
               {user && event ? "View Event" : "View Events"}
             </PrimaryButton>
             <div className="button-pair">
-              <GhostButton height={44} onClick={() => nav("/map", { state: { fromHome: true } })}>
+              <GhostButton height={44} onClick={exploreBeaches}>
                 See Other Beaches
               </GhostButton>
               <GhostButton

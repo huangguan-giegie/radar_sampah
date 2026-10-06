@@ -1,4 +1,4 @@
-import { apiRequest, ApiError, getMe, invalidateBeaches, USE_MOCK } from './api';
+import { apiRequest, ApiError, getBeaches, getMe, invalidateBeaches, USE_MOCK } from './api';
 import {
   completeCleanup,
   createAdminEvent,
@@ -133,6 +133,12 @@ export async function fetchCleanupForTarget(reportId: string): Promise<CleanupAc
 export async function fetchLatestCleanupForBeach(beachId: string): Promise<CleanupAction | null> {
   if (USE_MOCK) return getLatestCleanupForBeach(beachId);
   return apiRequest<CleanupAction | null>(`/beaches/${encodeURIComponent(beachId)}/cleanups/latest`);
+}
+
+export async function fetchLatestCleanupDates(): Promise<Record<string, string | null>> {
+  if (USE_MOCK) return Object.fromEntries((await getBeaches()).map(beach =>
+    [beach.id, getLatestCleanupForBeach(beach.id)?.createdAt ?? null]));
+  return apiRequest<Record<string, string | null>>('/cleanups/latest-by-beach', 'GET', undefined, 15_000, false);
 }
 
 export async function fetchEventCleanups(eventId: string): Promise<CleanupAction[]> {

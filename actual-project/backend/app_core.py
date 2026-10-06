@@ -118,10 +118,10 @@ REPORT_STATUS_NOTES = {
     "Incomplete": "Photo unreadable — excluded until you correct and save the record.",
 }
 SCORING_BANDS = (
-    {"band": "Low", "range": "below 1.5", "color": "#7CA98B"},
-    {"band": "Moderate", "range": "1.5 – <2.5", "color": "#D9A24B"},
-    {"band": "High", "range": "2.5 – <3.5", "color": "#CE6B45"},
-    {"band": "Severe", "range": "3.5 and above", "color": "#B84A3F"},
+    {"band": "Low", "range": "0.35 ≤ x < 1.50", "color": "#7CA98B"},
+    {"band": "Moderate", "range": "1.50 ≤ x < 2.50", "color": "#D9A24B"},
+    {"band": "High", "range": "2.50 ≤ x < 3.50", "color": "#CE6B45"},
+    {"band": "Severe", "range": "3.50 ≤ x ≤ 4.00", "color": "#B84A3F"},
 )
 PHOTO_MIME_TYPES = {"image/jpeg", "image/png", "image/heic", "image/heif"}
 REPORT_INPUT_FIELDS = {"beachId", "quantities", "photoKey", "locationSource", "coords"}

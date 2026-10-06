@@ -89,7 +89,7 @@ export function markerHtml(
     const sv = attention?.hasBand && b.severity ? SEVERITY[b.severity] : null;
     const col = sv ? sv.col : '#98A4B5';
     // Four bars, filled up to the band. Shape as well as colour, so the gap
-    // between Low and Very high survives for a colour-blind reader.
+    // between Low and Severe survives for a colour-blind reader.
     let bars = '<span style="display:flex;gap:2px;align-items:flex-end">';
     for (let i = 0; i < 4; i++) {
       const on = attention?.hasBand && b.band !== null && i < b.band;
@@ -98,8 +98,8 @@ export function markerHtml(
       }"></i>`;
     }
     bars += '</span>';
-    // The helper supplies the wording, never the raw band: the pin says "VERY
-    // HIGH" where the data says 'Severe'. "INSUFFICIENT DATA" is spelled out because
+    // The shared helper supplies the published band label.
+    // "INSUFFICIENT DATA" is spelled out because
     // empty bars with no label read as a Low rating, not as missing evidence.
     const label = attention?.markerLabel ?? 'INSUFFICIENT DATA';
     const pill =

@@ -42,8 +42,14 @@ describe("cleanup journey", () => {
     expect(after).not.toContain("Sort as you go");
     expect(after).not.toContain("Prepare");
     expect(after).toContain("Drop off your bags");
-    expect(after).toContain("[Drop-off point name]");
-    expect(after).toContain("disabled=");
+    expect(after).toContain("Drop-off point not confirmed");
+    expect(after).toContain("A recycling point has not been confirmed");
+    expect(after).toContain("take your bags with you");
+    for (const html of [before, after]) {
+      expect(html).not.toMatch(/\[(Drop-off point name|Recycling point name|DD-MM-YYYY)\]/);
+      expect(html).not.toContain("Checked by Radar Sampah");
+      expect(html).not.toContain("Open in Maps");
+    }
     expect(after).toContain('href="tel:999"');
   });
   it('keeps the event cleanup guidance image-free', () => {

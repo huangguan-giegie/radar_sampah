@@ -1,7 +1,7 @@
 export const CLEANUP_GUIDE = {
-  dropOffName: "[Drop-off point name]",
-  recyclingName: "[Recycling point name]",
-  checkedDate: "[DD-MM-YYYY]",
+  dropOffName: null as string | null,
+  recyclingName: null as string | null,
+  checkedDate: null as string | null,
   mapsUrl: null as string | null,
   equipment: [
     ["gloves", "Gloves"],

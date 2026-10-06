@@ -17,6 +17,7 @@ from share_contract import install_reviewed_share_contract
 GALLERY_TOKEN_PURPOSE = "litter-gallery-photo"
 GALLERY_TOKEN_TTL = timedelta(minutes=5)
 GALLERY_HMAC_CONTEXT = b"radar-sampah-litter-gallery-v1"
+GALLERY_PHOTO_LIMIT = 5
 
 
 def _photo_binding(beach_id: str, report_id: str, photo_key: str, secret: str) -> str:
@@ -88,10 +89,26 @@ def install_litter_gallery(application: Any, engine: Any, jwt_secret: str, impl:
                 .where(
                     impl.reports_table.c.beach_id == beach_id,
                     impl.reports_table.c.status == "Counted",
+                    impl.reports_table.c.deleted_at.is_(None),
                 )
-                .order_by(impl.reports_table.c.created_at.desc(), impl.reports_table.c.id.desc())
             ).all()
-            report_ids = [report.id for report in reports]
+            eligible = []
+            for report in reports:
+                bands = impl.quantities_from_row(report)
+                if not any(band != "Small" for band in bands.values()):
+                    continue
+                if report.stored_photo_key is None and not impl.photo_available(None, directory, report.photo_key, report.reporter_id):
+                    continue
+                eligible.append((report, bands))
+            # Rank the submitted evidence, so subsequent cleanup does not lower
+            # a historical photo's priority. Filter before applying the limit.
+            eligible.sort(key=lambda item: (
+                impl.report_score_for(item[1]),
+                impl.utc_datetime(item[0].created_at),
+                item[0].id,
+            ), reverse=True)
+            gallery_reports = eligible[:GALLERY_PHOTO_LIMIT]
+            report_ids = [report.id for report, _bands in gallery_reports]
             actions = connection.execute(
                 select(impl.cleanup_actions_table).where(impl.cleanup_actions_table.c.target_report_id.in_(report_ids))
             ).all() if report_ids else []
@@ -100,15 +117,12 @@ def install_litter_gallery(application: Any, engine: Any, jwt_secret: str, impl:
             actions_by_report.setdefault(action.target_report_id, []).append(action)
 
         entries = []
-        for report in reports:
-            if report.stored_photo_key is None and not impl.photo_available(None, directory, report.photo_key, report.reporter_id):
-                continue
+        for report, bands in gallery_reports:
             token = _issue_gallery_token(report, jwt_secret, impl)
             # The bands are what the photo shows, taken from the report as it was
             # submitted. Later cleanups change the current beach state, not this
             # historical card, and the card would otherwise read as a claim about
             # litter that has since been removed.
-            bands = impl.quantities_from_row(report)
             current_bands = impl.quantity_band_state_for(report, actions_by_report.get(report.id, []))
             current_state = "excluded" if impl.utc_datetime(report.created_at) < datetime.now(timezone.utc) - timedelta(days=90) else (
                 "active" if any(band != "Small" for band in current_bands.values()) else "resolved"
@@ -149,6 +163,7 @@ def install_litter_gallery(application: Any, engine: Any, jwt_secret: str, impl:
                     impl.reports_table.c.id == report_id,
                     impl.reports_table.c.beach_id == beach_id,
                     impl.reports_table.c.status == "Counted",
+                    impl.reports_table.c.deleted_at.is_(None),
                 )
             ).first()
         if report is None:

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 import sys
 from urllib.parse import urlsplit
@@ -10,6 +11,7 @@ if str(_backend_dir) not in sys.path:
     sys.path.insert(0, str(_backend_dir))
 
 from api_tests_core import api, signup, upload
+from app import reports_table
 
 
 def _create_report(client, headers, *, beach_id: str, quantities: dict[str, str], location_source: str = "manual", coords=None):
@@ -145,3 +147,96 @@ def test_litter_gallery_unknown_beach_is_not_found(api):
 
     assert response.status_code == 404
     assert response.get_json()["code"] == "NOT_FOUND"
+
+
+def test_litter_gallery_returns_five_highest_original_scores_with_newest_ties(api):
+    application, client = api
+    _session, headers = signup(client)
+    now = datetime.now(timezone.utc)
+    cases = [
+        ({"Fishing gear": "Very Large"}, 6),
+        ({"Plastic": "Very Large"}, 5),
+        ({"Fishing gear": "Large"}, 1),
+        ({"Fishing gear": "Large"}, 4),
+        ({"Glass": "Very Large"}, 3),
+        ({"Plastic": "Large"}, 0),
+        ({"Fishing gear": "Medium", "Plastic": "Medium"}, 0),
+        ({"Paper": "Very Large"}, 0),
+    ]
+    report_ids = []
+    for quantities, age_days in cases:
+        response, _photo = _create_report(client, headers, beach_id="morib", quantities=quantities)
+        assert response.status_code == 201
+        report_id = response.get_json()["id"]
+        assert response.get_json()["status"] == "Counted"
+        report_ids.append(report_id)
+        with application.extensions["marine_engine"].begin() as connection:
+            connection.execute(reports_table.update().where(reports_table.c.id == report_id).values(
+                created_at=now - timedelta(days=age_days),
+            ))
+
+    cleanup = client.post("/cleanup-actions", headers=headers, json={
+        "targetReportId": report_ids[0],
+        "remainingQuantities": {"Fishing gear": "Small"},
+        "handling": "Collected for disposal",
+        "idempotencyKey": "gallery-original-score",
+    })
+    assert cleanup.status_code == 201
+    assert cleanup.get_json()["resolved"] is True
+
+    for path in ("/beaches/morib/litter-gallery", "/beaches/morib/gallery"):
+        response = client.get(path)
+        assert response.status_code == 200
+        entries = response.get_json()
+        assert [entry["reportId"] for entry in entries] == report_ids[:5]
+        assert entries[0]["currentState"] == "resolved"
+        assert client.get(entries[0]["photoUrl"]).status_code == 200
+
+
+def test_litter_gallery_filters_ineligible_or_missing_photos_before_five_photo_limit(api):
+    application, client = api
+    _session, headers = signup(client)
+    now = datetime.now(timezone.utc)
+    eligible_ids = []
+    for age_days in range(6):
+        response, _photo = _create_report(client, headers, beach_id="morib", quantities={"Paper": "Medium"})
+        assert response.status_code == 201
+        report_id = response.get_json()["id"]
+        eligible_ids.append(report_id)
+        with application.extensions["marine_engine"].begin() as connection:
+            connection.execute(reports_table.update().where(reports_table.c.id == report_id).values(
+                created_at=now - timedelta(days=age_days + 1),
+            ))
+
+    for values in (
+        {"qty_fishing_gear": "Small", "quantity": "Small", "quantities": '{"Fishing gear":"Small"}'},
+        {"status": "Duplicate"},
+        {"status": "Incomplete"},
+        {"photo_key": "unavailable-gallery-photo"},
+    ):
+        response, _photo = _create_report(client, headers, beach_id="morib", quantities={"Fishing gear": "Very Large"})
+        assert response.status_code == 201
+        with application.extensions["marine_engine"].begin() as connection:
+            connection.execute(reports_table.update().where(reports_table.c.id == response.get_json()["id"]).values(**values))
+
+    entries = client.get("/beaches/morib/litter-gallery").get_json()
+    assert [entry["reportId"] for entry in entries] == eligible_ids[:5]
+
+
+def test_hidden_counted_report_is_removed_from_gallery_and_existing_photo_link(api):
+    application, client = api
+    _session, headers = signup(client)
+    response, _photo = _create_report(client, headers, beach_id="morib", quantities={"Plastic": "Large"})
+    assert response.status_code == 201
+    report_id = response.get_json()["id"]
+    entry = client.get("/beaches/morib/litter-gallery").get_json()[0]
+    assert client.get(entry["photoUrl"]).status_code == 200
+
+    with application.extensions["marine_engine"].begin() as connection:
+        connection.execute(reports_table.update().where(reports_table.c.id == report_id).values(
+            deleted_at=datetime.now(timezone.utc),
+        ))
+
+    assert client.get("/beaches/morib/litter-gallery").get_json() == []
+    assert client.get("/beaches/morib/gallery").get_json() == []
+    assert client.get(entry["photoUrl"]).status_code == 404

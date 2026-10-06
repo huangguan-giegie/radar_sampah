@@ -12,7 +12,7 @@ from datetime import datetime, timezone
 from typing import Any
 
 from flask import g, jsonify, request
-from sqlalchemy import Column, DateTime, Integer, String, Table, delete, insert, select
+from sqlalchemy import Column, DateTime, Integer, String, Table, delete, func, insert, select
 from sqlalchemy.exc import IntegrityError
 
 from standalone_cleanup import _active_quantities, _current_band_state
@@ -406,6 +406,19 @@ def install_v3_contract(application: Any, engine: Any, jwt_secret: str, impl: An
         action = _latest_action(engine, impl, beach_id=beach_id)
         return jsonify(_action_payload(engine, impl, action)) if action is not None else jsonify(None)
 
+    def read_latest_cleanup_dates():
+        # Community priorities need dates, not every cleanup's private detail.
+        # Keep the query count fixed as the beach catalogue grows.
+        with engine.connect() as connection:
+            beach_ids = connection.execute(select(impl.beaches_table.c.id)).scalars().all()
+            latest = connection.execute(select(
+                impl.cleanup_actions_table.c.beach_id,
+                func.max(impl.cleanup_actions_table.c.created_at).label("latest_at"),
+            ).group_by(impl.cleanup_actions_table.c.beach_id)).all()
+        dates = {beach_id: None for beach_id in beach_ids}
+        dates.update({row.beach_id: impl.contract_timestamp(row.latest_at) for row in latest if row.beach_id in dates})
+        return jsonify(dates)
+
     def read_event_cleanups(event_id: str):
         if _event_by_id(engine, impl, event_id) is None:
             return impl.error_response(404, "NOT_FOUND", "Event not found.")
@@ -463,6 +476,7 @@ def install_v3_contract(application: Any, engine: Any, jwt_secret: str, impl: An
     application.add_url_rule("/cleanup-events/<event_id>/cleanups", "v3_event_cleanups", read_event_cleanups, methods=["GET"])
     application.add_url_rule("/cleanup-targets/<beach_id>", "v3_target", targets_v3, methods=["GET"])
     application.add_url_rule("/cleanups", "v3_create_cleanup", create_cleanup_v3, methods=["POST"])
+    application.add_url_rule("/cleanups/latest-by-beach", "v3_cleanup_history", read_latest_cleanup_dates, methods=["GET"])
     application.add_url_rule("/cleanups/<cleanup_id>", "v3_cleanup", read_cleanup, methods=["GET"])
     application.add_url_rule("/cleanups/by-target/<report_id>", "v3_target_cleanup", read_cleanup_target, methods=["GET"])
     application.add_url_rule("/beaches/<beach_id>/cleanups/latest", "v3_latest_cleanup", read_latest_cleanup, methods=["GET"])
