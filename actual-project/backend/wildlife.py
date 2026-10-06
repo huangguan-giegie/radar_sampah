@@ -96,7 +96,9 @@ def wildlife_panel(application: Any, engine: Any, impl: Any) -> dict[str, Any]:
                 beach["lat"], beach["lng"], max_distance_km=15, top_k=40,
             )
             predictions = result.get("topPredictions", [])
-        except (KeyError, ValueError, RuntimeError):
+        # The model is optional context. Runtime/model-version problems
+        # must not turn the public Insights response into a server error.
+        except (AttributeError, KeyError, ValueError, RuntimeError):
             pass
         modelled = []
         for prediction in predictions:
