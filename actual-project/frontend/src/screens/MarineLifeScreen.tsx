@@ -181,6 +181,22 @@ function PreviewSpeciesScreen() {
         <DataUnavailable title="Species not found" />
       </CoastalPage>
     );
+  return <SpeciesIntroductionView species={s} goBack={goBack} />;
+}
+
+type SpeciesIntroduction = {
+  name: string;
+  subtitle: string;
+  intro: string;
+  evidence: string;
+  image: string | null;
+  answers: { title: string; text: string }[];
+  sources: { label: string; url: string }[];
+  credit: string;
+  photoSource: string | null;
+};
+
+export function SpeciesIntroductionView({ species: s, goBack }: { species: SpeciesIntroduction; goBack: () => void }) {
   return (
     <main className="screen scroll-y coastal-screen">
       <div className="species-hero">
@@ -198,9 +214,9 @@ function PreviewSpeciesScreen() {
           <p style={{ fontSize: 17, lineHeight: 1.5 }}>{s.intro}</p>
           <p className="coastal-footnote">{s.evidence}</p>
         </div>
-        <SummaryCard eyebrow="Ask AI">
+        <SummaryCard eyebrow="Read answers">
           <p style={{ margin: "0 0 8px", fontSize: 12, color: "#ffffffad" }}>
-            AI-assisted · answers use this card’s sources
+            Answers use this card’s published sources
           </p>
           {[
             "Where does it usually live?",
@@ -224,11 +240,7 @@ function PreviewSpeciesScreen() {
           ))}
         </SummaryCard>
         {s.answers.map((a, i) => (
-          <section
-            key={a.title}
-            id={"answer-" + i}
-            style={{ scrollMarginTop: 22 }}
-          >
+          <section key={a.title} id={"answer-" + i} style={{ scrollMarginTop: 22 }}>
             <WhiteCard>
               <h3>{a.title}</h3>
               <p className="subtle">{a.text}</p>
@@ -238,24 +250,13 @@ function PreviewSpeciesScreen() {
         <section>
           <h3>Sources & Photo Credit</h3>
           {s.sources.map((source, i) => (
-            <a
-              key={i}
-              className="species-source"
-              href={source.url}
-              target="_blank"
-              rel="noreferrer"
-            >
+            <a key={i} className="species-source" href={source.url} target="_blank" rel="noreferrer">
               {source.label} ↗
             </a>
           ))}
           {s.credit && <p className="coastal-footnote">{s.credit}</p>}
           {s.photoSource && (
-            <a
-              className="species-source"
-              href={s.photoSource}
-              target="_blank"
-              rel="noreferrer"
-            >
+            <a className="species-source" href={s.photoSource} target="_blank" rel="noreferrer">
               Photo source ↗
             </a>
           )}
