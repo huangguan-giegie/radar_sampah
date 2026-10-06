@@ -1,0 +1,199 @@
+.reference-insights .coastal-header > .grow > .eyebrow {
+  font-size: 13px;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.reference-insights .action-tile {
+  min-height: 96px;
+  border-radius: 20px;
+  padding: 12px 10px;
+}
+.reference-insights .action-tile > strong {
+  font-size: 12px;
+}
+.reference-insights .action-tile > span:last-child {
+  font-size: 12px;
+}
+.reference-insights-filters {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.reference-insights-filters label {
+  display: grid;
+  gap: 6px;
+  color: #5a6474;
+  font-size: 12px;
+}
+.reference-insights-filters select {
+  min-width: 0;
+  min-height: 42px;
+  padding: 8px;
+  border: 1px solid #dde3ec;
+  border-radius: 12px;
+  background: white;
+  color: #0b2161;
+  font: inherit;
+}
+.reference-needs-filter {
+  display: flex;
+  gap: 9px;
+  align-items: center;
+  color: #0b2161;
+  font-size: 13px;
+}
+.reference-species .species-hero > .species-placeholder,
+.reference-species-no-photo {
+  height: 100%;
+  background: #0b2161;
+  color: white;
+  display: grid;
+  place-items: center;
+  padding: 30px;
+  text-align: center;
+}
+.reference-species .species-body > div:first-child {
+  border-bottom: 1px solid #dde3ec;
+  padding-bottom: 12px;
+}
+.reference-species .coastal-summary {
+  padding: 16px;
+}
+.reference-species .coastal-summary > .eyebrow {
+  color: #b8ff36;
+  font-size: 18px;
+  text-transform: none;
+  letter-spacing: 0;
+}
+.reference-species .coastal-summary .coastal-link-row {
+  min-height: 48px;
+  padding: 12px;
+  margin-top: 10px;
+  border: 0;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, .1);
+}
+.reference-species-answer {
+  border-radius: 16px;
+  padding: 17px;
+}
+.reference-species-answer h3 {
+  color: #1e2421;
+  font-size: 15px;
+}
+.reference-species-answer p {
+  color: #26303f;
+  font-size: 14px;
+  line-height: 1.5;
+}
+.reference-habitat .coastal-summary h2 {
+  color: white;
+  font-size: 27px;
+}
+.reference-habitat .coastal-link-row .row-thumb {
+  width: 104px;
+  height: 104px;
+  border-radius: 12px;
+}
+.reference-habitat .coastal-link-row .row-thumb > img {
+  height: 100%;
+}
+.reference-habitat-help {
+  background: #e9ecf1;
+  border-radius: 16px;
+}
+.reference-habitat-help h2 {
+  color: #0b2161;
+  font-size: 17px;
+}
+.reference-habitat-help p {
+  font-size: 13px;
+  color: #5a6474;
+  line-height: 1.5;
+}
+.reference-about-intro h2 {
+  margin: 12px 0;
+  color: white;
+  font-size: 20px;
+  line-height: 1.4;
+}
+.reference-about-intro > p {
+  color: rgba(255, 255, 255, .78);
+  font-size: 14px;
+  line-height: 1.5;
+}
+.reference-about-intro ol {
+  display: grid;
+  gap: 10px;
+  list-style: none;
+  padding: 0;
+  margin: 16px 0;
+}
+.reference-about-intro li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, .1);
+  font-size: 14px;
+  line-height: 1.4;
+}
+.reference-about-intro li > span {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 25px;
+  height: 25px;
+  border-radius: 50%;
+  background: #b8ff36;
+  color: #0b2161;
+  font-weight: 700;
+}
+.reference-about-intro > .reference-about-team {
+  color: rgba(255, 255, 255, .62);
+  font-size: 11px;
+  margin-bottom: 0;
+}
+.reference-about-background {
+  padding-top: 12px;
+}
+.reference-about-background h2 {
+  margin: 12px 0 6px;
+  color: #0b2161;
+  font-size: 22px;
+  line-height: 1.4;
+}
+.reference-about-shares {
+  background: #0b2161;
+  border: 0;
+  padding: 18px;
+}
+.reference-photo-credit {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.reference-photo-credit img {
+  width: 74px;
+  height: 74px;
+  flex: none;
+  object-fit: cover;
+  border-radius: 14px;
+}
+.reference-photo-credit strong {
+  color: #0b2161;
+}
+.reference-photo-credit small {
+  display: block;
+  color: #5a6474;
+  font-size: 12px;
+  line-height: 1.4;
+  margin-top: 5px;
+}
+.reference-credits-done {
+  position: sticky;
+  bottom: 0;
+  padding: 12px 0;
+  background: #f7f8fa;
+}

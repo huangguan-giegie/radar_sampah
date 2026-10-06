@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Check, Info } from '../components/Icon';
 import { Alert, Callout, EmptyState, InfoChip, SectionLabel } from '../components/ds';
@@ -6,11 +5,11 @@ import { BackButton, GhostButton, PrimaryButton } from '../components/ui';
 import { cleanupBandLabelForRow, eventCleanups, formatEventDate, formatEventTimeRange, getCleanupEvent } from '../iteration2';
 import { fetchCleanupEvent, fetchEventCleanups } from '../iteration2Api';
 import { C, MONO } from '../theme';
-import type { LitterCategory } from '../types';
 import { useAsyncData } from '../useAsyncData';
 import { CoastalPage, DataUnavailable } from '../components/CoastalUI';
 import { useAppBack } from '../navigation';
 import { RecurrenceEvidence } from '../components/RecurrenceEvidence';
+import '../styles/community-alignment.css';
 
 export default function EventResultScreen() {
   const { eventId = '' } = useParams();
@@ -31,23 +30,15 @@ export default function EventResultScreen() {
   const latestCleanup = cleanups.reduce<(typeof cleanups)[number] | undefined>((latest, cleanup) =>
     !latest || Date.parse(cleanup.createdAt) > Date.parse(latest.createdAt) || (Date.parse(cleanup.createdAt) === Date.parse(latest.createdAt) && cleanup.id > latest.id) ? cleanup : latest,
   undefined);
-  // Keep each recorded transition separate; a band difference is not a
-  // measured amount removed, and unrelated cleanup bands cannot be added.
-  const recordedBands = useMemo(() => {
-    const result: Partial<Record<LitterCategory, string[]>> = {};
-    cleanups.flatMap((cleanup) => cleanup.rows).forEach((row) => {
-      const bands = (result[row.category] ??= []);
-      const band = cleanupBandLabelForRow(row);
-      if (band) bands.push(band);
-    });
-    return result;
-  }, [cleanups]);
+  const recordedRows = cleanups.flatMap(cleanup => cleanup.rows.map((row, index) => ({
+    key: `${cleanup.id}:${index}`, category: row.category, bands: cleanupBandLabelForRow(row),
+  })));
 
   if (loading && !event) return <CoastalPage title="Event Results" back="/community" tabs={false}><div role="status">Loading event results…</div></CoastalPage>;
   if (!event) return <CoastalPage title="Event Results" back="/community" tabs={false}><DataUnavailable title="Event result not found" retry={error ? () => void refresh() : undefined}>{error}</DataUnavailable></CoastalPage>;
 
   return (
-    <div className="screen scroll-y" style={{ zIndex: 26 }}>
+    <div className="screen scroll-y event-result-alignment" style={{ zIndex: 26 }}>
       <div className="measure i2-page anim-fade-up" style={{ paddingBottom: 'calc(var(--safe-bottom) + 34px)' }}>
         <BackButton onClick={back} />
         <div>
@@ -59,13 +50,13 @@ export default function EventResultScreen() {
           <p className="i2-subtitle">{formatEventDate(event.date)} · {formatEventTimeRange(event.startsAt, event.endsAt)}</p>
         </div>
 
-        <div className="i2-result-score">
+        <div className="event-result-hero">
           <div className="anim-pop-in" style={{ width: 38, height: 38, borderRadius: 19, margin: '0 auto 10px', background: C.lime, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Check color={C.navy} /></div>
           <h2 style={{margin:'8px 0 0',fontSize:23,color:C.white}}>{cleanupResultsReady && cleanups.length > 0 ? 'Cleanup Recorded' : 'Cleanup Results'}</h2>
           <div className="i2-stat-grid" style={{ marginTop: 17 }}>
-            <div className="i2-stat"><strong>{event.participantCount}</strong><span>PARTICIPANTS</span></div>
-            <div className="i2-stat"><strong>{event.attendanceCount}</strong><span>RECORDED ATTENDANCE</span></div>
-            <div className="i2-stat"><strong>{cleanupResultsReady ? cleanups.length : '—'}</strong><span>CLEANUPS</span></div>
+            <div className="i2-stat"><span>Participants</span><strong>{event.participantCount}</strong></div>
+            <div className="i2-stat"><span>Recorded Attendance</span><strong>{event.attendanceCount}</strong></div>
+            <div className="i2-stat"><span>Cleanups</span><strong>{cleanupResultsReady ? cleanups.length : '—'}</strong></div>
           </div>
         </div>
 
@@ -83,10 +74,10 @@ export default function EventResultScreen() {
               <SectionLabel size="sm">BEFORE → AFTER</SectionLabel>
             </div>
             <div style={{ marginTop: 2 }}>
-              {(Object.entries(recordedBands) as [LitterCategory, string[]][]).map(([category, bands]) => (
-                <div key={category} className="i2-quantity-row" style={{ gridTemplateColumns: 'minmax(0,1fr) auto' }}>
-                  <strong style={{ fontSize: 13 }}>{category}</strong>
-                  <strong style={{ fontFamily: MONO, fontSize: 12.5, color: C.green, textAlign: 'right' }}>{bands.length > 0 ? bands.join(' · ') : '—'}</strong>
+              {recordedRows.map(row => (
+                <div key={row.key} className="i2-quantity-row" style={{ gridTemplateColumns: 'minmax(0,1fr) auto' }}>
+                  <strong style={{ fontSize: 13 }}>{row.category}</strong>
+                  <strong style={{ fontFamily: MONO, fontSize: 12.5, color: C.green, textAlign: 'right' }}>{row.bands ?? '—'}</strong>
                 </div>
               ))}
             </div>

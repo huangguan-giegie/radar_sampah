@@ -572,6 +572,9 @@ export async function createAnonymousId(): Promise<AuthSession> {
   }
 
   const data = await request('/auth/anonymous', 'POST');
+  if (typeof data.recoveryToken !== 'string' || !data.recoveryToken.trim()) {
+    throw new Error('Your profile was issued without a recovery token. Please try again before contributing.');
+  }
   saveToken(data.token);
   saveRecoveryToken(data.recoveryToken);
   return data;

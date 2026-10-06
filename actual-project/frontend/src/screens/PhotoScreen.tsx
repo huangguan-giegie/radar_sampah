@@ -9,7 +9,7 @@ import { useNavigate } from 'react-router-dom';
 import { photoPreviewUrl, refreshPhotoPreview, uploadPhoto, USE_MOCK } from '../api';
 import { ArrowRight, Camera, ChevronRight, Shield, Upload } from '../components/Icon';
 import { BackButton, ErrorNote, PrimaryButton, StepBadge } from '../components/ui';
-import { C, MONO } from '../theme';
+import { C } from '../theme';
 import { OverlayChip } from '../components/ds';
 import { useApp } from '../AppContext';
 import { useAppBack } from '../navigation';
@@ -181,11 +181,11 @@ export default function PhotoScreen() {
       >
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <BackButton onClick={() => { uploadRequest.current += 1; back(); }} />
-          <StepBadge>STEP 1 OF 6 · PHOTO</StepBadge>
+          <StepBadge>STEP 1 OF 5 · PHOTO</StepBadge>
         </div>
 
         <div>
-          <div style={{ fontSize: 30, fontWeight: 640, letterSpacing: '-.8px' }}>Show us what you found</div>
+          <div style={{ fontSize: 28, fontWeight: 640, letterSpacing: '-.7px' }}>Show Us What You Found</div>
           <div style={{ fontSize: 14, color: C.muted, marginTop: 7, lineHeight: 1.5 }}>
           We'll check the photo first. Then you can confirm or change the suggested categories and amounts.
           </div>
@@ -307,9 +307,6 @@ export default function PhotoScreen() {
                 alt="Litter you photographed"
                 style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
               />
-              <div style={{ position: 'absolute', top: 14, left: 14, fontFamily: MONO, fontSize: 8.5, letterSpacing: '.14em', color: 'rgba(255,255,255,.9)', background: 'rgba(30,36,44,.45)', backdropFilter: 'blur(6px)', padding: '5px 9px', borderRadius: 8 }}>
-                PHOTO
-              </div>
               <button
                 type="button"
                 onClick={() => {
@@ -330,7 +327,7 @@ export default function PhotoScreen() {
               )}
             </div>
 
-            <PrimaryButton onClick={() => nav('/report/location')}>
+            <PrimaryButton onClick={() => nav(draft.beachId ? '/report/confirm' : '/report/location')}>
               Continue
               <ArrowRight />
             </PrimaryButton>

@@ -2,11 +2,13 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useApp } from '../AppContext';
 import { iteration3Request } from '../iteration3Api';
 import { useAsyncData } from '../useAsyncData';
-import { CoastalPage, DataUnavailable, LinkRow, SummaryCard, SummaryStats, WhiteCard } from '../components/CoastalUI';
+import { ActionTile, CoastalPage, DataUnavailable, LinkRow, SummaryCard, SummaryStats, WhiteCard } from '../components/CoastalUI';
+import { BarChart, Check, CommunityIcon, Info, Search, SpeciesIcon } from '../components/Icon';
 import { GhostButton, Skeleton } from '../components/ui';
 import { SeverityBadge } from '../components/ds';
 import type { SeverityBand, SpeciesCoordinateContext } from '../types';
-import { formatDate } from '../theme';
+import { C, formatDate } from '../theme';
+import '../styles/reference-pages.css';
 
 type PublicCount = number | 'Fewer than 3';
 type Beach = {
@@ -26,14 +28,13 @@ type Summary = {
   beaches: Beach[];
   trends: { monthlyReports: { months: string[]; beaches: { beachId: string; counts: number[] }[]; caption: string } };
   cleanup: {
-    recent: { beachId: string; beachName: string; date: string; categories: { category: string; beforeBand: string; afterBand: string }[]; cleanupScore: number; handling: string; status: string }[];
+    recent: { beachId: string; beachName: string; date: string; categories: { category: string; beforeBand: string; afterBand: string }[]; handling: string; status: string }[];
     emptyState: string | null;
     hardestToClear: { eligible: boolean; categories: { category: string; percentage: number }[]; emptyState: string | null };
     handling: { eligible: boolean; statuses: { status: string; count: number; percentage: number }[]; label: string; emptyState: string | null };
     recurrence: { beaches: Recurrence[]; emptyState: string | null };
   };
   participation: { steps: { key: string; label: string; count: PublicCount; beaches: { beachId: string; count: number }[] | null }[]; conversions: { from: string; to: string; percentage: number | null; beaches?: { beachId: string; percentage: number }[] | null }[]; caption: string };
-  evidence: { sufficientBeachCount: number; countedNote: string; beaches: { beachId: string; statuses: { countedActive: number; countedResolved: number; duplicate: number; incomplete: number } }[] };
   wildlife?: { beaches?: {
     beachId: string; beachName: string;
     species: { id: string; name: string; relativeOccurrenceScore: number | null; locationMatchScore?: number | null; source: { label: string; url: string }; reviewDate: string; destination: string }[];
@@ -52,25 +53,48 @@ function volunteerReasons(reasons: string[]) {
 
 export default function LiveInsightsScreen() {
   const { topic = '', beachId } = useParams();
-  const [params] = useSearchParams();
+  const [params, setParams] = useSearchParams();
   const nav = useNavigate();
   const { reportsVersion } = useApp();
   const { data, loading, error, refresh } = useAsyncData<Summary | null>(() => iteration3Request('/insights/summary'), [reportsVersion], null);
-  const titles: Record<string, string> = { trends: 'Beach Trends', cleanup: 'Cleanup Results', 'cleanup-history': 'Cleanup History', participation: 'Participation', evidence: 'Evidence', wildlife: 'Wildlife Nearby', volunteers: 'Needs Volunteers' };
+  const titles: Record<string, string> = { trends: beachId ? 'Beach Trend' : 'Beach Trends', cleanup: 'Cleanup Results', 'cleanup-history': 'Cleanup History', participation: 'Participation', wildlife: 'Wildlife Nearby', volunteers: 'Needs Volunteers' };
   const title = titles[topic] ?? 'Insights';
-  const filtered = data?.beaches.filter(beach => (!beachId || beach.id === beachId) && (!params.get('q') || beach.name.toLowerCase().includes(params.get('q')!.toLowerCase())) && (!params.get('band') || beach.severity === params.get('band')) && (!params.get('needs') || beach.needsVolunteers.flag)) ?? [];
-  const sections = [['trends', 'Trends'], ['cleanup', 'Cleanup'], ['participation', 'Participation'], ['evidence', 'Evidence'], ['wildlife', 'Wildlife']];
-  return <CoastalPage title={title} back={topic ? '/insights' : undefined} action={<button onClick={() => nav('/method')}>About Data</button>}>
+  const filtered = data?.beaches.filter(beach => (!beachId || beach.id === beachId) && (!params.get('q') || beach.name.toLowerCase().includes(params.get('q')!.toLowerCase())) && (!params.get('band') || beach.severity === params.get('band')) && (!params.get('region') || beach.area.includes(params.get('region')!)) && (params.get('needs') !== '1' || beach.needsVolunteers.flag)) ?? [];
+  const sections = [['trends', 'Trends'], ['cleanup', 'Cleanup'], ['participation', 'Participation']];
+  const changeFilter = (key: string, value: string) => setParams(previous => {
+    const next = new URLSearchParams(previous);
+    if (value) next.set(key, value); else next.delete(key);
+    return next;
+  }, { replace: true });
+  const updates = data?.beaches.filter(beach => beach.trend.eligible && ['up', 'down'].includes(beach.trend.direction ?? '')) ?? [];
+  return <CoastalPage title={title} eyebrow={data ? `${data.beaches.length} pilot beaches · as of ${formatDate(data.asOf)}` : 'Insights'} className="reference-insights" back={topic ? '/insights' : undefined} action={<button onClick={() => nav('/method')} className={topic ? '' : 'icon-button navy'} aria-label="About data">{topic ? 'About Data' : <Info size={22} color="white" />}</button>}>
     {loading ? <><Skeleton h={180} r={22} /><Skeleton h={120} r={22} /></> : error || !data ? <DataUnavailable title="Insights could not be loaded" retry={() => { void refresh(); }}>Please try again.</DataUnavailable> : <>
-      <p className="coastal-footnote">Four validated MVP beaches · as of {formatDate(data.asOf)} · recorded system data only</p>
-      <div className="coastal-segments" aria-label="Insight topics">{sections.map(([id, label]) => <button key={id} aria-pressed={topic === id} onClick={() => nav('/insights/' + id)}>{label}</button>)}</div>
+      {['trends', 'cleanup', 'cleanup-history', 'participation'].includes(topic) && <div className="coastal-segments" aria-label="Insight topics">{sections.map(([id, label]) => <button key={id} aria-pressed={topic === id || (id === 'cleanup' && topic === 'cleanup-history')} onClick={() => nav('/insights/' + id)}>{label}</button>)}</div>}
       {!topic && <>
-        <SummaryCard eyebrow="Last 90 days · four pilot beaches" value={data.overview.countedReports} description="Counted reports">
+        <SummaryCard eyebrow={`Last 90 days · ${data.beaches.length} pilot beaches`} value={data.overview.countedReports} description="counted reports shape the beach ratings">
           <SummaryStats items={[{ label: 'Cleanups', value: data.overview.recordedCleanups }, { label: 'Joined', value: data.overview.joinedParticipants }, { label: 'Need help', value: data.overview.needsVolunteers }]} />
         </SummaryCard>
+        <p className="eyebrow">Beach updates</p>
+        {updates.map(beach => <WhiteCard key={beach.id} className="update-card"><button className="coastal-link-row" onClick={() => nav('/insights/trends/' + beach.id)}><span className="row-thumb"><SpeciesIcon glyph="grass" size={28} /></span><span className="grow"><strong>{beach.name}</strong><span className="update-bands"><SeverityBadge band={beach.trend.previousBand} /><span>→</span><SeverityBadge band={beach.trend.currentBand} /></span><small>Last 30 days · counted reports</small></span><span>›</span></button></WhiteCard>)}
         {data.headlines.map((card, i) => <WhiteCard key={i}><LinkRow title={card.text} onClick={() => nav(card.href)} /></WhiteCard>)}
-        {!data.headlines.length && <DataUnavailable title={data.headlinesEmptyState ?? 'Not enough recent reports to generate insights yet.'} />}
-        <WhiteCard><LinkRow title="Beaches needing volunteers" subtitle="Based on recorded beach attention and participation" onClick={() => nav('/insights/volunteers')} /></WhiteCard>
+        {!data.headlines.length && !updates.length && <DataUnavailable title={data.headlinesEmptyState ?? 'Not enough recent reports to generate insights yet.'} />}
+        <p className="eyebrow">Explore insights</p>
+        <div className="action-grid five" aria-label="Explore insights">
+          <ActionTile title="Trends" subtitle="Band changes" icon={<BarChart size={19} />} onClick={() => nav('/insights/trends')} />
+          <ActionTile title="Cleanup" subtitle="Results" icon={<Check color={C.navy} />} onClick={() => nav('/insights/cleanup')} />
+          <ActionTile title="Participation" subtitle="Who joined" icon={<CommunityIcon size={19} />} onClick={() => nav('/insights/participation')} />
+          <ActionTile title="Wildlife" subtitle="Species nearby" icon={<SpeciesIcon glyph="grass" size={20} />} onClick={() => nav('/insights/wildlife')} />
+          <ActionTile title="Volunteers" subtitle="Beaches needing help" icon={<CommunityIcon size={19} />} onClick={() => nav('/community/needs-volunteers')} />
+        </div>
+      </>}
+      {topic === 'trends' && !beachId && <>
+        <label className="coastal-search"><Search /><input aria-label="Search beaches" placeholder="Search beaches" value={params.get('q') ?? ''} onChange={event => changeFilter('q', event.target.value)} /></label>
+        <div className="reference-insights-filters">
+          <label>State<select value={params.get('region') ?? ''} onChange={event => changeFilter('region', event.target.value)}><option value="">All states</option>{[...new Set(data.beaches.map(beach => beach.area))].map(area => <option key={area} value={area}>{area}</option>)}</select></label>
+          <label>Band<select value={params.get('band') ?? ''} onChange={event => changeFilter('band', event.target.value)}><option value="">All bands</option>{['Low', 'Moderate', 'High', 'Severe'].map(band => <option key={band}>{band}</option>)}</select></label>
+        </div>
+        <label className="reference-needs-filter"><input type="checkbox" checked={params.get('needs') === '1'} onChange={event => changeFilter('needs', event.target.checked ? '1' : '')} />Needs volunteers only</label>
+        {!filtered.length && <DataUnavailable title="No matching beaches">Try another search or clear the filters.</DataUnavailable>}
       </>}
       {topic === 'trends' && filtered.map(beach => {
         const monthly = data.trends.monthlyReports.beaches.find(row => row.beachId === beach.id);
@@ -85,17 +109,13 @@ export default function LiveInsightsScreen() {
         </WhiteCard>;
       })}
       {(topic === 'cleanup' || topic === 'cleanup-history') && <>
-        {data.cleanup.recent.filter(row => !beachId || row.beachId === beachId).map((row, i) => <WhiteCard key={i}><h3>{row.beachName}</h3><p className="coastal-footnote">{formatDate(row.date)}</p>{row.categories.map(category => <p key={category.category}>{category.category}: {category.beforeBand} → {category.afterBand}</p>)}<p>Cleanup Score: {row.cleanupScore} · {row.handling}</p><p>{row.status}</p></WhiteCard>)}
+        {data.cleanup.recent.filter(row => !beachId || row.beachId === beachId).map((row, i) => <WhiteCard key={i}><p className="eyebrow">Cleanup Recorded</p><h3>{row.beachName}</h3><p className="coastal-footnote">{formatDate(row.date)}</p>{row.categories.map(category => <p key={category.category}>{category.category} · {category.beforeBand} → {category.afterBand}</p>)}<p>{row.handling}</p><p className="coastal-footnote">{row.status}</p></WhiteCard>)}
         {!data.cleanup.recent.length && <DataUnavailable title={data.cleanup.emptyState ?? 'Not enough cleanups recorded yet.'} />}
         <WhiteCard><h3>Hardest-to-clear categories</h3>{data.cleanup.hardestToClear.eligible ? <Shares rows={data.cleanup.hardestToClear.categories} /> : <p>{data.cleanup.hardestToClear.emptyState}</p>}<p className="coastal-footnote">Categories included in at least three cleanups. Remaining above Small after cleanup.</p></WhiteCard>
         <WhiteCard><h3>Handling status</h3>{data.cleanup.handling.eligible ? data.cleanup.handling.statuses.map(row => <p key={row.status}>{row.status}: {row.percentage}% ({row.count})</p>) : <p>{data.cleanup.handling.emptyState}</p>}<p className="coastal-footnote">{data.cleanup.handling.label}</p></WhiteCard>
         {data.cleanup.recurrence.beaches.map(row => <WhiteCard key={row.beachId}><h3>{data.beaches.find(beach => beach.id === row.beachId)?.name}</h3><p>{row.status} · {row.daysSinceCleanup} days since cleanup</p>{row.medianDays !== null && <p>Provisional median: {row.medianDays} days</p>}<p className="coastal-footnote">{row.evidenceNote}</p></WhiteCard>)}
       </>}
       {topic === 'participation' && <><SummaryCard eyebrow="Joining to cleanup · last 90 days">{data.participation.steps.map(step => <div key={step.key}><p>{step.label}: <strong>{step.count}</strong></p>{step.beaches?.map(row => <p key={row.beachId} className="coastal-footnote">{data.beaches.find(beach => beach.id === row.beachId)?.name}: {row.count}</p>)}</div>)}{data.participation.conversions.map((conversion, i) => <div key={i}><p>{conversion.from} → {conversion.to}: {conversion.percentage === null ? 'Insufficient data' : `${conversion.percentage}%`}</p>{conversion.beaches?.map(row => <p key={row.beachId}>{data.beaches.find(beach => beach.id === row.beachId)?.name}: {row.percentage}%</p>)}</div>)}<p className="coastal-footnote">{data.participation.caption}</p></SummaryCard><p className="coastal-footnote">Small counts are withheld. Beach breakdowns are shown only when every beach meets the minimum of three.</p></>}
-      {topic === 'evidence' && <><SummaryCard eyebrow="Evidence coverage" value={data.evidence.sufficientBeachCount} description="of four beaches have sufficient data" />{data.beaches.map(beach => {
-        const statuses = data.evidence.beaches.find(row => row.beachId === beach.id)?.statuses;
-        return <WhiteCard key={beach.id}><h3>{beach.name}</h3><p>{beach.eligibleReportCount} active eligible reports · {beach.evidence.sufficiency}</p><p>{beach.evidence.freshnessLabel} · latest contributing report: {beach.latestContributingReportAt ? formatDate(beach.latestContributingReportAt) : 'Not recently reported'}</p>{statuses && <><p>Counted · Active: {statuses.countedActive}</p><p>Counted · Resolved: {statuses.countedResolved}</p><p>Duplicate: {statuses.duplicate}</p><p>Incomplete: {statuses.incomplete}</p></>}</WhiteCard>;
-      })}<p className="coastal-footnote">{data.evidence.countedNote}</p></>}
       {topic === 'volunteers' && <>{data.beaches.filter(beach => beach.needsVolunteers.flag).map(beach => <WhiteCard key={beach.id}><LinkRow title={beach.name} subtitle={volunteerReasons(beach.needsVolunteers.reasons)} onClick={() => nav(beach.needsVolunteers.href)} /><p>Joined: {beach.needsVolunteers.nextEventJoinedCount}</p>{beach.needsVolunteers.eventMessage && <p>{beach.needsVolunteers.eventMessage}</p>}</WhiteCard>)}{!data.beaches.some(beach => beach.needsVolunteers.flag) && <DataUnavailable title="No beaches currently flagged for volunteers" />}</>}
       {topic === 'wildlife' && <>{data.beaches.map(beach => {
         const wildlife = data.wildlife?.beaches?.find(row => row.beachId === beach.id);

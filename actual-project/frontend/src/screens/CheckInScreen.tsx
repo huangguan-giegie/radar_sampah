@@ -13,6 +13,7 @@ import { useAppBack } from '../navigation';
 import { eventCanCheckIn, eventPhase, useEventClock } from '../eventAvailability';
 import { iteration3Request } from '../iteration3Api';
 import type { WildlifeGuidance } from '../iteration3Personal';
+import '../styles/community-alignment.css';
 
 /** The grey shield banner: one short line about what check-in does or asks. */
 function ShieldBanner({ children }: { children: ReactNode }) {
@@ -116,15 +117,11 @@ export default function CheckInScreen() {
   const joined = Boolean(event.joined);
   const attendanceRecorded = Boolean(event.attendanceConfirmed);
   const withinArea = state === 'within_area';
-  const readyToConfirm = false;
   // Anything short of a recorded check-in keeps the location button up.
   const needsLocation = available && !withinArea && !attendanceRecorded;
   // A refused or failed location attempt explains itself inside the status
   // card, so the same sentence is not repeated in a second alert below.
   const messageInStatus = state === 'denied' && Boolean(message);
-  // The prototype lists "Confirmed you were there" before the report or
-  // cleanup. The backend refuses attendance until a linked report or cleanup
-  // exists (EVENT_EVIDENCE_REQUIRED), so the list keeps the order that works.
   const attendanceSteps = [
     ['Joined this event', joined],
     ['Near the beach on the day', withinArea],
@@ -144,13 +141,13 @@ export default function CheckInScreen() {
   const cleanUpHere = () => nav(`/cleanup/${event.beachId}?event=${encodeURIComponent(event.id)}`);
 
   return (
-    <div className="screen scroll-y" style={{ zIndex: 26 }}>
-      {reminder && <Sheet title="Two Quick Reminders" onClose={() => setReminder(false)}>{(wildlife?.reminder ?? ['Do not handle stranded or entangled animals', 'Keep away from nests and burrows']).map((tip, index) => <div key={tip} className="wildlife-rule"><span>{index + 1}</span><p>{tip}</p></div>)}<PrimaryButton onClick={() => setReminder(false)}>Got It</PrimaryButton></Sheet>}
+    <div className="screen scroll-y checkin-alignment" style={{ zIndex: 26 }}>
+      {reminder && <Sheet title="Two Quick Reminders" onClose={() => setReminder(false)}>{(wildlife?.reminder ?? ['Keep away from nests and burrows', 'Do not handle stranded or entangled animals']).slice(0, 2).map((tip, index) => <div key={tip} className="wildlife-rule"><span>{index + 1}</span><p>{tip}</p></div>)}<PrimaryButton onClick={() => setReminder(false)}>Got It</PrimaryButton></Sheet>}
       <div className="measure i2-page anim-fade-up" style={{ paddingBottom: 'calc(var(--safe-bottom) + 34px)' }}>
-        <BackButton onClick={back} />
+        <div className="checkin-top-row"><BackButton onClick={back} />{available && <InfoChip color={C.green} background={C.greenBg}>On the event day</InfoChip>}</div>
         <div>
           <SectionLabel size="sm">CHECK IN</SectionLabel>
-          <h1 className="i2-title" style={{ marginTop: 7 }}>{readyToConfirm ? 'Confirm attendance' : 'Check in'}</h1>
+          <h1 className="i2-title" style={{ marginTop: 7 }}>{attendanceRecorded ? "You're Checked In" : 'Check In'}</h1>
         </div>
 
         <div className="i2-card i2-event-strip">
@@ -165,8 +162,11 @@ export default function CheckInScreen() {
           <InfoChip color={joined ? C.green : C.muted} background={joined ? C.greenBg : undefined}>{joined ? 'Joined' : 'Not joined'}</InfoChip>
         </div>
 
-        {readyToConfirm ? (
-          <ShieldBanner>You were near the beach. Confirm you took part.</ShieldBanner>
+        {attendanceRecorded ? (
+          <div className="checkin-recorded-card">
+            <span><Check color="white" size={24} /></span>
+            <div><strong>Attendance recorded</strong><small>{event.beachName} · {formatEventDate(event.date)}</small></div>
+          </div>
         ) : (
           <div className={`i2-checkin-status${withinArea ? ' is-success' : ''}`}>
             <span className="i2-checkin-icon">
@@ -185,10 +185,6 @@ export default function CheckInScreen() {
           </div>
         )}
 
-        {attendanceRecorded && (
-          <div className="i2-confirmed-row"><Check size={15} color={C.green} /><strong>Attendance confirmed</strong></div>
-        )}
-
         {!available && !attendanceRecorded && <Alert tone="caution">{eventPhase(event, now) === 'upcoming' ? 'Check-in opens when the event starts.' : 'This activity is no longer open for check-in.'}</Alert>}
         {needsLocation && (
           <>
@@ -200,7 +196,7 @@ export default function CheckInScreen() {
           </>
         )}
 
-        <div className="i2-card">
+        {!attendanceRecorded && <div className="i2-card">
           <SectionLabel size="sm">RECORDED ATTENDANCE NEEDS</SectionLabel>
           <div className="i2-step-list">
             {attendanceSteps.map(([label, done]) => (
@@ -215,7 +211,7 @@ export default function CheckInScreen() {
               ? 'Recorded attendance'
               : 'Attendance is recorded automatically after a successful check-in'}
           </InfoChip>
-        </div>
+        </div>}
 
         {message && !messageInStatus && <Alert title="Check-in not completed" tone="caution">{message}</Alert>}
 

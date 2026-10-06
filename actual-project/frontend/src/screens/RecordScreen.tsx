@@ -16,7 +16,7 @@ const BANDS: QuantityBand[] = ['Small', 'Medium', 'Large', 'Very Large'];
 
 export default function RecordScreen() {
   const nav = useNavigate();
-  const { draft, patchDraft } = useApp();
+  const { draft, patchDraft, showToast } = useApp();
   const back = useAppBack(draft.editingReportId ? `/reports/${draft.editingReportId}` : '/report/confirm');
   const [showErrors, setShowErrors] = useState(false);
   const quantities = draft.quantities;
@@ -51,6 +51,7 @@ export default function RecordScreen() {
     const valid = picked.length > 0 && picked.every((category) => Boolean(quantities[category]));
     if (!valid) {
       setShowErrors(true);
+      showToast(picked.length === 0 ? 'Choose a category first' : 'Choose a quantity band');
       return;
     }
     // Step 3 is the AI check. It runs once per photo; coming back here after
@@ -80,7 +81,7 @@ export default function RecordScreen() {
             <BackButton dark onClick={back} />
             {beachChip && <OverlayChip>{beachChip}</OverlayChip>}
           </div>
-          <StepBadge dark>STEP 5 OF 6 · DETAILS</StepBadge>
+          <StepBadge dark>STEP 4 OF 5 · DETAILS</StepBadge>
         </div>
       </div>
 
@@ -89,13 +90,13 @@ export default function RecordScreen() {
         style={{ position: 'relative', marginTop: -26, paddingTop: 24, borderRadius: '28px 28px 0 0', background: C.bg, paddingBottom: 'calc(var(--safe-bottom) + 30px)' }}
       >
         <div>
-          <h1 className="i2-title">{draft.editingReportId ? 'Correct your report' : 'What did you find?'}</h1>
+          <h1 className="i2-title">{draft.editingReportId ? 'Correct Your Report' : 'What Did You Find?'}</h1>
           <p className="i2-subtitle">Select every category and choose a quantity band.</p>
         </div>
         {draft.aiModelState === 'ready' && draft.aiDecision !== 'manual' && Object.keys(quantities).length > 0 && (
           <AiSuggestionHelp context="report" suggestions={quantities} />
         )}
-        {(draft.aiModelState === 'empty' || draft.aiModelState === 'unavailable') && (
+        {(draft.aiModelState === 'empty' || draft.aiModelState === 'unavailable' || draft.aiModelState === 'unreadable') && (
           <div style={{ padding: 13, borderRadius: 14, background: C.tint, color: C.slate, fontSize: 12 }}>
             <Alert /> AI could not provide a supported suggestion. Select the category and quantity band manually.
           </div>
@@ -138,7 +139,7 @@ export default function RecordScreen() {
         {picked.map((category) => (
           <div key={category} role="group" aria-label={`${category} quantity band`}>
             <SectionLabel size="sm">QUANTITY BAND · {category.toUpperCase()}</SectionLabel>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 7, marginTop: 10 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 9, marginTop: 10 }}>
               {BANDS.map((band) => {
                 const selected = quantities[category] === band;
                 return (
@@ -151,17 +152,17 @@ export default function RecordScreen() {
                     aria-describedby={showErrors && !quantities[category] ? `${category}-band-error` : undefined}
                     onClick={() => setBand(category, band)}
                     style={{
-                      minHeight: 54,
-                      padding: '0 4px',
+                      minHeight: 68,
+                      padding: '10px 8px',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       textAlign: 'center',
-                      borderRadius: 14,
+                      borderRadius: 22,
                       border: `1px solid ${selected ? C.navy : C.line2}`,
                       background: selected ? C.navy : C.white,
                       color: selected ? C.white : C.ink3,
-                      fontSize: 12.5,
+                      fontSize: 14,
                       fontWeight: 650,
                       cursor: 'pointer',
                     }}
@@ -171,7 +172,7 @@ export default function RecordScreen() {
                         people pick the same band. */}
                     <span>
                       {band}
-                      <span style={{ display: 'block', marginTop: 3, fontSize: 10, fontWeight: 550, lineHeight: 1.25 }}>
+                      <span style={{ display: 'block', marginTop: 3, fontSize: 12, fontWeight: 550, lineHeight: 1.25 }}>
                         {QUANTITY_DESC[band]}
                       </span>
                     </span>

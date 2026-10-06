@@ -17,6 +17,8 @@ import { buildReportSubmission, findExactDuplicateReport, finishReportSubmission
 import { linkEventReportData } from '../iteration2Api';
 import { useAppBack } from '../navigation';
 import { pendingReportSave } from '../pendingReportSave';
+import { onlySmallQuantities } from './participantFlowContent';
+import './participant-flow.css';
 
 export default function ReviewScreen() {
   const nav = useNavigate();
@@ -38,7 +40,8 @@ export default function ReviewScreen() {
   // Set when the server turned the report away because every category is
   // Small. That is the scope rule working, not a failure, so the page becomes
   // a calm "not recorded" outcome instead of showing a red error.
-  const [smallOnly, setSmallOnly] = useState(false);
+  const [smallRejected, setSmallRejected] = useState(false);
+  const smallOnly = smallRejected || onlySmallQuantities(draft.quantities);
 
   useEffect(() => {
     getBeaches()
@@ -113,7 +116,7 @@ export default function ReviewScreen() {
     } catch (err) {
       if (!active.current) return;
       if (isSmallOnlyRejection(err)) {
-        setSmallOnly(true);
+        setSmallRejected(true);
         return;
       }
       setError(err instanceof Error ? err.message : 'Could not save this report.');
@@ -125,10 +128,9 @@ export default function ReviewScreen() {
   }
 
 
-  // Pop the previous step when available; a direct link replaces with the
-  // relevant edit step. Never push a second copy of the same form.
+  // Edit actions always open details; browser history may lead to the AI page.
   const backToDetails = () => {
-    if (!submitting.current) back();
+    if (!submitting.current) nav('/report/details', { replace: true });
   };
 
 
@@ -145,7 +147,7 @@ export default function ReviewScreen() {
       type="button"
       onClick={action}
       disabled={busy && Boolean(action)}
-      className={action ? 'row-hover' : undefined}
+      className={`report-review-row ${action ? 'row-hover' : ''}`}
       style={{
         display: 'flex',
         alignItems: 'center',
@@ -155,13 +157,13 @@ export default function ReviewScreen() {
         cursor: action ? 'pointer' : 'default',
       }}
     >
-      <span style={{ width: 92, flex: 'none', fontSize: 11.5, fontWeight: 600, color: C.dim }}>
+      <span className="report-review-label" style={{ fontSize: 11.5, fontWeight: 600, color: C.dim }}>
         {label}
       </span>
-      <span style={{ fontSize: 14, fontWeight: 640, flex: 1 }}>{value}</span>
+      <span className="report-review-value" style={{ fontSize: 14, fontWeight: 640 }}>{value}</span>
       {action && <span style={{ fontSize: 11.5, fontWeight: 700, color: C.navy }}>Change</span>}
       {badge && (
-        <StatusBadge status="duplicate" style={{ marginLeft: 'auto' }}>
+        <StatusBadge status="duplicate" style={{ marginLeft: 'auto', flex: 'none', fontSize: 9 }}>
           {badge}
         </StatusBadge>
       )}
@@ -184,13 +186,13 @@ export default function ReviewScreen() {
         style={{ paddingInline: 20, paddingBottom: 'calc(var(--safe-bottom) + 32px)', display: 'flex', flexDirection: 'column', gap: 16 }}
       >
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <BackButton onClick={backToDetails} disabled={busy} />
-          <StepBadge>STEP 6 OF 6 · REVIEW</StepBadge>
+          <BackButton onClick={back} disabled={busy} />
+          <StepBadge>STEP 5 OF 5 · REVIEW</StepBadge>
         </div>
 
         <div>
           <div style={{ fontSize: 29, fontWeight: 640, letterSpacing: '-.7px' }}>
-            {smallOnly ? 'Small — not recorded' : 'Review your report'}
+            Review Your Report
           </div>
         </div>
 
@@ -198,6 +200,14 @@ export default function ReviewScreen() {
           {photoUrl && (
             <img src={photoUrl} alt="Report evidence" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
           )}
+          <button
+            type="button"
+            disabled={busy}
+            onClick={() => nav('/report/photo', { replace: true })}
+            style={{ position: 'absolute', top: 12, right: 12, minHeight: 36, padding: '6px 12px', borderRadius: 999, background: 'rgba(11,33,97,.78)', color: C.white, fontSize: 12, fontWeight: 650 }}
+          >
+            Change Photo
+          </button>
           {/* Correcting a report whose original photo will not load. Say so
               plainly, because the old photo is still kept unless they pick
               a replacement. */}
@@ -232,7 +242,7 @@ export default function ReviewScreen() {
         {smallOnly && greenNote('Small is excluded from Counted and not saved.')}
 
         {duplicateMatch && !smallOnly && (
-          <Alert title="You already filed this one" tone="caution">
+          <Alert title="Possible Matching Report" tone="caution">
             <div>A report from {formatDate(duplicateMatch.createdAt)} at {duplicateMatch.beachName} looks the same as this one. If it really is a new find, you can still submit it.</div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 10 }}>
               <InfoChip>Same participant</InfoChip>
@@ -261,7 +271,7 @@ export default function ReviewScreen() {
 
         {smallOnly ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
-            <PrimaryButton onClick={() => backToDetails()}>Change size band</PrimaryButton>
+            <PrimaryButton onClick={() => backToDetails()}>Change Quantity Band</PrimaryButton>
             {/* The draft is left as it is, so the photo and beach are still
                 there if the user comes back to report something bigger. */}
             <TextButton onClick={() => nav(`/beach/${draft.beachId}`)}>Back to beach</TextButton>
@@ -272,13 +282,13 @@ export default function ReviewScreen() {
               <Info style={{ flex: 'none', marginTop: 1 }} />
               <div style={{ fontSize: 12, lineHeight: 1.55, color: C.slate }}>
                 Duplicate or incomplete reports are excluded from the severity calculation — the same
-                rule for every beach.
+                rule for every beach. Only active reports within the reporting window affect the rating.
               </div>
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
               <PrimaryButton onClick={submit} disabled={busy}>
-                {busy ? 'Saving…' : duplicateMatch ? 'Submit anyway — new observation' : 'Submit Report'}
+                {busy ? 'Saving…' : 'Submit Report'}
                 {!busy && <ArrowRight />}
               </PrimaryButton>
               <TextButton onClick={backToDetails} disabled={busy}>

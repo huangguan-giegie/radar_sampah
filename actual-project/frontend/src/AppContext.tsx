@@ -62,7 +62,7 @@ export type ReportDraft = {
    * AI suggestion or explicitly keeps the manual values they entered.
    */
   aiDecision: 'confirmed' | 'manual' | null;
-  aiModelState?: 'ready' | 'empty' | 'unavailable' | null;
+  aiModelState?: 'ready' | 'empty' | 'unreadable' | 'unavailable' | null;
   aiModelVersion?: string | null;
 
   /**
@@ -411,12 +411,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
     // the only thing they can use to get back into their reports later.
     async createId() {
       const session = await createAnonymousId();
+      if (!session.recoveryToken) {
+        throw new Error('Your profile was issued without a recovery token. Please try again before contributing.');
+      }
       setUser(session.user);
       saveUserSnapshot(session.user);
       setAuthSyncError(null);
       return {
         participantId: session.user.participantId,
-        token: session.recoveryToken ?? session.token,
+        token: session.recoveryToken,
       };
     },
 

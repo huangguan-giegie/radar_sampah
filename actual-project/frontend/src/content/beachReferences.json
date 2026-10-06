@@ -1,0 +1,662 @@
+{
+  "pantai-batu-laut": {
+    "cards": [
+      "Blood cockle",
+      "Mangrove restoration"
+    ]
+  },
+  "pantai-redang": {
+    "cards": [
+      "Shorebirds",
+      "Blood cockle"
+    ],
+    "caption": "The local guide records shorebirds, without identifying individual species.",
+    "source": "https://selangor.travel/listing/redang-beach/"
+  },
+  "pantai-sungai-kajang-baru": {
+    "cards": [
+      "Blood cockle",
+      "Mangrove restoration"
+    ]
+  },
+  "pantai-acheh": {
+    "cards": [
+      "Blood cockle",
+      "Mangrove restoration"
+    ]
+  },
+  "pantai-bagan-nakhoda-omar": {
+    "cards": [
+      "Blood cockle",
+      "Mangrove restoration"
+    ]
+  },
+  "pantai-tanjung-rhu-pulau-carey": {
+    "cards": [
+      "Mangrove restoration",
+      "Blood cockle"
+    ],
+    "caption": "273 mangrove seedlings were planted on this shoreline in 2025.",
+    "source": "https://news.uitm.edu.my/2025/10/uitm-petronas-dagangan-dan-mmcv-jayakan-program-pemuliharaan-bakau-di-pulau-carey/"
+  },
+  "pantai-batu-23": {
+    "cards": [
+      "Blood cockle",
+      "Mangrove restoration"
+    ]
+  },
+  "pantai-sungai-lang": {
+    "cards": [
+      "Blood cockle",
+      "Mangrove restoration"
+    ]
+  },
+  "pantai-sungai-burung": {
+    "cards": [
+      "Blood cockle",
+      "Mangrove restoration"
+    ]
+  },
+  "pantai-sungai-haji-dorani": {
+    "cards": [
+      "Mangrove restoration",
+      "Blood cockle"
+    ],
+    "caption": "Mangrove restoration on this coastline was studied in 2011.",
+    "source": "https://eprints.um.edu.my/8861/"
+  },
+  "pantai-kok": {
+    "cards": [
+      "Mangrove crabs",
+      "Coral restoration"
+    ]
+  },
+  "pantai-teluk-datai": {
+    "cards": [
+      "Coral restoration",
+      "Mangrove crabs"
+    ],
+    "caption": "Coral nurseries support restoration in Datai Bay.",
+    "source": "https://www.thedatai.com/sustainability/key-initiatives/coral-restoration-programme/"
+  },
+  "pantai-tanjung-rhu": {
+    "cards": [
+      "Mangrove crabs",
+      "Coral restoration"
+    ]
+  },
+  "pantai-pasir-hitam": {
+    "cards": [
+      "Mangrove crabs",
+      "Coral restoration"
+    ]
+  },
+  "pantai-pasir-tengkorak": {
+    "cards": [
+      "Mangrove crabs",
+      "Coral restoration"
+    ]
+  },
+  "pantai-merdeka": {
+    "cards": [
+      "Mangrove crabs",
+      "Coral restoration"
+    ]
+  },
+  "pantai-datuk-syed-omar": {
+    "cards": [
+      "Mangrove crabs",
+      "Coral restoration"
+    ]
+  },
+  "pantai-tanjung-bungah": {
+    "cards": [
+      "Mangrove crabs",
+      "Coral restoration"
+    ]
+  },
+  "monkey-beach": {
+    "cards": [
+      "Macaques",
+      "Mangrove crabs"
+    ],
+    "caption": "Macaques are documented here; the guide does not identify species.",
+    "source": "https://mypenang.gov.my/uploads/downloads/SFA_Teluk-Bahang_Eng_V03Aug24.pdf"
+  },
+  "pantai-pasir-panjang": {
+    "cards": [
+      "Mangrove crabs",
+      "Coral restoration"
+    ]
+  },
+  "pantai-bersih": {
+    "cards": [
+      "Mangrove crabs",
+      "Coral restoration"
+    ]
+  },
+  "pantai-teluk-aman": {
+    "cards": [
+      "Mangrove crabs",
+      "Coral restoration"
+    ]
+  },
+  "pasir-belanda": {
+    "cards": [
+      "Mangrove crabs",
+      "Coral restoration"
+    ]
+  },
+  "pantai-teluk-batik": {
+    "cards": [
+      "Giant mudskipper",
+      "Black sea cucumber"
+    ]
+  },
+  "pantai-pasir-bogak": {
+    "cards": [
+      "Giant mudskipper",
+      "Black sea cucumber"
+    ]
+  },
+  "pantai-teluk-nipah": {
+    "cards": [
+      "Black sea cucumber",
+      "Giant mudskipper"
+    ],
+    "caption": "Collected at Teluk Nipah in November 2011.",
+    "source": "https://irep.iium.edu.my/29832/1/2013_GenBank_KC405565-KC405568_-_Outlook_Web_Access_Light.pdf"
+  },
+  "pantai-teluk-senangin": {
+    "cards": [
+      "Giant mudskipper",
+      "Black sea cucumber"
+    ]
+  },
+  "pantai-teluk-segadas": {
+    "cards": [
+      "Giant mudskipper",
+      "Black sea cucumber"
+    ]
+  },
+  "pantai-pasir-panjang-segari": {
+    "cards": [
+      "Green turtle",
+      "Giant mudskipper"
+    ],
+    "caption": "Segari records include green turtles; beach sightings remain unconfirmed.",
+    "source": "https://www.dof.gov.my/wp-content/uploads/2023/07/KENYATAAN-MEDIA-PUSAT-KONVENSYEN-DAN-PENERANGAN-PENYU-SEGARI.pdf"
+  },
+  "emerald-bay-pangkor-laut": {
+    "cards": [
+      "Sea cucumber",
+      "Giant mudskipper"
+    ],
+    "caption": "Collected at Pangkor Laut in 2011, not specifically Emerald Bay.",
+    "source": "https://irep.iium.edu.my/29832/1/2013_GenBank_KC405565-KC405568_-_Outlook_Web_Access_Light.pdf"
+  },
+  "pantai-cahaya-negeri": {
+    "cards": [
+      "Hawksbill turtle",
+      "Seagrass"
+    ]
+  },
+  "pantai-bagan-pinang": {
+    "cards": [
+      "Hawksbill turtle",
+      "Seagrass"
+    ]
+  },
+  "pantai-tanjung-gemuk": {
+    "cards": [
+      "Hawksbill turtle",
+      "Seagrass"
+    ]
+  },
+  "pantai-tanjung-biru": {
+    "cards": [
+      "Hawksbill turtle",
+      "Seagrass"
+    ]
+  },
+  "pantai-pengkalan-balak": {
+    "cards": [
+      "Hawksbill turtle",
+      "Seagrass"
+    ],
+    "caption": "Hawksbill nests were recorded here during 2015–2019.",
+    "source": "https://pmc.ncbi.nlm.nih.gov/articles/PMC13127984/"
+  },
+  "pantai-kundor": {
+    "cards": [
+      "Hawksbill turtle",
+      "Seagrass"
+    ]
+  },
+  "pantai-klebang": {
+    "cards": [
+      "Hawksbill turtle",
+      "Seagrass"
+    ],
+    "caption": "Earlier nesting reported; none recorded here during 2015–2019.",
+    "source": "https://pmc.ncbi.nlm.nih.gov/articles/PMC13127984/"
+  },
+  "pantai-tanjung-bidara": {
+    "cards": [
+      "Hawksbill turtle",
+      "Seagrass"
+    ],
+    "caption": "A few hawksbill nests were recorded here during 2015–2019.",
+    "source": "https://pmc.ncbi.nlm.nih.gov/articles/PMC13127984/"
+  },
+  "pulau-besar-melaka": {
+    "cards": [
+      "Hawksbill turtle",
+      "Seagrass"
+    ]
+  },
+  "pantai-siring": {
+    "cards": [
+      "Hawksbill turtle",
+      "Seagrass"
+    ]
+  },
+  "pantai-desaru": {
+    "cards": [
+      "Dugong",
+      "Seagrass meadows"
+    ]
+  },
+  "pantai-air-papan": {
+    "cards": [
+      "Dugong",
+      "Seagrass meadows"
+    ]
+  },
+  "pantai-tanjung-balau": {
+    "cards": [
+      "Dugong",
+      "Seagrass meadows"
+    ]
+  },
+  "pantai-minyak-beku": {
+    "cards": [
+      "Dugong",
+      "Seagrass meadows"
+    ]
+  },
+  "pantai-stulang": {
+    "cards": [
+      "Dugong",
+      "Seagrass meadows"
+    ]
+  },
+  "pantai-teluk-gorek": {
+    "cards": [
+      "Dugong",
+      "Seagrass meadows"
+    ]
+  },
+  "pasir-gemang": {
+    "cards": [
+      "Dugong",
+      "Seagrass meadows"
+    ]
+  },
+  "pantai-semanyir": {
+    "cards": [
+      "Dugong",
+      "Seagrass meadows"
+    ]
+  },
+  "pasir-bunga": {
+    "cards": [
+      "Dugong",
+      "Seagrass meadows"
+    ]
+  },
+  "pulau-rawa": {
+    "cards": [
+      "Dugong",
+      "Seagrass meadows"
+    ]
+  },
+  "pulau-tinggi": {
+    "cards": [
+      "Dugong",
+      "Seagrass meadows"
+    ],
+    "caption": "Seagrass around southwest Tinggi supports dugongs.",
+    "source": "https://johornationalparks.gov.my/ms/taman-laut-sultan-iskandar-florafauna/"
+  },
+  "pulau-besar-mersing": {
+    "cards": [
+      "Dugong",
+      "Seagrass meadows"
+    ]
+  },
+  "pulau-sibu": {
+    "cards": [
+      "Seagrass meadows",
+      "Dugong"
+    ],
+    "caption": "Seagrass around Sibu provides dugong feeding habitat.",
+    "source": "https://johornationalparks.gov.my/ms/taman-laut-sultan-iskandar-florafauna/"
+  },
+  "pantai-teluk-mahkota": {
+    "cards": [
+      "Dugong",
+      "Seagrass meadows"
+    ]
+  },
+  "pantai-batu-layar": {
+    "cards": [
+      "Dugong",
+      "Seagrass meadows"
+    ]
+  },
+  "pantai-tanjung-leman": {
+    "cards": [
+      "Dugong",
+      "Seagrass meadows"
+    ]
+  },
+  "pantai-cahaya-bulan": {
+    "cards": [
+      "Faunus snail"
+    ]
+  },
+  "pantai-irama": {
+    "cards": [
+      "Faunus snail"
+    ]
+  },
+  "pantai-senok": {
+    "cards": [
+      "Faunus snail"
+    ]
+  },
+  "pantai-kuda": {
+    "cards": [
+      "Faunus snail"
+    ]
+  },
+  "pantai-mek-mas": {
+    "cards": [
+      "Faunus snail"
+    ]
+  },
+  "pantai-tok-bali": {
+    "cards": [
+      "Faunus snail"
+    ]
+  },
+  "pantai-bisikan-bayu": {
+    "cards": [
+      "Faunus snail"
+    ],
+    "caption": "Faunus ater was collected here in 2007.",
+    "source": "https://www.jelsciences.com/articles/jbres1581.php"
+  },
+  "pantai-penarik": {
+    "cards": [
+      "Green turtle",
+      "Corals"
+    ]
+  },
+  "pantai-teluk-lipat": {
+    "cards": [
+      "Green turtle",
+      "Corals"
+    ]
+  },
+  "pantai-kemasik": {
+    "cards": [
+      "Green turtle",
+      "Corals"
+    ]
+  },
+  "pantai-pandak": {
+    "cards": [
+      "Green turtle",
+      "Corals"
+    ]
+  },
+  "pantai-bukit-keluang": {
+    "cards": [
+      "Green turtle",
+      "Corals"
+    ]
+  },
+  "pulau-kapas": {
+    "cards": [
+      "Coral habitat",
+      "Green turtle"
+    ],
+    "caption": "Hard and soft corals are documented around Kapas.",
+    "source": "https://ebrochures.malaysia.travel/en/malaysia-travel-guide/terengganu/"
+  },
+  "long-beach-perhentian": {
+    "cards": [
+      "Green turtle",
+      "Corals"
+    ]
+  },
+  "pasir-panjang-redang": {
+    "cards": [
+      "Green turtle",
+      "Corals"
+    ]
+  },
+  "chagar-hutang-redang": {
+    "cards": [
+      "Green turtle",
+      "Corals"
+    ],
+    "caption": "Green turtles are documented in Chagar Hutang Bay.",
+    "source": "https://journal.umt.edu.my/index.php/umtjur/article/view/493"
+  },
+  "pasir-besar-lang-tengah": {
+    "cards": [
+      "Reef research",
+      "Green turtle"
+    ],
+    "caption": "Coral research covers Pasir Besar and Batu Kuching reefs.",
+    "source": "https://opus.lib.uts.edu.au/rest/bitstreams/f4882097-3cdb-4a3e-bf63-2f841afe1827/retrieve"
+  },
+  "pantai-cherating": {
+    "cards": [
+      "Horseshoe crab",
+      "Hawksbill turtle"
+    ]
+  },
+  "pantai-balok": {
+    "cards": [
+      "Horseshoe crab",
+      "Hawksbill turtle"
+    ],
+    "caption": "Spawning was recorded at Pantai Balok during 2009–2013.",
+    "source": "https://pmc.ncbi.nlm.nih.gov/articles/PMC4957986/"
+  },
+  "pantai-chendor": {
+    "cards": [
+      "Turtle nesting coast",
+      "Horseshoe crab"
+    ],
+    "caption": "Official guide identifies turtle nesting here; species are not named.",
+    "source": "https://ebrochures.malaysia.travel/en/islands-and-beaches/cherating-pahang/"
+  },
+  "pantai-paya-tioman": {
+    "cards": [
+      "Tioman coral habitat",
+      "Horseshoe crab"
+    ],
+    "caption": "Coral formations are documented around Tioman, beyond this beach.",
+    "source": "https://storage.ebrochures.malaysia.travel/storage/PAHANGMAPGUIDE_english_0916.pdf"
+  },
+  "pantai-air-batang-tioman": {
+    "cards": [
+      "Horseshoe crab",
+      "Hawksbill turtle"
+    ]
+  },
+  "pantai-juara-tioman": {
+    "cards": [
+      "Hawksbill turtle",
+      "Horseshoe crab"
+    ],
+    "caption": "Nesting recorded in the Kampung Juara area in 2012.",
+    "source": "https://www.juaraturtleproject.com/wp-content/uploads/2012/04/2012-Summary_-Juara-Turtle-Project.pdf"
+  },
+  "pantai-kelambu": {
+    "cards": [
+      "Irrawaddy dolphin",
+      "Clownfish"
+    ]
+  },
+  "pantai-merakit": {
+    "cards": [
+      "Irrawaddy dolphin",
+      "Clownfish"
+    ]
+  },
+  "pantai-larai-larai": {
+    "cards": [
+      "Pulau Tiga reefs",
+      "Irrawaddy dolphin"
+    ],
+    "caption": "Coral reefs are documented around Pulau Tiga Park.",
+    "source": "https://www.sabahparks.org.my/pulau-tiga-park"
+  },
+  "pantai-dalit": {
+    "cards": [
+      "Irrawaddy dolphin",
+      "Clownfish"
+    ]
+  },
+  "pulau-mantanani": {
+    "cards": [
+      "Clownfish",
+      "Irrawaddy dolphin"
+    ],
+    "caption": "Clownfish are documented around Mantanani, not at a specific beach.",
+    "source": "https://sabahtourism.com/destination/mantanani-island/?locale=fr"
+  },
+  "pantai-tanjong-lobang": {
+    "cards": [
+      "Irrawaddy dolphin",
+      "Clownfish"
+    ]
+  },
+  "pantai-tusan": {
+    "cards": [
+      "Irrawaddy dolphin",
+      "Clownfish"
+    ]
+  },
+  "pantai-tanjong-batu": {
+    "cards": [
+      "Irrawaddy dolphin",
+      "Clownfish"
+    ]
+  },
+  "pantai-mukah": {
+    "cards": [
+      "Irrawaddy dolphin",
+      "Clownfish"
+    ]
+  },
+  "pantai-pandan": {
+    "cards": [
+      "Irrawaddy dolphin",
+      "Clownfish"
+    ]
+  },
+  "pantai-cenang": {
+    "cards": [
+      "Mangrove crabs",
+      "Coral restoration"
+    ]
+  },
+  "morib": {
+    "cards": [
+      "Scaleworm",
+      "Tube-dwelling worm"
+    ],
+    "caption": "Described from Morib in 2001, living in empty worm tubes.",
+    "source": "https://doi.org/10.12782/specdiv.6.1"
+  },
+  "remis": {
+    "cards": [
+      "Coastal shellfish",
+      "Blood cockle"
+    ],
+    "caption": "A 2024 study found microplastics in shellfish sampled here.",
+    "source": "https://doi.org/10.20473/jkl.v16i4.2024.321-330"
+  },
+  "kelanang": {
+    "cards": [
+      "Mud lobster",
+      "Mangroves"
+    ],
+    "caption": "Described from 2006–07 specimens in mangrove-edge burrows here.",
+    "source": "https://lkcnhm.nus.edu.sg/app/uploads/2017/06/57rbz465-473.pdf"
+  },
+  "pantai-batu-buruk": {
+    "cards": [
+      "Green turtle",
+      "Corals"
+    ]
+  },
+  "pantai-batu-ferringhi": {
+    "cards": [
+      "Green sea turtle",
+      "Mangrove crabs"
+    ],
+    "caption": "A 2012 study reported green-turtle tracks and nests from 1995–2009. Current nesting is unverified.",
+    "source": "https://ejournal.usm.my/tlsr/article/download/tlsr_vol23-no-1-2012_6/pdf/1122"
+  },
+  "pantai-tanjung-aru": {
+    "cards": [
+      "Irrawaddy dolphin",
+      "Clownfish"
+    ]
+  },
+  "teluk-cempedak": {
+    "cards": [
+      "Horseshoe crab",
+      "Hawksbill turtle"
+    ]
+  },
+  "pantai-damai": {
+    "cards": [
+      "Irrawaddy dolphin",
+      "Finless porpoise"
+    ],
+    "caption": "Kuching Bay surveys (2007–11) recorded dolphins and porpoises, not confirmed sightings at Damai.",
+    "source": "https://ir.unimas.my/id/eprint/6588/1/Gianna.pdf"
+  },
+  "teluk-kemang": {
+    "cards": [
+      "Syringodium",
+      "Seagrass"
+    ],
+    "caption": "A 2022 abstract records Syringodium seagrass here; it does not confirm turtles or dugongs.",
+    "source": "https://irep.iium.edu.my/97098/7/97098_%20Abundance%20and%20size%20composition%20of%20the%20billfishes.pdf"
+  },
+  "pantai-kuala-perlis": {
+    "cards": [
+      "Mangroves",
+      "Mangrove crabs"
+    ],
+    "source": "https://www.ukm.my/jem/wp-content/uploads/2021/05/jeko_543-7.pdf"
+  },
+  "bagan": {
+    "cards": [
+      "Rhizophora",
+      "Blood cockle"
+    ],
+    "caption": "Rhizophora stylosa was recorded on the seafront in March 2012.",
+    "source": "https://glomis.com/ej/pdf/EJ_10-2.pdf"
+  }
+}

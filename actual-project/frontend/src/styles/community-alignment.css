@@ -1,0 +1,224 @@
+.community-filters > button {
+  flex: 1;
+  padding-inline: 8px;
+  font-weight: 650;
+}
+
+.community-date-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 6px 0 12px;
+  color: #5a6474;
+  font-size: 11px;
+  font-weight: 650;
+}
+
+.community-date-heading > span:first-child {
+  letter-spacing: 1px;
+}
+
+.community-alignment .event-calendar {
+  min-height: 72px;
+}
+
+.community-alignment .event-calendar small {
+  margin-top: 4px;
+  font-size: 9px;
+}
+
+.event-share-details {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 44px;
+  min-height: 44px;
+  margin-top: 12px;
+  padding: 0 12px;
+  border-radius: 14px;
+  text-decoration: none;
+  font-size: 13px;
+}
+
+.event-share-details[aria-disabled="true"] {
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+.event-alignment .i2-stat,
+.event-result-alignment .i2-stat {
+  padding: 12px 10px;
+  text-align: left;
+}
+
+.event-alignment .i2-stat span,
+.event-result-alignment .i2-stat span {
+  min-height: 32px;
+  margin-top: 0;
+  justify-content: flex-start;
+  font-size: 11px;
+  text-align: left;
+}
+
+.event-alignment .event-status-tile {
+  background: #b8ff361a;
+}
+
+.event-alignment .event-status-tile span {
+  color: #b8ff36;
+}
+
+.event-result-hero {
+  padding: 24px 17px 18px;
+  border-radius: 26px;
+  background: #0b2161;
+  color: white;
+  text-align: center;
+}
+
+.event-result-alignment .i2-stat strong {
+  font-size: 24px;
+}
+
+.event-alignment .guide-photo span {
+  font-size: 12px;
+}
+
+.event-alignment .guide-equipment > div {
+  text-align: center;
+}
+
+.event-alignment .guide-equipment span {
+  font-size: 12px;
+}
+
+.event-alignment .guide-reminders > span {
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+  font-size: 12px;
+}
+
+.cleanup-beach-row,
+.cleanup-start-steps > div {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.cleanup-beach-icon {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: #0b2161;
+  flex: none;
+}
+
+.cleanup-beach-row strong,
+.cleanup-start-steps strong {
+  display: block;
+  color: #0b2161;
+  font-size: 15px;
+}
+
+.cleanup-beach-row small,
+.cleanup-start-steps small {
+  display: block;
+  margin-top: 5px;
+  color: #5a6474;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.cleanup-start-steps {
+  display: grid;
+  gap: 26px;
+}
+
+.cleanup-start-steps > div > span {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 1px solid #0b216140;
+  border-radius: 50%;
+  color: #0b2161;
+  flex: none;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.cleanup-start-steps > div:first-child > span {
+  position: relative;
+  background: #0b2161;
+  color: #b8ff36;
+}
+
+.cleanup-start-steps > div:first-child > span::after {
+  content: "";
+  position: absolute;
+  top: 35px;
+  width: 1px;
+  height: 22px;
+  background: #0b216126;
+}
+
+.cleanup-information {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  border: 1px solid #0b216114;
+  border-radius: 14px;
+  padding: 13px;
+  background: #0b216106;
+  color: #5a6474;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.cleanup-information > svg {
+  flex: none;
+  margin-top: 1px;
+}
+
+.checkin-top-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.checkin-recorded-card {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  padding: 20px 17px;
+  border-radius: 22px;
+  background: #0b2161;
+}
+
+.checkin-recorded-card > span {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: #177a3e;
+  flex: none;
+}
+
+.checkin-recorded-card strong {
+  display: block;
+  color: white;
+  font-size: 19px;
+}
+
+.checkin-recorded-card small {
+  display: block;
+  margin-top: 6px;
+  color: #ffffffb3;
+  font-size: 12px;
+}

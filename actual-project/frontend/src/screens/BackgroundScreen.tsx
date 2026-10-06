@@ -15,8 +15,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { SectionLabel } from '../components/ds';
 import { Close, RadarMark } from '../components/Icon';
-import { BackButton, TextButton } from '../components/ui';
-import { useAppBack } from '../navigation';
+import { TextButton } from '../components/ui';
 import {
   MALAYSIA_NOTE,
   OCEAN_PLASTIC_IMAGE,
@@ -32,6 +31,7 @@ import {
   type RegionShare,
 } from '../oceanPlastic';
 import { C, MONO } from '../theme';
+import '../styles/reference-pages.css';
 
 // Links out open in a new tab with no opener, the same as every other link to
 // a data source in the app, so the volunteer's place in the app is kept.
@@ -43,15 +43,13 @@ const IMAGE_ALT =
 
 export default function BackgroundScreen({ intro = false }: { intro?: boolean }) {
   const nav = useNavigate();
-  const goBack = useAppBack('/home');
   const [region, setRegion] = useState<RegionShare | null>(null);
   const countries = intro ? TOP_COUNTRIES.slice(0, 3) : TOP_COUNTRIES;
   const widest = TOP_COUNTRIES[0].percent;
 
   return (
-    <div className="screen scroll-y" style={{ zIndex: 26, background: C.bg }}>
+    <div className={`screen scroll-y ${intro ? '' : 'reference-about'}`} style={{ zIndex: 26, background: C.bg }}>
       <div className="measure i2-page anim-fade-up" style={{ paddingBottom: 'calc(var(--safe-bottom) + 34px)', gap: 14 }}>
-        {!intro && <BackButton onClick={goBack} />}
         <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
           <span style={{ width: 26, height: 26, borderRadius: 13, background: C.deep, display: 'grid', placeItems: 'center', flex: 'none' }}>
             <RadarMark size={18} />
@@ -69,7 +67,7 @@ export default function BackgroundScreen({ intro = false }: { intro?: boolean })
               padding: '5px 9px',
             }}
           >
-            ABOUT US
+            {intro ? 'BACKGROUND' : 'ABOUT US'}
           </span>
         </div>
 
@@ -82,7 +80,20 @@ export default function BackgroundScreen({ intro = false }: { intro?: boolean })
           </p>
         </div>
 
-        {!intro && <><section className="coastal-summary"><p className="eyebrow">Radar Sampah</p><h2 style={{color:'white',fontSize:24,margin:0}}>Beach litter reports for Malaysia</h2><p style={{fontSize:14,lineHeight:1.5,color:'#ffffffcc'}}>Sampah means rubbish in Malay. Anyone can take part with an anonymous ID.</p>{['Report litter with a photo. AI suggests the type.','See which beaches need help.','Join a Saturday cleanup and log what you cleared.'].map((line,i)=><div key={line} style={{display:'flex',gap:10,alignItems:'center',marginTop:15,fontSize:14,lineHeight:1.4}}><span style={{color:C.lime,fontWeight:700}}>{i+1}</span>{line}</div>)}<p style={{color:'#ffffff99',fontSize:11,marginTop:22}}>Built by a student team at Monash University Malaysia.</p></section><SectionLabel>BACKGROUND</SectionLabel><h2 style={{margin:0,fontSize:22,color:C.navy}}>From plastic waste to the ocean</h2></>}
+        {!intro && <>
+          <section className="coastal-summary reference-about-intro">
+            <p className="eyebrow">Radar Sampah</p>
+            <h2>Beach litter reports for Malaysia</h2>
+            <p>Sampah means rubbish in Malay. Anyone can take part with an anonymous ID.</p>
+            <ol>{['Report litter with a photo. AI suggests the type.', 'See which beaches need help.', 'Join a Saturday cleanup and log what you cleared.'].map((line, index) => <li key={line}><span>{index + 1}</span>{line}</li>)}</ol>
+            <p className="reference-about-team">Built by a student team at Monash University Malaysia.</p>
+          </section>
+          <div className="reference-about-background">
+            <SectionLabel>BACKGROUND</SectionLabel>
+            <h2>From Plastic Waste to the Ocean</h2>
+            <p className="i2-subtitle">A wider view of the problem behind our beach reports.</p>
+          </div>
+        </>}
         <div className="i2-card" style={{ padding: 13 }}>
           {/* On the intro the whole map is one link to the live chart. On the
               full page it is a map you can question: each continent is a tap
@@ -132,8 +143,8 @@ export default function BackgroundScreen({ intro = false }: { intro?: boolean })
           )}
         </div>
 
-        <div className="i2-card">
-          <SectionLabel size="sm">SHARE OF GLOBAL OCEAN PLASTIC · {OCEAN_PLASTIC_YEAR}</SectionLabel>
+        <div className={`i2-card ${intro ? '' : 'reference-about-shares'}`}>
+          <SectionLabel size="sm" tone={intro ? undefined : 'dark'}>SHARE OF GLOBAL OCEAN PLASTIC · {OCEAN_PLASTIC_YEAR}</SectionLabel>
           <div style={{ display: 'flex', flexDirection: 'column', marginTop: 8 }}>
             {countries.map((c) => {
               const home = c.iso3 === 'MYS';
@@ -146,21 +157,21 @@ export default function BackgroundScreen({ intro = false }: { intro?: boolean })
                   className="press"
                   style={{ display: 'grid', gridTemplateColumns: '96px 1fr 48px', alignItems: 'center', gap: 10, padding: '5px 0', color: 'inherit', textDecoration: 'none' }}
                 >
-                  <span style={{ fontSize: 13.5, fontWeight: home ? 720 : 560, color: home ? C.ink : C.ink2 }}>{c.name}</span>
-                  <span style={{ height: 8, borderRadius: 4, background: 'rgba(11,33,97,.07)', overflow: 'hidden' }}>
+                  <span style={{ fontSize: 13.5, fontWeight: home ? 720 : 560, color: intro ? (home ? C.ink : C.ink2) : (home ? C.lime : C.white) }}>{c.name}</span>
+                  <span style={{ height: 8, borderRadius: 4, background: intro ? 'rgba(11,33,97,.07)' : 'rgba(255,255,255,.15)', overflow: 'hidden' }}>
                     {/* Bars are scaled to the largest country, not to 100%,
                         so the differences between them stay visible. Malaysia
                         is the one bar in the accent colour. */}
-                    <span style={{ display: 'block', height: '100%', width: `${(c.percent / widest) * 100}%`, borderRadius: 4, background: home ? C.lime : C.navy }} />
+                    <span style={{ display: 'block', height: '100%', width: `${(c.percent / widest) * 100}%`, borderRadius: 4, background: home ? C.lime : (intro ? C.navy : C.white) }} />
                   </span>
-                  <span style={{ fontFamily: MONO, fontSize: 12.5, fontWeight: 650, color: C.ink3, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>
+                  <span style={{ fontFamily: MONO, fontSize: 12.5, fontWeight: 650, color: intro ? C.ink3 : C.white, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>
                     {c.share}
                   </span>
                 </a>
               );
             })}
           </div>
-          <div style={{ fontSize: 12.5, color: C.muted, marginTop: 8, lineHeight: 1.5 }}>{MALAYSIA_NOTE}</div>
+          <div style={{ fontSize: 12.5, color: intro ? C.muted : '#ffffffbb', marginTop: 8, lineHeight: 1.5 }}>{MALAYSIA_NOTE}</div>
         </div>
 
         {!intro && (

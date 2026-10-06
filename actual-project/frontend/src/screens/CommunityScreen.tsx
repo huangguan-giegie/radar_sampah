@@ -13,7 +13,7 @@ import {
 import { GhostButton, Skeleton } from "../components/ui";
 import { useApp } from "../AppContext";
 import { getBeaches, USE_MOCK } from "../api";
-import { formatEventDate, formatEventTimeRange } from "../iteration2";
+import { formatEventDate, formatEventTimeRange, relativeEventWeek } from "../iteration2";
 import { fetchCleanupEvents, fetchLatestCleanupForBeach } from "../iteration2Api";
 import { useAsyncData } from "../useAsyncData";
 import { C } from "../theme";
@@ -21,6 +21,7 @@ import { eventIsAvailable, eventPhase, useEventClock } from "../eventAvailabilit
 import content from "../content/coastalContent.json";
 import { beachNeedsVolunteers } from "../volunteerNeeds";
 import { hasMapCoordinates } from "../mapGeometry";
+import "../styles/community-alignment.css";
 
 type Filter = "All" | "Near Me" | "Joined";
 // Keep the last result only in this tab's memory so a detail-page return does not ask again.
@@ -77,7 +78,7 @@ export default function CommunityScreen() {
   const needsHelp = (b: typeof beaches[number]) => beachNeedsVolunteers(b, recentCleanups?.[b.id], nextEvents.find(e => e.beachId === b.id)?.participantCount, now);
   const withoutEvent = needs && filter !== "Joined" ? beaches.filter(b =>
     (!selectedBeach || b.id === selectedBeach.id) && needsHelp(b) && !nextEvents.some(e => e.beachId === b.id) &&
-    (filter !== "Near Me" || !!position && hasMapCoordinates(b) && distanceKm(position, b) <= 50)) : [];
+    (filter !== "Near Me" || !!position && hasMapCoordinates(b) && distanceKm(position, b) <= 60)) : [];
   const needsBeachData = needs || filter === "Near Me";
   function chooseFilter(value: Filter) {
     const next = new URLSearchParams(search);
@@ -127,29 +128,41 @@ export default function CommunityScreen() {
       )
         return false;
       if (filter === "Near Me")
-        return !!position && hasMapCoordinates(b) && distanceKm(position, b) <= 50;
+        return !!position && hasMapCoordinates(b) && distanceKm(position, b) <= 60;
       return true;
     });
-  const grouped = filtered.reduce<Record<string, typeof events>>((all, e) => {
+  const grouped = [...filtered].sort((a, b) => a.date.localeCompare(b.date) || a.startsAt.localeCompare(b.startsAt)).reduce<Record<string, typeof events>>((all, e) => {
     (all[e.date] ??= []).push(e);
     return all;
   }, {});
   return (
     <CoastalPage
       title={needs ? "Beaches Needing Help" : "Community Cleanups"}
-      back={needs ? "/community" : undefined}
+      eyebrow="Community"
+      className="community-alignment"
+      back={needs || filter !== "All" ? "/community" : undefined}
+      backMode={!needs && filter !== "All" ? "destination" : "history"}
       subtitle={
         needs
           ? "Moderate or above · a little help goes a long way"
-          : "Choose a beach. Make a difference together."
+          : filter === "Near Me" ? "Cleanups within 60 km of your approximate location."
+          : filter === "Joined" ? "Cleanups you have joined. Leave any time from the event page."
+          : "One Saturday cleanup for each beach at Moderate or above. Join any that suit you."
       }
       action={
         user?.role === "moderator" ? (
-          <button onClick={() => nav("/platform/events/new")}>Organiser</button>
+          <button onClick={() => nav("/platform/events/new")}>Manage events</button>
         ) : undefined
       }
     >
       {selectedBeach && <div className="filter-chips" style={{ margin: 0 }}><button aria-label="Show all beaches" onClick={clearBeach}>{selectedBeach.name} ×</button></div>}
+      <div className="filter-chips community-filters" style={{ margin: 0 }}>
+        {(["All", "Joined", "Near Me"] as const).map((f) => (
+          <button key={f} aria-pressed={filter === f} onClick={() => chooseFilter(f)}>
+            {f === "All" ? "All Dates" : f}
+          </button>
+        ))}
+      </div>
       {!needs && (
         <button
           className="volunteer-banner"
@@ -157,7 +170,6 @@ export default function CommunityScreen() {
         >
           <span>
             <strong>Beaches Needing Help</strong>
-            <small>Find your next cleanup</small>
           </span>
           <ChevronRight color={C.lime} size={18} />
         </button>
@@ -175,29 +187,18 @@ export default function CommunityScreen() {
           </button>
         </SummaryCard>
       )}
-      <div className="filter-chips" style={{ margin: 0 }}>
-        {(["All", "Near Me", "Joined"] as const).map((f) => (
-          <button
-            key={f}
-            aria-pressed={filter === f}
-            onClick={() => chooseFilter(f)}
-          >
-            {f === "All" ? "Upcoming" : f}
-          </button>
-        ))}
-      </div>
       {filter === "Near Me" && (
         <p className="coastal-footnote" role="status">
           {locating
             ? "Checking your location…"
             : locationError ||
-              "Activities within 50 km. Your location stays on this device."}
+              "Activities within 60 km. Your location stays on this device."}
         </p>
       )}
       {filter === "Near Me" && !position ? (
         locationError ? (
           <DataUnavailable title="Location Unavailable" retry={() => setLocationAttempt((value) => value + 1)}>
-            <GhostButton onClick={() => chooseFilter("All")}>Show Upcoming Activities</GhostButton>
+            <GhostButton onClick={() => chooseFilter("All")}>See All Dates</GhostButton>
           </DataUnavailable>
         ) : <Skeleton h={190} />
       ) : loading || (needsBeachData && beachesLoading) || (needs && historyLoading) ? (
@@ -219,7 +220,7 @@ export default function CommunityScreen() {
         <DataUnavailable
           title={
             filter === "Joined"
-              ? "No Joined Cleanups Yet"
+              ? "You haven't joined a cleanup yet"
               : filter === "Near Me"
                 ? "No Cleanups Nearby"
                 : selectedBeach ? "No Upcoming Cleanups Here" : "No Activities Yet"
@@ -235,11 +236,10 @@ export default function CommunityScreen() {
           ) : (
             <>
               <p>
-                Try another filter or come back when more activities are
-                available.
+                {filter === "Joined" ? "Pick a date under All Dates, then tap Join This Cleanup." : "Try another filter or come back when more activities are available."}
               </p>
               <GhostButton onClick={() => selectedBeach ? clearBeach() : chooseFilter("All")}>
-                {selectedBeach ? "Show All Beaches" : "Show Upcoming Activities"}
+                {selectedBeach ? "Show All Beaches" : "See All Dates"}
               </GhostButton>
             </>
           )}
@@ -247,7 +247,10 @@ export default function CommunityScreen() {
       ) : (
         Object.entries(grouped).map(([date, rows]) => (
           <section key={date}>
-            <p className="eyebrow">{formatEventDate(date)}</p>
+            <div className="community-date-heading">
+              <span>{relativeEventWeek(date) ?? "Past cleanup"}</span>
+              <span>{formatEventDate(date)}</span>
+            </div>
             <div className="event-list">
               {rows.map((e) => {
                 const b = beaches.find((b) => b.id === e.beachId);
@@ -259,6 +262,7 @@ export default function CommunityScreen() {
                   >
                     <span className="event-calendar">
                       <strong>{date.slice(8, 10)}</strong>
+                      <small>{new Date(date + "T12:00:00+08:00").toLocaleDateString("en-GB", { month: "short", timeZone: "Asia/Kuala_Lumpur" }).toUpperCase()}</small>
                       <small>
                         {new Date(date + "T12:00:00")
                           .toLocaleDateString("en-GB", { weekday: "short" })

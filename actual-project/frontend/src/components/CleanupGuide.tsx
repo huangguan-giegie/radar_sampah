@@ -29,7 +29,7 @@ export function CleanupGuide({ recorded = false, imageFree = false }: { recorded
                 {guide.equipment.map(([image, label]) => (
                   <div key={image}>
                     {!imageFree && <img src={"/images/cleanup/" + image + ".jpg"} alt="" />}
-                    <span>{label}</span>
+                    <span>{label === "Two bags" || label === "Closed shoes" ? <>{label.split(" ")[0]}<br />{label.split(" ")[1]}</> : label}</span>
                   </div>
                 ))}
               </div>
@@ -112,7 +112,7 @@ export function WildlifeGuide() {
     <section>
       <p className="eyebrow">Wildlife-friendly cleanup</p>
       <WhiteCard>
-        {(guidance?.tips ?? guide.wildlife).slice(0, 5).map((text, i) => (
+        {(guidance?.tips ?? guide.wildlife).slice(0, 3).map((text, i) => (
           <div key={text} className="wildlife-rule">
             <span>{i + 1}</span>
             <p>{text}</p>

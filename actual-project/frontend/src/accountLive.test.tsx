@@ -99,7 +99,7 @@ describe("live contribution account", () => {
     state.section = "history";
     const markup = renderToStaticMarkup(<AccountScreen />);
     expect(markup).toContain("6");
-    expect(markup).toContain("Recorded cleanup attendance");
+    expect(markup).toContain("Recorded attendance");
     expect(markup).toContain("+5");
     expect(markup).toContain("Counted report");
     expect(markup).not.toContain("Preview");

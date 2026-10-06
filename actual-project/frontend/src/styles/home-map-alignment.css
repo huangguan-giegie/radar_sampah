@@ -1,0 +1,54 @@
+.home-aligned .home-header h1 { font-size: 30px; }
+.home-aligned .home-header .icon-button { width: 48px; height: 48px; }
+.home-aligned .home-beach-photo { height: 132px; }
+.home-aligned .home-beach-overlay { inset: 10px 12px; }
+.home-aligned .home-beach-overlay .home-place { font-size: 27px; width: 74%; }
+.home-aligned .home-beach-body { padding: 16px 12px 10px; }
+.home-aligned .home-beach-body h2 { font-size: 19px; }
+.home-aligned .marine-banner { height: 182px; }
+.home-next-action { border-top: 1px solid #0b216114; padding-top: 10px; }
+.home-next-action > button:first-child { font-weight: 650; color: #0b2161; font-size: 14px; }
+.home-next-action p { font-size: 12px; margin: 6px 0; }
+.home-next-action .home-dismiss { color: #5a6474; font-size: 11px; }
+.beach-aligned .beach-body { gap: 26px; }
+.beach-aligned .beach-severity-card { width: 100%; text-align: left; box-shadow: 0 5px 14px #0b21610a; }
+.beach-aligned .beach-severity-card .coastal-footnote { margin-top: 10px; }
+.beach-aligned .beach-band-value strong { overflow-wrap: anywhere; }
+.beach-aligned .beach-band-header small { flex: none; }
+.beach-aligned .coastal-grid-two > button > .species-image,
+.beach-aligned .beach-reference-no-photo { height: 142px; width: 100%; }
+.beach-reference-no-photo { display: flex; align-items: center; padding: 16px; background: #e8ecf2; color: #0b2161; text-align: left; font-size: 13px; font-weight: 650; }
+.beach-local-record { font-size: 14px; color: #5a6474; line-height: 1.5; margin: 10px 0 0; }
+.beach-aligned .section-heading a { color: #0b2161; font-size: 12px; font-weight: 650; text-decoration: none; white-space: nowrap; }
+.beach-more-context { border-top: 1px solid #0b216114; padding-top: 16px; }
+.beach-more-context summary { cursor: pointer; color: #0b2161; font-weight: 650; font-size: 14px; }
+.beach-more-context[open] > .section-heading { margin-top: 20px; }
+.beach-more-context[open] > section { margin-top: 16px; }
+.map-beach-list-row { border-bottom: 1px solid #0b216114; padding: 15px 0; }
+.map-beach-list-row > div { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.map-beach-list-row > div > button { min-width: 0; color: #0b2161; font-size: 16px; font-weight: 650; text-align: left; }
+.map-cleanup-link { display: flex; width: 100%; align-items: center; justify-content: space-between; gap: 8px; border-radius: 12px; padding: 12px; background: #f2f5f9; color: #0b2161; margin-top: 10px; font-size: 13px; font-weight: 650; text-align: left; }
+.map-cleanup-link b { font-size: 22px; }
+.map-cleanup-link small { display: block; color: #3e6b52; font-size: 11px; margin-top: 4px; }
+.map-beach-list-row + .button-pair { margin-top: 20px; }
+.map-key-explanation { display: flex; align-items: center; gap: 16px; font-size: 14px; color: #5a6474; margin-top: 16px; }
+.map-key-explanation .region-map-pin { flex: none; margin: 0; }
+.map-key-explanation p { margin: 0; line-height: 1.5; }
+.map-key-bands { display: flex; flex-wrap: wrap; gap: 8px; margin: 18px 0; }
+.map-key-bands .legend-row { display: inline-flex; margin: 0; border-radius: 20px; background: #f2f4f7; padding: 8px 12px; gap: 7px; font-size: 12px; }
+.borneo-report-counts { position: absolute; z-index: 1; top: 16px; left: 9px; right: 9px; display: flex; justify-content: space-between; pointer-events: none; }
+.borneo-report-counts > span { display: flex; flex-direction: column; align-items: center; color: #0b2161; font-size: 9px; }
+.borneo-report-counts b { border-radius: 50%; background: #0b2161; border: 3px solid #98a4b5; color: white; width: 28px; height: 28px; display: grid; place-items: center; font-size: 10px; }
+.personal-empty-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 18px; }
+.personal-empty-actions > button { background: #f2f4f7; border: 1px solid #0b216114; border-radius: 16px; padding: 18px 12px; font-size: 14px; font-weight: 650; color: #0b2161; }
+.personal-empty-actions small { display: block; color: #5a6474; margin-top: 8px; font-size: 11px; font-weight: 400; }
+.personal-insight-fact { font-size: 23px; font-weight: 700; color: #0b2161; margin: 6px 0; }
+.personal-insight-risk { background: #0b2161; border-radius: 14px; padding: 14px; color: white; margin: 14px 0; }
+.personal-insight-risk .eyebrow { color: #b8ff36; margin-bottom: 6px; }
+.personal-insight-risk > strong { display: block; font-size: 14px; }
+.personal-insight-risk > small { display: block; color: #ffffffb8; font-size: 12px; margin-top: 5px; }
+@media (max-width: 380px) {
+  .home-aligned .home-header h1 { font-size: 26px; }
+  .home-aligned .home-beach-overlay .home-place { font-size: 24px; }
+  .beach-aligned .beach-band-header { flex-wrap: wrap; }
+}

@@ -113,13 +113,14 @@ describe("live Insights acceptance display", () => {
     expect(markup).toContain("Zero means no reports, not zero litter");
   });
 
-  it("renders all four evidence lifecycle counts with the expert-verification boundary", () => {
-    state.topic = "evidence";
+  it("offers the five current insight tiles and removes the evidence-quality entry", () => {
     const markup = renderToStaticMarkup(<LiveInsightsScreen />);
-    expect(markup).toContain("Counted · Active: 3");
-    expect(markup).toContain("Counted · Resolved: 2");
-    expect(markup).toContain("Duplicate: 1");
-    expect(markup).toContain("Incomplete: 0");
+    expect(markup.match(/class="action-tile press"/g)).toHaveLength(5);
+    expect(markup).toContain('action-grid five');
+    expect(markup).toContain('Volunteers');
+    expect(markup).toContain('Wildlife');
+    expect(markup).not.toContain('Evidence Quality');
+    expect(markup).not.toContain('Evidence coverage');
     expect(markup).toContain("not expert verification");
   });
 
@@ -131,13 +132,14 @@ describe("live Insights acceptance display", () => {
     expect(markup.replace(/<[^>]*>/g, "")).not.toContain("100%");
   });
 
-  it("shows individual Cleanup Scores and resolved history wording", () => {
+  it("shows confirmed before-and-after bands without displaying cleanup scores", () => {
     state.topic = "cleanup";
     state.data.cleanup.recent = [{ beachId: "morib", beachName: "Pantai Morib", date: "2026-10-04", categories: [{ category: "Plastic", beforeBand: "Large", afterBand: "Small" }], cleanupScore: 2, handling: "Not recorded", status: "Resolved — source report kept in history" }];
     const markup = renderToStaticMarkup(<LiveInsightsScreen />);
-    expect(markup).toContain("Cleanup Score: 2");
+    expect(markup).toContain("Cleanup Recorded");
+    expect(markup).toContain("Large → Small");
     expect(markup).toContain("Resolved — source report kept in history");
-    expect(markup).not.toContain("Total Cleanup Score");
+    expect(markup).not.toContain("Cleanup Score");
   });
 
   it("distinguishes location match from raw wildlife scores and discloses the nearby reference", () => {

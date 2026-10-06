@@ -1,10 +1,5 @@
 
-// The anonymous participant number - this app's whole idea of an account.
-// No name, no email, no password. The user gets a four digit number and their
-// reports hang off it. Data we never collect cannot leak, and a volunteer
-// standing on a beach in the sun will not stop to verify an email address.
-// The cost is real, so the screen says it twice: lose the number and the old
-// reports still count for their beach, but nobody can reopen them.
+// Server-issued identity with a separate private token for recovery.
 
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -14,6 +9,7 @@ import { BackButton, ErrorNote, GhostButton, PrimaryButton, TextButton, download
 import { useApp } from '../AppContext';
 import { safeNextPath } from '../flowRules';
 import { useAppBack } from '../navigation';
+import './participant-flow.css';
 
 export default function IdentityScreen() {
   const nav = useNavigate();
@@ -25,11 +21,12 @@ export default function IdentityScreen() {
   }, []);
   const [params] = useSearchParams();
   const next = safeNextPath(params.get('next'));
-  const { createId, restore } = useApp();
+  const { createId, restore, showToast } = useApp();
 
   const [mode, setMode] = useState<'new' | 'existing'>('new');
   const [typedId, setTypedId] = useState('');
   const [typedToken, setTypedToken] = useState('');
+  const [tokenVisible, setTokenVisible] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   // The number we have just issued. Null means show the two choices; set means
@@ -37,19 +34,24 @@ export default function IdentityScreen() {
   // purpose - Back must not bring "here is your number" up a second time, when
   // the number on screen would no longer be the one they were given.
   const [newSession, setNewSession] = useState<{ participantId: string; token: string } | null>(null);
-  const [copied, setCopied] = useState(false);
-  const [copiedId, setCopiedId] = useState(false);
   const [savedRecovery, setSavedRecovery] = useState(false);
 
-  const recoveryKitText = newSession
-    ? `Radar Sampah recovery details\nParticipant ID: ${newSession.participantId}\nRecovery token: ${newSession.token}\n\nKeep this file private. The token works like a password.`
-    : '';
   const canRestore = !busy && /^\d{4}$/.test(typedId) && typedToken.trim() !== '';
 
   function saveRecoveryKit() {
     if (!newSession) return;
     downloadRecoveryKit(newSession.participantId, newSession.token);
-    setSavedRecovery(true);
+    showToast('Downloaded');
+  }
+
+  async function copy(value: string) {
+    try {
+      if (!navigator.clipboard) throw new Error('Clipboard unavailable');
+      await navigator.clipboard.writeText(value);
+      if (active.current) showToast('Copied');
+    } catch {
+      if (active.current) setError('Could not copy. Select the value or download your recovery details.');
+    }
   }
 
   function goBack() {
@@ -60,6 +62,7 @@ export default function IdentityScreen() {
 
   // Ask for a new number.
   async function getNewId() {
+    if (busy) return;
     setBusy(true);
     setError(null);
     try {
@@ -82,6 +85,7 @@ export default function IdentityScreen() {
   // input silently drops a leading zero, which would send a different ID.
   async function useExistingId(e: FormEvent) {
     e.preventDefault();
+    if (!canRestore) return;
     setBusy(true);
     setError(null);
     try {
@@ -100,7 +104,7 @@ export default function IdentityScreen() {
   }
 
   return (
-    <div className="screen scroll-y" style={{ zIndex: 50 }}>
+    <div className="screen scroll-y participant-identity" style={{ zIndex: 50, background: C.navy }}>
       <div
         className="anim-fade-up pt-page-lg measure"
         style={{
@@ -111,14 +115,16 @@ export default function IdentityScreen() {
           gap: 20,
         }}
       >
-        <BackButton onClick={goBack} />
+        <BackButton onClick={goBack} disabled={busy} />
+
+        <div className="participant-identity-card">
 
         <div>
           {/* One headline for the whole flow, as in the prototype. Switching
               between "get" and "restore", or being issued a number, changes
               what is below it - not what the page is about. */}
           <div style={{ fontSize: 31, fontWeight: 640, letterSpacing: '-.8px' }}>
-            Join in — no name needed
+            Join Radar Sampah
           </div>
           {/* No subtitle once the number is issued: the token card says what
               matters there, right next to the token. */}
@@ -126,10 +132,12 @@ export default function IdentityScreen() {
             <div style={{ fontSize: 14, color: C.muted, marginTop: 8, lineHeight: 1.5 }}>
               {mode === 'existing'
                 ? 'Use your participant ID and recovery token.'
-                : 'No name, email or phone number required.'}
+                : 'Create a simple profile to report litter, join cleanups, and track your contributions.'}
             </div>
           )}
         </div>
+
+        {error && <ErrorNote title="Could not continue" body={error} />}
 
         {newSession ? (
           // The number is issued. Two cards, as in the prototype: the
@@ -137,9 +145,6 @@ export default function IdentityScreen() {
           // KEEP PRIVATE. The save checkbox is the honest price of having no
           // password, and the Account page repeats the warning.
           //
-          // How restore should work is still being decided with the backend
-          // (see docs/BACKEND_FOLLOWUPS_PROTOTYPE_ALIGNMENT.md), so nothing on
-          // this screen makes promises about what the ID can or cannot do.
           <>
             <div style={{ background: C.navy, borderRadius: 24, padding: '18px 18px 20px', color: C.bg }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
@@ -149,15 +154,7 @@ export default function IdentityScreen() {
                 <button
                   type="button"
                   className="press"
-                  onClick={async () => {
-                    if (!navigator.clipboard) return;
-                    try {
-                      await navigator.clipboard.writeText(newSession.participantId);
-                      setCopiedId(true);
-                    } catch {
-                      setCopiedId(false);
-                    }
-                  }}
+                  onClick={() => void copy(newSession.participantId)}
                   style={{
                     flex: 'none',
                     padding: '6px 11px',
@@ -168,7 +165,7 @@ export default function IdentityScreen() {
                     fontWeight: 620,
                   }}
                 >
-                  {copiedId ? 'Copied' : 'Copy ID'}
+                  Copy ID
                 </button>
               </div>
               <div style={{ fontFamily: MONO, fontSize: 40, fontWeight: 700, color: C.lime, marginTop: 10, userSelect: 'all' }}>
@@ -198,11 +195,8 @@ export default function IdentityScreen() {
                   KEEP PRIVATE
                 </span>
               </div>
-              {/* The prototype's "the only way back in" waits on the restore
-                  decision with the backend, so this line only promises what we
-                  can keep today. */}
               <div style={{ fontSize: 13, lineHeight: 1.5, color: C.muted, marginTop: 5 }}>
-                You won't see this token again after leaving this screen.
+                Keep this token safe to restore your profile. It works like a password.
               </div>
               <div
                 style={{
@@ -228,18 +222,9 @@ export default function IdentityScreen() {
                 <GhostButton
                   height={46}
                   style={{ fontSize: 14 }}
-                  onClick={async () => {
-                    if (!navigator.clipboard) return;
-                    try {
-                      await navigator.clipboard.writeText(recoveryKitText);
-                      setCopied(true);
-                      setSavedRecovery(true);
-                    } catch {
-                      setCopied(false);
-                    }
-                  }}
+                  onClick={() => void copy(newSession.token)}
                 >
-                  {copied ? 'Copied' : 'Copy token'}
+                  Copy Token
                 </GhostButton>
                 <GhostButton height={46} style={{ fontSize: 14 }} onClick={saveRecoveryKit}>Download</GhostButton>
               </div>
@@ -266,13 +251,12 @@ export default function IdentityScreen() {
                 // someone backing out would think it had been thrown away.
                 if (!savedRecovery && !window.confirm('Leave without saving your recovery token? The new profile stays signed in until you sign out from Account.')) return;
                 setNewSession(null);
-                setCopied(false);
-                setCopiedId(false);
                 setSavedRecovery(false);
                 setMode('existing');
+                setTokenVisible(false);
               }}
             >
-              I already have a token
+              Already Have My Profile
             </TextButton>
           </>
         ) : (
@@ -294,6 +278,8 @@ export default function IdentityScreen() {
             >
               <button
                 type="button"
+                disabled={busy}
+                aria-pressed={mode === 'new'}
                 onClick={() => setMode('new')}
                 style={{
                   flex: 1,
@@ -306,10 +292,12 @@ export default function IdentityScreen() {
                   fontWeight: mode === 'new' ? 650 : 600,
                 }}
               >
-                Get an ID
+                New Profile
               </button>
               <button
                 type="button"
+                disabled={busy}
+                aria-pressed={mode === 'existing'}
                 onClick={() => setMode('existing')}
                 style={{
                   flex: 1,
@@ -322,18 +310,16 @@ export default function IdentityScreen() {
                   fontWeight: mode === 'existing' ? 650 : 600,
                 }}
               >
-                Restore profile
+                Restore Profile
               </button>
             </div>
-
-            {error && <ErrorNote title="Could not continue" body={error} />}
 
             {mode === 'new' ? (
               <>
                 <PrimaryButton onClick={getNewId} disabled={busy}>
-                  {busy ? 'Creating your profile…' : 'Create my profile'}
+                  {busy ? 'Creating your profile…' : 'Create My Profile'}
                 </PrimaryButton>
-                <TextButton onClick={() => setMode('existing')}>I already have a token</TextButton>
+                <TextButton disabled={busy} onClick={() => setMode('existing')}>Already Have My Profile</TextButton>
               </>
             ) : (
               <form onSubmit={useExistingId} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -346,9 +332,10 @@ export default function IdentityScreen() {
                     inputMode="numeric"
                     pattern="[0-9]{4}"
                     maxLength={4}
+                    disabled={busy}
                     value={typedId}
                     onChange={(e) => setTypedId(e.target.value.replace(/\D/g, '').slice(0, 4))}
-                    placeholder="1637"
+                    placeholder="Enter your participant ID"
                     style={{
                       background: C.white,
                       border: `1.5px solid ${C.cloud}`,
@@ -366,10 +353,14 @@ export default function IdentityScreen() {
                   <span style={{ fontFamily: MONO, fontSize: 9.5, letterSpacing: '.14em', color: C.dim }}>
                     RECOVERY TOKEN
                   </span>
+                  <div style={{ position: 'relative' }}>
                   <input
                     className="field"
-                    type="password"
+                    type={tokenVisible ? 'text' : 'password'}
                     autoComplete="current-password"
+                    autoCapitalize="none"
+                    spellCheck={false}
+                    disabled={busy}
                     value={typedToken}
                     onChange={(e) => setTypedToken(e.target.value)}
                     placeholder="Enter your recovery token"
@@ -378,20 +369,31 @@ export default function IdentityScreen() {
                       border: `1.5px solid ${C.cloud}`,
                       borderRadius: 16,
                       padding: 16,
+                      paddingRight: 64,
+                      width: '100%',
                       fontSize: 16,
                       fontFamily: MONO,
                       color: C.ink,
                     }}
                   />
+                  <button
+                    type="button"
+                    disabled={busy}
+                    aria-label={tokenVisible ? 'Hide recovery token' : 'Show recovery token'}
+                    aria-pressed={tokenVisible}
+                    onClick={() => setTokenVisible((visible) => !visible)}
+                    style={{ position: 'absolute', right: 8, top: 8, minHeight: 40, minWidth: 48, color: C.navy, fontSize: 12, fontWeight: 650 }}
+                  >
+                    {tokenVisible ? 'Hide' : 'Show'}
+                  </button>
+                  </div>
                 </label>
 
-                {/* Both fields stay required. The prototype restores from the
-                    token alone; that depends on a backend change that has not
-                    been agreed yet. */}
+                {/* Both credentials are checked by the recovery endpoint. */}
                 <PrimaryButton type="submit" trailingArrow={canRestore} disabled={!canRestore}>
-                  {busy ? 'Checking…' : 'Restore profile'}
+                  {busy ? 'Checking…' : 'Restore Profile'}
                 </PrimaryButton>
-                <TextButton onClick={() => setMode('new')}>+ Create a new profile</TextButton>
+                <TextButton disabled={busy} onClick={() => setMode('new')}>+ Create a New Profile</TextButton>
 
               </form>
             )}
@@ -415,11 +417,12 @@ export default function IdentityScreen() {
               </div>
             </div>
 
-            <TextButton onClick={() => nav('/map')} style={{ fontSize: 13.5, color: C.dim, padding: 9 }}>
-              Keep browsing without an ID
+            <TextButton disabled={busy} onClick={() => nav('/home', { replace: true })} style={{ fontSize: 13.5, color: C.dim, padding: 9 }}>
+              Keep Exploring Without a Profile
             </TextButton>
           </>
         )}
+        </div>
       </div>
     </div>
   );

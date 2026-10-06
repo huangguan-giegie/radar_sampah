@@ -1,0 +1,9 @@
+.location-prompt { z-index: 50; }
+.app-shell:has(.location-prompt) .coastal-tabs { display: none; }
+.location-map-wash { position: absolute; inset: 0; background: rgba(247,248,250,.52); }
+.location-map-credit { position: absolute; top: 16px; right: 16px; z-index: 1; font-size: 10px; color: #3e4f6e; }
+.location-prompt-card { position: absolute; bottom: calc(var(--safe-bottom) + 20px); left: 16px; right: 16px; margin: auto; max-width: 520px; padding: 24px; border-radius: 28px; background: white; box-shadow: 0 12px 48px rgba(11,33,97,.12); display: grid; gap: 12px; max-height: calc(100% - 64px); overflow-y: auto; }
+.location-prompt-icon { display: grid; place-items: center; width: 56px; height: 56px; border-radius: 50%; background: #f0f3f7; }
+.location-prompt-card h1 { color: #0b2161; font-size: 24px; margin: 2px 0; }
+.location-prompt-card p { color: #5a6474; font-size: 14px; line-height: 1.55; margin: 0 0 4px; }
+.location-why { justify-self: center; color: #5a6474; text-decoration: underline; font-size: 12px; padding: 4px; }

@@ -5,6 +5,7 @@ import {
   canRecordAttendance,
   createAdminEvent,
   formatEventDate,
+  formatEventTimeRange,
   getCleanupEvent,
   getCleanupTarget,
   hasEventEvidence,
@@ -31,6 +32,10 @@ Object.defineProperty(globalThis, 'localStorage', { value: storage, configurable
 beforeEach(() => storage.clear());
 
 describe('Iteration 2 date presentation', () => {
+  it('uses the Malaysian clock for ISO event timestamps', () => {
+    expect(formatEventTimeRange('2026-10-10T01:00:00Z', '2026-10-10T04:00:00Z')).toBe('9:00 AM – 12:00 PM');
+    expect(formatEventTimeRange('09:00', '12:00')).toBe('9:00 AM – 12:00 PM');
+  });
   it('prints the exact date first and the verified weekday in brackets', () => {
     expect(formatEventDate('2026-09-12')).toBe('12-09-2026 (Sat)');
     expect(formatEventDate('2026-09-16')).toBe('16-09-2026 (Wed)');

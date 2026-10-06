@@ -40,7 +40,7 @@ describe('beaches without verified coordinates', () => {
   it('keeps manual selection available and uses a broad viewport instead of null coordinates', () => {
     const html = renderToStaticMarkup(<MemoryRouter><ConfirmBeachScreen /></MemoryRouter>);
     expect(html).toContain('Expanded Beach');
-    expect(html).toContain('Choose your beach');
+    expect(html).toContain('Choose Your Beach');
     expect(html).toContain('data-map-lat="4.05"');
     expect(html).toContain('data-map-lng="109.5"');
     expect(html).toContain('data-map-zoom="4"');
@@ -51,7 +51,7 @@ describe('beaches without verified coordinates', () => {
     state.source = 'gps';
     const html = renderToStaticMarkup(<MemoryRouter><ConfirmBeachScreen /></MemoryRouter>);
     expect(html).toContain('MANUAL BEACH SELECTION');
-    expect(html).not.toContain('SUGGESTED FROM YOUR LOCATION');
+    expect(html).not.toContain('GPS USED ONCE · PRIVATE');
   });
   it('preserves a verified GPS position and the existing close view', () => {
     state.source = 'gps'; state.coords = { lat: 2.747, lng: 101.44 };
@@ -59,7 +59,7 @@ describe('beaches without verified coordinates', () => {
     const html = renderToStaticMarkup(<MemoryRouter><ConfirmBeachScreen /></MemoryRouter>);
     expect(html).toContain('data-map-lat="2.747"');
     expect(html).toContain('data-map-zoom="12"');
-    expect(html).toContain('SUGGESTED FROM YOUR LOCATION');
+    expect(html).toContain('GPS USED ONCE · PRIVATE');
   });
   it('skips biodiversity prediction when the beach coordinate is unknown', async () => {
     renderToStaticMarkup(<MemoryRouter><BeachScreen /></MemoryRouter>);

@@ -636,10 +636,17 @@ export function formatEventDate(date: string): string {
 
 /** "09:00" → "9:00 AM". The API keeps 24-hour times so they sort and compare
  *  simply; volunteers read the 12-hour clock the prototype uses. Anything that
- *  is not a plain HH:MM is shown as it came, rather than guessed at. */
+ *  is not a plain HH:MM or ISO timestamp is kept unchanged. */
 function formatClock(value: string): string {
   const match = /^(\d{1,2}):(\d{2})$/.exec(value);
-  if (!match) return value;
+  if (!match) {
+    if (!/^\d{4}-\d{2}-\d{2}T/.test(value)) return value;
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return value;
+    return new Intl.DateTimeFormat('en-US', {
+      timeZone: 'Asia/Kuala_Lumpur', hour: 'numeric', minute: '2-digit', hour12: true,
+    }).format(date);
+  }
   const hours = Number(match[1]);
   const twelveHour = hours % 12 === 0 ? 12 : hours % 12;
   return `${twelveHour}:${match[2]} ${hours >= 12 ? 'PM' : 'AM'}`;

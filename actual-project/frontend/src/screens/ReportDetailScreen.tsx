@@ -1,8 +1,6 @@
 // One saved report, read-only, with a way to correct it.
 //
-// My Reports rows no longer open this page - they go straight to the correction
-// screen, as the prototype does. The page stays at /reports/:reportId so a link
-// to a single saved report still has somewhere to land.
+// My Reports opens this page before a participant chooses to make a correction.
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { createIteration2ShareLink, getMyReports } from '../api';
@@ -29,20 +27,32 @@ export default function ReportDetailScreen() {
   const [report, setReport] = useState<LitterReport | null>(null);
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
+  const [missing, setMissing] = useState(false);
+  const [photoFailed, setPhotoFailed] = useState(false);
+  const loadRequest = useRef(0);
   const [shareError, setShareError] = useState<string | null>(null);
   const [sharing, setSharing] = useState(false);
 
-  useEffect(() => {
+  function loadReport() {
+    const request = ++loadRequest.current;
     setLoading(true);
     setFailed(false);
+    setMissing(false);
+    setPhotoFailed(false);
     getMyReports()
       .then((reports) => {
+        if (request !== loadRequest.current) return;
         const match = reports.find((item) => item.id === reportId) ?? null;
         setReport(match);
-        setFailed(!match);
+        setMissing(!match);
       })
-      .catch(() => setFailed(true))
-      .finally(() => setLoading(false));
+      .catch(() => { if (request === loadRequest.current) setFailed(true); })
+      .finally(() => { if (request === loadRequest.current) setLoading(false); });
+  }
+
+  useEffect(() => {
+    loadReport();
+    return () => { loadRequest.current += 1; };
   }, [reportId, reportsVersion]);
 
   function editReport() {
@@ -56,13 +66,15 @@ export default function ReportDetailScreen() {
       quantities: { ...report.quantities },
       locationSource: report.locationSource ?? 'manual',
       coords: null,
-      existingPhotoUrl: report.photoUrl ?? null,
+      existingPhotoUrl: photoFailed ? null : report.photoUrl ?? null,
       existingPhotoKey: report.photoKey ?? null,
-      existingPhotoUnavailable: historicalPhotoUnavailable(report.photoUrl, report.photoKey),
+      existingPhotoUnavailable: photoFailed || historicalPhotoUnavailable(report.photoUrl, report.photoKey),
       editingStatus: report.status,
       editingStatusNote: report.statusNote ?? null,
     });
-    nav('/report/details');
+    const needsPhoto = report.status === 'Incomplete'
+      && (!report.photoUrl || /photo|image|unreadable/i.test(report.statusNote ?? ''));
+    nav(needsPhoto ? '/report/photo' : '/report/details');
   }
 
   function requestEdit() {
@@ -97,12 +109,16 @@ export default function ReportDetailScreen() {
     );
   }
 
-  if (failed || !report) {
+  if (failed || missing || !report) {
     return (
       <div className="screen scroll-y">
         <div className="measure i2-page">
           <BackButton onClick={back} />
-          <ErrorNote title="Report not found" body="Return to My Reports and choose another report." />
+          <ErrorNote
+            title={failed ? 'Could not load this report' : 'Report not found'}
+            body={failed ? 'Your report is still saved. Check the connection and try again.' : 'Return to My Reports and choose another report.'}
+            onRetry={failed ? loadReport : undefined}
+          />
           <PrimaryButton onClick={() => nav('/reports')}>Back to My Reports</PrimaryButton>
         </div>
       </div>
@@ -125,11 +141,12 @@ export default function ReportDetailScreen() {
           <StatusBadge status={reportStateLabel(report).toLowerCase() as BadgeStatus} indicator>{reportStateLabel(report)}</StatusBadge>
         </div>
 
-        {report.photoUrl ? (
+        {report.photoUrl && !photoFailed ? (
           <img
             src={report.photoUrl}
             alt={`Litter reported at ${report.beachName}`}
-            style={{ width: '100%', height: 220, objectFit: 'cover', borderRadius: 24, border: `1px solid ${C.line}` }}
+            onError={() => setPhotoFailed(true)}
+            style={{ width: '100%', height: 150, objectFit: 'cover', borderRadius: 28, border: `1px solid ${C.line}` }}
           />
         ) : (
           <div style={{ height: 150, borderRadius: 24, background: C.tint, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8, color: C.muted }}>
@@ -151,7 +168,7 @@ export default function ReportDetailScreen() {
           <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, paddingTop: 12, fontSize: 12, color: C.muted }}>
             <span>Location</span>
             <strong style={{ color: C.ink2 }}>
-              {report.locationSource === 'gps' ? 'GPS matched' : report.locationSource === 'manual' ? 'Selected manually' : 'Not recorded'}
+              {report.locationSource ? 'Beach level only' : 'Not recorded'}
             </strong>
           </div>
         </div>
@@ -164,8 +181,8 @@ export default function ReportDetailScreen() {
 
         {shareError && <div style={{ color: C.red, fontSize: 12 }}>{shareError}</div>}
 
-        <PrimaryButton onClick={() => nav(`/beach/${report.beachId}`)}>View beach</PrimaryButton>
-        <GhostButton onClick={requestEdit}>{report.status === 'Incomplete' ? 'Fix this report' : 'Edit this report'}</GhostButton>
+        <PrimaryButton onClick={() => nav(`/beach/${report.beachId}`)}>View Beach</PrimaryButton>
+        <GhostButton onClick={requestEdit}>{report.status === 'Incomplete' ? 'Fix This Report' : 'Edit This Report'}</GhostButton>
         {report.status === 'Counted' && report.currentState !== 'excluded' && (
           <GhostButton onClick={shareReport} disabled={sharing}>{sharing ? 'Creating link…' : 'Share report'}</GhostButton>
         )}
