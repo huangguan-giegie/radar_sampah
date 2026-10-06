@@ -105,6 +105,19 @@ def test_api_factories_reuse_one_loaded_registry(api, tmp_path):
     second = create_app(database_url=f"sqlite:///{tmp_path / 'second.db'}", testing=True, photo_storage_dir=tmp_path / "photos")
     assert second.extensions["species_distribution_model"] is app.extensions["species_distribution_model"]
 
+def test_loaded_logistic_models_restore_runtime_compatibility_state(api):
+    app, _ = api
+    registry = app.extensions["species_distribution_model"]
+    logistic_estimators = []
+    for item in registry.models:
+        model = item["model"]
+        estimator = model.steps[-1][1] if hasattr(model, "steps") and model.steps else model
+        if estimator.__class__.__name__ == "LogisticRegression":
+            logistic_estimators.append(estimator)
+    assert logistic_estimators
+    assert all(hasattr(estimator, "multi_class") for estimator in logistic_estimators)
+
+
 
 def test_predictions_and_catalog_do_not_write_coordinates_or_reports(api):
     app, client = api

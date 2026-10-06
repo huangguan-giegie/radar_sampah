@@ -87,6 +87,26 @@ def test_public_wildlife_panel_is_coarse_and_independent_of_attention(api):
     assert "not probabilities" in body["note"]
 
 
+def test_wildlife_panel_degrades_to_unavailable_when_model_runtime_fails(api):
+    application, client = api
+
+    class BrokenModel:
+        def predict_nearby_marine(self, *_args, **_kwargs):
+            raise AttributeError("runtime compatibility failure")
+
+    original = application.extensions["species_distribution_model"]
+    application.extensions["species_distribution_model"] = BrokenModel()
+    try:
+        response = client.get("/insights/wildlife")
+    finally:
+        application.extensions["species_distribution_model"] = original
+
+    assert response.status_code == 200
+    body = response.get_json()
+    assert len(body["beaches"]) == 4
+    assert all(row["species"] == [] and row["sourceStatus"] == "unavailable" for row in body["beaches"])
+
+
 def test_event_details_and_recorded_checkin_include_approved_text_guidance(api):
     application, client = api
     _, headers = signup(client)
