@@ -13,6 +13,7 @@
 import { useNavigate } from 'react-router-dom';
 import { C, MONO, NOISE } from '../theme';
 import { Pin } from '../components/Icon';
+import { markWelcomeSeen } from '../welcomeEntry';
 
 // Morib Beach at dusk, the walk the headline is talking about. Like the photo
 // on Home it is one of the four beaches in this app and ships with the app, so
@@ -31,6 +32,10 @@ const WELCOME_PHOTO = {
 
 export default function WelcomeScreen() {
   const nav = useNavigate();
+  const continueTo = (path: string) => {
+    markWelcomeSeen();
+    nav(path);
+  };
 
   return (
     <div
@@ -111,7 +116,7 @@ export default function WelcomeScreen() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 8 }}>
           <button
             type="button"
-            onClick={() => nav('/map')}
+            onClick={() => continueTo('/map')}
             className="press"
             style={{
               height: 56,
@@ -132,7 +137,7 @@ export default function WelcomeScreen() {
           </button>
           <button
             type="button"
-            onClick={() => nav('/identity?next=/home')}
+            onClick={() => continueTo('/identity?next=/home')}
             className="press"
             style={{
               height: 56,
