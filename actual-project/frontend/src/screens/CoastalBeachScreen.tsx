@@ -35,6 +35,7 @@ import type { SeverityBand } from "../types";
 import { useAppBack } from "../navigation";
 import { eventIsAvailable, useEventClock } from "../eventAvailability";
 import { RecurrenceEvidence } from "../components/RecurrenceEvidence";
+import { NearbyMarineSpecies } from "../components/NearbyMarineSpecies";
 
 export default function CoastalBeachScreen() {
   const { beachId = "" } = useParams();
@@ -305,6 +306,10 @@ export default function CoastalBeachScreen() {
               Sources ↗
             </button>
           </div>
+        </section>
+        <section id="species-model">
+          <SectionHeading>Modelled Nearby Marine Species</SectionHeading>
+          <NearbyMarineSpecies beach={{ id: beachId, lat: detail?.lat ?? null, lng: detail?.lng ?? null, scene: detail?.scene ?? "#edf2f8" }} />
         </section>
         {pilot && <ConservationCards beachId={beachId} />}
         <section>

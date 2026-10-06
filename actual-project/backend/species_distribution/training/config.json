@@ -1,0 +1,1105 @@
+{
+  "schema_version": 1,
+  "description": "Frozen names for the 157 original Iteration 3 training candidates. Only display names may be overridden by the adjacent application manifest; original four slug aliases remain frozen.",
+  "species": [
+    {
+      "slug": "abudefduf_sexfasciatus",
+      "scientific_name": "Abudefduf sexfasciatus",
+      "common_name_en": "Abudefduf sexfasciatus",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "abudefduf_vaigiensis",
+      "scientific_name": "Abudefduf vaigiensis",
+      "common_name_en": "Abudefduf vaigiensis",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "actitis_hypoleucos",
+      "scientific_name": "Actitis hypoleucos",
+      "common_name_en": "Actitis hypoleucos",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "aeoliscus_strigatus",
+      "scientific_name": "Aeoliscus strigatus",
+      "common_name_en": "Aeoliscus strigatus",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "aluterus_scriptus",
+      "scientific_name": "Aluterus scriptus",
+      "common_name_en": "Aluterus scriptus",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "amblyglyphidodon_aureus",
+      "scientific_name": "Amblyglyphidodon aureus",
+      "common_name_en": "Amblyglyphidodon aureus",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "amblyglyphidodon_curacao",
+      "scientific_name": "Amblyglyphidodon curacao",
+      "common_name_en": "Amblyglyphidodon curacao",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "amphiprion_biaculeatus",
+      "scientific_name": "Amphiprion biaculeatus",
+      "common_name_en": "Amphiprion biaculeatus",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "amphiprion_clarkii",
+      "scientific_name": "Amphiprion clarkii",
+      "common_name_en": "Amphiprion clarkii",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "amphiprion_frenatus",
+      "scientific_name": "Amphiprion frenatus",
+      "common_name_en": "Amphiprion frenatus",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "ocellaris_clownfish",
+      "scientific_name": "Amphiprion ocellaris",
+      "common_name_en": "Ocellaris clownfish",
+      "common_name_zh": "公子小丑鱼",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "amphiprion_perideraion",
+      "scientific_name": "Amphiprion perideraion",
+      "common_name_en": "Amphiprion perideraion",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "arothron_hispidus",
+      "scientific_name": "Arothron hispidus",
+      "common_name_en": "Arothron hispidus",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "arothron_mappa",
+      "scientific_name": "Arothron mappa",
+      "common_name_en": "Arothron mappa",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "arothron_nigropunctatus",
+      "scientific_name": "Arothron nigropunctatus",
+      "common_name_en": "Arothron nigropunctatus",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "arothron_stellatus",
+      "scientific_name": "Arothron stellatus",
+      "common_name_en": "Arothron stellatus",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "ascarosepion_latimanus",
+      "scientific_name": "Ascarosepion latimanus",
+      "common_name_en": "Ascarosepion latimanus",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "atule_mate",
+      "scientific_name": "Atule mate",
+      "common_name_en": "Atule mate",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "balistoides_viridescens",
+      "scientific_name": "Balistoides viridescens",
+      "common_name_en": "Balistoides viridescens",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "bodianus_mesothorax",
+      "scientific_name": "Bodianus mesothorax",
+      "common_name_en": "Bodianus mesothorax",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "caesio_caerulaurea",
+      "scientific_name": "Caesio caerulaurea",
+      "common_name_en": "Caesio caerulaurea",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "caesio_cuning",
+      "scientific_name": "Caesio cuning",
+      "common_name_en": "Caesio cuning",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "calidris_ruficollis",
+      "scientific_name": "Calidris ruficollis",
+      "common_name_en": "Calidris ruficollis",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "caloria_indica",
+      "scientific_name": "Caloria indica",
+      "common_name_en": "Caloria indica",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "caretta_caretta",
+      "scientific_name": "Caretta caretta",
+      "common_name_en": "Caretta caretta",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "cephalopholis_boenak",
+      "scientific_name": "Cephalopholis boenak",
+      "common_name_en": "Cephalopholis boenak",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "cephalopholis_cyanostigma",
+      "scientific_name": "Cephalopholis cyanostigma",
+      "common_name_en": "Cephalopholis cyanostigma",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "cephalopholis_formosa",
+      "scientific_name": "Cephalopholis formosa",
+      "common_name_en": "Cephalopholis formosa",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "chaetodon_adiergastos",
+      "scientific_name": "Chaetodon adiergastos",
+      "common_name_en": "Chaetodon adiergastos",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "chaetodon_baronessa",
+      "scientific_name": "Chaetodon baronessa",
+      "common_name_en": "Chaetodon baronessa",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "chaetodon_octofasciatus",
+      "scientific_name": "Chaetodon octofasciatus",
+      "common_name_en": "Chaetodon octofasciatus",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "chaetodontoplus_mesoleucus",
+      "scientific_name": "Chaetodontoplus mesoleucus",
+      "common_name_en": "Chaetodontoplus mesoleucus",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "cheilinus_chlorourus",
+      "scientific_name": "Cheilinus chlorourus",
+      "common_name_en": "Cheilinus chlorourus",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "cheilinus_fasciatus",
+      "scientific_name": "Cheilinus fasciatus",
+      "common_name_en": "Cheilinus fasciatus",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "chelidonura_amoena",
+      "scientific_name": "Chelidonura amoena",
+      "common_name_en": "Chelidonura amoena",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "chelmon_rostratus",
+      "scientific_name": "Chelmon rostratus",
+      "common_name_en": "Chelmon rostratus",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "green_sea_turtle",
+      "scientific_name": "Chelonia mydas",
+      "common_name_en": "Green sea turtle",
+      "common_name_zh": "绿海龟",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "chlorurus_spilurus",
+      "scientific_name": "Chlorurus spilurus",
+      "common_name_en": "Chlorurus spilurus",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "choriaster_granulatus",
+      "scientific_name": "Choriaster granulatus",
+      "common_name_en": "Choriaster granulatus",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "chromodoris_annae",
+      "scientific_name": "Chromodoris annae",
+      "common_name_en": "Chromodoris annae",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "chromodoris_magnifica",
+      "scientific_name": "Chromodoris magnifica",
+      "common_name_en": "Chromodoris magnifica",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "coradion_chrysozonus",
+      "scientific_name": "Coradion chrysozonus",
+      "common_name_en": "Coradion chrysozonus",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "coryphellina_exoptata",
+      "scientific_name": "Coryphellina exoptata",
+      "common_name_en": "Coryphellina exoptata",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "culcita_novaeguineae",
+      "scientific_name": "Culcita novaeguineae",
+      "common_name_en": "Culcita novaeguineae",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "cymodocea_rotundata",
+      "scientific_name": "Cymodocea rotundata",
+      "common_name_en": "Cymodocea rotundata",
+      "common_name_zh": "",
+      "kingdom_name": "Plantae"
+    },
+    {
+      "slug": "cypraea_tigris",
+      "scientific_name": "Cypraea tigris",
+      "common_name_en": "Cypraea tigris",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "dascyllus_reticulatus",
+      "scientific_name": "Dascyllus reticulatus",
+      "common_name_en": "Dascyllus reticulatus",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "dascyllus_trimaculatus",
+      "scientific_name": "Dascyllus trimaculatus",
+      "common_name_en": "Dascyllus trimaculatus",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "dendrochirus_zebra",
+      "scientific_name": "Dendrochirus zebra",
+      "common_name_en": "Dendrochirus zebra",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "dermochelys_coriacea",
+      "scientific_name": "Dermochelys coriacea",
+      "common_name_en": "Dermochelys coriacea",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "diadema_setosum",
+      "scientific_name": "Diadema setosum",
+      "common_name_en": "Diadema setosum",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "diodon_hystrix",
+      "scientific_name": "Diodon hystrix",
+      "common_name_en": "Diodon hystrix",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "diodon_liturosus",
+      "scientific_name": "Diodon liturosus",
+      "common_name_en": "Diodon liturosus",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "diploprion_bifasciatum",
+      "scientific_name": "Diploprion bifasciatum",
+      "common_name_en": "Diploprion bifasciatum",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "dischistodus_perspicillatus",
+      "scientific_name": "Dischistodus perspicillatus",
+      "common_name_en": "Dischistodus perspicillatus",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "echeneis_naucrates",
+      "scientific_name": "Echeneis naucrates",
+      "common_name_en": "Echeneis naucrates",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "echinaster_luzonicus",
+      "scientific_name": "Echinaster luzonicus",
+      "common_name_en": "Echinaster luzonicus",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "echinothrix_calamaris",
+      "scientific_name": "Echinothrix calamaris",
+      "common_name_en": "Echinothrix calamaris",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "egretta_sacra",
+      "scientific_name": "Egretta sacra",
+      "common_name_en": "Egretta sacra",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "enhalus_acoroides",
+      "scientific_name": "Enhalus acoroides",
+      "common_name_en": "Enhalus acoroides",
+      "common_name_zh": "",
+      "kingdom_name": "Plantae"
+    },
+    {
+      "slug": "epibulus_insidiator",
+      "scientific_name": "Epibulus insidiator",
+      "common_name_en": "Epibulus insidiator",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "epinephelus_fasciatus",
+      "scientific_name": "Epinephelus fasciatus",
+      "common_name_en": "Epinephelus fasciatus",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "epinephelus_quoyanus",
+      "scientific_name": "Epinephelus quoyanus",
+      "common_name_en": "Epinephelus quoyanus",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "galaxea_fascicularis",
+      "scientific_name": "Galaxea fascicularis",
+      "common_name_en": "Galaxea fascicularis",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "gnathanodon_speciosus",
+      "scientific_name": "Gnathanodon speciosus",
+      "common_name_en": "Gnathanodon speciosus",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "gomphosus_varius",
+      "scientific_name": "Gomphosus varius",
+      "common_name_en": "Gomphosus varius",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "goniobranchus_coi",
+      "scientific_name": "Goniobranchus coi",
+      "common_name_en": "Goniobranchus coi",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "goniobranchus_fidelis",
+      "scientific_name": "Goniobranchus fidelis",
+      "common_name_en": "Goniobranchus fidelis",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "goniobranchus_geometricus",
+      "scientific_name": "Goniobranchus geometricus",
+      "common_name_en": "Goniobranchus geometricus",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "grapsus_albolineatus",
+      "scientific_name": "Grapsus albolineatus",
+      "common_name_en": "Grapsus albolineatus",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "gymnothorax_javanicus",
+      "scientific_name": "Gymnothorax javanicus",
+      "common_name_en": "Gymnothorax javanicus",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "gymnothorax_thyrsoideus",
+      "scientific_name": "Gymnothorax thyrsoideus",
+      "common_name_en": "Gymnothorax thyrsoideus",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "halichoeres_chloropterus",
+      "scientific_name": "Halichoeres chloropterus",
+      "common_name_en": "Halichoeres chloropterus",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "halichoeres_hortulanus",
+      "scientific_name": "Halichoeres hortulanus",
+      "common_name_en": "Halichoeres hortulanus",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "halodule_pinifolia",
+      "scientific_name": "Halodule pinifolia",
+      "common_name_en": "Halodule pinifolia",
+      "common_name_zh": "",
+      "kingdom_name": "Plantae"
+    },
+    {
+      "slug": "halodule_uninervis",
+      "scientific_name": "Halodule uninervis",
+      "common_name_en": "Halodule uninervis",
+      "common_name_zh": "",
+      "kingdom_name": "Plantae"
+    },
+    {
+      "slug": "halophila_ovalis",
+      "scientific_name": "Halophila ovalis",
+      "common_name_en": "Halophila ovalis",
+      "common_name_zh": "",
+      "kingdom_name": "Plantae"
+    },
+    {
+      "slug": "helcogramma_striata",
+      "scientific_name": "Helcogramma striata",
+      "common_name_en": "Helcogramma striata",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "hemigymnus_melapterus",
+      "scientific_name": "Hemigymnus melapterus",
+      "common_name_en": "Hemigymnus melapterus",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "heniochus_acuminatus",
+      "scientific_name": "Heniochus acuminatus",
+      "common_name_en": "Heniochus acuminatus",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "holothuria_atra",
+      "scientific_name": "Holothuria atra",
+      "common_name_en": "Holothuria atra",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "holothuria_edulis",
+      "scientific_name": "Holothuria edulis",
+      "common_name_en": "Holothuria edulis",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "hypselodoris_bullockii",
+      "scientific_name": "Hypselodoris bullockii",
+      "common_name_en": "Hypselodoris bullockii",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "hypselodoris_tryoni",
+      "scientific_name": "Hypselodoris tryoni",
+      "common_name_en": "Hypselodoris tryoni",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "jorunna_funebris",
+      "scientific_name": "Jorunna funebris",
+      "common_name_en": "Jorunna funebris",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "labroides_dimidiatus",
+      "scientific_name": "Labroides dimidiatus",
+      "common_name_en": "Labroides dimidiatus",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "laticauda_colubrina",
+      "scientific_name": "Laticauda colubrina",
+      "common_name_en": "Laticauda colubrina",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "linckia_laevigata",
+      "scientific_name": "Linckia laevigata",
+      "common_name_en": "Linckia laevigata",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "lutjanus_decussatus",
+      "scientific_name": "Lutjanus decussatus",
+      "common_name_en": "Lutjanus decussatus",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "lutjanus_lutjanus",
+      "scientific_name": "Lutjanus lutjanus",
+      "common_name_en": "Lutjanus lutjanus",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "mauritia_arabica",
+      "scientific_name": "Mauritia arabica",
+      "common_name_en": "Mauritia arabica",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "megalaspis_cordyla",
+      "scientific_name": "Megalaspis cordyla",
+      "common_name_en": "Megalaspis cordyla",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "nembrotha_kubaryana",
+      "scientific_name": "Nembrotha kubaryana",
+      "common_name_en": "Nembrotha kubaryana",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "nembrotha_milleri",
+      "scientific_name": "Nembrotha milleri",
+      "common_name_en": "Nembrotha milleri",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "neophocaena_phocaenoides",
+      "scientific_name": "Neophocaena phocaenoides",
+      "common_name_en": "Neophocaena phocaenoides",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "onychoprion_anaethetus",
+      "scientific_name": "Onychoprion anaethetus",
+      "common_name_en": "Onychoprion anaethetus",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "irrawaddy_dolphin",
+      "scientific_name": "Orcaella brevirostris",
+      "common_name_en": "Irrawaddy dolphin",
+      "common_name_zh": "伊洛瓦底海豚",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "ostracion_cubicum",
+      "scientific_name": "Ostracion cubicum",
+      "common_name_en": "Ostracion cubicum",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "oxycheilinus_digramma",
+      "scientific_name": "Oxycheilinus digramma",
+      "common_name_en": "Oxycheilinus digramma",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "panulirus_versicolor",
+      "scientific_name": "Panulirus versicolor",
+      "common_name_en": "Panulirus versicolor",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "paratectonatica_tigrina",
+      "scientific_name": "Paratectonatica tigrina",
+      "common_name_en": "Paratectonatica tigrina",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "pearsonothuria_graeffei",
+      "scientific_name": "Pearsonothuria graeffei",
+      "common_name_en": "Pearsonothuria graeffei",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "pentapodus_trivittatus",
+      "scientific_name": "Pentapodus trivittatus",
+      "common_name_en": "Pentapodus trivittatus",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "phyllidia_coelestis",
+      "scientific_name": "Phyllidia coelestis",
+      "common_name_en": "Phyllidia coelestis",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "phyllidia_elegans",
+      "scientific_name": "Phyllidia elegans",
+      "common_name_en": "Phyllidia elegans",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "phyllidia_ocellata",
+      "scientific_name": "Phyllidia ocellata",
+      "common_name_en": "Phyllidia ocellata",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "phyllidia_picta",
+      "scientific_name": "Phyllidia picta",
+      "common_name_en": "Phyllidia picta",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "phyllidia_varicosa",
+      "scientific_name": "Phyllidia varicosa",
+      "common_name_en": "Phyllidia varicosa",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "phyllidiella_pustulosa",
+      "scientific_name": "Phyllidiella pustulosa",
+      "common_name_en": "Phyllidiella pustulosa",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "phyllodesmium_briareum",
+      "scientific_name": "Phyllodesmium briareum",
+      "common_name_en": "Phyllodesmium briareum",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "physeter_macrocephalus",
+      "scientific_name": "Physeter macrocephalus",
+      "common_name_en": "Physeter macrocephalus",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "platax_boersii",
+      "scientific_name": "Platax boersii",
+      "common_name_en": "Platax boersii",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "platax_pinnatus",
+      "scientific_name": "Platax pinnatus",
+      "common_name_en": "Platax pinnatus",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "platax_teira",
+      "scientific_name": "Platax teira",
+      "common_name_en": "Platax teira",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "plectorhinchus_chaetodonoides",
+      "scientific_name": "Plectorhinchus chaetodonoides",
+      "common_name_en": "Plectorhinchus chaetodonoides",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "plotosus_lineatus",
+      "scientific_name": "Plotosus lineatus",
+      "common_name_en": "Plotosus lineatus",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "pomacanthus_annularis",
+      "scientific_name": "Pomacanthus annularis",
+      "common_name_en": "Pomacanthus annularis",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "pomacanthus_sexstriatus",
+      "scientific_name": "Pomacanthus sexstriatus",
+      "common_name_en": "Pomacanthus sexstriatus",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "pomacentrus_moluccensis",
+      "scientific_name": "Pomacentrus moluccensis",
+      "common_name_en": "Pomacentrus moluccensis",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "protoreaster_nodosus",
+      "scientific_name": "Protoreaster nodosus",
+      "common_name_en": "Protoreaster nodosus",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "pteraeolidia_semperi",
+      "scientific_name": "Pteraeolidia semperi",
+      "common_name_en": "Pteraeolidia semperi",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "pterocaesio_chrysozona",
+      "scientific_name": "Pterocaesio chrysozona",
+      "common_name_en": "Pterocaesio chrysozona",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "pterois_volitans",
+      "scientific_name": "Pterois volitans",
+      "common_name_en": "Pterois volitans",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "radianthus_magnifica",
+      "scientific_name": "Radianthus magnifica",
+      "common_name_en": "Radianthus magnifica",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "rhincodon_typus",
+      "scientific_name": "Rhincodon typus",
+      "common_name_en": "Rhincodon typus",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "salarias_fasciatus",
+      "scientific_name": "Salarias fasciatus",
+      "common_name_en": "Salarias fasciatus",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "samla_bicolor",
+      "scientific_name": "Samla bicolor",
+      "common_name_en": "Samla bicolor",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "sargocentron_rubrum",
+      "scientific_name": "Sargocentron rubrum",
+      "common_name_en": "Sargocentron rubrum",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "scarus_ghobban",
+      "scientific_name": "Scarus ghobban",
+      "common_name_en": "Scarus ghobban",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "scarus_niger",
+      "scientific_name": "Scarus niger",
+      "common_name_en": "Scarus niger",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "scarus_quoyi",
+      "scientific_name": "Scarus quoyi",
+      "common_name_en": "Scarus quoyi",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "scolopsis_bilineata",
+      "scientific_name": "Scolopsis bilineata",
+      "common_name_en": "Scolopsis bilineata",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "scolopsis_ciliata",
+      "scientific_name": "Scolopsis ciliata",
+      "common_name_en": "Scolopsis ciliata",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "scolopsis_lineata",
+      "scientific_name": "Scolopsis lineata",
+      "common_name_en": "Scolopsis lineata",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "scolopsis_margaritifera",
+      "scientific_name": "Scolopsis margaritifera",
+      "common_name_en": "Scolopsis margaritifera",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "siganus_corallinus",
+      "scientific_name": "Siganus corallinus",
+      "common_name_en": "Siganus corallinus",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "siganus_fuscescens",
+      "scientific_name": "Siganus fuscescens",
+      "common_name_en": "Siganus fuscescens",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "siganus_guttatus",
+      "scientific_name": "Siganus guttatus",
+      "common_name_en": "Siganus guttatus",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "siganus_javus",
+      "scientific_name": "Siganus javus",
+      "common_name_en": "Siganus javus",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "siganus_virgatus",
+      "scientific_name": "Siganus virgatus",
+      "common_name_en": "Siganus virgatus",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "siganus_vulpinus",
+      "scientific_name": "Siganus vulpinus",
+      "common_name_en": "Siganus vulpinus",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "stenopus_hispidus",
+      "scientific_name": "Stenopus hispidus",
+      "common_name_en": "Stenopus hispidus",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "sterna_sumatrana",
+      "scientific_name": "Sterna sumatrana",
+      "common_name_en": "Sterna sumatrana",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "stichopus_chloronotus",
+      "scientific_name": "Stichopus chloronotus",
+      "common_name_en": "Stichopus chloronotus",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "synodus_variegatus",
+      "scientific_name": "Synodus variegatus",
+      "common_name_en": "Synodus variegatus",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "taenianotus_triacanthus",
+      "scientific_name": "Taenianotus triacanthus",
+      "common_name_en": "Taenianotus triacanthus",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "taeniura_lymma",
+      "scientific_name": "Taeniura lymma",
+      "common_name_en": "Taeniura lymma",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "thalassia_hemprichii",
+      "scientific_name": "Thalassia hemprichii",
+      "common_name_en": "Thalassia hemprichii",
+      "common_name_zh": "",
+      "kingdom_name": "Plantae"
+    },
+    {
+      "slug": "thalassoma_hardwicke",
+      "scientific_name": "Thalassoma hardwicke",
+      "common_name_en": "Thalassoma hardwicke",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "thalassoma_lunare",
+      "scientific_name": "Thalassoma lunare",
+      "common_name_en": "Thalassoma lunare",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "theonella_swinhoei",
+      "scientific_name": "Theonella swinhoei",
+      "common_name_en": "Theonella swinhoei",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "tridacna_crocea",
+      "scientific_name": "Tridacna crocea",
+      "common_name_en": "Tridacna crocea",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "tridacna_maxima",
+      "scientific_name": "Tridacna maxima",
+      "common_name_en": "Tridacna maxima",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "tylosurus_crocodilus",
+      "scientific_name": "Tylosurus crocodilus",
+      "common_name_en": "Tylosurus crocodilus",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "upeneus_tragula",
+      "scientific_name": "Upeneus tragula",
+      "common_name_en": "Upeneus tragula",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "xestospongia_testudinaria",
+      "scientific_name": "Xestospongia testudinaria",
+      "common_name_en": "Xestospongia testudinaria",
+      "common_name_zh": "",
+      "kingdom_name": "Animalia"
+    },
+    {
+      "slug": "moorish_idol",
+      "scientific_name": "Zanclus cornutus",
+      "common_name_en": "Moorish idol",
+      "common_name_zh": "镰鳍角蝶鱼",
+      "kingdom_name": "Animalia"
+    }
+  ]
+}

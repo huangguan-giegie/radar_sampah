@@ -1,2 +1,10 @@
 actual-project/ml-model/models/*.pt filter=lfs diff=lfs merge=lfs -text
 actual-project/ml-model/models/*.onnx filter=lfs diff=lfs merge=lfs -text
+
+# Preserve the exact bytes used by the frozen species-training fingerprints.
+actual-project/backend/species_distribution/models/*.joblib -text -diff
+actual-project/backend/species_distribution/*.npz -text -diff
+actual-project/backend/species_distribution/reference/* -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+actual-project/backend/species_distribution/reference/*.geojson -diff
+actual-project/backend/species_distribution/training/config.json -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+actual-project/backend/species_distribution/training/data/*.json -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol linguist-generated=true

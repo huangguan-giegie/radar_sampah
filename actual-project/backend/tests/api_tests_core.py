@@ -175,7 +175,8 @@ def test_species_distribution_predicts_from_packaged_models(api):
     assert payload["insideMalaysianEez"] is True
     assert payload["scoreType"] == "relative_occurrence"
     assert payload["calibratedProbability"] is False
-    assert {prediction["speciesSlug"] for prediction in payload["predictions"]} == {
+    assert len(payload["predictions"]) == payload["modelCount"] == 40
+    assert {prediction["speciesSlug"] for prediction in payload["predictions"]} >= {
         "green_sea_turtle",
         "ocellaris_clownfish",
         "irrawaddy_dolphin",
@@ -580,7 +581,8 @@ def test_species_distribution_predicts_from_packaged_models(api):
     assert payload["insideMalaysianEez"] is True
     assert payload["scoreType"] == "relative_occurrence"
     assert payload["calibratedProbability"] is False
-    assert {prediction["speciesSlug"] for prediction in payload["predictions"]} == {
+    assert len(payload["predictions"]) == payload["modelCount"] == 40
+    assert {prediction["speciesSlug"] for prediction in payload["predictions"]} >= {
         "green_sea_turtle",
         "ocellaris_clownfish",
         "irrawaddy_dolphin",

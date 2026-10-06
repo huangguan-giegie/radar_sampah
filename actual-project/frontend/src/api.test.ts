@@ -233,7 +233,11 @@ describe('真实 API contract', () => {
       insideMalaysianEez: true,
       scoreType: 'relative_occurrence',
       calibratedProbability: false,
+      crossSpeciesRankingValidated: false,
+      rankingMethod: 'heuristic_within_species_percentile',
       predictions: [],
+      topPredictions: [],
+      coordinateContext: { requestedLatitude: 2.746, requestedLongitude: 101.44, usedLatitude: 2.746, usedLongitude: 101.44, distanceKm: 0 },
       modelVersion: '2026-08-29',
     };
     const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify(result), { status: 200 }));
@@ -243,6 +247,37 @@ describe('真实 API contract', () => {
     await expect(getSpeciesDistribution(2.746, 101.44)).resolves.toEqual(result);
     expect(fetchMock.mock.calls[0][0]).toBe('https://radar-sampah-api.onrender.com/api/species-distribution/predict');
     expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({ latitude: 2.746, longitude: 101.44 });
+  });
+
+  it('explicitly requests nearby marine species without changing the requested coordinate', async () => {
+    const result = {
+      scoreType: 'relative_occurrence', calibratedProbability: false, crossSpeciesRankingValidated: false,
+      rankingMethod: 'heuristic_within_species_percentile', predictions: [], topPredictions: [],
+      coordinateContext: { requestedLatitude: 2.746, requestedLongitude: 101.44, usedLatitude: 2.75, usedLongitude: 101.35, distanceKm: 10 },
+    };
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify(result), { status: 200 }));
+    vi.stubGlobal('fetch', fetchMock);
+    const { getSpeciesDistribution } = await import('./api');
+    await expect(getSpeciesDistribution(2.746, 101.44, { mode: 'nearby_marine', topK: 5 })).resolves.toEqual(result);
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({ latitude: 2.746, longitude: 101.44, mode: 'nearby_marine', topK: 5 });
+  });
+
+  it('does not reinterpret an old raw-score response as a location-match result', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify({
+      insideMalaysianEez: true, scoreType: 'relative_occurrence', calibratedProbability: false, predictions: [],
+    }), { status: 200 })));
+    const { getSpeciesDistribution } = await import('./api');
+    await expect(getSpeciesDistribution(2.746, 101.44)).rejects.toThrow('Species information is temporarily unavailable');
+  });
+
+  it('fetches the species catalog without submitting a beach or a model request', async () => {
+    const catalog = { modelCount: 40, modelVersion: 'iteration3-upgrade-40-species-20261003', species: [] };
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify(catalog), { status: 200 }));
+    vi.stubGlobal('fetch', fetchMock);
+    const { getSpeciesCatalog } = await import('./api');
+    await expect(getSpeciesCatalog()).resolves.toEqual(catalog);
+    expect(fetchMock.mock.calls[0][0]).toBe('https://radar-sampah-api.onrender.com/api/species-distribution/species');
+    expect(fetchMock.mock.calls[0][1].method).toBe('GET');
   });
 
   // The derived category must be the highest weight x amount, not simply the

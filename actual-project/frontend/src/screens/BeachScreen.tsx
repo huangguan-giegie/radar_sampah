@@ -14,7 +14,7 @@ import { getBeach, getSpeciesDistribution, USE_MOCK } from '../api';
 import { BeachCover } from '../components/BeachCover';
 import { BeachCleanupCard } from '../components/BeachCleanupCard';
 import { EcologicalBackgroundLink } from '../components/EcologicalBackgroundLink';
-import { Camera, Check, ChevronRight, Clock, Info, SpeciesIcon } from '../components/Icon';
+import { Camera, Check, ChevronRight, Clock, Info } from '../components/Icon';
 import { BackButton, DraftChoiceDialog, ErrorNote, GhostButton, Label, PrimaryButton, Skeleton } from '../components/ui';
 import { attentionStateFor, C, formatDate, freshnessLabel, freshStyle, MONO, NOISE, reportWord, SEVERITY, severityLabel } from '../theme';
 import { BandMeter, Callout, GlassPanel, InfoChip } from '../components/ds';
@@ -24,18 +24,13 @@ import { hasDraftProgress, resumePath } from '../flowRules';
 import { getCleanupEvent, getCleanupTarget, getLatestCleanupForBeach } from '../iteration2';
 import { fetchCleanupEvent, fetchCleanupTarget, fetchLatestCleanupForBeach } from '../iteration2Api';
 import { SCORING_METHOD } from '../scoring';
-import { MODEL_SPECIES_MEDIA } from '../speciesMedia';
+import { SpeciesModelCards, speciesModelError, type SpeciesModelError } from '../components/SpeciesModelCards';
+export { SpeciesModelCards, speciesModelError, decimalScoreLabel, locationMatchLabel } from '../components/SpeciesModelCards';
 import { useAsyncData } from '../useAsyncData';
 import { hasMapCoordinates } from '../mapGeometry';
 
-/*
- * relativeOccurrenceScore stays on the API's 0..1 scale, and the card prints it
- * with two decimals: 0.118262 reads as precision a relative score does not have.
- *
- * Do not "fix" this into a percentage. A previous version multiplied by 100 to
- * print "12 / 100"; AC5.5.1 was settled the other way. Only the number of
- * printed decimals changed here, never the scale.
- */
+// Location match compares reference locations for each species. The raw
+// historical model score remains separate and is never shown as a probability.
 
 // Bar colours for the composition rows. They only separate one row from the
 // next - they carry no meaning, which is why they are deliberately NOT the four
@@ -62,10 +57,6 @@ export function compositionPercentageLabel(percentage: number): string {
   return `${Math.max(0, Math.min(100, Math.round(percentage)))}%`;
 }
 
-export function decimalScoreLabel(value: number): string {
-  return (Math.round((value + Number.EPSILON) * 100) / 100).toFixed(2);
-}
-
 export default function BeachScreen() {
   const { beachId = '' } = useParams();
   const nav = useNavigate();
@@ -80,6 +71,10 @@ export default function BeachScreen() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [showDraftChoice, setShowDraftChoice] = useState(false);
   const [modelResult, setModelResult] = useState<SpeciesDistributionResult | null>(null);
+  const [modelLoading, setModelLoading] = useState(false);
+  const [modelError, setModelError] = useState<SpeciesModelError | null>(null);
+  const beachRequestId = useRef(0);
+  const modelRequestId = useRef(0);
   const requestedEventId = new URLSearchParams(location.search).get('event');
   const { data: latestCleanup } = useAsyncData(
     () => fetchLatestCleanupForBeach(beachId),
@@ -103,26 +98,48 @@ export default function BeachScreen() {
       && linkedEvent.joined,
   );
 
+  function loadSpecies(data: BeachDetail) {
+    if (!hasMapCoordinates(data)) return;
+    const requestId = ++modelRequestId.current;
+    setModelLoading(true);
+    setModelResult(null);
+    setModelError(null);
+    getSpeciesDistribution(data.lat, data.lng, { mode: 'nearby_marine', topK: 5 })
+      .then((result) => {
+        if (requestId === modelRequestId.current) setModelResult(result);
+      })
+      .catch((reason) => {
+        if (requestId === modelRequestId.current) setModelError(speciesModelError(reason));
+      })
+      .finally(() => {
+        if (requestId === modelRequestId.current) setModelLoading(false);
+      });
+  }
+
   function loadBeach() {
+    const requestId = ++beachRequestId.current;
+    ++modelRequestId.current;
     setLoading(true);
     setFailed(false);
     setLoadError(null);
     setB(null);
     setModelResult(null);
+    setModelError(null);
+    setModelLoading(false);
     getBeach(beachId)
       .then((data) => {
+        if (requestId !== beachRequestId.current) return;
         setB(data);
-        if (!USE_MOCK && hasMapCoordinates(data)) {
-          getSpeciesDistribution(data.lat, data.lng)
-            .then(setModelResult)
-            .catch(() => setModelResult(null));
-        }
+        if (!USE_MOCK && hasMapCoordinates(data)) loadSpecies(data);
       })
       .catch((reason) => {
+        if (requestId !== beachRequestId.current) return;
         setFailed(true);
         setLoadError(reason instanceof Error ? reason.message : 'Could not load this beach.');
       })
-      .finally(() => setLoading(false));
+      .finally(() => {
+        if (requestId === beachRequestId.current) setLoading(false);
+      });
   }
 
   // beachId is in the dependency list, so moving between beaches refetches.
@@ -130,6 +147,10 @@ export default function BeachScreen() {
   // quietly drift into different behaviour.
   useEffect(() => {
     loadBeach();
+    return () => {
+      ++beachRequestId.current;
+      ++modelRequestId.current;
+    };
   }, [beachId]);
 
   // Scroll once the beach has loaded - before that the section does not exist
@@ -218,10 +239,6 @@ export default function BeachScreen() {
   const fs = freshStyle(b.freshnessKind);
   const newestCountedAt = b.newestCountedReportAt
     ?? (b.latestContributingReportAt === undefined ? b.lastReportedAt : b.latestContributingReportAt);
-  // Scientific name is the only id a species card and a model prediction share.
-  const modelByScientificName = new Map(
-    (modelResult?.predictions ?? []).map((prediction) => [prediction.scientificName, prediction]),
-  );
 
   return (
     <div className="screen scroll-y" style={{ zIndex: 20 }}>
@@ -489,136 +506,20 @@ export default function BeachScreen() {
             Habitat · {b.habitat}
           </div>
 
-          {/* The four modelled species, each with a licensed photo and its
-              relative score for this beach. A per-beach row of habitat cards
-              used to sit above these, but its entries had no photos and no
-              source yet ("pending"), so it read as placeholder content. */}
-          <div
-            className="scroll-x"
-            style={{
-              display: 'flex',
-              gap: 12,
-              paddingBottom: 6,
-              margin: '0 -16px',
-              paddingLeft: 16,
-              paddingRight: 16,
-              scrollSnapType: 'x proximity',
-            }}
-          >
-            {MODEL_SPECIES_MEDIA.map((species) => {
-              const prediction = modelByScientificName.get(species.scientificName);
-              return (
-                <article
-                  key={species.scientificName}
-                  style={{
-                    width: 226,
-                    flex: 'none',
-                    background: C.white,
-                    border: `1px solid ${C.line}`,
-                    borderRadius: 22,
-                    overflow: 'hidden',
-                    scrollSnapAlign: 'start',
-                    boxShadow: '0 10px 26px -24px rgba(11,33,97,.7)',
-                  }}
-                >
-                  <div style={{ height: 132, position: 'relative', overflow: 'hidden', background: b.scene }}>
-                    <img
-                      src={species.imageUrl}
-                      alt={species.imageAlt}
-                      loading="lazy"
-                      style={{
-                        width: '100%',
-                        height: '100%',
-                        display: 'block',
-                        objectFit: 'cover',
-                        objectPosition: species.imageObjectPosition ?? 'center',
-                      }}
-                    />
-                    <div
-                      style={{
-                        position: 'absolute',
-                        inset: 0,
-                        background: 'linear-gradient(180deg,transparent 48%,rgba(7,22,50,.66) 100%)',
-                        pointerEvents: 'none',
-                      }}
-                    />
-                    <div
-                      style={{
-                        position: 'absolute',
-                        right: 10,
-                        bottom: 10,
-                        minHeight: 26,
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        padding: '5px 9px',
-                        borderRadius: 999,
-                        background: 'rgba(7,22,50,.82)',
-                        color: C.bg,
-                        fontFamily: MONO,
-                        fontSize: 9.5,
-                        fontWeight: 700,
-                        letterSpacing: '.06em',
-                        backdropFilter: 'blur(8px)',
-                      }}
-                    >
-                      {/* Two decimals: 0.118262 reads as false precision for a relative score. */}
-                      {prediction ? `RELATIVE SCORE ${decimalScoreLabel(prediction.relativeOccurrenceScore)}` : 'SCORE PENDING'}
-                    </div>
-                  </div>
-                  <div style={{ padding: '14px 14px 15px' }}>
-                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 9 }}>
-                      <div
-                        aria-hidden="true"
-                        style={{
-                          width: 34,
-                          height: 34,
-                          flex: 'none',
-                          borderRadius: 17,
-                          background: C.tint,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                        }}
-                      >
-                        <SpeciesIcon glyph={species.glyph} />
-                      </div>
-                      <div style={{ minWidth: 0, paddingTop: 1 }}>
-                        <div style={{ fontSize: 14.5, fontWeight: 680, lineHeight: 1.25, color: C.ink2 }}>
-                          {species.commonName}
-                        </div>
-                        <div style={{ fontSize: 11.5, fontStyle: 'italic', lineHeight: 1.35, color: C.dim, marginTop: 3 }}>
-                          {species.scientificName}
-                        </div>
-                      </div>
-                    </div>
-                    <div style={{ fontSize: 11.5, lineHeight: 1.45, color: C.muted, marginTop: 11 }}>
-                      Photo:{' '}
-                      <a
-                        href={species.imageSourceUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        style={{ color: C.slate, textDecoration: 'underline', textUnderlineOffset: 2 }}
-                      >
-                        {species.imageAuthor}
-                      </a>
-                      {' · '}
-                      <a
-                        href={species.imageLicenseUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        style={{ color: C.slate, textDecoration: 'underline', textUnderlineOffset: 2 }}
-                      >
-                        {species.imageLicense}
-                      </a>
-                    </div>
-                  </div>
-                </article>
-              );
-            })}
-          </div>
-          <div style={{ fontSize: 11.5, color: C.muted, marginTop: 8, lineHeight: 1.5 }}>
-            Relative model scores · not probabilities or confirmed sightings · OBIS snapshot, CC BY-NC
-          </div>
+          {hasMapCoordinates(b) ? (
+            <SpeciesModelCards
+              result={modelResult}
+              loading={modelLoading}
+              error={modelError}
+              onRetry={() => loadSpecies(b)}
+              scene={b.scene}
+              preview={USE_MOCK}
+            />
+          ) : (
+            <div style={{ fontSize: 12.5, lineHeight: 1.5, color: C.muted }}>
+              Species information is unavailable until this beach's coordinates are verified.
+            </div>
+          )}
 
           <div style={{ marginTop: 16, background: C.tint, borderRadius: 20, padding: '16px 17px' }}>
             <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '.14em', color: C.slate }}>

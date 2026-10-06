@@ -48,15 +48,14 @@ export type SpeciesGlyph = 'turtle' | 'bird' | 'mangrove' | 'grass' | 'crab' | '
  * uncalibrated "relative occurrence score". Saying "70% chance of turtles"
  * would be claiming something we did not measure.
  *
- * It covers four species: green turtle, ocellaris clownfish, Irrawaddy dolphin
- * and the Moorish idol.
+ * The model package covers 40 species; licensed photographs remain available
+ * for four species. Media availability does not determine model coverage.
  */
 export interface SpeciesLikelihood {
   /**
    * ready        the model is connected and score has a value
    * pending      this species IS in scope, but the backend is not wired yet
-   * unavailable  this species is not one of the four - there will never be a
-   *              number for it in this iteration
+   * unavailable  this species is outside the packaged registry
    *
    * The three still mean different things, but the beach page now draws the
    * occurrence box only for 'ready'. It used to render for the other two, and
@@ -248,7 +247,50 @@ export interface SpeciesPrediction {
   scientificName: string;
   commonNameEn: string;
   relativeOccurrenceScore: number;
+  locationMatchScore: number;
   selectedModel: string;
+  defaultRecommendation: boolean;
+  validationStatus: string;
+  kingdom: string | null;
+  category?: string | null;
+  introEn?: string;
+  introZh?: string;
+  sources?: SpeciesContentSource[];
+  imageAvailable?: boolean;
+  recordYears: { min: number | null; max: number | null };
+}
+
+export interface SpeciesContentSource {
+  title: string;
+  url: string;
+}
+
+export interface SpeciesCatalog {
+  modelVersion: string;
+  modelCount: number;
+  scoreType: 'relative_occurrence';
+  calibratedProbability: false;
+  crossSpeciesRankingValidated: false;
+  species: Pick<SpeciesPrediction, 'speciesSlug' | 'scientificName' | 'commonNameEn' | 'category' | 'introEn' | 'introZh' | 'sources' | 'imageAvailable' | 'recordYears'>[];
+}
+
+export interface SpeciesDistributionOptions {
+  mode?: 'exact' | 'nearby_marine';
+  topK?: number;
+}
+
+export interface SpeciesCoordinateContext {
+  requestedLatitude: number;
+  requestedLongitude: number;
+  usedLatitude: number;
+  usedLongitude: number;
+  method: 'exact_coordinate' | 'nearest_marine_grid';
+  moved: boolean;
+  distanceKm: number;
+  maxDistanceKm?: number;
+  gridCellId?: string | null;
+  requestedInsideMalaysianEez: boolean;
+  interpretation?: string;
 }
 
 /**
@@ -264,8 +306,13 @@ export interface SpeciesDistributionResult {
   insideMalaysianEez: boolean;
   scoreType: 'relative_occurrence';
   calibratedProbability: false;
+  crossSpeciesRankingValidated: false;
+  rankingMethod: 'heuristic_within_species_percentile';
   predictions: SpeciesPrediction[];
+  topPredictions: SpeciesPrediction[];
+  coordinateContext: SpeciesCoordinateContext;
   modelVersion: string;
+  modelCount: number;
 }
 
 /** The published scoring rules, so the "How the score works" page can print
