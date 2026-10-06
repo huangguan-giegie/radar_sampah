@@ -149,12 +149,19 @@ def install_account(application: Any, engine: Any, jwt_secret: str, impl: Any) -
             if joined and not valid_nickname(nickname):
                 return impl.error_response(400, "INVALID_NICKNAME", "Choose a nickname before joining the leaderboard.")
             values = {"nickname": nickname, "joined_leaderboard": joined, "updated_at": datetime.now(timezone.utc)}
+            # PATCH only owns the fields supplied by this request. Reusing the
+            # read snapshot here can undo a concurrent leaderboard opt-out.
+            changes = {"updated_at": values["updated_at"]}
+            if "nickname" in payload:
+                changes["nickname"] = nickname
+            if "joinedLeaderboard" in payload:
+                changes["joined_leaderboard"] = joined
             if engine.dialect.name == "postgresql":
                 from sqlalchemy.dialects.postgresql import insert as dialect_insert
             else:
                 from sqlalchemy.dialects.sqlite import insert as dialect_insert
             statement = dialect_insert(profiles).values(user_id=user.id, **values).on_conflict_do_update(
-                index_elements=[profiles.c.user_id], set_=values,
+                index_elements=[profiles.c.user_id], set_=changes,
             )
             connection.execute(statement)
         return jsonify(profile_payload(user.id))

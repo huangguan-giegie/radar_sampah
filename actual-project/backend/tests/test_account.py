@@ -5,7 +5,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import pytest
-from sqlalchemy import insert, select
+from sqlalchemy import event, insert, select
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from api_tests_core import signup, upload, report_payload
@@ -95,6 +95,37 @@ def test_account_profile_survives_service_restart_and_account_restore(api, tmp_p
     profile = second.get("/account/profile", headers={"Authorization": "Bearer " + restored.get_json()["token"]}).get_json()
     assert profile == {"nickname": "OceanPal", "joinedLeaderboard": True, "points": 0, "rank": 1}
     assert second.get("/leaderboard").get_json()["entries"] == [{"nickname": "OceanPal", "points": 0, "rank": 1}]
+
+
+@pytest.mark.parametrize("existing_profile", [False, True])
+def test_partial_profile_update_preserves_concurrent_leaderboard_opt_out(api, existing_profile):
+    application, client = api
+    _, headers = signup(client)
+    if existing_profile:
+        client.patch("/account/profile", headers=headers,
+                     json={"nickname": "OldBeachPal", "joinedLeaderboard": True})
+    engine = application.extensions["marine_engine"]
+    interleaved = []
+
+    def opt_out_before_nickname_write(connection, statement, multiparams, params, options):
+        if getattr(statement, "is_insert", False) and statement.table.name == "account_profiles" and not interleaved:
+            interleaved.append(True)
+            # Another tab withdraws consent after the nickname request's read,
+            # but before its write (including the first-profile insert race).
+            with application.test_client() as other:
+                response = other.patch("/account/profile", headers=headers, json={"joinedLeaderboard": False})
+                assert response.status_code == 200
+
+    event.listen(engine, "before_execute", opt_out_before_nickname_write)
+    try:
+        updated = client.patch("/account/profile", headers=headers, json={"nickname": "NewBeachPal"})
+    finally:
+        event.remove(engine, "before_execute", opt_out_before_nickname_write)
+    assert interleaved
+    assert updated.status_code == 200
+    assert updated.json["nickname"] == "NewBeachPal"
+    assert updated.json["joinedLeaderboard"] is False
+    assert client.get("/leaderboard").json["entries"] == []
 
 
 def test_account_points_and_history_include_past_attendance_without_double_count(api):

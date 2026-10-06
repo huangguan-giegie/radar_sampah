@@ -44,7 +44,9 @@ requires a database URL. It must use PostgreSQL rather than ephemeral SQLite.
 A database is not automatically provisioned. Use a new database for a clean
 installation, or set `DATABASE_SCHEMA=radar_v2` to test in a separate schema on
 an existing instance. Tables/reference rows are initialized idempotently while
-preserving report data. New photos are stored privately in the database and
+preserving report data. A configured schema is created if absent; the database
+role needs CREATE permission for this first startup (or a DBA can create and
+grant access to the schema in advance). New photos are stored privately in the database and
 survive redeployment with report records.
 
 For another Docker host, run from the repository root:

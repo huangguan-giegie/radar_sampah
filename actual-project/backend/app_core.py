@@ -57,6 +57,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.engine import Engine
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.schema import CreateSchema
 from werkzeug.exceptions import HTTPException
 from werkzeug.exceptions import RequestEntityTooLarge
 from species_distribution import ModelAreaError, ModelInputError, SpeciesDistributionModel
@@ -421,6 +422,11 @@ def database_schema() -> str | None:
 
 def initialise_database(engine: Engine) -> None:
     """Create the schema and preserve reports written under the former name."""
+    schema = database_schema() if engine.dialect.name == "postgresql" else None
+    if schema:
+        with engine.begin() as connection:
+            if not inspect(connection).has_schema(schema):
+                connection.execute(CreateSchema(schema, if_not_exists=True))
     migrate_legacy_reports_table(engine)
     metadata.create_all(engine)
     ensure_user_columns(engine)
