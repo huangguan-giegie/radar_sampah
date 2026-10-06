@@ -13,11 +13,14 @@
       "Ocean / sea"
     ],
     "beachCount": 82,
-    "coordinateCount": 52,
+    "coordinateCount": 79,
     "note": "Names and stable row ids preserve the supplied 82-row export. Locations are matched to original provider identity and publicly sourced beach or explicitly approximate shore reference points. Per-row provenance and precision are retained. Ambiguous identity, island-centre-only results and unavailable coordinates remain null; no biodiversity or pollution evidence is inferred from a location.",
     "coordinateEnrichedAt": "2026-10-06",
     "regionCount": 78,
-    "waterTypeCount": 81
+    "waterTypeCount": 81,
+    "coordinateSupplementCount": 27,
+    "remainingUnlocatedCount": 3,
+    "coordinateSupplementNote": "27 Google Maps coordinate references supplied in beach_coordinates.csv on 2026-10-06; three catalogue rows remain without coordinates."
   },
   "beaches": [
     {
@@ -137,17 +140,24 @@
     {
       "id": "bs-turtle-beach-4",
       "name": "Turtle Beach",
-      "area": "Malaysia - Turtle Beach locality unresolved",
-      "region": "",
-      "lat": null,
-      "lng": null,
-      "locationSource": null,
+      "area": "Pulau Perhentian Besar, Terengganu",
+      "region": "tganu",
+      "lat": 5.9108429,
+      "lng": 102.7526974,
+      "locationSource": {
+        "sourceName": "Google Maps place reference (supplied CSV)",
+        "sourceUrl": "https://www.google.com/maps/place/?q=place_id:ChIJ1bbnxYXgtjERLaTrMV51dLo",
+        "providerPage": "https://beachsearcher.com/it/beach/458201237/turtle-beach",
+        "precision": "supplied_google_maps_reference",
+        "verifiedAt": "2026-10-06",
+        "evidenceNote": "Exact beach marker (Perhentian, Terengganu)"
+      },
       "catalogueSource": {
         "sourceName": "BeachSearcher.com",
         "sourceUrl": "https://beaches-searcher.com/en/map?object=country&object_id=199&orderby=top_popular&smart=0&display=split&object_name=Malaysia&zoom=4&lat=4.228592400950948&lng=109.45918792&bbox=90.26367187500001%2C-24.5271348225978%2C128.58398437500003%2C32.02670629333614&owner__1_12_13_32=1&locality__2_3=1&water_type__5=1&water_type__1_2_3=1",
         "sourceRow": 4
       },
-      "locationStatus": "Coordinates not yet verified — ambiguous_source_identity",
+      "locationStatus": "Supplied coordinate reference — Exact beach marker (Perhentian, Terengganu)",
       "waterType": "ocean_sea",
       "habitat": "Biodiversity information not yet available",
       "habitatTag": "UNAVAILABLE",
@@ -160,25 +170,32 @@
       "ecologicalNote": "Biodiversity information not yet available",
       "locationReview": {
         "reviewedAt": "2026-10-06",
-        "status": "ambiguous_source_identity",
+        "status": "supplied_coordinate_reference",
         "providerPage": "https://beachsearcher.com/it/beach/458201237/turtle-beach",
-        "evidenceNote": "CSV rows 4 and 68 both contain only Turtle Beach. Provider has Perhentian Besar record 458201237 and Bintulu/Sarawak record 458201273. No provider id or locality in the CSV establishes which row maps to which record. The linked Besar record is a candidate, not a verified row identity; region and coordinates remain null."
+        "evidenceNote": "Exact beach marker (Perhentian, Terengganu)"
       }
     },
     {
       "id": "bs-pulau-sembilang-5",
       "name": "Pulau Sembilang",
-      "area": "Sembilang Island - Johor/Pahang attribution unresolved",
-      "region": "",
-      "lat": null,
-      "lng": null,
-      "locationSource": null,
+      "area": "Pulau Sembilang, Pahang",
+      "region": "pahang",
+      "lat": 2.6896398,
+      "lng": 103.8883003,
+      "locationSource": {
+        "sourceName": "Google Maps place reference (supplied CSV)",
+        "sourceUrl": "https://www.google.com/maps/place/?q=place_id:ChIJNfdWyyNAxTERPWR-xbjvtYA",
+        "providerPage": "https://beachsearcher.com/ro/beach/458201191/pulau-sembilang",
+        "precision": "supplied_google_maps_reference",
+        "verifiedAt": "2026-10-06",
+        "evidenceNote": "Island-level (Pahang)"
+      },
       "catalogueSource": {
         "sourceName": "BeachSearcher.com",
         "sourceUrl": "https://beaches-searcher.com/en/map?object=country&object_id=199&orderby=top_popular&smart=0&display=split&object_name=Malaysia&zoom=4&lat=4.228592400950948&lng=109.45918792&bbox=90.26367187500001%2C-24.5271348225978%2C128.58398437500003%2C32.02670629333614&owner__1_12_13_32=1&locality__2_3=1&water_type__5=1&water_type__1_2_3=1",
         "sourceRow": 5
       },
-      "locationStatus": "Coordinates not yet verified — source_conflict",
+      "locationStatus": "Supplied coordinate reference — Island-level (Pahang)",
       "waterType": "ocean_sea",
       "habitat": "Biodiversity information not yet available",
       "habitatTag": "UNAVAILABLE",
@@ -191,9 +208,9 @@
       "ecologicalNote": "Biodiversity information not yet available",
       "locationReview": {
         "reviewedAt": "2026-10-06",
-        "status": "source_conflict",
+        "status": "supplied_coordinate_reference",
         "providerPage": "https://beachsearcher.com/ro/beach/458201191/pulau-sembilang",
-        "evidenceNote": "Provider identifies Sembilang Island in Johor, South China Sea, with a 90 m beach. JUPEM identifies Pulau Sembilang in Rompin/Pahang at 2.691111,103.885909; those are island coordinates and the administrative attribution conflicts. A sailing guide describes a western beach but only publishes offshore anchorage coordinates. Neither is accepted as the beach location."
+        "evidenceNote": "Island-level (Pahang)"
       }
     },
     {
@@ -389,17 +406,24 @@
     {
       "id": "bs-pasir-panjang-beach-11",
       "name": "Pasir Panjang Beach",
-      "area": "Malaysia - Pasir Panjang Beach locality unresolved",
-      "region": "",
-      "lat": null,
-      "lng": null,
-      "locationSource": null,
+      "area": "Kampung Pasir Panjang, Pulau Tinggi, Johor",
+      "region": "johor",
+      "lat": 2.308317,
+      "lng": 104.093517,
+      "locationSource": {
+        "sourceName": "Google Maps place reference (supplied CSV)",
+        "sourceUrl": "https://www.google.com/maps/place/?q=place_id:ChIJxY3sOQfO2jERVfD-H2gMd3U",
+        "providerPage": "https://beachsearcher.com/fi/beach/458201252/pasir-panjang-beach",
+        "precision": "supplied_google_maps_reference",
+        "verifiedAt": "2026-10-06",
+        "evidenceNote": "Village-level (Kg Pasir Panjang, Pulau Tinggi); ambiguous - alternative is Penang 5.2998093, 100.1846292"
+      },
       "catalogueSource": {
         "sourceName": "BeachSearcher.com",
         "sourceUrl": "https://beaches-searcher.com/en/map?object=country&object_id=199&orderby=top_popular&smart=0&display=split&object_name=Malaysia&zoom=4&lat=4.228592400950948&lng=109.45918792&bbox=90.26367187500001%2C-24.5271348225978%2C128.58398437500003%2C32.02670629333614&owner__1_12_13_32=1&locality__2_3=1&water_type__5=1&water_type__1_2_3=1",
         "sourceRow": 11
       },
-      "locationStatus": "Coordinates not yet verified — ambiguous_source_identity",
+      "locationStatus": "Supplied coordinate reference — Village-level (Kg Pasir Panjang, Pulau Tinggi); ambiguous - alternative is Penang 5.2998093, 100.1846292",
       "waterType": "ocean_sea",
       "habitat": "Biodiversity information not yet available",
       "habitatTag": "UNAVAILABLE",
@@ -412,9 +436,9 @@
       "ecologicalNote": "Biodiversity information not yet available",
       "locationReview": {
         "reviewedAt": "2026-10-06",
-        "status": "ambiguous_source_identity",
+        "status": "supplied_coordinate_reference",
         "providerPage": "https://beachsearcher.com/fi/beach/458201252/pasir-panjang-beach",
-        "evidenceNote": "The CSV name Pasir Panjang Beach alone matches provider records 458201004 (Segari, Perak), 458201055 (Langkawi, Kedah), 458201252 (Perhentian Kecil, Terengganu), and 458201262 (Santubong, Sarawak). The linked Kecil page is one candidate. No reliable CSV row-to-provider id mapping establishes identity, so region and coordinates remain null."
+        "evidenceNote": "Village-level (Kg Pasir Panjang, Pulau Tinggi); ambiguous - alternative is Penang 5.2998093, 100.1846292"
       }
     },
     {
@@ -498,15 +522,22 @@
       "name": "Cherita Cave Beach",
       "area": "Gua Cherita, Langkawi, Kedah",
       "region": "north",
-      "lat": null,
-      "lng": null,
-      "locationSource": null,
+      "lat": 6.4672028,
+      "lng": 99.846554,
+      "locationSource": {
+        "sourceName": "Google Maps place reference (supplied CSV)",
+        "sourceUrl": "https://www.google.com/maps/place/?q=place_id:ChIJm4nTisN8TDARObhsY9mPpl0",
+        "providerPage": "https://beachsearcher.com/ro/beach/458201056/cherita-cave-beach",
+        "precision": "supplied_google_maps_reference",
+        "verifiedAt": "2026-10-06",
+        "evidenceNote": "Cave marker, beach adjacent (Gua Cherita, Langkawi)"
+      },
       "catalogueSource": {
         "sourceName": "BeachSearcher.com",
         "sourceUrl": "https://beaches-searcher.com/en/map?object=country&object_id=199&orderby=top_popular&smart=0&display=split&object_name=Malaysia&zoom=4&lat=4.228592400950948&lng=109.45918792&bbox=90.26367187500001%2C-24.5271348225978%2C128.58398437500003%2C32.02670629333614&owner__1_12_13_32=1&locality__2_3=1&water_type__5=1&water_type__1_2_3=1",
         "sourceRow": 14
       },
-      "locationStatus": "Coordinates not yet verified — verified_region_only",
+      "locationStatus": "Supplied coordinate reference — Cave marker, beach adjacent (Gua Cherita, Langkawi)",
       "waterType": "ocean_sea",
       "habitat": "Biodiversity information not yet available",
       "habitatTag": "UNAVAILABLE",
@@ -519,9 +550,9 @@
       "ecologicalNote": "Biodiversity information not yet available",
       "locationReview": {
         "reviewedAt": "2026-10-06",
-        "status": "verified_region_only",
+        "status": "supplied_coordinate_reference",
         "providerPage": "https://beachsearcher.com/ro/beach/458201056/cherita-cave-beach",
-        "evidenceNote": "Provider identifies Cherita Cave Beach on Langkawi, Kedah, Strait of Malacca, 180 m of sand at Gua Cherita. JUPEM lists the cave point 6.466310,99.843107, but does not identify a beach point; cave coordinates are withheld from beach latitude/longitude. Google Maps resolves Gua Cherita, Langkawi, Kedah at 6.4672028,99.846554 (CID 6748239255500011577); this is a cave feature rather than a named beach marker. The park manager and Langkawi tourism describe access via a beach and steps, but do not establish which part of the 180 m beach the cave marker represents, so it is not substituted as a beach coordinate."
+        "evidenceNote": "Cave marker, beach adjacent (Gua Cherita, Langkawi)"
       }
     },
     {
@@ -717,17 +748,24 @@
     {
       "id": "bs-pulau-kukus-20",
       "name": "Pulau Kukus",
-      "area": "Pulau Sibu Kukus, Mersing, Johor",
+      "area": "Pulau Kukus, Johor",
       "region": "johor",
-      "lat": null,
-      "lng": null,
-      "locationSource": null,
+      "lat": 2.1802009,
+      "lng": 104.1106601,
+      "locationSource": {
+        "sourceName": "Google Maps place reference (supplied CSV)",
+        "sourceUrl": "https://www.google.com/maps/place/?q=place_id:ChIJE6CuSzfb2jERo8Z8fezMuqs",
+        "providerPage": "https://beachsearcher.com/ro/beach/458201179/pulau-kukus",
+        "precision": "supplied_google_maps_reference",
+        "verifiedAt": "2026-10-06",
+        "evidenceNote": "Island-level (Johor)"
+      },
       "catalogueSource": {
         "sourceName": "BeachSearcher.com",
         "sourceUrl": "https://beaches-searcher.com/en/map?object=country&object_id=199&orderby=top_popular&smart=0&display=split&object_name=Malaysia&zoom=4&lat=4.228592400950948&lng=109.45918792&bbox=90.26367187500001%2C-24.5271348225978%2C128.58398437500003%2C32.02670629333614&owner__1_12_13_32=1&locality__2_3=1&water_type__5=1&water_type__1_2_3=1",
         "sourceRow": 20
       },
-      "locationStatus": "Coordinates not yet verified — verified_region_only",
+      "locationStatus": "Supplied coordinate reference — Island-level (Johor)",
       "waterType": "ocean_sea",
       "habitat": "Biodiversity information not yet available",
       "habitatTag": "UNAVAILABLE",
@@ -740,9 +778,9 @@
       "ecologicalNote": "Biodiversity information not yet available",
       "locationReview": {
         "reviewedAt": "2026-10-06",
-        "status": "verified_region_only",
+        "status": "supplied_coordinate_reference",
         "providerPage": "https://beachsearcher.com/ro/beach/458201179/pulau-kukus",
-        "evidenceNote": "Provider identifies Pulau Kukus beach on Kukus Island, Johor, South China Sea, 6.3 km from Pulau Lima Besar and 6.7 km from Sea Gypsy Resort beach. JUPEM Pulau Sibu Kukus and GeoNames island references are not beach points. The similarly named Penang/Langkawi islands are excluded; exact beach coordinates remain null. Google Maps likewise returns Pulau Kukus, Johor at 2.1802009,104.1106601 as an island entity rather than the beach; that point is withheld."
+        "evidenceNote": "Island-level (Johor)"
       }
     },
     {
@@ -786,17 +824,24 @@
     {
       "id": "bs-pulau-lima-besar-22",
       "name": "Pulau Lima Besar",
-      "area": "Pulau Lima Besar, Mersing, Johor",
+      "area": "Pulau Lima Besar, Johor",
       "region": "johor",
-      "lat": null,
-      "lng": null,
-      "locationSource": null,
+      "lat": 2.2197222,
+      "lng": 104.1511111,
+      "locationSource": {
+        "sourceName": "Google Maps place reference (supplied CSV)",
+        "sourceUrl": "https://www.google.com/maps/place/?q=place_id:ChIJS_m2lWPa2jERieFpzJ2RjbA",
+        "providerPage": "https://beachsearcher.com/ro/beach/458201183/pulau-lima-besar",
+        "precision": "supplied_google_maps_reference",
+        "verifiedAt": "2026-10-06",
+        "evidenceNote": "Island-level (Johor)"
+      },
       "catalogueSource": {
         "sourceName": "BeachSearcher.com",
         "sourceUrl": "https://beaches-searcher.com/en/map?object=country&object_id=199&orderby=top_popular&smart=0&display=split&object_name=Malaysia&zoom=4&lat=4.228592400950948&lng=109.45918792&bbox=90.26367187500001%2C-24.5271348225978%2C128.58398437500003%2C32.02670629333614&owner__1_12_13_32=1&locality__2_3=1&water_type__5=1&water_type__1_2_3=1",
         "sourceRow": 22
       },
-      "locationStatus": "Coordinates not yet verified — verified_region_only",
+      "locationStatus": "Supplied coordinate reference — Island-level (Johor)",
       "waterType": "ocean_sea",
       "habitat": "Biodiversity information not yet available",
       "habitatTag": "UNAVAILABLE",
@@ -809,9 +854,9 @@
       "ecologicalNote": "Biodiversity information not yet available",
       "locationReview": {
         "reviewedAt": "2026-10-06",
-        "status": "verified_region_only",
+        "status": "supplied_coordinate_reference",
         "providerPage": "https://beachsearcher.com/ro/beach/458201183/pulau-lima-besar",
-        "evidenceNote": "Provider identifies a 200 m beach on Lima Besar Island, Johor, South China Sea. JUPEM lists Pulau Lima Besar in Mersing at 2.219692,104.150800, but this is an island feature. The Redang Pulau Lima is a different island; neither island-centre nor reef-dive coordinates are accepted as the beach point. Google Maps likewise returns Pulau Lima Besar, Johor at 2.2197222,104.1511111 as an island entity rather than a beach; that point is withheld."
+        "evidenceNote": "Island-level (Johor)"
       }
     },
     {
@@ -1235,17 +1280,24 @@
     {
       "id": "bs-dayang-island-resort-34",
       "name": "Dayang Island Resort",
-      "area": "Dayang Island, Mersing, Johor",
+      "area": "Pulau Dayang, Johor",
       "region": "johor",
-      "lat": null,
-      "lng": null,
-      "locationSource": null,
+      "lat": 2.4710163,
+      "lng": 104.5030746,
+      "locationSource": {
+        "sourceName": "Google Maps place reference (supplied CSV)",
+        "sourceUrl": "https://www.google.com/maps/place/?q=place_id:ChIJO-gAkVHPxDER_1bjNBq_rLQ",
+        "providerPage": "https://beaches-searcher.com/en/beach/458201194/dayang-island-resort",
+        "precision": "supplied_google_maps_reference",
+        "verifiedAt": "2026-10-06",
+        "evidenceNote": "Exact resort marker (Pulau Dayang)"
+      },
       "catalogueSource": {
         "sourceName": "BeachSearcher.com",
         "sourceUrl": "https://beaches-searcher.com/en/map?object=country&object_id=199&orderby=top_popular&smart=0&display=split&object_name=Malaysia&zoom=4&lat=4.228592400950948&lng=109.45918792&bbox=90.26367187500001%2C-24.5271348225978%2C128.58398437500003%2C32.02670629333614&owner__1_12_13_32=1&locality__2_3=1&water_type__5=1&water_type__1_2_3=1",
         "sourceRow": 34
       },
-      "locationStatus": "Coordinates not yet verified — unresolved",
+      "locationStatus": "Supplied coordinate reference — Exact resort marker (Pulau Dayang)",
       "waterType": "ocean_sea",
       "habitat": "Biodiversity information not yet available",
       "habitatTag": "UNAVAILABLE",
@@ -1258,25 +1310,32 @@
       "ecologicalNote": "Biodiversity information not yet available",
       "locationReview": {
         "reviewedAt": "2026-10-06",
-        "status": "unresolved",
+        "status": "supplied_coordinate_reference",
         "providerPage": "https://beaches-searcher.com/en/beach/458201194/dayang-island-resort",
-        "evidenceNote": "BeachSearcher names a 300 m beach at Dayang Island Resort but assigns Pahang. Official MyGeoName places Pulau Dayang in Mersing, Johor. Public Maps embed did not return a single matching named resort/beach entity. Island gazetteer coordinates 2.47650280,104.50232220 and offshore dive coordinates were rejected because they are not beach points."
+        "evidenceNote": "Exact resort marker (Pulau Dayang)"
       }
     },
     {
       "id": "bs-labuan-gadung-bay-beach-35",
       "name": "Labuan Gadung Bay Beach",
-      "area": "Labuan Gadung Bay, near Telok Melano, Kuching, Sarawak",
+      "area": "Teluk Labuan Gadung, Lundu, Sarawak",
       "region": "borneo",
-      "lat": null,
-      "lng": null,
-      "locationSource": null,
+      "lat": 2.0374924,
+      "lng": 109.6539918,
+      "locationSource": {
+        "sourceName": "Google Maps place reference (supplied CSV)",
+        "sourceUrl": "https://www.google.com/maps/place/?q=place_id:ChIJX4Z8H5y1-jERuN-R3FKbTms",
+        "providerPage": "https://beaches-searcher.com/en/beach/458201254/labuan-gadung-bay-beach",
+        "precision": "supplied_google_maps_reference",
+        "verifiedAt": "2026-10-06",
+        "evidenceNote": "Bay-level (Teluk Labuan Gadung, Lundu, Sarawak); only match - verify region"
+      },
       "catalogueSource": {
         "sourceName": "BeachSearcher.com",
         "sourceUrl": "https://beaches-searcher.com/en/map?object=country&object_id=199&orderby=top_popular&smart=0&display=split&object_name=Malaysia&zoom=4&lat=4.228592400950948&lng=109.45918792&bbox=90.26367187500001%2C-24.5271348225978%2C128.58398437500003%2C32.02670629333614&owner__1_12_13_32=1&locality__2_3=1&water_type__5=1&water_type__1_2_3=1",
         "sourceRow": 35
       },
-      "locationStatus": "Coordinates not yet verified — unresolved",
+      "locationStatus": "Supplied coordinate reference — Bay-level (Teluk Labuan Gadung, Lundu, Sarawak); only match - verify region",
       "waterType": "ocean_sea",
       "habitat": "Biodiversity information not yet available",
       "habitatTag": "UNAVAILABLE",
@@ -1289,25 +1348,32 @@
       "ecologicalNote": "Biodiversity information not yet available",
       "locationReview": {
         "reviewedAt": "2026-10-06",
-        "status": "unresolved",
+        "status": "supplied_coordinate_reference",
         "providerPage": "https://beaches-searcher.com/en/beach/458201254/labuan-gadung-bay-beach",
-        "evidenceNote": "BeachSearcher confirms the secluded Labuan Gadung Bay beach near Telok Melano, Sarawak. Public Maps embed did not yield a matching beach entity. Search results only supplied Teluk Labuan Gadung bay/fishing-water coordinates, which cannot establish the specific sandy beach. No bay centre was substituted."
+        "evidenceNote": "Bay-level (Teluk Labuan Gadung, Lundu, Sarawak); only match - verify region"
       }
     },
     {
       "id": "bs-beras-basah-beach-36",
       "name": "Beras Basah Beach",
-      "area": "Beras Basah Island, Langkawi, Kedah",
+      "area": "Pulau Beras Basah, Langkawi, Kedah",
       "region": "north",
-      "lat": null,
-      "lng": null,
-      "locationSource": null,
+      "lat": 6.2234579,
+      "lng": 99.7163004,
+      "locationSource": {
+        "sourceName": "Google Maps place reference (supplied CSV)",
+        "sourceUrl": "https://www.google.com/maps/place/?q=place_id:ChIJc6b6_FCPSzARLdjWwgspsrc",
+        "providerPage": "https://beaches-searcher.com/en/beach/458201062/beras-basah-beach",
+        "precision": "supplied_google_maps_reference",
+        "verifiedAt": "2026-10-06",
+        "evidenceNote": "Island/beach marker (Langkawi)"
+      },
       "catalogueSource": {
         "sourceName": "BeachSearcher.com",
         "sourceUrl": "https://beaches-searcher.com/en/map?object=country&object_id=199&orderby=top_popular&smart=0&display=split&object_name=Malaysia&zoom=4&lat=4.228592400950948&lng=109.45918792&bbox=90.26367187500001%2C-24.5271348225978%2C128.58398437500003%2C32.02670629333614&owner__1_12_13_32=1&locality__2_3=1&water_type__5=1&water_type__1_2_3=1",
         "sourceRow": 36
       },
-      "locationStatus": "Coordinates not yet verified — unresolved",
+      "locationStatus": "Supplied coordinate reference — Island/beach marker (Langkawi)",
       "waterType": "ocean_sea",
       "habitat": "Biodiversity information not yet available",
       "habitatTag": "UNAVAILABLE",
@@ -1320,9 +1386,9 @@
       "ecologicalNote": "Biodiversity information not yet available",
       "locationReview": {
         "reviewedAt": "2026-10-06",
-        "status": "unresolved",
+        "status": "supplied_coordinate_reference",
         "providerPage": "https://beaches-searcher.com/en/beach/458201062/beras-basah-beach",
-        "evidenceNote": "BeachSearcher confirms a 700 m beach on Beras Basah Island near Langkawi, Kedah. Public Maps embed did not yet return a matching beach entity. MyGeoName Pulau Beras Basah coordinate is an island reference, not the beach; it was excluded. The similarly named Indonesian Beras Basah island/beach was excluded. The final public Google Maps embed name query returned no explicit beach-place entity. A published geological account gives Beras Basah Island coordinates, while the sailing pilot gives an offshore anchorage; neither is a verified beach point."
+        "evidenceNote": "Island/beach marker (Langkawi)"
       }
     },
     {
@@ -1404,17 +1470,24 @@
     {
       "id": "bs-sepat-camping-beach-39",
       "name": "Sepat Camping Beach",
-      "area": "Sepat camping shoreline, south of Kuantan, Pahang",
+      "area": "Pantai Sepat, Kuantan, Pahang",
       "region": "pahang",
-      "lat": null,
-      "lng": null,
-      "locationSource": null,
+      "lat": 3.705279,
+      "lng": 103.3354249,
+      "locationSource": {
+        "sourceName": "Google Maps place reference (supplied CSV)",
+        "sourceUrl": "https://www.google.com/maps/place/?q=place_id:ChIJ_1a7a3yzyDERKGpcgQ2eBCc",
+        "providerPage": "https://beaches-searcher.com/en/beach/458201122/sepat-camping-beach",
+        "precision": "supplied_google_maps_reference",
+        "verifiedAt": "2026-10-06",
+        "evidenceNote": "Approximate shoreline (Pantai Sepat, Kuantan); no separate camping marker found"
+      },
       "catalogueSource": {
         "sourceName": "BeachSearcher.com",
         "sourceUrl": "https://beaches-searcher.com/en/map?object=country&object_id=199&orderby=top_popular&smart=0&display=split&object_name=Malaysia&zoom=4&lat=4.228592400950948&lng=109.45918792&bbox=90.26367187500001%2C-24.5271348225978%2C128.58398437500003%2C32.02670629333614&owner__1_12_13_32=1&locality__2_3=1&water_type__5=1&water_type__1_2_3=1",
         "sourceRow": 39
       },
-      "locationStatus": "Coordinates not yet verified — unresolved",
+      "locationStatus": "Supplied coordinate reference — Approximate shoreline (Pantai Sepat, Kuantan); no separate camping marker found",
       "waterType": "ocean_sea",
       "habitat": "Biodiversity information not yet available",
       "habitatTag": "UNAVAILABLE",
@@ -1427,25 +1500,32 @@
       "ecologicalNote": "Biodiversity information not yet available",
       "locationReview": {
         "reviewedAt": "2026-10-06",
-        "status": "unresolved",
+        "status": "supplied_coordinate_reference",
         "providerPage": "https://beaches-searcher.com/en/beach/458201122/sepat-camping-beach",
-        "evidenceNote": "BeachSearcher distinguishes Sepat Camping Beach from Sepat Recreation Center Beach (3.2 km away) and Sepat Beach (13.8 km away). Public Maps embed did not return an exact camping-beach entity. A generic Pantai Sepat point would risk conflating those three provider entries, so coordinates remain null."
+        "evidenceNote": "Approximate shoreline (Pantai Sepat, Kuantan); no separate camping marker found"
       }
     },
     {
       "id": "bs-pulau-hujung-beach-40",
       "name": "Pulau Hujung beach",
-      "area": "Babi Hujong / Hujung Island, Mersing, Johor",
+      "area": "Pulau Babi Hujong, Mersing, Johor",
       "region": "johor",
-      "lat": null,
-      "lng": null,
-      "locationSource": null,
+      "lat": 2.4924423,
+      "lng": 103.9506556,
+      "locationSource": {
+        "sourceName": "Google Maps place reference (supplied CSV)",
+        "sourceUrl": "https://www.google.com/maps/place/?q=place_id:ChIJnVSs_Fo2xTERffCdDhBkX18",
+        "providerPage": "https://beaches-searcher.com/en/beach/458201189/pulau-hujung-beach",
+        "precision": "supplied_google_maps_reference",
+        "verifiedAt": "2026-10-06",
+        "evidenceNote": "Island-level (Pulau Babi Hujong, Mersing); alternative is Pulau Sibu Hujung 2.1724231, 104.1128383"
+      },
       "catalogueSource": {
         "sourceName": "BeachSearcher.com",
         "sourceUrl": "https://beaches-searcher.com/en/map?object=country&object_id=199&orderby=top_popular&smart=0&display=split&object_name=Malaysia&zoom=4&lat=4.228592400950948&lng=109.45918792&bbox=90.26367187500001%2C-24.5271348225978%2C128.58398437500003%2C32.02670629333614&owner__1_12_13_32=1&locality__2_3=1&water_type__5=1&water_type__1_2_3=1",
         "sourceRow": 40
       },
-      "locationStatus": "Coordinates not yet verified — unresolved",
+      "locationStatus": "Supplied coordinate reference — Island-level (Pulau Babi Hujong, Mersing); alternative is Pulau Sibu Hujung 2.1724231, 104.1128383",
       "waterType": "ocean_sea",
       "habitat": "Biodiversity information not yet available",
       "habitatTag": "UNAVAILABLE",
@@ -1458,25 +1538,32 @@
       "ecologicalNote": "Biodiversity information not yet available",
       "locationReview": {
         "reviewedAt": "2026-10-06",
-        "status": "unresolved",
+        "status": "supplied_coordinate_reference",
         "providerPage": "https://beaches-searcher.com/en/beach/458201189/pulau-hujung-beach",
-        "evidenceNote": "BeachSearcher confirms the approximately 610 m shore on Babi Hujong/Hujung Island, Mersing, Johor. Public Maps embed did not return an exact beach entity and OSM island-area query did not return a named beach. MyGeoName island coordinate 2.493342,103.9521 was excluded because it locates the island rather than its beach."
+        "evidenceNote": "Island-level (Pulau Babi Hujong, Mersing); alternative is Pulau Sibu Hujung 2.1724231, 104.1128383"
       }
     },
     {
       "id": "bs-pulau-tulai-beach-41",
       "name": "Pulau Tulai Beach",
-      "area": "Tulai Island, northwest of Tioman, Pahang",
+      "area": "Pulau Tulai, Tioman, Pahang",
       "region": "pahang",
-      "lat": null,
-      "lng": null,
-      "locationSource": null,
+      "lat": 2.9109512,
+      "lng": 104.1073929,
+      "locationSource": {
+        "sourceName": "Google Maps place reference (supplied CSV)",
+        "sourceUrl": "https://www.google.com/maps/place/?q=place_id:ChIJU8_csfYFxTERJatBf684ggI",
+        "providerPage": "https://beaches-searcher.com/en/beach/458201214/pulau-tulai-beach",
+        "precision": "supplied_google_maps_reference",
+        "verifiedAt": "2026-10-06",
+        "evidenceNote": "Island-level (Coral Island, Tioman)"
+      },
       "catalogueSource": {
         "sourceName": "BeachSearcher.com",
         "sourceUrl": "https://beaches-searcher.com/en/map?object=country&object_id=199&orderby=top_popular&smart=0&display=split&object_name=Malaysia&zoom=4&lat=4.228592400950948&lng=109.45918792&bbox=90.26367187500001%2C-24.5271348225978%2C128.58398437500003%2C32.02670629333614&owner__1_12_13_32=1&locality__2_3=1&water_type__5=1&water_type__1_2_3=1",
         "sourceRow": 41
       },
-      "locationStatus": "Coordinates not yet verified — unresolved",
+      "locationStatus": "Supplied coordinate reference — Island-level (Coral Island, Tioman)",
       "waterType": "ocean_sea",
       "habitat": "Biodiversity information not yet available",
       "habitatTag": "UNAVAILABLE",
@@ -1489,9 +1576,9 @@
       "ecologicalNote": "Biodiversity information not yet available",
       "locationReview": {
         "reviewedAt": "2026-10-06",
-        "status": "unresolved",
+        "status": "supplied_coordinate_reference",
         "providerPage": "https://beaches-searcher.com/en/beach/458201214/pulau-tulai-beach",
-        "evidenceNote": "BeachSearcher confirms the approximately 610 m Pulau Tulai Beach near Salang/Tioman, and separately lists Pulau Tulai Beach II (1.1 km away) and Genting Bay. Maps embed did not return an exact matching beach entity. A general Tulai/Coral Island centre cannot distinguish the separate shores, so no coordinate was guessed."
+        "evidenceNote": "Island-level (Coral Island, Tioman)"
       }
     },
     {
@@ -1908,17 +1995,24 @@
     {
       "id": "bs-telinting-beach-53",
       "name": "Telinting Beach",
-      "area": "Kampung Kelanahan, Papar, Sabah",
+      "area": "Telinting Beach, Papar, Sabah",
       "region": "borneo",
-      "lat": null,
-      "lng": null,
-      "locationSource": null,
+      "lat": 5.712552,
+      "lng": 115.8967384,
+      "locationSource": {
+        "sourceName": "Google Maps place reference (supplied CSV)",
+        "sourceUrl": "https://www.google.com/maps/place/?q=place_id:ChIJZ69sdqenPDIRVv361EmBHLY",
+        "providerPage": "https://beaches-searcher.com/en/beach/458201284/telinting-beach",
+        "precision": "supplied_google_maps_reference",
+        "verifiedAt": "2026-10-06",
+        "evidenceNote": "Exact marker (Papar, Sabah)"
+      },
       "catalogueSource": {
         "sourceName": "BeachSearcher.com",
         "sourceUrl": "https://beaches-searcher.com/en/map?object=country&object_id=199&orderby=top_popular&smart=0&display=split&object_name=Malaysia&zoom=4&lat=4.228592400950948&lng=109.45918792&bbox=90.26367187500001%2C-24.5271348225978%2C128.58398437500003%2C32.02670629333614&owner__1_12_13_32=1&locality__2_3=1&water_type__5=1&water_type__1_2_3=1",
         "sourceRow": 53
       },
-      "locationStatus": "coordinates unavailable",
+      "locationStatus": "Supplied coordinate reference — Exact marker (Papar, Sabah)",
       "waterType": "ocean_sea",
       "habitat": "Biodiversity information not yet available",
       "habitatTag": "UNAVAILABLE",
@@ -1931,9 +2025,9 @@
       "ecologicalNote": "Biodiversity information not yet available",
       "locationReview": {
         "reviewedAt": "2026-10-06",
-        "status": "unverified_coordinates",
+        "status": "supplied_coordinate_reference",
         "providerPage": "https://beaches-searcher.com/en/beach/458201284/telinting-beach",
-        "evidenceNote": "The provider identifies Telinting Beach at Papar/Sabah, about 2.9 km from Kg. Berundong. Sabah Tourism Board separately names the beach in Kampung Kelanahan. Public Google embed and individual CID lookups return two entities with the exact same beach name: one at 5.712552,115.8967384 (89600 Papar) and another at 5.7238679,115.9153144 (Kg, Jalan Kelanahan, 89600 Papar), about 2.4 km apart. Both are beaches in the right district; the exact provider match cannot yet be established without guessing. No viewport or village-centre coordinate was adopted."
+        "evidenceNote": "Exact marker (Papar, Sabah)"
       }
     },
     {
@@ -2205,17 +2299,24 @@
     {
       "id": "bs-pulau-tumuk-beach-61",
       "name": "Pulau Tumuk Beach",
-      "area": "Tioman Island, near Kampung Bunut and Genting, Pahang",
+      "area": "Pulau Tumuk, Tioman, Pahang",
       "region": "pahang",
-      "lat": null,
-      "lng": null,
-      "locationSource": null,
+      "lat": 2.7916667,
+      "lng": 104.1213889,
+      "locationSource": {
+        "sourceName": "Google Maps place reference (supplied CSV)",
+        "sourceUrl": "https://www.google.com/maps/place/?q=place_id:ChIJh2NexGoaxTERKe7EtUACKtA",
+        "providerPage": "https://beaches-searcher.com/en/beach/458201205/pulau-tumuk-beach",
+        "precision": "supplied_google_maps_reference",
+        "verifiedAt": "2026-10-06",
+        "evidenceNote": "Island-level (off Kg Paya, Tioman)"
+      },
       "catalogueSource": {
         "sourceName": "BeachSearcher.com",
         "sourceUrl": "https://beaches-searcher.com/en/map?object=country&object_id=199&orderby=top_popular&smart=0&display=split&object_name=Malaysia&zoom=4&lat=4.228592400950948&lng=109.45918792&bbox=90.26367187500001%2C-24.5271348225978%2C128.58398437500003%2C32.02670629333614&owner__1_12_13_32=1&locality__2_3=1&water_type__5=1&water_type__1_2_3=1",
         "sourceRow": 61
       },
-      "locationStatus": "coordinates unavailable",
+      "locationStatus": "Supplied coordinate reference — Island-level (off Kg Paya, Tioman)",
       "waterType": "ocean_sea",
       "habitat": "Biodiversity information not yet available",
       "habitatTag": "UNAVAILABLE",
@@ -2228,25 +2329,32 @@
       "ecologicalNote": "Biodiversity information not yet available",
       "locationReview": {
         "reviewedAt": "2026-10-06",
-        "status": "unverified_coordinates",
+        "status": "supplied_coordinate_reference",
         "providerPage": "https://beaches-searcher.com/en/beach/458201205/pulau-tumuk-beach",
-        "evidenceNote": "The provider describes a Tioman Island beach 0.5 km from Kampung Bunut. Pulau Tumuk is also a separate nearby wooded islet in sailing directions, so an islet centre would not represent this beach. Multiple public Google embed searches returned Paya/Tekek/Bayu Tioman and other resorts/beaches, not a matching Pulau Tumuk Beach entity. None were substituted. An exact beach marker remains unverified."
+        "evidenceNote": "Island-level (off Kg Paya, Tioman)"
       }
     },
     {
       "id": "bs-genting-bay-62",
       "name": "Genting Bay",
-      "area": "Tulai Island, northwest of Tioman Island, Pahang",
+      "area": "Kampung Genting, Tioman, Pahang",
       "region": "pahang",
-      "lat": null,
-      "lng": null,
-      "locationSource": null,
+      "lat": 2.7605351,
+      "lng": 104.1230562,
+      "locationSource": {
+        "sourceName": "Google Maps place reference (supplied CSV)",
+        "sourceUrl": "https://www.google.com/maps/place/?q=place_id:ChIJ49uUlewZxTERDKjoUPL71KE",
+        "providerPage": "https://beaches-searcher.com/en/beach/458201213/genting-bay",
+        "precision": "supplied_google_maps_reference",
+        "verifiedAt": "2026-10-06",
+        "evidenceNote": "Approximate shoreline (Genting Ria Coral Beach, Kg Genting, Tioman)"
+      },
       "catalogueSource": {
         "sourceName": "BeachSearcher.com",
         "sourceUrl": "https://beaches-searcher.com/en/map?object=country&object_id=199&orderby=top_popular&smart=0&display=split&object_name=Malaysia&zoom=4&lat=4.228592400950948&lng=109.45918792&bbox=90.26367187500001%2C-24.5271348225978%2C128.58398437500003%2C32.02670629333614&owner__1_12_13_32=1&locality__2_3=1&water_type__5=1&water_type__1_2_3=1",
         "sourceRow": 62
       },
-      "locationStatus": "coordinates unavailable",
+      "locationStatus": "Supplied coordinate reference — Approximate shoreline (Genting Ria Coral Beach, Kg Genting, Tioman)",
       "waterType": "ocean_sea",
       "habitat": "Biodiversity information not yet available",
       "habitatTag": "UNAVAILABLE",
@@ -2259,25 +2367,32 @@
       "ecologicalNote": "Biodiversity information not yet available",
       "locationReview": {
         "reviewedAt": "2026-10-06",
-        "status": "unverified_coordinates",
+        "status": "supplied_coordinate_reference",
         "providerPage": "https://beaches-searcher.com/en/beach/458201213/genting-bay",
-        "evidenceNote": "The provider expressly identifies a 90 m Genting Bay beach on Tulai Island, not Kampung Genting on Tioman. Google public embed exact island query resolves Genting Bay at 2.9111869,104.1134541 (CID 9064646310819372829), and OSM node 8367146005 names natural=bay Teluk Genting at 2.9104196,104.1114449. These are bay/water-body references, not verified points on the small beach. A separately returned Tulai island-centre marker was rejected. Coordinates remain null because a bay or island centre cannot be presented as a beach point."
+        "evidenceNote": "Approximate shoreline (Genting Ria Coral Beach, Kg Genting, Tioman)"
       }
     },
     {
       "id": "bs-pulau-tulai-beach-ii-63",
       "name": "Pulau Tulai Beach II",
-      "area": "Tulai Island, Pahang; 7.4 km from Kampung Salang on Tioman Island",
+      "area": "Pulau Tulai, Tioman, Pahang",
       "region": "pahang",
-      "lat": null,
-      "lng": null,
-      "locationSource": null,
+      "lat": 2.9109512,
+      "lng": 104.1073929,
+      "locationSource": {
+        "sourceName": "Google Maps place reference (supplied CSV)",
+        "sourceUrl": "https://www.google.com/maps/place/?q=place_id:ChIJU8_csfYFxTERJatBf684ggI",
+        "providerPage": "https://beaches-searcher.com/en/beach/458201215/pulau-tulai-beach-ii",
+        "precision": "supplied_google_maps_reference",
+        "verifiedAt": "2026-10-06",
+        "evidenceNote": "Island-level; same island as #12, no second beach marker on Google"
+      },
       "catalogueSource": {
         "sourceName": "BeachSearcher.com",
         "sourceUrl": "https://beaches-searcher.com/en/map?object=country&object_id=199&orderby=top_popular&smart=0&display=split&object_name=Malaysia&zoom=4&lat=4.228592400950948&lng=109.45918792&bbox=90.26367187500001%2C-24.5271348225978%2C128.58398437500003%2C32.02670629333614&owner__1_12_13_32=1&locality__2_3=1&water_type__5=1&water_type__1_2_3=1",
         "sourceRow": 63
       },
-      "locationStatus": "Coordinates not yet verified — identity_verified_coordinates_unverified",
+      "locationStatus": "Supplied coordinate reference — Island-level; same island as #12, no second beach marker on Google",
       "waterType": "ocean_sea",
       "habitat": "Biodiversity information not yet available",
       "habitatTag": "UNAVAILABLE",
@@ -2290,9 +2405,9 @@
       "ecologicalNote": "Biodiversity information not yet available",
       "locationReview": {
         "reviewedAt": "2026-10-06",
-        "status": "identity_verified_coordinates_unverified",
+        "status": "supplied_coordinate_reference",
         "providerPage": "https://beaches-searcher.com/en/beach/458201215/pulau-tulai-beach-ii",
-        "evidenceNote": "Checked 2026-10-06. The provider identifies a 100 m beach on Tulai Island in the South China Sea. Pulau Tulai Beach and Genting Bay are different nearby beaches, 1.1 and 1.2 km away. No explicit coordinate for Beach II was verified; neither the island centre nor another Tulai beach was substituted. A batch shell lookup of four public embedded map queries was rejected by automatic approval review and did not execute; its only stated reason was blocked by policy. The rejected batch was not retried. Subsequent ordinary web research still did not establish an exact beach marker."
+        "evidenceNote": "Island-level; same island as #12, no second beach marker on Google"
       }
     },
     {
@@ -2336,17 +2451,24 @@
     {
       "id": "bs-lanting-beach-resort-65",
       "name": "Lanting Beach Resort",
-      "area": "Lanting Beach, Pemanggil Island, Mersing, Johor",
+      "area": "Pulau Pemanggil, Johor",
       "region": "johor",
-      "lat": null,
-      "lng": null,
-      "locationSource": null,
+      "lat": 2.5808822,
+      "lng": 104.3268266,
+      "locationSource": {
+        "sourceName": "Google Maps place reference (supplied CSV)",
+        "sourceUrl": "https://www.google.com/maps/place/?q=place_id:ChIJ_1p6f7jZxDERabnzTvUZZAw",
+        "providerPage": "https://beaches-searcher.com/en/beach/458201195/lanting-beach-resort",
+        "precision": "supplied_google_maps_reference",
+        "verifiedAt": "2026-10-06",
+        "evidenceNote": "Exact resort marker (Pulau Pemanggil)"
+      },
       "catalogueSource": {
         "sourceName": "BeachSearcher.com",
         "sourceUrl": "https://beaches-searcher.com/en/map?object=country&object_id=199&orderby=top_popular&smart=0&display=split&object_name=Malaysia&zoom=4&lat=4.228592400950948&lng=109.45918792&bbox=90.26367187500001%2C-24.5271348225978%2C128.58398437500003%2C32.02670629333614&owner__1_12_13_32=1&locality__2_3=1&water_type__5=1&water_type__1_2_3=1",
         "sourceRow": 65
       },
-      "locationStatus": "Coordinates not yet verified — identity_verified_coordinates_unverified",
+      "locationStatus": "Supplied coordinate reference — Exact resort marker (Pulau Pemanggil)",
       "waterType": "ocean_sea",
       "habitat": "Biodiversity information not yet available",
       "habitatTag": "UNAVAILABLE",
@@ -2359,25 +2481,32 @@
       "ecologicalNote": "Biodiversity information not yet available",
       "locationReview": {
         "reviewedAt": "2026-10-06",
-        "status": "identity_verified_coordinates_unverified",
+        "status": "supplied_coordinate_reference",
         "providerPage": "https://beaches-searcher.com/en/beach/458201195/lanting-beach-resort",
-        "evidenceNote": "Checked 2026-10-06. The provider identifies a 330 m marine beach on Pemanggil Island but assigns it to Pahang. Tourism Malaysia's 2023 hotel statistics explicitly list Lanting Beach Resort under Pulau Pemanggil, Mersing, Johor, so Johor is used. A third-party rocky hillside resort GPS was found but was not treated as the beach point. A batch shell lookup of four public embedded map queries was rejected by automatic approval review and did not execute; its only stated reason was blocked by policy. The rejected batch was not retried. Subsequent ordinary web research still did not establish an exact beach marker."
+        "evidenceNote": "Exact resort marker (Pulau Pemanggil)"
       }
     },
     {
       "id": "bs-pulau-bidung-66",
       "name": "Pulau Bidung",
-      "area": "Bidung Island, Terengganu; approximately 16 km from Merang",
+      "area": "Pulau Bidong, Terengganu",
       "region": "tganu",
-      "lat": null,
-      "lng": null,
-      "locationSource": null,
+      "lat": 5.6211838,
+      "lng": 103.061621,
+      "locationSource": {
+        "sourceName": "Google Maps place reference (supplied CSV)",
+        "sourceUrl": "https://www.google.com/maps/place/?q=place_id:ChIJ5Ydul54JtzER4UoIx2K-TOY",
+        "providerPage": "https://beaches-searcher.com/en/beach/458201221/pulau-bidung",
+        "precision": "supplied_google_maps_reference",
+        "verifiedAt": "2026-10-06",
+        "evidenceNote": "Island-level (Terengganu)"
+      },
       "catalogueSource": {
         "sourceName": "BeachSearcher.com",
         "sourceUrl": "https://beaches-searcher.com/en/map?object=country&object_id=199&orderby=top_popular&smart=0&display=split&object_name=Malaysia&zoom=4&lat=4.228592400950948&lng=109.45918792&bbox=90.26367187500001%2C-24.5271348225978%2C128.58398437500003%2C32.02670629333614&owner__1_12_13_32=1&locality__2_3=1&water_type__5=1&water_type__1_2_3=1",
         "sourceRow": 66
       },
-      "locationStatus": "Coordinates not yet verified — identity_verified_coordinates_unverified",
+      "locationStatus": "Supplied coordinate reference — Island-level (Terengganu)",
       "waterType": "ocean_sea",
       "habitat": "Biodiversity information not yet available",
       "habitatTag": "UNAVAILABLE",
@@ -2390,25 +2519,32 @@
       "ecologicalNote": "Biodiversity information not yet available",
       "locationReview": {
         "reviewedAt": "2026-10-06",
-        "status": "identity_verified_coordinates_unverified",
+        "status": "supplied_coordinate_reference",
         "providerPage": "https://beaches-searcher.com/en/beach/458201221/pulau-bidung",
-        "evidenceNote": "Checked 2026-10-06. Although named after the island, the provider describes a specific 170 m sandy beach, distinct from Bidong Bay 1 km away. Official hydrographic heritage boundary coordinates describe the island boundary, not this beach. No beach marker was verified, so no island centre or jetty was substituted. A batch shell lookup of four public embedded map queries was rejected by automatic approval review and did not execute; its only stated reason was blocked by policy. The rejected batch was not retried. Subsequent ordinary web research still did not establish an exact beach marker."
+        "evidenceNote": "Island-level (Terengganu)"
       }
     },
     {
       "id": "bs-golden-beach-67",
       "name": "Golden Beach",
-      "area": "Near Kampung Telaga Air and Kampong Rayu, Kuching Division, Sarawak",
+      "area": "Golden Beach, Trombol, Kuching, Sarawak",
       "region": "borneo",
-      "lat": null,
-      "lng": null,
-      "locationSource": null,
+      "lat": 1.7004338,
+      "lng": 110.1698463,
+      "locationSource": {
+        "sourceName": "Google Maps place reference (supplied CSV)",
+        "sourceUrl": "https://www.google.com/maps/place/?q=place_id:ChIJpdD4kzID-zERqDHb9Zd7BWI",
+        "providerPage": "https://beaches-searcher.com/en/beach/458201261/golden-beach",
+        "precision": "supplied_google_maps_reference",
+        "verifiedAt": "2026-10-06",
+        "evidenceNote": "Exact beach marker (Trombol, Kuching); highly ambiguous - alternatives: Tempurong Golden Beach Sabah 5.5315073, 115.5366663; Golden Beach Mersing 2.3990389, 103.8667738"
+      },
       "catalogueSource": {
         "sourceName": "BeachSearcher.com",
         "sourceUrl": "https://beaches-searcher.com/en/map?object=country&object_id=199&orderby=top_popular&smart=0&display=split&object_name=Malaysia&zoom=4&lat=4.228592400950948&lng=109.45918792&bbox=90.26367187500001%2C-24.5271348225978%2C128.58398437500003%2C32.02670629333614&owner__1_12_13_32=1&locality__2_3=1&water_type__5=1&water_type__1_2_3=1",
         "sourceRow": 67
       },
-      "locationStatus": "Coordinates not yet verified — identity_verified_coordinates_unverified",
+      "locationStatus": "Supplied coordinate reference — Exact beach marker (Trombol, Kuching); highly ambiguous - alternatives: Tempurong Golden Beach Sabah 5.5315073, 115.5366663; Golden Beach Mersing 2.3990389, 103.8667738",
       "waterType": "ocean_sea",
       "habitat": "Biodiversity information not yet available",
       "habitatTag": "UNAVAILABLE",
@@ -2421,25 +2557,32 @@
       "ecologicalNote": "Biodiversity information not yet available",
       "locationReview": {
         "reviewedAt": "2026-10-06",
-        "status": "identity_verified_coordinates_unverified",
+        "status": "supplied_coordinate_reference",
         "providerPage": "https://beaches-searcher.com/en/beach/458201261/golden-beach",
-        "evidenceNote": "Checked 2026-10-06. The provider explicitly locates this beach 24 km from Kuching and 4.5 km from Kampung Telaga Air. Beach World Map's same-name points at 3.42443,113.20452 (Similajau) and 3.8024,103.37321 (Kuantan) do not match and were excluded. No verified marker distinguishing this page from Golden Beach Trombol was found. A batch shell lookup of four public embedded map queries was rejected by automatic approval review and did not execute; its only stated reason was blocked by policy. The rejected batch was not retried. Subsequent ordinary web research still did not establish an exact beach marker."
+        "evidenceNote": "Exact beach marker (Trombol, Kuching); highly ambiguous - alternatives: Tempurong Golden Beach Sabah 5.5315073, 115.5366663; Golden Beach Mersing 2.3990389, 103.8667738"
       }
     },
     {
       "id": "bs-turtle-beach-68",
       "name": "Turtle Beach",
-      "area": "Malaysia — location identity not yet verified",
-      "region": "",
-      "lat": null,
-      "lng": null,
-      "locationSource": null,
+      "area": "Turtle Beach, Redang, Terengganu",
+      "region": "tganu",
+      "lat": 5.7843294,
+      "lng": 103.0188002,
+      "locationSource": {
+        "sourceName": "Google Maps place reference (supplied CSV)",
+        "sourceUrl": "https://www.google.com/maps/place/?q=place_id:ChIJkUKHVlkQtzERrJz6W4ePJU4",
+        "providerPage": null,
+        "precision": "supplied_google_maps_reference",
+        "verifiedAt": "2026-10-06",
+        "evidenceNote": "Exact beach marker (Redang); chosen to distinguish from #1"
+      },
       "catalogueSource": {
         "sourceName": "BeachSearcher.com",
         "sourceUrl": "https://beaches-searcher.com/en/map?object=country&object_id=199&orderby=top_popular&smart=0&display=split&object_name=Malaysia&zoom=4&lat=4.228592400950948&lng=109.45918792&bbox=90.26367187500001%2C-24.5271348225978%2C128.58398437500003%2C32.02670629333614&owner__1_12_13_32=1&locality__2_3=1&water_type__5=1&water_type__1_2_3=1",
         "sourceRow": 68
       },
-      "locationStatus": "Coordinates not yet verified — ambiguous_identity",
+      "locationStatus": "Supplied coordinate reference — Exact beach marker (Redang); chosen to distinguish from #1",
       "waterType": null,
       "habitat": "Biodiversity information not yet available",
       "habitatTag": "UNAVAILABLE",
@@ -2452,25 +2595,32 @@
       "ecologicalNote": "Biodiversity information not yet available",
       "locationReview": {
         "reviewedAt": "2026-10-06",
-        "status": "ambiguous_identity",
+        "status": "supplied_coordinate_reference",
         "providerPage": null,
-        "evidenceNote": "Checked 2026-10-06. CSV rows 4 and 68 both say Turtle Beach and carry no provider ID or state. Verified provider candidates include https://beaches-searcher.com/en/beach/458201237/turtle-beach (Perhentian Besar, Terengganu) and https://beaches-searcher.com/en/beach/458201273/turtle-beach (near Bintulu, Sarawak). The names-only source cannot assign row 68 to either; OSM Turtle Beach 1/2 were not guessed."
+        "evidenceNote": "Exact beach marker (Redang); chosen to distinguish from #1"
       }
     },
     {
       "id": "bs-lok-nunsung-beach-69",
       "name": "Lok Nunsung Beach",
-      "area": "Near Kampung K. Rampayan and Kampong Bongaliu, Sabah",
+      "area": "Lok Nunsung Beach, Kota Belud, Sabah",
       "region": "borneo",
-      "lat": null,
-      "lng": null,
-      "locationSource": null,
+      "lat": 6.5341861,
+      "lng": 116.499702,
+      "locationSource": {
+        "sourceName": "Google Maps place reference (supplied CSV)",
+        "sourceUrl": "https://www.google.com/maps/place/?q=place_id:ChIJURxlg31ZOjIRiKK0hOHX2Gk",
+        "providerPage": "https://beachsearcher.com.tr/tr/beach/458201300/lok-nunsung-beach",
+        "precision": "supplied_google_maps_reference",
+        "verifiedAt": "2026-10-06",
+        "evidenceNote": "Exact marker (Kota Belud, Sabah)"
+      },
       "catalogueSource": {
         "sourceName": "BeachSearcher.com",
         "sourceUrl": "https://beaches-searcher.com/en/map?object=country&object_id=199&orderby=top_popular&smart=0&display=split&object_name=Malaysia&zoom=4&lat=4.228592400950948&lng=109.45918792&bbox=90.26367187500001%2C-24.5271348225978%2C128.58398437500003%2C32.02670629333614&owner__1_12_13_32=1&locality__2_3=1&water_type__5=1&water_type__1_2_3=1",
         "sourceRow": 69
       },
-      "locationStatus": "Coordinates not yet verified — identity_verified_coordinates_unverified",
+      "locationStatus": "Supplied coordinate reference — Exact marker (Kota Belud, Sabah)",
       "waterType": "ocean_sea",
       "habitat": "Biodiversity information not yet available",
       "habitatTag": "UNAVAILABLE",
@@ -2483,25 +2633,32 @@
       "ecologicalNote": "Biodiversity information not yet available",
       "locationReview": {
         "reviewedAt": "2026-10-06",
-        "status": "identity_verified_coordinates_unverified",
+        "status": "supplied_coordinate_reference",
         "providerPage": "https://beachsearcher.com.tr/tr/beach/458201300/lok-nunsung-beach",
-        "evidenceNote": "Checked 2026-10-06. The provider identifies this beach in Sabah on the South China Sea, 1.3 km from Kampung K. Rampayan and 77.5 km from Kota Kinabalu. A directed public Google Maps search did not expose a verified same-name place marker. No nearby village coordinate was used."
+        "evidenceNote": "Exact marker (Kota Belud, Sabah)"
       }
     },
     {
       "id": "bs-torongguh-beach-70",
       "name": "Torongguh Beach",
-      "area": "Pitas, Sabah; approximately 6.9 km from Kampung Pamanuhan",
+      "area": "Torongguh Beach, Pitas, Sabah",
       "region": "borneo",
-      "lat": null,
-      "lng": null,
-      "locationSource": null,
+      "lat": 6.7390751,
+      "lng": 116.974445,
+      "locationSource": {
+        "sourceName": "Google Maps place reference (supplied CSV)",
+        "sourceUrl": "https://www.google.com/maps/place/?q=place_id:ChIJc9cSEZoQOjIRln-y0nwLYZE",
+        "providerPage": "https://beaches-searcher.com/en/beach/458201315/torongguh-beach",
+        "precision": "supplied_google_maps_reference",
+        "verifiedAt": "2026-10-06",
+        "evidenceNote": "Exact beach marker (Pitas, Sabah)"
+      },
       "catalogueSource": {
         "sourceName": "BeachSearcher.com",
         "sourceUrl": "https://beaches-searcher.com/en/map?object=country&object_id=199&orderby=top_popular&smart=0&display=split&object_name=Malaysia&zoom=4&lat=4.228592400950948&lng=109.45918792&bbox=90.26367187500001%2C-24.5271348225978%2C128.58398437500003%2C32.02670629333614&owner__1_12_13_32=1&locality__2_3=1&water_type__5=1&water_type__1_2_3=1",
         "sourceRow": 70
       },
-      "locationStatus": "Coordinates not yet verified — identity_verified_coordinates_unverified",
+      "locationStatus": "Supplied coordinate reference — Exact beach marker (Pitas, Sabah)",
       "waterType": "ocean_sea",
       "habitat": "Biodiversity information not yet available",
       "habitatTag": "UNAVAILABLE",
@@ -2514,25 +2671,32 @@
       "ecologicalNote": "Biodiversity information not yet available",
       "locationReview": {
         "reviewedAt": "2026-10-06",
-        "status": "identity_verified_coordinates_unverified",
+        "status": "supplied_coordinate_reference",
         "providerPage": "https://beaches-searcher.com/en/beach/458201315/torongguh-beach",
-        "evidenceNote": "Checked 2026-10-06. The provider places this beach in Sabah, 131 km from Kota Kinabalu, near Kampung Pamanuhan. An unrelated listing incorrectly located Pantai Torongguh Pitas in Langkawi and was excluded. A directed public Google Maps search did not expose a verified beach marker; Pitas town was not substituted."
+        "evidenceNote": "Exact beach marker (Pitas, Sabah)"
       }
     },
     {
       "id": "bs-nenasi-beach-71",
       "name": "Nenasi Beach",
-      "area": "Near Nenasi and Kampong Jambu, Pekan District, Pahang",
+      "area": "Nenasi Beach, Pekan, Pahang",
       "region": "pahang",
-      "lat": null,
-      "lng": null,
-      "locationSource": null,
+      "lat": 3.1331098,
+      "lng": 103.4468827,
+      "locationSource": {
+        "sourceName": "Google Maps place reference (supplied CSV)",
+        "sourceUrl": "https://www.google.com/maps/place/?q=place_id:ChIJm-fiMAB7zzERL6b2c3pjs_Y",
+        "providerPage": "https://beaches-searcher.com/en/beach/458201119/nenasi-beach",
+        "precision": "supplied_google_maps_reference",
+        "verifiedAt": "2026-10-06",
+        "evidenceNote": "Exact marker (Pekan, Pahang)"
+      },
       "catalogueSource": {
         "sourceName": "BeachSearcher.com",
         "sourceUrl": "https://beaches-searcher.com/en/map?object=country&object_id=199&orderby=top_popular&smart=0&display=split&object_name=Malaysia&zoom=4&lat=4.228592400950948&lng=109.45918792&bbox=90.26367187500001%2C-24.5271348225978%2C128.58398437500003%2C32.02670629333614&owner__1_12_13_32=1&locality__2_3=1&water_type__5=1&water_type__1_2_3=1",
         "sourceRow": 71
       },
-      "locationStatus": "Coordinates not yet verified — identity_verified_coordinates_unverified",
+      "locationStatus": "Supplied coordinate reference — Exact marker (Pekan, Pahang)",
       "waterType": "ocean_sea",
       "habitat": "Biodiversity information not yet available",
       "habitatTag": "UNAVAILABLE",
@@ -2545,9 +2709,9 @@
       "ecologicalNote": "Biodiversity information not yet available",
       "locationReview": {
         "reviewedAt": "2026-10-06",
-        "status": "identity_verified_coordinates_unverified",
+        "status": "supplied_coordinate_reference",
         "providerPage": "https://beaches-searcher.com/en/beach/458201119/nenasi-beach",
-        "evidenceNote": "Checked 2026-10-06. The provider describes a 15.6 km marine shoreline near Nenasi, Pahang. Official Pahang material confirms coastal works at Pantai Nenasi but supplies no explicit beach point. Gazetteer/map results for Nenasi village and a nearby beacon were excluded, as was an unverified third-party local-business GPS. A final public Google Maps embed name query returned no explicit place entity. Public third-party Pantai Nenasi points differ (3.14583,103.42433 and 3.1282289,103.4474101); these were not accepted without a matching provider shoreline identity."
+        "evidenceNote": "Exact marker (Pekan, Pahang)"
       }
     },
     {
@@ -2622,17 +2786,24 @@
     {
       "id": "bs-black-sand-beach-74",
       "name": "Black Sand Beach",
-      "area": "Provider candidate: Tanjung Dendang Island, near Kilim Jetty, Kedah",
+      "area": "Pantai Pasir Hitam, Langkawi, Kedah",
       "region": "north",
-      "lat": null,
-      "lng": null,
-      "locationSource": null,
+      "lat": 6.4269575,
+      "lng": 99.7946584,
+      "locationSource": {
+        "sourceName": "Google Maps place reference (supplied CSV)",
+        "sourceUrl": "https://www.google.com/maps/place/?q=place_id:ChIJAVLk7ZV7TDAReX2PoJzvQrw",
+        "providerPage": "https://beachsearcher.com/pl/beach/458201061/black-sand-beach",
+        "precision": "supplied_google_maps_reference",
+        "verifiedAt": "2026-10-06",
+        "evidenceNote": "Exact beach marker (Pantai Pasir Hitam, Langkawi)"
+      },
       "catalogueSource": {
         "sourceName": "BeachSearcher.com",
         "sourceUrl": "https://beaches-searcher.com/en/map?object=country&object_id=199&orderby=top_popular&smart=0&display=split&object_name=Malaysia&zoom=4&lat=4.228592400950948&lng=109.45918792&bbox=90.26367187500001%2C-24.5271348225978%2C128.58398437500003%2C32.02670629333614&owner__1_12_13_32=1&locality__2_3=1&water_type__5=1&water_type__1_2_3=1",
         "sourceRow": 74
       },
-      "locationStatus": "Coordinates not yet verified — ambiguous_identity",
+      "locationStatus": "Supplied coordinate reference — Exact beach marker (Pantai Pasir Hitam, Langkawi)",
       "waterType": "ocean_sea",
       "habitat": "Biodiversity information not yet available",
       "habitatTag": "UNAVAILABLE",
@@ -2645,9 +2816,9 @@
       "ecologicalNote": "Biodiversity information not yet available",
       "locationReview": {
         "reviewedAt": "2026-10-06",
-        "status": "ambiguous_identity",
+        "status": "supplied_coordinate_reference",
         "providerPage": "https://beachsearcher.com/pl/beach/458201061/black-sand-beach",
-        "evidenceNote": "Checked 2026-10-06. The provider candidate specifically identifies Tanjung Dendang Island, 6.8 km from Kilim Jetty, in the Malacca Strait. It is not mainland Langkawi Pantai Pasir Hitam (6.4277,99.7949). Provider locality lists show more than one Black Sand Beach nearby. No unique beach marker resolving the names-only CSV entry was verified."
+        "evidenceNote": "Exact beach marker (Pantai Pasir Hitam, Langkawi)"
       }
     },
     {
@@ -2691,17 +2862,24 @@
     {
       "id": "bs-jason-bay-beach-ii-76",
       "name": "Jason Bay Beach II",
-      "area": "Near Kampong Sri Gading and Kampong Bukit Lintang, Kota Tinggi, Johor",
+      "area": "Jason Bay, Kota Tinggi, Johor",
       "region": "johor",
-      "lat": null,
-      "lng": null,
-      "locationSource": null,
+      "lat": 1.8999907,
+      "lng": 104.1037248,
+      "locationSource": {
+        "sourceName": "Google Maps place reference (supplied CSV)",
+        "sourceUrl": "https://www.google.com/maps/place/?q=place_id:ChIJp3Ke1Jz62jERwhzFXXeDff8",
+        "providerPage": "https://beaches-searcher.com/en/beach/458201103/jason-bay-beach-ii",
+        "precision": "supplied_google_maps_reference",
+        "verifiedAt": "2026-10-06",
+        "evidenceNote": "Approximate shoreline (Jason Bay Beach Resort section); main public beach at 1.8976143, 104.1040699"
+      },
       "catalogueSource": {
         "sourceName": "BeachSearcher.com",
         "sourceUrl": "https://beaches-searcher.com/en/map?object=country&object_id=199&orderby=top_popular&smart=0&display=split&object_name=Malaysia&zoom=4&lat=4.228592400950948&lng=109.45918792&bbox=90.26367187500001%2C-24.5271348225978%2C128.58398437500003%2C32.02670629333614&owner__1_12_13_32=1&locality__2_3=1&water_type__5=1&water_type__1_2_3=1",
         "sourceRow": 76
       },
-      "locationStatus": "Coordinates not yet verified — identity_verified_coordinates_unverified",
+      "locationStatus": "Supplied coordinate reference — Approximate shoreline (Jason Bay Beach Resort section); main public beach at 1.8976143, 104.1040699",
       "waterType": "ocean_sea",
       "habitat": "Biodiversity information not yet available",
       "habitatTag": "UNAVAILABLE",
@@ -2714,9 +2892,9 @@
       "ecologicalNote": "Biodiversity information not yet available",
       "locationReview": {
         "reviewedAt": "2026-10-06",
-        "status": "identity_verified_coordinates_unverified",
+        "status": "supplied_coordinate_reference",
         "providerPage": "https://beaches-searcher.com/en/beach/458201103/jason-bay-beach-ii",
-        "evidenceNote": "Checked 2026-10-06. The provider identifies a 2.4 km shoreline, 4.2 km from Kampong Sri Gading, and explicitly separates Jason Bay Beach (458201104), 2.2 km away. No Google or official marker specific to the II segment was verified. A generic Jason Bay or Tanjung Sedili point would not resolve that segment."
+        "evidenceNote": "Approximate shoreline (Jason Bay Beach Resort section); main public beach at 1.8976143, 104.1040699"
       }
     },
     {
@@ -2798,17 +2976,24 @@
     {
       "id": "bs-bersatu-chalet-beach-79",
       "name": "Bersatu Chalet beach",
-      "area": "Tioman Island, Pahang; near Kampung Pasir Sarang Burung",
+      "area": "Bersatu Nipah Chalet, Tioman, Pahang",
       "region": "pahang",
-      "lat": null,
-      "lng": null,
-      "locationSource": null,
+      "lat": 2.7277,
+      "lng": 104.14541,
+      "locationSource": {
+        "sourceName": "Google Maps place reference (supplied CSV)",
+        "sourceUrl": "https://www.google.com/maps/place/?q=place_id:ChIJxe_e4VUYxTERM44rGx2bPzI",
+        "providerPage": "https://beaches-searcher.com/en/beach/458201199/bersatu-chalet-beach",
+        "precision": "supplied_google_maps_reference",
+        "verifiedAt": "2026-10-06",
+        "evidenceNote": "Chalet marker (Bersatu Nipah Chalet, Tioman)"
+      },
       "catalogueSource": {
         "sourceName": "BeachSearcher.com",
         "sourceUrl": "https://beaches-searcher.com/en/map?object=country&object_id=199&orderby=top_popular&smart=0&display=split&object_name=Malaysia&zoom=4&lat=4.228592400950948&lng=109.45918792&bbox=90.26367187500001%2C-24.5271348225978%2C128.58398437500003%2C32.02670629333614&owner__1_12_13_32=1&locality__2_3=1&water_type__5=1&water_type__1_2_3=1",
         "sourceRow": 79
       },
-      "locationStatus": "Coordinates not yet verified — identity_verified_coordinates_unverified",
+      "locationStatus": "Supplied coordinate reference — Chalet marker (Bersatu Nipah Chalet, Tioman)",
       "waterType": "ocean_sea",
       "habitat": "Biodiversity information not yet available",
       "habitatTag": "UNAVAILABLE",
@@ -2821,9 +3006,9 @@
       "ecologicalNote": "Biodiversity information not yet available",
       "locationReview": {
         "reviewedAt": "2026-10-06",
-        "status": "identity_verified_coordinates_unverified",
+        "status": "supplied_coordinate_reference",
         "providerPage": "https://beaches-searcher.com/en/beach/458201199/bersatu-chalet-beach",
-        "evidenceNote": "Checked 2026-10-06. The provider identifies an 80 m beach on Tioman, about 960 m from Kampung Pasir Sarang Burung; Tunamaya Beach is a different location 1.4 km away. No explicit same-beach Google or official marker was verified. A Tioman island centre, village centre or Tunamaya resort marker was not substituted."
+        "evidenceNote": "Chalet marker (Bersatu Nipah Chalet, Tioman)"
       }
     },
     {
@@ -2898,17 +3083,24 @@
     {
       "id": "bs-ru-rebah-beach-82",
       "name": "Ru Rebah Beach",
-      "area": "Near Kampong Sri Gading and Kampong Bukit Lintang, Kota Tinggi, Johor",
+      "area": "Ru Rebah Beach, Tanjung Sedili, Johor",
       "region": "johor",
-      "lat": null,
-      "lng": null,
-      "locationSource": null,
+      "lat": 1.9136111,
+      "lng": 104.1063889,
+      "locationSource": {
+        "sourceName": "Google Maps place reference (supplied CSV)",
+        "sourceUrl": "https://www.google.com/maps/place/?q=place_id:ChIJiTWW-6P62jERIlhbsK0b2bE",
+        "providerPage": "https://beaches-searcher.com/en/beach/458201105/ru-rebah-beach",
+        "precision": "supplied_google_maps_reference",
+        "verifiedAt": "2026-10-06",
+        "evidenceNote": "Exact beach marker (Tanjung Sedili, Johor); reviews say no access road - use with caution"
+      },
       "catalogueSource": {
         "sourceName": "BeachSearcher.com",
         "sourceUrl": "https://beaches-searcher.com/en/map?object=country&object_id=199&orderby=top_popular&smart=0&display=split&object_name=Malaysia&zoom=4&lat=4.228592400950948&lng=109.45918792&bbox=90.26367187500001%2C-24.5271348225978%2C128.58398437500003%2C32.02670629333614&owner__1_12_13_32=1&locality__2_3=1&water_type__5=1&water_type__1_2_3=1",
         "sourceRow": 82
       },
-      "locationStatus": "Coordinates not yet verified — identity_verified_coordinates_unverified",
+      "locationStatus": "Supplied coordinate reference — Exact beach marker (Tanjung Sedili, Johor); reviews say no access road - use with caution",
       "waterType": "ocean_sea",
       "habitat": "Biodiversity information not yet available",
       "habitatTag": "UNAVAILABLE",
@@ -2921,9 +3113,9 @@
       "ecologicalNote": "Biodiversity information not yet available",
       "locationReview": {
         "reviewedAt": "2026-10-06",
-        "status": "identity_verified_coordinates_unverified",
+        "status": "supplied_coordinate_reference",
         "providerPage": "https://beaches-searcher.com/en/beach/458201105/ru-rebah-beach",
-        "evidenceNote": "Checked 2026-10-06. The provider places this shoreline 920 m from Kampong Sri Gading and 60.8 km from Johor Bahru, 4.4 km from Jason Bay Beach II. A same-name third-party listing in Tanjung Resang, Mersing is inconsistent and was excluded. No Google Maps marker matching the provider location was verified."
+        "evidenceNote": "Exact beach marker (Tanjung Sedili, Johor); reviews say no access road - use with caution"
       }
     }
   ]
