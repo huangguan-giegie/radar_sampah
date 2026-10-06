@@ -151,6 +151,7 @@ describe("backend v1 contribution account", () => {
     state.section = "nickname";
     renderAccount();
     await state.actions.get("Save Nickname")?.();
+    await Promise.resolve(); await Promise.resolve();
     expect(state.request).toHaveBeenCalledWith("/account/profile", "PATCH", { nickname: "TideWatcher" });
     expect(state.setProfile).toHaveBeenCalled();
     expect(state.navigate).toHaveBeenCalledWith("/account");
@@ -176,6 +177,7 @@ describe("backend v1 contribution account", () => {
     state.request.mockRejectedValue(new Error("Could not save your preference."));
     renderAccount();
     await state.actions.get("Leave Leaderboard")?.();
+    await Promise.resolve(); await Promise.resolve();
     expect(state.setProfile).not.toHaveBeenCalled();
     const markup = renderAccount();
     expect(markup).toContain('role="alert"');
