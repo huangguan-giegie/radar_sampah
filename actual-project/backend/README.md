@@ -93,13 +93,15 @@ Normal anonymous signup creates `volunteer` accounts only.
 - `LITTER_MODEL_PATH`, `LITTER_MODEL_VERSION`: optional recognition model
   overrides.
 - `TEAMOROUTER_API_KEY`: backend-only key for custom species questions.
-  The key's TeamoRouter routing configuration must have `gpt-6-luna` capacity.
+  The key's TeamoRouter routing configuration must have Gemini capacity.
 
 Custom species questions use the shared published guide at
 `../frontend/src/content/coastalContent.json`; deploy the repository with that
 file present. The three prepared questions are answered locally in the frontend.
-Only the custom question calls the gateway, with a fixed `gpt-6-luna` model,
-35-second timeout and 1,500-token output budget. The public endpoint allows two
+Only the custom question calls TeamoRouter's native Gemini endpoint, using
+`gemini-3.5-flash-lite` first and `gemini-3.8-flash` if the primary call fails.
+Each model has a 20-second timeout and 1,500-token output budget. Authentication
+errors and blocked questions do not trigger the fallback. The public endpoint allows two
 concurrent calls and 60 attempts per rolling hour per worker. This deployment
 uses one worker; additional workers would each have their own limit.
 
