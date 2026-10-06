@@ -1,6 +1,6 @@
 # Malaysia beach coordinate enrichment — 6 October 2026
 
-The supplied 82-row catalogue now has **52 sourced coordinate pairs**, including **48 newly located rows** beyond the four original matches. **30 rows remain without an accepted coordinate pair**. Together with the four validated MVP beaches, the API has 56 located records out of 86.
+The supplied 82-row catalogue now has **82 coordinate references**. The initial source-backed pass located 52 rows; a 27-row user-supplied Google Maps supplement and a final Malaysia-only research pass for Landing Beach, Cenderawasih Beach and Batu village Beach brought the export to **82/82 located rows**. Together with the four validated MVP beaches, the API has 86 located records out of 86. Precision remains explicit: some supplement points are island-, resort-, beachfront- or triangulated references rather than exact surveyed beach centroids.
 
 All entries remain Malaysian locations. The original names, order and stable identifiers are preserved. The two Turtle Beach rows are not assigned interchangeably. A point adds a location reference; it does not establish pollution, local species occurrence, public accessibility or safe visiting conditions.
 
@@ -112,4 +112,4 @@ For the detailed evidence and rejected candidates, see the four research files:
 
 Startup refreshes only the 82 managed catalogue rows, updating changed latitude, longitude and area values in one database batch. The four MVP records, stable identifiers, reports, photos, users, events, attendance, cleanup history and biodiversity reference rows are preserved. Restarting with the same catalogue performs no location writes. New deployments therefore update previously seeded null coordinates, rather than merely changing the local JSON file.
 
-The existing 25 km GPS resolution and event proximity rules continue to apply. Unlocated rows still support manual evidence and remain excluded from pins and proximity check-in. Public Insights retains its four-beach scope and existing minimum-evidence/privacy rules. Full AC4.4.4 enrichment remains incomplete for the explicitly unresolved rows.
+The existing 25 km GPS resolution and event proximity rules continue to apply. All 82 export rows now have a coordinate reference and can participate in location-based map/model flows. Approximate and triangulated references remain explicitly labelled so they are not represented as exact surveyed beach centroids. Public Insights retains its four-beach scope and existing minimum-evidence/privacy rules.
