@@ -27,8 +27,9 @@ let lastPosition: { lat: number; lng: number } | null = null;
 
 function distanceKm(
   a: { lat: number; lng: number },
-  b: { lat: number; lng: number },
+  b: { lat: number | null; lng: number | null },
 ) {
+  if (b.lat == null || b.lng == null) return Number.POSITIVE_INFINITY;
   const rad = Math.PI / 180;
   const p =
     Math.sin(((b.lat - a.lat) * rad) / 2) ** 2 +
