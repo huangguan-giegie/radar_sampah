@@ -570,21 +570,24 @@ export default function MapScreen() {
               aria-label="Search beaches"
             />
           </label>
-          {visible.map((b) => (
-            <LinkRow
-              key={b.id}
-              title={b.name}
-              subtitle={b.validReports + " counted reports"}
-              trailing={
-                <SeverityBadge
-                  band={b.severity}
-                  label={b.severity ? undefined : "Insufficient Data"}
-                />
-              }
-              onClick={() => nav("/beach/" + b.id)}
-            />
-          ))}
-          {!visible.length && <DataUnavailable title="No matching beaches" />}
+          {loading ? (
+            <p className="subtle" role="status">Loading beaches…</p>
+          ) : error ? (
+            <DataUnavailable title="Could not load beaches" retry={() => void refresh()}>{error}</DataUnavailable>
+          ) : (
+            <>
+              {visible.map((beach) => (
+                <section key={beach.id} className="map-beach-list-row">
+                  <div>
+                    <button onClick={() => nav("/beach/" + beach.id)}>{beach.name}</button>
+                    <SeverityBadge band={beach.severity} label={beach.severity ? undefined : "Insufficient Data"} />
+                  </div>
+                  <p className="coastal-footnote">{beach.area} · {beach.validReports} counted reports</p>
+                </section>
+              ))}
+              {!visible.length && <DataUnavailable title="No matching beaches" />}
+            </>
+          )}
         </Sheet>
       )}
       {sheet === "personal" && user && (
