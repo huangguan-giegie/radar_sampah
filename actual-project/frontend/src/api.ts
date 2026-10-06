@@ -8,8 +8,13 @@ import {
   createIteration2Cleanup as createIteration2CleanupCore,
   invalidateBeaches,
   restoreId as restoreIdCore,
+  apiRequest,
 } from './apiCore';
 import type { AuthSession, QuantityByCategory } from './types';
+
+export function askSpeciesQuestion(speciesId: string, question: string): Promise<{ answer: string }> {
+  return apiRequest(`/species/${encodeURIComponent(speciesId)}/questions`, 'POST', { question }, 45_000, false);
+}
 
 export type Iteration2CleanupInput = {
   targetReportId?: string;

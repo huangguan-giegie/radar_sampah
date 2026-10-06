@@ -23,7 +23,7 @@ import content from "../content/coastalContent.json";
 import { BORNEO_VIEW_BOUNDS, getViewBounds, groupMapPoints, PENINSULA_VIEW_BOUNDS } from "../mapGeometry";
 import { getLocatedMapBeaches, PRIMARY_MAP_BEACHES } from "../mapCatalogue";
 import { placeMapLabels } from "../mapLabels";
-import { originBeachId, overviewMarinePins, regionalMarinePins, withBeach } from "../biodiversity";
+import { marineAreaPath, originBeachId, overviewMarinePins, regionalMarinePins, withBeach } from "../biodiversity";
 import { MarineRecordCard } from "../components/MarineRecordCard";
 const COLORS: Record<string, string> = {
   Low: "#6e9d80",
@@ -228,7 +228,7 @@ export default function MapScreen() {
       return pin;
     };
     if (layer === "bio") {
-      const pins = region ? marinePins.map(p => ({ ...p, name: p.record.name, place: p.record.place, image: p.record.image }))
+      const pins = region ? marinePins.map(p => ({ ...p, name: p.record.name, place: p.record.place, image: p.record.image, speciesId: p.record.speciesId }))
         : overviewMarinePins(locatedBeaches).map(p => ({ ...p, place: "" }));
       const size = map.getSize();
       const compact = size.y < 360;
@@ -239,8 +239,8 @@ export default function MapScreen() {
       });
       const labels = placeMapLabels(pins.map(p => ({ id: p.id, name: p.name, preferred: true, ...map.latLngToContainerPoint([p.lat, p.lng]) })),
         { width: size.x, height: size.y, obstacles, compact, labelHeight: compact ? 54 : region ? 94 : 74 });
-      const openPin = (id: string, destination: string) => {
-        if (!region) { nav(withBeach("/marine-area/" + destination, originBeachId(beachId ?? null, destination))); return; }
+      const openPin = (id: string, destination: string, speciesId: string | null) => {
+        if (!region) { nav(marineAreaPath(destination, speciesId, originBeachId(beachId ?? null, destination))); return; }
         setParams(previous => {
           const next = new URLSearchParams(previous);
           next.set("panel", "record"); next.set("record", id);
@@ -249,7 +249,7 @@ export default function MapScreen() {
       };
       // Keep all source locations tappable even where a short viewport cannot fit every label.
       for (const p of pins) marker(p.lat, p.lng, p.name + (p.place ? " · " + p.place : ""),
-        '<span class="marine-coast-dot"></span>', () => openPin(p.id, p.regionId), [22, 22]);
+        '<span class="marine-coast-dot"></span>', () => openPin(p.id, p.regionId, p.speciesId), [22, 22]);
       for (const placed of labels) {
         const p = pins.find(pin => pin.id === placed.id)!;
         const point = map.latLngToContainerPoint([p.lat, p.lng]);
@@ -266,7 +266,7 @@ export default function MapScreen() {
         text.append(name);
         if (p.place) { const place = document.createElement("small"); place.textContent = p.place; text.append(place); }
         node.append(photo, text);
-        marker(p.lat, p.lng, p.name + (p.place ? " · " + p.place : ""), node.outerHTML, () => openPin(p.id, p.regionId),
+        marker(p.lat, p.lng, p.name + (p.place ? " · " + p.place : ""), node.outerHTML, () => openPin(p.id, p.regionId, p.speciesId),
           [placed.width, placed.height], [point.x - placed.x, point.y - placed.y], 1000);
       }
     } else if (!region) {

@@ -687,3 +687,11 @@
 .wildlife-beach-card small{color:#63707e;font-size:12px}
 .wildlife-species{display:flex;gap:7px;flex-wrap:wrap}
 .wildlife-species>span{padding:7px 11px;border:1px solid #d9dee5;border-radius:30px;font-size:12px}
+.species-question-note{margin:0 0 8px;font-size:12px;color:#ffffffad}
+.coastal-summary form{margin-top:18px;font-size:14px}
+.coastal-summary textarea{display:block;resize:vertical;min-height:90px}
+.species-question-submit{padding:12px 18px;border-radius:16px;background:#b8ff36;color:#0b2161;font-weight:700}
+.species-question-submit:disabled{opacity:.5;cursor:default}
+.marine-record-body>span.marine-record-location{display:flex;flex-direction:column;gap:5px;font-size:14px;color:inherit}
+.marine-record-location small{font-size:12px;color:#667587}
+.marine-record-location+.marine-record-location{padding-top:10px;border-top:1px solid #e8ecf0}

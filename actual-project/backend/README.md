@@ -92,6 +92,21 @@ Normal anonymous signup creates `volunteer` accounts only.
 - `GEO_PRIVACY_HMAC_KEY`: stable private key for proximity references.
 - `LITTER_MODEL_PATH`, `LITTER_MODEL_VERSION`: optional recognition model
   overrides.
+- `TEAMOROUTER_API_KEY`: backend-only key for custom species questions.
+  The key's TeamoRouter routing configuration must have `gpt-6-luna` capacity.
+
+Custom species questions use the shared published guide at
+`../frontend/src/content/coastalContent.json`; deploy the repository with that
+file present. The three prepared questions are answered locally in the frontend.
+Only the custom question calls the gateway, with a fixed `gpt-6-luna` model,
+35-second timeout and 1,500-token output budget. The public endpoint allows two
+concurrent calls and 60 attempts per rolling hour per worker. This deployment
+uses one worker; additional workers would each have their own limit.
+
+`POST /species/<id>/questions` accepts `{"question": "..."}` (1–500 characters)
+and returns `{"answer": "...", "sources": [...]}`. It requires no account.
+Invalid questions return 400, unknown species 404, busy/rate limits 429,
+gateway failures 502, missing configuration 503 and timeouts 504.
 
 ## Active endpoints
 
@@ -105,6 +120,7 @@ Normal anonymous signup creates `volunteer` accounts only.
 - `GET /scoring-method`
 - `GET /scoring-method/iteration2`
 - `POST /api/species-distribution/predict`
+- `POST /species/<id>/questions`
 - `POST /geo/resolve-beach`
 - `POST /uploads/photos`
 - `POST /reports`

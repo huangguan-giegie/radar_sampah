@@ -18,7 +18,8 @@ import { useAppBack } from "../navigation";
 
 import { SpeciesPicture } from "../components/SpeciesPicture";
 import { MarineRecordCard } from "../components/MarineRecordCard";
-import { originBeachId, withBeach } from "../biodiversity";
+import { SpeciesQuestions } from "../components/SpeciesQuestions";
+import { groupMarineRecords, originBeachId, withBeach } from "../biodiversity";
 
 function speciesImageMedia(id: string) {
   return Object.entries(photoOverrides).find(([key]) => key === id)?.[1];
@@ -143,43 +144,7 @@ export function SpeciesScreen() {
           <p style={{ fontSize: 17, lineHeight: 1.5 }}>{s.intro}</p>
           <p className="coastal-footnote">{s.evidence}</p>
         </div>
-        <SummaryCard eyebrow="Ask AI">
-          <p style={{ margin: "0 0 8px", fontSize: 12, color: "#ffffffad" }}>
-            AI-assisted · answers use this card’s sources
-          </p>
-          {[
-            "Where does it usually live?",
-            "How can marine litter affect it?",
-            "What can I do?",
-          ].map((q, i) => (
-            <button
-              key={q}
-              className="coastal-link-row"
-              onClick={() =>
-                document
-                  .getElementById("answer-" + i)
-                  ?.scrollIntoView({ behavior: "smooth", block: "start" })
-              }
-            >
-              <span className="grow" style={{ fontSize: 14 }}>
-                {q}
-              </span>
-              <span style={{ color: C.lime }}>↓</span>
-            </button>
-          ))}
-        </SummaryCard>
-        {s.answers.map((a, i) => (
-          <section
-            key={a.title}
-            id={"answer-" + i}
-            style={{ scrollMarginTop: 22 }}
-          >
-            <WhiteCard>
-              <h3>{a.title}</h3>
-              <p className="subtle">{a.text}</p>
-            </WhiteCard>
-          </section>
-        ))}
+        <SpeciesQuestions key={s.id} species={s} />
         <section>
           <h3>{s.id === "grubeulepis-malayensis" ? "Sources & Illustration Credit" : "Sources & Photo Credit"}</h3>
           {s.sources.map((source, i) => (
@@ -216,42 +181,6 @@ export function SpeciesScreen() {
   );
 }
 
-
-type SpeciesIntroduction = {
-  name: string;
-  subtitle: string;
-  intro: string;
-  evidence: string;
-  image: string | null;
-  answers: { title: string; text: string }[];
-  sources: { label: string; url: string }[];
-  credit: string;
-  photoSource: string | null;
-};
-
-/** Compatibility view retained for the published-answer contract test. */
-export function SpeciesIntroductionView({ species: s, goBack }: { species: SpeciesIntroduction; goBack: () => void }) {
-  return (
-    <main className="screen scroll-y coastal-screen">
-      <div className="species-hero">
-        <SpeciesPicture image={s.image} name={s.name} />
-        <div className="back-overlay"><BackButton onClick={goBack} /></div>
-      </div>
-      <div className="coastal-page measure species-body">
-        <h1>{s.name}</h1>
-        <p className="subtle" style={{ fontStyle: "italic" }}>{s.subtitle}</p>
-        <p>{s.intro}</p>
-        <p className="coastal-footnote">{s.evidence}</p>
-        <SummaryCard eyebrow="Read answers">
-          <p style={{ margin: "0 0 8px", fontSize: 12, color: "#ffffffad" }}>
-            Answers use this card’s published sources
-          </p>
-        </SummaryCard>
-        {s.answers.map((a) => <WhiteCard key={a.title}><h3>{a.title}</h3><p className="subtle">{a.text}</p></WhiteCard>)}
-      </div>
-    </main>
-  );
-}
 
 export function HabitatScreen() {
   const { habitatId } = useParams();
@@ -407,6 +336,7 @@ export function MarineAreaScreen() {
         ))}
       </CoastalPage>
     );
+  const groups = groupMarineRecords(r.records, params.get("species"));
   return (
     <CoastalPage
       title={r.name}
@@ -415,7 +345,7 @@ export function MarineAreaScreen() {
       back={withBeach("/map?layer=bio&region=" + r.id, beachId)}
       tabs={false}
     >
-      <MarineRecordCard record={r.records[0]} beachId={beachId} />
+      <MarineRecordCard record={groups[0].records[0]} records={groups[0].records} name={groups[0].name} beachId={beachId} />
       <SummaryCard eyebrow="AI-Assisted Impact Summary">
         <p style={{ lineHeight: 1.5 }}>
           Choose a beach with litter-type data for a local explanation.
@@ -430,7 +360,7 @@ export function MarineAreaScreen() {
           Why This?
         </button>
       </SummaryCard>
-      {r.records.slice(1).map((record, i) => <MarineRecordCard key={i} record={record} beachId={beachId} />)}
+      {groups.slice(1).map(group => <MarineRecordCard key={group.id} record={group.records[0]} records={group.records} name={group.name} beachId={beachId} />)}
       <WhiteCard>
         <h3>Sources & Photo Credits</h3>
         {r.sources.map((s, i) => (
