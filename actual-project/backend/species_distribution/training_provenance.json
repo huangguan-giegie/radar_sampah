@@ -1,0 +1,52 @@
+{
+  "source_training_version": "iteration3-project-cell-holdout-20261003",
+  "release_version": "iteration3-upgrade-40-species-20261003",
+  "source_training_completed_at_utc": "2026-10-03T12:39:55.273778+00:00",
+  "source_api": "https://api.obis.org/v3/occurrence",
+  "source_region": "areaid=140 (Malaysia)",
+  "downloaded_records": 69991,
+  "all_successfully_trained_models": 157,
+  "selected_release_models": 40,
+  "training_grid_cells": 4227,
+  "python": "3.13.7",
+  "numpy": "2.4.6",
+  "pandas": "3.0.3",
+  "scikit_learn": "1.8.0",
+  "training_code_sha256": "6e8c057cd5124ba0d5ddce22cd15c1ffd0523a56d631ec64e475630be33886fb",
+  "training_config_sha256": "91312f941d59f29ffe1d17e13c741efa16537eb870e14b0ebc6470c2e325c136",
+  "frozen_source_files": {
+    "malaysia_eez_marine_grid.csv": {
+      "sha256": "c6574f2c1c4c7b28c62daa7df1b12648e5bef4481674cc6e68a43449a85644e7",
+      "bytes": 92717
+    },
+    "presence_cells.json": {
+      "sha256": "6df4e75f73c6f8893fcd2a7de0fe1a26f28f551d5889dafc5dd7f4135f883f12",
+      "bytes": 1718421
+    },
+    "species_audit_table.json": {
+      "sha256": "db726d59134f5651c874ce81e6a3429a464028658ae0727e42b25951e129fcca",
+      "bytes": 2355047
+    },
+    "occurrence_download_manifest.json": {
+      "sha256": "ebce95999adea57d93e153afc41d8e15b1c8770f61e47c3916510c65d8823fe2",
+      "bytes": 5430
+    },
+    "quality_filtered_download_manifest.json": {
+      "sha256": "ed9c163813d8c1f9b8be6ff248e3ba308da441a6981b0a673ae6bed499cb5f66",
+      "bytes": 4053
+    },
+    "accepted_occurrences.json": {
+      "sha256": "5e8943868649f5dd01c16ffa790aa16a7ed1cbae8e5a98027bc07b02df462dff",
+      "bytes": 24467275
+    }
+  },
+  "release_retrains_models": false,
+  "labels": {
+    "1": "accepted historical record in grid cell",
+    "0": "unrecorded background; not confirmed absence"
+  },
+  "validation": "Fixed stratified 80/20 cell split per species; 3-fold parameter selection only inside the development partition. Final models refit on all cells after held-out evaluation.",
+  "score_calibrated": false,
+  "new_region_transfer_validated": false,
+  "cross_species_top5_accuracy_validated": false
+}

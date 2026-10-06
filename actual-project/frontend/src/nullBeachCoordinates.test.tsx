@@ -72,6 +72,6 @@ describe('beaches without verified coordinates', () => {
     renderToStaticMarkup(<MemoryRouter><BeachScreen /></MemoryRouter>);
     state.effects[0]();
     await Promise.resolve(); await Promise.resolve();
-    expect(state.model).toHaveBeenCalledWith(2.746, 101.44);
+    expect(state.model).toHaveBeenCalledWith(2.746, 101.44, { mode: 'nearby_marine', topK: 5 });
   });
 });

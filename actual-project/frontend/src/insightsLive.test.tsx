@@ -63,7 +63,7 @@ function summary() {
       caption: "Recorded attendance does not prove cleanup work was completed.",
     },
     evidence: { sufficientBeachCount: 1, countedNote: "Counted is community evidence, not expert verification.", beaches: [{ beachId: "morib", statuses: { countedActive: 3, countedResolved: 2, duplicate: 1, incomplete: 0 } }] },
-    wildlife: { beaches: [{ beachId: "morib", beachName: "Pantai Morib", species: [{ id: "green-sea-turtle", name: "Green Sea Turtle", relativeOccurrenceScore: 0.73, source: { label: "OBIS model", url: "https://obis.org/" }, reviewDate: "2026-10-05", destination: "/species/green-sea-turtle" }], sourceStatus: "ready" }] },
+    wildlife: { beaches: [{ beachId: "morib", beachName: "Pantai Morib", species: [{ id: "green-sea-turtle", name: "Green Sea Turtle", relativeOccurrenceScore: 0.73, locationMatchScore: 0.91, source: { label: "OBIS model", url: "https://obis.org/" }, reviewDate: "2026-10-05", destination: "/species/green-sea-turtle" }], sourceStatus: "ready", coordinateContext: { requestedLatitude: 2.746, requestedLongitude: 101.44, usedLatitude: 2.75, usedLongitude: 101.35, method: 'nearest_marine_grid', moved: true, distanceKm: 10, maxDistanceKm: 15, requestedInsideMalaysianEez: false } }] },
   };
 }
 
@@ -140,12 +140,29 @@ describe("live Insights acceptance display", () => {
     expect(markup).not.toContain("Total Cleanup Score");
   });
 
-  it("labels wildlife model scores as relative and links the authoritative source", () => {
+  it("distinguishes location match from raw wildlife scores and discloses the nearby reference", () => {
     state.topic = "wildlife";
     const markup = renderToStaticMarkup(<LiveInsightsScreen />);
-    expect(markup).toContain("Relative model score: 0.73");
+    expect(markup).toContain("Location match: 91/100");
+    expect(markup).toContain("Raw relative model score: 0.73");
     expect(markup).not.toContain("73%");
-    expect(markup).toContain("not probabilities or confirmed sightings");
+    expect(markup).not.toContain("91%");
+    expect(markup).toContain("not confirmed sightings");
+    expect(markup).toContain("an occurrence probability");
+    expect(markup).toContain("Marine-grid reference: 2.7500, 101.3500");
+    expect(markup).toContain("10.0 km from the beach");
+    expect(markup).toContain("15 km search limit");
     expect(markup).toContain('href="https://obis.org/"');
+  });
+
+  it("preserves the supplied wildlife order instead of sorting species by raw score", () => {
+    state.topic = "wildlife";
+    const first = state.data.wildlife.beaches[0].species[0];
+    first.relativeOccurrenceScore = 0.01;
+    state.data.wildlife.beaches[0].species.push({ ...first, id: 'moorish-idol', name: 'Moorish idol', relativeOccurrenceScore: 0.99, locationMatchScore: 0.85, destination: '/species/moorish-idol' });
+    const markup = renderToStaticMarkup(<LiveInsightsScreen />);
+    expect(markup.indexOf('Green Sea Turtle')).toBeLessThan(markup.indexOf('Moorish idol'));
+    expect(markup).toContain('Raw relative model score: 0.01');
+    expect(markup).toContain('Location match: 85/100');
   });
 });
