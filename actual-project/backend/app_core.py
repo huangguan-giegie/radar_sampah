@@ -745,6 +745,33 @@ def load_species_distribution_model() -> SpeciesDistributionModel:
     return SpeciesDistributionModel()
 
 
+@lru_cache(maxsize=1)
+def load_litter_recognizer():
+    """Load the packaged litter recognizer only when recognition is requested."""
+    from recognition import LitterRecognizer
+    return LitterRecognizer.load()
+
+
+class _LazyExtension:
+    """Proxy a heavyweight extension so Gunicorn can bind before models load."""
+
+    def __init__(self, loader):
+        self._loader = loader
+
+    def __getattr__(self, name):
+        return getattr(self._loader(), name)
+
+
+@lru_cache(maxsize=1)
+def lazy_species_distribution_model():
+    return _LazyExtension(load_species_distribution_model)
+
+
+@lru_cache(maxsize=1)
+def lazy_litter_recognizer():
+    return _LazyExtension(load_litter_recognizer)
+
+
 def generate_participant_id(connection: Any) -> str:
     taken = set(connection.execute(select(users_table.c.participant_id)).scalars().all())
     available = [str(value) for value in range(PARTICIPANT_ID_MIN, PARTICIPANT_ID_MAX + 1) if str(value) not in taken]
@@ -1522,18 +1549,17 @@ def create_app(
 
     engine = create_engine_for_url(normalise_database_url(database_url or os.getenv("DATABASE_URL")))
     initialise_database(engine)
-    from recognition import LitterRecognizer
-
-    recognizer = LitterRecognizer.load()
-    species_distribution_model = load_species_distribution_model()
+    recognizer = lazy_litter_recognizer()
+    species_distribution_model = lazy_species_distribution_model()
     directory = photo_storage_path(photo_storage_dir)
     seed_reference_data(engine, load_beaches())
     beaches = load_beaches(engine)
     beach_names = {beach["id"]: beach["name"] for beach in beaches}
     application.extensions["marine_engine"] = engine
     application.extensions["photo_storage_dir"] = directory
-    # Load the four validated offline models once at startup. Prediction never
-    # queries OBIS and does not write coordinates or scores to the database.
+    # Heavy offline models are loaded lazily on first use so Render can bind
+    # the HTTP port promptly. Prediction remains offline and does not persist
+    # coordinates or scores to the database.
     application.extensions["photo_cleanup_timers"] = []
     application.extensions["litter_recognizer"] = recognizer
     application.extensions["species_distribution_model"] = species_distribution_model
