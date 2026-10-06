@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import content from "../content/coastalContent.json";
+import photoOverrides from "../content/speciesPhotoOverrides.json";
 import {
   CoastalPage,
   DataUnavailable,
@@ -18,6 +19,10 @@ import { useAppBack } from "../navigation";
 import { SpeciesPicture } from "../components/SpeciesPicture";
 import { MarineRecordCard } from "../components/MarineRecordCard";
 import { originBeachId, withBeach } from "../biodiversity";
+
+function speciesImageMedia(id: string) {
+  return Object.entries(photoOverrides).find(([key]) => key === id)?.[1];
+}
 import { USE_MOCK } from "../api";
 import { iteration3Request } from "../iteration3Api";
 import type { ConservationCard } from "../iteration3Personal";
@@ -89,6 +94,7 @@ export default function MarineLifeScreen() {
                 <button key={s.id} onClick={() => nav("/species/" + s.id)}>
                   <SpeciesPicture image={s.image} name={s.name} />
                   <strong>{s.name}</strong>
+                  {s.id === "grubeulepis-malayensis" && <small>Scientific schematic</small>}
                   <small>Learn more →</small>
                 </button>
               ))}
@@ -102,7 +108,7 @@ export default function MarineLifeScreen() {
         </DataUnavailable>
       )}
       <p className="coastal-footnote">
-        Photos show species examples, not sightings at your beach. Explore their
+        Photos and labelled schematics show species examples, not sightings at your beach. Explore their
         habitats.
       </p>
       <GhostButton onClick={() => nav("/habitats")}>
@@ -161,7 +167,7 @@ function ApprovedSpeciesScreen() {
       {answer.aiAssisted && <p className="coastal-footnote">AI-assisted</p>}
       {answer.sources.map(source => <p key={source.url} className="coastal-footnote"><a href={source.url} target="_blank" rel="noreferrer">{source.label} ↗</a></p>)}
     </WhiteCard>}
-    <section><h3>Sources & Photo Credit</h3>
+    <section><h3>{s.name === "Grubeulepis malayensis" ? "Sources & Illustration Credit" : "Sources & Photo Credit"}</h3>
       {card.sources.map(source => <p key={source.url}><a className="species-source" href={source.url} target="_blank" rel="noreferrer">{source.label} ↗</a></p>)}
       <p className="coastal-footnote">Reviewed {card.reviewDate} · {card.credit}</p>
       <a className="species-source" href={card.photoSource} target="_blank" rel="noreferrer">Photo source ↗</a>
@@ -181,7 +187,8 @@ function PreviewSpeciesScreen() {
         <DataUnavailable title="Species not found" />
       </CoastalPage>
     );
-  return <SpeciesIntroductionView species={s} goBack={goBack} />;
+  const media = speciesImageMedia(s.id);
+  return <SpeciesIntroductionView species={s} goBack={goBack} media={media} />;
 }
 
 type SpeciesIntroduction = {
@@ -196,7 +203,7 @@ type SpeciesIntroduction = {
   photoSource: string | null;
 };
 
-export function SpeciesIntroductionView({ species: s, goBack }: { species: SpeciesIntroduction; goBack: () => void }) {
+export function SpeciesIntroductionView({ species: s, goBack, media }: { species: SpeciesIntroduction; goBack: () => void; media?: { imageLicenseUrl: string; imageCaption?: string | null } }) {
   return (
     <main className="screen scroll-y coastal-screen">
       <div className="species-hero">
@@ -212,6 +219,7 @@ export function SpeciesIntroductionView({ species: s, goBack }: { species: Speci
             {s.subtitle}
           </p>
           <p style={{ fontSize: 17, lineHeight: 1.5 }}>{s.intro}</p>
+          {media?.imageCaption && <p className="coastal-footnote">{media.imageCaption}</p>}
           <p className="coastal-footnote">{s.evidence}</p>
         </div>
         <SummaryCard eyebrow="Read answers">
@@ -257,7 +265,12 @@ export function SpeciesIntroductionView({ species: s, goBack }: { species: Speci
           {s.credit && <p className="coastal-footnote">{s.credit}</p>}
           {s.photoSource && (
             <a className="species-source" href={s.photoSource} target="_blank" rel="noreferrer">
-              Photo source ↗
+              {s.name === "Grubeulepis malayensis" ? "Schematic reference ↗" : "Photo source ↗"}
+            </a>
+          )}
+          {media && (
+            <a className="species-source" href={media.imageLicenseUrl} target="_blank" rel="noreferrer">
+              Image license ↗
             </a>
           )}
         </section>
