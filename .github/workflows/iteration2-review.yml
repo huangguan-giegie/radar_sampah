@@ -45,3 +45,42 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
+
+
+  production-model-benchmark:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Measure cold and warm production model latency
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE="https://team04-marine-observation-api.onrender.com"
+
+          echo "=== species distribution ==="
+          curl -sS -o /tmp/species-cold.json -w "SPECIES_COLD status=%{http_code} total=%{time_total} ttfb=%{time_starttransfer}\n"             -H "Content-Type: application/json"             -d '{"latitude":2.746,"longitude":101.44}'             "$BASE/api/species-distribution/predict"
+          curl -sS -o /tmp/species-warm.json -w "SPECIES_WARM status=%{http_code} total=%{time_total} ttfb=%{time_starttransfer}\n"             -H "Content-Type: application/json"             -d '{"latitude":2.746,"longitude":101.44}'             "$BASE/api/species-distribution/predict"
+
+          AUTH_JSON="$(curl -sS -H "Content-Type: application/json" -d '{}' "$BASE/auth/anonymous")"
+          TOKEN="$(python -c 'import json,sys; print(json.loads(sys.stdin.read())["token"])' <<<"$AUTH_JSON")"
+
+          python - <<'PY'
+          import base64
+          data = base64.b64decode("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Wl5Z1sAAAAASUVORK5CYII=")
+          open("/tmp/radar-test.png","wb").write(data)
+          PY
+
+          echo "=== litter recognizer ==="
+          curl -sS -o /tmp/litter-cold.json -w "LITTER_COLD status=%{http_code} total=%{time_total} ttfb=%{time_starttransfer}\n"             -H "Authorization: Bearer $TOKEN"             -F "photo=@/tmp/radar-test.png;type=image/png"             "$BASE/recognitions/cleanup-photo"
+          curl -sS -o /tmp/litter-warm.json -w "LITTER_WARM status=%{http_code} total=%{time_total} ttfb=%{time_starttransfer}\n"             -H "Authorization: Bearer $TOKEN"             -F "photo=@/tmp/radar-test.png;type=image/png"             "$BASE/recognitions/cleanup-photo"
+
+          echo "--- result states ---"
+          python - <<'PY'
+          import json
+          for name in ("species-cold","species-warm","litter-cold","litter-warm"):
+              with open(f"/tmp/{name}.json","r",encoding="utf-8") as f:
+                  body=json.load(f)
+              if name.startswith("species"):
+                  print(name, "predictions=", len(body.get("predictions", [])))
+              else:
+                  print(name, "modelState=", body.get("modelState"), "reason=", body.get("reason"))
+          PY
