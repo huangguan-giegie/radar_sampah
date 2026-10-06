@@ -142,3 +142,6 @@ the explanation control, above the map. Selecting `Not Now` returned to Home
 with the bottom navigation visible. The list/detail continuation is covered by
 the existing production QA captures; the local API returned a transient beach
 list loading error during this isolated check and no production data was changed.
+After PR #72 was merged, the public frontend returned HTTP 200 with a new
+static bundle containing both the prompt copy and `zIndex: 0`, confirming that
+the repair reached the deployed frontend.
