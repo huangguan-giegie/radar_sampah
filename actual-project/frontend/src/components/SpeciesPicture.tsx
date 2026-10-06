@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { SpeciesIcon } from "./Icon";
+import photoOverrides from "../content/speciesPhotoOverrides.json";
 export function SpeciesPicture({
   image,
   name,
@@ -10,11 +11,15 @@ export function SpeciesPicture({
   className?: string;
 }) {
   const [failed, setFailed] = useState(false);
+  const media = Object.values(photoOverrides).find((item) => item.image === image);
   return image && !failed ? (
     <img
       className={className}
       src={image}
-      alt={name}
+      alt={media?.imageAlt ?? name}
+      style={media && "objectFit" in media && media.objectFit === "contain"
+        ? { objectFit: "contain", backgroundColor: "#e7f1ed" }
+        : undefined}
       loading="lazy"
       onError={() => setFailed(true)}
     />

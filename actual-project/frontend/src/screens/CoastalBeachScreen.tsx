@@ -16,16 +16,17 @@ import {
   Skeleton,
 } from "../components/ui";
 import {
+  ActionTile,
   CoastalPage,
   DataUnavailable,
   LinkRow,
   SectionHeading,
   Sheet,
-  SummaryCard,
   WhiteCard,
 } from "../components/CoastalUI";
+import { Camera, Check, CommunityIcon } from "../components/Icon";
 import { SpeciesPicture } from "../components/SpeciesPicture";
-import { attentionStateFor, formatDate, SEVERITY, severityLabel } from "../theme";
+import { attentionStateFor, C, formatDate, SEVERITY, severityLabel } from "../theme";
 import { hasDraftProgress, resumePath } from "../flowRules";
 import { compositionFooter } from "./BeachScreen";
 import { BandMeter } from "../components/ds";
@@ -227,31 +228,33 @@ export default function CoastalBeachScreen() {
             How it’s rated →
           </button>
         </WhiteCard>
-        <SummaryCard eyebrow="What You Can Do Here">
-          <LinkRow
-            title="Report Litter Here"
-            subtitle="Photo, beach and what you saw"
-            onClick={startReport}
-          />
-          <LinkRow
-            title="Join a Cleanup"
-            subtitle={
-              event
-                ? "Contribute at an upcoming cleanup"
-                : "No cleanup here yet · contribute at one nearby"
-            }
-            onClick={() => nav(event ? "/events/" + event.id : "/community")}
-          />
-          <LinkRow
-            title="Log Your Cleanup"
-            subtitle="Confirm what is left after cleaning"
-            onClick={() =>
-              previewOnly
-                ? setUnsupported(true)
-                : nav(cleanupDestination(beachId, linkedEvent))
-            }
-          />
-        </SummaryCard>
+        <section>
+          <SectionHeading>What You Can Do Here</SectionHeading>
+          <div className="action-grid" style={{ marginTop: 16 }}>
+            <ActionTile
+              title="Report Litter"
+              subtitle="Take a photo"
+              icon={<Camera color={C.navy} size={18} />}
+              onClick={startReport}
+            />
+            <ActionTile
+              title="Join Cleanup"
+              subtitle={event ? "Choose an event" : "Find one nearby"}
+              icon={<CommunityIcon color={C.navy} size={19} />}
+              onClick={() => nav(event ? "/events/" + event.id : "/community")}
+            />
+            <ActionTile
+              title="Log Cleanup"
+              subtitle="What you cleared"
+              icon={<Check color={C.navy} size={21} />}
+              onClick={() =>
+                previewOnly
+                  ? setUnsupported(true)
+                  : nav(cleanupDestination(beachId, linkedEvent))
+              }
+            />
+          </div>
+        </section>
         <section>
           <SectionHeading
             action="Species Guide →"

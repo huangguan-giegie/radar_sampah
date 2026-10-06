@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import content from "../content/coastalContent.json";
+import photoOverrides from "../content/speciesPhotoOverrides.json";
 import {
   CoastalPage,
   DataUnavailable,
@@ -18,6 +19,10 @@ import { useAppBack } from "../navigation";
 import { SpeciesPicture } from "../components/SpeciesPicture";
 import { MarineRecordCard } from "../components/MarineRecordCard";
 import { originBeachId, withBeach } from "../biodiversity";
+
+function speciesImageMedia(id: string) {
+  return Object.entries(photoOverrides).find(([key]) => key === id)?.[1];
+}
 export default function MarineLifeScreen() {
   const nav = useNavigate();
   const [params, setParams] = useSearchParams();
@@ -79,6 +84,7 @@ export default function MarineLifeScreen() {
                 <button key={s.id} onClick={() => nav("/species/" + s.id)}>
                   <SpeciesPicture image={s.image} name={s.name} />
                   <strong>{s.name}</strong>
+                  {s.id === "grubeulepis-malayensis" && <small>Scientific schematic</small>}
                   <small>Learn more →</small>
                 </button>
               ))}
@@ -92,7 +98,7 @@ export default function MarineLifeScreen() {
         </DataUnavailable>
       )}
       <p className="coastal-footnote">
-        Photos show species examples, not sightings at your beach. Explore their
+        Photos and labelled schematics show species examples, not sightings at your beach. Explore their
         habitats.
       </p>
       <GhostButton onClick={() => nav("/habitats")}>
@@ -118,6 +124,7 @@ export function SpeciesScreen() {
         <DataUnavailable title="Species not found" />
       </CoastalPage>
     );
+  const media = speciesImageMedia(s.id);
   return (
     <main className="screen scroll-y coastal-screen">
       <div className="species-hero">
@@ -132,6 +139,7 @@ export function SpeciesScreen() {
           <p className="subtle" style={{ fontStyle: "italic" }}>
             {s.subtitle}
           </p>
+          {media?.imageCaption && <p className="coastal-footnote">{media.imageCaption}</p>}
           <p style={{ fontSize: 17, lineHeight: 1.5 }}>{s.intro}</p>
           <p className="coastal-footnote">{s.evidence}</p>
         </div>
@@ -173,7 +181,7 @@ export function SpeciesScreen() {
           </section>
         ))}
         <section>
-          <h3>Sources & Photo Credit</h3>
+          <h3>{s.id === "grubeulepis-malayensis" ? "Sources & Illustration Credit" : "Sources & Photo Credit"}</h3>
           {s.sources.map((source, i) => (
             <a
               key={i}
@@ -193,7 +201,12 @@ export function SpeciesScreen() {
               target="_blank"
               rel="noreferrer"
             >
-              Photo source ↗
+              {s.id === "grubeulepis-malayensis" ? "Schematic reference ↗" : "Photo source ↗"}
+            </a>
+          )}
+          {media && (
+            <a className="species-source" href={media.imageLicenseUrl} target="_blank" rel="noreferrer">
+              Image license ↗
             </a>
           )}
         </section>
