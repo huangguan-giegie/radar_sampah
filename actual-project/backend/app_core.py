@@ -745,6 +745,29 @@ def load_species_distribution_model() -> SpeciesDistributionModel:
     return SpeciesDistributionModel()
 
 
+class _LazySpeciesDistributionModel:
+    """Preserve the shared model object contract without blocking web startup."""
+
+    def __init__(self) -> None:
+        self._instance: SpeciesDistributionModel | None = None
+        self._load_lock = threading.Lock()
+
+    def _get(self) -> SpeciesDistributionModel:
+        if self._instance is None:
+            with self._load_lock:
+                if self._instance is None:
+                    self._instance = load_species_distribution_model()
+        return self._instance
+
+    def __getattr__(self, name: str) -> Any:
+        return getattr(self._get(), name)
+
+
+@lru_cache(maxsize=1)
+def lazy_species_distribution_model() -> _LazySpeciesDistributionModel:
+    return _LazySpeciesDistributionModel()
+
+
 class _LazyLitterRecognizer:
     """Delay ONNX session creation until a recognition request actually needs it.
 
@@ -1547,7 +1570,7 @@ def create_app(
     engine = create_engine_for_url(normalise_database_url(database_url or os.getenv("DATABASE_URL")))
     initialise_database(engine)
     recognizer = _LazyLitterRecognizer()
-    species_distribution_model = load_species_distribution_model()
+    species_distribution_model = lazy_species_distribution_model()
     directory = photo_storage_path(photo_storage_dir)
     seed_reference_data(engine, load_beaches())
     beaches = load_beaches(engine)
