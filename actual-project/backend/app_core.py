@@ -745,6 +745,30 @@ def load_species_distribution_model() -> SpeciesDistributionModel:
     return SpeciesDistributionModel()
 
 
+class _LazyLitterRecognizer:
+    """Delay ONNX session creation until a recognition request actually needs it.
+
+    Render must bind the web port before its deploy health window expires. The
+    recognizer keeps the exact same request-time behavior; only startup order
+    changes.
+    """
+
+    def __init__(self) -> None:
+        self._instance: Any | None = None
+        self._load_lock = threading.Lock()
+
+    def _get(self) -> Any:
+        if self._instance is None:
+            with self._load_lock:
+                if self._instance is None:
+                    from recognition import LitterRecognizer
+                    self._instance = LitterRecognizer.load()
+        return self._instance
+
+    def recognise(self, image_bytes: bytes) -> dict[str, Any]:
+        return self._get().recognise(image_bytes)
+
+
 def generate_participant_id(connection: Any) -> str:
     taken = set(connection.execute(select(users_table.c.participant_id)).scalars().all())
     available = [str(value) for value in range(PARTICIPANT_ID_MIN, PARTICIPANT_ID_MAX + 1) if str(value) not in taken]
@@ -1522,9 +1546,7 @@ def create_app(
 
     engine = create_engine_for_url(normalise_database_url(database_url or os.getenv("DATABASE_URL")))
     initialise_database(engine)
-    from recognition import LitterRecognizer
-
-    recognizer = LitterRecognizer.load()
+    recognizer = _LazyLitterRecognizer()
     species_distribution_model = load_species_distribution_model()
     directory = photo_storage_path(photo_storage_dir)
     seed_reference_data(engine, load_beaches())
