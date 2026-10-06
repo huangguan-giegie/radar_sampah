@@ -14,7 +14,7 @@ import { GhostButton, Skeleton } from "../components/ui";
 import { useApp } from "../AppContext";
 import { getBeaches, USE_MOCK } from "../api";
 import { formatEventDate, formatEventTimeRange } from "../iteration2";
-import { fetchCleanupEvents, fetchLatestCleanupForBeach } from "../iteration2Api";
+import { fetchCleanupEvents, fetchLatestCleanupDates } from "../iteration2Api";
 import { useAsyncData } from "../useAsyncData";
 import { C } from "../theme";
 import { eventIsAvailable, eventPhase, useEventClock } from "../eventAvailability";
@@ -69,7 +69,7 @@ export default function CommunityScreen() {
   );
   const { data: beaches, loading: beachesLoading, error: beachesError, refresh: refreshBeaches } = useAsyncData(getBeaches, [reportsVersion], []);
   const { data: recentCleanups, loading: historyLoading, error: historyError, refresh: refreshHistory } = useAsyncData(
-    async () => needs ? Object.fromEntries(await Promise.all(beaches.map(async b => [b.id, (await fetchLatestCleanupForBeach(b.id))?.createdAt ?? null]))) as Record<string, string | null> : {},
+    () => needs && beaches.length ? fetchLatestCleanupDates(beaches.map(b => b.id)) : Promise.resolve({} as Record<string, string | null>),
     [needs, beaches, reportsVersion], {} as Record<string, string | null>,
   );
   const nextEvents = [...events].filter(e => eventIsAvailable(e, now)).sort((a, b) => a.startsAt.localeCompare(b.startsAt));

@@ -1,6 +1,5088 @@
 [
-  {"id":"morib","name":"Pantai Morib","area":"Banting, Selangor","lat":2.746,"lng":101.44,"habitat":"Intertidal mudflat & sandy shore","habitatTag":"MUDFLAT","sensitivity":"Migratory feeding ground","primarySpeciesGlyph":"turtle","speciesNames":["Green Sea Turtle","Mangrove Fringe","Coastal Birds"],"coverImageUrl":null,"scene":"linear-gradient(178deg,#8FD0E8 0%,#4E9EC9 36%,#2E6EA8 58%,#173E77 100%)","species":[{"name":"Green Sea Turtle","kind":"species","scientificName":"Chelonia mydas","threatCategory":null,"glyph":"turtle","text":"Occasional visitor along the Strait of Malacca. Floating plastic may be mistaken for food.","source":{"dataset":"pending","citation":"Awaiting FishBase / OBIS extract — not yet sourced","url":null,"accessedAt":null},"likelihood":{"state":"pending","basis":"Green sea turtle is one of the four modelled species. Backend not connected yet."}},{"name":"Mangrove Fringe","kind":"habitat","scientificName":null,"threatCategory":null,"glyph":"mangrove","text":"Young mangroves at the northern end shelter juvenile fish and crabs.","source":{"dataset":"pending","citation":"Awaiting FishBase / OBIS extract — not yet sourced","url":null,"accessedAt":null}},{"name":"Coastal Birds","kind":"group","scientificName":null,"threatCategory":null,"glyph":"bird","text":"Migratory shorebirds feed along this tide line between September and April.","source":{"dataset":"pending","citation":"Awaiting FishBase / OBIS extract — not yet sourced","url":null,"accessedAt":null},"likelihood":{"state":"unavailable","basis":"Not one of the four modelled species, so no occurrence score exists for this card."}}],"ecologicalNote":"Plastic and abandoned fishing gear may affect turtles and shorebirds that feed in this coastal environment."},
-  {"id":"remis","name":"Pantai Remis","area":"Jeram, Kuala Selangor","lat":3.218,"lng":101.302,"habitat":"Mudflat & shallow coastal waters","habitatTag":"MUDFLAT","sensitivity":"Seasonal bird activity","primarySpeciesGlyph":"bird","speciesNames":["Migratory Shorebirds","Marine Fish","Mangrove Belt"],"coverImageUrl":null,"scene":"linear-gradient(180deg,#D8ECF4 0%,#8FC6DC 38%,#5FA3C4 52%,#B5AF9E 100%)","species":[{"name":"Migratory Shorebirds","kind":"group","scientificName":null,"threatCategory":null,"glyph":"bird","text":"The Jeram mudflats are a stopover for migratory waders crossing the strait.","source":{"dataset":"pending","citation":"Awaiting FishBase / OBIS extract — not yet sourced","url":null,"accessedAt":null}},{"name":"Marine Fish","kind":"group","scientificName":null,"threatCategory":null,"glyph":"fish","text":"Shallow nursery waters for coastal fish species.","source":{"dataset":"pending","citation":"Awaiting FishBase / OBIS extract — not yet sourced","url":null,"accessedAt":null}},{"name":"Mangrove Belt","kind":"habitat","scientificName":null,"threatCategory":null,"glyph":"mangrove","text":"A narrow mangrove belt lines the river mouth south of the beach.","source":{"dataset":"pending","citation":"Awaiting FishBase / OBIS extract — not yet sourced","url":null,"accessedAt":null}}],"ecologicalNote":"Litter that settles on mudflats may be swallowed by, or entangle, the birds and invertebrates feeding here."},
-  {"id":"kelanang","name":"Pantai Kelanang","area":"Banting, Selangor","lat":2.789,"lng":101.415,"habitat":"Mangrove-lined estuary shore","habitatTag":"MANGROVE","sensitivity":"Evidence still being gathered","primarySpeciesGlyph":"mangrove","speciesNames":["Mangrove Habitat","Coastal Birds"],"coverImageUrl":null,"scene":"linear-gradient(178deg,#2F6B7C 0%,#245A6B 44%,#1B4557 72%,#123244 100%)","species":[{"name":"Mangrove Habitat","kind":"habitat","scientificName":null,"threatCategory":null,"glyph":"mangrove","text":"Dense mangrove roots trap sediment and shelter juvenile marine life.","source":{"dataset":"pending","citation":"Awaiting FishBase / OBIS extract — not yet sourced","url":null,"accessedAt":null}},{"name":"Coastal Birds","kind":"group","scientificName":null,"threatCategory":null,"glyph":"bird","text":"Egrets and herons hunt along the shallow channels at low tide.","source":{"dataset":"pending","citation":"Awaiting FishBase / OBIS extract — not yet sourced","url":null,"accessedAt":null}}],"ecologicalNote":"Litter caught in mangrove roots can persist for years and may break down into microplastics."},
-  {"id":"bagan","name":"Pantai Bagan Lalang","area":"Sepang, Selangor","lat":2.601,"lng":101.688,"habitat":"Wide sandy beach & seagrass patches","habitatTag":"SEAGRASS","sensitivity":"Horseshoe crab spawning shore","primarySpeciesGlyph":"crab","speciesNames":["Horseshoe Crab","Seagrass Patches","Mangrove Habitat"],"coverImageUrl":null,"scene":"linear-gradient(178deg,#E4EEF3 0%,#9CCAD8 34%,#5FA3C4 52%,#BFB8A6 100%)","species":[{"name":"Horseshoe Crab","kind":"species","scientificName":"Carcinoscorpius rotundicauda","threatCategory":null,"glyph":"crab","text":"One of the few Selangor shores where mangrove horseshoe crabs still come up to spawn.","source":{"dataset":"pending","citation":"Awaiting FishBase / OBIS extract — not yet sourced","url":null,"accessedAt":null}},{"name":"Seagrass Patches","kind":"habitat","scientificName":null,"threatCategory":null,"glyph":"grass","text":"Seagrass in the shallows feeds and shelters small marine animals.","source":{"dataset":"pending","citation":"Awaiting FishBase / OBIS extract — not yet sourced","url":null,"accessedAt":null}},{"name":"Mangrove Habitat","kind":"habitat","scientificName":null,"threatCategory":null,"glyph":"mangrove","text":"The Sepang river-mouth mangroves sit just south of this beach.","source":{"dataset":"pending","citation":"Awaiting FishBase / OBIS extract — not yet sourced","url":null,"accessedAt":null}}],"ecologicalNote":"Ghost nets and plastic sheeting may trap horseshoe crabs that come ashore to spawn."}
+  {
+    "id": "pantai-batu-laut",
+    "name": "Pantai Batu Laut",
+    "area": "Kuala Langat, Selangor",
+    "lat": 2.67511,
+    "lng": 101.51496,
+    "coordinateSource": {
+      "url": "https://www.malaysia-traveller.com/batu-laut-beach.html",
+      "name": "Malaysia Traveller - first-hand beach GPS",
+      "note": "Approximate beach reference point; not a visitor's location."
+    },
+    "habitat": "Coastal environment",
+    "habitatTag": "COASTAL",
+    "sensitivity": "Published marine-life reference context",
+    "primarySpeciesGlyph": "fish",
+    "speciesNames": [
+      "Blood Cockle"
+    ],
+    "scene": "linear-gradient(178deg,#8FD0E8 0%,#4E9EC9 36%,#173E77 100%)",
+    "species": [
+      {
+        "name": "Blood Cockle",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Pantai Remis samples showed microplastics in a 2024 study.",
+        "source": {
+          "dataset": "other",
+          "citation": "Pantai Remis cockle study",
+          "url": "https://doi.org/10.20473/jkl.v16i4.2024.321-330",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      }
+    ],
+    "ecologicalNote": "Marine-life information is from published reference sources, not a live wildlife observation or measured litter impact.",
+    "coverImageUrl": "/images/coastal/pantai-batu-laut.jpg"
+  },
+  {
+    "id": "pantai-redang",
+    "name": "Pantai Redang",
+    "area": "Sekinchan, Selangor",
+    "lat": 3.5028,
+    "lng": 101.094,
+    "coordinateSource": {
+      "url": "https://www.beachworldmap.org/en/malaysia",
+      "name": "OpenStreetMap via Beach World Map",
+      "note": "Approximate beach reference point; not a visitor's location."
+    },
+    "habitat": "Coastal environment",
+    "habitatTag": "COASTAL",
+    "sensitivity": "Published marine-life reference context",
+    "primarySpeciesGlyph": "fish",
+    "speciesNames": [
+      "Shorebirds",
+      "Blood Cockle"
+    ],
+    "scene": "linear-gradient(178deg,#8FD0E8 0%,#4E9EC9 36%,#173E77 100%)",
+    "species": [
+      {
+        "name": "Shorebirds",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "A local guide records shorebirds at Pantai Redang without naming species.",
+        "source": {
+          "dataset": "other",
+          "citation": "Selangor Travel · Redang Beach",
+          "url": "https://selangor.travel/listing/redang-beach/",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      },
+      {
+        "name": "Blood Cockle",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Pantai Remis samples showed microplastics in a 2024 study.",
+        "source": {
+          "dataset": "other",
+          "citation": "Pantai Remis cockle study",
+          "url": "https://doi.org/10.20473/jkl.v16i4.2024.321-330",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      }
+    ],
+    "ecologicalNote": "Marine-life information is from published reference sources, not a live wildlife observation or measured litter impact.",
+    "coverImageUrl": "/images/coastal/pantai-redang.jpg"
+  },
+  {
+    "id": "pantai-sungai-kajang-baru",
+    "name": "Pantai Sungai Kajang Baru",
+    "area": "Tanjung Karang, Selangor",
+    "lat": 3.41263,
+    "lng": 101.1566705,
+    "coordinateSource": {
+      "url": "https://www.hotelinmy.com/address/pantai_sungai_kajang_baru/3.41263/101.1566705",
+      "name": "HotelinMY - named beach location",
+      "note": "Approximate beach reference point; not a visitor's location."
+    },
+    "habitat": "Coastal environment",
+    "habitatTag": "COASTAL",
+    "sensitivity": "Published marine-life reference context",
+    "primarySpeciesGlyph": "fish",
+    "speciesNames": [
+      "Blood Cockle"
+    ],
+    "scene": "linear-gradient(178deg,#8FD0E8 0%,#4E9EC9 36%,#173E77 100%)",
+    "species": [
+      {
+        "name": "Blood Cockle",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Pantai Remis samples showed microplastics in a 2024 study.",
+        "source": {
+          "dataset": "other",
+          "citation": "Pantai Remis cockle study",
+          "url": "https://doi.org/10.20473/jkl.v16i4.2024.321-330",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      }
+    ],
+    "ecologicalNote": "Marine-life information is from published reference sources, not a live wildlife observation or measured litter impact.",
+    "coverImageUrl": "/images/coastal/pantai-sungai-kajang-baru.jpg"
+  },
+  {
+    "id": "pantai-acheh",
+    "name": "Pantai Acheh",
+    "area": "Pulau Indah, Selangor",
+    "lat": 2.8856,
+    "lng": 101.2831,
+    "coordinateSource": {
+      "url": "https://www.beachworldmap.org/en/malaysia",
+      "name": "OpenStreetMap via Beach World Map",
+      "note": "Approximate beach reference point; not a visitor's location."
+    },
+    "habitat": "Coastal environment",
+    "habitatTag": "COASTAL",
+    "sensitivity": "Published marine-life reference context",
+    "primarySpeciesGlyph": "fish",
+    "speciesNames": [
+      "Blood Cockle"
+    ],
+    "scene": "linear-gradient(178deg,#8FD0E8 0%,#4E9EC9 36%,#173E77 100%)",
+    "species": [
+      {
+        "name": "Blood Cockle",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Pantai Remis samples showed microplastics in a 2024 study.",
+        "source": {
+          "dataset": "other",
+          "citation": "Pantai Remis cockle study",
+          "url": "https://doi.org/10.20473/jkl.v16i4.2024.321-330",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      }
+    ],
+    "ecologicalNote": "Marine-life information is from published reference sources, not a live wildlife observation or measured litter impact.",
+    "coverImageUrl": null
+  },
+  {
+    "id": "pantai-bagan-nakhoda-omar",
+    "name": "Pantai Bagan Nakhoda Omar",
+    "area": "Sabak Bernam, Selangor",
+    "lat": 3.76680202,
+    "lng": 100.8730652,
+    "coordinateSource": {
+      "url": "https://mygeoname.mygeoportal.gov.my/exportpdffasa3.jsp?kodnegeri=10",
+      "name": "JUPEM / MyGeoName Selangor gazetteer",
+      "note": "Approximate beach reference point; not a visitor's location."
+    },
+    "habitat": "Coastal environment",
+    "habitatTag": "COASTAL",
+    "sensitivity": "Published marine-life reference context",
+    "primarySpeciesGlyph": "fish",
+    "speciesNames": [
+      "Blood Cockle"
+    ],
+    "scene": "linear-gradient(178deg,#8FD0E8 0%,#4E9EC9 36%,#173E77 100%)",
+    "species": [
+      {
+        "name": "Blood Cockle",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Pantai Remis samples showed microplastics in a 2024 study.",
+        "source": {
+          "dataset": "other",
+          "citation": "Pantai Remis cockle study",
+          "url": "https://doi.org/10.20473/jkl.v16i4.2024.321-330",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      }
+    ],
+    "ecologicalNote": "Marine-life information is from published reference sources, not a live wildlife observation or measured litter impact.",
+    "coverImageUrl": "/images/coastal/pantai-bagan-nakhoda-omar.jpg"
+  },
+  {
+    "id": "pantai-tanjung-rhu-pulau-carey",
+    "name": "Pantai Tanjung Rhu, Pulau Carey",
+    "area": "Pulau Carey, Selangor",
+    "lat": 2.8286398,
+    "lng": 101.3325786,
+    "coordinateSource": {
+      "url": "https://www.reddit.com/r/itookapicture/comments/17xqqdb/",
+      "name": "Original photographer - Carey Island beach GPS",
+      "note": "Approximate beach reference point; not a visitor's location."
+    },
+    "habitat": "Coastal environment",
+    "habitatTag": "COASTAL",
+    "sensitivity": "Published marine-life reference context",
+    "primarySpeciesGlyph": "fish",
+    "speciesNames": [
+      "Blood Cockle"
+    ],
+    "scene": "linear-gradient(178deg,#8FD0E8 0%,#4E9EC9 36%,#173E77 100%)",
+    "species": [
+      {
+        "name": "Blood Cockle",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Pantai Remis samples showed microplastics in a 2024 study.",
+        "source": {
+          "dataset": "other",
+          "citation": "Pantai Remis cockle study",
+          "url": "https://doi.org/10.20473/jkl.v16i4.2024.321-330",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      }
+    ],
+    "ecologicalNote": "Marine-life information is from published reference sources, not a live wildlife observation or measured litter impact.",
+    "coverImageUrl": null
+  },
+  {
+    "id": "pantai-batu-23",
+    "name": "Pantai Batu 23",
+    "area": "Sungai Nibong, Selangor",
+    "lat": 3.5934722,
+    "lng": 101.05575,
+    "coordinateSource": {
+      "url": "https://www.sedapnya-makan.com/2018/03/terbaiklah-makan-mee-bandung-udang-pantai-bm.html",
+      "name": "Sedapnya Makan - Pantai BM waterfront visit GPS",
+      "note": "Approximate beach reference point; not a visitor's location."
+    },
+    "habitat": "Coastal environment",
+    "habitatTag": "COASTAL",
+    "sensitivity": "Published marine-life reference context",
+    "primarySpeciesGlyph": "fish",
+    "speciesNames": [
+      "Blood Cockle"
+    ],
+    "scene": "linear-gradient(178deg,#8FD0E8 0%,#4E9EC9 36%,#173E77 100%)",
+    "species": [
+      {
+        "name": "Blood Cockle",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Pantai Remis samples showed microplastics in a 2024 study.",
+        "source": {
+          "dataset": "other",
+          "citation": "Pantai Remis cockle study",
+          "url": "https://doi.org/10.20473/jkl.v16i4.2024.321-330",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      }
+    ],
+    "ecologicalNote": "Marine-life information is from published reference sources, not a live wildlife observation or measured litter impact.",
+    "coverImageUrl": null
+  },
+  {
+    "id": "pantai-sungai-lang",
+    "name": "Pantai Sungai Lang",
+    "area": "Sabak Bernam, Selangor",
+    "lat": 3.8226347,
+    "lng": 100.8136904,
+    "coordinateSource": {
+      "url": "https://womenwanderingbeyond.com/beaches-in-selangor/",
+      "name": "Women Wandering Beyond - Sungai Lang Google Maps destination",
+      "note": "Approximate beach reference point; not a visitor's location."
+    },
+    "habitat": "Coastal environment",
+    "habitatTag": "COASTAL",
+    "sensitivity": "Published marine-life reference context",
+    "primarySpeciesGlyph": "fish",
+    "speciesNames": [
+      "Blood Cockle"
+    ],
+    "scene": "linear-gradient(178deg,#8FD0E8 0%,#4E9EC9 36%,#173E77 100%)",
+    "species": [
+      {
+        "name": "Blood Cockle",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Pantai Remis samples showed microplastics in a 2024 study.",
+        "source": {
+          "dataset": "other",
+          "citation": "Pantai Remis cockle study",
+          "url": "https://doi.org/10.20473/jkl.v16i4.2024.321-330",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      }
+    ],
+    "ecologicalNote": "Marine-life information is from published reference sources, not a live wildlife observation or measured litter impact.",
+    "coverImageUrl": null
+  },
+  {
+    "id": "pantai-sungai-burung",
+    "name": "Pantai Sungai Burung",
+    "area": "Bagan Sungai Burung, Selangor",
+    "lat": 3.6905558,
+    "lng": 100.9332583,
+    "coordinateSource": {
+      "url": "https://www.google.com/maps/place/Pantai+Sungai+Burung/data=!4m7!3m6!1s0x31cb5f76784cce95:0x74c820d72e226d9f!8m2!3d3.6905558!4d100.9332583!16s%2Fg%2F11g8k0prnv!19sChIJlc5MeHZfyzERn20iLtcgyHQ",
+      "name": "Google Maps named place, 2 Jalan Sekolah, Bagan Sungai Burong, Sungai Besar; destination coordinates, not viewport centre",
+      "note": "Approximate beach reference point; not a visitor's location."
+    },
+    "habitat": "Coastal environment",
+    "habitatTag": "COASTAL",
+    "sensitivity": "Published marine-life reference context",
+    "primarySpeciesGlyph": "fish",
+    "speciesNames": [
+      "Blood Cockle"
+    ],
+    "scene": "linear-gradient(178deg,#8FD0E8 0%,#4E9EC9 36%,#173E77 100%)",
+    "species": [
+      {
+        "name": "Blood Cockle",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Pantai Remis samples showed microplastics in a 2024 study.",
+        "source": {
+          "dataset": "other",
+          "citation": "Pantai Remis cockle study",
+          "url": "https://doi.org/10.20473/jkl.v16i4.2024.321-330",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      }
+    ],
+    "ecologicalNote": "Marine-life information is from published reference sources, not a live wildlife observation or measured litter impact.",
+    "coverImageUrl": null
+  },
+  {
+    "id": "pantai-sungai-haji-dorani",
+    "name": "Pantai Sungai Haji Dorani",
+    "area": "Sabak Bernam, Selangor",
+    "lat": 3.6333333,
+    "lng": 101.0166667,
+    "coordinateSource": {
+      "url": "https://digital.nahrim.gov.my/uploads/publications/pdf_20230407151824.pdf",
+      "name": "NAHRIM - Sungai Haji Dorani coastal study location",
+      "note": "Approximate beach reference point; not a visitor's location."
+    },
+    "habitat": "Coastal environment",
+    "habitatTag": "COASTAL",
+    "sensitivity": "Published marine-life reference context",
+    "primarySpeciesGlyph": "fish",
+    "speciesNames": [
+      "Blood Cockle"
+    ],
+    "scene": "linear-gradient(178deg,#8FD0E8 0%,#4E9EC9 36%,#173E77 100%)",
+    "species": [
+      {
+        "name": "Blood Cockle",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Pantai Remis samples showed microplastics in a 2024 study.",
+        "source": {
+          "dataset": "other",
+          "citation": "Pantai Remis cockle study",
+          "url": "https://doi.org/10.20473/jkl.v16i4.2024.321-330",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      }
+    ],
+    "ecologicalNote": "Marine-life information is from published reference sources, not a live wildlife observation or measured litter impact.",
+    "coverImageUrl": null
+  },
+  {
+    "id": "pantai-kok",
+    "name": "Pantai Kok",
+    "area": "Langkawi, Kedah",
+    "lat": 6.365306,
+    "lng": 99.675194,
+    "coordinateSource": {
+      "url": "https://mygeoname.mygeoportal.gov.my/pdf/02.pdf#page=367",
+      "name": "MyGeoName / JUPEM Kedah gazetteer, Pantai Kok",
+      "note": "Approximate beach reference point; not a visitor's location."
+    },
+    "habitat": "Coastal environment",
+    "habitatTag": "COASTAL",
+    "sensitivity": "Published marine-life reference context",
+    "primarySpeciesGlyph": "fish",
+    "speciesNames": [
+      "Mangrove Crabs"
+    ],
+    "scene": "linear-gradient(178deg,#8FD0E8 0%,#4E9EC9 36%,#173E77 100%)",
+    "species": [
+      {
+        "name": "Mangrove Crabs",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Crabs are listed in Kilim’s mangrove ecosystem; the guide does not identify one species here.",
+        "source": {
+          "dataset": "other",
+          "citation": "Kilim park guide · fauna",
+          "url": "https://kilimgeoforestpark.com/biodiversity/fauna/",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      }
+    ],
+    "ecologicalNote": "Marine-life information is from published reference sources, not a live wildlife observation or measured litter impact.",
+    "coverImageUrl": "/images/coastal/pantai-kok.jpg"
+  },
+  {
+    "id": "pantai-teluk-datai",
+    "name": "Pantai Teluk Datai",
+    "area": "Langkawi, Kedah",
+    "lat": 6.428,
+    "lng": 99.6735,
+    "coordinateSource": {
+      "url": "https://naturallylangkawi.my/wp-content/uploads/2023/07/Nature_New.pdf",
+      "name": "Langkawi Development Authority, Nature Guide, Pantai Teluk Datai",
+      "note": "Approximate beach reference point; not a visitor's location."
+    },
+    "habitat": "Coastal environment",
+    "habitatTag": "COASTAL",
+    "sensitivity": "Published marine-life reference context",
+    "primarySpeciesGlyph": "fish",
+    "speciesNames": [
+      "Mangrove Crabs"
+    ],
+    "scene": "linear-gradient(178deg,#8FD0E8 0%,#4E9EC9 36%,#173E77 100%)",
+    "species": [
+      {
+        "name": "Mangrove Crabs",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Crabs are listed in Kilim’s mangrove ecosystem; the guide does not identify one species here.",
+        "source": {
+          "dataset": "other",
+          "citation": "Kilim park guide · fauna",
+          "url": "https://kilimgeoforestpark.com/biodiversity/fauna/",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      }
+    ],
+    "ecologicalNote": "Marine-life information is from published reference sources, not a live wildlife observation or measured litter impact.",
+    "coverImageUrl": "/images/coastal/pantai-teluk-datai.jpg"
+  },
+  {
+    "id": "pantai-tanjung-rhu",
+    "name": "Pantai Tanjung Rhu",
+    "area": "Langkawi, Kedah",
+    "lat": 6.457333,
+    "lng": 99.822139,
+    "coordinateSource": {
+      "url": "https://mygeoname.mygeoportal.gov.my/pdf/02.pdf#page=367",
+      "name": "MyGeoName / JUPEM Kedah gazetteer, Pantai Tg. Rhu",
+      "note": "Approximate beach reference point; not a visitor's location."
+    },
+    "habitat": "Coastal environment",
+    "habitatTag": "COASTAL",
+    "sensitivity": "Published marine-life reference context",
+    "primarySpeciesGlyph": "fish",
+    "speciesNames": [
+      "Mangrove Crabs"
+    ],
+    "scene": "linear-gradient(178deg,#8FD0E8 0%,#4E9EC9 36%,#173E77 100%)",
+    "species": [
+      {
+        "name": "Mangrove Crabs",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Crabs are listed in Kilim’s mangrove ecosystem; the guide does not identify one species here.",
+        "source": {
+          "dataset": "other",
+          "citation": "Kilim park guide · fauna",
+          "url": "https://kilimgeoforestpark.com/biodiversity/fauna/",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      }
+    ],
+    "ecologicalNote": "Marine-life information is from published reference sources, not a live wildlife observation or measured litter impact.",
+    "coverImageUrl": "/images/coastal/pantai-tanjung-rhu.jpg"
+  },
+  {
+    "id": "pantai-pasir-hitam",
+    "name": "Pantai Pasir Hitam",
+    "area": "Langkawi, Kedah",
+    "lat": 6.425389,
+    "lng": 99.789139,
+    "coordinateSource": {
+      "url": "https://mygeoname.mygeoportal.gov.my/pdf/02.pdf#page=367",
+      "name": "MyGeoName / JUPEM Kedah gazetteer, Pantai Psr. Hitam",
+      "note": "Approximate beach reference point; not a visitor's location."
+    },
+    "habitat": "Coastal environment",
+    "habitatTag": "COASTAL",
+    "sensitivity": "Published marine-life reference context",
+    "primarySpeciesGlyph": "fish",
+    "speciesNames": [
+      "Mangrove Crabs"
+    ],
+    "scene": "linear-gradient(178deg,#8FD0E8 0%,#4E9EC9 36%,#173E77 100%)",
+    "species": [
+      {
+        "name": "Mangrove Crabs",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Crabs are listed in Kilim’s mangrove ecosystem; the guide does not identify one species here.",
+        "source": {
+          "dataset": "other",
+          "citation": "Kilim park guide · fauna",
+          "url": "https://kilimgeoforestpark.com/biodiversity/fauna/",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      }
+    ],
+    "ecologicalNote": "Marine-life information is from published reference sources, not a live wildlife observation or measured litter impact.",
+    "coverImageUrl": "/images/coastal/pantai-pasir-hitam.jpg"
+  },
+  {
+    "id": "pantai-pasir-tengkorak",
+    "name": "Pantai Pasir Tengkorak",
+    "area": "Langkawi, Kedah",
+    "lat": 6.431111,
+    "lng": 99.725778,
+    "coordinateSource": {
+      "url": "https://mygeoname.mygeoportal.gov.my/pdf/02.pdf#page=367",
+      "name": "MyGeoName / JUPEM Kedah gazetteer, Pantai Pasir Tengkorak",
+      "note": "Approximate beach reference point; not a visitor's location."
+    },
+    "habitat": "Rocky shore",
+    "habitatTag": "COASTAL",
+    "sensitivity": "Published marine-life reference context",
+    "primarySpeciesGlyph": "fish",
+    "speciesNames": [
+      "Mangrove Crabs"
+    ],
+    "scene": "linear-gradient(178deg,#8FD0E8 0%,#4E9EC9 36%,#173E77 100%)",
+    "species": [
+      {
+        "name": "Mangrove Crabs",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Crabs are listed in Kilim’s mangrove ecosystem; the guide does not identify one species here.",
+        "source": {
+          "dataset": "other",
+          "citation": "Kilim park guide · fauna",
+          "url": "https://kilimgeoforestpark.com/biodiversity/fauna/",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      }
+    ],
+    "ecologicalNote": "Marine-life information is from published reference sources, not a live wildlife observation or measured litter impact.",
+    "coverImageUrl": null
+  },
+  {
+    "id": "pantai-merdeka",
+    "name": "Pantai Merdeka",
+    "area": "Kuala Muda, Kedah",
+    "lat": 5.66603,
+    "lng": 100.36732,
+    "coordinateSource": {
+      "url": "https://www.penang-traveltips.com/malaysia/kedah/merdeka-beach.htm",
+      "name": "Penang Travel Tips, Merdeka Beach GPS",
+      "note": "Approximate beach reference point; not a visitor's location."
+    },
+    "habitat": "Coastal environment",
+    "habitatTag": "COASTAL",
+    "sensitivity": "Published marine-life reference context",
+    "primarySpeciesGlyph": "fish",
+    "speciesNames": [
+      "Mangrove Crabs"
+    ],
+    "scene": "linear-gradient(178deg,#8FD0E8 0%,#4E9EC9 36%,#173E77 100%)",
+    "species": [
+      {
+        "name": "Mangrove Crabs",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Crabs are listed in Kilim’s mangrove ecosystem; the guide does not identify one species here.",
+        "source": {
+          "dataset": "other",
+          "citation": "Kilim park guide · fauna",
+          "url": "https://kilimgeoforestpark.com/biodiversity/fauna/",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      }
+    ],
+    "ecologicalNote": "Marine-life information is from published reference sources, not a live wildlife observation or measured litter impact.",
+    "coverImageUrl": "/images/coastal/pantai-merdeka.jpg"
+  },
+  {
+    "id": "pantai-datuk-syed-omar",
+    "name": "Pantai Datuk Syed Omar",
+    "area": "Langkawi, Kedah",
+    "lat": 6.298246,
+    "lng": 99.856387,
+    "coordinateSource": {
+      "url": "https://geographic.org/geographic_names/name.php?c=malaysia&fid=4131&uni=10606891",
+      "name": "NGA geographical names via Geographic.org, Pantai Datok Syed Omar",
+      "note": "Approximate beach reference point; not a visitor's location."
+    },
+    "habitat": "Sandy shore",
+    "habitatTag": "COASTAL",
+    "sensitivity": "Published marine-life reference context",
+    "primarySpeciesGlyph": "fish",
+    "speciesNames": [
+      "Mangrove Crabs"
+    ],
+    "scene": "linear-gradient(178deg,#8FD0E8 0%,#4E9EC9 36%,#173E77 100%)",
+    "species": [
+      {
+        "name": "Mangrove Crabs",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Crabs are listed in Kilim’s mangrove ecosystem; the guide does not identify one species here.",
+        "source": {
+          "dataset": "other",
+          "citation": "Kilim park guide · fauna",
+          "url": "https://kilimgeoforestpark.com/biodiversity/fauna/",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      }
+    ],
+    "ecologicalNote": "Marine-life information is from published reference sources, not a live wildlife observation or measured litter impact.",
+    "coverImageUrl": null
+  },
+  {
+    "id": "pantai-tanjung-bungah",
+    "name": "Pantai Tanjung Bungah",
+    "area": "Tanjung Bungah, Penang",
+    "lat": 5.467972,
+    "lng": 100.288528,
+    "coordinateSource": {
+      "url": "https://mygeoname.mygeoportal.gov.my/pdf/07.pdf#page=76",
+      "name": "MyGeoName / JUPEM Penang gazetteer, Pantai Tanjong Bungah",
+      "note": "Approximate beach reference point; not a visitor's location."
+    },
+    "habitat": "Coastal environment",
+    "habitatTag": "COASTAL",
+    "sensitivity": "Published marine-life reference context",
+    "primarySpeciesGlyph": "fish",
+    "speciesNames": [
+      "Mangrove Crabs"
+    ],
+    "scene": "linear-gradient(178deg,#8FD0E8 0%,#4E9EC9 36%,#173E77 100%)",
+    "species": [
+      {
+        "name": "Mangrove Crabs",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Crabs are listed in Kilim’s mangrove ecosystem; the guide does not identify one species here.",
+        "source": {
+          "dataset": "other",
+          "citation": "Kilim park guide · fauna",
+          "url": "https://kilimgeoforestpark.com/biodiversity/fauna/",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      }
+    ],
+    "ecologicalNote": "Marine-life information is from published reference sources, not a live wildlife observation or measured litter impact.",
+    "coverImageUrl": "/images/coastal/pantai-tanjung-bungah.jpg"
+  },
+  {
+    "id": "monkey-beach",
+    "name": "Monkey Beach",
+    "area": "Penang National Park, Penang",
+    "lat": 5.470694,
+    "lng": 100.189056,
+    "coordinateSource": {
+      "url": "https://mygeoname.mygeoportal.gov.my/pdf/07.pdf#page=76",
+      "name": "MyGeoName / JUPEM Penang gazetteer, Pantai Teluk Duyung (Monkey Beach)",
+      "note": "Approximate beach reference point; not a visitor's location."
+    },
+    "habitat": "Coastal environment",
+    "habitatTag": "COASTAL",
+    "sensitivity": "Published marine-life reference context",
+    "primarySpeciesGlyph": "fish",
+    "speciesNames": [
+      "Macaques",
+      "Mangrove Crabs"
+    ],
+    "scene": "linear-gradient(178deg,#8FD0E8 0%,#4E9EC9 36%,#173E77 100%)",
+    "species": [
+      {
+        "name": "Macaques",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Documented around Monkey Beach; the guide does not identify a species.",
+        "source": {
+          "dataset": "other",
+          "citation": "Penang guide · Monkey Beach",
+          "url": "https://mypenang.gov.my/uploads/downloads/SFA_Teluk-Bahang_Eng_V03Aug24.pdf",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      },
+      {
+        "name": "Mangrove Crabs",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Crabs are listed in Kilim’s mangrove ecosystem; the guide does not identify one species here.",
+        "source": {
+          "dataset": "other",
+          "citation": "Kilim park guide · fauna",
+          "url": "https://kilimgeoforestpark.com/biodiversity/fauna/",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      }
+    ],
+    "ecologicalNote": "Marine-life information is from published reference sources, not a live wildlife observation or measured litter impact.",
+    "coverImageUrl": "/images/coastal/monkey-beach.jpg"
+  },
+  {
+    "id": "pantai-pasir-panjang",
+    "name": "Pantai Pasir Panjang",
+    "area": "Balik Pulau, Penang",
+    "lat": 5.297111,
+    "lng": 100.184028,
+    "coordinateSource": {
+      "url": "https://mygeoname.mygeoportal.gov.my/pdf/07.pdf#page=75",
+      "name": "MyGeoName / JUPEM Penang gazetteer, Pantai Pasir Panjang, Barat Daya",
+      "note": "Approximate beach reference point; not a visitor's location."
+    },
+    "habitat": "Coastal environment",
+    "habitatTag": "COASTAL",
+    "sensitivity": "Published marine-life reference context",
+    "primarySpeciesGlyph": "fish",
+    "speciesNames": [
+      "Mangrove Crabs"
+    ],
+    "scene": "linear-gradient(178deg,#8FD0E8 0%,#4E9EC9 36%,#173E77 100%)",
+    "species": [
+      {
+        "name": "Mangrove Crabs",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Crabs are listed in Kilim’s mangrove ecosystem; the guide does not identify one species here.",
+        "source": {
+          "dataset": "other",
+          "citation": "Kilim park guide · fauna",
+          "url": "https://kilimgeoforestpark.com/biodiversity/fauna/",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      }
+    ],
+    "ecologicalNote": "Marine-life information is from published reference sources, not a live wildlife observation or measured litter impact.",
+    "coverImageUrl": null
+  },
+  {
+    "id": "pantai-bersih",
+    "name": "Pantai Bersih",
+    "area": "Butterworth, Penang",
+    "lat": 5.446972,
+    "lng": 100.379556,
+    "coordinateSource": {
+      "url": "https://mygeoname.mygeoportal.gov.my/pdf/07.pdf#page=76",
+      "name": "MyGeoName / JUPEM Penang gazetteer, Pantai Bersih",
+      "note": "Approximate beach reference point; not a visitor's location."
+    },
+    "habitat": "Coastal environment",
+    "habitatTag": "COASTAL",
+    "sensitivity": "Published marine-life reference context",
+    "primarySpeciesGlyph": "fish",
+    "speciesNames": [
+      "Mangrove Crabs"
+    ],
+    "scene": "linear-gradient(178deg,#8FD0E8 0%,#4E9EC9 36%,#173E77 100%)",
+    "species": [
+      {
+        "name": "Mangrove Crabs",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Crabs are listed in Kilim’s mangrove ecosystem; the guide does not identify one species here.",
+        "source": {
+          "dataset": "other",
+          "citation": "Kilim park guide · fauna",
+          "url": "https://kilimgeoforestpark.com/biodiversity/fauna/",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      }
+    ],
+    "ecologicalNote": "Marine-life information is from published reference sources, not a live wildlife observation or measured litter impact.",
+    "coverImageUrl": "/images/coastal/pantai-bersih.jpg"
+  },
+  {
+    "id": "pantai-teluk-aman",
+    "name": "Pantai Teluk Aman",
+    "area": "Penang",
+    "lat": 5.26707,
+    "lng": 100.40876,
+    "coordinateSource": {
+      "url": "https://mapcarta.com/W1311505901",
+      "name": "OpenStreetMap way 1311505901 via Mapcarta, Pantai Teluk Aman",
+      "note": "Approximate beach reference point; not a visitor's location."
+    },
+    "habitat": "Coastal environment",
+    "habitatTag": "COASTAL",
+    "sensitivity": "Published marine-life reference context",
+    "primarySpeciesGlyph": "fish",
+    "speciesNames": [
+      "Mangrove Crabs"
+    ],
+    "scene": "linear-gradient(178deg,#8FD0E8 0%,#4E9EC9 36%,#173E77 100%)",
+    "species": [
+      {
+        "name": "Mangrove Crabs",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Crabs are listed in Kilim’s mangrove ecosystem; the guide does not identify one species here.",
+        "source": {
+          "dataset": "other",
+          "citation": "Kilim park guide · fauna",
+          "url": "https://kilimgeoforestpark.com/biodiversity/fauna/",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      }
+    ],
+    "ecologicalNote": "Marine-life information is from published reference sources, not a live wildlife observation or measured litter impact.",
+    "coverImageUrl": null
+  },
+  {
+    "id": "pasir-belanda",
+    "name": "Pasir Belanda",
+    "area": "Penang Island, Penang",
+    "lat": 5.281611,
+    "lng": 100.213472,
+    "coordinateSource": {
+      "url": "https://mygeoname.mygeoportal.gov.my/pdf/07.pdf#page=76",
+      "name": "MyGeoName / JUPEM Penang gazetteer, Pasir Belanda beach, Barat Daya",
+      "note": "Approximate beach reference point; not a visitor's location."
+    },
+    "habitat": "Coastal environment",
+    "habitatTag": "COASTAL",
+    "sensitivity": "Published marine-life reference context",
+    "primarySpeciesGlyph": "fish",
+    "speciesNames": [
+      "Mangrove Crabs"
+    ],
+    "scene": "linear-gradient(178deg,#8FD0E8 0%,#4E9EC9 36%,#173E77 100%)",
+    "species": [
+      {
+        "name": "Mangrove Crabs",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Crabs are listed in Kilim’s mangrove ecosystem; the guide does not identify one species here.",
+        "source": {
+          "dataset": "other",
+          "citation": "Kilim park guide · fauna",
+          "url": "https://kilimgeoforestpark.com/biodiversity/fauna/",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      }
+    ],
+    "ecologicalNote": "Marine-life information is from published reference sources, not a live wildlife observation or measured litter impact.",
+    "coverImageUrl": "/images/coastal/pasir-belanda.jpg"
+  },
+  {
+    "id": "pantai-teluk-batik",
+    "name": "Pantai Teluk Batik",
+    "area": "Lumut, Perak",
+    "lat": 4.187,
+    "lng": 100.607,
+    "coordinateSource": {
+      "url": "https://www.beachworldmap.org/en/malaysia",
+      "name": "OpenStreetMap via Beach World Map",
+      "note": "Approximate beach reference point; not a visitor's location."
+    },
+    "habitat": "Sandy shore",
+    "habitatTag": "COASTAL",
+    "sensitivity": "Published marine-life reference context",
+    "primarySpeciesGlyph": "fish",
+    "speciesNames": [
+      "Giant Mudskipper",
+      "Black Sea Cucumber"
+    ],
+    "scene": "linear-gradient(178deg,#8FD0E8 0%,#4E9EC9 36%,#173E77 100%)",
+    "species": [
+      {
+        "name": "Giant Mudskipper",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Observed hunting fiddler crabs on Kuala Gula mudflats at low tide.",
+        "source": {
+          "dataset": "other",
+          "citation": "FishBase · giant mudskipper",
+          "url": "https://www.fishbase.se/FieldGuide/FieldGuideSummary.php?c_code=356&genusname=Periophthalmodon&speciesname=schlosseri",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      },
+      {
+        "name": "Black Sea Cucumber",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Collected at Teluk Nipah in November 2011.",
+        "source": {
+          "dataset": "other",
+          "citation": "Teluk Nipah original record",
+          "url": "https://irep.iium.edu.my/29832/1/2013_GenBank_KC405565-KC405568_-_Outlook_Web_Access_Light.pdf",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      }
+    ],
+    "ecologicalNote": "Marine-life information is from published reference sources, not a live wildlife observation or measured litter impact.",
+    "coverImageUrl": "/images/coastal/pantai-teluk-batik.jpg"
+  },
+  {
+    "id": "pantai-pasir-bogak",
+    "name": "Pantai Pasir Bogak",
+    "area": "Pangkor Island, Perak",
+    "lat": 4.2104,
+    "lng": 100.5528,
+    "coordinateSource": {
+      "url": "https://www.beachworldmap.org/en/malaysia",
+      "name": "OpenStreetMap via Beach World Map",
+      "note": "Approximate beach reference point; not a visitor's location."
+    },
+    "habitat": "Sandy shore",
+    "habitatTag": "COASTAL",
+    "sensitivity": "Published marine-life reference context",
+    "primarySpeciesGlyph": "fish",
+    "speciesNames": [
+      "Giant Mudskipper",
+      "Black Sea Cucumber"
+    ],
+    "scene": "linear-gradient(178deg,#8FD0E8 0%,#4E9EC9 36%,#173E77 100%)",
+    "species": [
+      {
+        "name": "Giant Mudskipper",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Observed hunting fiddler crabs on Kuala Gula mudflats at low tide.",
+        "source": {
+          "dataset": "other",
+          "citation": "FishBase · giant mudskipper",
+          "url": "https://www.fishbase.se/FieldGuide/FieldGuideSummary.php?c_code=356&genusname=Periophthalmodon&speciesname=schlosseri",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      },
+      {
+        "name": "Black Sea Cucumber",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Collected at Teluk Nipah in November 2011.",
+        "source": {
+          "dataset": "other",
+          "citation": "Teluk Nipah original record",
+          "url": "https://irep.iium.edu.my/29832/1/2013_GenBank_KC405565-KC405568_-_Outlook_Web_Access_Light.pdf",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      }
+    ],
+    "ecologicalNote": "Marine-life information is from published reference sources, not a live wildlife observation or measured litter impact.",
+    "coverImageUrl": null
+  },
+  {
+    "id": "pantai-teluk-nipah",
+    "name": "Pantai Teluk Nipah",
+    "area": "Pangkor Island, Perak",
+    "lat": 4.2303,
+    "lng": 100.5431,
+    "coordinateSource": {
+      "url": "https://www.beachworldmap.org/en/malaysia",
+      "name": "OpenStreetMap via Beach World Map",
+      "note": "Approximate beach reference point; not a visitor's location."
+    },
+    "habitat": "Coastal environment",
+    "habitatTag": "COASTAL",
+    "sensitivity": "Published marine-life reference context",
+    "primarySpeciesGlyph": "fish",
+    "speciesNames": [
+      "Black Sea Cucumber",
+      "Giant Mudskipper"
+    ],
+    "scene": "linear-gradient(178deg,#8FD0E8 0%,#4E9EC9 36%,#173E77 100%)",
+    "species": [
+      {
+        "name": "Black Sea Cucumber",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Collected at Teluk Nipah in November 2011.",
+        "source": {
+          "dataset": "other",
+          "citation": "Teluk Nipah original record",
+          "url": "https://irep.iium.edu.my/29832/1/2013_GenBank_KC405565-KC405568_-_Outlook_Web_Access_Light.pdf",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      },
+      {
+        "name": "Giant Mudskipper",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Observed hunting fiddler crabs on Kuala Gula mudflats at low tide.",
+        "source": {
+          "dataset": "other",
+          "citation": "FishBase · giant mudskipper",
+          "url": "https://www.fishbase.se/FieldGuide/FieldGuideSummary.php?c_code=356&genusname=Periophthalmodon&speciesname=schlosseri",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      }
+    ],
+    "ecologicalNote": "Marine-life information is from published reference sources, not a live wildlife observation or measured litter impact.",
+    "coverImageUrl": "/images/coastal/pantai-teluk-nipah.jpg"
+  },
+  {
+    "id": "pantai-teluk-senangin",
+    "name": "Pantai Teluk Senangin",
+    "area": "Lumut, Perak",
+    "lat": 4.3052,
+    "lng": 100.5761,
+    "coordinateSource": {
+      "url": "https://www.beachworldmap.org/en/malaysia",
+      "name": "OpenStreetMap via Beach World Map",
+      "note": "Approximate beach reference point; not a visitor's location."
+    },
+    "habitat": "Coastal environment",
+    "habitatTag": "COASTAL",
+    "sensitivity": "Published marine-life reference context",
+    "primarySpeciesGlyph": "fish",
+    "speciesNames": [
+      "Giant Mudskipper",
+      "Black Sea Cucumber"
+    ],
+    "scene": "linear-gradient(178deg,#8FD0E8 0%,#4E9EC9 36%,#173E77 100%)",
+    "species": [
+      {
+        "name": "Giant Mudskipper",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Observed hunting fiddler crabs on Kuala Gula mudflats at low tide.",
+        "source": {
+          "dataset": "other",
+          "citation": "FishBase · giant mudskipper",
+          "url": "https://www.fishbase.se/FieldGuide/FieldGuideSummary.php?c_code=356&genusname=Periophthalmodon&speciesname=schlosseri",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      },
+      {
+        "name": "Black Sea Cucumber",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Collected at Teluk Nipah in November 2011.",
+        "source": {
+          "dataset": "other",
+          "citation": "Teluk Nipah original record",
+          "url": "https://irep.iium.edu.my/29832/1/2013_GenBank_KC405565-KC405568_-_Outlook_Web_Access_Light.pdf",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      }
+    ],
+    "ecologicalNote": "Marine-life information is from published reference sources, not a live wildlife observation or measured litter impact.",
+    "coverImageUrl": "/images/coastal/pantai-teluk-senangin.jpg"
+  },
+  {
+    "id": "pantai-teluk-segadas",
+    "name": "Pantai Teluk Segadas",
+    "area": "Pangkor Island, Perak",
+    "lat": 4.191,
+    "lng": 100.5732,
+    "coordinateSource": {
+      "url": "https://www.beachworldmap.org/en/malaysia",
+      "name": "OpenStreetMap via Beach World Map",
+      "note": "Approximate beach reference point; not a visitor's location."
+    },
+    "habitat": "Sandy bay",
+    "habitatTag": "COASTAL",
+    "sensitivity": "Published marine-life reference context",
+    "primarySpeciesGlyph": "fish",
+    "speciesNames": [
+      "Giant Mudskipper",
+      "Black Sea Cucumber"
+    ],
+    "scene": "linear-gradient(178deg,#8FD0E8 0%,#4E9EC9 36%,#173E77 100%)",
+    "species": [
+      {
+        "name": "Giant Mudskipper",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Observed hunting fiddler crabs on Kuala Gula mudflats at low tide.",
+        "source": {
+          "dataset": "other",
+          "citation": "FishBase · giant mudskipper",
+          "url": "https://www.fishbase.se/FieldGuide/FieldGuideSummary.php?c_code=356&genusname=Periophthalmodon&speciesname=schlosseri",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      },
+      {
+        "name": "Black Sea Cucumber",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Collected at Teluk Nipah in November 2011.",
+        "source": {
+          "dataset": "other",
+          "citation": "Teluk Nipah original record",
+          "url": "https://irep.iium.edu.my/29832/1/2013_GenBank_KC405565-KC405568_-_Outlook_Web_Access_Light.pdf",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      }
+    ],
+    "ecologicalNote": "Marine-life information is from published reference sources, not a live wildlife observation or measured litter impact.",
+    "coverImageUrl": null
+  },
+  {
+    "id": "pantai-pasir-panjang-segari",
+    "name": "Pantai Pasir Panjang, Segari",
+    "area": "Segari, Perak",
+    "lat": 4.36365,
+    "lng": 100.581245,
+    "coordinateSource": {
+      "url": "https://commons.wikimedia.org/wiki/File:Pantai_Pasir_Panjang,_Segari_20231222_131452.jpg",
+      "name": "Wiki Farazi - geotagged Segari beach photograph",
+      "note": "Approximate beach reference point; not a visitor's location."
+    },
+    "habitat": "Coastal environment",
+    "habitatTag": "COASTAL",
+    "sensitivity": "Published marine-life reference context",
+    "primarySpeciesGlyph": "fish",
+    "speciesNames": [
+      "Green Sea Turtle",
+      "Giant Mudskipper"
+    ],
+    "scene": "linear-gradient(178deg,#8FD0E8 0%,#4E9EC9 36%,#173E77 100%)",
+    "species": [
+      {
+        "name": "Green Sea Turtle",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Nests on Malaysian beaches. Adults graze on seagrass.",
+        "source": {
+          "dataset": "other",
+          "citation": "NOAA Fisheries · green turtle",
+          "url": "https://www.fisheries.noaa.gov/species/green-turtle",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      },
+      {
+        "name": "Giant Mudskipper",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Observed hunting fiddler crabs on Kuala Gula mudflats at low tide.",
+        "source": {
+          "dataset": "other",
+          "citation": "FishBase · giant mudskipper",
+          "url": "https://www.fishbase.se/FieldGuide/FieldGuideSummary.php?c_code=356&genusname=Periophthalmodon&speciesname=schlosseri",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      }
+    ],
+    "ecologicalNote": "Marine-life information is from published reference sources, not a live wildlife observation or measured litter impact.",
+    "coverImageUrl": "/images/coastal/pantai-pasir-panjang-segari.jpg"
+  },
+  {
+    "id": "emerald-bay-pangkor-laut",
+    "name": "Emerald Bay, Pangkor Laut",
+    "area": "Pangkor Laut, Perak",
+    "lat": 4.195936,
+    "lng": 100.543037,
+    "coordinateSource": {
+      "url": "https://resortavipangkorbeachpangkorisland.my-hotels.net/en/location.html",
+      "name": "Avi Pangkor location guide - Emerald Bay attraction coordinates",
+      "note": "Approximate beach reference point; not a visitor's location."
+    },
+    "habitat": "Coastal environment",
+    "habitatTag": "COASTAL",
+    "sensitivity": "Published marine-life reference context",
+    "primarySpeciesGlyph": "fish",
+    "speciesNames": [
+      "Sea Cucumber",
+      "Giant Mudskipper"
+    ],
+    "scene": "linear-gradient(178deg,#8FD0E8 0%,#4E9EC9 36%,#173E77 100%)",
+    "species": [
+      {
+        "name": "Sea Cucumber",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Collected at Pangkor Laut in 2011, not specifically Emerald Bay.",
+        "source": {
+          "dataset": "other",
+          "citation": "Pangkor Laut original record",
+          "url": "https://irep.iium.edu.my/29832/1/2013_GenBank_KC405565-KC405568_-_Outlook_Web_Access_Light.pdf",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      },
+      {
+        "name": "Giant Mudskipper",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Observed hunting fiddler crabs on Kuala Gula mudflats at low tide.",
+        "source": {
+          "dataset": "other",
+          "citation": "FishBase · giant mudskipper",
+          "url": "https://www.fishbase.se/FieldGuide/FieldGuideSummary.php?c_code=356&genusname=Periophthalmodon&speciesname=schlosseri",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      }
+    ],
+    "ecologicalNote": "Marine-life information is from published reference sources, not a live wildlife observation or measured litter impact.",
+    "coverImageUrl": null
+  },
+  {
+    "id": "pantai-cahaya-negeri",
+    "name": "Pantai Cahaya Negeri",
+    "area": "Port Dickson, Negeri Sembilan",
+    "lat": 2.491,
+    "lng": 101.8407,
+    "coordinateSource": {
+      "url": "https://www.beachworldmap.org/en/malaysia",
+      "name": "OpenStreetMap via Beach World Map",
+      "note": "Approximate beach reference point; not a visitor's location."
+    },
+    "habitat": "Coastal environment",
+    "habitatTag": "COASTAL",
+    "sensitivity": "Published marine-life reference context",
+    "primarySpeciesGlyph": "fish",
+    "speciesNames": [
+      "Hawksbill Turtle",
+      "Seagrass"
+    ],
+    "scene": "linear-gradient(178deg,#8FD0E8 0%,#4E9EC9 36%,#173E77 100%)",
+    "species": [
+      {
+        "name": "Hawksbill Turtle",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Nesting records exist at Malaysian coastal sites; the record is not a current sighting.",
+        "source": {
+          "dataset": "other",
+          "citation": "NOAA Fisheries · hawksbill turtle",
+          "url": "https://www.fisheries.noaa.gov/species/hawksbill-turtle",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      },
+      {
+        "name": "Seagrass",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Seagrasses are rooted, flowering marine plants that form underwater meadows.",
+        "source": {
+          "dataset": "other",
+          "citation": "NOAA · seagrass meadows",
+          "url": "https://sanctuaries.noaa.gov/visit/ecosystems/seagrass.html",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      }
+    ],
+    "ecologicalNote": "Marine-life information is from published reference sources, not a live wildlife observation or measured litter impact.",
+    "coverImageUrl": "/images/coastal/pantai-cahaya-negeri.jpg"
+  },
+  {
+    "id": "pantai-bagan-pinang",
+    "name": "Pantai Bagan Pinang",
+    "area": "Port Dickson, Negeri Sembilan",
+    "lat": 2.5105,
+    "lng": 101.8279,
+    "coordinateSource": {
+      "url": "https://www.beachworldmap.org/en/malaysia",
+      "name": "OpenStreetMap via Beach World Map",
+      "note": "Approximate beach reference point; not a visitor's location."
+    },
+    "habitat": "Coastal environment",
+    "habitatTag": "COASTAL",
+    "sensitivity": "Published marine-life reference context",
+    "primarySpeciesGlyph": "fish",
+    "speciesNames": [
+      "Hawksbill Turtle",
+      "Seagrass"
+    ],
+    "scene": "linear-gradient(178deg,#8FD0E8 0%,#4E9EC9 36%,#173E77 100%)",
+    "species": [
+      {
+        "name": "Hawksbill Turtle",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Nesting records exist at Malaysian coastal sites; the record is not a current sighting.",
+        "source": {
+          "dataset": "other",
+          "citation": "NOAA Fisheries · hawksbill turtle",
+          "url": "https://www.fisheries.noaa.gov/species/hawksbill-turtle",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      },
+      {
+        "name": "Seagrass",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Seagrasses are rooted, flowering marine plants that form underwater meadows.",
+        "source": {
+          "dataset": "other",
+          "citation": "NOAA · seagrass meadows",
+          "url": "https://sanctuaries.noaa.gov/visit/ecosystems/seagrass.html",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      }
+    ],
+    "ecologicalNote": "Marine-life information is from published reference sources, not a live wildlife observation or measured litter impact.",
+    "coverImageUrl": null
+  },
+  {
+    "id": "pantai-tanjung-gemuk",
+    "name": "Pantai Tanjung Gemuk",
+    "area": "Port Dickson, Negeri Sembilan",
+    "lat": 2.5456,
+    "lng": 101.7986,
+    "coordinateSource": {
+      "url": "https://www.beachworldmap.org/en/malaysia",
+      "name": "OpenStreetMap via Beach World Map",
+      "note": "Approximate beach reference point; not a visitor's location."
+    },
+    "habitat": "Coastal environment",
+    "habitatTag": "COASTAL",
+    "sensitivity": "Published marine-life reference context",
+    "primarySpeciesGlyph": "fish",
+    "speciesNames": [
+      "Hawksbill Turtle",
+      "Seagrass"
+    ],
+    "scene": "linear-gradient(178deg,#8FD0E8 0%,#4E9EC9 36%,#173E77 100%)",
+    "species": [
+      {
+        "name": "Hawksbill Turtle",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Nesting records exist at Malaysian coastal sites; the record is not a current sighting.",
+        "source": {
+          "dataset": "other",
+          "citation": "NOAA Fisheries · hawksbill turtle",
+          "url": "https://www.fisheries.noaa.gov/species/hawksbill-turtle",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      },
+      {
+        "name": "Seagrass",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Seagrasses are rooted, flowering marine plants that form underwater meadows.",
+        "source": {
+          "dataset": "other",
+          "citation": "NOAA · seagrass meadows",
+          "url": "https://sanctuaries.noaa.gov/visit/ecosystems/seagrass.html",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      }
+    ],
+    "ecologicalNote": "Marine-life information is from published reference sources, not a live wildlife observation or measured litter impact.",
+    "coverImageUrl": "/images/coastal/pantai-tanjung-gemuk.jpg"
+  },
+  {
+    "id": "pantai-tanjung-biru",
+    "name": "Pantai Tanjung Biru",
+    "area": "Port Dickson, Negeri Sembilan",
+    "lat": 2.4154,
+    "lng": 101.8559,
+    "coordinateSource": {
+      "url": "https://www.beachworldmap.org/en/malaysia",
+      "name": "OpenStreetMap via Beach World Map",
+      "note": "Approximate beach reference point; not a visitor's location."
+    },
+    "habitat": "Sandy shore",
+    "habitatTag": "COASTAL",
+    "sensitivity": "Published marine-life reference context",
+    "primarySpeciesGlyph": "fish",
+    "speciesNames": [
+      "Hawksbill Turtle",
+      "Seagrass"
+    ],
+    "scene": "linear-gradient(178deg,#8FD0E8 0%,#4E9EC9 36%,#173E77 100%)",
+    "species": [
+      {
+        "name": "Hawksbill Turtle",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Nesting records exist at Malaysian coastal sites; the record is not a current sighting.",
+        "source": {
+          "dataset": "other",
+          "citation": "NOAA Fisheries · hawksbill turtle",
+          "url": "https://www.fisheries.noaa.gov/species/hawksbill-turtle",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      },
+      {
+        "name": "Seagrass",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Seagrasses are rooted, flowering marine plants that form underwater meadows.",
+        "source": {
+          "dataset": "other",
+          "citation": "NOAA · seagrass meadows",
+          "url": "https://sanctuaries.noaa.gov/visit/ecosystems/seagrass.html",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      }
+    ],
+    "ecologicalNote": "Marine-life information is from published reference sources, not a live wildlife observation or measured litter impact.",
+    "coverImageUrl": "/images/coastal/pantai-tanjung-biru.jpg"
+  },
+  {
+    "id": "pantai-pengkalan-balak",
+    "name": "Pantai Pengkalan Balak",
+    "area": "Alor Gajah, Melaka",
+    "lat": 2.314,
+    "lng": 102.0722,
+    "coordinateSource": {
+      "url": "https://www.beachworldmap.org/en/malaysia",
+      "name": "OpenStreetMap via Beach World Map",
+      "note": "Approximate beach reference point; not a visitor's location."
+    },
+    "habitat": "Sandy coast",
+    "habitatTag": "COASTAL",
+    "sensitivity": "Published marine-life reference context",
+    "primarySpeciesGlyph": "fish",
+    "speciesNames": [
+      "Hawksbill Turtle",
+      "Seagrass"
+    ],
+    "scene": "linear-gradient(178deg,#8FD0E8 0%,#4E9EC9 36%,#173E77 100%)",
+    "species": [
+      {
+        "name": "Hawksbill Turtle",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Nesting records exist at Malaysian coastal sites; the record is not a current sighting.",
+        "source": {
+          "dataset": "other",
+          "citation": "NOAA Fisheries · hawksbill turtle",
+          "url": "https://www.fisheries.noaa.gov/species/hawksbill-turtle",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      },
+      {
+        "name": "Seagrass",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Seagrasses are rooted, flowering marine plants that form underwater meadows.",
+        "source": {
+          "dataset": "other",
+          "citation": "NOAA · seagrass meadows",
+          "url": "https://sanctuaries.noaa.gov/visit/ecosystems/seagrass.html",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      }
+    ],
+    "ecologicalNote": "Marine-life information is from published reference sources, not a live wildlife observation or measured litter impact.",
+    "coverImageUrl": "/images/coastal/pantai-pengkalan-balak.jpg"
+  },
+  {
+    "id": "pantai-kundor",
+    "name": "Pantai Kundor",
+    "area": "Tanjung Kling, Melaka",
+    "lat": 2.234,
+    "lng": 102.1456,
+    "coordinateSource": {
+      "url": "https://www.beachworldmap.org/en/malaysia",
+      "name": "OpenStreetMap via Beach World Map",
+      "note": "Approximate beach reference point; not a visitor's location."
+    },
+    "habitat": "Sandy shore",
+    "habitatTag": "COASTAL",
+    "sensitivity": "Published marine-life reference context",
+    "primarySpeciesGlyph": "fish",
+    "speciesNames": [
+      "Hawksbill Turtle",
+      "Seagrass"
+    ],
+    "scene": "linear-gradient(178deg,#8FD0E8 0%,#4E9EC9 36%,#173E77 100%)",
+    "species": [
+      {
+        "name": "Hawksbill Turtle",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Nesting records exist at Malaysian coastal sites; the record is not a current sighting.",
+        "source": {
+          "dataset": "other",
+          "citation": "NOAA Fisheries · hawksbill turtle",
+          "url": "https://www.fisheries.noaa.gov/species/hawksbill-turtle",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      },
+      {
+        "name": "Seagrass",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Seagrasses are rooted, flowering marine plants that form underwater meadows.",
+        "source": {
+          "dataset": "other",
+          "citation": "NOAA · seagrass meadows",
+          "url": "https://sanctuaries.noaa.gov/visit/ecosystems/seagrass.html",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      }
+    ],
+    "ecologicalNote": "Marine-life information is from published reference sources, not a live wildlife observation or measured litter impact.",
+    "coverImageUrl": null
+  },
+  {
+    "id": "pantai-klebang",
+    "name": "Pantai Klebang",
+    "area": "Klebang, Melaka Tengah",
+    "lat": 2.216384,
+    "lng": 102.194318,
+    "coordinateSource": {
+      "url": "https://pokokkelapa.wordpress.com/2017/10/16/white-sand-dunes-pantai-klebang-melaka/",
+      "name": "Pokok Kelapa - first-hand Klebang beach access GPS",
+      "note": "Approximate beach reference point; not a visitor's location."
+    },
+    "habitat": "Sandy shore",
+    "habitatTag": "COASTAL",
+    "sensitivity": "Published marine-life reference context",
+    "primarySpeciesGlyph": "fish",
+    "speciesNames": [
+      "Hawksbill Turtle",
+      "Seagrass"
+    ],
+    "scene": "linear-gradient(178deg,#8FD0E8 0%,#4E9EC9 36%,#173E77 100%)",
+    "species": [
+      {
+        "name": "Hawksbill Turtle",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Nesting records exist at Malaysian coastal sites; the record is not a current sighting.",
+        "source": {
+          "dataset": "other",
+          "citation": "NOAA Fisheries · hawksbill turtle",
+          "url": "https://www.fisheries.noaa.gov/species/hawksbill-turtle",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      },
+      {
+        "name": "Seagrass",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Seagrasses are rooted, flowering marine plants that form underwater meadows.",
+        "source": {
+          "dataset": "other",
+          "citation": "NOAA · seagrass meadows",
+          "url": "https://sanctuaries.noaa.gov/visit/ecosystems/seagrass.html",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      }
+    ],
+    "ecologicalNote": "Marine-life information is from published reference sources, not a live wildlife observation or measured litter impact.",
+    "coverImageUrl": "/images/coastal/pantai-klebang.jpg"
+  },
+  {
+    "id": "pantai-tanjung-bidara",
+    "name": "Pantai Tanjung Bidara",
+    "area": "Masjid Tanah, Alor Gajah, Melaka",
+    "lat": 2.296418,
+    "lng": 102.078502,
+    "coordinateSource": {
+      "url": "https://www.mpag.gov.my/pantai-tanjung-bidara/",
+      "name": "Majlis Perbandaran Alor Gajah - official beach GPS",
+      "note": "Approximate beach reference point; not a visitor's location."
+    },
+    "habitat": "Coastal environment",
+    "habitatTag": "COASTAL",
+    "sensitivity": "Published marine-life reference context",
+    "primarySpeciesGlyph": "fish",
+    "speciesNames": [
+      "Hawksbill Turtle",
+      "Seagrass"
+    ],
+    "scene": "linear-gradient(178deg,#8FD0E8 0%,#4E9EC9 36%,#173E77 100%)",
+    "species": [
+      {
+        "name": "Hawksbill Turtle",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Nesting records exist at Malaysian coastal sites; the record is not a current sighting.",
+        "source": {
+          "dataset": "other",
+          "citation": "NOAA Fisheries · hawksbill turtle",
+          "url": "https://www.fisheries.noaa.gov/species/hawksbill-turtle",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      },
+      {
+        "name": "Seagrass",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Seagrasses are rooted, flowering marine plants that form underwater meadows.",
+        "source": {
+          "dataset": "other",
+          "citation": "NOAA · seagrass meadows",
+          "url": "https://sanctuaries.noaa.gov/visit/ecosystems/seagrass.html",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      }
+    ],
+    "ecologicalNote": "Marine-life information is from published reference sources, not a live wildlife observation or measured litter impact.",
+    "coverImageUrl": "/images/coastal/pantai-tanjung-bidara.jpg"
+  },
+  {
+    "id": "pulau-besar-melaka",
+    "name": "Pulau Besar, Melaka",
+    "area": "Off mainland Melaka",
+    "lat": 2.1116806,
+    "lng": 102.327675,
+    "coordinateSource": {
+      "url": "https://studentsrepo.um.edu.my/15617/2/Logananthini_Muniandy.pdf",
+      "name": "Universiti Malaya - Pulau Besar beach sampling study",
+      "note": "Approximate beach reference point; not a visitor's location."
+    },
+    "habitat": "Sandy beaches",
+    "habitatTag": "COASTAL",
+    "sensitivity": "Published marine-life reference context",
+    "primarySpeciesGlyph": "fish",
+    "speciesNames": [
+      "Hawksbill Turtle",
+      "Seagrass"
+    ],
+    "scene": "linear-gradient(178deg,#8FD0E8 0%,#4E9EC9 36%,#173E77 100%)",
+    "species": [
+      {
+        "name": "Hawksbill Turtle",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Nesting records exist at Malaysian coastal sites; the record is not a current sighting.",
+        "source": {
+          "dataset": "other",
+          "citation": "NOAA Fisheries · hawksbill turtle",
+          "url": "https://www.fisheries.noaa.gov/species/hawksbill-turtle",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      },
+      {
+        "name": "Seagrass",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Seagrasses are rooted, flowering marine plants that form underwater meadows.",
+        "source": {
+          "dataset": "other",
+          "citation": "NOAA · seagrass meadows",
+          "url": "https://sanctuaries.noaa.gov/visit/ecosystems/seagrass.html",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      }
+    ],
+    "ecologicalNote": "Marine-life information is from published reference sources, not a live wildlife observation or measured litter impact.",
+    "coverImageUrl": "/images/coastal/pulau-besar-melaka.jpg"
+  },
+  {
+    "id": "pantai-siring",
+    "name": "Pantai Siring",
+    "area": "Jasin, Melaka",
+    "lat": 2.14087,
+    "lng": 102.36025,
+    "coordinateSource": {
+      "url": "https://malaysia.worldplaces.me/view-place/2697308-pantai-siring-merlimau-melaka.html",
+      "name": "WorldPlaces - Pantai Siring, Merlimau, Melaka",
+      "note": "Approximate beach reference point; not a visitor's location."
+    },
+    "habitat": "Coastal environment",
+    "habitatTag": "COASTAL",
+    "sensitivity": "Published marine-life reference context",
+    "primarySpeciesGlyph": "fish",
+    "speciesNames": [
+      "Hawksbill Turtle",
+      "Seagrass"
+    ],
+    "scene": "linear-gradient(178deg,#8FD0E8 0%,#4E9EC9 36%,#173E77 100%)",
+    "species": [
+      {
+        "name": "Hawksbill Turtle",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Nesting records exist at Malaysian coastal sites; the record is not a current sighting.",
+        "source": {
+          "dataset": "other",
+          "citation": "NOAA Fisheries · hawksbill turtle",
+          "url": "https://www.fisheries.noaa.gov/species/hawksbill-turtle",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      },
+      {
+        "name": "Seagrass",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Seagrasses are rooted, flowering marine plants that form underwater meadows.",
+        "source": {
+          "dataset": "other",
+          "citation": "NOAA · seagrass meadows",
+          "url": "https://sanctuaries.noaa.gov/visit/ecosystems/seagrass.html",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      }
+    ],
+    "ecologicalNote": "Marine-life information is from published reference sources, not a live wildlife observation or measured litter impact.",
+    "coverImageUrl": null
+  },
+  {
+    "id": "pantai-desaru",
+    "name": "Pantai Desaru",
+    "area": "Kota Tinggi, Johor",
+    "lat": 1.5506,
+    "lng": 104.2656,
+    "coordinateSource": {
+      "url": "https://www.beachworldmap.org/en/malaysia",
+      "name": "OpenStreetMap via Beach World Map",
+      "note": "Approximate beach reference point; not a visitor's location."
+    },
+    "habitat": "Coastal environment",
+    "habitatTag": "COASTAL",
+    "sensitivity": "Published marine-life reference context",
+    "primarySpeciesGlyph": "fish",
+    "speciesNames": [
+      "Dugong"
+    ],
+    "scene": "linear-gradient(178deg,#8FD0E8 0%,#4E9EC9 36%,#173E77 100%)",
+    "species": [
+      {
+        "name": "Dugong",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Feeding trails have been documented in Sibu–Tinggi seagrass meadows since 2014.",
+        "source": {
+          "dataset": "other",
+          "citation": "Fisheries Malaysia · dugong record",
+          "url": "https://www.dof.gov.my/wp-content/uploads/2024/03/SIARAN-MEDIA_RUMPUT-LAUT-PUPUS-ANCAM-POPULASI-DUGONG-.pdf",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      }
+    ],
+    "ecologicalNote": "Marine-life information is from published reference sources, not a live wildlife observation or measured litter impact.",
+    "coverImageUrl": "/images/coastal/pantai-desaru.jpg"
+  },
+  {
+    "id": "pantai-air-papan",
+    "name": "Pantai Air Papan",
+    "area": "Kampung Air Papan, Mersing, Johor",
+    "lat": 2.524505,
+    "lng": 103.829224,
+    "coordinateSource": {
+      "url": "https://commons.wikimedia.org/wiki/File:Pantai_Air_Papan,_Kampung_Air_Papan_Laut_20221219_183326.jpg",
+      "name": "Wikimedia Commons - geotagged beach photograph by Wiki Farazi",
+      "note": "Approximate beach reference point; not a visitor's location."
+    },
+    "habitat": "Coastal environment",
+    "habitatTag": "COASTAL",
+    "sensitivity": "Published marine-life reference context",
+    "primarySpeciesGlyph": "fish",
+    "speciesNames": [
+      "Dugong"
+    ],
+    "scene": "linear-gradient(178deg,#8FD0E8 0%,#4E9EC9 36%,#173E77 100%)",
+    "species": [
+      {
+        "name": "Dugong",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Feeding trails have been documented in Sibu–Tinggi seagrass meadows since 2014.",
+        "source": {
+          "dataset": "other",
+          "citation": "Fisheries Malaysia · dugong record",
+          "url": "https://www.dof.gov.my/wp-content/uploads/2024/03/SIARAN-MEDIA_RUMPUT-LAUT-PUPUS-ANCAM-POPULASI-DUGONG-.pdf",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      }
+    ],
+    "ecologicalNote": "Marine-life information is from published reference sources, not a live wildlife observation or measured litter impact.",
+    "coverImageUrl": "/images/coastal/pantai-air-papan.jpg"
+  },
+  {
+    "id": "pantai-tanjung-balau",
+    "name": "Pantai Tanjung Balau",
+    "area": "Kota Tinggi, Johor",
+    "lat": 1.6292,
+    "lng": 104.2515,
+    "coordinateSource": {
+      "url": "https://www.beachworldmap.org/en/malaysia",
+      "name": "OpenStreetMap via Beach World Map",
+      "note": "Approximate beach reference point; not a visitor's location."
+    },
+    "habitat": "Coastal environment",
+    "habitatTag": "COASTAL",
+    "sensitivity": "Published marine-life reference context",
+    "primarySpeciesGlyph": "fish",
+    "speciesNames": [
+      "Dugong"
+    ],
+    "scene": "linear-gradient(178deg,#8FD0E8 0%,#4E9EC9 36%,#173E77 100%)",
+    "species": [
+      {
+        "name": "Dugong",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Feeding trails have been documented in Sibu–Tinggi seagrass meadows since 2014.",
+        "source": {
+          "dataset": "other",
+          "citation": "Fisheries Malaysia · dugong record",
+          "url": "https://www.dof.gov.my/wp-content/uploads/2024/03/SIARAN-MEDIA_RUMPUT-LAUT-PUPUS-ANCAM-POPULASI-DUGONG-.pdf",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      }
+    ],
+    "ecologicalNote": "Marine-life information is from published reference sources, not a live wildlife observation or measured litter impact.",
+    "coverImageUrl": "/images/coastal/pantai-tanjung-balau.jpg"
+  },
+  {
+    "id": "pantai-minyak-beku",
+    "name": "Pantai Minyak Beku",
+    "area": "Batu Pahat, Johor",
+    "lat": 1.7951,
+    "lng": 102.88796,
+    "coordinateSource": {
+      "url": "https://www.penang-traveltips.com/malaysia/johor/batu-pahat/pantai-minyak-beku.htm",
+      "name": "Penang Travel Tips - on-site beach GPS",
+      "note": "Approximate beach reference point; not a visitor's location."
+    },
+    "habitat": "Coastal environment",
+    "habitatTag": "COASTAL",
+    "sensitivity": "Published marine-life reference context",
+    "primarySpeciesGlyph": "fish",
+    "speciesNames": [
+      "Dugong"
+    ],
+    "scene": "linear-gradient(178deg,#8FD0E8 0%,#4E9EC9 36%,#173E77 100%)",
+    "species": [
+      {
+        "name": "Dugong",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Feeding trails have been documented in Sibu–Tinggi seagrass meadows since 2014.",
+        "source": {
+          "dataset": "other",
+          "citation": "Fisheries Malaysia · dugong record",
+          "url": "https://www.dof.gov.my/wp-content/uploads/2024/03/SIARAN-MEDIA_RUMPUT-LAUT-PUPUS-ANCAM-POPULASI-DUGONG-.pdf",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      }
+    ],
+    "ecologicalNote": "Marine-life information is from published reference sources, not a live wildlife observation or measured litter impact.",
+    "coverImageUrl": "/images/coastal/pantai-minyak-beku.jpg"
+  },
+  {
+    "id": "pantai-stulang",
+    "name": "Pantai Stulang",
+    "area": "Stulang Laut, Johor Bahru",
+    "lat": 1.4675,
+    "lng": 103.7795,
+    "coordinateSource": {
+      "url": "https://www.beachworldmap.org/en/malaysia",
+      "name": "OpenStreetMap via Beach World Map",
+      "note": "Approximate beach reference point; not a visitor's location."
+    },
+    "habitat": "Coastal environment",
+    "habitatTag": "COASTAL",
+    "sensitivity": "Published marine-life reference context",
+    "primarySpeciesGlyph": "fish",
+    "speciesNames": [
+      "Dugong"
+    ],
+    "scene": "linear-gradient(178deg,#8FD0E8 0%,#4E9EC9 36%,#173E77 100%)",
+    "species": [
+      {
+        "name": "Dugong",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Feeding trails have been documented in Sibu–Tinggi seagrass meadows since 2014.",
+        "source": {
+          "dataset": "other",
+          "citation": "Fisheries Malaysia · dugong record",
+          "url": "https://www.dof.gov.my/wp-content/uploads/2024/03/SIARAN-MEDIA_RUMPUT-LAUT-PUPUS-ANCAM-POPULASI-DUGONG-.pdf",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      }
+    ],
+    "ecologicalNote": "Marine-life information is from published reference sources, not a live wildlife observation or measured litter impact.",
+    "coverImageUrl": "/images/coastal/pantai-stulang.jpg"
+  },
+  {
+    "id": "pantai-teluk-gorek",
+    "name": "Pantai Teluk Gorek",
+    "area": "Mersing, Johor",
+    "lat": 2.5734,
+    "lng": 103.8172,
+    "coordinateSource": {
+      "url": "https://www.beachworldmap.org/en/malaysia",
+      "name": "OpenStreetMap via Beach World Map",
+      "note": "Approximate beach reference point; not a visitor's location."
+    },
+    "habitat": "Sandy coastline",
+    "habitatTag": "COASTAL",
+    "sensitivity": "Published marine-life reference context",
+    "primarySpeciesGlyph": "fish",
+    "speciesNames": [
+      "Dugong"
+    ],
+    "scene": "linear-gradient(178deg,#8FD0E8 0%,#4E9EC9 36%,#173E77 100%)",
+    "species": [
+      {
+        "name": "Dugong",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Feeding trails have been documented in Sibu–Tinggi seagrass meadows since 2014.",
+        "source": {
+          "dataset": "other",
+          "citation": "Fisheries Malaysia · dugong record",
+          "url": "https://www.dof.gov.my/wp-content/uploads/2024/03/SIARAN-MEDIA_RUMPUT-LAUT-PUPUS-ANCAM-POPULASI-DUGONG-.pdf",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      }
+    ],
+    "ecologicalNote": "Marine-life information is from published reference sources, not a live wildlife observation or measured litter impact.",
+    "coverImageUrl": null
+  },
+  {
+    "id": "pasir-gemang",
+    "name": "Pasir Gemang",
+    "area": "Muar District, Johor",
+    "lat": 1.8575,
+    "lng": 102.7024,
+    "coordinateSource": {
+      "url": "https://www.beachworldmap.org/en/malaysia",
+      "name": "OpenStreetMap via Beach World Map",
+      "note": "Approximate beach reference point; not a visitor's location."
+    },
+    "habitat": "Coastal environment",
+    "habitatTag": "COASTAL",
+    "sensitivity": "Published marine-life reference context",
+    "primarySpeciesGlyph": "fish",
+    "speciesNames": [
+      "Dugong"
+    ],
+    "scene": "linear-gradient(178deg,#8FD0E8 0%,#4E9EC9 36%,#173E77 100%)",
+    "species": [
+      {
+        "name": "Dugong",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Feeding trails have been documented in Sibu–Tinggi seagrass meadows since 2014.",
+        "source": {
+          "dataset": "other",
+          "citation": "Fisheries Malaysia · dugong record",
+          "url": "https://www.dof.gov.my/wp-content/uploads/2024/03/SIARAN-MEDIA_RUMPUT-LAUT-PUPUS-ANCAM-POPULASI-DUGONG-.pdf",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      }
+    ],
+    "ecologicalNote": "Marine-life information is from published reference sources, not a live wildlife observation or measured litter impact.",
+    "coverImageUrl": null
+  },
+  {
+    "id": "pantai-semanyir",
+    "name": "Pantai Semanyir",
+    "area": "Endau, Mersing, Johor",
+    "lat": 2.6608,
+    "lng": 103.6432,
+    "coordinateSource": {
+      "url": "https://www.beachworldmap.org/en/malaysia",
+      "name": "OpenStreetMap via Beach World Map",
+      "note": "Approximate beach reference point; not a visitor's location."
+    },
+    "habitat": "Coastal environment",
+    "habitatTag": "COASTAL",
+    "sensitivity": "Published marine-life reference context",
+    "primarySpeciesGlyph": "fish",
+    "speciesNames": [
+      "Dugong"
+    ],
+    "scene": "linear-gradient(178deg,#8FD0E8 0%,#4E9EC9 36%,#173E77 100%)",
+    "species": [
+      {
+        "name": "Dugong",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Feeding trails have been documented in Sibu–Tinggi seagrass meadows since 2014.",
+        "source": {
+          "dataset": "other",
+          "citation": "Fisheries Malaysia · dugong record",
+          "url": "https://www.dof.gov.my/wp-content/uploads/2024/03/SIARAN-MEDIA_RUMPUT-LAUT-PUPUS-ANCAM-POPULASI-DUGONG-.pdf",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      }
+    ],
+    "ecologicalNote": "Marine-life information is from published reference sources, not a live wildlife observation or measured litter impact.",
+    "coverImageUrl": null
+  },
+  {
+    "id": "pasir-bunga",
+    "name": "Pasir Bunga",
+    "area": "Johor",
+    "lat": 1.4068,
+    "lng": 104.1059,
+    "coordinateSource": {
+      "url": "https://www.beachworldmap.org/en/malaysia",
+      "name": "OpenStreetMap via Beach World Map",
+      "note": "Approximate beach reference point; not a visitor's location."
+    },
+    "habitat": "Coastal environment",
+    "habitatTag": "COASTAL",
+    "sensitivity": "Published marine-life reference context",
+    "primarySpeciesGlyph": "fish",
+    "speciesNames": [
+      "Dugong"
+    ],
+    "scene": "linear-gradient(178deg,#8FD0E8 0%,#4E9EC9 36%,#173E77 100%)",
+    "species": [
+      {
+        "name": "Dugong",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Feeding trails have been documented in Sibu–Tinggi seagrass meadows since 2014.",
+        "source": {
+          "dataset": "other",
+          "citation": "Fisheries Malaysia · dugong record",
+          "url": "https://www.dof.gov.my/wp-content/uploads/2024/03/SIARAN-MEDIA_RUMPUT-LAUT-PUPUS-ANCAM-POPULASI-DUGONG-.pdf",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      }
+    ],
+    "ecologicalNote": "Marine-life information is from published reference sources, not a live wildlife observation or measured litter impact.",
+    "coverImageUrl": null
+  },
+  {
+    "id": "pulau-rawa",
+    "name": "Pulau Rawa",
+    "area": "Mersing, Johor",
+    "lat": 2.51994,
+    "lng": 103.97599,
+    "coordinateSource": {
+      "url": "https://mapcarta.com/15815456",
+      "name": "Mapcarta / OpenStreetMap - Rawa island reference point",
+      "note": "Approximate beach reference point; not a visitor's location."
+    },
+    "habitat": "Coral reefs",
+    "habitatTag": "COASTAL",
+    "sensitivity": "Published marine-life reference context",
+    "primarySpeciesGlyph": "fish",
+    "speciesNames": [
+      "Dugong"
+    ],
+    "scene": "linear-gradient(178deg,#8FD0E8 0%,#4E9EC9 36%,#173E77 100%)",
+    "species": [
+      {
+        "name": "Dugong",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Feeding trails have been documented in Sibu–Tinggi seagrass meadows since 2014.",
+        "source": {
+          "dataset": "other",
+          "citation": "Fisheries Malaysia · dugong record",
+          "url": "https://www.dof.gov.my/wp-content/uploads/2024/03/SIARAN-MEDIA_RUMPUT-LAUT-PUPUS-ANCAM-POPULASI-DUGONG-.pdf",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      }
+    ],
+    "ecologicalNote": "Marine-life information is from published reference sources, not a live wildlife observation or measured litter impact.",
+    "coverImageUrl": "/images/coastal/pulau-rawa.jpg"
+  },
+  {
+    "id": "pulau-tinggi",
+    "name": "Pulau Tinggi",
+    "area": "Mersing, Johor",
+    "lat": 2.29917,
+    "lng": 104.11803,
+    "coordinateSource": {
+      "url": "https://mapcarta.com/15811270",
+      "name": "Mapcarta / OpenStreetMap - Tinggi island reference point",
+      "note": "Approximate beach reference point; not a visitor's location."
+    },
+    "habitat": "Coastal environment",
+    "habitatTag": "COASTAL",
+    "sensitivity": "Published marine-life reference context",
+    "primarySpeciesGlyph": "fish",
+    "speciesNames": [
+      "Dugong"
+    ],
+    "scene": "linear-gradient(178deg,#8FD0E8 0%,#4E9EC9 36%,#173E77 100%)",
+    "species": [
+      {
+        "name": "Dugong",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Feeding trails have been documented in Sibu–Tinggi seagrass meadows since 2014.",
+        "source": {
+          "dataset": "other",
+          "citation": "Fisheries Malaysia · dugong record",
+          "url": "https://www.dof.gov.my/wp-content/uploads/2024/03/SIARAN-MEDIA_RUMPUT-LAUT-PUPUS-ANCAM-POPULASI-DUGONG-.pdf",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      }
+    ],
+    "ecologicalNote": "Marine-life information is from published reference sources, not a live wildlife observation or measured litter impact.",
+    "coverImageUrl": null
+  },
+  {
+    "id": "pulau-besar-mersing",
+    "name": "Pulau Besar, Mersing",
+    "area": "Mersing, Johor",
+    "lat": 2.4393,
+    "lng": 103.9835,
+    "coordinateSource": {
+      "url": "https://mapcarta.com/15811326",
+      "name": "Mapcarta / GeoNames - Pulau Babi Besar island reference point",
+      "note": "Approximate beach reference point; not a visitor's location."
+    },
+    "habitat": "Coastal environment",
+    "habitatTag": "COASTAL",
+    "sensitivity": "Published marine-life reference context",
+    "primarySpeciesGlyph": "fish",
+    "speciesNames": [
+      "Dugong"
+    ],
+    "scene": "linear-gradient(178deg,#8FD0E8 0%,#4E9EC9 36%,#173E77 100%)",
+    "species": [
+      {
+        "name": "Dugong",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Feeding trails have been documented in Sibu–Tinggi seagrass meadows since 2014.",
+        "source": {
+          "dataset": "other",
+          "citation": "Fisheries Malaysia · dugong record",
+          "url": "https://www.dof.gov.my/wp-content/uploads/2024/03/SIARAN-MEDIA_RUMPUT-LAUT-PUPUS-ANCAM-POPULASI-DUGONG-.pdf",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      }
+    ],
+    "ecologicalNote": "Marine-life information is from published reference sources, not a live wildlife observation or measured litter impact.",
+    "coverImageUrl": "/images/coastal/pulau-besar-mersing.jpg"
+  },
+  {
+    "id": "pulau-sibu",
+    "name": "Pulau Sibu",
+    "area": "Mersing, Johor",
+    "lat": 2.2148,
+    "lng": 104.0705,
+    "coordinateSource": {
+      "url": "https://mapcarta.com/Sibu_Island",
+      "name": "Mapcarta / OpenStreetMap - Sibu island reference point",
+      "note": "Approximate beach reference point; not a visitor's location."
+    },
+    "habitat": "Seagrass meadows",
+    "habitatTag": "COASTAL",
+    "sensitivity": "Published marine-life reference context",
+    "primarySpeciesGlyph": "fish",
+    "speciesNames": [
+      "Dugong"
+    ],
+    "scene": "linear-gradient(178deg,#8FD0E8 0%,#4E9EC9 36%,#173E77 100%)",
+    "species": [
+      {
+        "name": "Dugong",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Feeding trails have been documented in Sibu–Tinggi seagrass meadows since 2014.",
+        "source": {
+          "dataset": "other",
+          "citation": "Fisheries Malaysia · dugong record",
+          "url": "https://www.dof.gov.my/wp-content/uploads/2024/03/SIARAN-MEDIA_RUMPUT-LAUT-PUPUS-ANCAM-POPULASI-DUGONG-.pdf",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      }
+    ],
+    "ecologicalNote": "Marine-life information is from published reference sources, not a live wildlife observation or measured litter impact.",
+    "coverImageUrl": "/images/coastal/pulau-sibu.jpg"
+  },
+  {
+    "id": "pantai-teluk-mahkota",
+    "name": "Pantai Teluk Mahkota",
+    "area": "Tanjung Sedili, Kota Tinggi, Johor",
+    "lat": 1.898,
+    "lng": 104.105,
+    "coordinateSource": {
+      "url": "https://www.engineeringletters.com/issues_v34/issue_5/EL_34_5_12.pdf",
+      "name": "Engineering Letters 34(5), 2026 - Table I coastal sampling site S9",
+      "note": "Approximate beach reference point; not a visitor's location."
+    },
+    "habitat": "Coastal environment",
+    "habitatTag": "COASTAL",
+    "sensitivity": "Published marine-life reference context",
+    "primarySpeciesGlyph": "fish",
+    "speciesNames": [
+      "Dugong"
+    ],
+    "scene": "linear-gradient(178deg,#8FD0E8 0%,#4E9EC9 36%,#173E77 100%)",
+    "species": [
+      {
+        "name": "Dugong",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Feeding trails have been documented in Sibu–Tinggi seagrass meadows since 2014.",
+        "source": {
+          "dataset": "other",
+          "citation": "Fisheries Malaysia · dugong record",
+          "url": "https://www.dof.gov.my/wp-content/uploads/2024/03/SIARAN-MEDIA_RUMPUT-LAUT-PUPUS-ANCAM-POPULASI-DUGONG-.pdf",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      }
+    ],
+    "ecologicalNote": "Marine-life information is from published reference sources, not a live wildlife observation or measured litter impact.",
+    "coverImageUrl": null
+  },
+  {
+    "id": "pantai-batu-layar",
+    "name": "Pantai Batu Layar",
+    "area": "Pengerang, Kota Tinggi, Johor",
+    "lat": 1.446,
+    "lng": 104.298,
+    "coordinateSource": {
+      "url": "https://www.engineeringletters.com/issues_v34/issue_5/EL_34_5_12.pdf",
+      "name": "Engineering Letters 34(5), 2026 - Table I coastal sampling site S2",
+      "note": "Approximate beach reference point; not a visitor's location."
+    },
+    "habitat": "Coastal environment",
+    "habitatTag": "COASTAL",
+    "sensitivity": "Published marine-life reference context",
+    "primarySpeciesGlyph": "fish",
+    "speciesNames": [
+      "Dugong"
+    ],
+    "scene": "linear-gradient(178deg,#8FD0E8 0%,#4E9EC9 36%,#173E77 100%)",
+    "species": [
+      {
+        "name": "Dugong",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Feeding trails have been documented in Sibu–Tinggi seagrass meadows since 2014.",
+        "source": {
+          "dataset": "other",
+          "citation": "Fisheries Malaysia · dugong record",
+          "url": "https://www.dof.gov.my/wp-content/uploads/2024/03/SIARAN-MEDIA_RUMPUT-LAUT-PUPUS-ANCAM-POPULASI-DUGONG-.pdf",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      }
+    ],
+    "ecologicalNote": "Marine-life information is from published reference sources, not a live wildlife observation or measured litter impact.",
+    "coverImageUrl": null
+  },
+  {
+    "id": "pantai-tanjung-leman",
+    "name": "Pantai Tanjung Leman",
+    "area": "Mersing, Johor",
+    "lat": 2.147,
+    "lng": 104.011,
+    "coordinateSource": {
+      "url": "https://www.engineeringletters.com/issues_v34/issue_5/EL_34_5_12.pdf",
+      "name": "Engineering Letters 34(5), 2026 - Table I coastal sampling site S16",
+      "note": "Approximate beach reference point; not a visitor's location."
+    },
+    "habitat": "Coastal environment",
+    "habitatTag": "COASTAL",
+    "sensitivity": "Published marine-life reference context",
+    "primarySpeciesGlyph": "fish",
+    "speciesNames": [
+      "Dugong"
+    ],
+    "scene": "linear-gradient(178deg,#8FD0E8 0%,#4E9EC9 36%,#173E77 100%)",
+    "species": [
+      {
+        "name": "Dugong",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Feeding trails have been documented in Sibu–Tinggi seagrass meadows since 2014.",
+        "source": {
+          "dataset": "other",
+          "citation": "Fisheries Malaysia · dugong record",
+          "url": "https://www.dof.gov.my/wp-content/uploads/2024/03/SIARAN-MEDIA_RUMPUT-LAUT-PUPUS-ANCAM-POPULASI-DUGONG-.pdf",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      }
+    ],
+    "ecologicalNote": "Marine-life information is from published reference sources, not a live wildlife observation or measured litter impact.",
+    "coverImageUrl": "/images/coastal/pantai-tanjung-leman.jpg"
+  },
+  {
+    "id": "pantai-cahaya-bulan",
+    "name": "Pantai Cahaya Bulan",
+    "area": "Kota Bharu, Kelantan",
+    "lat": 6.1935,
+    "lng": 102.2794,
+    "coordinateSource": {
+      "url": "https://www.beachworldmap.org/en/malaysia",
+      "name": "OpenStreetMap via Beach World Map",
+      "note": "Approximate beach reference point; not a visitor's location."
+    },
+    "habitat": "Coastal environment",
+    "habitatTag": "COASTAL",
+    "sensitivity": "Published marine-life reference context",
+    "primarySpeciesGlyph": "fish",
+    "speciesNames": [
+      "Faunus Snail"
+    ],
+    "scene": "linear-gradient(178deg,#8FD0E8 0%,#4E9EC9 36%,#173E77 100%)",
+    "species": [
+      {
+        "name": "Faunus Snail",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Collected at Pantai Bisikan Bayu in a 2007 study.",
+        "source": {
+          "dataset": "other",
+          "citation": "Faunus original record",
+          "url": "https://www.jelsciences.com/articles/jbres1581.php",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      }
+    ],
+    "ecologicalNote": "Marine-life information is from published reference sources, not a live wildlife observation or measured litter impact.",
+    "coverImageUrl": null
+  },
+  {
+    "id": "pantai-irama",
+    "name": "Pantai Irama",
+    "area": "Bachok, Kelantan",
+    "lat": 6.0777,
+    "lng": 102.3949,
+    "coordinateSource": {
+      "url": "https://www.beachworldmap.org/en/malaysia",
+      "name": "OpenStreetMap via Beach World Map",
+      "note": "Approximate beach reference point; not a visitor's location."
+    },
+    "habitat": "Coastal environment",
+    "habitatTag": "COASTAL",
+    "sensitivity": "Published marine-life reference context",
+    "primarySpeciesGlyph": "fish",
+    "speciesNames": [
+      "Faunus Snail"
+    ],
+    "scene": "linear-gradient(178deg,#8FD0E8 0%,#4E9EC9 36%,#173E77 100%)",
+    "species": [
+      {
+        "name": "Faunus Snail",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Collected at Pantai Bisikan Bayu in a 2007 study.",
+        "source": {
+          "dataset": "other",
+          "citation": "Faunus original record",
+          "url": "https://www.jelsciences.com/articles/jbres1581.php",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      }
+    ],
+    "ecologicalNote": "Marine-life information is from published reference sources, not a live wildlife observation or measured litter impact.",
+    "coverImageUrl": "/images/coastal/pantai-irama.jpg"
+  },
+  {
+    "id": "pantai-senok",
+    "name": "Pantai Senok",
+    "area": "Kelantan",
+    "lat": 6.1643,
+    "lng": 102.3477,
+    "coordinateSource": {
+      "url": "https://www.beachworldmap.org/en/malaysia",
+      "name": "OpenStreetMap via Beach World Map",
+      "note": "Approximate beach reference point; not a visitor's location."
+    },
+    "habitat": "Coastal environment",
+    "habitatTag": "COASTAL",
+    "sensitivity": "Published marine-life reference context",
+    "primarySpeciesGlyph": "fish",
+    "speciesNames": [
+      "Faunus Snail"
+    ],
+    "scene": "linear-gradient(178deg,#8FD0E8 0%,#4E9EC9 36%,#173E77 100%)",
+    "species": [
+      {
+        "name": "Faunus Snail",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Collected at Pantai Bisikan Bayu in a 2007 study.",
+        "source": {
+          "dataset": "other",
+          "citation": "Faunus original record",
+          "url": "https://www.jelsciences.com/articles/jbres1581.php",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      }
+    ],
+    "ecologicalNote": "Marine-life information is from published reference sources, not a live wildlife observation or measured litter impact.",
+    "coverImageUrl": null
+  },
+  {
+    "id": "pantai-kuda",
+    "name": "Pantai Kuda",
+    "area": "Kelantan",
+    "lat": 6.2169,
+    "lng": 102.2316,
+    "coordinateSource": {
+      "url": "https://www.beachworldmap.org/en/malaysia",
+      "name": "OpenStreetMap via Beach World Map",
+      "note": "Approximate beach reference point; not a visitor's location."
+    },
+    "habitat": "Coastal environment",
+    "habitatTag": "COASTAL",
+    "sensitivity": "Published marine-life reference context",
+    "primarySpeciesGlyph": "fish",
+    "speciesNames": [
+      "Faunus Snail"
+    ],
+    "scene": "linear-gradient(178deg,#8FD0E8 0%,#4E9EC9 36%,#173E77 100%)",
+    "species": [
+      {
+        "name": "Faunus Snail",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Collected at Pantai Bisikan Bayu in a 2007 study.",
+        "source": {
+          "dataset": "other",
+          "citation": "Faunus original record",
+          "url": "https://www.jelsciences.com/articles/jbres1581.php",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      }
+    ],
+    "ecologicalNote": "Marine-life information is from published reference sources, not a live wildlife observation or measured litter impact.",
+    "coverImageUrl": null
+  },
+  {
+    "id": "pantai-mek-mas",
+    "name": "Pantai Mek Mas",
+    "area": "Kelantan",
+    "lat": 6.21642,
+    "lng": 102.24322,
+    "coordinateSource": {
+      "url": "https://mycoast.nahrim.gov.my/portal-main/metadata-directory?search_type=TBEACHPROFILE",
+      "name": "NAHRIM MyCoast - Pantai Mek Mas beach profile survey, February 2018",
+      "note": "Approximate beach reference point; not a visitor's location."
+    },
+    "habitat": "Coastal environment",
+    "habitatTag": "COASTAL",
+    "sensitivity": "Published marine-life reference context",
+    "primarySpeciesGlyph": "fish",
+    "speciesNames": [
+      "Faunus Snail"
+    ],
+    "scene": "linear-gradient(178deg,#8FD0E8 0%,#4E9EC9 36%,#173E77 100%)",
+    "species": [
+      {
+        "name": "Faunus Snail",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Collected at Pantai Bisikan Bayu in a 2007 study.",
+        "source": {
+          "dataset": "other",
+          "citation": "Faunus original record",
+          "url": "https://www.jelsciences.com/articles/jbres1581.php",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      }
+    ],
+    "ecologicalNote": "Marine-life information is from published reference sources, not a live wildlife observation or measured litter impact.",
+    "coverImageUrl": null
+  },
+  {
+    "id": "pantai-tok-bali",
+    "name": "Pantai Tok Bali",
+    "area": "Pasir Puteh, Kelantan",
+    "lat": 5.90209,
+    "lng": 102.48017,
+    "coordinateSource": {
+      "url": "https://mapcarta.com/35737884",
+      "name": "Mapcarta / GeoNames - Pantai Tok Bali beach",
+      "note": "Approximate beach reference point; not a visitor's location."
+    },
+    "habitat": "Coastal environment",
+    "habitatTag": "COASTAL",
+    "sensitivity": "Published marine-life reference context",
+    "primarySpeciesGlyph": "fish",
+    "speciesNames": [
+      "Faunus Snail"
+    ],
+    "scene": "linear-gradient(178deg,#8FD0E8 0%,#4E9EC9 36%,#173E77 100%)",
+    "species": [
+      {
+        "name": "Faunus Snail",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Collected at Pantai Bisikan Bayu in a 2007 study.",
+        "source": {
+          "dataset": "other",
+          "citation": "Faunus original record",
+          "url": "https://www.jelsciences.com/articles/jbres1581.php",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      }
+    ],
+    "ecologicalNote": "Marine-life information is from published reference sources, not a live wildlife observation or measured litter impact.",
+    "coverImageUrl": "/images/coastal/pantai-tok-bali.jpg"
+  },
+  {
+    "id": "pantai-bisikan-bayu",
+    "name": "Pantai Bisikan Bayu",
+    "area": "Semerak, Pasir Puteh, Kelantan",
+    "lat": 5.8647,
+    "lng": 102.5144,
+    "coordinateSource": {
+      "url": "https://www.beachworldmap.org/en/malaysia",
+      "name": "OpenStreetMap via Beach World Map",
+      "note": "Approximate beach reference point; not a visitor's location."
+    },
+    "habitat": "Coastal environment",
+    "habitatTag": "COASTAL",
+    "sensitivity": "Published marine-life reference context",
+    "primarySpeciesGlyph": "fish",
+    "speciesNames": [
+      "Faunus Snail"
+    ],
+    "scene": "linear-gradient(178deg,#8FD0E8 0%,#4E9EC9 36%,#173E77 100%)",
+    "species": [
+      {
+        "name": "Faunus Snail",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Collected at Pantai Bisikan Bayu in a 2007 study.",
+        "source": {
+          "dataset": "other",
+          "citation": "Faunus original record",
+          "url": "https://www.jelsciences.com/articles/jbres1581.php",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      }
+    ],
+    "ecologicalNote": "Marine-life information is from published reference sources, not a live wildlife observation or measured litter impact.",
+    "coverImageUrl": "/images/coastal/pantai-bisikan-bayu.jpg"
+  },
+  {
+    "id": "pantai-penarik",
+    "name": "Pantai Penarik",
+    "area": "Terengganu",
+    "lat": 5.5921,
+    "lng": 102.8534,
+    "coordinateSource": {
+      "url": "https://www.beachworldmap.org/en/malaysia",
+      "name": "OpenStreetMap via Beach World Map",
+      "note": "Approximate beach reference point; not a visitor's location."
+    },
+    "habitat": "Coastal environment",
+    "habitatTag": "COASTAL",
+    "sensitivity": "Published marine-life reference context",
+    "primarySpeciesGlyph": "fish",
+    "speciesNames": [
+      "Green Sea Turtle",
+      "Corals"
+    ],
+    "scene": "linear-gradient(178deg,#8FD0E8 0%,#4E9EC9 36%,#173E77 100%)",
+    "species": [
+      {
+        "name": "Green Sea Turtle",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Nests on Malaysian beaches. Adults graze on seagrass.",
+        "source": {
+          "dataset": "other",
+          "citation": "NOAA Fisheries · green turtle",
+          "url": "https://www.fisheries.noaa.gov/species/green-turtle",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      },
+      {
+        "name": "Corals",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Corals are animals. Many reef-building kinds create shelter for marine life.",
+        "source": {
+          "dataset": "other",
+          "citation": "NOAA · what are corals?",
+          "url": "https://oceanservice.noaa.gov/education/tutorial_corals/coral01_intro.html",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      }
+    ],
+    "ecologicalNote": "Marine-life information is from published reference sources, not a live wildlife observation or measured litter impact.",
+    "coverImageUrl": null
+  },
+  {
+    "id": "pantai-teluk-lipat",
+    "name": "Pantai Teluk Lipat",
+    "area": "Dungun, Terengganu",
+    "lat": 4.768,
+    "lng": 103.4229,
+    "coordinateSource": {
+      "url": "https://www.beachworldmap.org/en/malaysia",
+      "name": "OpenStreetMap via Beach World Map",
+      "note": "Approximate beach reference point; not a visitor's location."
+    },
+    "habitat": "Coastal environment",
+    "habitatTag": "COASTAL",
+    "sensitivity": "Published marine-life reference context",
+    "primarySpeciesGlyph": "fish",
+    "speciesNames": [
+      "Green Sea Turtle",
+      "Corals"
+    ],
+    "scene": "linear-gradient(178deg,#8FD0E8 0%,#4E9EC9 36%,#173E77 100%)",
+    "species": [
+      {
+        "name": "Green Sea Turtle",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Nests on Malaysian beaches. Adults graze on seagrass.",
+        "source": {
+          "dataset": "other",
+          "citation": "NOAA Fisheries · green turtle",
+          "url": "https://www.fisheries.noaa.gov/species/green-turtle",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      },
+      {
+        "name": "Corals",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Corals are animals. Many reef-building kinds create shelter for marine life.",
+        "source": {
+          "dataset": "other",
+          "citation": "NOAA · what are corals?",
+          "url": "https://oceanservice.noaa.gov/education/tutorial_corals/coral01_intro.html",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      }
+    ],
+    "ecologicalNote": "Marine-life information is from published reference sources, not a live wildlife observation or measured litter impact.",
+    "coverImageUrl": null
+  },
+  {
+    "id": "pantai-kemasik",
+    "name": "Pantai Kemasik",
+    "area": "Terengganu",
+    "lat": 4.416,
+    "lng": 103.4566,
+    "coordinateSource": {
+      "url": "https://www.beachworldmap.org/en/malaysia",
+      "name": "OpenStreetMap via Beach World Map",
+      "note": "Approximate beach reference point; not a visitor's location."
+    },
+    "habitat": "Coastal environment",
+    "habitatTag": "COASTAL",
+    "sensitivity": "Published marine-life reference context",
+    "primarySpeciesGlyph": "fish",
+    "speciesNames": [
+      "Green Sea Turtle",
+      "Corals"
+    ],
+    "scene": "linear-gradient(178deg,#8FD0E8 0%,#4E9EC9 36%,#173E77 100%)",
+    "species": [
+      {
+        "name": "Green Sea Turtle",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Nests on Malaysian beaches. Adults graze on seagrass.",
+        "source": {
+          "dataset": "other",
+          "citation": "NOAA Fisheries · green turtle",
+          "url": "https://www.fisheries.noaa.gov/species/green-turtle",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      },
+      {
+        "name": "Corals",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Corals are animals. Many reef-building kinds create shelter for marine life.",
+        "source": {
+          "dataset": "other",
+          "citation": "NOAA · what are corals?",
+          "url": "https://oceanservice.noaa.gov/education/tutorial_corals/coral01_intro.html",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      }
+    ],
+    "ecologicalNote": "Marine-life information is from published reference sources, not a live wildlife observation or measured litter impact.",
+    "coverImageUrl": "/images/coastal/pantai-kemasik.jpg"
+  },
+  {
+    "id": "pantai-pandak",
+    "name": "Pantai Pandak",
+    "area": "Terengganu",
+    "lat": 5.2718504,
+    "lng": 103.1826955,
+    "coordinateSource": {
+      "url": "https://beach-spot.com/beach/pantai-pandak/",
+      "name": "Beach-Spot - named beach GPS",
+      "note": "Approximate beach reference point; not a visitor's location."
+    },
+    "habitat": "Coastal environment",
+    "habitatTag": "COASTAL",
+    "sensitivity": "Published marine-life reference context",
+    "primarySpeciesGlyph": "fish",
+    "speciesNames": [
+      "Green Sea Turtle",
+      "Corals"
+    ],
+    "scene": "linear-gradient(178deg,#8FD0E8 0%,#4E9EC9 36%,#173E77 100%)",
+    "species": [
+      {
+        "name": "Green Sea Turtle",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Nests on Malaysian beaches. Adults graze on seagrass.",
+        "source": {
+          "dataset": "other",
+          "citation": "NOAA Fisheries · green turtle",
+          "url": "https://www.fisheries.noaa.gov/species/green-turtle",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      },
+      {
+        "name": "Corals",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Corals are animals. Many reef-building kinds create shelter for marine life.",
+        "source": {
+          "dataset": "other",
+          "citation": "NOAA · what are corals?",
+          "url": "https://oceanservice.noaa.gov/education/tutorial_corals/coral01_intro.html",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      }
+    ],
+    "ecologicalNote": "Marine-life information is from published reference sources, not a live wildlife observation or measured litter impact.",
+    "coverImageUrl": null
+  },
+  {
+    "id": "pantai-bukit-keluang",
+    "name": "Pantai Bukit Keluang",
+    "area": "Near Kuala Besut, Terengganu",
+    "lat": 5.8017,
+    "lng": 102.6046,
+    "coordinateSource": {
+      "url": "https://www.beachworldmap.org/en/malaysia",
+      "name": "OpenStreetMap via Beach World Map",
+      "note": "Approximate beach reference point; not a visitor's location."
+    },
+    "habitat": "Coastal forest",
+    "habitatTag": "COASTAL",
+    "sensitivity": "Published marine-life reference context",
+    "primarySpeciesGlyph": "fish",
+    "speciesNames": [
+      "Green Sea Turtle",
+      "Corals"
+    ],
+    "scene": "linear-gradient(178deg,#8FD0E8 0%,#4E9EC9 36%,#173E77 100%)",
+    "species": [
+      {
+        "name": "Green Sea Turtle",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Nests on Malaysian beaches. Adults graze on seagrass.",
+        "source": {
+          "dataset": "other",
+          "citation": "NOAA Fisheries · green turtle",
+          "url": "https://www.fisheries.noaa.gov/species/green-turtle",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      },
+      {
+        "name": "Corals",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Corals are animals. Many reef-building kinds create shelter for marine life.",
+        "source": {
+          "dataset": "other",
+          "citation": "NOAA · what are corals?",
+          "url": "https://oceanservice.noaa.gov/education/tutorial_corals/coral01_intro.html",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      }
+    ],
+    "ecologicalNote": "Marine-life information is from published reference sources, not a live wildlife observation or measured litter impact.",
+    "coverImageUrl": null
+  },
+  {
+    "id": "pulau-kapas",
+    "name": "Pulau Kapas",
+    "area": "Kapas Island, Terengganu",
+    "lat": 5.2190041,
+    "lng": 103.2649049,
+    "coordinateSource": {
+      "url": "https://beach-spot.com/beach/pulau-kapas-3/",
+      "name": "Beach-Spot - Kapas island beach GPS",
+      "note": "Approximate beach reference point; not a visitor's location."
+    },
+    "habitat": "Coastal environment",
+    "habitatTag": "COASTAL",
+    "sensitivity": "Published marine-life reference context",
+    "primarySpeciesGlyph": "fish",
+    "speciesNames": [
+      "Green Sea Turtle"
+    ],
+    "scene": "linear-gradient(178deg,#8FD0E8 0%,#4E9EC9 36%,#173E77 100%)",
+    "species": [
+      {
+        "name": "Green Sea Turtle",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Nests on Malaysian beaches. Adults graze on seagrass.",
+        "source": {
+          "dataset": "other",
+          "citation": "NOAA Fisheries · green turtle",
+          "url": "https://www.fisheries.noaa.gov/species/green-turtle",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      }
+    ],
+    "ecologicalNote": "Marine-life information is from published reference sources, not a live wildlife observation or measured litter impact.",
+    "coverImageUrl": "/images/coastal/pulau-kapas.jpg"
+  },
+  {
+    "id": "long-beach-perhentian",
+    "name": "Long Beach, Perhentian",
+    "area": "Perhentian Kecil, Terengganu",
+    "lat": 5.9183806,
+    "lng": 102.7221365,
+    "coordinateSource": {
+      "url": "https://beach-spot.com/beach/long-beach-3/",
+      "name": "Beach-Spot - Long Beach, Perhentian Kecil GPS",
+      "note": "Approximate beach reference point; not a visitor's location."
+    },
+    "habitat": "Coastal environment",
+    "habitatTag": "COASTAL",
+    "sensitivity": "Published marine-life reference context",
+    "primarySpeciesGlyph": "fish",
+    "speciesNames": [
+      "Green Sea Turtle",
+      "Corals"
+    ],
+    "scene": "linear-gradient(178deg,#8FD0E8 0%,#4E9EC9 36%,#173E77 100%)",
+    "species": [
+      {
+        "name": "Green Sea Turtle",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Nests on Malaysian beaches. Adults graze on seagrass.",
+        "source": {
+          "dataset": "other",
+          "citation": "NOAA Fisheries · green turtle",
+          "url": "https://www.fisheries.noaa.gov/species/green-turtle",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      },
+      {
+        "name": "Corals",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Corals are animals. Many reef-building kinds create shelter for marine life.",
+        "source": {
+          "dataset": "other",
+          "citation": "NOAA · what are corals?",
+          "url": "https://oceanservice.noaa.gov/education/tutorial_corals/coral01_intro.html",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      }
+    ],
+    "ecologicalNote": "Marine-life information is from published reference sources, not a live wildlife observation or measured litter impact.",
+    "coverImageUrl": null
+  },
+  {
+    "id": "pasir-panjang-redang",
+    "name": "Pasir Panjang, Redang",
+    "area": "Redang Island, Terengganu",
+    "lat": 5.7739,
+    "lng": 103.0338,
+    "coordinateSource": {
+      "url": "https://www.beachworldmap.org/en/malaysia",
+      "name": "OpenStreetMap via Beach World Map",
+      "note": "Approximate beach reference point; not a visitor's location."
+    },
+    "habitat": "Coastal environment",
+    "habitatTag": "COASTAL",
+    "sensitivity": "Published marine-life reference context",
+    "primarySpeciesGlyph": "fish",
+    "speciesNames": [
+      "Green Sea Turtle",
+      "Corals"
+    ],
+    "scene": "linear-gradient(178deg,#8FD0E8 0%,#4E9EC9 36%,#173E77 100%)",
+    "species": [
+      {
+        "name": "Green Sea Turtle",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Nests on Malaysian beaches. Adults graze on seagrass.",
+        "source": {
+          "dataset": "other",
+          "citation": "NOAA Fisheries · green turtle",
+          "url": "https://www.fisheries.noaa.gov/species/green-turtle",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      },
+      {
+        "name": "Corals",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Corals are animals. Many reef-building kinds create shelter for marine life.",
+        "source": {
+          "dataset": "other",
+          "citation": "NOAA · what are corals?",
+          "url": "https://oceanservice.noaa.gov/education/tutorial_corals/coral01_intro.html",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      }
+    ],
+    "ecologicalNote": "Marine-life information is from published reference sources, not a live wildlife observation or measured litter impact.",
+    "coverImageUrl": "/images/coastal/pasir-panjang-redang.jpg"
+  },
+  {
+    "id": "chagar-hutang-redang",
+    "name": "Chagar Hutang, Redang",
+    "area": "Redang Island, Terengganu",
+    "lat": 5.81287,
+    "lng": 103.0083,
+    "coordinateSource": {
+      "url": "https://mapcarta.com/15900984",
+      "name": "Mapcarta / OpenStreetMap - Pasir Chagar Hutang beach, Redang",
+      "note": "Approximate beach reference point; not a visitor's location."
+    },
+    "habitat": "Coastal environment",
+    "habitatTag": "COASTAL",
+    "sensitivity": "Published marine-life reference context",
+    "primarySpeciesGlyph": "fish",
+    "speciesNames": [
+      "Green Sea Turtle",
+      "Corals"
+    ],
+    "scene": "linear-gradient(178deg,#8FD0E8 0%,#4E9EC9 36%,#173E77 100%)",
+    "species": [
+      {
+        "name": "Green Sea Turtle",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Nests on Malaysian beaches. Adults graze on seagrass.",
+        "source": {
+          "dataset": "other",
+          "citation": "NOAA Fisheries · green turtle",
+          "url": "https://www.fisheries.noaa.gov/species/green-turtle",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      },
+      {
+        "name": "Corals",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Corals are animals. Many reef-building kinds create shelter for marine life.",
+        "source": {
+          "dataset": "other",
+          "citation": "NOAA · what are corals?",
+          "url": "https://oceanservice.noaa.gov/education/tutorial_corals/coral01_intro.html",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      }
+    ],
+    "ecologicalNote": "Marine-life information is from published reference sources, not a live wildlife observation or measured litter impact.",
+    "coverImageUrl": null
+  },
+  {
+    "id": "pasir-besar-lang-tengah",
+    "name": "Pasir Besar, Lang Tengah",
+    "area": "Lang Tengah, Terengganu",
+    "lat": 5.80051,
+    "lng": 102.89353,
+    "coordinateSource": {
+      "url": "https://mapcarta.com/15904192",
+      "name": "Mapcarta / GeoNames - Pasir Besar beach, Lang Tengah",
+      "note": "Approximate beach reference point; not a visitor's location."
+    },
+    "habitat": "Offshore reef",
+    "habitatTag": "COASTAL",
+    "sensitivity": "Published marine-life reference context",
+    "primarySpeciesGlyph": "fish",
+    "speciesNames": [
+      "Green Sea Turtle"
+    ],
+    "scene": "linear-gradient(178deg,#8FD0E8 0%,#4E9EC9 36%,#173E77 100%)",
+    "species": [
+      {
+        "name": "Green Sea Turtle",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Nests on Malaysian beaches. Adults graze on seagrass.",
+        "source": {
+          "dataset": "other",
+          "citation": "NOAA Fisheries · green turtle",
+          "url": "https://www.fisheries.noaa.gov/species/green-turtle",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      }
+    ],
+    "ecologicalNote": "Marine-life information is from published reference sources, not a live wildlife observation or measured litter impact.",
+    "coverImageUrl": null
+  },
+  {
+    "id": "pantai-cherating",
+    "name": "Pantai Cherating",
+    "area": "Kuantan area, Pahang",
+    "lat": 4.1212,
+    "lng": 103.3921,
+    "coordinateSource": {
+      "url": "https://www.beachworldmap.org/en/malaysia",
+      "name": "OpenStreetMap via Beach World Map",
+      "note": "Approximate beach reference point; not a visitor's location."
+    },
+    "habitat": "Coastal environment",
+    "habitatTag": "COASTAL",
+    "sensitivity": "Published marine-life reference context",
+    "primarySpeciesGlyph": "fish",
+    "speciesNames": [
+      "Horseshoe Crab",
+      "Hawksbill Turtle"
+    ],
+    "scene": "linear-gradient(178deg,#8FD0E8 0%,#4E9EC9 36%,#173E77 100%)",
+    "species": [
+      {
+        "name": "Horseshoe Crab",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Spawning was recorded at Pantai Balok during 2009–2013.",
+        "source": {
+          "dataset": "other",
+          "citation": "Balok spawning study",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC4957986/",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      },
+      {
+        "name": "Hawksbill Turtle",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Nesting records exist at Malaysian coastal sites; the record is not a current sighting.",
+        "source": {
+          "dataset": "other",
+          "citation": "NOAA Fisheries · hawksbill turtle",
+          "url": "https://www.fisheries.noaa.gov/species/hawksbill-turtle",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      }
+    ],
+    "ecologicalNote": "Marine-life information is from published reference sources, not a live wildlife observation or measured litter impact.",
+    "coverImageUrl": "/images/coastal/pantai-cherating.jpg"
+  },
+  {
+    "id": "pantai-balok",
+    "name": "Pantai Balok",
+    "area": "Kuantan area, Pahang",
+    "lat": 3.9252,
+    "lng": 103.3731,
+    "coordinateSource": {
+      "url": "https://www.beachworldmap.org/en/malaysia",
+      "name": "OpenStreetMap via Beach World Map",
+      "note": "Approximate beach reference point; not a visitor's location."
+    },
+    "habitat": "Coastal environment",
+    "habitatTag": "COASTAL",
+    "sensitivity": "Published marine-life reference context",
+    "primarySpeciesGlyph": "fish",
+    "speciesNames": [
+      "Horseshoe Crab",
+      "Hawksbill Turtle"
+    ],
+    "scene": "linear-gradient(178deg,#8FD0E8 0%,#4E9EC9 36%,#173E77 100%)",
+    "species": [
+      {
+        "name": "Horseshoe Crab",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Spawning was recorded at Pantai Balok during 2009–2013.",
+        "source": {
+          "dataset": "other",
+          "citation": "Balok spawning study",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC4957986/",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      },
+      {
+        "name": "Hawksbill Turtle",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Nesting records exist at Malaysian coastal sites; the record is not a current sighting.",
+        "source": {
+          "dataset": "other",
+          "citation": "NOAA Fisheries · hawksbill turtle",
+          "url": "https://www.fisheries.noaa.gov/species/hawksbill-turtle",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      }
+    ],
+    "ecologicalNote": "Marine-life information is from published reference sources, not a live wildlife observation or measured litter impact.",
+    "coverImageUrl": "/images/coastal/pantai-balok.jpg"
+  },
+  {
+    "id": "pantai-chendor",
+    "name": "Pantai Chendor",
+    "area": "Pahang",
+    "lat": 4.1764576,
+    "lng": 103.4241628,
+    "coordinateSource": {
+      "url": "https://beach-spot.com/beach/pantai-chendor/",
+      "name": "Beach-Spot - named beach GPS",
+      "note": "Approximate beach reference point; not a visitor's location."
+    },
+    "habitat": "Coastal environment",
+    "habitatTag": "COASTAL",
+    "sensitivity": "Published marine-life reference context",
+    "primarySpeciesGlyph": "fish",
+    "speciesNames": [
+      "Sea Turtles",
+      "Horseshoe Crab"
+    ],
+    "scene": "linear-gradient(178deg,#8FD0E8 0%,#4E9EC9 36%,#173E77 100%)",
+    "species": [
+      {
+        "name": "Sea Turtles",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Sea turtles use marine waters and return to land to nest. This card does not name a species.",
+        "source": {
+          "dataset": "other",
+          "citation": "NOAA · debris ingestion",
+          "url": "https://marinedebris.noaa.gov/why-marine-debris-problem/ingestion",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      },
+      {
+        "name": "Horseshoe Crab",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Spawning was recorded at Pantai Balok during 2009–2013.",
+        "source": {
+          "dataset": "other",
+          "citation": "Balok spawning study",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC4957986/",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      }
+    ],
+    "ecologicalNote": "Marine-life information is from published reference sources, not a live wildlife observation or measured litter impact.",
+    "coverImageUrl": null
+  },
+  {
+    "id": "pantai-paya-tioman",
+    "name": "Pantai Paya, Tioman",
+    "area": "Tioman Island, Pahang",
+    "lat": 2.7871,
+    "lng": 104.1206,
+    "coordinateSource": {
+      "url": "https://www.beachworldmap.org/en/malaysia",
+      "name": "OpenStreetMap via Beach World Map",
+      "note": "Approximate beach reference point; not a visitor's location."
+    },
+    "habitat": "Coastal environment",
+    "habitatTag": "COASTAL",
+    "sensitivity": "Published marine-life reference context",
+    "primarySpeciesGlyph": "fish",
+    "speciesNames": [
+      "Horseshoe Crab"
+    ],
+    "scene": "linear-gradient(178deg,#8FD0E8 0%,#4E9EC9 36%,#173E77 100%)",
+    "species": [
+      {
+        "name": "Horseshoe Crab",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Spawning was recorded at Pantai Balok during 2009–2013.",
+        "source": {
+          "dataset": "other",
+          "citation": "Balok spawning study",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC4957986/",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      }
+    ],
+    "ecologicalNote": "Marine-life information is from published reference sources, not a live wildlife observation or measured litter impact.",
+    "coverImageUrl": "/images/coastal/pantai-paya-tioman.jpg"
+  },
+  {
+    "id": "pantai-air-batang-tioman",
+    "name": "Pantai Air Batang, Tioman",
+    "area": "Tioman Island, Pahang",
+    "lat": 2.8475,
+    "lng": 104.1587,
+    "coordinateSource": {
+      "url": "https://www.beachworldmap.org/en/malaysia",
+      "name": "OpenStreetMap via Beach World Map",
+      "note": "Approximate beach reference point; not a visitor's location."
+    },
+    "habitat": "Coastal environment",
+    "habitatTag": "COASTAL",
+    "sensitivity": "Published marine-life reference context",
+    "primarySpeciesGlyph": "fish",
+    "speciesNames": [
+      "Horseshoe Crab",
+      "Hawksbill Turtle"
+    ],
+    "scene": "linear-gradient(178deg,#8FD0E8 0%,#4E9EC9 36%,#173E77 100%)",
+    "species": [
+      {
+        "name": "Horseshoe Crab",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Spawning was recorded at Pantai Balok during 2009–2013.",
+        "source": {
+          "dataset": "other",
+          "citation": "Balok spawning study",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC4957986/",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      },
+      {
+        "name": "Hawksbill Turtle",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Nesting records exist at Malaysian coastal sites; the record is not a current sighting.",
+        "source": {
+          "dataset": "other",
+          "citation": "NOAA Fisheries · hawksbill turtle",
+          "url": "https://www.fisheries.noaa.gov/species/hawksbill-turtle",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      }
+    ],
+    "ecologicalNote": "Marine-life information is from published reference sources, not a live wildlife observation or measured litter impact.",
+    "coverImageUrl": "/images/coastal/pantai-air-batang-tioman.jpg"
+  },
+  {
+    "id": "pantai-juara-tioman",
+    "name": "Pantai Juara, Tioman",
+    "area": "Tioman Island, Pahang",
+    "lat": 2.7953,
+    "lng": 104.2047,
+    "coordinateSource": {
+      "url": "https://mapcarta.com/15890184",
+      "name": "Mapcarta / GeoNames - Pasir Juara beach",
+      "note": "Approximate beach reference point; not a visitor's location."
+    },
+    "habitat": "Coastal environment",
+    "habitatTag": "COASTAL",
+    "sensitivity": "Published marine-life reference context",
+    "primarySpeciesGlyph": "fish",
+    "speciesNames": [
+      "Hawksbill Turtle",
+      "Horseshoe Crab"
+    ],
+    "scene": "linear-gradient(178deg,#8FD0E8 0%,#4E9EC9 36%,#173E77 100%)",
+    "species": [
+      {
+        "name": "Hawksbill Turtle",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Nesting records exist at Malaysian coastal sites; the record is not a current sighting.",
+        "source": {
+          "dataset": "other",
+          "citation": "NOAA Fisheries · hawksbill turtle",
+          "url": "https://www.fisheries.noaa.gov/species/hawksbill-turtle",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      },
+      {
+        "name": "Horseshoe Crab",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Spawning was recorded at Pantai Balok during 2009–2013.",
+        "source": {
+          "dataset": "other",
+          "citation": "Balok spawning study",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC4957986/",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      }
+    ],
+    "ecologicalNote": "Marine-life information is from published reference sources, not a live wildlife observation or measured litter impact.",
+    "coverImageUrl": "/images/coastal/pantai-juara-tioman.jpg"
+  },
+  {
+    "id": "pantai-kelambu",
+    "name": "Pantai Kelambu",
+    "area": "Kudat, Sabah",
+    "lat": 6.984,
+    "lng": 116.725,
+    "coordinateSource": {
+      "url": "https://www.beachworldmap.org/en/malaysia",
+      "name": "OpenStreetMap via Beach World Map",
+      "note": "Approximate beach reference point; not a visitor's location."
+    },
+    "habitat": "Coastal environment",
+    "habitatTag": "COASTAL",
+    "sensitivity": "Published marine-life reference context",
+    "primarySpeciesGlyph": "fish",
+    "speciesNames": [
+      "Irrawaddy Dolphin",
+      "Clownfish"
+    ],
+    "scene": "linear-gradient(178deg,#8FD0E8 0%,#4E9EC9 36%,#173E77 100%)",
+    "species": [
+      {
+        "name": "Irrawaddy Dolphin",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "A round head and no beak. Lives close to shore.",
+        "source": {
+          "dataset": "other",
+          "citation": "IUCN · dolphin threats",
+          "url": "https://iucn.org/news/species/201712/unsustainable-food-systems-threaten-wild-crop-and-dolphin-species-%E2%80%93-iucn-red-list",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      },
+      {
+        "name": "Clownfish",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Clownfish shelter among sea anemones. This card does not identify a species.",
+        "source": {
+          "dataset": "other",
+          "citation": "FishBase · clownfish",
+          "url": "https://www.fishbase.se/FieldGuide/FieldGuideSummary.php?c_code=704&genusname=Amphiprion&speciesname=ocellaris",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      }
+    ],
+    "ecologicalNote": "Marine-life information is from published reference sources, not a live wildlife observation or measured litter impact.",
+    "coverImageUrl": null
+  },
+  {
+    "id": "pantai-merakit",
+    "name": "Pantai Merakit",
+    "area": "Sabah",
+    "lat": 6.3567,
+    "lng": 116.3146,
+    "coordinateSource": {
+      "url": "https://www.beachworldmap.org/en/malaysia",
+      "name": "OpenStreetMap via Beach World Map",
+      "note": "Approximate beach reference point; not a visitor's location."
+    },
+    "habitat": "Coastal environment",
+    "habitatTag": "COASTAL",
+    "sensitivity": "Published marine-life reference context",
+    "primarySpeciesGlyph": "fish",
+    "speciesNames": [
+      "Irrawaddy Dolphin",
+      "Clownfish"
+    ],
+    "scene": "linear-gradient(178deg,#8FD0E8 0%,#4E9EC9 36%,#173E77 100%)",
+    "species": [
+      {
+        "name": "Irrawaddy Dolphin",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "A round head and no beak. Lives close to shore.",
+        "source": {
+          "dataset": "other",
+          "citation": "IUCN · dolphin threats",
+          "url": "https://iucn.org/news/species/201712/unsustainable-food-systems-threaten-wild-crop-and-dolphin-species-%E2%80%93-iucn-red-list",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      },
+      {
+        "name": "Clownfish",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Clownfish shelter among sea anemones. This card does not identify a species.",
+        "source": {
+          "dataset": "other",
+          "citation": "FishBase · clownfish",
+          "url": "https://www.fishbase.se/FieldGuide/FieldGuideSummary.php?c_code=704&genusname=Amphiprion&speciesname=ocellaris",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      }
+    ],
+    "ecologicalNote": "Marine-life information is from published reference sources, not a live wildlife observation or measured litter impact.",
+    "coverImageUrl": null
+  },
+  {
+    "id": "pantai-larai-larai",
+    "name": "Pantai Larai-Larai",
+    "area": "Pulau Tiga, Sabah",
+    "lat": 5.7329,
+    "lng": 115.6321,
+    "coordinateSource": {
+      "url": "https://www.beachworldmap.org/en/malaysia",
+      "name": "OpenStreetMap via Beach World Map",
+      "note": "Approximate beach reference point; not a visitor's location."
+    },
+    "habitat": "Coastal environment",
+    "habitatTag": "COASTAL",
+    "sensitivity": "Published marine-life reference context",
+    "primarySpeciesGlyph": "fish",
+    "speciesNames": [
+      "Irrawaddy Dolphin"
+    ],
+    "scene": "linear-gradient(178deg,#8FD0E8 0%,#4E9EC9 36%,#173E77 100%)",
+    "species": [
+      {
+        "name": "Irrawaddy Dolphin",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "A round head and no beak. Lives close to shore.",
+        "source": {
+          "dataset": "other",
+          "citation": "IUCN · dolphin threats",
+          "url": "https://iucn.org/news/species/201712/unsustainable-food-systems-threaten-wild-crop-and-dolphin-species-%E2%80%93-iucn-red-list",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      }
+    ],
+    "ecologicalNote": "Marine-life information is from published reference sources, not a live wildlife observation or measured litter impact.",
+    "coverImageUrl": null
+  },
+  {
+    "id": "pantai-dalit",
+    "name": "Pantai Dalit",
+    "area": "Tuaran, Sabah",
+    "lat": 6.15868,
+    "lng": 116.15096,
+    "coordinateSource": {
+      "url": "https://mapcarta.com/34454504",
+      "name": "Mapcarta / GeoNames - Pantai Dalit beach",
+      "note": "Approximate beach reference point; not a visitor's location."
+    },
+    "habitat": "Coastal environment",
+    "habitatTag": "COASTAL",
+    "sensitivity": "Published marine-life reference context",
+    "primarySpeciesGlyph": "fish",
+    "speciesNames": [
+      "Irrawaddy Dolphin",
+      "Clownfish"
+    ],
+    "scene": "linear-gradient(178deg,#8FD0E8 0%,#4E9EC9 36%,#173E77 100%)",
+    "species": [
+      {
+        "name": "Irrawaddy Dolphin",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "A round head and no beak. Lives close to shore.",
+        "source": {
+          "dataset": "other",
+          "citation": "IUCN · dolphin threats",
+          "url": "https://iucn.org/news/species/201712/unsustainable-food-systems-threaten-wild-crop-and-dolphin-species-%E2%80%93-iucn-red-list",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      },
+      {
+        "name": "Clownfish",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Clownfish shelter among sea anemones. This card does not identify a species.",
+        "source": {
+          "dataset": "other",
+          "citation": "FishBase · clownfish",
+          "url": "https://www.fishbase.se/FieldGuide/FieldGuideSummary.php?c_code=704&genusname=Amphiprion&speciesname=ocellaris",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      }
+    ],
+    "ecologicalNote": "Marine-life information is from published reference sources, not a live wildlife observation or measured litter impact.",
+    "coverImageUrl": null
+  },
+  {
+    "id": "pulau-mantanani",
+    "name": "Pulau Mantanani",
+    "area": "Kota Belud, Sabah",
+    "lat": 6.711898,
+    "lng": 116.352439,
+    "coordinateSource": {
+      "url": "https://www.geonames.org/advanced-search.html?country=MY&featureClass=T&q=&startRow=150",
+      "name": "GeoNames - Pulau Mantanani Besar island reference point",
+      "note": "Approximate beach reference point; not a visitor's location."
+    },
+    "habitat": "Coral reefs",
+    "habitatTag": "COASTAL",
+    "sensitivity": "Published marine-life reference context",
+    "primarySpeciesGlyph": "fish",
+    "speciesNames": [
+      "Clownfish",
+      "Irrawaddy Dolphin"
+    ],
+    "scene": "linear-gradient(178deg,#8FD0E8 0%,#4E9EC9 36%,#173E77 100%)",
+    "species": [
+      {
+        "name": "Clownfish",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Clownfish shelter among sea anemones. This card does not identify a species.",
+        "source": {
+          "dataset": "other",
+          "citation": "FishBase · clownfish",
+          "url": "https://www.fishbase.se/FieldGuide/FieldGuideSummary.php?c_code=704&genusname=Amphiprion&speciesname=ocellaris",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      },
+      {
+        "name": "Irrawaddy Dolphin",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "A round head and no beak. Lives close to shore.",
+        "source": {
+          "dataset": "other",
+          "citation": "IUCN · dolphin threats",
+          "url": "https://iucn.org/news/species/201712/unsustainable-food-systems-threaten-wild-crop-and-dolphin-species-%E2%80%93-iucn-red-list",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      }
+    ],
+    "ecologicalNote": "Marine-life information is from published reference sources, not a live wildlife observation or measured litter impact.",
+    "coverImageUrl": "/images/coastal/pulau-mantanani.jpg"
+  },
+  {
+    "id": "pantai-tanjong-lobang",
+    "name": "Pantai Tanjong Lobang",
+    "area": "Miri, Sarawak",
+    "lat": 4.37,
+    "lng": 113.9678,
+    "coordinateSource": {
+      "url": "https://www.beachworldmap.org/en/malaysia",
+      "name": "OpenStreetMap via Beach World Map",
+      "note": "Approximate beach reference point; not a visitor's location."
+    },
+    "habitat": "Coastal environment",
+    "habitatTag": "COASTAL",
+    "sensitivity": "Published marine-life reference context",
+    "primarySpeciesGlyph": "fish",
+    "speciesNames": [
+      "Irrawaddy Dolphin",
+      "Clownfish"
+    ],
+    "scene": "linear-gradient(178deg,#8FD0E8 0%,#4E9EC9 36%,#173E77 100%)",
+    "species": [
+      {
+        "name": "Irrawaddy Dolphin",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "A round head and no beak. Lives close to shore.",
+        "source": {
+          "dataset": "other",
+          "citation": "IUCN · dolphin threats",
+          "url": "https://iucn.org/news/species/201712/unsustainable-food-systems-threaten-wild-crop-and-dolphin-species-%E2%80%93-iucn-red-list",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      },
+      {
+        "name": "Clownfish",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Clownfish shelter among sea anemones. This card does not identify a species.",
+        "source": {
+          "dataset": "other",
+          "citation": "FishBase · clownfish",
+          "url": "https://www.fishbase.se/FieldGuide/FieldGuideSummary.php?c_code=704&genusname=Amphiprion&speciesname=ocellaris",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      }
+    ],
+    "ecologicalNote": "Marine-life information is from published reference sources, not a live wildlife observation or measured litter impact.",
+    "coverImageUrl": "/images/coastal/pantai-tanjong-lobang.jpg"
+  },
+  {
+    "id": "pantai-tusan",
+    "name": "Pantai Tusan",
+    "area": "Subis, Sarawak",
+    "lat": 4.1261,
+    "lng": 113.822,
+    "coordinateSource": {
+      "url": "https://www.beachworldmap.org/en/malaysia",
+      "name": "OpenStreetMap via Beach World Map",
+      "note": "Approximate beach reference point; not a visitor's location."
+    },
+    "habitat": "Coastal environment",
+    "habitatTag": "COASTAL",
+    "sensitivity": "Published marine-life reference context",
+    "primarySpeciesGlyph": "fish",
+    "speciesNames": [
+      "Irrawaddy Dolphin",
+      "Clownfish"
+    ],
+    "scene": "linear-gradient(178deg,#8FD0E8 0%,#4E9EC9 36%,#173E77 100%)",
+    "species": [
+      {
+        "name": "Irrawaddy Dolphin",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "A round head and no beak. Lives close to shore.",
+        "source": {
+          "dataset": "other",
+          "citation": "IUCN · dolphin threats",
+          "url": "https://iucn.org/news/species/201712/unsustainable-food-systems-threaten-wild-crop-and-dolphin-species-%E2%80%93-iucn-red-list",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      },
+      {
+        "name": "Clownfish",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Clownfish shelter among sea anemones. This card does not identify a species.",
+        "source": {
+          "dataset": "other",
+          "citation": "FishBase · clownfish",
+          "url": "https://www.fishbase.se/FieldGuide/FieldGuideSummary.php?c_code=704&genusname=Amphiprion&speciesname=ocellaris",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      }
+    ],
+    "ecologicalNote": "Marine-life information is from published reference sources, not a live wildlife observation or measured litter impact.",
+    "coverImageUrl": null
+  },
+  {
+    "id": "pantai-tanjong-batu",
+    "name": "Pantai Tanjong Batu",
+    "area": "Bintulu, Sarawak",
+    "lat": 3.2109,
+    "lng": 113.0467,
+    "coordinateSource": {
+      "url": "https://www.beachworldmap.org/en/malaysia",
+      "name": "OpenStreetMap via Beach World Map",
+      "note": "Approximate beach reference point; not a visitor's location."
+    },
+    "habitat": "Rocky and sandy shoreline",
+    "habitatTag": "COASTAL",
+    "sensitivity": "Published marine-life reference context",
+    "primarySpeciesGlyph": "fish",
+    "speciesNames": [
+      "Irrawaddy Dolphin",
+      "Clownfish"
+    ],
+    "scene": "linear-gradient(178deg,#8FD0E8 0%,#4E9EC9 36%,#173E77 100%)",
+    "species": [
+      {
+        "name": "Irrawaddy Dolphin",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "A round head and no beak. Lives close to shore.",
+        "source": {
+          "dataset": "other",
+          "citation": "IUCN · dolphin threats",
+          "url": "https://iucn.org/news/species/201712/unsustainable-food-systems-threaten-wild-crop-and-dolphin-species-%E2%80%93-iucn-red-list",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      },
+      {
+        "name": "Clownfish",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Clownfish shelter among sea anemones. This card does not identify a species.",
+        "source": {
+          "dataset": "other",
+          "citation": "FishBase · clownfish",
+          "url": "https://www.fishbase.se/FieldGuide/FieldGuideSummary.php?c_code=704&genusname=Amphiprion&speciesname=ocellaris",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      }
+    ],
+    "ecologicalNote": "Marine-life information is from published reference sources, not a live wildlife observation or measured litter impact.",
+    "coverImageUrl": "/images/coastal/pantai-tanjong-batu.jpg"
+  },
+  {
+    "id": "pantai-mukah",
+    "name": "Pantai Mukah",
+    "area": "Mukah, Sarawak",
+    "lat": 2.9114,
+    "lng": 112.0908,
+    "coordinateSource": {
+      "url": "https://www.beachworldmap.org/en/malaysia",
+      "name": "OpenStreetMap via Beach World Map",
+      "note": "Approximate beach reference point; not a visitor's location."
+    },
+    "habitat": "Coastal environment",
+    "habitatTag": "COASTAL",
+    "sensitivity": "Published marine-life reference context",
+    "primarySpeciesGlyph": "fish",
+    "speciesNames": [
+      "Irrawaddy Dolphin",
+      "Clownfish"
+    ],
+    "scene": "linear-gradient(178deg,#8FD0E8 0%,#4E9EC9 36%,#173E77 100%)",
+    "species": [
+      {
+        "name": "Irrawaddy Dolphin",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "A round head and no beak. Lives close to shore.",
+        "source": {
+          "dataset": "other",
+          "citation": "IUCN · dolphin threats",
+          "url": "https://iucn.org/news/species/201712/unsustainable-food-systems-threaten-wild-crop-and-dolphin-species-%E2%80%93-iucn-red-list",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      },
+      {
+        "name": "Clownfish",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Clownfish shelter among sea anemones. This card does not identify a species.",
+        "source": {
+          "dataset": "other",
+          "citation": "FishBase · clownfish",
+          "url": "https://www.fishbase.se/FieldGuide/FieldGuideSummary.php?c_code=704&genusname=Amphiprion&speciesname=ocellaris",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      }
+    ],
+    "ecologicalNote": "Marine-life information is from published reference sources, not a live wildlife observation or measured litter impact.",
+    "coverImageUrl": null
+  },
+  {
+    "id": "pantai-pandan",
+    "name": "Pantai Pandan",
+    "area": "Lundu, Sarawak",
+    "lat": 1.7645227,
+    "lng": 109.8625902,
+    "coordinateSource": {
+      "url": "https://lundudc.sarawak.gov.my/web/subpage/webpage_view/133",
+      "name": "Lundu District Council - linked Google Maps place coordinates for Pantai Pandan",
+      "note": "Approximate beach reference point; not a visitor's location."
+    },
+    "habitat": "Coastal environment",
+    "habitatTag": "COASTAL",
+    "sensitivity": "Published marine-life reference context",
+    "primarySpeciesGlyph": "fish",
+    "speciesNames": [
+      "Irrawaddy Dolphin",
+      "Clownfish"
+    ],
+    "scene": "linear-gradient(178deg,#8FD0E8 0%,#4E9EC9 36%,#173E77 100%)",
+    "species": [
+      {
+        "name": "Irrawaddy Dolphin",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "A round head and no beak. Lives close to shore.",
+        "source": {
+          "dataset": "other",
+          "citation": "IUCN · dolphin threats",
+          "url": "https://iucn.org/news/species/201712/unsustainable-food-systems-threaten-wild-crop-and-dolphin-species-%E2%80%93-iucn-red-list",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      },
+      {
+        "name": "Clownfish",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Clownfish shelter among sea anemones. This card does not identify a species.",
+        "source": {
+          "dataset": "other",
+          "citation": "FishBase · clownfish",
+          "url": "https://www.fishbase.se/FieldGuide/FieldGuideSummary.php?c_code=704&genusname=Amphiprion&speciesname=ocellaris",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      }
+    ],
+    "ecologicalNote": "Marine-life information is from published reference sources, not a live wildlife observation or measured litter impact.",
+    "coverImageUrl": null
+  },
+  {
+    "id": "pantai-cenang",
+    "name": "Pantai Cenang",
+    "area": "Langkawi, Kedah",
+    "lat": 6.295761,
+    "lng": 99.722389,
+    "coordinateSource": {
+      "url": "https://www.wikidata.org/wiki/Q33328099",
+      "name": "Wikidata Q33328099, Cenang Beach, Langkawi",
+      "note": "Approximate beach reference point; not a visitor's location."
+    },
+    "habitat": "Sandy Shore",
+    "habitatTag": "COASTAL",
+    "sensitivity": "Published marine-life reference context",
+    "primarySpeciesGlyph": "fish",
+    "speciesNames": [
+      "Mangrove Crabs"
+    ],
+    "scene": "linear-gradient(178deg,#8FD0E8 0%,#4E9EC9 36%,#173E77 100%)",
+    "species": [
+      {
+        "name": "Mangrove Crabs",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Crabs are listed in Kilim’s mangrove ecosystem; the guide does not identify one species here.",
+        "source": {
+          "dataset": "other",
+          "citation": "Kilim park guide · fauna",
+          "url": "https://kilimgeoforestpark.com/biodiversity/fauna/",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      }
+    ],
+    "ecologicalNote": "Marine-life information is from published reference sources, not a live wildlife observation or measured litter impact.",
+    "coverImageUrl": "/images/coastal/pantai-cenang.jpg"
+  },
+  {
+    "id": "morib",
+    "name": "Pantai Morib",
+    "area": "Banting, Selangor",
+    "lat": 2.746,
+    "lng": 101.44,
+    "habitat": "Intertidal mudflat & sandy shore",
+    "habitatTag": "MUDFLAT",
+    "sensitivity": "Migratory feeding ground",
+    "primarySpeciesGlyph": "turtle",
+    "speciesNames": [
+      "Green Sea Turtle",
+      "Mangrove Fringe",
+      "Coastal Birds"
+    ],
+    "coverImageUrl": "/home/pantai-morib.jpg",
+    "scene": "linear-gradient(178deg,#8FD0E8 0%,#4E9EC9 36%,#2E6EA8 58%,#173E77 100%)",
+    "species": [
+      {
+        "name": "Green Sea Turtle",
+        "kind": "species",
+        "scientificName": "Chelonia mydas",
+        "threatCategory": null,
+        "glyph": "turtle",
+        "text": "Occasional visitor along the Strait of Malacca. Floating plastic may be mistaken for food.",
+        "source": {
+          "dataset": "pending",
+          "citation": "Awaiting FishBase / OBIS extract — not yet sourced",
+          "url": null,
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "pending",
+          "basis": "Green sea turtle is one of the four modelled species. Backend not connected yet."
+        }
+      },
+      {
+        "name": "Mangrove Fringe",
+        "kind": "habitat",
+        "scientificName": null,
+        "threatCategory": null,
+        "glyph": "mangrove",
+        "text": "Young mangroves at the northern end shelter juvenile fish and crabs.",
+        "source": {
+          "dataset": "pending",
+          "citation": "Awaiting FishBase / OBIS extract — not yet sourced",
+          "url": null,
+          "accessedAt": null
+        }
+      },
+      {
+        "name": "Coastal Birds",
+        "kind": "group",
+        "scientificName": null,
+        "threatCategory": null,
+        "glyph": "bird",
+        "text": "Migratory shorebirds feed along this tide line between September and April.",
+        "source": {
+          "dataset": "pending",
+          "citation": "Awaiting FishBase / OBIS extract — not yet sourced",
+          "url": null,
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Not one of the four modelled species, so no occurrence score exists for this card."
+        }
+      }
+    ],
+    "ecologicalNote": "Plastic and abandoned fishing gear may affect turtles and shorebirds that feed in this coastal environment."
+  },
+  {
+    "id": "remis",
+    "name": "Pantai Remis",
+    "area": "Jeram, Kuala Selangor",
+    "lat": 3.218,
+    "lng": 101.302,
+    "habitat": "Mudflat & shallow coastal waters",
+    "habitatTag": "MUDFLAT",
+    "sensitivity": "Seasonal bird activity",
+    "primarySpeciesGlyph": "bird",
+    "speciesNames": [
+      "Migratory Shorebirds",
+      "Marine Fish",
+      "Mangrove Belt"
+    ],
+    "coverImageUrl": null,
+    "scene": "linear-gradient(180deg,#D8ECF4 0%,#8FC6DC 38%,#5FA3C4 52%,#B5AF9E 100%)",
+    "species": [
+      {
+        "name": "Migratory Shorebirds",
+        "kind": "group",
+        "scientificName": null,
+        "threatCategory": null,
+        "glyph": "bird",
+        "text": "The Jeram mudflats are a stopover for migratory waders crossing the strait.",
+        "source": {
+          "dataset": "pending",
+          "citation": "Awaiting FishBase / OBIS extract — not yet sourced",
+          "url": null,
+          "accessedAt": null
+        }
+      },
+      {
+        "name": "Marine Fish",
+        "kind": "group",
+        "scientificName": null,
+        "threatCategory": null,
+        "glyph": "fish",
+        "text": "Shallow nursery waters for coastal fish species.",
+        "source": {
+          "dataset": "pending",
+          "citation": "Awaiting FishBase / OBIS extract — not yet sourced",
+          "url": null,
+          "accessedAt": null
+        }
+      },
+      {
+        "name": "Mangrove Belt",
+        "kind": "habitat",
+        "scientificName": null,
+        "threatCategory": null,
+        "glyph": "mangrove",
+        "text": "A narrow mangrove belt lines the river mouth south of the beach.",
+        "source": {
+          "dataset": "pending",
+          "citation": "Awaiting FishBase / OBIS extract — not yet sourced",
+          "url": null,
+          "accessedAt": null
+        }
+      }
+    ],
+    "ecologicalNote": "Litter that settles on mudflats may be swallowed by, or entangle, the birds and invertebrates feeding here."
+  },
+  {
+    "id": "kelanang",
+    "name": "Pantai Kelanang",
+    "area": "Banting, Selangor",
+    "lat": 2.789,
+    "lng": 101.415,
+    "habitat": "Mangrove-lined estuary shore",
+    "habitatTag": "MANGROVE",
+    "sensitivity": "Evidence still being gathered",
+    "primarySpeciesGlyph": "mangrove",
+    "speciesNames": [
+      "Mangrove Habitat",
+      "Coastal Birds"
+    ],
+    "coverImageUrl": null,
+    "scene": "linear-gradient(178deg,#2F6B7C 0%,#245A6B 44%,#1B4557 72%,#123244 100%)",
+    "species": [
+      {
+        "name": "Mangrove Habitat",
+        "kind": "habitat",
+        "scientificName": null,
+        "threatCategory": null,
+        "glyph": "mangrove",
+        "text": "Dense mangrove roots trap sediment and shelter juvenile marine life.",
+        "source": {
+          "dataset": "pending",
+          "citation": "Awaiting FishBase / OBIS extract — not yet sourced",
+          "url": null,
+          "accessedAt": null
+        }
+      },
+      {
+        "name": "Coastal Birds",
+        "kind": "group",
+        "scientificName": null,
+        "threatCategory": null,
+        "glyph": "bird",
+        "text": "Egrets and herons hunt along the shallow channels at low tide.",
+        "source": {
+          "dataset": "pending",
+          "citation": "Awaiting FishBase / OBIS extract — not yet sourced",
+          "url": null,
+          "accessedAt": null
+        }
+      }
+    ],
+    "ecologicalNote": "Litter caught in mangrove roots can persist for years and may break down into microplastics."
+  },
+  {
+    "id": "pantai-batu-buruk",
+    "name": "Pantai Batu Buruk",
+    "area": "Kuala Terengganu, Terengganu",
+    "lat": 5.3126,
+    "lng": 103.1616,
+    "coordinateSource": {
+      "url": "https://www.beachworldmap.org/en/malaysia",
+      "name": "OpenStreetMap via Beach World Map",
+      "note": "Approximate beach reference point; not a visitor's location."
+    },
+    "habitat": "Sandy Shore",
+    "habitatTag": "COASTAL",
+    "sensitivity": "Published marine-life reference context",
+    "primarySpeciesGlyph": "fish",
+    "speciesNames": [
+      "Green Sea Turtle",
+      "Corals"
+    ],
+    "scene": "linear-gradient(178deg,#8FD0E8 0%,#4E9EC9 36%,#173E77 100%)",
+    "species": [
+      {
+        "name": "Green Sea Turtle",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Nests on Malaysian beaches. Adults graze on seagrass.",
+        "source": {
+          "dataset": "other",
+          "citation": "NOAA Fisheries · green turtle",
+          "url": "https://www.fisheries.noaa.gov/species/green-turtle",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      },
+      {
+        "name": "Corals",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Corals are animals. Many reef-building kinds create shelter for marine life.",
+        "source": {
+          "dataset": "other",
+          "citation": "NOAA · what are corals?",
+          "url": "https://oceanservice.noaa.gov/education/tutorial_corals/coral01_intro.html",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      }
+    ],
+    "ecologicalNote": "Marine-life information is from published reference sources, not a live wildlife observation or measured litter impact.",
+    "coverImageUrl": null
+  },
+  {
+    "id": "pantai-batu-ferringhi",
+    "name": "Pantai Batu Ferringhi",
+    "area": "Batu Ferringhi, Penang",
+    "lat": 5.473167,
+    "lng": 100.245722,
+    "coordinateSource": {
+      "url": "https://mygeoname.mygeoportal.gov.my/pdf/07.pdf#page=76",
+      "name": "MyGeoName / JUPEM Penang gazetteer, Pantai Batu Ferringgi",
+      "note": "Approximate beach reference point; not a visitor's location."
+    },
+    "habitat": "Sandy Shore",
+    "habitatTag": "COASTAL",
+    "sensitivity": "Published marine-life reference context",
+    "primarySpeciesGlyph": "fish",
+    "speciesNames": [
+      "Green Sea Turtle",
+      "Mangrove Crabs"
+    ],
+    "scene": "linear-gradient(178deg,#8FD0E8 0%,#4E9EC9 36%,#173E77 100%)",
+    "species": [
+      {
+        "name": "Green Sea Turtle",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Nests on Malaysian beaches. Adults graze on seagrass.",
+        "source": {
+          "dataset": "other",
+          "citation": "NOAA Fisheries · green turtle",
+          "url": "https://www.fisheries.noaa.gov/species/green-turtle",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      },
+      {
+        "name": "Mangrove Crabs",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Crabs are listed in Kilim’s mangrove ecosystem; the guide does not identify one species here.",
+        "source": {
+          "dataset": "other",
+          "citation": "Kilim park guide · fauna",
+          "url": "https://kilimgeoforestpark.com/biodiversity/fauna/",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      }
+    ],
+    "ecologicalNote": "Marine-life information is from published reference sources, not a live wildlife observation or measured litter impact.",
+    "coverImageUrl": null
+  },
+  {
+    "id": "pantai-tanjung-aru",
+    "name": "Pantai Tanjung Aru",
+    "area": "Kota Kinabalu, Sabah",
+    "lat": 5.946994,
+    "lng": 116.045601,
+    "coordinateSource": {
+      "url": "https://commons.wikimedia.org/wiki/Category:Tanjung_Aru_Beach",
+      "name": "Wikimedia Commons / Wikidata - Tanjung Aru beach object location",
+      "note": "Approximate beach reference point; not a visitor's location."
+    },
+    "habitat": "Sandy Shore",
+    "habitatTag": "COASTAL",
+    "sensitivity": "Published marine-life reference context",
+    "primarySpeciesGlyph": "fish",
+    "speciesNames": [
+      "Irrawaddy Dolphin",
+      "Clownfish"
+    ],
+    "scene": "linear-gradient(178deg,#8FD0E8 0%,#4E9EC9 36%,#173E77 100%)",
+    "species": [
+      {
+        "name": "Irrawaddy Dolphin",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "A round head and no beak. Lives close to shore.",
+        "source": {
+          "dataset": "other",
+          "citation": "IUCN · dolphin threats",
+          "url": "https://iucn.org/news/species/201712/unsustainable-food-systems-threaten-wild-crop-and-dolphin-species-%E2%80%93-iucn-red-list",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      },
+      {
+        "name": "Clownfish",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Clownfish shelter among sea anemones. This card does not identify a species.",
+        "source": {
+          "dataset": "other",
+          "citation": "FishBase · clownfish",
+          "url": "https://www.fishbase.se/FieldGuide/FieldGuideSummary.php?c_code=704&genusname=Amphiprion&speciesname=ocellaris",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      }
+    ],
+    "ecologicalNote": "Marine-life information is from published reference sources, not a live wildlife observation or measured litter impact.",
+    "coverImageUrl": null
+  },
+  {
+    "id": "teluk-cempedak",
+    "name": "Teluk Cempedak",
+    "area": "Kuantan, Pahang",
+    "lat": 3.8098,
+    "lng": 103.3729,
+    "coordinateSource": {
+      "url": "https://www.beachworldmap.org/en/malaysia",
+      "name": "OpenStreetMap via Beach World Map",
+      "note": "Approximate beach reference point; not a visitor's location."
+    },
+    "habitat": "Sandy Shore",
+    "habitatTag": "COASTAL",
+    "sensitivity": "Published marine-life reference context",
+    "primarySpeciesGlyph": "fish",
+    "speciesNames": [
+      "Horseshoe Crab",
+      "Hawksbill Turtle"
+    ],
+    "scene": "linear-gradient(178deg,#8FD0E8 0%,#4E9EC9 36%,#173E77 100%)",
+    "species": [
+      {
+        "name": "Horseshoe Crab",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Spawning was recorded at Pantai Balok during 2009–2013.",
+        "source": {
+          "dataset": "other",
+          "citation": "Balok spawning study",
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC4957986/",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      },
+      {
+        "name": "Hawksbill Turtle",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Nesting records exist at Malaysian coastal sites; the record is not a current sighting.",
+        "source": {
+          "dataset": "other",
+          "citation": "NOAA Fisheries · hawksbill turtle",
+          "url": "https://www.fisheries.noaa.gov/species/hawksbill-turtle",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      }
+    ],
+    "ecologicalNote": "Marine-life information is from published reference sources, not a live wildlife observation or measured litter impact.",
+    "coverImageUrl": null
+  },
+  {
+    "id": "pantai-damai",
+    "name": "Pantai Damai",
+    "area": "Santubong, Sarawak",
+    "lat": 1.74955,
+    "lng": 110.3127,
+    "coordinateSource": {
+      "url": "https://mapcarta.com/34454480",
+      "name": "Mapcarta / GeoNames - Damai beach, Sarawak",
+      "note": "Approximate beach reference point; not a visitor's location."
+    },
+    "habitat": "Sandy Shore",
+    "habitatTag": "COASTAL",
+    "sensitivity": "Published marine-life reference context",
+    "primarySpeciesGlyph": "fish",
+    "speciesNames": [
+      "Irrawaddy Dolphin",
+      "Indo-Pacific Finless Porpoise"
+    ],
+    "scene": "linear-gradient(178deg,#8FD0E8 0%,#4E9EC9 36%,#173E77 100%)",
+    "species": [
+      {
+        "name": "Irrawaddy Dolphin",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "A round head and no beak. Lives close to shore.",
+        "source": {
+          "dataset": "other",
+          "citation": "IUCN · dolphin threats",
+          "url": "https://iucn.org/news/species/201712/unsustainable-food-systems-threaten-wild-crop-and-dolphin-species-%E2%80%93-iucn-red-list",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      },
+      {
+        "name": "Indo-Pacific Finless Porpoise",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "A small coastal porpoise recorded in Kuching Bay surveys, without a documented Damai Beach sighting.",
+        "source": {
+          "dataset": "other",
+          "citation": "Kuching Bay survey",
+          "url": "https://ir.unimas.my/id/eprint/6588/1/Gianna.pdf",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      }
+    ],
+    "ecologicalNote": "Marine-life information is from published reference sources, not a live wildlife observation or measured litter impact.",
+    "coverImageUrl": null
+  },
+  {
+    "id": "teluk-kemang",
+    "name": "Teluk Kemang",
+    "area": "Port Dickson, Negeri Sembilan",
+    "lat": 2.454,
+    "lng": 101.8539,
+    "coordinateSource": {
+      "url": "https://www.beachworldmap.org/en/malaysia",
+      "name": "OpenStreetMap via Beach World Map",
+      "note": "Approximate beach reference point; not a visitor's location."
+    },
+    "habitat": "Sandy Shore",
+    "habitatTag": "COASTAL",
+    "sensitivity": "Published marine-life reference context",
+    "primarySpeciesGlyph": "fish",
+    "speciesNames": [
+      "Syringodium isoetifolium",
+      "Seagrass"
+    ],
+    "scene": "linear-gradient(178deg,#8FD0E8 0%,#4E9EC9 36%,#173E77 100%)",
+    "species": [
+      {
+        "name": "Syringodium isoetifolium",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "A seagrass recorded at Teluk Kemang in a Port Dickson survey.",
+        "source": {
+          "dataset": "other",
+          "citation": "Port Dickson seagrass survey abstract",
+          "url": "https://irep.iium.edu.my/97098/7/97098_%20Abundance%20and%20size%20composition%20of%20the%20billfishes.pdf",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      },
+      {
+        "name": "Seagrass",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Seagrasses are rooted, flowering marine plants that form underwater meadows.",
+        "source": {
+          "dataset": "other",
+          "citation": "NOAA · seagrass meadows",
+          "url": "https://sanctuaries.noaa.gov/visit/ecosystems/seagrass.html",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      }
+    ],
+    "ecologicalNote": "Marine-life information is from published reference sources, not a live wildlife observation or measured litter impact.",
+    "coverImageUrl": null
+  },
+  {
+    "id": "pantai-kuala-perlis",
+    "name": "Pantai Kuala Perlis",
+    "area": "Kuala Perlis, Perlis",
+    "lat": 6.38824,
+    "lng": 100.13499,
+    "coordinateSource": {
+      "url": "https://malaysia.worldplaces.me/ms/places-in-kuala-perlis/1592512-pantai-kuala-perlis.html",
+      "name": "WorldPlaces, Pantai Kuala Perlis GPS",
+      "note": "Approximate beach reference point; not a visitor's location."
+    },
+    "habitat": "Mudflat",
+    "habitatTag": "COASTAL",
+    "sensitivity": "Published marine-life reference context",
+    "primarySpeciesGlyph": "fish",
+    "speciesNames": [
+      "Mangroves",
+      "Mangrove Crabs"
+    ],
+    "scene": "linear-gradient(178deg,#8FD0E8 0%,#4E9EC9 36%,#173E77 100%)",
+    "species": [
+      {
+        "name": "Mangroves",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Mangroves are coastal plants that form tidal forests and support wildlife.",
+        "source": {
+          "dataset": "other",
+          "citation": "UNEP · mangroves at risk",
+          "url": "https://www.unep.org/news-and-stories/story/coastal-crisis-mangroves-risk",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      },
+      {
+        "name": "Mangrove Crabs",
+        "kind": "group",
+        "scientificName": null,
+        "glyph": "fish",
+        "text": "Crabs are listed in Kilim’s mangrove ecosystem; the guide does not identify one species here.",
+        "source": {
+          "dataset": "other",
+          "citation": "Kilim park guide · fauna",
+          "url": "https://kilimgeoforestpark.com/biodiversity/fauna/",
+          "accessedAt": null
+        },
+        "likelihood": {
+          "state": "unavailable",
+          "basis": "Published reference context; not a confirmed sighting at this beach."
+        }
+      }
+    ],
+    "ecologicalNote": "Marine-life information is from published reference sources, not a live wildlife observation or measured litter impact.",
+    "coverImageUrl": null
+  },
+  {
+    "id": "bagan",
+    "name": "Pantai Bagan Lalang",
+    "area": "Sepang, Selangor",
+    "lat": 2.601,
+    "lng": 101.688,
+    "habitat": "Wide sandy beach & seagrass patches",
+    "habitatTag": "SEAGRASS",
+    "sensitivity": "Horseshoe crab spawning shore",
+    "primarySpeciesGlyph": "crab",
+    "speciesNames": [
+      "Horseshoe Crab",
+      "Seagrass Patches",
+      "Mangrove Habitat"
+    ],
+    "coverImageUrl": "/images/coastal/pantai-bagan-lalang.jpg",
+    "scene": "linear-gradient(178deg,#E4EEF3 0%,#9CCAD8 34%,#5FA3C4 52%,#BFB8A6 100%)",
+    "species": [
+      {
+        "name": "Horseshoe Crab",
+        "kind": "species",
+        "scientificName": "Carcinoscorpius rotundicauda",
+        "threatCategory": null,
+        "glyph": "crab",
+        "text": "One of the few Selangor shores where mangrove horseshoe crabs still come up to spawn.",
+        "source": {
+          "dataset": "pending",
+          "citation": "Awaiting FishBase / OBIS extract — not yet sourced",
+          "url": null,
+          "accessedAt": null
+        }
+      },
+      {
+        "name": "Seagrass Patches",
+        "kind": "habitat",
+        "scientificName": null,
+        "threatCategory": null,
+        "glyph": "grass",
+        "text": "Seagrass in the shallows feeds and shelters small marine animals.",
+        "source": {
+          "dataset": "pending",
+          "citation": "Awaiting FishBase / OBIS extract — not yet sourced",
+          "url": null,
+          "accessedAt": null
+        }
+      },
+      {
+        "name": "Mangrove Habitat",
+        "kind": "habitat",
+        "scientificName": null,
+        "threatCategory": null,
+        "glyph": "mangrove",
+        "text": "The Sepang river-mouth mangroves sit just south of this beach.",
+        "source": {
+          "dataset": "pending",
+          "citation": "Awaiting FishBase / OBIS extract — not yet sourced",
+          "url": null,
+          "accessedAt": null
+        }
+      }
+    ],
+    "ecologicalNote": "Ghost nets and plastic sheeting may trap horseshoe crabs that come ashore to spawn."
+  }
 ]

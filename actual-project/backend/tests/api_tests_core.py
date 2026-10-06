@@ -63,8 +63,8 @@ def test_startup_seeds_reference_tables_idempotently(tmp_path):
     second = create_app(database_url=database_url, testing=True, photo_storage_dir=tmp_path / "photos")
     engine = second.extensions["marine_engine"]
     with engine.connect() as connection:
-        assert connection.execute(text("SELECT COUNT(*) FROM beaches")).scalar_one() == 4
-        assert connection.execute(text("SELECT COUNT(*) FROM area_species")).scalar_one() == 11
+        assert connection.execute(text("SELECT COUNT(*) FROM beaches")).scalar_one() == 101
+        assert connection.execute(text("SELECT COUNT(*) FROM area_species")).scalar_one() == sum(len(b.get("species", [])) for b in load_beaches())
         assert connection.execute(text("SELECT COUNT(*) FROM reports")).scalar_one() == 0
 
 
@@ -76,8 +76,8 @@ def test_startup_repairs_partial_reference_seed_without_touching_reports(tmp_pat
         connection.execute(text("DELETE FROM beaches WHERE id <> 'morib'"))
     second = create_app(database_url=database_url, testing=True, photo_storage_dir=tmp_path / "photos")
     with second.extensions["marine_engine"].connect() as connection:
-        assert connection.execute(text("SELECT COUNT(*) FROM beaches")).scalar_one() == 4
-        assert connection.execute(text("SELECT COUNT(*) FROM area_species")).scalar_one() == 11
+        assert connection.execute(text("SELECT COUNT(*) FROM beaches")).scalar_one() == 101
+        assert connection.execute(text("SELECT COUNT(*) FROM area_species")).scalar_one() == sum(len(b.get("species", [])) for b in load_beaches())
         assert connection.execute(text("SELECT COUNT(*) FROM reports")).scalar_one() == 0
 
 
@@ -257,7 +257,7 @@ def report_payload(photo_key, beach_id="morib", quantities=None, location_source
 
 def test_health_and_legacy_routes(api):
     _application, client = api
-    assert client.get("/health").get_json() == {"status": "ok", "database": "configured"}
+    assert client.get("/health").get_json() == {"status": "ok", "database": "connected", "apiVersion": "3.0.0"}
 
     response = client.get("/api/options")
     assert response.status_code == 404
@@ -507,7 +507,7 @@ def test_beach_summary_and_detail_shapes_are_strict(api):
     response = client.get("/beaches")
     assert response.status_code == 200
     beaches = response.get_json()
-    assert len(beaches) == 4
+    assert len(beaches) == 101
     expected_summary_fields = {
         "id", "name", "area", "lat", "lng", "severity", "band", "insufficientData",
         "validReports", "lastReportedAt", "freshnessKind", "habitat", "habitatTag",

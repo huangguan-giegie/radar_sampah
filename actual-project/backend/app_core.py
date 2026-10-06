@@ -1269,7 +1269,7 @@ def signed_photo_url(
         jwt_secret,
         algorithm=AUTH_JWT_ALGORITHM,
     )
-    return request.host_url.rstrip("/") + "/uploads/photos/" + photo_key + "?" + urlencode({"token": token})
+    return request.url_root.rstrip("/") + "/uploads/photos/" + photo_key + "?" + urlencode({"token": token})
 
 
 def delete_photo(directory: Path, photo_key: str) -> None:
@@ -1528,7 +1528,6 @@ def create_app(
     application.extensions["photo_storage_dir"] = directory
     # Load the four validated offline models once at startup. Prediction never
     # queries OBIS and does not write coordinates or scores to the database.
-    application.extensions["species_distribution_model"] = SpeciesDistributionModel()
     application.extensions["photo_cleanup_timers"] = []
     application.extensions["litter_recognizer"] = recognizer
     application.extensions["species_distribution_model"] = species_distribution_model
@@ -1809,11 +1808,17 @@ def create_app(
 
     @application.get("/")
     def root():
-        return jsonify({"project": "Radar Sampah", "status": "ready", "apiVersion": "1.0.0"})
+        return jsonify({"project": "Radar Sampah", "status": "ready", "apiVersion": "3.0.0"})
 
     @application.get("/health")
     def health():
-        return jsonify({"status": "ok", "database": "configured"})
+        try:
+            with engine.connect() as connection:
+                connection.execute(text("SELECT 1"))
+        except Exception:
+            application.logger.exception("Database health check failed")
+            return jsonify({"status": "unavailable", "database": "unavailable"}), 503
+        return jsonify({"status": "ok", "database": "connected", "apiVersion": "3.0.0"})
 
     @application.post("/auth/anonymous")
     def create_anonymous_participant():

@@ -335,7 +335,7 @@ def test_weekly_events_are_created_only_for_moderate_high_and_severe_beaches(api
     _seed_attention(client, "bagan", {"Paper": "Medium"})
 
     severities = {item["id"]: item["severity"] for item in client.get("/beaches").get_json()}
-    assert severities == {
+    assert {beach: severity for beach, severity in severities.items() if severity is not None} == {
         "morib": "Moderate",
         "remis": "High",
         "kelanang": "Severe",

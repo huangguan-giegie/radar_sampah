@@ -1,13 +1,19 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
-  getMyReportCounts,
-  getMyReports,
   storedRecoveryToken,
   USE_MOCK,
 } from "../api";
 import { useApp } from "../AppContext";
-import { fetchCleanupEvents } from "../iteration2Api";
+import {
+  getAccountProfile,
+  getContributions,
+  getLeaderboard,
+  updateAccountProfile,
+  type AccountProfile,
+  type Contributions,
+  type Leaderboard,
+} from "../accountApi";
 import { useAsyncData } from "../useAsyncData";
 import {
   CoastalPage,
@@ -31,76 +37,67 @@ import {
   UserIcon,
 } from "../components/Icon";
 import { formatDate } from "../theme";
-import {
-  readPreviewProfile,
-  savePreviewProfile,
-  validNickname,
-} from "../accountPreview";
-const TOP = [
-  ["PenyuPal", 184],
-  ["KakiPantai", 176],
-  ["PantaiPatrol", 151],
-  ["SabahShores", 139],
-  ["TerengganuTides", 127],
-];
+import { validNickname } from "../accountPreview";
 export default function AccountScreen() {
   const { section } = useParams();
   const nav = useNavigate();
   const { user, signOut, reportsVersion, showToast } = useApp();
   const id = user?.participantId ?? "";
-  const { data: counts, loading: countsLoading, error: countsError, refresh: refreshCounts } = useAsyncData(
-    getMyReportCounts,
+  const { data: contributions, loading, error, refresh: refreshContributions } = useAsyncData<Contributions | null>(
+    () => getContributions(id),
     [reportsVersion, id],
     null,
   );
-  const { data: events, loading: eventsLoading, error: eventsError, refresh: refreshEvents } = useAsyncData(
-    () => fetchCleanupEvents(id, true),
-    [id, reportsVersion],
-    [],
+  const { data: profile, setData: setProfile, loading: profileLoading, error: profileError, refresh: refreshProfile } = useAsyncData<AccountProfile | null>(
+    () => getAccountProfile(id),
+    [reportsVersion, id],
+    null,
   );
-  const { data: reports, loading: reportsLoading, error: reportsError, refresh: refreshReports } = useAsyncData(
-    getMyReports,
-    [id, reportsVersion],
-    [],
+  const { data: leaderboard, loading: leaderboardLoading, error: leaderboardError, refresh: refreshLeaderboard } = useAsyncData<Leaderboard | null>(
+    () => section === "leaderboard" ? getLeaderboard() : Promise.resolve(null),
+    [id, reportsVersion, section, profile?.joinedLeaderboard],
+    null,
   );
-  const attendance = events.filter(
-    (e) => e.attendanceConfirmed || e.attendanceBy?.includes(id),
-  );
-  const loading = countsLoading || eventsLoading || reportsLoading;
-  const error = countsError || eventsError || reportsError;
-  const ready = !loading && !error;
-  const points = ready && counts ? counts.counted + attendance.length * 5 : null;
-  const counted = ready ? counts?.counted ?? "—" : "—";
-  const contributionSummary = loading ? "Loading contributions…" : error ? "Contributions unavailable" : `${attendance.length} recorded attendance · ${counted} counted reports`;
+  const ready = !loading && !error && contributions !== null;
+  const points = ready ? contributions.points : null;
+  const counted = ready ? contributions.countedReports : "—";
+  const contributionSummary = loading ? "Loading contributions…" : error ? "Contributions unavailable" : `${contributions?.attendanceCount ?? 0} recorded attendance · ${counted} counted reports`;
   const loadError = error ? (
-    <DataUnavailable title="Couldn’t Load Contributions" retry={() => { void refreshCounts(); void refreshEvents(); void refreshReports(); }}>Please try again.</DataUnavailable>
+    <DataUnavailable title="Couldn’t Load Contributions" retry={() => { void refreshContributions(); void refreshProfile(); }}>{error}</DataUnavailable>
   ) : null;
-  const [profile, setProfile] = useState(() => readPreviewProfile(id));
-  const [nickname, setNickname] = useState(profile.nickname);
+  const profileLoadError = profileError ? (
+    <DataUnavailable title="Couldn’t Load Your Profile" retry={() => { void refreshProfile(); }}>{profileError}</DataUnavailable>
+  ) : null;
+  const [nickname, setNickname] = useState("");
   const [validation, setValidation] = useState("");
+  const [saving, setSaving] = useState(false);
   const [privacy, setPrivacy] = useState(false);
   const recoveryToken = storedRecoveryToken();
-  function save(join?: boolean) {
-    if (!validNickname(nickname)) {
+  useEffect(() => {
+    setNickname(profile?.nickname ?? "");
+  }, [id, profile?.nickname]);
+  async function save(join?: boolean) {
+    if (saving || profileLoading || !profile || profileError) return;
+    if (join !== false && !validNickname(nickname)) {
       setValidation(
         "Use 3–30 characters. Don’t use an email address or phone number.",
       );
       return;
     }
-    const next = {
-      nickname: nickname.trim(),
-      joinedLeaderboard: join ?? profile.joinedLeaderboard,
+    const input = join === false ? { joinedLeaderboard: false } : {
+      nickname: nickname.trim(), ...(join === true ? { joinedLeaderboard: true } : {}),
     };
+    setSaving(true);
+    setValidation("");
     try {
-      savePreviewProfile(id, next);
+      const next = await updateAccountProfile(id, input);
       setProfile(next);
-      setValidation("");
-      showToast("Saved on this device");
+      showToast(USE_MOCK ? "Saved on this device" : join === false ? "You left the leaderboard" : "Profile saved");
       if (join === undefined) nav("/account");
-    } catch {
-      setValidation(
-        "Could not save on this device. Please enable browser storage.",
-      );
+    } catch (reason) {
+      setValidation(reason instanceof Error ? reason.message : "Could not save. Please try again.");
+    } finally {
+      setSaving(false);
     }
   }
   const icon = (child: JSX.Element) => (
@@ -122,6 +119,7 @@ export default function AccountScreen() {
         maxLength={30}
         autoComplete="off"
         value={nickname}
+        disabled={saving || profileLoading || !!profileError}
         onChange={(e) => setNickname(e.target.value)}
       />
       <p className="coastal-footnote">
@@ -145,16 +143,12 @@ export default function AccountScreen() {
         back="/account"
         subtitle="Only shown on the leaderboard if you join."
       >
-        {USE_MOCK ? (
+        {profileLoading ? <Skeleton h={160} /> : profileLoadError || (
           <>
             {nicknameInput}
-            <PrimaryButton onClick={() => save()}>Save Nickname</PrimaryButton>
-            <p className="demo-label">Preview · saved only on this device</p>
+            <PrimaryButton disabled={saving || !profile} onClick={() => { void save(); }}>{saving ? "Saving…" : "Save Nickname"}</PrimaryButton>
+            {USE_MOCK && <p className="demo-label">Preview · saved only on this device</p>}
           </>
-        ) : (
-          <DataUnavailable title="Nickname Editing Is Not Available Yet">
-            Your participant ID is still available in Account.
-          </DataUnavailable>
         )}
       </CoastalPage>
     );
@@ -163,46 +157,32 @@ export default function AccountScreen() {
       <CoastalPage title="Contribution History" back="/account">
         <SummaryCard
           eyebrow={USE_MOCK ? "Your Points · Preview" : "Your Contributions"}
-          value={USE_MOCK ? (points ?? "—") : counted}
-          description={USE_MOCK ? "points" : "counted reports"}
+          value={points ?? "—"}
+          description="points"
         >
           <p className="account-divider">
             {contributionSummary}
           </p>
         </SummaryCard>
         {loading ? <Skeleton h={160} /> : loadError}
-        {ready && attendance.map((e) => (
-          <WhiteCard key={e.id}>
+        {ready && contributions.history.map((entry) => (
+          <WhiteCard key={entry.kind + ":" + entry.id}>
             <LinkRow
-              title="Recorded attendance"
-              subtitle={e.beachName + " · " + formatDate(e.date)}
-              trailing={USE_MOCK ? <b>+5</b> : undefined}
-              onClick={() => nav("/events/" + e.id)}
+              title={entry.kind === "attendance" ? "Recorded attendance" : "Counted report"}
+              subtitle={entry.beachName + " · " + formatDate(entry.createdAt)}
+              trailing={<b>+{entry.points}</b>}
+              onClick={() => nav((entry.kind === "attendance" ? "/events/" : "/reports/") + entry.id)}
             />
           </WhiteCard>
         ))}
-        {ready && reports
-          .filter((r) => r.status === "Counted")
-          .map((r) => (
-            <WhiteCard key={r.id}>
-              <LinkRow
-                title="Counted report"
-                subtitle={r.beachName + " · " + formatDate(r.createdAt)}
-                trailing={USE_MOCK ? <b>+1</b> : undefined}
-                onClick={() => nav("/reports/" + r.id)}
-              />
-            </WhiteCard>
-          ))}
-        {ready && !attendance.length && !reports.some((r) => r.status === "Counted") && (
+        {ready && !contributions.history.length && (
           <DataUnavailable title="Your History Starts Here">
             Counted reports and recorded attendance will appear here.
           </DataUnavailable>
         )}
         <p className="coastal-footnote">
           Duplicate and incomplete reports are not included.{" "}
-          {USE_MOCK
-            ? "Preview points: recorded attendance +5, counted report +1."
-            : ""}
+          Recorded attendance +5, counted report +1.
         </p>
       </CoastalPage>
     );
@@ -212,49 +192,42 @@ export default function AccountScreen() {
         title="Leaderboard"
         back="/account"
         subtitle={
-          profile.joinedLeaderboard
+          profile?.joinedLeaderboard
             ? "Nicknames only. You opted in."
             : "Off until you join. Leave any time."
         }
       >
-        {USE_MOCK && loadError}
-        {!USE_MOCK ? (
-          <DataUnavailable title="Leaderboard Not Available Yet">
-            You can still view your own reports and contribution history.
-          </DataUnavailable>
-        ) : profile.joinedLeaderboard ? (
+        {loadError}
+        {profileLoading ? <Skeleton h={160} /> : profileLoadError || (profile?.joinedLeaderboard ? (
           <>
             <SummaryCard
-              eyebrow="Your Preview Profile"
+              eyebrow={USE_MOCK ? "Your Preview Profile" : "Your Profile"}
               description={profile.nickname}
               value={points ?? "—"}
             >
               <p className="account-divider">
-                points · personal rank not calculated
+                {USE_MOCK ? "points · personal rank not calculated" : `points · ${profile.rank === null ? "rank unavailable" : "rank #" + profile.rank}`}
               </p>
             </SummaryCard>
-            <WhiteCard>
-              {TOP.map(([name, value], i) => (
-                <div className="leaderboard-row" key={name}>
-                  <span>#{i + 1}</span>
-                  <strong>{name}</strong>
-                  <span>{value}</span>
+            {leaderboardLoading ? <Skeleton h={160} /> : leaderboardError ? (
+              <DataUnavailable title="Couldn’t Load Leaderboard" retry={() => { void refreshLeaderboard(); }}>{leaderboardError}</DataUnavailable>
+            ) : <WhiteCard>
+              {leaderboard?.entries.map((entry, i) => (
+                <div className="leaderboard-row" key={entry.nickname + ":" + i}>
+                  <span>#{entry.rank}</span>
+                  <strong>{entry.nickname}</strong>
+                  <span>{entry.points}</span>
                 </div>
               ))}
-            </WhiteCard>
-            <p className="demo-label">Example leaderboard · as of 27-09-2026</p>
+              {!leaderboard?.entries.length && <p className="subtle">No volunteers have joined yet.</p>}
+            </WhiteCard>}
+            {USE_MOCK && <p className="demo-label">Example leaderboard · as of 27-09-2026</p>}
+            {validation && <p role="alert" className="coastal-footnote" style={{ color: "#9c4237" }}>{validation}</p>}
             <GhostButton
-              onClick={() => {
-                const next = { ...profile, joinedLeaderboard: false };
-                try {
-                  savePreviewProfile(id, next);
-                  setProfile(next);
-                } catch {
-                  showToast("Could not save your preference.");
-                }
-              }}
+              disabled={saving}
+              onClick={() => { void save(false); }}
             >
-              Leave Leaderboard
+              {saving ? "Saving…" : "Leave Leaderboard"}
             </GhostButton>
           </>
         ) : (
@@ -268,14 +241,12 @@ export default function AccountScreen() {
                 <span style={{ color: "#b8ff36" }}>{points ?? "—"} pts</span>
               </div>
             </SummaryCard>
-            <PrimaryButton onClick={() => save(true)}>
-              Join Leaderboard
+            <PrimaryButton disabled={saving || !profile} onClick={() => { void save(true); }}>
+              {saving ? "Saving…" : "Join Leaderboard"}
             </PrimaryButton>
-            <p className="demo-label">
-              Preview · this choice stays on your device
-            </p>
+            {USE_MOCK ? <p className="demo-label">Preview · this choice stays on your device</p> : <p className="coastal-footnote">Only your nickname, rank and points are public. You can leave any time.</p>}
           </>
-        )}
+        ))}
       </CoastalPage>
     );
   return (
@@ -287,9 +258,9 @@ export default function AccountScreen() {
             <strong>{id}</strong>
           </div>
           <div>
-            <p className="eyebrow">{USE_MOCK ? "Points" : "Reports"}</p>
+            <p className="eyebrow">Points</p>
             <strong>
-              {USE_MOCK ? (points ?? "—") : counted}
+              {points ?? "—"}
             </strong>
           </div>
         </div>
@@ -298,6 +269,7 @@ export default function AccountScreen() {
         </p>
       </SummaryCard>
       {loadError}
+      {profileLoadError}
       <WhiteCard>
         <LinkRow
           title="Marine Life"
@@ -309,7 +281,7 @@ export default function AccountScreen() {
       <WhiteCard>
         <LinkRow
           title="Public Nickname"
-          trailing={<small>{profile.nickname || "Not set"}</small>}
+          trailing={<small>{profileLoading ? "Loading…" : profileError ? "Unavailable" : profile?.nickname || "Not set"}</small>}
           leading={icon(<UserIcon />)}
           onClick={() => nav("/account/nickname")}
         />
@@ -325,7 +297,7 @@ export default function AccountScreen() {
         />
         <LinkRow
           title="My Reports"
-          trailing={<small>{reportsLoading || reportsError ? "—" : reports.length}</small>}
+          trailing={<small>{loading || error ? "—" : contributions?.reportCount ?? "—"}</small>}
           leading={icon(<BookmarkIcon />)}
           onClick={() => nav("/reports")}
         />

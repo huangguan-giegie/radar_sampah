@@ -219,7 +219,7 @@ export default function CoastalBeachScreen() {
             ●{" "}
             {detail?.lastReportedAt
               ? "Reported " + formatDate(detail.lastReportedAt)
-              : (fixture?.reported ?? "Not recently reported")}
+              : USE_MOCK ? (fixture?.reported ?? "Not recently reported") : "No counted report yet"}
           </p>
           {!attention.hasBand && (
             <p className="coastal-footnote">{attention.detail}</p>

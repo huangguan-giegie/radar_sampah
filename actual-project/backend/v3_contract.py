@@ -8,11 +8,11 @@ response shapes at the boundary.
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Any
 
 from flask import g, jsonify, request
-from sqlalchemy import Column, DateTime, Integer, String, Table, delete, insert, select
+from sqlalchemy import Column, DateTime, Integer, String, Table, delete, func, insert, select
 from sqlalchemy.exc import IntegrityError
 
 from standalone_cleanup import _active_quantities, _current_band_state
@@ -112,9 +112,9 @@ def _read_map(value: Any) -> dict[str, Any]:
     return parsed if isinstance(parsed, dict) else {}
 
 
-def _action_payload(engine: Any, impl: Any, action: Any) -> dict[str, Any]:
+def _action_payload(engine: Any, impl: Any, action: Any, *, include_participant: bool = False) -> dict[str, Any]:
     with engine.connect() as connection:
-        participant = connection.execute(select(impl.users_table.c.participant_id).where(impl.users_table.c.id == action.participant_id)).scalar_one_or_none()
+        participant = connection.execute(select(impl.users_table.c.participant_id).where(impl.users_table.c.id == action.participant_id)).scalar_one_or_none() if include_participant else None
         beach_name = connection.execute(select(impl.beaches_table.c.name).where(impl.beaches_table.c.id == action.beach_id)).scalar_one_or_none()
     rows = []
     try:
@@ -138,9 +138,8 @@ def _action_payload(engine: Any, impl: Any, action: Any) -> dict[str, Any]:
     score = getattr(action, "cleanup_score", None)
     if score is None:
         score = getattr(action, "total_removed", 0)
-    return {
+    payload = {
         "id": action.id,
-        "participantId": participant or action.participant_id,
         "targetReportId": action.target_report_id,
         "eventId": action.event_id,
         "beachId": action.beach_id,
@@ -156,6 +155,9 @@ def _action_payload(engine: Any, impl: Any, action: Any) -> dict[str, Any]:
         "note": action.note or "",
         "status": "Cleanup recorded — awaiting follow-up",
     }
+    if include_participant:
+        payload["participantId"] = participant or action.participant_id
+    return payload
 
 
 def _action(engine: Any, impl: Any, action_id: str):
@@ -328,7 +330,7 @@ def install_v3_contract(application: Any, engine: Any, jwt_secret: str, impl: An
             return impl.error_response(409, "EVENT_NOT_ACTIVE", "Evidence can only be linked during the event.")
         if report is None or report.reporter_id != user.id:
             return impl.error_response(403, "REPORT_NOT_OWNED", "Only your own report can be linked.")
-        if report.status != "Counted" or report.beach_id != event.beach_id:
+        if report.status != "Counted" or report.deleted_at is not None or report.beach_id != event.beach_id:
             return impl.error_response(400, "VALIDATION_FAILED", "The report must be a Counted report from this beach.")
         if not (impl.utc_datetime(report.created_at) >= impl.utc_datetime(event.starts_at) and impl.utc_datetime(report.created_at) <= impl.utc_datetime(event.ends_at)):
             return impl.error_response(409, "REPORT_OUTSIDE_EVENT", "The report was not created during this event.")
@@ -340,12 +342,15 @@ def install_v3_contract(application: Any, engine: Any, jwt_secret: str, impl: An
         return jsonify(_event_payload(engine, impl, event, user.id, attendance))
 
     def targets_v3(beach_id: str):
-        if _beach(engine, impl, beach_id) is None:
+        beach = _beach(engine, impl, beach_id)
+        if beach is None:
             return impl.error_response(404, "NOT_FOUND", "Beach not found.")
         with engine.connect() as connection:
             reports = connection.execute(select(impl.reports_table).where(
                 impl.reports_table.c.beach_id == beach_id,
                 impl.reports_table.c.status == "Counted",
+                impl.reports_table.c.deleted_at.is_(None),
+                impl.reports_table.c.created_at >= datetime.now(timezone.utc) - timedelta(days=90),
             ).order_by(impl.reports_table.c.created_at.desc(), impl.reports_table.c.id.desc())).all()
             for report in reports:
                 actions = connection.execute(select(impl.cleanup_actions_table).where(
@@ -355,7 +360,7 @@ def install_v3_contract(application: Any, engine: Any, jwt_secret: str, impl: An
                 if _active_quantities(remaining):
                     return jsonify({
                         "reportId": report.id, "beachId": report.beach_id,
-                        "beachName": (_beach(engine, impl, beach_id) or {}).get("name", beach_id),
+                        "beachName": beach.get("name", beach_id),
                         "reportedAt": impl.contract_timestamp(report.created_at),
                         "remainingBands": remaining,
                     })
@@ -390,7 +395,7 @@ def install_v3_contract(application: Any, engine: Any, jwt_secret: str, impl: An
         _old_json, status = _response_parts(result)
         data = _json(result)
         action = _action(engine, impl, data.get("id") if isinstance(data, dict) else "")
-        return (jsonify(_action_payload(engine, impl, action)), status) if action is not None else result
+        return (jsonify(_action_payload(engine, impl, action, include_participant=True)), status) if action is not None else result
 
     def read_cleanup(cleanup_id: str):
         action = _action(engine, impl, cleanup_id)
@@ -406,6 +411,17 @@ def install_v3_contract(application: Any, engine: Any, jwt_secret: str, impl: An
         action = _latest_action(engine, impl, beach_id=beach_id)
         return jsonify(_action_payload(engine, impl, action)) if action is not None else jsonify(None)
 
+    def read_cleanup_history():
+        # One grouped query replaces 101 separate latest-cleanup requests.
+        with engine.connect() as connection:
+            rows = connection.execute(select(
+                impl.beaches_table.c.id, func.max(impl.cleanup_actions_table.c.created_at),
+            ).select_from(impl.beaches_table.outerjoin(
+                impl.cleanup_actions_table,
+                impl.beaches_table.c.id == impl.cleanup_actions_table.c.beach_id,
+            )).group_by(impl.beaches_table.c.id)).all()
+        return jsonify({beach_id: impl.contract_timestamp(latest) if latest else None for beach_id, latest in rows})
+
     def read_event_cleanups(event_id: str):
         if _event_by_id(engine, impl, event_id) is None:
             return impl.error_response(404, "NOT_FOUND", "Event not found.")
@@ -416,9 +432,6 @@ def install_v3_contract(application: Any, engine: Any, jwt_secret: str, impl: An
         payloads = []
         for action in actions:
             payload = _action_payload(engine, impl, action)
-            # Event result pages show aggregate cleanup rows only. Participant
-            # identity belongs to the authenticated user's own action view.
-            payload.pop("participantId", None)
             payloads.append(payload)
         return jsonify(payloads)
 
@@ -466,4 +479,5 @@ def install_v3_contract(application: Any, engine: Any, jwt_secret: str, impl: An
     application.add_url_rule("/cleanups/<cleanup_id>", "v3_cleanup", read_cleanup, methods=["GET"])
     application.add_url_rule("/cleanups/by-target/<report_id>", "v3_target_cleanup", read_cleanup_target, methods=["GET"])
     application.add_url_rule("/beaches/<beach_id>/cleanups/latest", "v3_latest_cleanup", read_latest_cleanup, methods=["GET"])
+    application.add_url_rule("/beaches/cleanup-history", "v3_cleanup_history", read_cleanup_history, methods=["GET"])
     application.add_url_rule("/beaches/<beach_id>/gallery", "v3_gallery", gallery_v3, methods=["GET"])

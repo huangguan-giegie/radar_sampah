@@ -135,6 +135,11 @@ export async function fetchLatestCleanupForBeach(beachId: string): Promise<Clean
   return apiRequest<CleanupAction | null>(`/beaches/${encodeURIComponent(beachId)}/cleanups/latest`);
 }
 
+export async function fetchLatestCleanupDates(beachIds: string[]): Promise<Record<string, string | null>> {
+  if (!USE_MOCK) return apiRequest<Record<string, string | null>>('/beaches/cleanup-history', 'GET', undefined, 15_000, false);
+  return Object.fromEntries(beachIds.map(id => [id, getLatestCleanupForBeach(id)?.createdAt ?? null]));
+}
+
 export async function fetchEventCleanups(eventId: string): Promise<CleanupAction[]> {
   if (USE_MOCK) return eventCleanups(eventId);
   return apiRequest<CleanupAction[]>(`/cleanup-events/${encodeURIComponent(eventId)}/cleanups`);
