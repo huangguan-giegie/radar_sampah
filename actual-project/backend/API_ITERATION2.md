@@ -321,3 +321,18 @@ linked by the existing `reports.photo_key`. PostgreSQL stores their processed
 JPEG bytes as `bytea`, so new photos survive service redeploys without a mounted
 disk. Unattached uploads expire after 24 hours; referenced audit photos remain.
 After-cleanup recognition photos are temporary and discarded after inference.
+
+## 13. Public cleanup-history dates
+
+`GET /cleanups/latest-by-beach` returns an object keyed by every known beach ID.
+Each value is the latest recorded cleanup timestamp in ISO 8601 Malaysia time,
+or `null` when no cleanup exists. Targeted and standalone cleanups are included.
+
+```json
+{"morib": "2026-10-06T10:00:00+08:00", "remis": null}
+```
+
+The endpoint is public and exposes dates only, with no participant identifiers,
+cleanup notes or coordinates. It uses two batch queries. Community's Needs
+Volunteers screen uses this endpoint instead of one latest-cleanup request per
+beach; existing detail endpoints remain available.

@@ -46,16 +46,16 @@ export const SCORING_METHOD: ScoringMethod = {
   //
   // Fixed, not relative to the other beaches: if the cut-offs moved with the
   // data, a beach could become "cleaner" on paper purely because another beach
-  // got worse. The ranges are written as "1.5 - <2.5" so the boundary is
+  // got worse. The ranges are written as "1.50 ≤ x < 2.50" so the boundary is
   // unambiguous - a score of exactly 2.5 is High, not Moderate.
   //
   // The colours live with the bands so the map, the beach page and the legend
   // cannot drift apart.
   bands: [
-    { band: 'Low', range: 'below 1.5', color: '#7CA98B' },
-    { band: 'Moderate', range: '1.5 – <2.5', color: '#D9A24B' },
-    { band: 'High', range: '2.5 – <3.5', color: '#CE6B45' },
-    { band: 'Severe', range: '3.5 and above', color: '#B84A3F' },
+    { band: 'Low', range: '0.35 ≤ x < 1.50', color: '#7CA98B' },
+    { band: 'Moderate', range: '1.50 ≤ x < 2.50', color: '#D9A24B' },
+    { band: 'High', range: '2.50 ≤ x < 3.50', color: '#CE6B45' },
+    { band: 'Severe', range: '3.50 ≤ x ≤ 4.00', color: '#B84A3F' },
   ],
 
   // Only reports from the last 90 days count. Litter is cleaned up and washed

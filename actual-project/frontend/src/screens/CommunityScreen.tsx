@@ -14,7 +14,7 @@ import { GhostButton, Skeleton } from "../components/ui";
 import { useApp } from "../AppContext";
 import { getBeaches, USE_MOCK } from "../api";
 import { formatEventDate, formatEventTimeRange, relativeEventWeek } from "../iteration2";
-import { fetchCleanupEvents, fetchLatestCleanupForBeach } from "../iteration2Api";
+import { fetchCleanupEvents, fetchLatestCleanupDates } from "../iteration2Api";
 import { useAsyncData } from "../useAsyncData";
 import { C } from "../theme";
 import { eventIsAvailable, eventPhase, useEventClock } from "../eventAvailability";
@@ -70,9 +70,9 @@ export default function CommunityScreen() {
     [],
   );
   const { data: beaches, loading: beachesLoading, error: beachesError, refresh: refreshBeaches } = useAsyncData(getBeaches, [reportsVersion], []);
-  const { data: recentCleanups, loading: historyLoading, error: historyError, refresh: refreshHistory } = useAsyncData(
-    async () => needs ? Object.fromEntries(await Promise.all(beaches.map(async b => [b.id, (await fetchLatestCleanupForBeach(b.id))?.createdAt ?? null]))) as Record<string, string | null> : {},
-    [needs, beaches, reportsVersion], {} as Record<string, string | null>,
+  const { data: recentCleanups, loading: historyLoading, error: historyError, refresh: refreshHistory } = useAsyncData<Record<string, string | null>>(
+    async () => needs ? fetchLatestCleanupDates() : {},
+    [needs, reportsVersion], {} as Record<string, string | null>,
   );
   const nextEvents = [...events].filter(e => eventIsAvailable(e, now)).sort((a, b) => a.startsAt.localeCompare(b.startsAt));
   const needsHelp = (b: typeof beaches[number]) => beachNeedsVolunteers(b, recentCleanups?.[b.id], nextEvents.find(e => e.beachId === b.id)?.participantCount, now);
@@ -307,7 +307,7 @@ export default function CommunityScreen() {
           <WhiteCard>
             <h3>Available litter evidence</h3>
             <p className="subtle">
-              A beach is flagged at Moderate, High or Very high when it has no cleanup in the last 30 days, or fewer than 3 people have joined its next cleanup.
+              A beach is flagged at Moderate, High or Severe when it has no cleanup in the last 30 days, or fewer than 3 people have joined its next cleanup.
             </p>
           </WhiteCard>
           <p className="subtle">

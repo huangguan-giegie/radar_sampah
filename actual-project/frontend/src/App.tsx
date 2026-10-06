@@ -238,8 +238,6 @@ export default function App() {
 
         <Route path="/home" element={shouldShowWelcomeBeforeHome(initialEntryPath) ? <Navigate to="/welcome" replace /> : <LocationPrompt><HomeScreen /></LocationPrompt>} />
         <Route path="/insights" element={<InsightsScreen />} />
-        <Route path="/insights/evidence" element={<Navigate to="/method" replace />} />
-        <Route path="/insights/evidence/:beachId" element={<Navigate to="/method" replace />} />
         <Route path="/insights/:topic" element={<InsightsScreen />} />
         <Route path="/insights/:topic/:beachId" element={<InsightsScreen />} />
         <Route path="/marine-life" element={<MarineLifeScreen />} />

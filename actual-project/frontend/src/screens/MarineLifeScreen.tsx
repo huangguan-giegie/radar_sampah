@@ -194,7 +194,7 @@ export function SpeciesIntroductionView({ species: s, goBack }: { species: Speci
           <p style={{ fontSize: 17, lineHeight: 1.5 }}>{s.intro}</p>
           <p className="coastal-footnote">{s.evidence}</p>
         </div>
-        <SummaryCard eyebrow="Ask AI">
+        <SummaryCard eyebrow="Read answers">
           <p style={{ margin: "0 0 8px", fontSize: 12, color: "#ffffffad" }}>
             Answers use this card’s published sources
           </p>

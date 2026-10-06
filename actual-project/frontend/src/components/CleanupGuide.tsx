@@ -67,13 +67,17 @@ export function CleanupGuide({ recorded = false, imageFree = false }: { recorded
           <div className="guide-dropoff">
             {!imageFree && <img src="/images/cleanup/bintop.jpg" alt="Litter bin" />}
             <div>
-              <strong>{guide.dropOffName}</strong>
-              <small>Checked by Radar Sampah · {guide.checkedDate}</small>
+              <strong>{guide.dropOffName ?? "Drop-off point not confirmed"}</strong>
+              <small>{guide.checkedDate
+                ? `Checked by Radar Sampah · ${guide.checkedDate}`
+                : "No confirmed drop-off or recycling details are available."}</small>
             </div>
           </div>
           <p className="subtle">
-            Tie every bag. Recycling goes to {guide.recyclingName}. Bin full?
-            Take it home.
+            Tie every bag. {guide.recyclingName
+              ? `Recycling goes to ${guide.recyclingName}.`
+              : "A recycling point has not been confirmed. Check disposal arrangements with the local council."}{" "}
+            If no suitable bin is available or it is full, take your bags with you.
           </p>
           {guide.mapsUrl ? (
             <a
@@ -84,15 +88,7 @@ export function CleanupGuide({ recorded = false, imageFree = false }: { recorded
             >
               Open in Maps
             </a>
-          ) : (
-            <button
-              className="lime-button"
-              disabled
-              title="A drop-off point has not been set"
-            >
-              Open in Maps
-            </button>
-          )}
+          ) : null}
         </section>
         <div className="guide-emergency">
           <div>

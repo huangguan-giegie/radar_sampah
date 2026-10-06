@@ -4,7 +4,7 @@ import { ArrowRight, Check, ChevronRight, Clock, Pin } from '../components/Icon'
 import { EmptyState, InfoChip, SectionLabel } from '../components/ds';
 import { BackButton, GhostButton, PrimaryButton, TextButton } from '../components/ui';
 import { useApp } from '../AppContext';
-import { createIteration2ShareLink, getIteration2MyCleanups, USE_MOCK } from '../api';
+import { createIteration2ShareLink, getBeach, getIteration2MyCleanups, USE_MOCK } from '../api';
 import {
   formatEventDate,
   formatEventTimeRange,
@@ -12,7 +12,8 @@ import {
   getCleanupEvent,
 } from '../iteration2';
 import { fetchCleanupEvent, joinCleanupEventData, leaveCleanupEventData } from '../iteration2Api';
-import { C } from '../theme';
+import { attentionStateFor, C } from '../theme';
+import type { BeachDetail } from '../types';
 import { useAsyncData } from '../useAsyncData';
 import { CleanupGuide, WildlifeGuide } from '../components/CleanupGuide';
 import { fetchEventCleanups } from '../iteration2Api';
@@ -38,6 +39,10 @@ export default function EventScreen() {
     getCleanupEvent(eventId),
   );
   const { data: cleanups } = useAsyncData(() => fetchEventCleanups(eventId), [eventId, reportsVersion], []);
+  const { data: beach, loading: beachLoading, error: beachError, refresh: refreshBeach } = useAsyncData<BeachDetail | null>(
+    () => event ? getBeach(event.beachId) : Promise.resolve(null),
+    [event?.beachId, reportsVersion], null,
+  );
   const { data: ownCleanups } = useAsyncData<{ eventId: string | null }[]>(
     () => !user ? Promise.resolve([]) : USE_MOCK
       ? Promise.resolve(eventCleanups(eventId).filter(cleanup => cleanup.participantId === user.participantId))
@@ -186,6 +191,15 @@ export default function EventScreen() {
             </div>
             <InfoChip>{cleanups.length} {cleanups.length === 1 ? 'cleanup' : 'cleanups'}</InfoChip>
           </div>
+          {beachLoading ? <p className="coastal-footnote" role="status">Loading current Beach Attention…</p> : beachError ? (
+            <div>
+              <p className="coastal-footnote">Current Beach Attention could not be loaded.</p>
+              <TextButton onClick={() => void refreshBeach()}>Retry beach data</TextButton>
+            </div>
+          ) : beach && (
+            <p className="coastal-footnote">Current Beach Attention: <strong>{attentionStateFor(beach.severity, beach.insufficientData, beach.validReports).pageLabel}</strong></p>
+          )}
+          {event.source === 'weekly' && <p className="coastal-footnote">Weekly cleanups are scheduled for Moderate, High or Severe Beach Attention. Low or insufficient data pauses new scheduling; already planned activities and registrations remain.</p>}
           <GhostButton onClick={() => nav(`/beach/${event.beachId}`)} style={{ marginTop: 12 }}>View beach data <ArrowRight color={C.navy} /></GhostButton>
         </div>
 
