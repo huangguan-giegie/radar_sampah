@@ -28,7 +28,7 @@ describe("welcome first-entry gate", () => {
   });
 
   it("fails open when session storage is unavailable", () => {
-    expect(shouldShowWelcomeBeforeHome("/home", null)).toBe(true);
+    expect(shouldShowWelcomeBeforeHome("/home", null)).toBe(false);
     expect(() => markWelcomeSeen(null)).not.toThrow();
   });
 });
