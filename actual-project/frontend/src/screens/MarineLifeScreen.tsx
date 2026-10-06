@@ -167,7 +167,7 @@ function ApprovedSpeciesScreen() {
       {answer.aiAssisted && <p className="coastal-footnote">AI-assisted</p>}
       {answer.sources.map(source => <p key={source.url} className="coastal-footnote"><a href={source.url} target="_blank" rel="noreferrer">{source.label} ↗</a></p>)}
     </WhiteCard>}
-    <section><h3>{s.name === "Grubeulepis malayensis" ? "Sources & Illustration Credit" : "Sources & Photo Credit"}</h3>
+    <section><h3>{card.name === "Grubeulepis malayensis" ? "Sources & Illustration Credit" : "Sources & Photo Credit"}</h3>
       {card.sources.map(source => <p key={source.url}><a className="species-source" href={source.url} target="_blank" rel="noreferrer">{source.label} ↗</a></p>)}
       <p className="coastal-footnote">Reviewed {card.reviewDate} · {card.credit}</p>
       <a className="species-source" href={card.photoSource} target="_blank" rel="noreferrer">Photo source ↗</a>
