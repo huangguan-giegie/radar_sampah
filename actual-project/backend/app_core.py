@@ -602,6 +602,7 @@ def load_beaches(engine: Engine | None = None) -> list[dict[str, Any]]:
                 "lat": row["lat"], "lng": row["lng"], "habitat": row["habitat"],
                 "habitatTag": row["habitat_tag"], "sensitivity": row["sensitivity"],
                 "primarySpeciesGlyph": row["primary_species_glyph"],
+                "speciesNames": base.get("speciesNames", []),
                 "coverImageUrl": row["cover_image_url"], "scene": row["scene"],
                 "ecologicalNote": row["ecological_note"],
             }
