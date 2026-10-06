@@ -194,7 +194,7 @@ export default function ConfirmBeachScreen() {
             </>
           ) : (
             <>
-              <div style={{ fontSize: 22, fontWeight: 650, letterSpacing: '-.4px' }}>Choose your beach</div>
+              <div style={{ fontSize: 22, fontWeight: 650, letterSpacing: '-.4px' }}>Choose Your Beach</div>
               <div
                 style={{
                   display: 'flex',
