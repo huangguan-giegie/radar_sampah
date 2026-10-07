@@ -4,7 +4,7 @@ set -euo pipefail
 NAME="${NAME:-radar-sampah}"
 ZONE="${ZONE:-us-west1-b}"
 REPO="${REPO:-https://github.com/huangguan-giegie/radar_sampah.git}"
-REF="${REF:-deploy/gcp-e2-micro}"
+REF="${REF:-main}"
 
 WORKDIR="$(mktemp -d)"
 trap 'rm -rf "${WORKDIR}"' EXIT
