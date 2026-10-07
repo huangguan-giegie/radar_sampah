@@ -29,7 +29,7 @@ if ! gcloud compute networks describe "${NETWORK}" >/dev/null 2>&1; then
 fi
 
 if ! gcloud compute networks subnets describe "${SUBNET}" --region="${REGION}" >/dev/null 2>&1; then
-  gcloud compute networks subnets create "${SUBNET}"     --network="${NETWORK}"     --range=10.42.0.0/24     --stack-type=IPV4_IPV6     --ipv6-access-type=EXTERNAL     --ipv6-network-tier=PREMIUM     --region="${REGION}"
+  gcloud compute networks subnets create "${SUBNET}"     --network="${NETWORK}"     --range=10.42.0.0/24     --stack-type=IPV4_IPV6     --ipv6-access-type=EXTERNAL     --region="${REGION}"
 fi
 
 if ! gcloud compute addresses describe "${IPV6_NAME}" --region="${REGION}" >/dev/null 2>&1; then
