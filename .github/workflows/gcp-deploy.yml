@@ -52,7 +52,8 @@ jobs:
             sudo apt-get install -y git-lfs rsync
           fi
 
-          git clone --depth=1 --branch "$BRANCH" "$REPOSITORY" "$TMP/repo"
+          # Do not pull the resident ONNX model into the temporary checkout.
+          GIT_LFS_SKIP_SMUDGE=1 git clone --depth=1 --filter=blob:none --branch "$BRANCH" "$REPOSITORY" "$TMP/repo"
 
           # Keep production secrets and the resident ONNX model on the VM.
           sudo rsync -a --delete \
