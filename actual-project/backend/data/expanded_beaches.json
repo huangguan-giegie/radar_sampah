@@ -18,9 +18,9 @@
     "coordinateEnrichedAt": "2026-10-07",
     "regionCount": 78,
     "waterTypeCount": 81,
-    "coordinateSupplementCount": 31,
+    "coordinateSupplementCount": 30,
     "remainingUnlocatedCount": 0,
-    "coordinateSupplementNote": "The previously unresolved BeachSearcher row 63 is now normalized to Teluk Bakau (Pulau Tulai) using the named Bakau Bay/Teluk Bakau OpenStreetMap/GeoNames reference at 2.91134, 104.10430, corroborated by IIUM marine-science research that explicitly places Teluk Bakau on Tulai Island. The original BeachSearcher label is retained in catalogueSource.sourceBeachName. All 82 supplied catalogue rows now have a source-backed coordinate reference.",
+    "coordinateSupplementNote": "The 30-row supplement now yields distinct references for all remaining catalogue rows: the former duplicate island-level reference for BeachSearcher row 63 has been replaced by a Malaysia-only researched named-bay reference for Teluk Bakau (Pulau Tulai), corroborated by OpenStreetMap/GeoNames and IIUM marine-science research. The original BeachSearcher label is retained in catalogueSource.sourceBeachName. All 82 supplied catalogue rows now have a source-backed coordinate reference.",
     "coordinateResearchSupplementCount": 4
   },
   "beaches": [
