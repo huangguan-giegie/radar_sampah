@@ -639,6 +639,23 @@
   font-weight: 400;
   margin-bottom: 8px;
 }
+.insights-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.personal-insights-button {
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid #0b216126;
+  border-radius: 24px;
+  background: white;
+  color: #0b2161;
+  font-size: 12px;
+  font-weight: 650;
+  white-space: nowrap;
+}
 .insights-hub .summary-headline > strong {
   font-size: 36px;
 }

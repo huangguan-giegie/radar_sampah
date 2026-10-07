@@ -26,6 +26,8 @@ import { C, formatDate, severityLabel } from "../theme";
 import { useApp } from "../AppContext";
 import { useAsyncData } from "../useAsyncData";
 import { fetchInsights, type InsightsData, type InsightBeach, type InsightCleanup } from "../insightsApi";
+import { iteration3Request } from "../iteration3Api";
+import type { PersonalInsights } from "../iteration3Personal";
 
 export function MetricBars({ rows }: { rows: [string, number][] }) {
   return (
@@ -45,10 +47,54 @@ export function MetricBars({ rows }: { rows: [string, number][] }) {
   );
 }
 export default function InsightsScreen() {
-  return USE_MOCK ? <PreviewInsightsScreen /> : <LiveInsightsScreen />;
+  const nav = useNavigate();
+  const [params, setParams] = useSearchParams();
+  const { user, reportsVersion } = useApp();
+  const personalOpen = params.get('panel') === 'personal';
+  const setPersonalOpen = (open: boolean) => setParams(previous => {
+    const next = new URLSearchParams(previous);
+    if (open) next.set('panel', 'personal'); else next.delete('panel');
+    return next;
+  }, { replace: true });
+  const { data: personal, loading, error, refresh } = useAsyncData(
+    () => user && personalOpen ? iteration3Request<PersonalInsights>('/personal-insights') : Promise.resolve(null),
+    [user?.participantId, reportsVersion, personalOpen],
+    null,
+  );
+  const personalAction = user && <button className="personal-insights-button" onClick={() => setPersonalOpen(true)}>
+    Personal Insights
+  </button>;
+  return <>
+    {USE_MOCK ? <PreviewInsightsScreen personalAction={personalAction} /> : <LiveInsightsScreen personalAction={personalAction} />}
+    {personalOpen && user && <Sheet title="Your Insights" onClose={() => setPersonalOpen(false)}>
+      <p className="eyebrow">Private · only you see this</p>
+      {loading ? <p role="status">Loading your insights…</p> : error ? (
+        <DataUnavailable title="Your insights could not be loaded" retry={() => void refresh()}>
+          Please try again to load your personal insights.
+        </DataUnavailable>
+      ) : personal?.sections.length ? personal.sections.map(section => (
+        <WhiteCard key={section.id}>
+          <p className="eyebrow">{section.title}</p>
+          {section.aiAssisted && <p className="coastal-footnote">AI-assisted</p>}
+          <p className="subtle">{section.text}</p>
+          {section.sources.map(source => <p className="coastal-footnote" key={source.url}>
+            <a href={source.url} target={source.url.startsWith('https://') ? '_blank' : undefined} rel="noreferrer">{source.label}</a>
+            {section.reviewDate && ' · Reviewed ' + section.reviewDate}
+          </p>)}
+          <PrimaryButton onClick={() => nav(section.action.path)}>{section.action.label}</PrimaryButton>
+        </WhiteCard>
+      )) : (
+        <DataUnavailable title="Your Insights">
+          {personal?.emptyStateMessage ?? 'Report litter or finish a cleanup to unlock personal insights.'}
+        </DataUnavailable>
+      )}
+      <GhostButton onClick={() => { setPersonalOpen(false); nav('/insights'); }}>View Beach Insights</GhostButton>
+      <GhostButton style={{ marginTop: 16 }} onClick={() => nav('/reports')}>My Reports</GhostButton>
+    </Sheet>}
+  </>;
 }
 
-function LiveInsightsScreen() {
+function LiveInsightsScreen({ personalAction }: { personalAction: ReactNode }) {
   const { topic = '', beachId } = useParams();
   const nav = useNavigate();
   const [params, setParams] = useSearchParams();
@@ -220,7 +266,10 @@ function LiveInsightsScreen() {
   }
   return <CoastalPage title={title} className={!topic ? 'insights-hub' : ''} eyebrow={data ? `Saved records · as of ${formatDate(data.asOf)}` : 'Insights'}
     back={beachId ? '/beach/' + beachId : topic ? '/insights' : undefined}
-    action={<button onClick={() => nav('/method')} className={topic ? '' : 'icon-button navy'} aria-label="About data">{topic ? 'About Data' : <Info color="white" size={22} />}</button>}>
+    action={<div className="insights-header-actions">
+      {!topic && personalAction}
+      <button onClick={() => nav('/method')} className={topic ? '' : 'icon-button navy'} aria-label="About data">{topic ? 'About Data' : <Info color="white" size={22} />}</button>
+    </div>}>
     {topic && topic !== 'wildlife' && chips}{body}
     {!loading && !error && data && <p className="coastal-footnote">Calculated from saved reports and cleanup records · {formatDate(data.asOf)}. No reports means unchecked, not clean.</p>}
     {filters && data && <Sheet title="Filters" onClose={() => setFilters(false)}>
@@ -235,7 +284,7 @@ function LiveInsightsScreen() {
   </CoastalPage>;
 }
 
-function PreviewInsightsScreen() {
+function PreviewInsightsScreen({ personalAction }: { personalAction: ReactNode }) {
   const { topic = "", beachId } = useParams();
   const nav = useNavigate();
   const [params, setParams] = useSearchParams();
@@ -763,7 +812,10 @@ function PreviewInsightsScreen() {
           : undefined
       }
       back={beachId ? "/insights/" + topic : topic ? "/insights" : undefined}
-      action={topic === "wildlife" ? <button onClick={() => nav("/marine-life")}>Marine Life</button> : about}
+      action={<div className="insights-header-actions">
+        {!topic && personalAction}
+        {topic === "wildlife" ? <button onClick={() => nav("/marine-life")}>Marine Life</button> : about}
+      </div>}
       subtitle={topic === "wildlife" ? "Modelled species and habitats, not sightings." : undefined}
     >
       {topic && topic !== "wildlife" && chips}
