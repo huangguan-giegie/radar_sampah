@@ -13,15 +13,15 @@
       "Ocean / sea"
     ],
     "beachCount": 82,
-    "coordinateCount": 81,
-    "note": "Names and stable row ids preserve the supplied 82-row export. Locations are matched to original provider identity and publicly sourced beach or explicitly approximate shore reference points. Provenance and precision remain explicit: some points are exact named beach markers, while others are island-, resort-, beachfront- or triangulated approximate references. Ambiguous duplicate markers remain unlocated. No biodiversity or pollution evidence is inferred from a location.",
-    "coordinateEnrichedAt": "2026-10-06",
+    "coordinateCount": 82,
+    "note": "Names and stable row ids preserve the supplied 82-row export as provenance while allowing a source-backed display-name normalization where an external generic label can be matched to a documented Malaysian place name. Locations are publicly sourced beach, bay, or explicitly approximate shore reference points. Precision remains explicit; no biodiversity or pollution evidence is inferred from a location.",
+    "coordinateEnrichedAt": "2026-10-07",
     "regionCount": 78,
     "waterTypeCount": 81,
     "coordinateSupplementCount": 30,
-    "remainingUnlocatedCount": 1,
-    "coordinateSupplementNote": "27 Google Maps references supplied in beach_coordinates.csv plus 3 Malaysia-only researched references (Landing Beach, Cenderawasih Beach and Batu village Beach) provide 81 distinct coordinate references; Pulau Tulai Beach II remains unlocated because no separate marker was verified.",
-    "coordinateResearchSupplementCount": 3
+    "remainingUnlocatedCount": 0,
+    "coordinateSupplementNote": "The 30-row supplement now yields distinct references for all remaining catalogue rows: the former duplicate island-level reference for BeachSearcher row 63 has been replaced by a Malaysia-only researched named-bay reference for Teluk Bakau (Pulau Tulai), corroborated by OpenStreetMap/GeoNames and IIUM marine-science research. The original BeachSearcher label is retained in catalogueSource.sourceBeachName. All 82 supplied catalogue rows now have a source-backed coordinate reference.",
+    "coordinateResearchSupplementCount": 4
   },
   "beaches": [
     {
@@ -2382,18 +2382,26 @@
     },
     {
       "id": "bs-pulau-tulai-beach-ii-63",
-      "name": "Pulau Tulai Beach II",
-      "area": "Pulau Tulai, Tioman, Pahang",
+      "name": "Teluk Bakau (Pulau Tulai)",
+      "area": "Teluk Bakau, Pulau Tulai (Coral Island), Pahang",
       "region": "pahang",
-      "lat": null,
-      "lng": null,
-      "locationSource": null,
+      "lat": 2.91134,
+      "lng": 104.1043,
+      "locationSource": {
+        "sourceName": "OpenStreetMap / GeoNames named bay reference, corroborated by IIUM marine research",
+        "sourceUrl": "https://www.openstreetmap.org/node/8367617378",
+        "providerPage": "https://beaches-searcher.com/en/beach/458201215/pulau-tulai-beach-ii",
+        "precision": "named_bay_reference_point",
+        "verifiedAt": "2026-10-07",
+        "evidenceNote": "OpenStreetMap node 8367617378 and GeoNames 1781789 identify Bakau Bay (Malay: Teluk Bakau) in Pahang at 2.91134, 104.10430. IIUM marine-science research independently places Teluk Bakau on Tulai Island and describes its mangrove bay. BeachSearcher record 458201215 is retained as catalogue provenance; its generic label 'Pulau Tulai Beach II' is preserved as the source beach name rather than treated as the preferred local display name."
+      },
       "catalogueSource": {
         "sourceName": "BeachSearcher.com",
         "sourceUrl": "https://beaches-searcher.com/en/map?object=country&object_id=199&orderby=top_popular&smart=0&display=split&object_name=Malaysia&zoom=4&lat=4.228592400950948&lng=109.45918792&bbox=90.26367187500001%2C-24.5271348225978%2C128.58398437500003%2C32.02670629333614&owner__1_12_13_32=1&locality__2_3=1&water_type__5=1&water_type__1_2_3=1",
-        "sourceRow": 63
+        "sourceRow": 63,
+        "sourceBeachName": "Pulau Tulai Beach II"
       },
-      "locationStatus": "Coordinates unavailable — no distinct beach marker verified",
+      "locationStatus": "Source-backed location reference — named_bay_reference_point",
       "waterType": "ocean_sea",
       "habitat": "Biodiversity information not yet available",
       "habitatTag": "UNAVAILABLE",
@@ -2405,10 +2413,10 @@
       "scene": "linear-gradient(180deg,#D8ECF4,#5FA3C4)",
       "ecologicalNote": "Biodiversity information not yet available",
       "locationReview": {
-        "reviewedAt": "2026-10-06",
-        "status": "identity_verified_coordinates_unverified",
+        "reviewedAt": "2026-10-07",
+        "status": "verified_named_bay_reference",
         "providerPage": "https://beaches-searcher.com/en/beach/458201215/pulau-tulai-beach-ii",
-        "evidenceNote": "No distinct beach marker verified; the available Google Maps place ID maps to Pulau Tulai Beach (#12)."
+        "evidenceNote": "OpenStreetMap node 8367617378 and GeoNames 1781789 identify Bakau Bay (Malay: Teluk Bakau) in Pahang at 2.91134, 104.10430. IIUM marine-science research independently places Teluk Bakau on Tulai Island and describes its mangrove bay. BeachSearcher record 458201215 is retained as catalogue provenance; its generic label 'Pulau Tulai Beach II' is preserved as the source beach name rather than treated as the preferred local display name."
       }
     },
     {

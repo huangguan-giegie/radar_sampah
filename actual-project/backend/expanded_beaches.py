@@ -43,17 +43,18 @@ def refresh_expanded_beach_locations(engine, impl):
         return
     table = impl.beaches_table
     with engine.begin() as connection:
-        existing = connection.execute(select(table.c.id, table.c.lat, table.c.lng, table.c.area)
+        existing = connection.execute(select(table.c.id, table.c.name, table.c.lat, table.c.lng, table.c.area)
                                       .where(table.c.id.in_(locations))).mappings().all()
         changes = []
         for row in existing:
             location = locations[row['id']]
-            if (row['lat'], row['lng'], row['area']) != (location['lat'], location['lng'], location['area']):
-                changes.append({'beach_key': row['id'], 'latitude': location['lat'],
-                                'longitude': location['lng'], 'beach_area': location['area']})
+            if (row['name'], row['lat'], row['lng'], row['area']) != (location['name'], location['lat'], location['lng'], location['area']):
+                changes.append({'beach_key': row['id'], 'beach_name': location['name'],
+                                'latitude': location['lat'], 'longitude': location['lng'],
+                                'beach_area': location['area']})
         if changes:
             connection.execute(update(table).where(table.c.id == bindparam('beach_key'))
-                               .values(lat=bindparam('latitude'), lng=bindparam('longitude'),
+                               .values(name=bindparam('beach_name'), lat=bindparam('latitude'), lng=bindparam('longitude'),
                                        area=bindparam('beach_area')), changes)
 
 
