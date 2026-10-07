@@ -1,0 +1,8 @@
+{
+  auto_https disable_redirects
+}
+
+{$SITE_ADDRESS} {
+  encode zstd gzip
+  reverse_proxy app:5000
+}
