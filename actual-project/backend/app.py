@@ -19,8 +19,11 @@ from __future__ import annotations
 
 import hashlib
 import hmac
+import os
 from pathlib import Path
 from statistics import median
+import threading
+import time
 from typing import Any
 
 from flask import g, jsonify, request
@@ -415,57 +418,79 @@ def _upcoming_saturdays_reviewed(now: Any) -> list[Any]:
 def _reviewed_event_scheduler(engine: Any):
     """Build the scheduler used by the existing event routes with an attention gate."""
     beaches = _impl.load_beaches(engine)
+    refresh_lock = threading.Lock()
+    last_refresh_at = 0.0
+    last_schedule_key: tuple[Any, ...] | None = None
+    try:
+        refresh_ttl = max(5.0, float(os.getenv("EVENT_SCHEDULER_TTL_SECONDS", "30")))
+    except ValueError:
+        refresh_ttl = 30.0
 
     def ensure_scheduled_events(now: Any | None = None) -> None:
+        nonlocal last_refresh_at, last_schedule_key
         current = now or _impl.datetime.now(_impl.timezone.utc)
         starts = _upcoming_saturdays_reviewed(current)
-        summaries = {summary["id"]: summary for summary in _impl.beach_summaries_batch(engine, beaches, current)}
-        eligible_beaches = [
-            beach
-            for beach in beaches
-            if summaries.get(beach["id"], {}).get("severity") in WEEKLY_EVENT_SEVERITIES
-        ]
-        scheduled = [
-            (
-                beach,
-                starts_at,
-                f"{beach['id']}-{starts_at.astimezone(_impl.KUALA_LUMPUR).date().isoformat()}",
-            )
-            for beach in eligible_beaches
-            for starts_at in starts
-        ]
-        with engine.begin() as connection:
-            existing_ids = set()
-            if scheduled:
-                existing_ids = set(connection.execute(
-                    select(_impl.events_table.c.id).where(
-                        _impl.events_table.c.id.in_(event_id for _, _, event_id in scheduled)
-                    )
-                ).scalars())
-            for beach, starts_at, event_id in scheduled:
-                if event_id in existing_ids:
-                    continue
-                try:
-                    with connection.begin_nested():
-                        connection.execute(_impl.insert(_impl.events_table).values(
-                            id=event_id,
-                            beach_id=beach["id"],
-                            starts_at=starts_at,
-                            ends_at=starts_at + _impl.timedelta(
-                                hours=_impl.EVENT_END_LOCAL_HOUR - _impl.EVENT_START_LOCAL_HOUR
-                            ),
-                            status="Open",
-                            source="scheduled",
-                            created_by=None,
-                            created_at=current,
-                            updated_at=current,
-                        ))
-                except _impl.IntegrityError:
-                    continue
-            connection.execute(_impl.events_table.update().where(
-                _impl.events_table.c.status == "Open",
-                _impl.events_table.c.ends_at < current,
-            ).values(status="Closed", updated_at=current))
+        schedule_key = tuple(starts)
+        if (
+            last_schedule_key == schedule_key
+            and time.monotonic() - last_refresh_at < refresh_ttl
+        ):
+            return
+        with refresh_lock:
+            if (
+                last_schedule_key == schedule_key
+                and time.monotonic() - last_refresh_at < refresh_ttl
+            ):
+                return
+            summaries = {summary["id"]: summary for summary in _impl.beach_summaries_batch(engine, beaches, current)}
+            eligible_beaches = [
+                beach
+                for beach in beaches
+                if summaries.get(beach["id"], {}).get("severity") in WEEKLY_EVENT_SEVERITIES
+            ]
+            scheduled = [
+                (
+                    beach,
+                    starts_at,
+                    f"{beach['id']}-{starts_at.astimezone(_impl.KUALA_LUMPUR).date().isoformat()}",
+                )
+                for beach in eligible_beaches
+                for starts_at in starts
+            ]
+            with engine.begin() as connection:
+                existing_ids = set()
+                if scheduled:
+                    existing_ids = set(connection.execute(
+                        select(_impl.events_table.c.id).where(
+                            _impl.events_table.c.id.in_(event_id for _, _, event_id in scheduled)
+                        )
+                    ).scalars())
+                for beach, starts_at, event_id in scheduled:
+                    if event_id in existing_ids:
+                        continue
+                    try:
+                        with connection.begin_nested():
+                            connection.execute(_impl.insert(_impl.events_table).values(
+                                id=event_id,
+                                beach_id=beach["id"],
+                                starts_at=starts_at,
+                                ends_at=starts_at + _impl.timedelta(
+                                    hours=_impl.EVENT_END_LOCAL_HOUR - _impl.EVENT_START_LOCAL_HOUR
+                                ),
+                                status="Open",
+                                source="scheduled",
+                                created_by=None,
+                                created_at=current,
+                                updated_at=current,
+                            ))
+                    except _impl.IntegrityError:
+                        continue
+                connection.execute(_impl.events_table.update().where(
+                    _impl.events_table.c.status == "Open",
+                    _impl.events_table.c.ends_at < current,
+                ).values(status="Closed", updated_at=current))
+            last_refresh_at = time.monotonic()
+            last_schedule_key = schedule_key
 
     return ensure_scheduled_events
 
@@ -561,6 +586,19 @@ def create_app(
         route = application.view_functions.get(endpoint)
         if route is None or not _replace_freevar(route, "ensure_scheduled_events", reviewed_scheduler):
             raise RuntimeError(f"Could not install reviewed weekly-event scheduler for {endpoint}.")
+
+    # Build the public Insights snapshot after the worker is ready so the first
+    # visitor does not pay the full cross-region PostgreSQL query cost.
+    if not application.testing and os.getenv("RADAR_PREWARM_PUBLIC_VIEWS", "1").lower() in {"1", "true", "yes", "on"}:
+        prewarm = application.extensions.get("prewarm_insights")
+        if prewarm is not None:
+            def _prewarm_public_views() -> None:
+                try:
+                    prewarm()
+                except Exception:  # pragma: no cover - deployment-only best effort
+                    application.logger.exception("Public view prewarm failed")
+
+            threading.Thread(target=_prewarm_public_views, name="radar-public-prewarm", daemon=True).start()
 
     original_create_report = application.view_functions["create_report"]
 

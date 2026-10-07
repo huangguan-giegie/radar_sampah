@@ -34,6 +34,15 @@ function publicEvents(values: CleanupEvent[]): CleanupEvent[] {
   return values.map(publicEvent);
 }
 
+const EVENTS_CACHE_TTL_MS = 10_000;
+const eventsCache = new Map<string, { value: CleanupEvent[]; expiresAt: number }>();
+const eventsInFlight = new Map<string, Promise<CleanupEvent[]>>();
+
+export function invalidateCleanupEventsCache(): void {
+  eventsCache.clear();
+  eventsInFlight.clear();
+}
+
 /** Local ledgers contain multiple volunteers; derive the same viewer-scoped
  * booleans as the server instead of reusing another volunteer's last action. */
 function mockEventFor(value: CleanupEvent, participantId?: string): CleanupEvent {
@@ -49,7 +58,22 @@ export async function fetchCleanupEvents(participantId?: string, joinedOnly = fa
     const viewer = participantId ?? (await getMe())?.participantId;
     return listCleanupEvents().map(event => mockEventFor(event, viewer)).filter(event => !joinedOnly || event.joined);
   }
-  return publicEvents(await apiRequest<CleanupEvent[]>(`/cleanup-events${joinedOnly ? '?joined=true' : ''}`));
+  const key = `${participantId ?? ''}:${joinedOnly ? 'joined' : 'all'}`;
+  const cached = eventsCache.get(key);
+  if (cached && cached.expiresAt > Date.now()) return cached.value;
+  const inFlight = eventsInFlight.get(key);
+  if (inFlight) return inFlight;
+  const request = apiRequest<CleanupEvent[]>(`/cleanup-events${joinedOnly ? '?joined=true' : ''}`)
+    .then(publicEvents)
+    .then((value) => {
+      eventsCache.set(key, { value, expiresAt: Date.now() + EVENTS_CACHE_TTL_MS });
+      return value;
+    })
+    .finally(() => {
+      if (eventsInFlight.get(key) === request) eventsInFlight.delete(key);
+    });
+  eventsInFlight.set(key, request);
+  return request;
 }
 
 export async function fetchCleanupEvent(eventId: string): Promise<CleanupEvent | null> {
@@ -67,12 +91,16 @@ export async function fetchCleanupEvent(eventId: string): Promise<CleanupEvent |
 
 export async function joinCleanupEventData(eventId: string, participantId: string): Promise<CleanupEvent> {
   if (USE_MOCK) return mockEventFor(joinCleanupEvent(eventId, participantId), participantId);
-  return publicEvent(await apiRequest<CleanupEvent>(`/cleanup-events/${encodeURIComponent(eventId)}/join`, 'POST'));
+  const result = publicEvent(await apiRequest<CleanupEvent>(`/cleanup-events/${encodeURIComponent(eventId)}/join`, 'POST'));
+  invalidateCleanupEventsCache();
+  return result;
 }
 
 export async function leaveCleanupEventData(eventId: string, participantId: string): Promise<CleanupEvent> {
   if (USE_MOCK) return mockEventFor(leaveCleanupEvent(eventId, participantId), participantId);
-  return publicEvent(await apiRequest<CleanupEvent>(`/cleanup-events/${encodeURIComponent(eventId)}/join`, 'DELETE'));
+  const result = publicEvent(await apiRequest<CleanupEvent>(`/cleanup-events/${encodeURIComponent(eventId)}/join`, 'DELETE'));
+  invalidateCleanupEventsCache();
+  return result;
 }
 
 export type CheckInCoordinates = { lat: number; lng: number };
@@ -87,12 +115,16 @@ export async function recordCheckInData(
     return mockEventFor(recordCheckIn(eventId, participantId, 'within_area'), participantId);
   }
   if (typeof state === 'string') throw new Error('Location coordinates are required for check-in.');
-  return publicEvent(await apiRequest<CleanupEvent>(`/cleanup-events/${encodeURIComponent(eventId)}/check-in`, 'POST', state));
+  const result = publicEvent(await apiRequest<CleanupEvent>(`/cleanup-events/${encodeURIComponent(eventId)}/check-in`, 'POST', state));
+  invalidateCleanupEventsCache();
+  return result;
 }
 
 export async function confirmAttendanceData(eventId: string, participantId: string): Promise<CleanupEvent> {
   if (USE_MOCK) return mockEventFor(recordAttendance(eventId, participantId), participantId);
-  return publicEvent(await apiRequest<CleanupEvent>(`/cleanup-events/${encodeURIComponent(eventId)}/attendance`, 'POST'));
+  const result = publicEvent(await apiRequest<CleanupEvent>(`/cleanup-events/${encodeURIComponent(eventId)}/attendance`, 'POST'));
+  invalidateCleanupEventsCache();
+  return result;
 }
 
 export async function linkEventReportData(
@@ -102,10 +134,12 @@ export async function linkEventReportData(
   beachId: string,
 ): Promise<CleanupEvent> {
   if (USE_MOCK) return recordEventReportEvidence(eventId, participantId, reportId, beachId);
-  return publicEvent(await apiRequest<CleanupEvent>(
+  const result = publicEvent(await apiRequest<CleanupEvent>(
     `/cleanup-events/${encodeURIComponent(eventId)}/reports/${encodeURIComponent(reportId)}`,
     'POST',
   ));
+  invalidateCleanupEventsCache();
+  return result;
 }
 
 export async function fetchCleanupTarget(beachId: string): Promise<CleanupTarget | null> {
@@ -163,10 +197,13 @@ export async function submitCleanup(input: {
     idempotencyKey: input.idempotencyKey ?? crypto.randomUUID(),
   });
   invalidateBeaches();
+  invalidateCleanupEventsCache();
   return cleanup;
 }
 
 export async function createAdminEventData(input: { beachId: string; date: string }): Promise<CleanupEvent> {
   if (USE_MOCK) return createAdminEvent(input);
-  return publicEvent(await apiRequest<CleanupEvent>('/cleanup-events', 'POST', input));
+  const result = publicEvent(await apiRequest<CleanupEvent>('/cleanup-events', 'POST', input));
+  invalidateCleanupEventsCache();
+  return result;
 }

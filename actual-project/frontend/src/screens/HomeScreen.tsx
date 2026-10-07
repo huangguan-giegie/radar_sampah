@@ -20,6 +20,7 @@ import {
 import { SeverityBadge } from "../components/ds";
 import { hasDraftProgress, resumePath } from "../flowRules";
 import { fetchCleanupEvents } from "../iteration2Api";
+import { fetchInsights } from "../insightsApi";
 import { formatEventDate } from "../iteration2";
 import { useAsyncData } from "../useAsyncData";
 import { C } from "../theme";
@@ -53,6 +54,11 @@ export default function HomeScreen() {
     error,
     refresh,
   } = useAsyncData(getBeaches, [reportsVersion], []);
+  useEffect(() => {
+    if (USE_MOCK || !beaches.length) return;
+    const timer = window.setTimeout(() => { void fetchInsights(); }, 250);
+    return () => window.clearTimeout(timer);
+  }, [beaches.length, reportsVersion]);
   const beach = beaches.find((b) => b.id === "morib") ?? beaches[0];
   const { data: detail } = useAsyncData(
     () => (beach ? getBeach(beach.id) : Promise.resolve(null)),

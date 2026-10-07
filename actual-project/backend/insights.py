@@ -7,6 +7,9 @@ from __future__ import annotations
 
 import json
 import math
+import os
+import threading
+import time
 from collections import defaultdict
 from datetime import datetime, timedelta, timezone
 from statistics import median
@@ -259,17 +262,59 @@ def build_insights(engine: Any, impl: Any, *, now: datetime | None = None,
 
 
 def install_insights(application: Any, engine: Any, jwt_secret: str, impl: Any) -> None:
+    cache_lock = threading.Lock()
+    cached_results: dict[str | None, tuple[float, dict[str, Any]]] = {}
+    try:
+        cache_ttl = max(5.0, float(os.getenv("INSIGHTS_CACHE_TTL_SECONDS", "15")))
+    except ValueError:
+        cache_ttl = 15.0
+    cache_enabled = not application.testing
+
+    def invalidate_cache() -> None:
+        with cache_lock:
+            cached_results.clear()
+
+    def read_cached(beach_id: str | None, current: datetime) -> dict[str, Any]:
+        if not cache_enabled:
+            scheduler = application.extensions.get("ensure_scheduled_events")
+            if scheduler is not None:
+                scheduler(current)
+            return build_insights(engine, impl, now=current, beach_id=beach_id)
+        now = time.monotonic()
+        with cache_lock:
+            cached = cached_results.get(beach_id)
+            if cached is not None and now - cached[0] < cache_ttl:
+                return cached[1]
+            # Keep the lock while building the snapshot so concurrent page
+            # loads share one expensive cross-region database calculation.
+            scheduler = application.extensions.get("ensure_scheduled_events")
+            if scheduler is not None:
+                scheduler(current)
+            result = build_insights(engine, impl, now=current, beach_id=beach_id)
+            cached_results[beach_id] = (time.monotonic(), result)
+            return result
+
+    def prewarm() -> None:
+        read_cached(None, datetime.now(timezone.utc))
+
+    application.extensions["invalidate_insights_cache"] = invalidate_cache
+    application.extensions["prewarm_insights"] = prewarm
+
+    @application.after_request
+    def clear_insights_after_write(response: Any):
+        if request.method not in {"GET", "HEAD", "OPTIONS"} and response.status_code < 400:
+            invalidate_cache()
+        return response
+
     @application.get("/insights")
     def insights_summary():
         beach_id = request.args.get("beachId")
         if beach_id is not None and not any(b["id"] == beach_id for b in impl.load_beaches(engine)):
             return impl.error_response(404, "NOT_FOUND", "Beach not found.")
         current = datetime.now(timezone.utc)
-        # Community reads create eligible weekly slots lazily. Use the same
-        # scheduler so help recommendations do not depend on visit order.
-        scheduler = application.extensions.get("ensure_scheduled_events")
-        if scheduler is not None:
-            scheduler(current)
-        response = jsonify(build_insights(engine, impl, now=current, beach_id=beach_id))
+        # Community reads create eligible weekly slots lazily. The shared
+        # snapshot keeps that scheduler and the Insights query off the hot path
+        # for repeated mobile navigations.
+        response = jsonify(read_cached(beach_id, current))
         response.headers["Cache-Control"] = "no-store"
         return response
