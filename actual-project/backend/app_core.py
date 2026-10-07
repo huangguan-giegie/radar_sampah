@@ -1570,7 +1570,15 @@ def create_app(
 
     engine = create_engine_for_url(normalise_database_url(database_url or os.getenv("DATABASE_URL")))
     initialise_database(engine)
-    recognizer = _LazyLitterRecognizer()
+    # Render's small free instance keeps the ONNX session lazy, while the
+    # dedicated GCP VM can keep the detector resident and remove first-photo
+    # model loading from the request path.
+    if os.getenv("LITTER_PRELOAD", "").lower() in {"1", "true", "yes", "on"}:
+        from recognition import LitterRecognizer
+
+        recognizer = LitterRecognizer.load()
+    else:
+        recognizer = _LazyLitterRecognizer()
     species_distribution_model = load_species_distribution_model()
     directory = photo_storage_path(photo_storage_dir)
     seed_reference_data(engine, load_beaches())

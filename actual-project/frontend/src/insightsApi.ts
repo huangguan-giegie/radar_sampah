@@ -1,6 +1,10 @@
 import { apiRequest } from './api';
 import type { SeverityBand } from './types';
 
+const INSIGHTS_CACHE_TTL_MS = 15_000;
+const insightsCache = new Map<string, { value: InsightsData; expiresAt: number }>();
+const insightsInFlight = new Map<string, Promise<InsightsData>>();
+
 export interface InsightBeach {
   id: string;
   name: string;
@@ -58,6 +62,25 @@ export interface InsightsData {
   wildlife: { beachId: string; name: string; habitat: string; species: string[]; activeReports: number; composition: [string, number][] }[];
 }
 
+export function invalidateInsightsCache(): void {
+  insightsCache.clear();
+  insightsInFlight.clear();
+}
+
 export function fetchInsights(beachId?: string): Promise<InsightsData> {
-  return apiRequest(`/insights${beachId ? '?beachId=' + encodeURIComponent(beachId) : ''}`);
+  const key = beachId ?? '__all__';
+  const cached = insightsCache.get(key);
+  if (cached && cached.expiresAt > Date.now()) return Promise.resolve(cached.value);
+  const inFlight = insightsInFlight.get(key);
+  if (inFlight) return inFlight;
+  const request = apiRequest<InsightsData>(`/insights${beachId ? '?beachId=' + encodeURIComponent(beachId) : ''}`)
+    .then((value) => {
+      insightsCache.set(key, { value, expiresAt: Date.now() + INSIGHTS_CACHE_TTL_MS });
+      return value;
+    })
+    .finally(() => {
+      if (insightsInFlight.get(key) === request) insightsInFlight.delete(key);
+    });
+  insightsInFlight.set(key, request);
+  return request;
 }
