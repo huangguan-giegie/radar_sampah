@@ -83,6 +83,14 @@ not prove recognition or cache effectiveness. Validate real recognition,
 species prediction, authentication, reports, cleanup, uploads, and event
 join/leave before declaring acceptance complete or retiring the Render rollback.
 
+For an explicit production API acceptance run, manually dispatch the workflow on
+`main` with `run_acceptance` enabled. It creates one temporary participant, uses a
+neutral JPEG to verify ONNX execution, exercises report/cleanup and event
+join/leave, and removes only that participant's records in a `finally` block.
+The fixture verifies execution rather than recognition accuracy. Automatic
+deployments do not run these write checks. A failed cleanup must be investigated
+before repeating acceptance.
+
 ## Administration
 
 ```bash

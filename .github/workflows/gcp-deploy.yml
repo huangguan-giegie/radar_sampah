@@ -12,6 +12,11 @@ on:
       - "deploy/gcp/**"
       - ".github/workflows/gcp-deploy.yml"
   workflow_dispatch:
+    inputs:
+      run_acceptance:
+        description: Run production smoke tests and remove their temporary records
+        type: boolean
+        default: false
 
 permissions:
   id-token: write
@@ -45,6 +50,7 @@ jobs:
           REPOSITORY: https://github.com/huangguan-giegie/radar_sampah.git
           BRANCH: main
           DEPLOY_SHA: ${{ github.sha }}
+          RUN_ACCEPTANCE: ${{ inputs.run_acceptance && '1' || '0' }}
         run: |
           gcloud compute instances describe "$INSTANCE" --project="$PROJECT_ID" --zone="$ZONE" \
             --format='json(name,status,machineType,networkInterfaces)'
@@ -53,7 +59,7 @@ jobs:
             --zone="$ZONE" \
             --tunnel-through-iap \
             --quiet \
-            --command="REPOSITORY='$REPOSITORY' BRANCH='$BRANCH' DEPLOY_SHA='$DEPLOY_SHA' bash -s" <<'REMOTE'
+            --command="REPOSITORY='$REPOSITORY' BRANCH='$BRANCH' DEPLOY_SHA='$DEPLOY_SHA' RUN_ACCEPTANCE='$RUN_ACCEPTANCE' bash -s" <<'REMOTE'
           set -euo pipefail
 
           ROOT=/opt/radar-sampah
@@ -97,9 +103,13 @@ jobs:
 
           cd "$ROOT/deploy/gcp"
           sudo bash ./test-ipv6-dependencies.sh
-          sudo bash ./update.sh
+          sudo bash ./update.sh </dev/null
           test "$MODEL_HASH" = "$(sha256sum "$MODEL_DEST" | cut -d' ' -f1)"
           echo "Deployed commit: $DEPLOY_SHA"
+          test "$(sudo git -c safe.directory="$ROOT" -C "$ROOT" rev-parse HEAD)" = "$DEPLOY_SHA"
           echo "Production env preserved; resident ONNX SHA256: $MODEL_HASH"
           sudo bash ./diagnostics.sh
+          if [ "$RUN_ACCEPTANCE" = "1" ]; then
+            sudo bash ./acceptance.sh
+          fi
           REMOTE
