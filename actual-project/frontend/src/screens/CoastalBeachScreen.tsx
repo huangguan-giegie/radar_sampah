@@ -34,6 +34,9 @@ import { cleanupDestination } from "../cleanupFlow";
 import type { SeverityBand } from "../types";
 import { useAppBack } from "../navigation";
 import { eventIsAvailable, useEventClock } from "../eventAvailability";
+import { StaticMap } from "../components/Visuals";
+import { marineRecordDetails } from "../biodiversity";
+import { beachPhoto } from "../visuals";
 
 export default function CoastalBeachScreen() {
   const { beachId = "" } = useParams();
@@ -131,7 +134,9 @@ export default function CoastalBeachScreen() {
     detail?.insufficientData ?? !band,
     b.validReports,
   );
-  const image = detail?.coverImageUrl ?? fixture?.image;
+  const image = beachPhoto(beachId, detail?.coverImageUrl ?? fixture?.image);
+  const heroLat = detail?.lat ?? null;
+  const heroLng = detail?.lng ?? null;
   const region = fixture?.region ?? "selangor";
   const species = (fixture?.species ?? [])
     .map((id) => content.species.find((s) => s.id === id))
@@ -140,8 +145,10 @@ export default function CoastalBeachScreen() {
   const goMap = () => nav("/map?region=" + region);
   return (
     <main className="screen scroll-y coastal-screen">
-      <header className="coastal-beach-hero">
-        {image && <img src={image} alt={b.name} />}
+      <header className={"coastal-beach-hero" + (!image && heroLat != null ? " has-map" : "")}>
+        {image ? <img src={image} alt={b.name} /> : heroLat != null && heroLng != null && (
+          <StaticMap lat={heroLat} lng={heroLng} zoom={12} focus={[0.72, 0.46]} reach={[640, 254]} />
+        )}
         <div className="beach-hero-top">
           <BackButton dark onClick={goBack} />
           {image && fixture?.photoSource ? (
@@ -150,7 +157,7 @@ export default function CoastalBeachScreen() {
             </a>
           ) : (
             <span>
-              {image ? fixture?.credit || b.name : "No photo of this beach yet"}
+              {image ? fixture?.credit || b.name : heroLat != null ? "No photo yet · map © OpenStreetMap" : "No photo of this beach yet"}
             </span>
           )}
         </div>
@@ -289,7 +296,7 @@ export default function CoastalBeachScreen() {
                       )
                     }
                   >
-                    <SpeciesPicture image={r.image} name={r.name} />
+                    <SpeciesPicture image={marineRecordDetails(r).image} name={r.name} />
                     <strong>{r.name}</strong>
                   </button>
                 ))}

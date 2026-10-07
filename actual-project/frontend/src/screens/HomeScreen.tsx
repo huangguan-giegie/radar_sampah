@@ -26,6 +26,7 @@ import { C } from "../theme";
 import { eventIsAvailable, useEventClock } from "../eventAvailability";
 import { iteration3Request } from "../iteration3Api";
 import { dismissNextAction, dismissedNextActions, fallbackNextAction, type NextAction } from "../iteration3Personal";
+import { PHOTOS } from "../visuals";
 
 export default function HomeScreen() {
   const nav = useNavigate();
@@ -267,6 +268,10 @@ export default function HomeScreen() {
         </div>
       </button>
       <WhiteCard>
+        <figure className="page-cover card-cover">
+          <img src={PHOTOS.moribDusk} alt="Morib Beach at dusk" loading="lazy" />
+          <figcaption>Morib Beach · Ajayrb135 · CC BY-SA 4.0</figcaption>
+        </figure>
         <h2>About Us</h2>
         <p className="subtle">
           Who we are, and why it matters: global data on plastic entering the

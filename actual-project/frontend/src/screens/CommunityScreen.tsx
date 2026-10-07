@@ -20,6 +20,8 @@ import { C } from "../theme";
 import { eventIsAvailable, eventPhase, useEventClock } from "../eventAvailability";
 import content from "../content/coastalContent.json";
 import { beachNeedsVolunteers } from "../volunteerNeeds";
+import { PlaceThumb } from "../components/Visuals";
+import { beachPhoto } from "../visuals";
 
 type Filter = "All" | "Near Me" | "Joined";
 // Keep the last result only in this tab's memory so a detail-page return does not ask again.
@@ -257,13 +259,16 @@ export default function CommunityScreen() {
                     className="coastal-event"
                     onClick={() => nav("/events/" + e.id)}
                   >
-                    <span className="event-calendar">
-                      <strong>{date.slice(8, 10)}</strong>
-                      <small>
-                        {new Date(date + "T12:00:00")
-                          .toLocaleDateString("en-GB", { weekday: "short" })
-                          .toUpperCase()}
-                      </small>
+                    <span className="event-thumb">
+                      <PlaceThumb image={beachPhoto(e.beachId, b?.coverImageUrl)} lat={b?.lat} lng={b?.lng} size={72} focus={[0.64, 0.32]} />
+                      <span className="event-date">
+                        <strong>{date.slice(8, 10)}</strong>
+                        <small>
+                          {new Date(date + "T12:00:00")
+                            .toLocaleDateString("en-GB", { weekday: "short" })
+                            .toUpperCase()}
+                        </small>
+                      </span>
                     </span>
                     <span className="grow">
                       <h3>{e.beachName}</h3>
@@ -297,6 +302,7 @@ export default function CommunityScreen() {
       {needs && !loading && !beachesLoading && !historyLoading && !error && !beachesError && !historyError && withoutEvent.map(b => <WhiteCard key={b.id}>
         <LinkRow title={b.name} subtitle="No upcoming cleanup · view this beach" trailing={<SeverityBadge band={b.severity} />} onClick={() => nav("/beach/" + b.id)} />
       </WhiteCard>)}
+      <p className="map-credit">Beach photos where available · other thumbnails show the location · map © OpenStreetMap contributors</p>
       {USE_MOCK && <p className="demo-label">Preview · example schedule</p>}
       {why && (
         <Sheet title="Why These Beaches?" onClose={() => setWhy(false)}>

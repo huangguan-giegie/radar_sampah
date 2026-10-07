@@ -28,6 +28,9 @@ import { useAsyncData } from "../useAsyncData";
 import { fetchInsights, type InsightsData, type InsightBeach, type InsightCleanup } from "../insightsApi";
 import { iteration3Request } from "../iteration3Api";
 import type { PersonalInsights } from "../iteration3Personal";
+import { getCoastalBeaches } from "../coastalData";
+import { PlaceThumb } from "../components/Visuals";
+import { beachPhoto, speciesPhoto } from "../visuals";
 
 export function MetricBars({ rows }: { rows: [string, number][] }) {
   return (
@@ -103,6 +106,9 @@ function LiveInsightsScreen({ personalAction }: { personalAction: ReactNode }) {
   const { data, loading, error, refresh } = useAsyncData<InsightsData | null>(
     () => fetchInsights(beachId), [beachId, reportsVersion], null,
   );
+  // Photos and coordinates for row thumbnails; /insights itself carries neither for most beaches.
+  const { data: catalogue } = useAsyncData(() => getCoastalBeaches(), [], []);
+  const places = new Map(catalogue.map(b => [b.id, b]));
   const update = (key: string, value: string) => setParams(previous => {
     const next = new URLSearchParams(previous);
     if (value) next.set(key, value); else next.delete(key);
@@ -117,9 +123,11 @@ function LiveInsightsScreen({ personalAction }: { personalAction: ReactNode }) {
       {t === 'trends' ? 'Trends' : t === 'cleanup' ? 'Cleanup' : 'Participation'}
     </button>)}
   </div>;
-  const thumbnail = (beach: InsightBeach) => <span className="row-thumb">
-    {beach.photo ? <img src={beach.photo} alt="" /> : <SpeciesIcon glyph="grass" size={28} />}
-  </span>;
+  const thumbnail = (beach: InsightBeach) => {
+    const place = places.get(beach.id);
+    return <PlaceThumb image={beachPhoto(beach.id, beach.photo ?? place?.image)} lat={place?.lat} lng={place?.lng} />;
+  };
+  const mapCredit = <p className="map-credit">Beach photos where available · other thumbnails show the location · map © OpenStreetMap contributors</p>;
   const bands = (beach: InsightBeach) => <span className="update-bands">
     <SeverityBadge band={beach.from} /><span>→</span><SeverityBadge band={beach.to} />
   </span>;
@@ -148,6 +156,7 @@ function LiveInsightsScreen({ personalAction }: { personalAction: ReactNode }) {
           {thumbnail(beach)}<span className="grow"><strong>{beach.name}</strong>{bands(beach)}<small>Compared with {formatDate(data.comparisonAt)}</small></span><span>›</span>
         </button>
       </WhiteCard>) : <DataUnavailable title="No comparable band changes yet">Two report windows with at least 3 active reports are needed to compare a beach’s bands.</DataUnavailable>}
+      {changed.length > 0 && mapCredit}
       <p className="eyebrow" style={{ margin: '2px 0 -4px' }}>Explore insights</p>
       <div className="action-grid five">
         <ActionTile title="Trends" subtitle="Band changes" icon={<BarChart size={19} />} onClick={() => nav('/insights/trends')} />
@@ -203,6 +212,7 @@ function LiveInsightsScreen({ personalAction }: { personalAction: ReactNode }) {
       {rows.length ? <WhiteCard>{rows.map(beach => <LinkRow key={beach.id} title={beach.name} subtitle={beach.to ? `${severityLabel(beach.to)} · ${beach.activeReports} active reports` : `${beach.area} · ${beach.activeReports} active reports`}
         leading={thumbnail(beach)} trailing={<SeverityBadge band={beach.to} />} onClick={() => nav('/insights/trends/' + beach.id)} />)}</WhiteCard>
         : <DataUnavailable title="No matching beaches">No beach matches these filters.</DataUnavailable>}
+      {rows.length > 0 && mapCredit}
       <GhostButton onClick={() => nav('/map')}>See All on the Map</GhostButton>
     </>;
   } else if (topic === 'participation') {
@@ -259,7 +269,7 @@ function LiveInsightsScreen({ personalAction }: { personalAction: ReactNode }) {
       <SummaryCard eyebrow="Published coastal reference context" value={species.size} description={`species or groups referenced across ${data.wildlife.length} beaches`} />
       {data.wildlife.length ? data.wildlife.map(beach => <button className="wildlife-beach-card" key={beach.beachId} onClick={() => nav('/beach/' + beach.beachId)}>
         <span><strong>{beach.name}</strong><small>{beach.habitat} · {beach.activeReports} active litter reports</small></span>
-        <span className="wildlife-species">{beach.species.map(name => <span key={name}>{name}</span>)}</span>
+        <span className="wildlife-species">{beach.species.map(name => { const photo = speciesPhoto(name); return <span key={name} className={photo ? 'has-photo' : undefined}>{photo && <img src={photo} alt="" loading="lazy" />}{name}</span>; })}</span>
       </button>) : <DataUnavailable title="No reference records available">Published coastal reference records will appear when available.</DataUnavailable>}
       <p className="coastal-footnote">These are published references, not sightings or verified wildlife impacts. Litter reports are shown as separate local context. Open a beach for sources and model scope.</p>
     </>;

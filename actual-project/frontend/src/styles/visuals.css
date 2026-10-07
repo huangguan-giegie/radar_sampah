@@ -1,0 +1,183 @@
+/* Real photos and location maps in place of drawn placeholder glyphs. */
+
+/* Still location map cut from OpenStreetMap tiles */
+.static-map {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: #aad3df; /* OSM sea, so an unloaded tile reads as water */
+}
+.static-map img {
+  position: absolute;
+  max-width: none;
+  user-select: none;
+}
+.static-map .map-pin {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  margin: -6px 0 0 -6px;
+  border-radius: 50%;
+  background: #b8ff36;
+  border: 2.5px solid #0b2161;
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.75);
+}
+.row-thumb.place-thumb {
+  position: relative;
+  overflow: hidden;
+  padding: 0;
+  background: #e8eef3;
+}
+.row-thumb.place-thumb > img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.place-thumb-none {
+  background: linear-gradient(135deg, #e6edf3, #d5dfe8);
+}
+
+/* Beach page hero when the beach has no photo: its location map, kept
+   clear in the middle so the pin shows between the back button and the name */
+.coastal-beach-hero.has-map .static-map .map-pin {
+  width: 16px;
+  height: 16px;
+  margin: -8px 0 0 -8px;
+  border-width: 3px;
+}
+.coastal-beach-hero.has-map:after {
+  background: linear-gradient(180deg, rgba(7, 25, 66, 0.4) 0%, rgba(7, 25, 66, 0) 30%, rgba(7, 25, 66, 0) 46%, rgba(7, 25, 66, 0.92) 100%);
+}
+.coastal-beach-hero.has-map .beach-hero-top span,
+.i2-hero.has-media .hero-media-credit {
+  white-space: nowrap;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(7, 25, 66, 0.62);
+}
+
+/* Community event cards: beach photo or map with the date on top */
+.coastal-event .event-thumb {
+  position: relative;
+  flex: none;
+  width: 72px;
+  height: 72px;
+  border-radius: 16px;
+  overflow: hidden;
+}
+.coastal-event .event-thumb .row-thumb {
+  width: 72px;
+  height: 72px;
+  border-radius: 0;
+}
+.coastal-event .event-thumb .event-date {
+  position: absolute;
+  left: 5px;
+  bottom: 5px;
+  min-width: 34px;
+  padding: 3px 5px 2px;
+  border-radius: 9px;
+  background: rgba(11, 33, 97, 0.92);
+  color: white;
+  text-align: center;
+  line-height: 1.05;
+}
+.coastal-event .event-thumb .event-date strong {
+  display: block;
+  font-size: 15px;
+}
+.coastal-event .event-thumb .event-date small {
+  display: block;
+  font-size: 8.5px;
+  letter-spacing: 0.06em;
+  color: #b8ff36;
+}
+
+/* Event page hero with the beach photo or location map */
+.i2-hero.has-media {
+  position: relative;
+  overflow: hidden;
+  padding-top: 132px;
+}
+.i2-hero.has-media > .hero-media {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+.i2-hero.has-media > .hero-media > img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.i2-hero.has-media:after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(180deg, rgba(11, 33, 97, 0.1) 0%, rgba(11, 33, 97, 0.55) 30%, rgba(11, 33, 97, 0.97) 52%);
+  pointer-events: none;
+}
+.i2-hero.has-media > :not(.hero-media) {
+  position: relative;
+  z-index: 2;
+}
+.i2-hero.has-media .hero-media-credit {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  z-index: 2;
+  font-size: 10.5px;
+  color: #ffffffd9;
+}
+
+/* Cover photos on cards (Home → About Us, About page, Wildlife help) */
+.page-cover.card-cover {
+  height: 150px;
+  border-radius: 16px;
+  margin: 0 0 14px;
+}
+.page-cover {
+  position: relative;
+  margin: 0;
+  border-radius: 22px;
+  overflow: hidden;
+  height: 190px;
+  flex: none;
+}
+.page-cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.page-cover figcaption {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 26px 14px 10px;
+  background: linear-gradient(transparent, rgba(7, 25, 66, 0.8));
+  color: #ffffffd9;
+  font-size: 11px;
+}
+
+/* Wildlife Nearby: species chips with their photo */
+.wildlife-species > span.has-photo {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 4px 11px 4px 4px;
+}
+.wildlife-species > span.has-photo img {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex: none;
+}
+
+.map-credit {
+  font-size: 11px;
+  color: #5a6474;
+  margin: 0;
+}

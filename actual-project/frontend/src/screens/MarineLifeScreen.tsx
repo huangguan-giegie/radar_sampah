@@ -12,7 +12,7 @@ import {
   WhiteCard,
 } from "../components/CoastalUI";
 import { BackButton, GhostButton, PrimaryButton } from "../components/ui";
-import { Search, SpeciesIcon } from "../components/Icon";
+import { Search } from "../components/Icon";
 import { C } from "../theme";
 import { useAppBack } from "../navigation";
 
@@ -20,6 +20,8 @@ import { SpeciesPicture } from "../components/SpeciesPicture";
 import { MarineRecordCard } from "../components/MarineRecordCard";
 import { SpeciesQuestions } from "../components/SpeciesQuestions";
 import { groupMarineRecords, originBeachId, withBeach } from "../biodiversity";
+import { PlaceThumb } from "../components/Visuals";
+import { habitatPhoto as habitatCover, regionPhoto } from "../visuals";
 
 function speciesImageMedia(id: string) {
   return Object.entries(photoOverrides).find(([key]) => key === id)?.[1];
@@ -203,7 +205,7 @@ export function HabitatScreen() {
               title={h.title}
               subtitle={h.area}
               onClick={() => nav("/habitats/" + h.id)}
-              leading={<SpeciesIcon glyph="mangrove" size={32} />}
+              leading={<PlaceThumb image={habitatCover(h.id)} size={56} />}
             />
           </WhiteCard>
         ))}
@@ -330,6 +332,7 @@ export function MarineAreaScreen() {
             <LinkRow
               title={r.name}
               subtitle={r.records.length + " published records"}
+              leading={<PlaceThumb image={regionPhoto(r.id)} size={56} />}
               onClick={() => nav("/marine-area/" + r.id)}
             />
           </WhiteCard>

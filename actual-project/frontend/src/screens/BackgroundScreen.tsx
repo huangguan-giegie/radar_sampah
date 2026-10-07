@@ -17,6 +17,7 @@ import { SectionLabel } from '../components/ds';
 import { Close, RadarMark } from '../components/Icon';
 import { BackButton, TextButton } from '../components/ui';
 import { useAppBack } from '../navigation';
+import { PHOTOS } from '../visuals';
 import {
   MALAYSIA_NOTE,
   OCEAN_PLASTIC_IMAGE,
@@ -82,7 +83,7 @@ export default function BackgroundScreen({ intro = false }: { intro?: boolean })
           </p>
         </div>
 
-        {!intro && <><section className="coastal-summary"><p className="eyebrow">Radar Sampah</p><h2 style={{color:'white',fontSize:24,margin:0}}>Beach litter reports for Malaysia</h2><p style={{fontSize:14,lineHeight:1.5,color:'#ffffffcc'}}>Sampah means rubbish in Malay. Anyone can take part with an anonymous ID.</p>{['Report litter with a photo. AI suggests the type.','See which beaches need help.','Join a Saturday cleanup and log what you cleared.'].map((line,i)=><div key={line} style={{display:'flex',gap:10,alignItems:'center',marginTop:15,fontSize:14,lineHeight:1.4}}><span style={{color:C.lime,fontWeight:700}}>{i+1}</span>{line}</div>)}<p style={{color:'#ffffff99',fontSize:11,marginTop:22}}>Built by a student team at Monash University Malaysia.</p></section><SectionLabel>BACKGROUND</SectionLabel><h2 style={{margin:0,fontSize:22,color:C.navy}}>From plastic waste to the ocean</h2></>}
+        {!intro && <><figure className="page-cover" style={{ margin: 0 }}><img src={PHOTOS.volunteers} alt="Volunteers collecting litter on a beach" /><figcaption>Beach cleanup volunteers · public domain · Wikimedia Commons</figcaption></figure><section className="coastal-summary"><p className="eyebrow">Radar Sampah</p><h2 style={{color:'white',fontSize:24,margin:0}}>Beach litter reports for Malaysia</h2><p style={{fontSize:14,lineHeight:1.5,color:'#ffffffcc'}}>Sampah means rubbish in Malay. Anyone can take part with an anonymous ID.</p>{['Report litter with a photo. AI suggests the type.','See which beaches need help.','Join a Saturday cleanup and log what you cleared.'].map((line,i)=><div key={line} style={{display:'flex',gap:10,alignItems:'center',marginTop:15,fontSize:14,lineHeight:1.4}}><span style={{color:C.lime,fontWeight:700}}>{i+1}</span>{line}</div>)}<p style={{color:'#ffffff99',fontSize:11,marginTop:22}}>Built by a student team at Monash University Malaysia.</p></section><SectionLabel>BACKGROUND</SectionLabel><h2 style={{margin:0,fontSize:22,color:C.navy}}>From plastic waste to the ocean</h2></>}
         <div className="i2-card" style={{ padding: 13 }}>
           {/* On the intro the whole map is one link to the live chart. On the
               full page it is a map you can question: each continent is a tap
