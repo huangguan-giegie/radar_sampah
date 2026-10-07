@@ -15,6 +15,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY actual-project/backend/ ./
 COPY actual-project/ml-model/models/sea_taco_yolo11m_best.onnx /app/actual-project/ml-model/models/sea_taco_yolo11m_best.onnx
 COPY --from=frontend /build/frontend/dist /app/actual-project/frontend/dist
+COPY --from=frontend /build/frontend/src/content /app/actual-project/frontend/src/content
 RUN python scripts/check_runtime_assets.py
 EXPOSE 5000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=90s CMD python -c "import os,urllib.request; urllib.request.urlopen('http://127.0.0.1:'+os.getenv('PORT','5000')+'/api/health',timeout=4)"
