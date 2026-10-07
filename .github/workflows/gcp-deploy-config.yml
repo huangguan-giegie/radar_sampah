@@ -1,0 +1,27 @@
+name: GCP deployment config
+
+on:
+  pull_request:
+    paths:
+      - "deploy/gcp/**"
+      - ".github/workflows/gcp-deploy-config.yml"
+  push:
+    branches:
+      - deploy/gcp-e2-micro
+    paths:
+      - "deploy/gcp/**"
+      - ".github/workflows/gcp-deploy-config.yml"
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check shell syntax
+        run: bash -n deploy/gcp/*.sh
+
+      - name: Validate Compose
+        run: |
+          cp deploy/gcp/.env.example deploy/gcp/.env
+          docker compose -f deploy/gcp/docker-compose.yml config >/dev/null
