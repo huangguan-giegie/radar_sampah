@@ -2012,6 +2012,10 @@ def create_app(
             }
         )
 
+    @application.get("/api/species-distribution/species")
+    def species_distribution_catalog():
+        return jsonify(application.extensions["species_distribution_model"].catalog())
+
     @application.post("/api/species-distribution/predict")
     def predict_species_distribution():
         payload = request.get_json(silent=True)

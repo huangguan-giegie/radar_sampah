@@ -43,6 +43,7 @@ from account import install_account
 from insights import install_insights
 from recommendations import install_recommendations
 from species_questions import install_species_questions
+from wildlife import install_wildlife
 
 
 configure_cleanup_schema(_impl)
@@ -578,6 +579,7 @@ def create_app(
     install_insights(application, engine, jwt_secret, _impl)
     install_recommendations(application, engine, jwt_secret, _impl)
     install_species_questions(application)
+    install_wildlife(application, engine, _impl, jwt_secret)
 
     reviewed_scheduler = _reviewed_event_scheduler(engine)
     application.extensions["ensure_scheduled_events"] = reviewed_scheduler

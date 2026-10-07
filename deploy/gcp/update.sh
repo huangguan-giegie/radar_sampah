@@ -24,8 +24,10 @@ fi
 "${COMPOSE[@]}" up -d --no-deps app
 
 echo "Waiting for updated application health..."
-for _ in $(seq 1 45); do
-  if "${COMPOSE[@]}" exec -T app python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:5000/api/health', timeout=5)" >/dev/null 2>&1; then
+for _ in $(seq 1 75); do
+  APP_ID=$("${COMPOSE[@]}" ps -q app)
+  if [ "$(sudo docker inspect --format='{{.State.Health.Status}}' "$APP_ID")" = "healthy" ] \
+    && "${COMPOSE[@]}" exec -T app python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:5000/api/health', timeout=5)" </dev/null >/dev/null 2>&1; then
     echo "Update healthy."
     "${COMPOSE[@]}" ps
     exit 0
