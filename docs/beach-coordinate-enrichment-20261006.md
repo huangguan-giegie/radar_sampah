@@ -2,7 +2,7 @@
 
 The supplied 82-row catalogue now has **82/82 coordinate references**. The final unresolved row, BeachSearcher `Pulau Tulai Beach II`, was normalized on 7 October 2026 to **Teluk Bakau (Pulau Tulai)** using the named Bakau Bay / Teluk Bakau OpenStreetMap and GeoNames reference at **2.91134, 104.10430**, corroborated by IIUM marine-science research that explicitly places Teluk Bakau on Tulai Island. Together with the four validated MVP beaches, the API has **86 located records out of 86**. Precision remains explicit: some supplement points are island-, resort-, beachfront-, bay- or triangulated references rather than exact surveyed beach centroids.
 
-All entries remain Malaysian locations. The original names, order and stable identifiers are preserved. The two Turtle Beach rows are not assigned interchangeably. A point adds a location reference; it does not establish pollution, local species occurrence, public accessibility or safe visiting conditions.
+All entries remain Malaysian locations. Original source names are preserved as catalogue provenance; source order and stable identifiers are unchanged, while the preferred display name may be normalized when a documented Malaysian place name is established. The two Turtle Beach rows are not assigned interchangeably. A point adds a location reference; it does not establish pollution, local species occurrence, public accessibility or safe visiting conditions.
 
 ## Matching and precision
 
