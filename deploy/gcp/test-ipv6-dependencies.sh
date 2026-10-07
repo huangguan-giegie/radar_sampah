@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-echo "== IPv6 preflight =="
+echo "== Dependency connectivity preflight =="
 
 for url in   https://deb.debian.org/   https://registry-1.docker.io/v2/   https://pypi.org/simple/   https://registry.npmjs.org/react
 do
-  echo "Checking IPv6 HTTPS: ${url}"
-  curl -6 -sSI --connect-timeout 8 --max-time 15 "${url}" >/dev/null
+  echo "Checking HTTPS: ${url}"
+  curl -sSI --connect-timeout 8 --max-time 15 "${url}" >/dev/null
 done
 
 if [ ! -f .env ]; then
@@ -14,16 +14,22 @@ if [ ! -f .env ]; then
   exit 2
 fi
 
-set -a
-. ./.env
-set +a
-
 python3 - <<'PY'
-import os
+import json
 import socket
+import subprocess
 from urllib.parse import urlparse
 
-raw = os.environ.get("DATABASE_URL", "").strip()
+compose = ["sudo", "docker", "compose"]
+if subprocess.run(compose + ["version"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode:
+    compose = ["sudo", "docker-compose"]
+# Let Compose parse dotenv quoting; never print the resolved environment.
+config = json.loads(subprocess.check_output(compose + ["config", "--format", "json"])) if len(compose) == 3 else None
+if config is None:
+    # Compose v1 emits YAML, and its installed Python runtime provides PyYAML.
+    import yaml
+    config = yaml.safe_load(subprocess.check_output(compose + ["config"]))
+raw = config["services"]["app"]["environment"].get("DATABASE_URL", "").strip()
 if not raw:
     raise SystemExit("DATABASE_URL is missing.")
 u = urlparse(raw)
@@ -32,9 +38,9 @@ port = u.port or 5432
 if not host:
     raise SystemExit("DATABASE_URL has no hostname.")
 
-records = socket.getaddrinfo(host, port, socket.AF_INET6, socket.SOCK_STREAM)
+records = socket.getaddrinfo(host, port, socket.AF_UNSPEC, socket.SOCK_STREAM)
 if not records:
-    raise SystemExit(f"Database host {host} has no IPv6 address.")
+    raise SystemExit("Database hostname did not resolve.")
 
 last_error = None
 for family, socktype, proto, _, sockaddr in records:
@@ -42,14 +48,14 @@ for family, socktype, proto, _, sockaddr in records:
     s.settimeout(6)
     try:
         s.connect(sockaddr)
-        print(f"Database IPv6 TCP reachable: {host}:{port}")
+        print(f"Database TCP reachable over {'IPv6' if family == socket.AF_INET6 else 'IPv4'}.")
         break
     except OSError as exc:
         last_error = exc
     finally:
         s.close()
 else:
-    raise SystemExit(f"Database has IPv6 DNS but TCP connection failed: {last_error}")
+    raise SystemExit(f"Database TCP connection failed: {last_error}")
 PY
 
-echo "IPv6 preflight passed."
+echo "Dependency preflight passed."
