@@ -79,17 +79,11 @@ RADAR_PREWARM_PUBLIC_VIEWS=1
 
 Keep the single worker configured in `gunicorn.conf.py`; inspect measured memory
 and swap activity before changing concurrency. Environment settings alone do
-not prove recognition or cache effectiveness. Validate real recognition,
-species prediction, authentication, reports, cleanup, uploads, and event
-join/leave before declaring acceptance complete or retiring the Render rollback.
-
-For an explicit production API acceptance run, manually dispatch the workflow on
-`main` with `run_acceptance` enabled. It creates one temporary participant, uses a
-neutral JPEG to verify ONNX execution, exercises report/cleanup and event
-join/leave, and removes only that participant's records in a `finally` block.
-The fixture verifies execution rather than recognition accuracy. Automatic
-deployments do not run these write checks. A failed cleanup must be investigated
-before repeating acceptance.
+not prove recognition or cache effectiveness. Check model availability, database
+connectivity, key public APIs, and repeated request timings after deployment.
+This migration uses the existing verified business code, so deployment checks do
+not create participants, reports, cleanup records, or uploads. Expand into full
+business-flow testing only when a deployment smoke check identifies a problem.
 
 ## Administration
 
