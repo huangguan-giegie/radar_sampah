@@ -540,3 +540,20 @@ def test_fully_cleared_reports_are_excluded_from_five_report_median(api):
     assert morib["validReports"] == 3
     assert morib["attentionScore"] == 2.0
     assert morib["severity"] == "Moderate"
+
+
+def test_teluk_bakau_catalogue_normalization():
+    import json
+    from pathlib import Path
+
+    catalogue = json.loads(
+        (Path(__file__).resolve().parents[1] / "data" / "expanded_beaches.json").read_text(encoding="utf-8")
+    )
+    row = next(item for item in catalogue["beaches"] if item["id"] == "bs-pulau-tulai-beach-ii-63")
+    assert row["name"] == "Teluk Bakau (Pulau Tulai)"
+    assert row["area"] == "Teluk Bakau, Pulau Tulai (Coral Island), Pahang"
+    assert (row["lat"], row["lng"]) == (2.91134, 104.1043)
+    assert row["catalogueSource"]["sourceBeachName"] == "Pulau Tulai Beach II"
+    assert row["locationSource"]["precision"] == "named_bay_reference_point"
+    assert catalogue["metadata"]["coordinateCount"] == 82
+    assert catalogue["metadata"]["remainingUnlocatedCount"] == 0
