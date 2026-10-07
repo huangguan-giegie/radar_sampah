@@ -64,5 +64,5 @@ jobs:
             "$TMP/repo/" "$ROOT/"
 
           cd "$ROOT/deploy/gcp"
-          sudo ./update.sh
+          sudo bash ./update.sh
           REMOTE
