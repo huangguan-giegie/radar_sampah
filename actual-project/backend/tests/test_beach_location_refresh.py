@@ -19,7 +19,11 @@ def test_sourced_catalogue_preserves_names_ids_and_honest_location_metadata():
     with (data / 'beach_names.csv').open(encoding='utf-8-sig', newline='') as source:
         names = [row['Beach Name'] for row in csv.DictReader(source)]
     rows = catalogue['beaches']
-    assert [row['name'] for row in rows] == names
+    assert [row.get('catalogueSource', {}).get('sourceBeachName', row['name']) for row in rows] == names
+    tulai = next(row for row in rows if row['id'] == 'bs-pulau-tulai-beach-ii-63')
+    assert tulai['name'] == 'Teluk Bakau (Pulau Tulai)'
+    assert (tulai['lat'], tulai['lng']) == (2.91134, 104.1043)
+    assert tulai['catalogueSource']['sourceBeachName'] == 'Pulau Tulai Beach II'
     assert len(rows) == len({row['id'] for row in rows}) == 82
     assert [row['catalogueSource']['sourceRow'] for row in rows] == list(range(1, 83))
     located = [row for row in rows if row['lat'] is not None]
@@ -69,14 +73,14 @@ def test_existing_locations_are_backfilled_without_replacing_reports(api, tmp_pa
     assert report.status_code == 201
     with application.extensions['marine_engine'].begin() as connection:
         connection.execute(beaches_table.update().where(beaches_table.c.id == sourced['id'])
-                           .values(lat=None, lng=None, area='Malaysia — region not yet verified'))
+                           .values(name='Stale imported beach name', lat=None, lng=None, area='Malaysia — region not yet verified'))
         # The four validated core records remain database-owned.
         connection.execute(beaches_table.update().where(beaches_table.c.id == 'morib').values(lat=2.74615))
     restarted = create_app(database_url=str(application.extensions['marine_engine'].url), testing=True,
                            photo_storage_dir=tmp_path / 'restart-photos')
     restored = restarted.test_client()
     upgraded = restored.get('/beaches/' + sourced['id']).get_json()
-    assert (upgraded['lat'], upgraded['lng'], upgraded['area']) == (sourced['lat'], sourced['lng'], sourced['area'])
+    assert (upgraded['name'], upgraded['lat'], upgraded['lng'], upgraded['area']) == (sourced['name'], sourced['lat'], sourced['lng'], sourced['area'])
     assert restored.get('/beaches/morib').get_json()['lat'] == 2.74615
     assert restored.get('/reports/mine', headers=headers).get_json()[0]['id'] == report.get_json()['id']
     with restarted.extensions['marine_engine'].connect() as connection:
