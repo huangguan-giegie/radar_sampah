@@ -597,7 +597,9 @@ export default function MapScreen() {
         }}>
           <p className="eyebrow">Private · only you see this</p>
           {personalLoading ? <p role="status">Loading your insights…</p> : personalError ? (
-            <DataUnavailable title="Your insights could not be loaded" retry={() => void refreshPersonal()} />
+            <DataUnavailable title="Your insights could not be loaded" retry={() => void refreshPersonal()}>
+              Please try again to load your personal insights.
+            </DataUnavailable>
           ) : personal?.sections.length ? personal.sections.map(section => (
             <WhiteCard key={section.id}>
               <p className="eyebrow">{section.title}</p>

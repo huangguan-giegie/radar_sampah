@@ -139,11 +139,42 @@ def test_new_user_has_neutral_personal_insight_empty_state_and_no_next_action(ap
     _, client = api
     _, headers = signup(client)
     response = client.get("/personal-insights", headers=headers)
+    assert response.status_code == 200
     body = response.get_json()
     assert body["sections"] == [] and body["emptyStateReason"] == "NO_ELIGIBLE_PERSONAL_INSIGHTS"
     assert body["links"] == {"map": "/map", "insights": "/insights"}
     assert "reasonCode" not in body
     assert response.headers["Cache-Control"] == "private, no-store"
+
+
+def test_personal_insights_supports_cross_origin_authenticated_requests(api):
+    _, client = api
+    response = client.options("/personal-insights", headers={
+        "Origin": "https://team04-marine-observation-frontend.onrender.com",
+        "Access-Control-Request-Method": "GET",
+        "Access-Control-Request-Headers": "authorization,content-type",
+    })
+    assert response.status_code == 200
+    assert response.headers["Access-Control-Allow-Origin"] == "https://team04-marine-observation-frontend.onrender.com"
+    assert "authorization" in response.headers["Access-Control-Allow-Headers"].lower()
+    assert "GET" in response.headers["Access-Control-Allow-Methods"]
+
+
+def test_personal_insights_include_own_records_outside_original_four_beaches(api):
+    application, client = api
+    _, headers = signup(client)
+    target = _report(client, headers)
+    with application.extensions["marine_engine"].begin() as connection:
+        beach_id = connection.execute(select(_impl().beaches_table.c.id).where(
+            _impl().beaches_table.c.id.not_in(["morib", "remis", "kelanang", "bagan"]),
+        )).scalars().first()
+        connection.execute(reports_table.update().where(reports_table.c.id == target).values(beach_id=beach_id))
+    response = client.get("/personal-insights", headers=headers)
+    assert response.status_code == 200
+    body = response.get_json()
+    assert body["aggregate"][0]["beachId"] == beach_id
+    assert body["aggregate"][0]["reportCount"] == 1
+    assert [section["id"] for section in body["sections"]] == ["litter_wildlife"]
 
 
 def test_personal_aggregate_uses_counted_history_and_recalculates_corrections(api):
