@@ -60,8 +60,15 @@ jobs:
           # Keep production secrets and the resident ONNX model on the VM.
           sudo rsync -a --delete \
             --exclude='deploy/gcp/.env' \
-            --exclude='actual-project/backend/models/' \
+            --exclude='actual-project/ml-model/models/' \
             "$TMP/repo/" "$ROOT/"
+
+          MODEL_REL=actual-project/ml-model/models/sea_taco_yolo11m_best.onnx
+          MODEL_DEST="$ROOT/$MODEL_REL"
+          if [ ! -f "$MODEL_DEST" ]; then
+            git -C "$TMP/repo" lfs pull --include="$MODEL_REL"
+            sudo install -D -m 0644 "$TMP/repo/$MODEL_REL" "$MODEL_DEST"
+          fi
 
           cd "$ROOT/deploy/gcp"
           sudo bash ./update.sh
