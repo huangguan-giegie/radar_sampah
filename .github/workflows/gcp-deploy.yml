@@ -54,7 +54,7 @@ jobs:
             sudo apt-get install -y git-lfs rsync
           fi
 
-          # Do not pull the resident ONNX model into the temporary checkout.
+          # Download the ONNX weights only when the resident model needs repair.
           GIT_LFS_SKIP_SMUDGE=1 git clone --depth=1 --filter=blob:none --branch "$BRANCH" "$REPOSITORY" "$TMP/repo"
 
           # Keep production secrets and the resident ONNX model on the VM.
@@ -65,8 +65,13 @@ jobs:
 
           MODEL_REL=actual-project/ml-model/models/sea_taco_yolo11m_best.onnx
           MODEL_DEST="$ROOT/$MODEL_REL"
-          if [ ! -f "$MODEL_DEST" ]; then
+          if [ ! -f "$MODEL_DEST" ] || [ "$(stat -c %s "$MODEL_DEST")" -lt 1000 ] || grep -aq '^version https://git-lfs.github.com/spec/v1' "$MODEL_DEST"; then
             git -C "$TMP/repo" lfs pull --include="$MODEL_REL"
+            test "$(stat -c %s "$TMP/repo/$MODEL_REL")" -ge 1000
+            if grep -aq '^version https://git-lfs.github.com/spec/v1' "$TMP/repo/$MODEL_REL"; then
+              echo "Model download returned a Git LFS pointer instead of weights."
+              exit 1
+            fi
             sudo install -D -m 0644 "$TMP/repo/$MODEL_REL" "$MODEL_DEST"
           fi
 
