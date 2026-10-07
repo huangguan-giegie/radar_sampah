@@ -47,13 +47,11 @@ def _records(engine: Any, impl: Any, user_id: str, connection: Any = None):
             return _records(engine, impl, user_id, current_connection)
     reports = connection.execute(select(impl.reports_table).where(
             impl.reports_table.c.reporter_id == user_id,
-            impl.reports_table.c.beach_id.in_(MVP_BEACHES),
             impl.reports_table.c.status == "Counted",
             impl.reports_table.c.deleted_at.is_(None),
     )).all()
     cleanups = connection.execute(select(impl.cleanup_actions_table).where(
             impl.cleanup_actions_table.c.participant_id == user_id,
-            impl.cleanup_actions_table.c.beach_id.in_(MVP_BEACHES),
     )).all()
     return reports, cleanups
 

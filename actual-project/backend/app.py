@@ -38,6 +38,7 @@ from standalone_cleanup import (
 from v3_contract import install_v3_contract
 from account import install_account
 from insights import install_insights
+from recommendations import install_recommendations
 from species_questions import install_species_questions
 
 
@@ -550,6 +551,7 @@ def create_app(
     install_v3_contract(application, engine, jwt_secret, _impl)
     install_account(application, engine, jwt_secret, _impl)
     install_insights(application, engine, jwt_secret, _impl)
+    install_recommendations(application, engine, jwt_secret, _impl)
     install_species_questions(application)
 
     reviewed_scheduler = _reviewed_event_scheduler(engine)
