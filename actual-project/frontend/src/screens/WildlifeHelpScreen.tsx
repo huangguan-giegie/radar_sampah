@@ -3,12 +3,17 @@ import { DataUnavailable } from "../components/CoastalUI";
 import { iteration3Request } from "../iteration3Api";
 import type { WildlifeGuidance } from "../iteration3Personal";
 import { useAsyncData } from "../useAsyncData";
+import { PHOTOS } from "../visuals";
 export default function WildlifeHelpScreen() {
   const { data: guidance, loading, error, refresh } = useAsyncData(
     () => iteration3Request<WildlifeGuidance>('/wildlife-guidance'), [], null,
   );
   return (
     <CoastalPage title="Animal Hurt or Stranded" back="/community">
+      <figure className="page-cover" style={{ margin: 0 }}>
+        <img src={PHOTOS.turtle} alt="Green sea turtle swimming" />
+        <figcaption>Green sea turtle · Christoph Schuetzenhofer · CC BY-SA 3.0</figcaption>
+      </figure>
       <WhiteCard>
         <div className="guide-emergency" style={{ padding: 0 }}>
           <strong>Is a person hurt? Call 999 first.</strong>

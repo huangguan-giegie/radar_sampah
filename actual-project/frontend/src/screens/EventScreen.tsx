@@ -20,6 +20,8 @@ import { fetchEventCleanups } from '../iteration2Api';
 import { eventCanCheckIn, eventIsAvailable, eventPhase, useEventClock } from '../eventAvailability';
 import { useAppBack } from '../navigation';
 import '../styles/community-alignment.css';
+import { StaticMap } from '../components/Visuals';
+import { beachPhoto } from '../visuals';
 
 export default function EventScreen() {
   const { eventId = '' } = useParams();
@@ -129,12 +131,18 @@ export default function EventScreen() {
     { label: 'Attendance recorded', done: attendanceRecorded },
   ];
 
+  const heroPhoto = beachPhoto(event.beachId, beach?.coverImageUrl);
+  const heroMap: [number, number] | null = beach?.lat != null && beach?.lng != null ? [beach.lat, beach.lng] : null;
+
   return (
     <div className="screen scroll-y event-alignment" style={{ zIndex: 24 }}>
       <div className="measure i2-page anim-fade-up" style={{ paddingBottom: 'calc(var(--safe-bottom) + 34px)' }}>
         <BackButton onClick={goBack} />
 
-        <div className="i2-hero i2-hero-compact">
+        <div className={'i2-hero i2-hero-compact' + (heroPhoto || heroMap ? ' has-media' : '')}>
+          {heroPhoto ? <div className="hero-media"><img src={heroPhoto} alt={event.beachName} /></div>
+            : heroMap && <div className="hero-media"><StaticMap lat={heroMap[0]} lng={heroMap[1]} zoom={12} focus={[0.74, 0.17]} reach={[520, 460]} /></div>}
+          {!heroPhoto && heroMap && <span className="hero-media-credit">Location map © OpenStreetMap</span>}
           <SectionLabel size="sm" tone="dark">COMMUNITY CLEANUP</SectionLabel>
           <h1 style={{ margin: '8px 0 0', fontSize: 25, lineHeight: 1.08, letterSpacing: '-.6px' }}>{event.beachName}</h1>
           <div className="i2-event-meta">
