@@ -1,0 +1,105 @@
+name: Deploy GCP VM
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "actual-project/**"
+      - "Dockerfile"
+      - ".dockerignore"
+      - ".gitattributes"
+      - "deploy/gcp/**"
+      - ".github/workflows/gcp-deploy.yml"
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+concurrency:
+  group: gcp-radar-sampah
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: projects/199905345342/locations/global/workloadIdentityPools/github/providers/github
+          service_account: github-actions-deploy@project-5db6723a-ac19-4d7c-94a.iam.gserviceaccount.com
+
+      - name: Install gcloud CLI
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: project-5db6723a-ac19-4d7c-94a
+
+      - name: Sync source and restart the VM service
+        env:
+          PROJECT_ID: project-5db6723a-ac19-4d7c-94a
+          INSTANCE: radar-sampah
+          ZONE: us-west1-b
+          REPOSITORY: https://github.com/huangguan-giegie/radar_sampah.git
+          BRANCH: main
+          DEPLOY_SHA: ${{ github.sha }}
+        run: |
+          gcloud compute instances describe "$INSTANCE" --project="$PROJECT_ID" --zone="$ZONE" \
+            --format='json(name,status,machineType,networkInterfaces)'
+          gcloud compute ssh "$INSTANCE" \
+            --project="$PROJECT_ID" \
+            --zone="$ZONE" \
+            --tunnel-through-iap \
+            --quiet \
+            --command="REPOSITORY='$REPOSITORY' BRANCH='$BRANCH' DEPLOY_SHA='$DEPLOY_SHA' bash -s" <<'REMOTE'
+          set -euo pipefail
+
+          ROOT=/opt/radar-sampah
+          TMP=$(mktemp -d)
+          trap 'rm -rf "$TMP"' EXIT
+
+          if ! command -v git-lfs >/dev/null 2>&1 || ! command -v rsync >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y git-lfs rsync
+          fi
+
+          # Download the ONNX weights only when the resident model needs repair.
+          GIT_LFS_SKIP_SMUDGE=1 git clone --depth=1 --filter=blob:none --branch "$BRANCH" "$REPOSITORY" "$TMP/repo"
+          if [ "$(git -C "$TMP/repo" rev-parse HEAD)" != "$DEPLOY_SHA" ]; then
+            git -C "$TMP/repo" fetch --depth=1 origin "$DEPLOY_SHA"
+            GIT_LFS_SKIP_SMUDGE=1 git -C "$TMP/repo" checkout --detach "$DEPLOY_SHA"
+          fi
+          test "$(git -C "$TMP/repo" rev-parse HEAD)" = "$DEPLOY_SHA"
+          sudo test -s "$ROOT/deploy/gcp/.env"
+          ENV_HASH=$(sudo sha256sum "$ROOT/deploy/gcp/.env" | cut -d' ' -f1)
+
+          # Keep production secrets and the resident ONNX model on the VM.
+          sudo rsync -a --delete \
+            --exclude='deploy/gcp/.env' \
+            --exclude='actual-project/ml-model/models/sea_taco_yolo11m_best.onnx' \
+            "$TMP/repo/" "$ROOT/"
+
+          MODEL_REL=actual-project/ml-model/models/sea_taco_yolo11m_best.onnx
+          MODEL_DEST="$ROOT/$MODEL_REL"
+          if [ ! -f "$MODEL_DEST" ] || [ "$(stat -c %s "$MODEL_DEST")" -lt 1000 ] || grep -aq '^version https://git-lfs.github.com/spec/v1' "$MODEL_DEST"; then
+            git -C "$TMP/repo" lfs pull --include="$MODEL_REL"
+            test "$(stat -c %s "$TMP/repo/$MODEL_REL")" -ge 1000
+            if grep -aq '^version https://git-lfs.github.com/spec/v1' "$TMP/repo/$MODEL_REL"; then
+              echo "Model download returned a Git LFS pointer instead of weights."
+              exit 1
+            fi
+            sudo install -D -m 0644 "$TMP/repo/$MODEL_REL" "$MODEL_DEST"
+          fi
+          MODEL_HASH=$(sha256sum "$MODEL_DEST" | cut -d' ' -f1)
+          test "$ENV_HASH" = "$(sudo sha256sum "$ROOT/deploy/gcp/.env" | cut -d' ' -f1)"
+
+          cd "$ROOT/deploy/gcp"
+          sudo bash ./test-ipv6-dependencies.sh
+          sudo bash ./update.sh
+          test "$MODEL_HASH" = "$(sha256sum "$MODEL_DEST" | cut -d' ' -f1)"
+          echo "Deployed commit: $DEPLOY_SHA"
+          echo "Production env preserved; resident ONNX SHA256: $MODEL_HASH"
+          sudo bash ./diagnostics.sh
+          REMOTE

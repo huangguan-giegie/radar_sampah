@@ -4,7 +4,12 @@ set -euo pipefail
 RADAR_ROOT="${RADAR_ROOT:-/opt/radar-sampah}"
 cd "${RADAR_ROOT}/deploy/gcp"
 
-./test-ipv6-dependencies.sh
+# The full dependency preflight belongs to first-time provisioning. Incremental
+# GitHub Actions deployments should restart the service without requiring the
+# database secret to be sourced by the shell test.
+if [ "${RUN_IPV6_PREFLIGHT:-0}" = "1" ]; then
+  ./test-ipv6-dependencies.sh
+fi
 
 if sudo docker compose version >/dev/null 2>&1; then
   COMPOSE=(sudo docker compose)
