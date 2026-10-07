@@ -179,6 +179,18 @@ gcloud compute ssh radar-sampah \
   --tunnel-through-iap
 ```
 
+## GitHub Actions deployment
+
+The `Deploy GCP VM` workflow runs when `deploy/gcp-e2-micro` changes. Add a
+repository secret named `GCP_SA_KEY` containing a Google service-account JSON
+key with permission to use IAP TCP forwarding and OS Login on this VM. The
+workflow clones the branch on the VM, preserves `deploy/gcp/.env` and the
+resident ONNX model, then runs `update.sh`.
+
+The first run still requires the VM to have a working production `.env` and a
+successful bootstrap. Later pushes only synchronize source and rebuild the
+application container; the model is not uploaded again.
+
 ## Cost guardrails
 
 To remain at $0 under the current Free Tier:
