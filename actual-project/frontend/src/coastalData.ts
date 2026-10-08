@@ -1,5 +1,6 @@
 import { getBeaches, USE_MOCK } from "./api";
 import content from "./content/coastalContent.json";
+import expandedBeachRegions from "./content/expandedBeachRegions.json";
 import type { SeverityBand } from "./types";
 
 export const REGIONS = [
@@ -25,6 +26,11 @@ export const REGIONS = [
   { id: "kelantan", name: "Kelantan", lat: 6.1, lng: 102.3, zoom: 9 },
   { id: "borneo", name: "Sabah & Sarawak", lat: 4, lng: 114.4, zoom: 6 },
 ];
+const beachRegions: Record<string, string> = {
+  ...Object.fromEntries(content.beaches.map((beach) => [beach.id, beach.region])),
+  ...expandedBeachRegions,
+};
+
 export interface CoastalBeach {
   id: string;
   name: string;
@@ -44,7 +50,7 @@ export async function getCoastalBeaches(): Promise<CoastalBeach[]> {
     id: b.id,
     name: b.name,
     area: b.area,
-    region: (b as typeof b & { region?: string }).region ?? content.beaches.find((x) => x.id === b.id)?.region ?? "",
+    region: REGIONS.some((r) => r.id === b.region) ? b.region! : beachRegions[b.id] ?? "",
     severity: b.insufficientData ? null : b.severity,
     validReports: b.validReports,
     lat: b.lat,

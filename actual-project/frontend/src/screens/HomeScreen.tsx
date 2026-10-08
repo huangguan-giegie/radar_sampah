@@ -319,8 +319,8 @@ export default function HomeScreen() {
         </figure>
         <h2>About Us</h2>
         <p className="subtle">
-          Who we are, and why it matters: global data on plastic entering the
-          ocean.
+          Connect beach litter reports, marine biodiversity awareness and
+          community cleanups. Learn about our purpose and SDG goals.
         </p>
         <PrimaryButton
           style={{ marginTop: 14 }}

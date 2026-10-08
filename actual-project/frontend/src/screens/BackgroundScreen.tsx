@@ -79,11 +79,53 @@ export default function BackgroundScreen({ intro = false }: { intro?: boolean })
           <p className="i2-subtitle" style={{ fontSize: 13.5 }}>
             {intro
               ? 'Malaysia is the third largest source in the world. That is the problem behind every beach report here.'
-              : 'Who we are, and why beach litter matters.'}
+              : 'Connecting beach litter, marine biodiversity and community action.'}
           </p>
         </div>
 
-        {!intro && <><figure className="page-cover" style={{ margin: 0 }}><img src={PHOTOS.volunteers} alt="Volunteers collecting litter on a beach" /><figcaption>Beach cleanup volunteers · public domain · Wikimedia Commons</figcaption></figure><section className="coastal-summary"><p className="eyebrow">Radar Sampah</p><h2 style={{color:'white',fontSize:24,margin:0}}>Beach litter reports for Malaysia</h2><p style={{fontSize:14,lineHeight:1.5,color:'#ffffffcc'}}>Sampah means rubbish in Malay. Anyone can take part with an anonymous ID.</p>{['Report litter with a photo. AI suggests the type.','See which beaches need help.','Join a Saturday cleanup and log what you cleared.'].map((line,i)=><div key={line} style={{display:'flex',gap:10,alignItems:'center',marginTop:15,fontSize:14,lineHeight:1.4}}><span style={{color:C.lime,fontWeight:700}}>{i+1}</span>{line}</div>)}<p style={{color:'#ffffff99',fontSize:11,marginTop:22}}>Built by a student team at Monash University Malaysia.</p></section><SectionLabel>BACKGROUND</SectionLabel><h2 style={{margin:0,fontSize:22,color:C.navy}}>From plastic waste to the ocean</h2></>}
+        {!intro && <>
+          <figure className="page-cover" style={{ margin: 0 }}>
+            <img src={PHOTOS.volunteers} alt="Volunteers collecting litter on a beach" />
+            <figcaption>Beach cleanup volunteers · public domain · Wikimedia Commons</figcaption>
+          </figure>
+          <section className="coastal-summary" aria-labelledby="about-purpose">
+            <p className="eyebrow">Radar Sampah</p>
+            <h2 id="about-purpose" style={{ color: 'white', fontSize: 24, margin: 0 }}>Beach litter & marine biodiversity in Malaysia</h2>
+            <p style={{ fontSize: 14, lineHeight: 1.5, color: '#ffffffcc' }}>
+              Marine litter can harm wildlife and coastal habitats. Radar Sampah connects beach litter reports with marine biodiversity awareness, helping people understand our coast and take action together.
+            </p>
+            <p style={{ fontSize: 14, lineHeight: 1.5, color: '#ffffffcc' }}>Sampah means rubbish in Malay. Explore freely, and use an anonymous ID to contribute.</p>
+            <ol style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+              {[
+                'Report litter with a photo. Review AI suggestions before submitting.',
+                'Explore litter and biodiversity maps to understand beaches and their marine life.',
+                'Discover species and habitats, and learn why reducing litter matters to them.',
+                'Join community cleanups and record what you cleared.',
+              ].map((line, i) => <li key={line} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', marginTop: 15, fontSize: 14, lineHeight: 1.4 }}>
+                <span aria-hidden="true" style={{ color: C.lime, fontWeight: 700 }}>{i + 1}</span>{line}
+              </li>)}
+            </ol>
+            <p style={{ color: '#ffffff99', fontSize: 11, marginTop: 22 }}>Built by a student team at Monash University Malaysia.</p>
+          </section>
+          <section aria-labelledby="about-sdgs">
+            <SectionLabel>SDG GOALS</SectionLabel>
+            <h2 id="about-sdgs" style={{ margin: '0 0 10px', fontSize: 22, color: C.navy }}>Our connection to the Global Goals</h2>
+            <p className="subtle">Our focus on awareness and community participation relates to these UN Sustainable Development Goals.</p>
+            <div style={{ display: 'grid', gap: 10 }}>
+              {[
+                { number: 14, title: 'Life Below Water', text: 'Connect marine litter awareness with learning about coastal species and habitats.' },
+                { number: 12, title: 'Responsible Consumption and Production', text: 'Encourage litter reduction, responsible waste handling and community cleanups.' },
+                { number: 4, title: 'Quality Education', text: 'Make marine biodiversity and sustainability learning accessible through maps, species information and practical guidance.' },
+              ].map((goal) => <article className="i2-card" key={goal.number}>
+                <h3 style={{ margin: 0, fontSize: 16, color: C.navy }}>SDG {goal.number} · {goal.title}</h3>
+                <p className="subtle" style={{ margin: '8px 0' }}>{goal.text}</p>
+                <a href={`https://sdgs.un.org/goals/goal${goal.number}`} {...EXTERNAL} style={{ color: C.navy, fontSize: 13 }}>Read UN Goal {goal.number} ↗</a>
+              </article>)}
+            </div>
+          </section>
+          <SectionLabel>BACKGROUND</SectionLabel>
+          <h2 style={{ margin: 0, fontSize: 22, color: C.navy }}>From plastic waste to the ocean</h2>
+        </>}
         <div className="i2-card" style={{ padding: 13 }}>
           {/* On the intro the whole map is one link to the live chart. On the
               full page it is a map you can question: each continent is a tap
