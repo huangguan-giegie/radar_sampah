@@ -461,7 +461,7 @@ export default function MapScreen() {
                     " beaches · " +
                     areaBeaches.reduce((n, b) => n + b.validReports, 0) +
                     " reports"
-                  : "Explore Malaysia’s coast"}
+                  : beaches.length + " beaches · Explore Malaysia’s coast"}
             </small>
           </span>
           <PrimaryButton

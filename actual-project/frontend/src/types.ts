@@ -152,6 +152,7 @@ export interface BeachSummary {
   id: string;
   name: string;
   area: string;
+  region?: string;
   lat: number | null;
   lng: number | null;
   /** null when there are fewer than 3 active reports. null does NOT mean
