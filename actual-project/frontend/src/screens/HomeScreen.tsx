@@ -52,7 +52,7 @@ export default function HomeScreen() {
       : iteration3Request<NextAction>(user ? '/recommendations/next-action/ai' : '/recommendations/next-action', user ? 'POST' : 'GET'),
     [user?.participantId, reportsVersion], null,
   );
-  const nextAction = loadedAction ?? (!actionLoading ? fallbackNextAction(Boolean(user)) : null);
+  const nextAction = loadedAction ?? fallbackNextAction(Boolean(user));
   const now = useEventClock();
   const {
     data: beaches,
@@ -165,7 +165,7 @@ export default function HomeScreen() {
       {nextAction && (
         <WhiteCard className="home-ai-next-action">
           <p className="eyebrow">{nextAction.aiAssisted ? "AI Suggested Next Action" : "Suggested Next Action"}</p>
-          {user && !nextAction.aiAssisted && <p className="coastal-footnote">Rule-based suggestion · AI unavailable</p>}
+          {user && !nextAction.aiAssisted && <p className="coastal-footnote">{actionLoading ? "Preparing an AI recommendation…" : "Rule-based recommendation · AI unavailable"}</p>}
           <h2>{nextAction.actionLabel}</h2>
           <p className="subtle">{nextAction.reason}</p>
           <PrimaryButton onClick={() => {
