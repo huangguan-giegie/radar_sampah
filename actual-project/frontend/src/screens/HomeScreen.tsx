@@ -164,7 +164,7 @@ export default function HomeScreen() {
       </header>
       {nextAction && (
         <WhiteCard className="home-rule-suggestions">
-          <p className="eyebrow">Rule-based Suggestions</p>
+          <p className="eyebrow">Next Action</p>
           <h2>{nextAction.actionLabel}</h2>
           <p className="subtle">{nextAction.reason}</p>
           <PrimaryButton onClick={() => {
