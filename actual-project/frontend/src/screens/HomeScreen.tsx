@@ -46,10 +46,10 @@ export default function HomeScreen() {
   const [nearbyBeachId, setNearbyBeachId] = useState<string | null>(null);
   const [locationMessage, setLocationMessage] = useState("");
   const [locating, setLocating] = useState(false);
-  const { data: loadedAction, loading: actionLoading } = useAsyncData(
+  const { data: loadedAction } = useAsyncData(
     () => USE_MOCK
       ? Promise.resolve(fallbackNextAction(Boolean(user)))
-      : iteration3Request<NextAction>(user ? '/recommendations/next-action/ai' : '/recommendations/next-action', user ? 'POST' : 'GET'),
+      : iteration3Request<NextAction>('/recommendations/next-action'),
     [user?.participantId, reportsVersion], null,
   );
   const nextAction = loadedAction ?? fallbackNextAction(Boolean(user));
@@ -163,9 +163,8 @@ export default function HomeScreen() {
         </button>
       </header>
       {nextAction && (
-        <WhiteCard className="home-ai-next-action">
-          <p className="eyebrow">{nextAction.aiAssisted ? "AI Suggested Next Action" : "Suggested Next Action"}</p>
-          {user && !nextAction.aiAssisted && <p className="coastal-footnote">{actionLoading ? "Preparing an AI recommendation…" : "Rule-based recommendation · AI unavailable"}</p>}
+        <WhiteCard className="home-rule-suggestions">
+          <p className="eyebrow">Rule-based Suggestions</p>}
           <h2>{nextAction.actionLabel}</h2>
           <p className="subtle">{nextAction.reason}</p>
           <PrimaryButton onClick={() => {
