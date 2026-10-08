@@ -26,8 +26,10 @@ import { useAsyncData } from "../useAsyncData";
 import { C } from "../theme";
 import { eventIsAvailable, useEventClock } from "../eventAvailability";
 import { iteration3Request } from "../iteration3Api";
-import { dismissNextAction, dismissedNextActions, fallbackNextAction, type NextAction } from "../iteration3Personal";
+import { fallbackNextAction, type NextAction } from "../iteration3Personal";
 import { PHOTOS } from "../visuals";
+import { closestSupportedBeach } from "../homeNearby";
+import type { BeachSummary } from "../types";
 
 export default function HomeScreen() {
   const nav = useNavigate();
@@ -41,13 +43,16 @@ export default function HomeScreen() {
   } = useApp();
   const [draftChoice, setDraftChoice] = useState(false);
   const [chooseCleanupBeach, setChooseCleanupBeach] = useState(false);
-  const [dismissedActions, setDismissedActions] = useState<string[]>(() => dismissedNextActions(user?.participantId));
-  useEffect(() => setDismissedActions(dismissedNextActions(user?.participantId)), [user?.participantId]);
+  const [nearbyBeachId, setNearbyBeachId] = useState<string | null>(null);
+  const [locationMessage, setLocationMessage] = useState("");
+  const [locating, setLocating] = useState(false);
   const { data: loadedAction, loading: actionLoading } = useAsyncData(
-    () => iteration3Request<NextAction>('/recommendations/next-action'),
+    () => USE_MOCK
+      ? Promise.resolve(fallbackNextAction(Boolean(user)))
+      : iteration3Request<NextAction>(user ? '/recommendations/next-action/ai' : '/recommendations/next-action', user ? 'POST' : 'GET'),
     [user?.participantId, reportsVersion], null,
   );
-  const nextAction = loadedAction ?? (!actionLoading ? fallbackNextAction(Boolean(user)) : null);
+  const nextAction = loadedAction ?? fallbackNextAction(Boolean(user));
   const now = useEventClock();
   const {
     data: beaches,
@@ -60,7 +65,40 @@ export default function HomeScreen() {
     const timer = window.setTimeout(() => { void fetchInsights(); }, 250);
     return () => window.clearTimeout(timer);
   }, [beaches.length, reportsVersion]);
-  const beach = beaches.find((b) => b.id === "morib") ?? beaches[0];
+  // Never store or transmit precise GPS coordinates. Only the selected beach ID
+  // stays in component state until this page is unmounted.
+  const locateNearest = (catalogue: BeachSummary[]) => {
+    if (!navigator.geolocation) {
+      setLocationMessage("Location is not supported by this browser.");
+      return;
+    }
+    setLocating(true);
+    setLocationMessage("");
+    navigator.geolocation.getCurrentPosition(
+      ({ coords }) => {
+        const closest = closestSupportedBeach(catalogue, { lat: coords.latitude, lng: coords.longitude });
+        setNearbyBeachId(closest?.id ?? null);
+        setLocationMessage(closest ? "" : "No beaches with verified coordinates are available.");
+        setLocating(false);
+      },
+      (reason) => {
+        setLocating(false);
+        setLocationMessage(reason.code === 1 ? "Location access declined. Showing the featured beach." : "Unable to get your location. Showing the featured beach.");
+      },
+      { enableHighAccuracy: false, maximumAge: 300000, timeout: 10000 },
+    );
+  };
+  useEffect(() => {
+    if (!beaches.length || !navigator.permissions?.query || !navigator.geolocation) return;
+    let cancelled = false;
+    navigator.permissions.query({ name: "geolocation" }).then(permission => {
+      if (!cancelled && permission.state === "granted") locateNearest(beaches);
+    }).catch(() => {});
+    return () => { cancelled = true; };
+    // Permission discovery is tied only to the beach catalogue, not each render.
+  }, [beaches]);
+  const beach = beaches.find((b) => b.id === nearbyBeachId)
+    ?? beaches.find((b) => b.id === "morib") ?? beaches[0];
   const { data: detail } = useAsyncData(
     () => (beach ? getBeach(beach.id) : Promise.resolve(null)),
     [beach?.id, reportsVersion],
@@ -124,9 +162,10 @@ export default function HomeScreen() {
           <UserIcon size={28} color="white" />
         </button>
       </header>
-      {nextAction && !dismissedActions.includes(nextAction.id) && (
-        <WhiteCard>
-          <p className="eyebrow">Next Action</p>
+      {nextAction && (
+        <WhiteCard className="home-ai-next-action">
+          <p className="eyebrow">{nextAction.aiAssisted ? "AI Suggested Next Action" : "Suggested Next Action"}</p>
+          {user && !nextAction.aiAssisted && <p className="coastal-footnote">{actionLoading ? "Preparing an AI recommendation…" : "Rule-based recommendation · AI unavailable"}</p>}
           <h2>{nextAction.actionLabel}</h2>
           <p className="subtle">{nextAction.reason}</p>
           <PrimaryButton onClick={() => {
@@ -142,9 +181,6 @@ export default function HomeScreen() {
             nav(nextAction.destination.path);
           }}>{nextAction.actionLabel}</PrimaryButton>
           {nextAction.loginPrompt && <button onClick={() => nav(nextAction.loginPath ?? '/identity?next=/home')}>{nextAction.loginPrompt}</button>}
-          <button onClick={() => {
-            setDismissedActions(dismissNextAction(nextAction.id, user?.participantId));
-          }}>Dismiss suggestion</button>
         </WhiteCard>
       )}
       {(!beach || error) && (
@@ -185,7 +221,7 @@ export default function HomeScreen() {
         </DataUnavailable>
       ) : beach ? (
         <section className="home-beach-card">
-          <div className="home-beach-photo">
+          <div className="home-beach-photo" style={{ background: beach.scene }}>
             {(beach.coverImageUrl || beach.id === "morib") && (
               <img
                 src={beach.coverImageUrl || "/home/pantai-morib.jpg"}
@@ -193,7 +229,7 @@ export default function HomeScreen() {
               />
             )}
             <div className="home-beach-overlay">
-              <span className="photo-pill">Featured Beach</span>
+              <span className="photo-pill">{nearbyBeachId ? "Nearest Beach to You" : "Featured Beach"}</span>
               <div className="home-place">{beach.name}</div>
               <small>{beach.area}</small>
               <div className="home-band">
@@ -210,6 +246,10 @@ export default function HomeScreen() {
             </div>
           </div>
           <div className="home-beach-body">
+            <button type="button" className="home-location-button" onClick={() => locateNearest(beaches)} disabled={locating}>
+              {locating ? "Finding nearest beach…" : nearbyBeachId ? "Update Nearby Beach" : "Find Nearest Beach"}
+            </button>
+            {locationMessage && <p className="coastal-footnote" role="status">{locationMessage}</p>}
             <h2>
               {user && event
                 ? (event.joined ? "View your " : "Join ") +

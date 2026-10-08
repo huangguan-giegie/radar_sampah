@@ -42,6 +42,7 @@ from v3_contract import install_v3_contract
 from account import install_account
 from insights import install_insights
 from recommendations import install_recommendations
+from next_action_ai import install_next_action_ai
 from species_questions import install_species_questions
 from wildlife import install_wildlife
 
@@ -578,6 +579,7 @@ def create_app(
     install_account(application, engine, jwt_secret, _impl)
     install_insights(application, engine, jwt_secret, _impl)
     install_recommendations(application, engine, jwt_secret, _impl)
+    install_next_action_ai(application, engine, jwt_secret, _impl)
     install_species_questions(application)
     install_wildlife(application, engine, _impl, jwt_secret)
 

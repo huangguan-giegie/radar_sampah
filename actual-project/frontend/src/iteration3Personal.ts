@@ -4,6 +4,8 @@ export type NextAction = {
   reasonCode: string;
   reason: string;
   destination: { type: string; path: string; id?: string; beachId?: string };
+  aiAssisted?: boolean;
+  aiStatus?: 'ready' | 'fallback';
   loginPrompt?: string;
   loginPath?: string;
 };
@@ -49,10 +51,6 @@ export type WildlifeGuidance = {
   note: string;
 };
 
-export function nextActionDismissalKey(participantId?: string): string {
-  return 'radar-next-action-dismissed:' + (participantId ?? 'guest');
-}
-
 export function personalPopupKey(participantId: string): string {
   return 'radar-personal-insights-shown:' + participantId;
 }
@@ -67,19 +65,6 @@ export function readSessionValue(key: string): string | null {
 
 export function saveSessionValue(key: string, value: string): void {
   try { sessionStorage.setItem(key, value); } catch { /* Continue core flows when storage is unavailable. */ }
-}
-
-export function dismissedNextActions(participantId?: string): string[] {
-  try {
-    const value = JSON.parse(readSessionValue(nextActionDismissalKey(participantId)) ?? '[]');
-    return Array.isArray(value) ? value.filter(id => typeof id === 'string') : [];
-  } catch { return []; }
-}
-
-export function dismissNextAction(id: string, participantId?: string): string[] {
-  const values = [...new Set([...dismissedNextActions(participantId), id])];
-  saveSessionValue(nextActionDismissalKey(participantId), JSON.stringify(values));
-  return values;
 }
 
 export function fallbackNextAction(loggedIn: boolean): NextAction {
