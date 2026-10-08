@@ -37,6 +37,8 @@ MODEL_CLASSES = {
 FRONTEND_CATEGORIES = ("Fishing gear", "Plastic", "Glass", "Metal", "Other", "Paper")
 DEFAULT_MODEL_PATH = Path(__file__).resolve().parent.parent / "ml-model" / "models" / "sea_taco_yolo11m_best.onnx"
 DEFAULT_INFERENCE_SIZE = 320
+RECOGNITION_MAX_EDGE = 960
+FULL_IMAGE_CONFIDENCE_THRESHOLD = 0.5
 
 
 def _inference_regions(source: Image.Image, minimum_size: int = DEFAULT_INFERENCE_SIZE):
@@ -250,7 +252,11 @@ class LitterRecognizer:
                 source = image.convert("RGB")
             try:
                 candidates: list[dict[str, Any]] = []
-                source_width, source_height = source.size
+                original_width, original_height = source.size
+                source.thumbnail((RECOGNITION_MAX_EDGE, RECOGNITION_MAX_EDGE), Image.Resampling.LANCZOS)
+                inference_width, inference_height = source.size
+                coordinate_scale_x = original_width / inference_width
+                coordinate_scale_y = original_height / inference_height
                 for left, top, region in _inference_regions(source, self.inference_size):
                     try:
                         results = self._predict(region)
@@ -271,10 +277,10 @@ class LitterRecognizer:
                                 box = coordinates[index] if index < len(coordinates) else None
                                 if box is not None and len(box) >= 4:
                                     box = [
-                                        min(max(float(box[0]) + left, 0.0), float(source_width)),
-                                        min(max(float(box[1]) + top, 0.0), float(source_height)),
-                                        min(max(float(box[2]) + left, 0.0), float(source_width)),
-                                        min(max(float(box[3]) + top, 0.0), float(source_height)),
+                                        min(max((float(box[0]) + left) * coordinate_scale_x, 0.0), float(original_width)),
+                                        min(max((float(box[1]) + top) * coordinate_scale_y, 0.0), float(original_height)),
+                                        min(max((float(box[2]) + left) * coordinate_scale_x, 0.0), float(original_width)),
+                                        min(max((float(box[3]) + top) * coordinate_scale_y, 0.0), float(original_height)),
                                     ]
                                 candidates.append({
                                     "classId": int(class_id),
@@ -286,6 +292,12 @@ class LitterRecognizer:
                     finally:
                         if region is not source:
                             region.close()
+                    # ponytail: skip tiles for confident scenes; always tile if small-object recall becomes essential.
+                    if region is source and candidates and all(
+                        float(candidate["confidence"] or 0.0) >= FULL_IMAGE_CONFIDENCE_THRESHOLD
+                        for candidate in candidates
+                    ):
+                        break
             finally:
                 source.close()
             candidates = _deduplicate_detections(candidates)

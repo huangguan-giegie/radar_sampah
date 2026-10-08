@@ -265,9 +265,9 @@ def install_insights(application: Any, engine: Any, jwt_secret: str, impl: Any) 
     cache_lock = threading.Lock()
     cached_results: dict[str | None, tuple[float, dict[str, Any]]] = {}
     try:
-        cache_ttl = max(5.0, float(os.getenv("INSIGHTS_CACHE_TTL_SECONDS", "15")))
+        cache_ttl = max(5.0, float(os.getenv("INSIGHTS_CACHE_TTL_SECONDS", "60")))
     except ValueError:
-        cache_ttl = 15.0
+        cache_ttl = 60.0
     cache_enabled = not application.testing
 
     def invalidate_cache() -> None:

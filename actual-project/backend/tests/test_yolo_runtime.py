@@ -131,6 +131,24 @@ def test_scene_photo_uses_bounded_sequential_regions():
     assert result["state"] == "ready"
 
 
+def test_confident_full_image_uses_one_small_copy_and_preserves_coordinates():
+    model = RecordingModel([(0, 0.9, [10, 20, 100, 120])])
+    result = LitterRecognizer(model, "test").recognise(jpeg_bytes((1920, 1280)))
+
+    assert model.sources == [(960, 640)]
+    assert result["counts"]["Plastic"] == 1
+    assert result["detections"][0]["box"] == [20.0, 40.0, 200.0, 240.0]
+
+
+def test_low_confidence_full_image_falls_back_to_all_four_tiles():
+    model = RecordingModel([(0, 0.3, [10, 20, 100, 120])])
+    result = LitterRecognizer(model, "test").recognise(jpeg_bytes((1920, 1280)))
+
+    assert len(model.sources) == 5
+    assert all(max(size) <= 960 for size in model.sources)
+    assert result["state"] == "ready"
+
+
 def test_crop_detections_are_translated_to_original_coordinates():
     class SecondRegionModel(RecordingModel):
         def predict(self, *, source, **_kwargs):
@@ -148,6 +166,7 @@ def test_crop_detections_are_translated_to_original_coordinates():
 
     result = recognizer.recognise(jpeg_bytes((500, 635)))
 
+    assert len(model.sources) == 5
     assert result["detections"] == [{
         "modelClass": "plastic",
         "category": "Plastic",
