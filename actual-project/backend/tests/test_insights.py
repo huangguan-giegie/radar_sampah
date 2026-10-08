@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 import sys
+import time as wall_time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -10,8 +11,10 @@ import pytest
 from sqlalchemy import insert
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from api_tests_core import api, signup
+from api_tests_core import api, report_payload, signup, upload
+from app import create_app
 import app_core as impl
+import insights as insights_module
 from insights import build_insights
 
 NOW = datetime(2026, 10, 6, 6, 0, tzinfo=timezone.utc)
@@ -239,3 +242,45 @@ def test_insights_runs_same_lazy_scheduler_as_community(api):
     application.extensions["ensure_scheduled_events"] = lambda now: calls.append(now)
     assert client.get("/insights").status_code == 200
     assert len(calls) == 1 and calls[0].tzinfo is not None
+
+
+def test_public_insights_refresh_ahead_and_report_upload_triggers_refresh(tmp_path, monkeypatch):
+    monkeypatch.setenv("RADAR_PREWARM_PUBLIC_VIEWS", "0")
+    calls = []
+
+    def fake_build(_engine, _impl, *, now=None, beach_id=None):
+        calls.append((now, beach_id))
+        return {"marker": len(calls)}
+
+    monkeypatch.setattr(insights_module, "build_insights", fake_build)
+    application = create_app(
+        database_url=f"sqlite:///{tmp_path / 'refresh-ahead.db'}",
+        photo_storage_dir=tmp_path / "private-photos",
+    )
+    client = application.test_client()
+    _session, headers = signup(client)
+    photo = upload(client, headers)
+    application.extensions["prewarm_insights"]()
+
+    first = client.get("/insights")
+    assert first.get_json() == {"marker": 1}
+
+    application.extensions["invalidate_insights_cache"]()
+    second = client.get("/insights")
+    assert second.get_json() == {"marker": 1}
+    deadline = wall_time.monotonic() + 1.0
+    while len(calls) < 2 and wall_time.monotonic() < deadline:
+        wall_time.sleep(0.01)
+    assert len(calls) >= 2
+
+    before_upload = len(calls)
+    created = client.post(
+        "/reports",
+        headers=headers,
+        json=report_payload(photo["photoKey"]),
+    )
+    assert created.status_code == 201
+    deadline = wall_time.monotonic() + 1.0
+    while len(calls) <= before_upload and wall_time.monotonic() < deadline:
+        wall_time.sleep(0.01)
+    assert len(calls) > before_upload

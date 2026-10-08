@@ -263,6 +263,7 @@ def build_insights(engine: Any, impl: Any, *, now: datetime | None = None,
 
 def install_insights(application: Any, engine: Any, jwt_secret: str, impl: Any) -> None:
     cache_lock = threading.Lock()
+    refresh_lock = threading.Lock()
     cached_results: dict[str | None, tuple[float, dict[str, Any]]] = {}
     try:
         cache_ttl = max(5.0, float(os.getenv("INSIGHTS_CACHE_TTL_SECONDS", "60")))
@@ -272,7 +273,39 @@ def install_insights(application: Any, engine: Any, jwt_secret: str, impl: Any) 
 
     def invalidate_cache() -> None:
         with cache_lock:
-            cached_results.clear()
+            for beach_id, (_created_at, result) in cached_results.items():
+                cached_results[beach_id] = (0.0, result)
+
+    def refresh_snapshot(beach_id: str | None, current: datetime | None = None) -> dict[str, Any]:
+        current = current or datetime.now(timezone.utc)
+        with refresh_lock:
+            scheduler = application.extensions.get("ensure_scheduled_events")
+            if scheduler is not None:
+                scheduler(current)
+            result = build_insights(engine, impl, now=current, beach_id=beach_id)
+            with cache_lock:
+                cached_results[beach_id] = (time.monotonic(), result)
+            return result
+
+    def refresh_async(beach_id: str | None = None) -> None:
+        if not cache_enabled or not refresh_lock.acquire(blocking=False):
+            return
+
+        def run() -> None:
+            try:
+                current = datetime.now(timezone.utc)
+                scheduler = application.extensions.get("ensure_scheduled_events")
+                if scheduler is not None:
+                    scheduler(current)
+                result = build_insights(engine, impl, now=current, beach_id=beach_id)
+                with cache_lock:
+                    cached_results[beach_id] = (time.monotonic(), result)
+            except Exception:  # pragma: no cover - deployment-only refresh
+                application.logger.exception("Public insights refresh failed")
+            finally:
+                refresh_lock.release()
+
+        threading.Thread(target=run, name="radar-insights-refresh", daemon=True).start()
 
     def read_cached(beach_id: str | None, current: datetime) -> dict[str, Any]:
         if not cache_enabled:
@@ -280,30 +313,30 @@ def install_insights(application: Any, engine: Any, jwt_secret: str, impl: Any) 
             if scheduler is not None:
                 scheduler(current)
             return build_insights(engine, impl, now=current, beach_id=beach_id)
-        now = time.monotonic()
         with cache_lock:
             cached = cached_results.get(beach_id)
-            if cached is not None and now - cached[0] < cache_ttl:
-                return cached[1]
-            # Keep the lock while building the snapshot so concurrent page
-            # loads share one expensive cross-region database calculation.
-            scheduler = application.extensions.get("ensure_scheduled_events")
-            if scheduler is not None:
-                scheduler(current)
-            result = build_insights(engine, impl, now=current, beach_id=beach_id)
-            cached_results[beach_id] = (time.monotonic(), result)
-            return result
+        if cached is None:
+            return refresh_snapshot(beach_id, current)
+        if time.monotonic() - cached[0] >= cache_ttl:
+            refresh_async(beach_id)
+        return cached[1]
 
     def prewarm() -> None:
-        read_cached(None, datetime.now(timezone.utc))
+        refresh_snapshot(None)
 
     application.extensions["invalidate_insights_cache"] = invalidate_cache
     application.extensions["prewarm_insights"] = prewarm
+    application.extensions["refresh_insights_async"] = refresh_async
 
     @application.after_request
     def clear_insights_after_write(response: Any):
         if request.method not in {"GET", "HEAD", "OPTIONS"} and response.status_code < 400:
             invalidate_cache()
+            if request.method == "POST" and request.path == "/reports" and response.status_code == 201:
+                refresh_async()
+                refresh_events = application.extensions.get("refresh_cleanup_events_async")
+                if refresh_events is not None:
+                    refresh_events()
         return response
 
     @application.get("/insights")

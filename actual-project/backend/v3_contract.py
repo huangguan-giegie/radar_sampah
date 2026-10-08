@@ -196,11 +196,13 @@ def install_v3_contract(application: Any, engine: Any, jwt_secret: str, impl: An
         events_cache_ttl = 60.0
     events_cache_enabled = not application.testing
     events_cache_lock = threading.Lock()
+    events_refresh_lock = threading.Lock()
     cached_events: dict[tuple[str | None, bool, str | None], tuple[float, list[dict[str, Any]]]] = {}
 
     def invalidate_events_cache() -> None:
         with events_cache_lock:
-            cached_events.clear()
+            for cache_key, (_created_at, result) in cached_events.items():
+                cached_events[cache_key] = (0.0, result)
 
     @application.after_request
     def invalidate_events_cache_after_write(response: Any):
@@ -212,6 +214,8 @@ def install_v3_contract(application: Any, engine: Any, jwt_secret: str, impl: An
             and response.status_code < 400
         ):
             invalidate_events_cache()
+            if request.method == "POST" and request.path == "/reports" and response.status_code == 201:
+                refresh_events_async()
         return response
 
     def build_events(beach_id: str | None, joined_only: bool, viewer_id: str | None):
@@ -239,6 +243,29 @@ def install_v3_contract(application: Any, engine: Any, jwt_secret: str, impl: An
         payloads = _event_payloads(engine, impl, events, viewer_id, attendance)
         return [payload for payload in payloads if not joined_only or payload["joined"]]
 
+    def refresh_events_snapshot(cache_key: tuple[str | None, bool, str | None]) -> list[dict[str, Any]]:
+        with events_refresh_lock:
+            result = build_events(*cache_key)
+            with events_cache_lock:
+                cached_events[cache_key] = (time.monotonic(), result)
+            return result
+
+    def refresh_events_async(cache_key: tuple[str | None, bool, str | None] = (None, False, None)) -> None:
+        if not events_cache_enabled or not events_refresh_lock.acquire(blocking=False):
+            return
+
+        def run() -> None:
+            try:
+                result = build_events(*cache_key)
+                with events_cache_lock:
+                    cached_events[cache_key] = (time.monotonic(), result)
+            except Exception:  # pragma: no cover - deployment-only refresh
+                application.logger.exception("Public cleanup events refresh failed")
+            finally:
+                events_refresh_lock.release()
+
+        threading.Thread(target=run, name="radar-events-refresh", daemon=True).start()
+
     def events_v3():
         viewer = _user(engine, impl, jwt_secret)
         joined_only = request.args.get("joined") == "true"
@@ -251,23 +278,21 @@ def install_v3_contract(application: Any, engine: Any, jwt_secret: str, impl: An
         cache_key = (beach_id, joined_only, viewer_id)
         if not events_cache_enabled:
             return jsonify(build_events(*cache_key))
-        # ponytail: one lock and 128 snapshots; split locks if concurrent cache misses become a bottleneck.
         with events_cache_lock:
             cached = cached_events.get(cache_key)
-            if cached is not None and time.monotonic() - cached[0] < events_cache_ttl:
-                result = cached[1]
-            else:
-                result = build_events(*cache_key)
-                if len(cached_events) >= 128:
-                    cached_events.clear()
-                cached_events[cache_key] = (time.monotonic(), result)
+        if cached is None:
+            result = refresh_events_snapshot(cache_key)
+        else:
+            if time.monotonic() - cached[0] >= events_cache_ttl:
+                refresh_events_async(cache_key)
+            result = cached[1]
         return jsonify(result)
 
     def prewarm_events() -> None:
-        with application.test_request_context("/cleanup-events"):
-            events_v3()
+        refresh_events_snapshot((None, False, None))
 
     application.extensions["prewarm_cleanup_events"] = prewarm_events
+    application.extensions["refresh_cleanup_events_async"] = refresh_events_async
 
     def event_v3(event_id: str):
         # Keep the scheduler and event-not-found behavior of the old route.

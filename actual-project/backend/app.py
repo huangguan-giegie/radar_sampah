@@ -589,19 +589,33 @@ def create_app(
         if route is None or not _replace_freevar(route, "ensure_scheduled_events", reviewed_scheduler):
             raise RuntimeError(f"Could not install reviewed weekly-event scheduler for {endpoint}.")
 
-    # Build the public Insights snapshot after the worker is ready so the first
-    # visitor does not pay the full cross-region PostgreSQL query cost.
+    # Prepare public snapshots before serving requests, then refresh them in the
+    # background so an expired snapshot never makes a visitor wait.
     if not application.testing and os.getenv("RADAR_PREWARM_PUBLIC_VIEWS", "1").lower() in {"1", "true", "yes", "on"}:
         prewarm = application.extensions.get("prewarm_insights")
+        prewarm_events = application.extensions.get("prewarm_cleanup_events")
         if prewarm is not None:
-            def _prewarm_public_views() -> None:
-                try:
-                    prewarm()
-                    application.extensions["prewarm_cleanup_events"]()
-                except Exception:  # pragma: no cover - deployment-only best effort
-                    application.logger.exception("Public view prewarm failed")
+            try:
+                prewarm()
+            except Exception:  # pragma: no cover - deployment-only best effort
+                application.logger.exception("Public insights prewarm failed")
+        if prewarm_events is not None:
+            try:
+                prewarm_events()
+            except Exception:  # pragma: no cover - deployment-only best effort
+                application.logger.exception("Public cleanup events prewarm failed")
 
-            threading.Thread(target=_prewarm_public_views, name="radar-public-prewarm", daemon=True).start()
+        def _refresh_public_views_loop() -> None:
+            wait = threading.Event()
+            while not wait.wait(50.0):
+                refresh_insights = application.extensions.get("refresh_insights_async")
+                refresh_events = application.extensions.get("refresh_cleanup_events_async")
+                if refresh_insights is not None:
+                    refresh_insights()
+                if refresh_events is not None:
+                    refresh_events()
+
+        threading.Thread(target=_refresh_public_views_loop, name="radar-public-refresh", daemon=True).start()
 
     original_create_report = application.view_functions["create_report"]
 
