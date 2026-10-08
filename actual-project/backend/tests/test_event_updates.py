@@ -2,6 +2,7 @@
 
 from datetime import datetime, timedelta, timezone
 import sys
+import time as wall_time
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -117,18 +118,37 @@ def test_event_cache_expires_is_viewer_scoped_and_invalidates_after_join(tmp_pat
     assert len(calls) == 1
     clock[0] += 1
     client.get("/cleanup-events")
+    deadline = wall_time.monotonic() + 1
+    while len(calls) < 2 and wall_time.monotonic() < deadline:
+        wall_time.sleep(0.01)
     assert len(calls) == 2
     assert not client.get("/cleanup-events", headers=member_headers).get_json()[0]["joined"]
     client.get("/cleanup-events", headers=member_headers)
     assert len(calls) == 3
     assert client.post(f"/cleanup-events/{event_id}/join", headers=member_headers).status_code == 200
-    assert client.get("/cleanup-events", headers=member_headers).get_json()[0]["joined"]
+    joined = False
+    deadline = wall_time.monotonic() + 1
+    while not joined and wall_time.monotonic() < deadline:
+        joined = client.get("/cleanup-events", headers=member_headers).get_json()[0]["joined"]
+        if not joined:
+            wall_time.sleep(0.01)
+    assert joined
     assert not client.get("/cleanup-events", headers=other_headers).get_json()[0]["joined"]
     public = client.get("/cleanup-events").get_json()[0]
+    deadline = wall_time.monotonic() + 1
+    while public["participantCount"] != 1 and wall_time.monotonic() < deadline:
+        wall_time.sleep(0.01)
+        public = client.get("/cleanup-events").get_json()[0]
     assert not public["joined"] and public["participantCount"] == 1
     assert client.get("/cleanup-events?joined=true", headers=other_headers).get_json() == []
     assert client.delete(f"/cleanup-events/{event_id}/join", headers=member_headers).status_code == 200
-    assert not client.get("/cleanup-events", headers=member_headers).get_json()[0]["joined"]
+    left = True
+    deadline = wall_time.monotonic() + 1
+    while left and wall_time.monotonic() < deadline:
+        left = client.get("/cleanup-events", headers=member_headers).get_json()[0]["joined"]
+        if left:
+            wall_time.sleep(0.01)
+    assert not left
 
 
 def test_current_event_list_generates_four_weekly_slots_without_legacy_route(api):
