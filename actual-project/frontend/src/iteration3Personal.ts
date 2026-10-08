@@ -4,8 +4,6 @@ export type NextAction = {
   reasonCode: string;
   reason: string;
   destination: { type: string; path: string; id?: string; beachId?: string };
-  aiAssisted?: boolean;
-  aiStatus?: 'ready' | 'fallback';
   loginPrompt?: string;
   loginPath?: string;
 };
