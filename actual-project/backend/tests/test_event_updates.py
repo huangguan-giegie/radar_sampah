@@ -3,13 +3,15 @@
 from datetime import datetime, timedelta, timezone
 import sys
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 from sqlalchemy import insert, select
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from api_tests_core import api, signup, upload, report_payload
-from app import event_members_table, events_table, KUALA_LUMPUR
+from app import create_app, event_members_table, events_table, KUALA_LUMPUR
+import v3_contract
 
 
 def _seed_attention(client, quantities, count=3):
@@ -83,6 +85,50 @@ def test_joined_filter_and_public_list_are_privacy_safe(api):
     joined = client.get("/cleanup-events?joined=true", headers=headers)
     assert joined.status_code == 200
     assert [item["id"] for item in joined.get_json()] == [event_id]
+
+
+def test_event_cache_expires_is_viewer_scoped_and_invalidates_after_join(tmp_path, monkeypatch):
+    monkeypatch.setenv("RADAR_PREWARM_PUBLIC_VIEWS", "0")
+    monkeypatch.setenv("AUTH_JWT_SECRET", "test-only-event-cache-signing-secret")
+    application = create_app(
+        database_url=f"sqlite:///{tmp_path / 'event-cache.db'}",
+        photo_storage_dir=tmp_path / "photos",
+    )
+    client = application.test_client()
+    _, member_headers = signup(client)
+    _, other_headers = signup(client)
+    event_id = _event(application, "cached-event")
+    clock = [100.0]
+    monkeypatch.setattr(v3_contract, "time", SimpleNamespace(monotonic=lambda: clock[0]))
+    calls = []
+    original = v3_contract._event_payloads
+
+    def record_payloads(*args):
+        calls.append(args[3])
+        return original(*args)
+
+    monkeypatch.setattr(v3_contract, "_event_payloads", record_payloads)
+    application.extensions["prewarm_cleanup_events"]()
+    assert len(calls) == 1
+    assert client.get("/cleanup-events").get_json()[0]["id"] == event_id
+    assert len(calls) == 1
+    clock[0] += 59
+    client.get("/cleanup-events")
+    assert len(calls) == 1
+    clock[0] += 1
+    client.get("/cleanup-events")
+    assert len(calls) == 2
+    assert not client.get("/cleanup-events", headers=member_headers).get_json()[0]["joined"]
+    client.get("/cleanup-events", headers=member_headers)
+    assert len(calls) == 3
+    assert client.post(f"/cleanup-events/{event_id}/join", headers=member_headers).status_code == 200
+    assert client.get("/cleanup-events", headers=member_headers).get_json()[0]["joined"]
+    assert not client.get("/cleanup-events", headers=other_headers).get_json()[0]["joined"]
+    public = client.get("/cleanup-events").get_json()[0]
+    assert not public["joined"] and public["participantCount"] == 1
+    assert client.get("/cleanup-events?joined=true", headers=other_headers).get_json() == []
+    assert client.delete(f"/cleanup-events/{event_id}/join", headers=member_headers).status_code == 200
+    assert not client.get("/cleanup-events", headers=member_headers).get_json()[0]["joined"]
 
 
 def test_current_event_list_generates_four_weekly_slots_without_legacy_route(api):
