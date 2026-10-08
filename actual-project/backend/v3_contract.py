@@ -8,6 +8,9 @@ response shapes at the boundary.
 from __future__ import annotations
 
 import json
+import os
+import threading
+import time
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
@@ -187,14 +190,31 @@ def install_v3_contract(application: Any, engine: Any, jwt_secret: str, impl: An
         )
     impl.community_event_attendance_table = attendance
     attendance.create(engine, checkfirst=True)
+    try:
+        events_cache_ttl = max(5.0, float(os.getenv("EVENT_SCHEDULER_TTL_SECONDS", "60")))
+    except ValueError:
+        events_cache_ttl = 60.0
+    events_cache_enabled = not application.testing
+    events_cache_lock = threading.Lock()
+    cached_events: dict[tuple[str | None, bool, str | None], tuple[float, list[dict[str, Any]]]] = {}
 
-    def events_v3():
-        viewer = _user(engine, impl, jwt_secret)
-        if request.args.get("joined") == "true" and viewer is None:
-            return jsonify([])
-        beach_id = request.args.get("beachId")
-        if beach_id and _beach(engine, impl, beach_id) is None:
-            return impl.error_response(404, "NOT_FOUND", "Beach not found.")
+    def invalidate_events_cache() -> None:
+        with events_cache_lock:
+            cached_events.clear()
+
+    @application.after_request
+    def invalidate_events_cache_after_write(response: Any):
+        if request.endpoint == "v3_list_events":
+            response.headers["Cache-Control"] = "private, no-store"
+        if (
+            events_cache_enabled
+            and request.method not in {"GET", "HEAD", "OPTIONS"}
+            and response.status_code < 400
+        ):
+            invalidate_events_cache()
+        return response
+
+    def build_events(beach_id: str | None, joined_only: bool, viewer_id: str | None):
         now = datetime.now(timezone.utc)
         application.extensions["ensure_scheduled_events"](now)
         with engine.connect() as connection:
@@ -216,9 +236,38 @@ def install_v3_contract(application: Any, engine: Any, jwt_secret: str, impl: An
                     continue
                 automatic[row.beach_id] = count + 1
             events.append(row)
-        payloads = _event_payloads(engine, impl, events, viewer.id if viewer else None, attendance)
-        result = [payload for payload in payloads if request.args.get("joined") != "true" or payload["joined"]]
+        payloads = _event_payloads(engine, impl, events, viewer_id, attendance)
+        return [payload for payload in payloads if not joined_only or payload["joined"]]
+
+    def events_v3():
+        viewer = _user(engine, impl, jwt_secret)
+        joined_only = request.args.get("joined") == "true"
+        if joined_only and viewer is None:
+            return jsonify([])
+        beach_id = request.args.get("beachId")
+        if beach_id and _beach(engine, impl, beach_id) is None:
+            return impl.error_response(404, "NOT_FOUND", "Beach not found.")
+        viewer_id = viewer.id if viewer else None
+        cache_key = (beach_id, joined_only, viewer_id)
+        if not events_cache_enabled:
+            return jsonify(build_events(*cache_key))
+        # ponytail: one lock and 128 snapshots; split locks if concurrent cache misses become a bottleneck.
+        with events_cache_lock:
+            cached = cached_events.get(cache_key)
+            if cached is not None and time.monotonic() - cached[0] < events_cache_ttl:
+                result = cached[1]
+            else:
+                result = build_events(*cache_key)
+                if len(cached_events) >= 128:
+                    cached_events.clear()
+                cached_events[cache_key] = (time.monotonic(), result)
         return jsonify(result)
+
+    def prewarm_events() -> None:
+        with application.test_request_context("/cleanup-events"):
+            events_v3()
+
+    application.extensions["prewarm_cleanup_events"] = prewarm_events
 
     def event_v3(event_id: str):
         # Keep the scheduler and event-not-found behavior of the old route.

@@ -597,6 +597,7 @@ def create_app(
             def _prewarm_public_views() -> None:
                 try:
                     prewarm()
+                    application.extensions["prewarm_cleanup_events"]()
                 except Exception:  # pragma: no cover - deployment-only best effort
                     application.logger.exception("Public view prewarm failed")
 
