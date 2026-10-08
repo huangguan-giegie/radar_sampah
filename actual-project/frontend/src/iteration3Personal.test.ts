@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { canAutoShowPersonalPopup, fallbackNextAction, personalPopupKey } from './iteration3Personal';
+import { canAutoShowPersonalPopup, fallbackNextAction } from './iteration3Personal';
 afterEach(() => vi.unstubAllGlobals());
 
 describe('private personal insight sessions', () => {
