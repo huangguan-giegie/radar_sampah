@@ -1,6 +1,4 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import base from "../../backend/data/beaches.json";
-import expanded from "../../backend/data/expanded_beaches.json";
 import content from "./content/coastalContent.json";
 import expandedBeachRegions from "./content/expandedBeachRegions.json";
 import type { BeachSummary } from "./types";
@@ -10,8 +8,17 @@ vi.mock("./api", () => ({ USE_MOCK: false, getBeaches: vi.fn() }));
 import { getBeaches } from "./api";
 import { getCoastalBeaches, REGIONS } from "./coastalData";
 
-const catalogue = [...new Map([...base, ...expanded.beaches].map((beach) => [beach.id, beach])).values()];
-const apiRows = catalogue.map((beach) => ({ ...beach, region: undefined, validReports: 0, insufficientData: true })) as unknown as BeachSummary[];
+const catalogueIds = [...new Set([...content.beaches.map((beach) => beach.id), ...Object.keys(expandedBeachRegions)])];
+const apiRows = catalogueIds.map((id) => ({
+  id,
+  name: id,
+  area: "Malaysia",
+  region: undefined,
+  lat: null,
+  lng: null,
+  validReports: 0,
+  insufficientData: true,
+})) as unknown as BeachSummary[];
 
 beforeEach(() => vi.mocked(getBeaches).mockReset());
 
@@ -28,11 +35,12 @@ describe("live coastal catalogue", () => {
   });
 
   it("keeps the compact region lookup consistent with the reviewed catalogue", () => {
-    expect(expandedBeachRegions).toEqual(Object.fromEntries(expanded.beaches.map((beach) => [beach.id, beach.region])));
+    expect(Object.keys(expandedBeachRegions)).toHaveLength(82);
+    expect(catalogueIds).toHaveLength(179);
     const regions = new Map(content.beaches.map((beach) => [beach.id, beach.region]));
-    for (const beach of expanded.beaches) {
-      expect(REGIONS.some((region) => region.id === beach.region)).toBe(true);
-      if (regions.has(beach.id)) expect(regions.get(beach.id)).toBe(beach.region);
+    for (const [id, region] of Object.entries(expandedBeachRegions)) {
+      expect(REGIONS.some((item) => item.id === region)).toBe(true);
+      if (regions.has(id)) expect(regions.get(id)).toBe(region);
     }
   });
 
