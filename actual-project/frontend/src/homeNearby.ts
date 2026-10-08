@@ -21,8 +21,12 @@ export function beachDistanceKm(from: Point, to: Point): number {
 /** Pure local ranking: device coordinates are never sent to the API or stored. */
 export function closestSupportedBeach<T extends LocatedBeach>(beaches: T[], location: Point): T | null {
   if (!valid(location)) return null;
-  return beaches.filter(valid).reduce<T | null>((best, beach) => {
-    if (!best) return beach;
-    return beachDistanceKm(location, beach) < beachDistanceKm(location, best) ? beach : best;
-  }, null);
+  let best: (T & Point) | null = null;
+  for (const beach of beaches) {
+    if (!valid(beach)) continue;
+    if (!best || beachDistanceKm(location, beach) < beachDistanceKm(location, best)) {
+      best = beach;
+    }
+  }
+  return best;
 }
