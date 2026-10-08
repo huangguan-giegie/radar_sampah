@@ -45,6 +45,14 @@ def _impl():
     return app_core
 
 
+def test_next_action_is_rule_based_and_ai_endpoint_is_removed(api):
+    _, client = api
+    guest = client.get("/recommendations/next-action").get_json()
+    assert guest["aiAssisted"] is False
+    assert guest["reasonCode"] == "GUEST"
+    assert client.post("/recommendations/next-action/ai").status_code == 404
+
+
 def test_guest_next_action_is_generic_and_private_endpoints_require_auth(api):
     _, client = api
     guest = client.get("/recommendations/next-action").get_json()

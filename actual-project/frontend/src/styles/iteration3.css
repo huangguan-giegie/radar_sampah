@@ -1029,9 +1029,8 @@
   }
 }
 
-/* Home recommendation is always visible; no dismiss action. */
-.home-ai-next-action > .eyebrow { font-size: 13px; letter-spacing: .04em; }
-.home-ai-next-action .coastal-footnote { font-size: 11px; margin: 2px 0 10px; }
+/* Home rule-based recommendation is always visible; no dismiss action. */
+.home-rule-suggestions > .eyebrow { font-size: 13px; letter-spacing: .04em; }
 .home-location-button {
   display: inline-flex;
   align-items: center;
