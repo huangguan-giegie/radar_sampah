@@ -423,9 +423,9 @@ def _reviewed_event_scheduler(engine: Any):
     last_refresh_at = 0.0
     last_schedule_key: tuple[Any, ...] | None = None
     try:
-        refresh_ttl = max(5.0, float(os.getenv("EVENT_SCHEDULER_TTL_SECONDS", "30")))
+        refresh_ttl = max(5.0, float(os.getenv("EVENT_SCHEDULER_TTL_SECONDS", "60")))
     except ValueError:
-        refresh_ttl = 30.0
+        refresh_ttl = 60.0
 
     def ensure_scheduled_events(now: Any | None = None) -> None:
         nonlocal last_refresh_at, last_schedule_key

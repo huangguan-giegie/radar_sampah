@@ -34,7 +34,7 @@ function publicEvents(values: CleanupEvent[]): CleanupEvent[] {
   return values.map(publicEvent);
 }
 
-const EVENTS_CACHE_TTL_MS = 10_000;
+const EVENTS_CACHE_TTL_MS = 60_000;
 const eventsCache = new Map<string, { value: CleanupEvent[]; expiresAt: number }>();
 const eventsInFlight = new Map<string, Promise<CleanupEvent[]>>();
 

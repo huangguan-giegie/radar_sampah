@@ -1,7 +1,7 @@
 import { apiRequest } from './api';
 import type { SeverityBand } from './types';
 
-const INSIGHTS_CACHE_TTL_MS = 15_000;
+const INSIGHTS_CACHE_TTL_MS = 60_000;
 const insightsCache = new Map<string, { value: InsightsData; expiresAt: number }>();
 const insightsInFlight = new Map<string, Promise<InsightsData>>();
 
