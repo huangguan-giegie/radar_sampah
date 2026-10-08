@@ -1028,3 +1028,22 @@
     display: none;
   }
 }
+
+/* Home recommendation is always visible; no dismiss action. */
+.home-ai-next-action > .eyebrow { font-size: 13px; letter-spacing: .04em; }
+.home-ai-next-action .coastal-footnote { font-size: 11px; margin: 2px 0 10px; }
+.home-location-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  padding: 10px 13px;
+  border: 1px solid #0b216130;
+  border-radius: 12px;
+  color: #0b2161;
+  background: #eef4fa;
+  font-size: 13px;
+  font-weight: 650;
+  margin-bottom: 12px;
+}
+.home-location-button:disabled { opacity: .65; cursor: wait; }
