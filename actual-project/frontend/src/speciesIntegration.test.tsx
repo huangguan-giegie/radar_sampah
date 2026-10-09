@@ -70,6 +70,15 @@ describe('species model cards', () => {
     expect(html).not.toContain('green-sea-turtle.jpg');
   });
 
+  it('renders verified pictures in both recommendation cards and More species for model-only taxa', () => {
+    const ray = { ...prediction('Taeniura lymma'), commonNameEn: 'Bluespotted fantail ray' };
+    const html = renderToStaticMarkup(<SpeciesModelCards result={result([ray])} loading={false} error={null} {...actions} />);
+    expect(html).toContain('Taeniura_lymma.JPG');
+    expect(html).toContain('Wikimedia Commons');
+    expect(html).toContain('Photo credits');
+    expect(html.match(/<img/g)?.length).toBe(2);
+  });
+
   it('does not classify cuttlefish as fish merely because their category contains the same letters', () => {
     expect(glyphForSpeciesCategory('reef_fish')).toBe('fish');
     expect(glyphForSpeciesCategory('coastal_reef_fish')).toBe('fish');
