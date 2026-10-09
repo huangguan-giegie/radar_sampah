@@ -47,6 +47,7 @@ export default function AdminEventScreen() {
   const [dates] = useState(candidateDates);
   const [beachId, setBeachId] = useState<string>(beaches[0].id);
   const [date, setDate] = useState('');
+  const [meetingPoint, setMeetingPoint] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [outcome, setOutcome] = useState<Outcome | null>(null);
@@ -91,7 +92,7 @@ export default function AdminEventScreen() {
     try {
       const before = await fetchCleanupEvent(`${beachId}-${date}`);
       const takenBefore = Boolean(before) || availability(date) === 'TAKEN';
-      const event = await createAdminEventData({ beachId, date });
+      const event = await createAdminEventData({ beachId, date, meetingPoint: meetingPoint.trim() || undefined });
       setOutcome({ kind: takenBefore ? 'duplicate' : 'created', event });
       void refreshEvents();
     } catch (reason) {
@@ -171,6 +172,12 @@ export default function AdminEventScreen() {
                 </p>
               )}
             </div>
+
+            <label>
+              <span style={{ display: 'block', margin: '0 4px 7px', color: C.muted, fontSize: 12 }}>Meeting point</span>
+              <input className="i2-field" type="text" maxLength={160} value={meetingPoint} onChange={(event) => setMeetingPoint(event.target.value)} placeholder="Exact meeting place, if confirmed" />
+              <span className="coastal-footnote">Leave blank until the organiser confirms the place.</span>
+            </label>
 
             <PrimaryButton onClick={create} disabled={!date || saving}>
               {saving ? 'Creating…' : date ? 'Create activity' : 'Select a date'}

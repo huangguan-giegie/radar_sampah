@@ -136,9 +136,7 @@ export function SeverityBadge({
   }
   return (
     <StatusBadge status={band.toLowerCase() as BadgeStatus} size={size} indicator block={block}>
-      {/* severityLabel(), not the raw band: the data keeps 'Severe' because
-          that is the word in the contract, but the user is shown "Very high".
-          The translation happens here so every badge in the app gets it. */}
+      {/* severityLabel keeps map badges aligned with the API and filter labels. */}
       {label ?? severityLabel(band)}
     </StatusBadge>
   );

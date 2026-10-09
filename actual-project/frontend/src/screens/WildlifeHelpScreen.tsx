@@ -4,10 +4,12 @@ import { iteration3Request } from "../iteration3Api";
 import type { WildlifeGuidance } from "../iteration3Personal";
 import { useAsyncData } from "../useAsyncData";
 import { PHOTOS } from "../visuals";
+import { mergeWildlifeGuidance } from "../wildlifeGuidance";
 export default function WildlifeHelpScreen() {
   const { data: guidance, loading, error, refresh } = useAsyncData(
     () => iteration3Request<WildlifeGuidance>('/wildlife-guidance'), [], null,
   );
+  const effectiveGuidance = mergeWildlifeGuidance(guidance);
   return (
     <CoastalPage title="Animal Hurt or Stranded" back="/community">
       <figure className="page-cover" style={{ margin: 0 }}>
@@ -20,29 +22,27 @@ export default function WildlifeHelpScreen() {
           <a href="tel:999">Call 999</a>
         </div>
       </WhiteCard>
-      {loading ? <p role="status">Loading official contacts…</p> : error || !guidance ? (
-        <DataUnavailable title="Official contacts could not be loaded" retry={() => void refresh()}>
-          Do not handle the animal. Keep people and dogs back.
-        </DataUnavailable>
-      ) : <>
+      {loading && <p role="status">Loading official contacts… Local safety contacts are available below.</p>}
+      {error && <DataUnavailable title="Latest official contacts could not be loaded" retry={() => void refresh()}>
+        Showing the locally reviewed contacts below. Do not handle the animal. Keep people and dogs back.
+      </DataUnavailable>}
       <WhiteCard>
-        {[guidance.incident].map((t, i) => (
+        {[effectiveGuidance.incident].map((t, i) => (
           <div key={t} className="wildlife-rule">
             <span>{i + 1}</span>
             <p>{t}</p>
           </div>
         ))}
       </WhiteCard>
-      {guidance.authorities.map(authority => <SummaryCard key={authority.url} eyebrow={authority.name}>
+      {effectiveGuidance.authorities.map(authority => <SummaryCard key={authority.url} eyebrow={authority.name}>
         {authority.phone && <h2 style={{ color: 'white', fontSize: 28 }}>{authority.phone}</h2>}
         {authority.hours && <p style={{ color: '#ffffffb3' }}>{authority.hours}</p>}
         {authority.telephoneUri && <a className="lime-button" href={authority.telephoneUri}>Call authority</a>}
-        <p className="coastal-footnote">Checked {authority.lastChecked} · <a href={authority.url} target="_blank" rel="noreferrer">Official contact details ↗</a></p>
+        <p className="coastal-footnote" style={{ color: '#ffffffb3' }}>Checked {authority.lastChecked} · <a href={authority.url} target="_blank" rel="noreferrer" style={{ color: 'white' }}>Official contact details ↗</a></p>
       </SummaryCard>)}
       <p className="coastal-footnote">
-        {guidance.note}
+        {effectiveGuidance.note}
       </p>
-      </>}
     </CoastalPage>
   );
 }

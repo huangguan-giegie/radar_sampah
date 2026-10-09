@@ -27,6 +27,17 @@ describe("cleanup navigation drafts", () => {
     } finally { vi.unstubAllGlobals(); }
   });
 
+  it("restores a confirmed None result for one category without losing the other bands", () => {
+    const scope = cleanupDraftScope("participant-none", "morib", null);
+    const first = readCleanupDraft(scope, target);
+    writeCleanupDraft(scope, target, {
+      ...first,
+      afterBands: { Plastic: "None", Metal: "Small" },
+    });
+
+    expect(readCleanupDraft(scope, target).afterBands).toEqual({ Plastic: "None", Metal: "Small" });
+  });
+
   it("does not restore another participant, beach, or event's draft", () => {
     const scope = cleanupDraftScope("participant-a", "morib", "event-1");
     const value = readCleanupDraft(scope, target);

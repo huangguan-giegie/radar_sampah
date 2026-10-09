@@ -16,7 +16,7 @@ import {
   PrimaryButton,
   Skeleton,
 } from "../components/ui";
-import { confirmedCleanupBands } from "../cleanupFlow";
+import { applyConfirmedCleanupBands } from "../cleanupFlow";
 import {
   cleanupDraftScope,
   cleanupTargetVersion,
@@ -37,7 +37,7 @@ import {
 import { hasDraftProgress, resumePath } from "../flowRules";
 import { useAsyncData } from "../useAsyncData";
 import { C, QUANTITY_DESC } from "../theme";
-import type { LitterCategory, QuantityBand } from "../types";
+import type { CleanupAfterBand, LitterCategory, QuantityBand } from "../types";
 
 export default function CleanupScreen() {
   const { beachId = "" } = useParams();
@@ -69,8 +69,8 @@ export default function CleanupScreen() {
     null,
   );
   const [category, setCategory] = useState<LitterCategory | null>(null);
-  const [after, setAfter] = useState<QuantityBand | null>(null);
-  const [afterBands, setAfterBands] = useState<Partial<Record<LitterCategory, QuantityBand>>>({});
+  const [after, setAfter] = useState<CleanupAfterBand | null>(null);
+  const [afterBands, setAfterBands] = useState<Partial<Record<LitterCategory, CleanupAfterBand>>>({});
   const [step, setStep] = useState<"linked" | "amount" | "ai">("linked");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -96,7 +96,7 @@ export default function CleanupScreen() {
         ) ?? categories[0]);
   const before = selected ? target?.remainingBands[selected] : undefined;
   const selectedAfter = selected ? afterBands[selected] ?? after : after;
-  const chooseAfterFor = (item: LitterCategory, value: QuantityBand | null) => {
+  const chooseAfterFor = (item: LitterCategory, value: CleanupAfterBand | null) => {
     if (item === selected) setAfter(value);
     setAfterBands((previous) => {
       const next = { ...previous };
@@ -105,7 +105,7 @@ export default function CleanupScreen() {
       return next;
     });
   };
-  const chooseAfter = (value: QuantityBand | null) => {
+  const chooseAfter = (value: CleanupAfterBand | null) => {
     if (selected) chooseAfterFor(selected, value);
   };
   useEffect(() => {
@@ -200,10 +200,7 @@ export default function CleanupScreen() {
     const submissionKey = key.current;
     setError(null);
     try {
-      const submittedBands = { ...target.remainingBands };
-      for (const [item, value] of Object.entries(afterBands) as [LitterCategory, QuantityBand][]) {
-        Object.assign(submittedBands, confirmedCleanupBands(target.remainingBands, item, value));
-      }
+      const submittedBands = applyConfirmedCleanupBands(target.remainingBands, afterBands);
       if (Object.entries(submittedBands).every(([item, value]) => value === target.remainingBands[item as LitterCategory])) {
         setStep("amount");
         return;
@@ -350,13 +347,18 @@ export default function CleanupScreen() {
           <button
             className="amount-option"
             role="radio"
-            aria-checked={false}
-            disabled
+            aria-checked={selectedAfter === "None"}
+            disabled={busy}
+            onClick={() => {
+              chooseAfter("None");
+              setStep("linked");
+              setError(null);
+            }}
           >
             <span className="amount-radio" />
             <span>
               <strong>None</strong>
-              <small>Zero-litter recording is not available yet</small>
+              <small>No litter remains in this category</small>
             </span>
           </button>
           {QUANTITY_BANDS.map((b) => (
@@ -511,7 +513,7 @@ export default function CleanupScreen() {
                   value={afterBands[item] ?? ""}
                   disabled={busy}
                   onChange={(e) => {
-                    const value = e.target.value as QuantityBand | "";
+                    const value = e.target.value as CleanupAfterBand | "";
                     setCategory(item);
                     chooseAfterFor(item, value || null);
                     setPhoto(null);
@@ -521,6 +523,7 @@ export default function CleanupScreen() {
                   style={{ width: "100%", padding: 11, border: "1px solid #dde3ec", borderRadius: 12, fontSize: 16, fontWeight: 650, color: C.navy, background: "white" }}
                 >
                   <option value="">Choose amount left</option>
+                  <option value="None">None · nothing remains</option>
                   {QUANTITY_BANDS
                     .filter((band) => CLEANUP_BAND_UNITS[band] < CLEANUP_BAND_UNITS[itemBefore])
                     .map((band) => <option key={band} value={band}>{band} · {QUANTITY_DESC[band]}</option>)}

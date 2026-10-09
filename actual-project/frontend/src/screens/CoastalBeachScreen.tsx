@@ -37,6 +37,7 @@ import { eventIsAvailable, useEventClock } from "../eventAvailability";
 import { StaticMap } from "../components/Visuals";
 import { marineRecordDetails } from "../biodiversity";
 import { beachPhoto } from "../visuals";
+import { fetchInsights, type InsightsData } from "../insightsApi";
 
 export default function CoastalBeachScreen() {
   const { beachId = "" } = useParams();
@@ -81,6 +82,11 @@ export default function CoastalBeachScreen() {
     () =>
       previewOnly ? Promise.resolve(null) : fetchLatestCleanupForBeach(beachId),
     [beachId, reportsVersion],
+    null,
+  );
+  const { data: insights, loading: trendLoading, error: trendError, refresh: refreshTrend } = useAsyncData<InsightsData | null>(
+    () => previewOnly ? Promise.resolve(null) : fetchInsights(beachId),
+    [beachId, reportsVersion, previewOnly],
     null,
   );
   const b = detail ?? (previewOnly ? fixture : null);
@@ -138,6 +144,7 @@ export default function CoastalBeachScreen() {
   const heroLat = detail?.lat ?? null;
   const heroLng = detail?.lng ?? null;
   const region = fixture?.region ?? "selangor";
+  const trend = insights?.beaches.find((row) => row.id === beachId);
   const species = (fixture?.species ?? [])
     .map((id) => content.species.find((s) => s.id === id))
     .filter((s) => !!s);
@@ -197,7 +204,7 @@ export default function CoastalBeachScreen() {
         <WhiteCard>
           <div className="beach-band-header">
             <p className="eyebrow">Litter Severity</p>
-            <small>{b.validReports} counted reports</small>
+            <small>{b.validReports} active reports · latest 90 days</small>
           </div>
           <div
             className="beach-band-value"
@@ -235,6 +242,26 @@ export default function CoastalBeachScreen() {
             How it’s rated →
           </button>
         </WhiteCard>
+        <section>
+          <SectionHeading action="View Trend →" onAction={() => nav("/insights/trends/" + beachId)}>
+            30-day Band Change
+          </SectionHeading>
+          {trendLoading ? <p role="status">Loading band comparison…</p> : trendError ? (
+            <DataUnavailable title="Band comparison unavailable" retry={() => { void refreshTrend(); }}>{trendError}</DataUnavailable>
+          ) : !trend ? <DataUnavailable title="Beach trend not found" /> : trend.from && trend.to ? (
+            <WhiteCard>
+              <p className="eyebrow">Compared {formatDate(insights?.comparisonAt ?? "")} with {formatDate(insights?.asOf ?? "")}</p>
+              <p className="update-bands"><strong>{trend.from}</strong><span>→</span><strong>{trend.to}</strong></p>
+              <p className="coastal-footnote">{trend.reportsPrevious30Days} counted report submissions in the earlier 30 days · {trend.reportsLast30Days} in the latest 30 days. Bands use active reports in each 90-day window.</p>
+            </WhiteCard>
+          ) : (
+            <div className="dashed-empty">
+              <strong>Insufficient Data</strong>
+              <p>At least 3 active reports are needed in both 90-day windows for a band comparison.</p>
+              <p className="coastal-footnote">{trend.reportsPrevious30Days} counted submissions in the earlier 30 days · {trend.reportsLast30Days} in the latest 30 days. Report totals are not active-rating counts.</p>
+            </div>
+          )}
+        </section>
         <section>
           <SectionHeading>What You Can Do Here</SectionHeading>
           <div className="action-grid" style={{ marginTop: 16 }}>

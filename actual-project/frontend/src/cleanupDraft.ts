@@ -1,10 +1,10 @@
 import type { CleanupTarget } from "./iteration2";
-import type { LitterCategory, QuantityBand } from "./types";
+import type { CleanupAfterBand, LitterCategory, QuantityBand } from "./types";
 
 export type CleanupDraft = {
   category: LitterCategory | null;
-  after: QuantityBand | null;
-  afterBands?: Partial<Record<LitterCategory, QuantityBand>>;
+  after: CleanupAfterBand | null;
+  afterBands?: Partial<Record<LitterCategory, CleanupAfterBand>>;
   step: "linked" | "amount" | "ai";
   photo: File | null;
   suggestion: QuantityBand | null;

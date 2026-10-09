@@ -1,4 +1,4 @@
-import type { LitterCategory, QuantityBand, QuantityByCategory, RecurrenceEvidence } from './types';
+import type { CleanupAfterBand, LitterCategory, QuantityBand, QuantityByCategory, RecurrenceEvidence } from './types';
 import { recognizeCleanupPhoto, recognizeReportPhoto, USE_MOCK } from './api';
 
 export type EventStatus = 'Open' | 'Closed';
@@ -43,7 +43,7 @@ export interface CleanupTarget {
 export interface CleanupRow {
   category: LitterCategory;
   beforeBand?: QuantityBand;
-  afterBand?: QuantityBand;
+  afterBand?: CleanupAfterBand;
   removedBand?: QuantityBand;
   removedUnits?: number;
   /** Difference between the shared band values for this one action only. */
@@ -66,7 +66,7 @@ export interface CleanupAction {
   recurrence?: RecurrenceEvidence;
   eventFollowUpStatus?: string;
   resolutionStatus?: string;
-  remainingQuantities?: QuantityByCategory | null;
+  remainingQuantities?: Partial<Record<LitterCategory, CleanupAfterBand>> | null;
   removedQuantities?: QuantityByCategory | null;
   resolved?: boolean;
 }
@@ -94,6 +94,7 @@ export const CLEANUP_BAND_UNITS: Record<QuantityBand, number> = {
   Large: 3,
   'Very Large': 4,
 };
+const CLEANUP_AFTER_UNITS: Record<CleanupAfterBand, number> = { ...CLEANUP_BAND_UNITS, None: 0 };
 const CLEANUP_CATEGORIES: LitterCategory[] = ['Fishing gear', 'Plastic', 'Glass', 'Metal', 'Other', 'Paper'];
 
 const QUANTITY_BAND_VALUE: Record<QuantityBand, number> = {
@@ -358,7 +359,7 @@ export function completeCleanup(input: {
   beachId?: string;
   targetReportId?: string;
   eventId?: string | null;
-  afterBands?: Partial<Record<LitterCategory, QuantityBand>>;
+  afterBands?: Partial<Record<LitterCategory, CleanupAfterBand>>;
   removedQuantities?: QuantityByCategory;
   handling: CleanupHandling;
   note?: string;
@@ -392,27 +393,29 @@ export function completeCleanup(input: {
 
   if (target) {
     const before = { ...target.remainingBands };
-    const after = { ...before, ...(input.afterBands ?? {}) };
-    for (const [category, band] of Object.entries(after) as [LitterCategory, QuantityBand][]) {
+    const requested = input.afterBands ?? {};
+    const requestedState = { ...before, ...requested };
+    for (const [category, band] of Object.entries(requestedState) as [LitterCategory, CleanupAfterBand][]) {
       const beforeBand = before[category];
-      if (!beforeBand || !isQuantityBand(band)) throw new Error('Use only the litter categories already recorded for this target.');
-      if (CLEANUP_BAND_UNITS[band] > CLEANUP_BAND_UNITS[beforeBand]) {
+      if (!beforeBand || (band !== 'None' && !isQuantityBand(band))) throw new Error('Use only the litter categories already recorded for this target.');
+      if (CLEANUP_AFTER_UNITS[band] > CLEANUP_BAND_UNITS[beforeBand]) {
         throw new Error('Remaining litter cannot increase during a cleanup.');
       }
     }
     rows = (Object.entries(before) as [LitterCategory, QuantityBand][])
       .map(([category, beforeBand]): CleanupRow | null => {
-        const afterBand = after[category];
-        if (!afterBand) return null;
-        const removedUnits = CLEANUP_BAND_UNITS[beforeBand] - CLEANUP_BAND_UNITS[afterBand];
+        const afterBand = requestedState[category];
+        if (afterBand === undefined) return null;
+        if (afterBand === 'None') return { category, beforeBand, afterBand, score: CLEANUP_BAND_UNITS[beforeBand] };
+        const removedUnits = CLEANUP_BAND_UNITS[beforeBand] - CLEANUP_AFTER_UNITS[afterBand];
         return removedUnits > 0 ? { category, beforeBand, afterBand, score: removedUnits } : null;
       })
       .filter((row): row is CleanupRow => row !== null);
     score = rows.reduce((sum, row) => sum + (row.score ?? 0), 0);
     if (score <= 0) throw new Error('Record at least one reduction in the cleanup result.');
-    target.remainingBands = after;
-    remainingQuantities = after;
-    resolved = !activeTarget(after);
+    remainingQuantities = Object.fromEntries(Object.entries(requestedState).map(([category, band]) => [category, band === 'None' ? 'Small' : band]));
+    target.remainingBands = remainingQuantities;
+    resolved = !activeTarget(remainingQuantities);
   } else {
     removedQuantities = { ...(input.removedQuantities ?? {}) };
     for (const [category, band] of Object.entries(removedQuantities) as [LitterCategory, QuantityBand][]) {
@@ -529,7 +532,7 @@ export function recordAttendance(eventId: string, participantId: string): Cleanu
   });
 }
 
-export function createAdminEvent(input: { beachId: string; date: string }): CleanupEvent {
+export function createAdminEvent(input: { beachId: string; date: string; meetingPoint?: string }): CleanupEvent {
   const store = readStore();
   const beach = BEACHES.find((item) => item.id === input.beachId);
   if (!beach) throw new Error('Choose a monitored beach.');
@@ -542,6 +545,7 @@ export function createAdminEvent(input: { beachId: string; date: string }): Clea
     beachId: beach.id,
     beachName: beach.name,
     area: beach.area,
+    meetingPoint: input.meetingPoint?.trim() || undefined,
     date: input.date,
     startsAt: '09:00',
     endsAt: '12:00',

@@ -102,6 +102,7 @@ EVENT_END_LOCAL_HOUR = 12
 EVENTS_PER_BEACH = 4
 GEO_GRID_METRES = 1
 GEO_HMAC_CONTEXT = b"radar-sampah-proximity-v1"
+LEGACY_SEED_REPORT_IDS = frozenset({"r1", "r2", "r3", "r4"})
 
 FRONTEND_CATEGORIES = ("Fishing gear", "Plastic", "Glass", "Metal", "Other", "Paper")
 CATEGORY_WEIGHTS = {
@@ -1079,7 +1080,7 @@ def severity_for(rows: list[Any]) -> tuple[str | None, int | None]:
 
 def active_attention_rows(engine: Engine, rows: list[Any]) -> list[tuple[Any, dict[str, str]]]:
     """Return recent Counted reports that still have litter to attend to."""
-    counted_rows = [row for row in rows if getattr(row, "item_counts", None) is not None]
+    counted_rows = [row for row in rows if row.id not in LEGACY_SEED_REPORT_IDS and getattr(row, "item_counts", None) is not None]
     report_ids = [row.id for row in counted_rows]
     with engine.connect() as connection:
         actions = connection.execute(
@@ -1090,6 +1091,8 @@ def active_attention_rows(engine: Engine, rows: list[Any]) -> list[tuple[Any, di
         actions_by_report[action.target_report_id].append(action)
     active: list[tuple[Any, dict[str, str]]] = []
     for row in rows:
+        if row.id in LEGACY_SEED_REPORT_IDS:
+            continue
         quantities = quantity_band_state_for(row, actions_by_report[row.id])
         if quantities and any(value != "Small" for value in quantities.values()):
             active.append((row, quantities))
@@ -1125,7 +1128,8 @@ def beach_summary(engine: Engine, beach: dict[str, Any], now: datetime | None = 
                 reports_table.c.status == "Counted",
             )
         ).all()
-    eligible = [row for row in all_counted if utc_datetime(row.created_at) >= cutoff]
+    eligible = [row for row in all_counted if row.id not in LEGACY_SEED_REPORT_IDS and utc_datetime(row.created_at) >= cutoff]
+    all_counted = [row for row in all_counted if row.id not in LEGACY_SEED_REPORT_IDS]
     active_rows = active_attention_rows(engine, eligible)
     attention_score = (
         float(median(report_score_for(quantities) for _, quantities in active_rows))
@@ -1174,7 +1178,7 @@ def beach_summaries_batch(engine: Engine, beaches: list[dict[str, Any]], now: da
         actions_by_report[action.target_report_id].append(action)
     result = []
     for beach in beaches:
-        all_counted = [row for row in reports if row.beach_id == beach["id"] and row.status == "Counted" and getattr(row, "deleted_at", None) is None]
+        all_counted = [row for row in reports if row.id not in LEGACY_SEED_REPORT_IDS and row.beach_id == beach["id"] and row.status == "Counted" and getattr(row, "deleted_at", None) is None]
         eligible = [row for row in all_counted if utc_datetime(row.created_at) >= cutoff]
         active_rows = []
         for row in eligible:

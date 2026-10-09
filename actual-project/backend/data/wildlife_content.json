@@ -233,9 +233,12 @@
         "lastChecked": "2026-10-05"
       },
       {
-        "name": "Department of Fisheries Malaysia: marine animals",
-        "url": "https://www.dof.gov.my/en/contact-us/",
-        "lastChecked": "2026-10-05"
+        "name": "Department of Fisheries Malaysia: stranded turtles",
+        "phone": "03-8888 5019",
+        "telephoneUri": "tel:+60388885019",
+        "hours": "For stranded turtles; see the official marine park guidance.",
+        "url": "https://www.dof.gov.my/en/services/marine-park-resource-management/marine-park-management/",
+        "lastChecked": "2026-10-09"
       }
     ],
     "sources": [
@@ -248,7 +251,7 @@
         "url": "https://wildpedia.wildlife.gov.my/page/help"
       }
     ],
-    "reviewDate": "2026-10-05",
+    "reviewDate": "2026-10-09",
     "note": "General guidance; follow the relevant authority. Radar Sampah does not report incidents on your behalf."
   }
 }

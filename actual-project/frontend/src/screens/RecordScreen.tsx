@@ -192,6 +192,11 @@ export default function RecordScreen() {
             Select at least one litter category.
           </div>
         )}
+        {picked.length > 0 && picked.every((category) => quantities[category] === 'Small') && (
+          <div role="status" style={{ padding: 13, borderRadius: 14, background: '#fff5df', color: C.slate, fontSize: 12, lineHeight: 1.5 }}>
+            Small-only reports are not counted or saved. Choose Medium, Large or Very Large to continue.
+          </div>
+        )}
         <PrimaryButton onClick={next} style={{ marginTop: 8 }}>Continue</PrimaryButton>
       </div>
     </div>

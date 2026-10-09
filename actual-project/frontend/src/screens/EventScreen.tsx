@@ -40,7 +40,7 @@ export default function EventScreen() {
     [eventId, user?.participantId],
     getCleanupEvent(eventId),
   );
-  const { data: cleanups } = useAsyncData(() => fetchEventCleanups(eventId), [eventId, reportsVersion], []);
+  const { data: cleanups, loading: cleanupsLoading, error: cleanupsError, refresh: refreshCleanups } = useAsyncData(() => fetchEventCleanups(eventId), [eventId, reportsVersion], []);
   const { data: beach, loading: beachLoading, error: beachError, refresh: refreshBeach } = useAsyncData<BeachDetail | null>(
     () => event ? getBeach(event.beachId) : Promise.resolve(null),
     [event?.beachId, reportsVersion], null,
@@ -150,10 +150,10 @@ export default function EventScreen() {
             <span><Pin color={C.lime} />{event.area}</span>
           </div>
           <div style={{ marginTop: 10, color: C.bg, fontSize: 12.5, lineHeight: 1.45 }}>
-            <strong>Meet at:</strong> {event.meetingPoint || event.area}
-            {heroMap && (
+            <strong>Meeting point:</strong> {event.meetingPoint || 'To be confirmed by the organiser.'}
+            {event.meetingPoint && (
               <a
-                href={`https://www.google.com/maps/search/?api=1&query=${heroMap[0]},${heroMap[1]}`}
+                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${event.meetingPoint}, ${event.area}`)}`}
                 target="_blank"
                 rel="noreferrer"
                 style={{ display: 'inline-block', marginLeft: 10, color: C.lime, fontWeight: 700 }}
@@ -210,8 +210,9 @@ export default function EventScreen() {
               <strong style={{ display: 'block', color: C.ink2, fontSize: 14.5 }}>{event.beachName}</strong>
               <span style={{ display: 'block', marginTop: 4, color: C.muted, fontSize: 11.5 }}>{event.area}</span>
             </div>
-            <InfoChip>{cleanups.length} {cleanups.length === 1 ? 'cleanup' : 'cleanups'}</InfoChip>
+            <InfoChip>{cleanupsLoading ? 'Loading event records…' : cleanupsError ? 'Event records unavailable' : `${cleanups.length} recorded cleanups for this event`}</InfoChip>
           </div>
+          {cleanupsError && <div><p className="coastal-footnote">Could not load cleanup records for this event.</p><TextButton onClick={() => void refreshCleanups()}>Retry event records</TextButton></div>}
           {beachLoading ? <p className="coastal-footnote" role="status">Loading current Beach Attention…</p> : beachError ? (
             <div>
               <p className="coastal-footnote">Current Beach Attention could not be loaded.</p>

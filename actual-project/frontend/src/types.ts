@@ -15,6 +15,7 @@ export type SeverityBand = 'Low' | 'Moderate' | 'High' | 'Severe';
 export type LitterCategory = 'Plastic' | 'Fishing gear' | 'Glass' | 'Metal' | 'Paper' | 'Other';
 /** How much litter. Bands, not numbers - volunteers estimate by eye. */
 export type QuantityBand = 'Small' | 'Medium' | 'Large' | 'Very Large';
+export type CleanupAfterBand = QuantityBand | 'None';
 /**
  * What happened to a submitted report.
  *   Counted     it is used in the beach score
