@@ -129,3 +129,23 @@ def test_event_details_and_recorded_checkin_include_approved_text_guidance(api):
     recorded = client.post("/cleanup-events/wildlife-live/check-in", headers=headers, json={"lat": 2.74614, "lng": 101.44024})
     assert recorded.status_code == 200 and recorded.get_json()["attendanceConfirmed"] is True
     assert recorded.get_json()["wildlifeReminder"] == ["Do not handle stranded or entangled animals", "Keep away from nests and burrows"]
+
+
+def test_single_beach_wildlife_context_uses_same_predictions_without_full_scan(api):
+    application, client = api
+    expanded = json.loads((Path(__file__).resolve().parents[1] / "data" / "expanded_beaches.json").read_text(encoding="utf-8"))
+    seed_reference_data(application.extensions["marine_engine"], expanded["beaches"])
+    target = next(beach for beach in expanded["beaches"] if beach["id"] == "bs-pasir-panjang-9")
+    assert not target["speciesNames"]
+    response = client.get("/beaches/bs-pasir-panjang-9/wildlife")
+    assert response.status_code == 200
+    row = response.get_json()
+    assert row["beachId"] == "bs-pasir-panjang-9"
+    assert row["sourceStatus"] == "modelled"
+    assert len(row["species"]) == 2
+    assert all(species["evidenceType"] == "modelled" for species in row["species"])
+    assert row["coordinateContext"]["distanceKm"] <= 15
+    assert client.get("/beaches/nonexistent/wildlife").status_code == 404
+    original = client.get("/beaches/pantai-teluk-nipah/wildlife")
+    assert original.status_code == 200
+    assert original.get_json()["sourceStatus"] == "published_reference"
