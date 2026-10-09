@@ -97,6 +97,51 @@ export default function InsightsScreen() {
   </>;
 }
 
+type WildlifeModelRow = {
+  beachId: string;
+  sourceStatus: string;
+  coordinateContext?: { distanceKm: number } | null;
+  species: { name: string; scientificName: string; locationMatchScore: number | null; evidenceType: string }[];
+};
+type WildlifeModelResponse = { beaches: WildlifeModelRow[]; note: string };
+
+function WildlifeCoverage({ beaches }: { beaches: InsightsData['wildlife'] }) {
+  const nav = useNavigate();
+  const { data: predictions, loading, error, refresh } = useAsyncData<WildlifeModelResponse | null>(
+    () => iteration3Request<WildlifeModelResponse>('/insights/wildlife'), [], null,
+  );
+  const byBeach = new Map((predictions?.beaches ?? []).map(row => [row.beachId, row]));
+  const publishedCount = beaches.filter(beach => beach.species.length > 0).length;
+  const modelledCount = beaches.filter(beach => !beach.species.length && (byBeach.get(beach.beachId)?.species.length ?? 0) > 0).length;
+  const unavailableCount = beaches.length - publishedCount - modelledCount;
+  return <>
+    <SummaryCard eyebrow="Wildlife coverage · published & modelled context" value={beaches.length}
+      description={`beaches · ${publishedCount} with published references · ${modelledCount} with modelled context`} />
+    <p className="coastal-footnote">All registered beaches are listed. Published reference species and coordinate-based nearby marine-grid model suggestions are separate kinds of evidence; neither confirms sightings at these beaches.</p>
+    {loading && <p className="coastal-footnote">Loading nearby marine-grid context for beaches without published references…</p>}
+    {error && <DataUnavailable title="Modelled biodiversity temporarily unavailable" retry={() => { void refresh(); }}>Published references are still shown. The modelled suggestions could not be loaded.</DataUnavailable>}
+    {!loading && unavailableCount > 0 && <p className="coastal-footnote">{unavailableCount} beaches have no currently available species suggestion. This is not evidence that wildlife is absent.</p>}
+    {beaches.map(beach => {
+      const model = byBeach.get(beach.beachId);
+      const isPublished = beach.species.length > 0;
+      const names = isPublished ? beach.species : model?.species.map(item => item.name) ?? [];
+      const contextLabel = isPublished ? 'Published coastal reference' : names.length
+        ? `Modelled marine-grid context${model?.coordinateContext ? ` · ${model.coordinateContext.distanceKm.toFixed(1)} km reference distance` : ''}`
+        : 'Species context not yet available';
+      const habitat = beach.habitat === 'Biodiversity information not yet available'
+        ? 'Marine habitat not individually documented' : beach.habitat;
+      return <button className="wildlife-beach-card" key={beach.beachId} onClick={() => nav('/beach/' + beach.beachId)}>
+        <span><strong>{beach.name}</strong><small>{habitat} · {beach.activeReports} active litter reports</small><small>{contextLabel}</small></span>
+        <span className="wildlife-species">{names.length ? names.map(name => {
+          const photo = speciesPhoto(name);
+          return <span key={name} className={photo ? 'has-photo' : undefined}>{photo && <img src={photo} alt="" loading="lazy" />}{name}</span>;
+        }) : <span>{loading ? 'Checking model…' : 'No species suggestion available'}</span>}</span>
+      </button>;
+    })}
+    <p className="coastal-footnote">Model suggestions use frozen historical OBIS-derived scores from a marine grid within 15 km of each supplied reference coordinate. They are not occurrence probabilities, verified observations, or evidence of wildlife impact. Open a beach for litter and habitat context; modelled species here are nearby-grid suggestions only.</p>
+  </>;
+}
+
 function LiveInsightsScreen({ personalAction }: { personalAction: ReactNode }) {
   const { topic = '', beachId } = useParams();
   const nav = useNavigate();
@@ -274,15 +319,7 @@ function LiveInsightsScreen({ personalAction }: { personalAction: ReactNode }) {
       {selected && <GhostButton onClick={() => nav('/insights/cleanup-history')}>All Cleanup History</GhostButton>}
     </> : <DataUnavailable title={selected ? 'Cleanup not in this window' : 'No cleanup history yet'}>This history includes recorded cleanup actions from the last 90 days.</DataUnavailable>;
   } else {
-    const species = new Set(data.wildlife.flatMap(b => b.species));
-    body = <>
-      <SummaryCard eyebrow="Published coastal reference context" value={species.size} description={`species or groups referenced across ${data.wildlife.length} beaches`} />
-      {data.wildlife.length ? data.wildlife.map(beach => <button className="wildlife-beach-card" key={beach.beachId} onClick={() => nav('/beach/' + beach.beachId)}>
-        <span><strong>{beach.name}</strong><small>{beach.habitat} · {beach.activeReports} active litter reports</small></span>
-        <span className="wildlife-species">{beach.species.map(name => { const photo = speciesPhoto(name); return <span key={name} className={photo ? 'has-photo' : undefined}>{photo && <img src={photo} alt="" loading="lazy" />}{name}</span>; })}</span>
-      </button>) : <DataUnavailable title="No reference records available">Published coastal reference records will appear when available.</DataUnavailable>}
-      <p className="coastal-footnote">These are published references, not sightings or verified wildlife impacts. Litter reports are shown as separate local context. Open a beach for sources and model scope.</p>
-    </>;
+    body = <WildlifeCoverage beaches={data.wildlife} />;
   }
   return <CoastalPage title={title} className={!topic ? 'insights-hub' : ''} eyebrow={data ? `Saved records · as of ${formatDate(data.asOf)}` : 'Insights'}
     back={beachId ? '/beach/' + beachId : topic ? '/insights' : undefined}

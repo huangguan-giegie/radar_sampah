@@ -1,6 +1,7 @@
 """Approved-content publication gates and public conservation contracts."""
 
 import json
+from pathlib import Path
 from copy import deepcopy
 from datetime import datetime, timedelta, timezone
 
@@ -9,7 +10,7 @@ from sqlalchemy import insert
 
 from api_tests_core import api, signup
 from wildlife import approved_card, conservation_cards, load_content, risk_entries
-from app import events_table
+from app import events_table, seed_reference_data
 
 
 def test_public_conservation_cards_are_complete_and_have_exactly_three_questions(api):
@@ -90,10 +91,25 @@ def test_risk_lookup_uses_only_approved_report_categories_and_cautious_sources(a
 
 
 def test_public_wildlife_panel_is_coarse_and_independent_of_attention(api):
-    _, client = api
+    application, client = api
+    # The shared legacy fixture seeds only the 101 reference beaches.
+    # Add the 82-row export (four ids overlap) to exercise the 179-beach release.
+    expanded = json.loads((Path(__file__).resolve().parents[1] / "data" / "expanded_beaches.json").read_text(encoding="utf-8"))
+    seed_reference_data(application.extensions["marine_engine"], expanded["beaches"])
     body = client.get("/insights/wildlife").get_json()
-    assert len(body["beaches"]) == 4
+    from app import load_beaches
+    catalogue = load_beaches(application.extensions["marine_engine"])
+    assert len(body["beaches"]) == len(catalogue) == 179
+    assert len({row["beachId"] for row in body["beaches"]}) == 179
+    assert len(client.get("/insights").get_json()["wildlife"]) == 179
     assert all(len(row["species"]) <= 2 for row in body["beaches"])
+    by_id = {row["beachId"]: row for row in body["beaches"]}
+    without_published = [beach for beach in catalogue if not beach["speciesNames"]]
+    assert len(without_published) == 78
+    assert all(by_id[beach["id"]]["sourceStatus"] == "modelled" for beach in without_published)
+    assert all(by_id[beach["id"]]["species"] for beach in without_published)
+    assert all(item["evidenceType"] == "modelled"
+               for beach in without_published for item in by_id[beach["id"]]["species"])
     assert not any(key in json.dumps(body) for key in ['"lat"', '"lng"', '"participantId"', '"reporterId"', '"attentionScore"'])
     assert "not probabilities" in body["note"]
 

@@ -258,7 +258,7 @@ def build_insights(engine: Any, impl: Any, *, now: datetime | None = None,
         "participationBasis": "Person-event records for events that started in the last 90 days. Joining reflects current memberships; attendance and cleanup are recorded actions. Steps are independent counts, not a conversion rate.",
         "wildlife": [{"beachId": b["id"], "name": b["name"], "habitat": b["habitat"],
                       "species": b["speciesNames"], "activeReports": b["activeReports"],
-                      "composition": b["composition"]} for b in beach_rows if b["speciesNames"]],
+                      "composition": b["composition"]} for b in beach_rows],
     }
 
 

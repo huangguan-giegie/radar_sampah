@@ -160,36 +160,96 @@ def beach_risk_entries(engine: Any, impl: Any, beach_id: str) -> list[dict[str, 
 
 
 def wildlife_panel(application: Any, engine: Any, impl: Any) -> dict[str, Any]:
+    """One row per registered beach, with published or explicitly modelled context.
+
+    Published references and nearby-marine predictions are different evidence
+    classes. Neither represents confirmed observations at a named beach.
+    """
     cards = {card["scientificName"]: card for card in conservation_cards(engine, impl)}
+    cached = application.extensions.setdefault("wildlife_nearby_cache", {})
+    model = application.extensions.get("species_distribution_model")
     rows = []
     for beach in impl.load_beaches(engine):
-        if beach["id"] not in MVP_BEACHES:
-            continue
+        beach_id = beach["id"]
+        published = beach.get("species") or []
         predictions = []
         result = {}
-        try:
-            result = application.extensions["species_distribution_model"].predict_nearby_marine(
-                beach["lat"], beach["lng"], max_distance_km=15, top_k=40,
-            )
-            predictions = result.get("topPredictions", [])
-        except (AttributeError, KeyError, ValueError, RuntimeError):
-            pass
-        modelled = []
-        for prediction in predictions:
-            card = cards.get(prediction.get("scientificName"))
-            if card is None:
-                continue
-            modelled.append({"id": card["id"], "name": card["name"], "scientificName": card["scientificName"],
-                             "relativeOccurrenceScore": prediction.get("relativeOccurrenceScore"),
-                             "locationMatchScore": prediction.get("locationMatchScore"),
-                             "source": {"label": "OBIS packaged relative-occurrence model", "url": "https://obis.org/"},
-                             "sources": card["sources"], "reviewDate": card["reviewDate"], "destination": card["destination"]})
-        rows.append({"beachId": beach["id"], "beachName": beach["name"], "species": modelled[:2],
-                     "coordinateContext": result.get("coordinateContext"),
-                     "modelCount": result.get("modelCount"), "modelVersion": result.get("modelVersion"),
-                     "ecologicalNote": "Approved species cards provide general conservation context; this panel does not record local sightings.",
-                     "sourceStatus": "ready" if modelled else "unavailable"})
-    return {"beaches": rows, "note": "Modelled relative scores are not probabilities or confirmed sightings and do not change Beach Attention."}
+        # Curated beaches retain their published references. Only the four
+        # pilot cards and beaches missing those references need model inference.
+        if model is not None and (beach_id in MVP_BEACHES or not published):
+            lat, lng = beach.get("lat"), beach.get("lng")
+            if isinstance(lat, (int, float)) and isinstance(lng, (int, float)):
+                key = (float(lat), float(lng))
+                try:
+                    if key not in cached:
+                        cached[key] = model.predict_nearby_marine(lat, lng, max_distance_km=15, top_k=40)
+                    result = cached[key]
+                    predictions = result.get("topPredictions", [])
+                except (AttributeError, KeyError, ValueError, RuntimeError):
+                    pass
+
+        species = []
+        source_status = "unavailable"
+        if beach_id in MVP_BEACHES:
+            for prediction in predictions:
+                card = cards.get(prediction.get("scientificName"))
+                if card is None:
+                    continue
+                species.append({
+                    "id": card["id"], "name": card["name"],
+                    "scientificName": card["scientificName"],
+                    "relativeOccurrenceScore": prediction.get("relativeOccurrenceScore"),
+                    "locationMatchScore": prediction.get("locationMatchScore"),
+                    "source": {"label": "OBIS packaged relative-occurrence model", "url": "https://obis.org/"},
+                    "sources": card["sources"], "reviewDate": card["reviewDate"],
+                    "destination": card["destination"], "evidenceType": "modelled",
+                })
+            species = species[:2]
+            source_status = "modelled" if species else "unavailable"
+        elif published:
+            for reference in published:
+                source = reference.get("source") or {}
+                if not reference.get("name") or not str(source.get("url", "")).startswith("https://"):
+                    continue
+                species.append({
+                    "id": reference.get("scientificName") or reference["name"],
+                    "name": reference["name"], "scientificName": reference.get("scientificName"),
+                    "relativeOccurrenceScore": None, "locationMatchScore": None,
+                    "source": {"label": source.get("citation") or "Published coastal reference",
+                               "url": source["url"]},
+                    "sources": [{"label": source.get("citation") or "Published coastal reference",
+                                 "url": source["url"]}],
+                    "reviewDate": None, "destination": "/beach/" + beach_id,
+                    "evidenceType": "published_reference",
+                })
+                if len(species) == 2:
+                    break
+            source_status = "published_reference" if species else "unavailable"
+        else:
+            for prediction in predictions[:2]:
+                species.append({
+                    "id": prediction["speciesSlug"],
+                    "name": prediction.get("commonNameEn") or prediction["scientificName"],
+                    "scientificName": prediction["scientificName"],
+                    "relativeOccurrenceScore": prediction.get("relativeOccurrenceScore"),
+                    "locationMatchScore": prediction.get("locationMatchScore"),
+                    "source": {"label": "OBIS-derived marine-grid model", "url": "https://obis.org/"},
+                    "sources": prediction.get("sources", []),
+                    "reviewDate": None, "destination": "/beach/" + beach_id,
+                    "evidenceType": "modelled",
+                })
+            source_status = "modelled" if species else "unavailable"
+        rows.append({
+            "beachId": beach_id, "beachName": beach["name"], "species": species,
+            "coordinateContext": result.get("coordinateContext"),
+            "modelCount": result.get("modelCount"), "modelVersion": result.get("modelVersion"),
+            "ecologicalNote": "Published context or nearby marine-grid estimates; not beach sightings or measured wildlife impact.",
+            "sourceStatus": source_status,
+        })
+    return {
+        "beaches": rows,
+        "note": "All registered beaches are shown. Published references and modelled nearby marine-grid estimates are distinct. Model scores are not probabilities or confirmed sightings, and do not change Beach Attention.",
+    }
 
 
 def install_wildlife(application: Any, engine: Any, impl: Any, jwt_secret: str | None = None) -> None:
