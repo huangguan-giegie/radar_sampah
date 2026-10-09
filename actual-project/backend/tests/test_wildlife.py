@@ -97,7 +97,8 @@ def test_public_wildlife_panel_is_coarse_and_independent_of_attention(api):
     expanded = json.loads((Path(__file__).resolve().parents[1] / "data" / "expanded_beaches.json").read_text(encoding="utf-8"))
     seed_reference_data(application.extensions["marine_engine"], expanded["beaches"])
     body = client.get("/insights/wildlife").get_json()
-    catalogue = client.get("/beaches").get_json()
+    from app import load_beaches
+    catalogue = load_beaches(application.extensions["marine_engine"])
     assert len(body["beaches"]) == len(catalogue) == 179
     assert len({row["beachId"] for row in body["beaches"]}) == 179
     assert len(client.get("/insights").get_json()["wildlife"]) == 179
