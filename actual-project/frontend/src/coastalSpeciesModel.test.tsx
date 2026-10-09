@@ -1,4 +1,5 @@
 import appSource from './App.tsx?raw';
+import coastalStyles from './styles/iteration3.css?raw';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { StaticRouter } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
@@ -76,6 +77,20 @@ describe('teammate frontend v2 beach integration', () => {
     expect(html).toContain('Insufficient Data');
     expect(html).toContain('At least 3 active reports are needed in both 90-day windows');
     expect(html).toContain('View Trend');
+  });
+
+  it('keeps the wildlife explanation behind a help button and insets the sources link on phones', () => {
+    const html = renderBeach();
+    expect(html).toContain('wildlife-evidence-actions');
+    expect(html).toContain('aria-label="About wildlife evidence"');
+    expect(html).toContain('aria-haspopup="dialog"');
+    expect(html).toContain('Wildlife sources ↗');
+    expect(html).not.toContain('Published coastal reference · not confirmed beach sightings');
+    expect(coastalStyles).toContain('.wildlife-evidence-actions {');
+    expect(coastalStyles).toContain('padding-inline-end: 22px;');
+    expect(coastalStyles).toContain('justify-content: space-between;');
+    expect(coastalStyles).toContain('.wildlife-evidence-link {');
+    expect(coastalStyles).toContain('white-space: nowrap;');
   });
 
   it('uses the verified v2 species media on the beach page', () => {
