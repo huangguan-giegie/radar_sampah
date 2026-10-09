@@ -26,6 +26,7 @@ import {
 } from "../components/CoastalUI";
 import { Camera, Check, CommunityIcon } from "../components/Icon";
 import { SpeciesPicture } from "../components/SpeciesPicture";
+import { ModelSpeciesPicture } from "../components/ModelSpeciesPicture";
 import { attentionStateFor, C, formatDate, SEVERITY, severityLabel } from "../theme";
 import { hasDraftProgress, resumePath } from "../flowRules";
 import { compositionFooter } from "./BeachScreen";
@@ -370,6 +371,7 @@ export default function CoastalBeachScreen() {
                 <div className="coastal-grid-two" style={{ marginTop: 16 }}>
                   {wildlife.species.map((item) => (
                     <WhiteCard key={item.id}>
+                      {item.scientificName && <ModelSpeciesPicture name={item.name} scientificName={item.scientificName} />}
                       <strong>{item.name}</strong>
                       {item.scientificName && item.scientificName.toLowerCase() !== item.name.toLowerCase() && (
                         <p className="subtle"><i>{item.scientificName}</i></p>
