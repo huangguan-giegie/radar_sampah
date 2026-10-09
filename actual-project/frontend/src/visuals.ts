@@ -1,4 +1,5 @@
 import content from "./content/coastalContent.json";
+import { modelSpeciesPhoto, type PhotoReference } from "./modelSpeciesPhotos";
 
 /**
  * Real photos for places where the UI used to fall back to a drawn glyph.
@@ -35,6 +36,9 @@ const SPECIES_BY_NAME = new Map(
 // Habitat and group names used in the published reference lists.
 const GROUP_PHOTOS: Record<string, string> = {
   "mangrove habitat": PHOTOS.mangrove,
+  "mangrove belt": PHOTOS.mangrove,
+  "marine fish": "/species/ocellaris-clownfish.jpg", // representative group example, not species identification
+  "migratory shorebirds": PHOTOS.shorebirds,
   "mangrove fringe": PHOTOS.mangrove,
   mangroves: PHOTOS.mangrove,
   "seagrass patches": PHOTOS.seagrass,
@@ -46,7 +50,20 @@ const GROUP_PHOTOS: Record<string, string> = {
 /** Photo for a species or habitat named in reference content, if the project has one. */
 export function speciesPhoto(name: string): string | null {
   const key = name.trim().toLowerCase();
-  return SPECIES_BY_NAME.get(key) ?? GROUP_PHOTOS[key] ?? null;
+  return SPECIES_BY_NAME.get(key) ?? modelSpeciesPhoto(name)?.image ?? GROUP_PHOTOS[key] ?? null;
+}
+
+/** Photo provenance for a card, including model-only species absent from the curated guide. */
+export function speciesPhotoReference(name: string): PhotoReference | null {
+  const existing = content.species.find(item => item.name.toLowerCase() === name.toLowerCase());
+  if (existing?.image) {
+    return { image: existing.image, creditsUrl: existing.photoSource || "/credits",
+      note: "Published species reference photo" };
+  }
+  const model = modelSpeciesPhoto(name);
+  if (model) return model;
+  const group = GROUP_PHOTOS[name.trim().toLowerCase()];
+  return group ? { image: group, creditsUrl: "/credits", note: "Regional habitat example" } : null;
 }
 
 /** First species photo of a habitat, so each habitat row shows its own life. */
