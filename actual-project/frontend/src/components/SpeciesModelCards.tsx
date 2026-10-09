@@ -1,8 +1,7 @@
 import { ApiError } from '../api';
-import { Info, SpeciesIcon } from './Icon';
 import { ErrorNote, Skeleton } from './ui';
 import { C, MONO } from '../theme';
-import { glyphForSpeciesCategory, mediaForScientificName } from '../speciesMedia';
+import { ModelSpeciesPicture } from './ModelSpeciesPicture';
 import type { SpeciesDistributionResult, SpeciesPrediction } from '../types';
 
 export function decimalScoreLabel(value: number): string {
@@ -74,18 +73,10 @@ export function SpeciesModelCards({
       ) : (
         <div className="scroll-x" style={{ display: 'flex', gap: 12, paddingBottom: 6, margin: '0 -16px', paddingInline: 16, scrollSnapType: 'x proximity' }}>
           {cards.map((prediction) => {
-            const media = mediaForScientificName(prediction.scientificName);
-            const glyph = glyphForSpeciesCategory(prediction.category ?? '');
             return (
               <article key={prediction.scientificName} data-species-card={prediction.scientificName} style={{ width: 226, flex: 'none', background: C.white, border: `1px solid ${C.line}`, borderRadius: 22, overflow: 'hidden', scrollSnapAlign: 'start', boxShadow: '0 10px 26px -24px rgba(11,33,97,.7)' }}>
-                <div style={{ height: 132, position: 'relative', overflow: 'hidden', background: media ? scene : C.tint }}>
-                  {media ? (
-                    <img src={media.imageUrl} alt={media.imageAlt} loading="lazy" style={{ width: '100%', height: '100%', display: 'block', objectFit: 'cover', objectPosition: media.imageObjectPosition ?? 'center' }} />
-                  ) : (
-                    <div aria-hidden="true" style={{ height: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                      {glyph ? <SpeciesIcon glyph={glyph} size={48} /> : <Info size={48} color={C.slate} />}
-                    </div>
-                  )}
+                <div style={{ height: 132, position: 'relative', background: scene }}>
+                  <ModelSpeciesPicture name={prediction.commonNameEn || prediction.scientificName} scientificName={prediction.scientificName} compact />
                   <div style={{ position: 'absolute', right: 10, bottom: 10, padding: '5px 9px', borderRadius: 999, background: 'rgba(7,22,50,.82)', color: C.bg, fontFamily: MONO, fontSize: 9.5, fontWeight: 700 }}>
                     Location match {locationMatchLabel(prediction.locationMatchScore)}
                   </div>
@@ -100,7 +91,7 @@ export function SpeciesModelCards({
                     <div style={{ marginTop: 7 }}>Raw relative score: {decimalScoreLabel(prediction.relativeOccurrenceScore)} (0–1)</div>
                     <div>{recordYearsLabel(prediction)}</div>
                     <div>Historical source records describe the model inputs, not a current beach observation.</div>
-                    {media && <div style={{ marginTop: 7 }}>Photo: <a href={media.imageSourceUrl} target="_blank" rel="noreferrer" style={{ color: C.slate, textDecoration: 'underline' }}>{media.imageAuthor}</a>{' · '}<a href={media.imageLicenseUrl} target="_blank" rel="noreferrer" style={{ color: C.slate, textDecoration: 'underline' }}>{media.imageLicense}</a></div>}
+
                   </details>
                 </div>
               </article>
