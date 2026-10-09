@@ -78,6 +78,15 @@ describe('teammate frontend v2 beach integration', () => {
     expect(html).toContain('View Trend');
   });
 
+  it('keeps the wildlife explanation behind a help button and insets the sources link on phones', () => {
+    const html = renderBeach();
+    expect(html).toContain('wildlife-evidence-actions');
+    expect(html).toContain('aria-label="About wildlife evidence"');
+    expect(html).toContain('aria-haspopup="dialog"');
+    expect(html).toContain('Wildlife sources ↗');
+    expect(html).not.toContain('Published coastal reference · not confirmed beach sightings');
+  });
+
   it('uses the verified v2 species media on the beach page', () => {
     const html = renderBeach();
     expect(html).toContain('/images/coastal/thalassina-kelanang.jpg');

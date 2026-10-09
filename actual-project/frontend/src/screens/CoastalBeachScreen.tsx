@@ -62,6 +62,7 @@ export default function CoastalBeachScreen() {
   } = useApp();
   const [draftChoice, setDraftChoice] = useState(false);
   const [unsupported, setUnsupported] = useState(false);
+  const [showWildlifeEvidenceInfo, setShowWildlifeEvidenceInfo] = useState(false);
   const {
     data: detail,
     loading,
@@ -162,6 +163,11 @@ export default function CoastalBeachScreen() {
   const currentSpecies = wildlife?.species ?? [];
   const hasWildlifeContext = wildlife !== null;
   const showLegacyExamples = previewOnly || (Boolean(wildlifeError) && !wildlifeLoading);
+  const wildlifeEvidenceNote = hasWildlifeContext && wildlife?.sourceStatus === "modelled"
+    ? `Nearby OBIS-derived marine-grid suggestions${wildlife.coordinateContext ? ` · ${wildlife.coordinateContext.distanceKm.toFixed(1)} km to reference cell` : ""} · Not confirmed beach sightings or occurrence probabilities`
+    : hasWildlifeContext && wildlife?.sourceStatus === "published_reference"
+      ? "Published coastal reference · not confirmed beach sightings"
+      : showLegacyExamples ? "Regional examples · not sightings" : "No verified species observations are claimed";
   const goMap = () => nav("/map?region=" + region);
   return (
     <main className="screen scroll-y coastal-screen">
@@ -367,15 +373,22 @@ export default function CoastalBeachScreen() {
                 ))}
             </div>
           )}
-          <div className="section-heading" style={{ marginTop: 12 }}>
-            <p className="coastal-footnote">
-              {hasWildlifeContext && wildlife?.sourceStatus === "modelled"
-                ? `Nearby OBIS-derived marine-grid suggestions${wildlife.coordinateContext ? ` · ${wildlife.coordinateContext.distanceKm.toFixed(1)} km to reference cell` : ""} · Not confirmed beach sightings or occurrence probabilities`
-                : hasWildlifeContext && wildlife?.sourceStatus === "published_reference"
-                  ? "Published coastal reference · not confirmed beach sightings"
-                  : showLegacyExamples ? "Regional examples · not sightings" : "No verified species observations are claimed"}
-            </p>
-            <button onClick={() => nav(hasWildlifeContext ? "/insights/wildlife" : "/marine-area/" + region + "?beach=" + beachId)}>
+          <div className="wildlife-evidence-actions">
+            <button
+              type="button"
+              className="wildlife-evidence-help"
+              aria-label="About wildlife evidence"
+              title="About wildlife evidence"
+              aria-haspopup="dialog"
+              onClick={() => setShowWildlifeEvidenceInfo(true)}
+            >
+              ?
+            </button>
+            <button
+              type="button"
+              className="wildlife-evidence-link"
+              onClick={() => nav(hasWildlifeContext ? "/insights/wildlife" : "/marine-area/" + region + "?beach=" + beachId)}
+            >
               {hasWildlifeContext ? "Wildlife sources ↗" : "Sources ↗"}
             </button>
           </div>
@@ -428,6 +441,19 @@ export default function CoastalBeachScreen() {
         <GhostButton onClick={goMap}>Back to Map</GhostButton>
         {USE_MOCK && <p className="demo-label">Preview · example data</p>}
       </div>
+      {showWildlifeEvidenceInfo && (
+        <Sheet title="About wildlife evidence" onClose={() => setShowWildlifeEvidenceInfo(false)}>
+          <p className="subtle" style={{ lineHeight: 1.65 }}>{wildlifeEvidenceNote}</p>
+          <p className="coastal-footnote" style={{ fontSize: 12 }}>
+            {hasWildlifeContext && wildlife?.sourceStatus === "modelled"
+              ? "These historical marine-grid model suggestions describe a nearby reference location, not a survey of this beach. Neither the predictions nor their scores establish a local sighting or an occurrence probability."
+              : hasWildlifeContext && wildlife?.sourceStatus === "published_reference"
+                ? "Published coastal references give ecological context. They do not establish that the species was observed at this beach."
+                : "Regional examples or missing records are not evidence that wildlife is present or absent at this beach."}
+          </p>
+          <GhostButton onClick={() => setShowWildlifeEvidenceInfo(false)}>Close</GhostButton>
+        </Sheet>
+      )}
       {draftChoice && (
         <DraftChoiceDialog
           onCancel={() => setDraftChoice(false)}
