@@ -28,7 +28,6 @@ export interface InsightCleanup {
   id: string;
   beachId: string;
   beachName: string;
-  targetReportId: string | null;
   eventId: string | null;
   createdAt: string;
   handling: string;
@@ -37,6 +36,7 @@ export interface InsightCleanup {
   nextReportedAt: string | null;
   daysUntilNextReport: number | null;
   daysSinceCleanup: number | null;
+  followUpStatus?: string;
 }
 
 export interface InsightsData {
@@ -57,7 +57,7 @@ export interface InsightsData {
     handling: [string, number][];
     history: InsightCleanup[];
   };
-  participation: Record<string, [number, number, number]>;
+  participation: Record<string, [number | string, number | string, number | string]>;
   participationBasis: string;
   wildlife: { beachId: string; name: string; habitat: string; species: string[]; activeReports: number; composition: [string, number][] }[];
 }

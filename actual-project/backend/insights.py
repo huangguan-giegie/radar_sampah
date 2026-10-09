@@ -19,6 +19,7 @@ from flask import jsonify, request
 from sqlalchemy import func, select
 
 from standalone_cleanup import BAND_UNITS, _active_quantities, _current_band_state
+from recurrence import recurrence_records
 
 
 def _month_start(value: datetime, offset: int = 0) -> datetime:
@@ -170,6 +171,7 @@ def build_insights(engine: Any, impl: Any, *, now: datetime | None = None,
         })
 
     recent_actions = [a for a in actions if impl.utc_datetime(a.created_at) >= cutoff]
+    recurrence_by_cleanup = {row["cleanupId"]: row for row in recurrence_records(engine, impl, current)}
     beach_names = {b["id"]: b["name"] for b in beaches}
     history = []
     remainder_totals: dict[str, int] = defaultdict(int)
@@ -211,17 +213,18 @@ def build_insights(engine: Any, impl: Any, *, now: datetime | None = None,
         else:
             removed = _map(getattr(action, "removed_quantities", None))
             rows = [{"category": category, "removedBand": band} for category, band in removed.items()]
+        recurrence = recurrence_by_cleanup.get(action.id)
         following = next((r for r in reports_by_beach[action.beach_id]
                           if impl.utc_datetime(r.created_at) > impl.utc_datetime(action.created_at)), None)
-        elapsed = ((impl.utc_datetime(following.created_at) if following else current) - impl.utc_datetime(action.created_at)).total_seconds() / 86400
         history.append({
             "id": action.id, "beachId": action.beach_id, "beachName": beach_names.get(action.beach_id, action.beach_id),
-            "targetReportId": action.target_report_id, "eventId": action.event_id,
+            "eventId": action.event_id,
             "createdAt": impl.contract_timestamp(action.created_at), "handling": action.handling,
             "rows": rows, "linked": action.target_report_id is not None,
             "nextReportedAt": impl.contract_timestamp(following.created_at) if following else None,
-            "daysUntilNextReport": round(elapsed, 1) if following else None,
-            "daysSinceCleanup": round(elapsed, 1) if following is None else None,
+            "daysUntilNextReport": recurrence["intervalDays"] if recurrence and recurrence["intervalDays"] is not None else None,
+            "daysSinceCleanup": recurrence["daysSinceCleanup"] if recurrence and not following else None,
+            "followUpStatus": recurrence["status"] if recurrence else "No follow-up report yet",
         })
     history.reverse()
     remaining = [[c, round(remainder_present[c] * 100 / remainder_totals[c]), remainder_totals[c]]

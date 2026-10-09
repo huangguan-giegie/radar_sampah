@@ -41,6 +41,7 @@ from standalone_cleanup import (
 from v3_contract import install_v3_contract
 from account import install_account
 from insights import install_insights
+from recurrence import install_recurrence
 from recommendations import install_recommendations
 from species_questions import install_species_questions
 from wildlife import install_wildlife
@@ -577,6 +578,7 @@ def create_app(
     install_v3_contract(application, engine, jwt_secret, _impl)
     install_account(application, engine, jwt_secret, _impl)
     install_insights(application, engine, jwt_secret, _impl)
+    install_recurrence(application, engine, jwt_secret, _impl)
     install_recommendations(application, engine, jwt_secret, _impl)
     install_species_questions(application)
     install_wildlife(application, engine, _impl, jwt_secret)

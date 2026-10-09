@@ -31,6 +31,7 @@ import { hasDraftProgress, resumePath } from "../flowRules";
 import { compositionFooter } from "./BeachScreen";
 import { BandMeter } from "../components/ds";
 import { cleanupDestination } from "../cleanupFlow";
+import { RecurrenceEvidence } from "../components/RecurrenceEvidence";
 import type { SeverityBand } from "../types";
 import { useAppBack } from "../navigation";
 import { eventIsAvailable, useEventClock } from "../eventAvailability";
@@ -427,9 +428,9 @@ export default function CoastalBeachScreen() {
           <WhiteCard>
             <p className="eyebrow">Latest Recorded Cleanup</p>
             <h2>{formatDate(cleanup.createdAt)}</h2>
-            <p className="subtle">
-              A new counted report helps show what happened after the cleanup.
-            </p>
+            {detail?.recurrence ? <RecurrenceEvidence evidence={detail.recurrence} /> : (
+              <p className="subtle">Cleanup recorded - awaiting follow-up.</p>
+            )}
             <button
               style={{ marginTop: 14 }}
               onClick={() => nav("/cleanup/result/" + cleanup.id)}

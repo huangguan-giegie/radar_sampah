@@ -92,6 +92,7 @@ export default function InsightsScreen() {
         </DataUnavailable>
       )}
       <GhostButton onClick={() => { setPersonalOpen(false); nav('/insights'); }}>View Beach Insights</GhostButton>
+      <GhostButton style={{ marginTop: 16 }} onClick={() => { setPersonalOpen(false); nav(personal?.links.map ?? '/map'); }}>Open the map</GhostButton>
       <GhostButton style={{ marginTop: 16 }} onClick={() => nav('/reports')}>My Reports</GhostButton>
     </Sheet>}
   </>;
@@ -235,6 +236,7 @@ function LiveInsightsScreen({ personalAction }: { personalAction: ReactNode }) {
       </WhiteCard>
       <WhiteCard><p className="eyebrow">Current litter by category</p>
         {beach.composition.length ? <MetricBars rows={beach.composition} /> : <p className="subtle">No active litter reports in this window.</p>}
+        {beach.composition.length > 0 && <p className="subtle">Largest share of weighted reported composition: {beach.composition[0][0]} ({beach.composition[0][1]}%).</p>}
         <p className="coastal-footnote">Weighted share of reported quantity bands from {beach.activeReports} active reports in the last 90 days.</p>
       </WhiteCard>
       <PrimaryButton onClick={() => nav('/community?beach=' + beach.id)}>Find a Cleanup Here</PrimaryButton>
@@ -265,7 +267,9 @@ function LiveInsightsScreen({ personalAction }: { personalAction: ReactNode }) {
   } else if (topic === 'participation') {
     const selected = params.get('beach') ?? 'all';
     const values = data.participation[selected] ?? data.participation.all ?? [0, 0, 0];
-    const max = Math.max(1, ...values);
+    const displayValues = values.map(value => typeof value === 'number' && value < 3 ? 'Fewer than 3' : value);
+    const numericValues = values.filter((value): value is number => typeof value === 'number');
+    const max = Math.max(1, ...numericValues);
     body = <>
       <label className="eyebrow" htmlFor="insight-participation-beach">Beach</label>
       <select id="insight-participation-beach" className="coastal-input" value={selected} onChange={e => update('beach', e.target.value === 'all' ? '' : e.target.value)}>
@@ -273,8 +277,8 @@ function LiveInsightsScreen({ personalAction }: { personalAction: ReactNode }) {
       </select>
       <SummaryCard eyebrow="Participation records · last 90 days">
         {['Joined', 'Recorded attendance', 'At a recorded cleanup'].map((label, index) => <div className="metric-bar" key={label}>
-          <div><span>{label}</span><strong style={{ color: C.lime }}>{values[index]}</strong></div>
-          <div className="metric-track" style={{ background: '#ffffff1a' }}><i style={{ background: C.lime, width: values[index] / max * 100 + '%' }} /></div>
+            <div><span>{label}</span><strong style={{ color: C.lime }}>{displayValues[index]}</strong></div>
+          <div className="metric-track" style={{ background: '#ffffff1a' }}><i style={{ background: C.lime, width: typeof values[index] === 'number' ? values[index] / max * 100 + '%' : '0%' }} /></div>
         </div>)}
         <p className="coastal-footnote" style={{ color: '#ffffffb3' }}>{data.participationBasis}</p>
       </SummaryCard>
@@ -302,7 +306,7 @@ function LiveInsightsScreen({ personalAction }: { personalAction: ReactNode }) {
       <WhiteCard><p className="eyebrow">How litter was handled</p><MetricBars rows={data.cleanup.handling} /><p className="coastal-footnote">Share of cleanup records, as recorded by participants.</p></WhiteCard>
       <WhiteCard><p className="eyebrow">Days until the next counted report</p>
         {data.cleanup.history.slice(0, 5).map(cleanup => <LinkRow key={cleanup.id} title={cleanup.beachName}
-          subtitle={`Cleaned ${formatDate(cleanup.createdAt)} · ${cleanup.nextReportedAt ? `${cleanup.daysUntilNextReport} days until next report` : `No follow-up report yet · ${cleanup.daysSinceCleanup} days`}`}
+          subtitle={`Cleaned ${formatDate(cleanup.createdAt)} · ${cleanup.nextReportedAt ? `${cleanup.daysUntilNextReport} days until next report` : `${cleanup.followUpStatus ?? 'No follow-up report yet'} · ${cleanup.daysSinceCleanup} days since cleanup`}`}
           onClick={() => nav('/insights/cleanup-history?cleanup=' + cleanup.id)} />)}
         <p className="coastal-footnote">Time to the next report anywhere at this beach. A later report does not establish that litter returned at the cleaned spot.</p>
       </WhiteCard><GhostButton onClick={() => nav('/insights/cleanup-history')}>View Cleanup History</GhostButton>

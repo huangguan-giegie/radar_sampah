@@ -9,6 +9,9 @@ from typing import Any
 
 from flask import jsonify, request
 from sqlalchemy import Boolean, Column, DateTime, ForeignKey, MetaData, String, Table, func, select
+from sqlalchemy.exc import IntegrityError
+
+from contributions import recorded_attendance_query, validate_nickname
 
 
 def valid_nickname(value: Any) -> bool:
@@ -47,6 +50,14 @@ def install_account(application: Any, engine: Any, jwt_secret: str, impl: Any) -
                 return connection.execute(select(impl.users_table).where(impl.users_table.c.id == user_id)).first()
         return None
 
+    def eligible_attendance_query():
+        attendance_rows = recorded_attendance_query(impl).subquery("recorded_attendance")
+        return select(attendance_rows.c.participant_id, attendance_rows.c.event_id).select_from(
+            attendance_rows.join(impl.events_table, attendance_rows.c.event_id == impl.events_table.c.id)
+            .join(impl.cleanup_actions_table, (impl.cleanup_actions_table.c.event_id == impl.events_table.c.id)
+                  & (impl.cleanup_actions_table.c.beach_id == impl.events_table.c.beach_id))
+        ).where(func.coalesce(impl.cleanup_actions_table.c.cleanup_score, impl.cleanup_actions_table.c.total_removed, 0) > 0).distinct()
+
     def leaderboard_rows() -> list[dict[str, Any]]:
         # Group each ledger separately; joining raw report and attendance rows
         # would multiply points for volunteers who have both kinds of evidence.
@@ -62,9 +73,9 @@ def install_account(application: Any, engine: Any, jwt_secret: str, impl: Any) -
                 impl.reports_table.c.status == "Counted",
                 impl.reports_table.c.deleted_at.is_(None),
             ).group_by(impl.reports_table.c.reporter_id)).all())
-            attended = dict(connection.execute(select(
-                attendance.c.participant_id, func.count(),
-            ).where(attendance.c.participant_id.in_(user_ids)).group_by(attendance.c.participant_id)).all())
+            eligible_base = eligible_attendance_query().subquery("eligible_base")
+            eligible = select(eligible_base.c.participant_id, eligible_base.c.event_id).where(eligible_base.c.participant_id.in_(user_ids)).subquery("eligible")
+            attended = dict(connection.execute(select(eligible.c.participant_id, func.count()).group_by(eligible.c.participant_id)).all())
         rows = [
             {"user_id": row.user_id, "nickname": row.nickname,
              "points": reports.get(row.user_id, 0) + 5 * attended.get(row.user_id, 0)}
@@ -88,12 +99,17 @@ def install_account(application: Any, engine: Any, jwt_secret: str, impl: Any) -
             )).all()
             # Completed events stay in contribution history. Upcoming-event
             # lists intentionally exclude these rows and cannot count points.
-            attended = connection.execute(select(
-                attendance.c.event_id, attendance.c.confirmed_at,
-                impl.events_table.c.beach_id, impl.events_table.c.starts_at,
-            ).select_from(attendance.join(
-                impl.events_table, attendance.c.event_id == impl.events_table.c.id,
-            )).where(attendance.c.participant_id == user_id)).all()
+            eligible_base = eligible_attendance_query().subquery("eligible_base")
+            eligible = select(eligible_base.c.participant_id, eligible_base.c.event_id).where(eligible_base.c.participant_id == user_id).subquery("eligible")
+            attended = connection.execute(
+                select(eligible.c.event_id, attendance.c.confirmed_at,
+                       impl.events_table.c.beach_id, impl.events_table.c.starts_at)
+                .select_from(
+                    eligible.join(attendance, (attendance.c.event_id == eligible.c.event_id)
+                                  & (attendance.c.participant_id == eligible.c.participant_id))
+                    .join(impl.events_table, attendance.c.event_id == impl.events_table.c.id)
+                )
+            ).all()
             names = dict(connection.execute(select(impl.beaches_table.c.id, impl.beaches_table.c.name)).all())
         counts = Counter(row.status for row in reports)
         history = [
@@ -138,13 +154,24 @@ def install_account(application: Any, engine: Any, jwt_secret: str, impl: Any) -
         payload = request.get_json(silent=True)
         if not isinstance(payload, dict) or not payload or set(payload) - {"nickname", "joinedLeaderboard"}:
             return impl.error_response(400, "VALIDATION_FAILED", "Send nickname or joinedLeaderboard.")
-        if "nickname" in payload and not valid_nickname(payload["nickname"]):
-            return impl.error_response(400, "INVALID_NICKNAME", "Use 3–30 characters without an email address or phone number.")
+        if "nickname" in payload:
+            try:
+                validate_nickname(payload["nickname"])
+            except ValueError as error:
+                return impl.error_response(400, "INVALID_NICKNAME", str(error))
+            if not valid_nickname(payload["nickname"]):
+                return impl.error_response(400, "INVALID_NICKNAME", "Use 3-30 characters without an email address or phone number.")
         if "joinedLeaderboard" in payload and type(payload["joinedLeaderboard"]) is not bool:
             return impl.error_response(400, "VALIDATION_FAILED", "joinedLeaderboard must be true or false.")
         with engine.begin() as connection:
             old = connection.execute(select(profiles).where(profiles.c.user_id == user.id)).first()
             nickname = payload["nickname"].strip() if "nickname" in payload else old.nickname if old else ""
+            if "nickname" in payload and nickname:
+                duplicate = connection.execute(select(profiles.c.user_id).where(
+                    func.lower(profiles.c.nickname) == nickname.casefold(), profiles.c.user_id != user.id,
+                )).first()
+                if duplicate:
+                    return impl.error_response(409, "NICKNAME_UNAVAILABLE", "That nickname is already in use. Choose another nickname.")
             joined = payload.get("joinedLeaderboard", bool(old and old.joined_leaderboard))
             if joined and not valid_nickname(nickname):
                 return impl.error_response(400, "INVALID_NICKNAME", "Choose a nickname before joining the leaderboard.")

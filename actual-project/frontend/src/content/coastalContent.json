@@ -34,7 +34,8 @@
       "credit": "Photo · Christoph Schuetzenhofer · CC BY-SA 3.0",
       "image": "/species/green-sea-turtle.jpg",
       "photoSource": "https://commons.wikimedia.org/wiki/File:Chelonia_mydas_2005-06-11_Andaman_sea.jpg",
-      "category": "animal"
+      "category": "animal",
+      "reviewDate": "2026-10-05"
     },
     {
       "id": "dugong",
@@ -70,7 +71,8 @@
       "credit": "Photo · Jerome Paillet / IFREMER · CC BY 4.0",
       "image": "/images/coastal/dugong.jpg",
       "photoSource": "https://commons.wikimedia.org/wiki/File:Dugong_(Dugong_dugon)_(Ifremer_00617-72913).jpg",
-      "category": "animal"
+      "category": "animal",
+      "reviewDate": "2026-10-05"
     },
     {
       "id": "giant-mudskipper",
@@ -106,7 +108,8 @@
       "credit": "Photo · Pavel Kirillov · CC BY-SA 2.0",
       "image": "/images/coastal/periophthalmodon-schlosseri.jpg",
       "photoSource": "https://commons.wikimedia.org/wiki/File:Giant_mudskipper_Periophthalmodon_schlosseri_(8035170931).jpg",
-      "category": "animal"
+      "category": "animal",
+      "reviewDate": "2026-10-05"
     },
     {
       "id": "mangrove-crabs",
@@ -142,7 +145,8 @@
       "credit": "Tracy Enright, U.S. Geological Survey · Public Domain",
       "image": "/images/coastal/mangrove-crab-usgs.jpg",
       "photoSource": "https://www.usgs.gov/media/images/mangrove-crab",
-      "category": "animal"
+      "category": "animal",
+      "reviewDate": "2026-10-05"
     },
     {
       "id": "painted-terrapin",
@@ -178,7 +182,8 @@
       "credit": "Photo · Bernard DUPONT · CC BY-SA 2.0",
       "image": "/images/coastal/batagur-borneoensis.jpg",
       "photoSource": "https://commons.wikimedia.org/wiki/File:Painted_Terrapin_(Batagur_borneoensis)_(7781281590).jpg",
-      "category": "animal"
+      "category": "animal",
+      "reviewDate": "2026-10-05"
     },
     {
       "id": "southern-river-terrapin",
@@ -214,7 +219,8 @@
       "credit": "Photo · Mohd Hafiz Noor Shams · CC BY 2.5",
       "image": "/images/coastal/batagur-affinis.jpg",
       "photoSource": "https://commons.wikimedia.org/wiki/File:BatagurPasirKumpal.jpg",
-      "category": "animal"
+      "category": "animal",
+      "reviewDate": "2026-10-05"
     },
     {
       "id": "estuarine-crocodile",
@@ -254,7 +260,8 @@
       "credit": "Photo · Fernando Pérez Peralta · CC0 1.0",
       "image": "/images/coastal/crocodylus-porosus.jpg",
       "photoSource": "https://commons.wikimedia.org/wiki/File:Crocodylus_porosus_248308231.jpg",
-      "category": "animal"
+      "category": "animal",
+      "reviewDate": "2026-10-05"
     },
     {
       "id": "tube-dwelling-worm",
@@ -290,7 +297,8 @@
       "credit": "Wibowo et al. (2025), Figure 1 · CC BY-SA 4.0",
       "image": "/images/coastal/tube-dwelling-worm.jpg",
       "photoSource": "https://ejournal.undip.ac.id/index.php/ijms/article/view/60038",
-      "category": "animal"
+      "category": "animal",
+      "reviewDate": "2026-10-05"
     },
     {
       "id": "bakau-kurap",
@@ -326,7 +334,8 @@
       "credit": "Photo · Shagil Kannur · CC BY-SA 3.0",
       "image": "/images/coastal/rhizophora-mucronata.jpg",
       "photoSource": "https://commons.wikimedia.org/wiki/File:Rhizophora_mucronata_with_propagule_at_Muzhappilangad.jpg",
-      "category": "plant"
+      "category": "plant",
+      "reviewDate": "2026-10-05"
     },
     {
       "id": "nipa-palm",
@@ -362,7 +371,8 @@
       "credit": "Photo · Scott Edmunds · CC0 1.0",
       "image": "/images/coastal/nypa-fruticans.jpg",
       "photoSource": "https://commons.wikimedia.org/wiki/File:Nypa_fruticans_251538575.jpg",
-      "category": "plant"
+      "category": "plant",
+      "reviewDate": "2026-10-05"
     },
     {
       "id": "rhizophora-apiculata",
@@ -398,7 +408,8 @@
       "credit": "Photo · Ariefrahman · CC BY-SA 4.0",
       "image": "/images/coastal/rhizophora-apiculata.jpg",
       "photoSource": "https://commons.wikimedia.org/wiki/File:Rhizophora_apiculata_-_Manado.JPG",
-      "category": "plant"
+      "category": "plant",
+      "reviewDate": "2026-10-05"
     },
     {
       "id": "bruguiera-parviflora",
@@ -434,7 +445,8 @@
       "credit": "Photo · Wibowo Djatmiko (Wie146) · CC BY-SA 3.0",
       "image": "/images/coastal/bruguiera-parviflora.jpg",
       "photoSource": "https://commons.wikimedia.org/wiki/File:Brugu_parvi_111021-18698_Fr_kbu.jpg",
-      "category": "plant"
+      "category": "plant",
+      "reviewDate": "2026-10-05"
     },
     {
       "id": "enhalus-acoroides",
@@ -470,7 +482,8 @@
       "credit": "Photo · Christian Gloor · CC BY 2.0",
       "image": "/images/coastal/enhalus-acoroides.jpg",
       "photoSource": "https://commons.wikimedia.org/wiki/File:Enhalus_acoroides_(30774220094).jpg",
-      "category": "plant"
+      "category": "plant",
+      "reviewDate": "2026-10-05"
     },
     {
       "id": "halophila-ovalis",
@@ -506,7 +519,8 @@
       "credit": "Photo · Dr Catherine Collier (James Cook University), TropWATER · CC BY 3.0 AU · resized; displayed crop",
       "image": "/images/coastal/halophila-ovalis.jpg",
       "photoSource": "https://eatlas.org.au/media/4026",
-      "category": "plant"
+      "category": "plant",
+      "reviewDate": "2026-10-05"
     },
     {
       "id": "thalassia-hemprichii",
@@ -542,7 +556,8 @@
       "credit": "Photo · Mudasir Zainuddin · CC BY-SA 4.0",
       "image": "/images/coastal/thalassia-hemprichii.jpg",
       "photoSource": "https://commons.wikimedia.org/wiki/File:Thalassia_Hemprichii.jpg",
-      "category": "plant"
+      "category": "plant",
+      "reviewDate": "2026-10-05"
     },
     {
       "id": "halodule-pinifolia",
@@ -578,7 +593,8 @@
       "credit": "Photo · Joselito Balbosa Chavez, Jr. · CC BY-NC 4.0",
       "image": "/images/coastal/halodule-pinifolia.jpg",
       "photoSource": "https://commons.wikimedia.org/wiki/File:Halodule_pinifolia_(Miki)_Hartog.jpg",
-      "category": "plant"
+      "category": "plant",
+      "reviewDate": "2026-10-05"
     },
     {
       "id": "blood-cockle",
@@ -614,7 +630,8 @@
       "credit": "Photo · Al Kordesch · CC0 1.0",
       "image": "/images/coastal/blood-cockle.jpg",
       "photoSource": "https://commons.wikimedia.org/wiki/File:Tegillarca_granosa_360013509.jpg",
-      "category": "animal"
+      "category": "animal",
+      "reviewDate": "2026-10-05"
     },
     {
       "id": "shorebirds",
@@ -650,7 +667,8 @@
       "credit": "Photo · Kentish plover, a shorebird example · Nepenthes · CC BY-SA 3.0 · resized; displayed crop",
       "image": "/images/coastal/shorebirds.jpg",
       "photoSource": "https://commons.wikimedia.org/wiki/File:Charadrius_alexandrinus.jpg",
-      "category": "animal"
+      "category": "animal",
+      "reviewDate": "2026-10-05"
     },
     {
       "id": "macaques",
@@ -686,7 +704,8 @@
       "credit": "Photo · Gary Houston · CC0 1.0",
       "image": "/images/coastal/macaques.jpg",
       "photoSource": "https://commons.wikimedia.org/wiki/File:Macaca-fascicularis-20070216-019.jpg",
-      "category": "animal"
+      "category": "animal",
+      "reviewDate": "2026-10-05"
     },
     {
       "id": "black-sea-cucumber",
@@ -722,7 +741,8 @@
       "credit": "Photo · Philippe Bourjon · CC BY-SA 3.0",
       "image": "/images/coastal/black-long-sea-cucumber.jpg",
       "photoSource": "https://commons.wikimedia.org/wiki/File:Holothuria_leucospilota_R%C3%A9union_2.jpg",
-      "category": "animal"
+      "category": "animal",
+      "reviewDate": "2026-10-05"
     },
     {
       "id": "sea-cucumber",
@@ -758,7 +778,8 @@
       "credit": "Photo · Cricket Raspet · CC BY 4.0",
       "image": "/images/coastal/sea-cucumber.jpg",
       "photoSource": "https://commons.wikimedia.org/wiki/File:Stichopus_horrens_265884830.jpg",
-      "category": "animal"
+      "category": "animal",
+      "reviewDate": "2026-10-05"
     },
     {
       "id": "hawksbill-turtle",
@@ -794,7 +815,8 @@
       "credit": "Photo · Profmauri · CC BY-SA 3.0",
       "image": "/images/coastal/hawksbill-turtle.jpg",
       "photoSource": "https://commons.wikimedia.org/wiki/File:Hawksbill_turtle_on_Pom_Pom_Island.jpg",
-      "category": "animal"
+      "category": "animal",
+      "reviewDate": "2026-10-05"
     },
     {
       "id": "faunus-snail",
@@ -830,7 +852,8 @@
       "credit": "Photo · H. Zell · CC BY-SA 3.0",
       "image": "/images/coastal/black-faunus-snail.jpg",
       "photoSource": "https://commons.wikimedia.org/wiki/File:Faunus_ater_01.JPG",
-      "category": "animal"
+      "category": "animal",
+      "reviewDate": "2026-10-05"
     },
     {
       "id": "horseshoe-crab",
@@ -866,7 +889,8 @@
       "credit": "Photo · Doreen · CC BY 4.0",
       "image": "/images/coastal/horseshoe-crab.jpg",
       "photoSource": "https://commons.wikimedia.org/wiki/File:Tachypleus_gigas_214513978_(cropped).jpg",
-      "category": "animal"
+      "category": "animal",
+      "reviewDate": "2026-10-05"
     },
     {
       "id": "clownfish",
@@ -902,7 +926,8 @@
       "credit": "Photo · Ocellaris clownfish · Zoltán Stekkelpak · CC0 1.0",
       "image": "/images/coastal/ocellaris-clownfish.jpg",
       "photoSource": "https://commons.wikimedia.org/wiki/File:Amphiprion_ocellaris_354353067.jpg",
-      "category": "animal"
+      "category": "animal",
+      "reviewDate": "2026-10-05"
     },
     {
       "id": "corals",
@@ -942,7 +967,8 @@
       "credit": "Photo · Existing Pulau Kapas card · source below",
       "image": "/images/coastal/coral-reef.jpg",
       "photoSource": "https://commons.wikimedia.org/wiki/File:Underwater_photo_of_coral_reef.jpg",
-      "category": "animal"
+      "category": "animal",
+      "reviewDate": "2026-10-05"
     },
     {
       "id": "seagrass",
@@ -978,7 +1004,8 @@
       "credit": "Photo · Enhalus acoroides · Christian Gloor · CC BY 2.0",
       "image": "/images/coastal/seagrass-illustration.jpg",
       "photoSource": "https://commons.wikimedia.org/wiki/File:Sanc0209_-_Flickr_-_NOAA_Photo_Library.jpg",
-      "category": "plant"
+      "category": "plant",
+      "reviewDate": "2026-10-05"
     },
     {
       "id": "mangroves",
@@ -1014,7 +1041,8 @@
       "credit": "Photo · Bakau kurap mangrove · Shagil Kannur · CC BY-SA 3.0",
       "image": "/images/coastal/rhizophora-mucronata.jpg",
       "photoSource": "https://commons.wikimedia.org/wiki/File:Rhizophora_mucronata_with_propagule_at_Muzhappilangad.jpg",
-      "category": "plant"
+      "category": "plant",
+      "reviewDate": "2026-10-05"
     },
     {
       "id": "sea-turtles",
@@ -1050,7 +1078,8 @@
       "credit": "Photo · Green sea turtle · Christoph Schuetzenhofer · CC BY-SA 3.0",
       "image": "/images/coastal/green-turtle.jpg",
       "photoSource": "https://commons.wikimedia.org/wiki/File:Chelonia_mydas_2005-06-11_Andaman_sea.jpg",
-      "category": "animal"
+      "category": "animal",
+      "reviewDate": "2026-10-05"
     },
     {
       "id": "grubeulepis-malayensis",
@@ -1082,7 +1111,8 @@
       "credit": "Original schematic · Radar Sampah · CC BY 4.0 · based on the morphology described by Nishi (2001); not a photograph or an identification guide",
       "image": "/images/coastal/grubeulepis-malayensis.svg",
       "photoSource": "https://doi.org/10.12782/specdiv.6.1",
-      "category": "animal"
+      "category": "animal",
+      "reviewDate": "2026-10-05"
     },
     {
       "id": "thalassina-kelanang",
@@ -1114,7 +1144,8 @@
       "credit": "Specimen photo · Moh H. H. & Chong V. C. (2009), Figure 1 · CC BY 4.0 via Plazi / Zenodo · resized; displayed crop",
       "image": "/images/coastal/thalassina-kelanang.jpg",
       "photoSource": "https://zenodo.org/records/4509165",
-      "category": "animal"
+      "category": "animal",
+      "reviewDate": "2026-10-05"
     },
     {
       "id": "indo-pacific-finless-porpoise",
@@ -1154,7 +1185,8 @@
       "credit": "Photo · portioid / iNaturalist · CC BY-SA 4.0 · Hong Kong specimen · resized; displayed crop",
       "image": "/images/coastal/indo-pacific-finless-porpoise.jpg",
       "photoSource": "https://commons.wikimedia.org/wiki/File:Neophocaena_phocaenoides_31299614.jpg",
-      "category": "animal"
+      "category": "animal",
+      "reviewDate": "2026-10-05"
     },
     {
       "id": "syringodium-isoetifolium",
@@ -1194,7 +1226,8 @@
       "credit": "Photo · Philippe Bourjon · CC BY-SA 3.0 · resized; displayed crop",
       "image": "/images/coastal/syringodium-isoetifolium.jpg",
       "photoSource": "https://commons.wikimedia.org/wiki/File:Syringodium_isoetifolium_ployant_sous_la_houle.jpg",
-      "category": "plant"
+      "category": "plant",
+      "reviewDate": "2026-10-05"
     },
     {
       "id": "rhizophora-stylosa",
@@ -1234,7 +1267,8 @@
       "credit": "Photo · CRCHF · CC BY-SA 3.0 · resized; displayed crop",
       "image": "/images/coastal/rhizophora-stylosa.jpg",
       "photoSource": "https://commons.wikimedia.org/wiki/File:Rhizophora_stylosa.jpg",
-      "category": "plant"
+      "category": "plant",
+      "reviewDate": "2026-10-05"
     },
     {
       "id": "coastal-shellfish",
@@ -1270,7 +1304,8 @@
       "credit": "Photo · Blood cockle · Al Kordesch · CC0 1.0",
       "image": "/images/coastal/blood-cockle.jpg",
       "photoSource": "https://commons.wikimedia.org/wiki/File:Tegillarca_granosa_360013509.jpg",
-      "category": "animal"
+      "category": "animal",
+      "reviewDate": "2026-10-05"
     },
     {
       "id": "irrawaddy-dolphin",
@@ -1306,7 +1341,8 @@
       "credit": "Photo · Dan Koehl · CC BY 3.0",
       "image": "/species/irrawaddy-dolphin.jpg",
       "photoSource": "https://commons.wikimedia.org/wiki/File:DKoehl_Irrawaddi_Dolphin_jumping.jpg",
-      "category": "animal"
+      "category": "animal",
+      "reviewDate": "2026-10-05"
     },
     {
       "id": "moorish-idol",
@@ -1342,7 +1378,8 @@
       "credit": "Photo · Diego Delso · CC BY-SA 4.0",
       "image": "/species/moorish-idol.jpg",
       "photoSource": null,
-      "category": "animal"
+      "category": "animal",
+      "reviewDate": "2026-10-05"
     },
     {
       "id": "ocellaris-clownfish",
@@ -1378,7 +1415,8 @@
       "credit": "Photo · Zoltán Stekkelpak · CC0 1.0",
       "image": "/species/ocellaris-clownfish.jpg",
       "photoSource": "https://commons.wikimedia.org/wiki/File:Amphiprion_ocellaris_354353067.jpg",
-      "category": "animal"
+      "category": "animal",
+      "reviewDate": "2026-10-05"
     }
   ],
   "beaches": [

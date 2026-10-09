@@ -162,6 +162,7 @@ export function SpeciesScreen() {
             </a>
           ))}
           {s.credit && <p className="coastal-footnote">{s.credit}</p>}
+          <p className="coastal-footnote">Reviewed {s.reviewDate ?? "2026-10-05"}</p>
           {s.photoSource && (
             <a
               className="species-source"
