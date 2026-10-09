@@ -1,6 +1,7 @@
 """Approved-content publication gates and public conservation contracts."""
 
 import json
+from pathlib import Path
 from copy import deepcopy
 from datetime import datetime, timedelta, timezone
 
@@ -9,7 +10,7 @@ from sqlalchemy import insert
 
 from api_tests_core import api, signup
 from wildlife import approved_card, conservation_cards, load_content, risk_entries
-from app import events_table
+from app import events_table, seed_reference_data
 
 
 def test_public_conservation_cards_are_complete_and_have_exactly_three_questions(api):
@@ -90,7 +91,11 @@ def test_risk_lookup_uses_only_approved_report_categories_and_cautious_sources(a
 
 
 def test_public_wildlife_panel_is_coarse_and_independent_of_attention(api):
-    _, client = api
+    application, client = api
+    # The shared legacy fixture seeds only the 101 reference beaches.
+    # Add the 82-row export (four ids overlap) to exercise the 179-beach release.
+    expanded = json.loads((Path(__file__).resolve().parents[1] / "data" / "expanded_beaches.json").read_text(encoding="utf-8"))
+    seed_reference_data(application.extensions["marine_engine"], expanded["beaches"])
     body = client.get("/insights/wildlife").get_json()
     catalogue = client.get("/beaches").get_json()
     assert len(body["beaches"]) == len(catalogue) == 179
