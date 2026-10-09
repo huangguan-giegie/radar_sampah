@@ -37,6 +37,7 @@ import { eventIsAvailable, useEventClock } from "../eventAvailability";
 import { StaticMap } from "../components/Visuals";
 import { marineRecordDetails } from "../biodiversity";
 import { beachPhoto, speciesPhotoReference } from "../visuals";
+import { modelSpeciesDestination } from "../modelSpeciesNavigation";
 import { fetchInsights, type InsightsData } from "../insightsApi";
 
 type BeachWildlifeSpecies = { name: string; scientificName?: string | null; evidenceType: string; source?: { url: string } };
@@ -326,9 +327,11 @@ export default function CoastalBeachScreen() {
                 const guide = content.species.find(s => s.name.toLowerCase() === item.name.toLowerCase() ||
                   (item.scientificName && s.subtitle.toLowerCase().includes(item.scientificName.toLowerCase())));
                 const photo = speciesPhotoReference(item.name);
+                const modelIntro = item.evidenceType === "modelled"
+                  ? modelSpeciesDestination(item.scientificName, beachId) : null;
                 return (
                   <div className="wildlife-photo-card" key={item.scientificName ?? item.name ?? String(i)}>
-                    <button onClick={() => nav(guide ? "/species/" + guide.id : "/insights/wildlife")}>
+                    <button onClick={() => nav(guide ? "/species/" + guide.id : modelIntro ?? "/insights/wildlife")}>
                       <SpeciesPicture image={photo?.image ?? null} name={item.name} />
                       <strong>{item.name}</strong>
                       <small>{item.scientificName && item.scientificName !== item.name ? <em>{item.scientificName}</em> : null}
