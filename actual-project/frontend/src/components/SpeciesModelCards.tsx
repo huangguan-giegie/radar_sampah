@@ -121,8 +121,13 @@ export function SpeciesModelCards({
               const media = mediaForScientificName(prediction.scientificName);
               const photo = speciesPhotoReference(prediction.commonNameEn || prediction.scientificName);
               const url = media?.imageUrl ?? photo?.image;
-              return url ? <img src={url} alt={prediction.commonNameEn || prediction.scientificName}
-                loading="lazy" style={{ width: 72, height: 52, objectFit: 'cover', borderRadius: 9, marginBottom: 4 }} /> : null;
+              const creditsUrl = media?.imageSourceUrl ?? photo?.creditsUrl;
+              return url ? <div style={{ marginBottom: 5 }}>
+                <img src={url} alt={prediction.commonNameEn || prediction.scientificName}
+                  loading="lazy" style={{ width: 72, height: 52, objectFit: 'cover', borderRadius: 9, display: 'block' }} />
+                {creditsUrl && <a href={creditsUrl} target={creditsUrl.startsWith('https://') ? '_blank' : undefined}
+                  rel="noreferrer" style={{ fontSize: 10, color: C.slate, textDecoration: 'underline' }}>Photo credits ↗</a>}
+              </div> : null;
             })()}
             <div style={{ fontWeight: 650, color: C.ink2 }}>{prediction.commonNameEn || prediction.scientificName}</div>
             <div style={{ fontStyle: 'italic' }}>{prediction.scientificName}</div>
