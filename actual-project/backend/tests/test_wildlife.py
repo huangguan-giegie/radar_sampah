@@ -110,6 +110,17 @@ def test_public_wildlife_panel_is_coarse_and_independent_of_attention(api):
     assert all(by_id[beach["id"]]["species"] for beach in without_published)
     assert all(item["evidenceType"] == "modelled"
                for beach in without_published for item in by_id[beach["id"]]["species"])
+    # A beach-details request must return only that beach, not recompute and
+    # transmit 179 rows. This was missing while Insights itself was fixed.
+    detail_response = client.get("/beaches/bs-pasir-panjang-9/wildlife")
+    assert detail_response.status_code == 200
+    detail = detail_response.get_json()
+    assert detail["beachId"] == "bs-pasir-panjang-9"
+    assert detail["sourceStatus"] == "modelled"
+    assert detail["species"] and all(row["evidenceType"] == "modelled" for row in detail["species"])
+    assert detail == by_id["bs-pasir-panjang-9"]
+    assert client.get("/beaches/morib/wildlife").get_json()["beachId"] == "morib"
+    assert client.get("/beaches/not-real/wildlife").status_code == 404
     assert not any(key in json.dumps(body) for key in ['"lat"', '"lng"', '"participantId"', '"reporterId"', '"attentionScore"'])
     assert "not probabilities" in body["note"]
 
