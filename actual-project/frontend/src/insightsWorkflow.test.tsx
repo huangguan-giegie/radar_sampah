@@ -43,6 +43,22 @@ describe('production Insights scope and count labels', () => {
     expect(state.api).toHaveBeenCalledWith('/insights?beachId=morib');
   });
 
+  it('lists all 179 Wildlife beaches even when published species are missing', () => {
+    state.data.wildlife = Array.from({ length: 179 }, (_, index) => ({
+      beachId: 'beach-' + index,
+      name: 'Coastal Beach ' + index,
+      habitat: 'Coastal environment',
+      species: index < 101 ? ['Published species ' + index] : [],
+      activeReports: 0,
+      composition: [],
+    }));
+    const markup = render('/insights/wildlife');
+    expect(markup).toContain('179');
+    expect(markup).toContain('101 with published references');
+    expect(markup).toContain('Coastal Beach 178');
+    expect(markup).toContain('No species suggestion available');
+  });
+
   it('labels cleanup history and active scoring windows separately', () => {
     const markup = render('/insights/cleanup?beach=morib');
     expect(markup).toContain('Cleanup records · last 90 days');
