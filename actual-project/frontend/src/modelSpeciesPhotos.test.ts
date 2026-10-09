@@ -22,7 +22,7 @@ describe('marine-model species imagery coverage', () => {
   });
 
   it('also covers every distinct published species or ecological group in the 101 curated beaches', () => {
-    const names = [...new Set(beachCatalogue.beaches.flatMap(b => b.species.map(s => s.name)))];
+    const names = [...new Set(beachCatalogue.flatMap(b => b.species.map(s => s.name)))];
     expect(names).toHaveLength(27);
     for (const name of names) {
       expect(speciesPhoto(name), name).toBeTruthy();
