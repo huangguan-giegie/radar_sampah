@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import coastalContent from "../content/coastalContent.json";
+import { mediaForScientificName } from "../speciesMedia";
 
 /**
  * Marine-model species imagery.
@@ -52,6 +53,15 @@ export function speciesPhotoForModel(scientificName: string): Promise<SpeciesPho
   const key = scientificName.trim().toLowerCase();
   const existing = photoCache.get(key);
   if (existing) return existing;
+  const curated = mediaForScientificName(scientificName);
+  if (curated) {
+    const found = Promise.resolve<SpeciesPhoto | null>({
+      url: curated.imageUrl, credit: curated.imageAuthor, licence: curated.imageLicense,
+      sourceUrl: curated.imageSourceUrl, kind: "project",
+    });
+    photoCache.set(key, found);
+    return found;
+  }
   const matchingLocal = coastalContent.species.find(
     (item) => item.image && (item.subtitle ?? "").toLowerCase().includes(key),
   );
@@ -167,16 +177,16 @@ export function ModelSpeciesPicture({ name, scientificName, compact = false }: {
     return () => { active = false; };
   }, [scientificName]);
   return (
-    <div className="model-species-media">
+    <div className="model-species-media" style={{ width: "100%", height: compact ? "100%" : "auto" }}>
       {photo && !failed
         ? <img src={photo.url} alt={name} loading="lazy" onError={() => setFailed(true)}
-          style={{ width: "100%", aspectRatio: "16 / 10", objectFit: "cover", borderRadius: 12 }} />
+          style={{ width: "100%", height: compact ? "100%" : "auto", aspectRatio: compact ? undefined : "16 / 10", objectFit: "cover", borderRadius: 12 }} />
         : <AIGroupIllustration scientificName={scientificName} />}
-      {!compact && <small className="coastal-footnote" style={{ display: "block", marginTop: 5 }}>
+      <small className="coastal-footnote" style={{ display: "block", marginTop: compact ? 2 : 5, fontSize: compact ? 9.5 : undefined }}>
         {photo && !failed
-          ? <>{photo.credit} · {photo.licence}{photo.sourceUrl?.startsWith("https://") && <> · <a href={photo.sourceUrl} target="_blank" rel="noreferrer">Photo source ↗</a></>}</>
-          : "AI-generated group illustration · not a verified species photo"}
-      </small>}
+          ? <>{photo.credit} · {photo.licence}{!compact && photo.sourceUrl?.startsWith("https://") && <> · <a href={photo.sourceUrl} target="_blank" rel="noreferrer">Photo source ↗</a></>}</>
+          : compact ? "AI illustration" : "AI-generated group illustration · not a verified species photo"}
+      </small>
     </div>
   );
 }
