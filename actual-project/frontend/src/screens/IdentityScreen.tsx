@@ -41,9 +41,6 @@ export default function IdentityScreen() {
   const [copiedId, setCopiedId] = useState(false);
   const [savedRecovery, setSavedRecovery] = useState(false);
 
-  const recoveryKitText = newSession
-    ? `Radar Sampah recovery details\nParticipant ID: ${newSession.participantId}\nRecovery token: ${newSession.token}\n\nKeep this file private. The token works like a password.`
-    : '';
   const canRestore = !busy && /^\d{4}$/.test(typedId) && typedToken.trim() !== '';
 
   function saveRecoveryKit() {
@@ -231,7 +228,10 @@ export default function IdentityScreen() {
                   onClick={async () => {
                     if (!navigator.clipboard) return;
                     try {
-                      await navigator.clipboard.writeText(recoveryKitText);
+                      // Restore accepts the token plus the participant ID. Copy
+                      // only the token so pasting it into the password field
+                      // cannot accidentally include the recovery file labels.
+                      await navigator.clipboard.writeText(newSession.token);
                       setCopied(true);
                       setSavedRecovery(true);
                     } catch {

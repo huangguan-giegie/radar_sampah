@@ -149,6 +149,19 @@ export default function EventScreen() {
             <span><Clock color={C.lime} />{formatEventDate(event.date)} · {formatEventTimeRange(event.startsAt, event.endsAt)}</span>
             <span><Pin color={C.lime} />{event.area}</span>
           </div>
+          <div style={{ marginTop: 10, color: C.bg, fontSize: 12.5, lineHeight: 1.45 }}>
+            <strong>Meet at:</strong> {event.meetingPoint || event.area}
+            {heroMap && (
+              <a
+                href={`https://www.google.com/maps/search/?api=1&query=${heroMap[0]},${heroMap[1]}`}
+                target="_blank"
+                rel="noreferrer"
+                style={{ display: 'inline-block', marginLeft: 10, color: C.lime, fontWeight: 700 }}
+              >
+                Get directions ↗
+              </a>
+            )}
+          </div>
           <div className="i2-stat-grid" style={{ marginTop: 15 }}>
             <div className="i2-stat"><span>Participants</span><strong>{event.participantCount}</strong></div>
             <div className="i2-stat"><span>Recorded Attendance</span><strong>{event.attendanceCount}</strong></div>

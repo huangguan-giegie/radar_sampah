@@ -106,7 +106,8 @@ export default function WelcomeScreen() {
           can count for something.
         </div>
         <div style={{ fontSize: 14.5, lineHeight: 1.55, color: 'rgba(232,238,245,.82)', maxWidth: 310 }}>
-          Explore beaches across Malaysia, and add what you see.
+          Radar Sampah helps communities report beach litter, see which beaches need help,
+          and understand how cleaner shores support marine biodiversity.
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 8 }}>
           <button

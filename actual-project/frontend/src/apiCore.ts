@@ -173,9 +173,9 @@ async function fetchWithTimeout(url: string, init: RequestInit, ms: number) {
     return await fetch(url, { ...init, signal: ctrl.signal });
   } catch (err) {
     if (err instanceof DOMException && err.name === 'AbortError') {
-      throw new Error('The server did not respond. Check your connection and try again.');
+      throw new Error('The data service is taking longer than expected. Keep this page open and try again.');
     }
-    throw new Error('Could not reach the server. Check your connection and try again.');
+    throw new Error('The data service is temporarily unavailable. Please try again shortly.');
   } finally {
     clearTimeout(timer);
   }
@@ -221,7 +221,7 @@ async function request(path: string, method = 'GET', body?: unknown, timeoutMs =
     } catch (error) {
       lastNetworkError = error instanceof Error
         ? error
-        : new Error('Could not reach the server. Check your connection and try again.');
+        : new Error('The data service is temporarily unavailable. Please try again shortly.');
       // A timeout needs the full cold-start window; retry only fast network/CORS failures.
       if (!isRetryableRead(method) || lastNetworkError.message.includes('server did not respond') || attempt === maxAttempts - 1) {
         throw lastNetworkError;
@@ -230,7 +230,7 @@ async function request(path: string, method = 'GET', body?: unknown, timeoutMs =
     }
   }
 
-  if (!res) throw lastNetworkError ?? new Error('Could not reach the server. Check your connection and try again.');
+  if (!res) throw lastNetworkError ?? new Error('The data service is temporarily unavailable. Please try again shortly.');
 
   // 204 means "done, nothing to send back" - logout, for example. Calling
   // res.json() on an empty body throws, so return before we try.

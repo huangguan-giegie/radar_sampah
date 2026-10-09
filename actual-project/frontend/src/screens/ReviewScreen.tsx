@@ -39,6 +39,9 @@ export default function ReviewScreen() {
   // Small. That is the scope rule working, not a failure, so the page becomes
   // a calm "not recorded" outcome instead of showing a red error.
   const [smallOnly, setSmallOnly] = useState(false);
+  const smallOnlyDraft = Object.values(draft.quantities).length > 0
+    && Object.values(draft.quantities).every((quantity) => quantity === 'Small');
+  const showSmallOnly = smallOnly || smallOnlyDraft;
 
   useEffect(() => {
     getBeaches()
@@ -190,7 +193,7 @@ export default function ReviewScreen() {
 
         <div>
           <div style={{ fontSize: 29, fontWeight: 640, letterSpacing: '-.7px' }}>
-            {smallOnly ? 'Small — not recorded' : 'Review your report'}
+            {showSmallOnly ? 'Small — not recorded' : 'Review your report'}
           </div>
         </div>
 
@@ -228,10 +231,16 @@ export default function ReviewScreen() {
 
         {/* Only an accepted AI suggestion gets this row. Manual values need no
             label: the rows above already are what the user entered. */}
-        {draft.aiDecision === 'confirmed' && !smallOnly && greenNote('Confirmed by you')}
-        {smallOnly && greenNote('Small is excluded from Counted and not saved.')}
+        {draft.aiDecision === 'confirmed' && !showSmallOnly && greenNote('Confirmed by you')}
+        {showSmallOnly && greenNote('Small-only reports are not counted and will not be saved.')}
+        {showSmallOnly && (
+          <Alert title="Choose a larger quantity before submitting" tone="caution">
+            Small records the smallest band, but the current reporting rule needs
+            at least one Medium, Large or Very Large category to save a report.
+          </Alert>
+        )}
 
-        {duplicateMatch && !smallOnly && (
+        {duplicateMatch && !showSmallOnly && (
           <Alert title="You already filed this one" tone="caution">
             <div>A report from {formatDate(duplicateMatch.createdAt)} at {duplicateMatch.beachName} looks the same as this one. If it really is a new find, you can still submit it.</div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 10 }}>
@@ -259,7 +268,7 @@ export default function ReviewScreen() {
 
         {error && <ErrorNote title="Could not save" body={error} />}
 
-        {smallOnly ? (
+        {showSmallOnly ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
             <PrimaryButton onClick={() => backToDetails()}>Change size band</PrimaryButton>
             {/* The draft is left as it is, so the photo and beach are still
