@@ -110,17 +110,13 @@ export default function BackgroundScreen({ intro = false }: { intro?: boolean })
           <section aria-labelledby="about-sdgs">
             <SectionLabel>SDG GOALS</SectionLabel>
             <h2 id="about-sdgs" style={{ margin: '0 0 10px', fontSize: 22, color: C.navy }}>Our connection to the Global Goals</h2>
-            <p className="subtle">Our focus on awareness and community participation relates to these UN Sustainable Development Goals.</p>
+            <p className="subtle">Our focus on marine litter awareness and community participation supports UN Sustainable Development Goal 14: Life Below Water.</p>
             <div style={{ display: 'grid', gap: 10 }}>
-              {[
-                { number: 14, title: 'Life Below Water', text: 'Connect marine litter awareness with learning about coastal species and habitats.' },
-                { number: 12, title: 'Responsible Consumption and Production', text: 'Encourage litter reduction, responsible waste handling and community cleanups.' },
-                { number: 4, title: 'Quality Education', text: 'Make marine biodiversity and sustainability learning accessible through maps, species information and practical guidance.' },
-              ].map((goal) => <article className="i2-card" key={goal.number}>
-                <h3 style={{ margin: 0, fontSize: 16, color: C.navy }}>SDG {goal.number} · {goal.title}</h3>
-                <p className="subtle" style={{ margin: '8px 0' }}>{goal.text}</p>
-                <a href={`https://sdgs.un.org/goals/goal${goal.number}`} {...EXTERNAL} style={{ color: C.navy, fontSize: 13 }}>Read UN Goal {goal.number} ↗</a>
-              </article>)}
+              <article className="i2-card">
+                <h3 style={{ margin: 0, fontSize: 16, color: C.navy }}>SDG 14 · Life Below Water</h3>
+                <p className="subtle" style={{ margin: '8px 0' }}>Connect marine litter awareness with learning about coastal species and habitats.</p>
+                <a href="https://sdgs.un.org/goals/goal14" {...EXTERNAL} style={{ color: C.navy, fontSize: 13 }}>Read UN Goal 14 ↗</a>
+              </article>
             </div>
           </section>
           <SectionLabel>BACKGROUND</SectionLabel>
