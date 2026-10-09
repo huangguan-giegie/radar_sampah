@@ -55,7 +55,7 @@ export default function SharedItemScreen() {
               <section>
                 <SectionLabel size="sm">CLEANUP ACTIVITY · {event.status.toUpperCase()}</SectionLabel>
                 <p>{formatDate(event.date)} · {event.startsAt}–{event.endsAt}</p>
-                <p>{event.meetingPoint || event.area}</p>
+                <p>Meeting point: {event.meetingPoint || 'To be confirmed by the organiser.'}</p>
                 <p>{event.participantCount} participants · {event.attendanceCount} recorded attendance</p>
                 <PrimaryButton onClick={() => nav(`/events/${encodeURIComponent(event.id)}`)}>Open activity</PrimaryButton>
               </section>

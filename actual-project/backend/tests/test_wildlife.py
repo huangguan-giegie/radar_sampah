@@ -70,6 +70,17 @@ def test_guidance_is_text_only_and_authorities_have_verified_contact_dates(api):
     assert "image" not in json.dumps(body).lower()
 
 
+def test_guidance_has_a_verified_dialable_fisheries_contact_for_stranded_turtles(api):
+    _, client = api
+    body = client.get("/wildlife-guidance").get_json()
+    fisheries = next(authority for authority in body["authorities"] if "Fisheries" in authority["name"])
+    assert fisheries["phone"] == "03-8888 5019"
+    assert fisheries["telephoneUri"] == "tel:+60388885019"
+    assert "stranded turtles" in fisheries["name"]
+    assert fisheries["url"] == "https://www.dof.gov.my/en/services/marine-park-resource-management/marine-park-management/"
+    assert fisheries["lastChecked"] == "2026-10-09"
+
+
 def test_risk_lookup_uses_only_approved_report_categories_and_cautious_sources(api):
     _, client = api
     risks = client.get("/wildlife-risks").get_json()

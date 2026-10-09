@@ -8,6 +8,7 @@ vi.mock('react-router-dom', async original => ({
   useParams: () => ({ beachId: 'kelanang' }),
 }));
 vi.mock('./api', () => ({ USE_MOCK: false, getBeach: vi.fn() }));
+vi.mock('./insightsApi', () => ({ fetchInsights: vi.fn(async () => ({ beaches: [{ id: 'kelanang', from: null, to: null, reportsPrevious30Days: 1, reportsLast30Days: 0, activeReports: 1, reports: 1 }], asOf: '2026-10-05', comparisonAt: '2026-09-05' })) }));
 vi.mock('./AppContext', () => ({
   useApp: () => ({
     user: null,
@@ -21,8 +22,11 @@ vi.mock('./AppContext', () => ({
 vi.mock('./navigation', () => ({ useAppBack: () => vi.fn() }));
 vi.mock('./eventAvailability', () => ({ useEventClock: () => Date.now(), eventIsAvailable: () => false }));
 vi.mock('./useAsyncData', () => ({
-  useAsyncData: (_load: unknown, _dependencies: unknown, initial: unknown) => ({
-    data: Array.isArray(initial) ? [] : {
+  useAsyncData: (load: () => unknown, _dependencies: unknown, initial: unknown) => ({
+    data: load.toString().includes('fetchInsights') ? {
+      asOf: '2026-10-05', comparisonAt: '2026-09-05',
+      beaches: [{ id: 'kelanang', from: null, to: null, reportsPrevious30Days: 1, reportsLast30Days: 0, activeReports: 1, reports: 1 }],
+    } : Array.isArray(initial) ? [] : {
       id: 'kelanang',
       name: 'Pantai Kelanang',
       area: 'Selangor',
@@ -61,6 +65,14 @@ describe('teammate frontend v2 beach integration', () => {
     expect(html).toContain('Report Litter');
     expect(html).toContain('Join Cleanup');
     expect(html).toContain('Log Cleanup');
+  });
+
+  it('shows an honest insufficient-data 30-day band comparison with a trend destination', () => {
+    const html = renderBeach();
+    expect(html).toContain('30-day Band Change');
+    expect(html).toContain('Insufficient Data');
+    expect(html).toContain('At least 3 active reports are needed in both 90-day windows');
+    expect(html).toContain('View Trend');
   });
 
   it('uses the verified v2 species media on the beach page', () => {

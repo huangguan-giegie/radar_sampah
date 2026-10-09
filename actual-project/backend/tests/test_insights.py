@@ -66,6 +66,22 @@ def test_empty_database_uses_zero_activity_and_no_invented_bands(api):
     assert client.get("/insights?beachId=does-not-exist").status_code == 404
 
 
+def test_legacy_seed_report_ids_are_excluded_from_public_beach_and_insights_evidence(api):
+    application, client = api
+    user = signup(client)[0]["user"]["id"]
+    saved_report(application, user, "r1", beach="morib", at=datetime(2026, 8, 14, tzinfo=timezone.utc))
+    for index in range(2):
+        saved_report(application, user, f"real-{index}", beach="morib")
+
+    beach = client.get("/beaches/morib").get_json()
+    batch = {row["id"]: row for row in client.get("/beaches").get_json()}["morib"]
+    insights = client.get("/insights?beachId=morib").get_json()["beaches"][0]
+
+    assert beach["validReports"] == batch["validReports"] == insights["activeReports"] == 2
+    assert insights["reports"] == 2
+    assert beach["lastReportedAt"] == batch["lastReportedAt"] == impl.contract_timestamp(NOW - timedelta(days=10))
+
+
 def test_prior_band_uses_only_cleanup_actions_existing_at_that_time(api):
     application, client = api
     session, _ = signup(client)
@@ -126,6 +142,22 @@ def test_standalone_cleanup_does_not_change_reports_and_is_not_residual_evidence
     assert data["cleanup"]["remaining"] == []
     assert data["cleanup"]["handling"] == [["Recycled / handled", 100]]
     assert data["cleanup"]["history"][0]["rows"] == [{"category": "Plastic", "removedBand": "Very Large"}]
+
+
+def test_beach_filter_scopes_cleanup_totals_and_history_together(api):
+    application, client = api
+    user = signup(client)[0]["user"]["id"]
+    saved_cleanup(application, user, "morib-cleanup", beach="morib", removed={"Plastic": "Medium"})
+    saved_cleanup(application, user, "remis-cleanup", beach="remis", removed={"Glass": "Large"})
+
+    all_data = summary(application)
+    morib_data = summary(application, "morib")
+
+    assert all_data["cleanup"]["total"] == 2
+    assert len(all_data["cleanup"]["history"]) == 2
+    assert morib_data["overview"]["registeredBeaches"] == 1
+    assert morib_data["overview"]["cleanups"] == morib_data["cleanup"]["total"] == 1
+    assert [row["beachId"] for row in morib_data["cleanup"]["history"]] == ["morib"]
 
 
 def test_cleanup_history_retains_linked_before_bands_when_report_is_later_edited_or_excluded(api):

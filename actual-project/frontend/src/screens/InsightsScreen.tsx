@@ -103,8 +103,10 @@ function LiveInsightsScreen({ personalAction }: { personalAction: ReactNode }) {
   const [params, setParams] = useSearchParams();
   const { reportsVersion } = useApp();
   const [filters, setFilters] = useState(false);
+  const cleanupBeach = topic.startsWith('cleanup') ? params.get('beach') ?? undefined : undefined;
+  const requestedBeach = cleanupBeach ?? beachId;
   const { data, loading, error, refresh } = useAsyncData<InsightsData | null>(
-    () => fetchInsights(beachId), [beachId, reportsVersion], null,
+    () => fetchInsights(requestedBeach), [requestedBeach, reportsVersion], null,
   );
   // Photos and coordinates for row thumbnails; /insights itself carries neither for most beaches.
   const { data: catalogue } = useAsyncData(() => getCoastalBeaches(), [], []);
@@ -236,14 +238,21 @@ function LiveInsightsScreen({ personalAction }: { personalAction: ReactNode }) {
     </>;
   } else if (topic === 'cleanup') {
     const latest = data.cleanup.history[0];
-    body = latest ? <>
+    const beachOptions = [...new Map([...data.beaches, ...catalogue].map(beach => [beach.id, beach])).values()];
+    body = <>
+      <label className="eyebrow" htmlFor="cleanup-insight-beach">Beach</label>
+      <select id="cleanup-insight-beach" className="coastal-input" value={cleanupBeach ?? ''} onChange={e => update('beach', e.target.value)}>
+        <option value="">All beaches</option>{beachOptions.map(beach => <option key={beach.id} value={beach.id}>{beach.name}</option>)}
+      </select>
+      {latest ? <>
       <SummaryCard eyebrow={`Latest cleanup · ${formatDate(latest.createdAt)}`} description={latest.beachName}>
-        <h2 style={{ color: 'white' }}>Cleanup Recorded</h2><SummaryStats items={[{ label: 'Cleanups in 90 days', value: data.cleanup.total }, { label: 'With linked bands', value: data.cleanup.evaluatedCleanups }]} />
+        <h2 style={{ color: 'white' }}>Cleanup Recorded</h2><SummaryStats items={[{ label: 'Cleanup records · last 90 days', value: data.cleanup.total }, { label: 'With linked bands', value: data.cleanup.evaluatedCleanups }]} />
       </SummaryCard>
+      <p className="coastal-footnote">Active reports · latest 90 days: {data.beaches.reduce((sum, beach) => sum + beach.activeReports, 0)}. Counted report submissions received · last 90 days: {data.overview.reports}. Resolved reports remain in submission history but not the active rating count.</p>
       <WhiteCard><p className="eyebrow">Litter still above Small after cleanup</p>
         {data.cleanup.remaining.length ? data.cleanup.remaining.map(([category, percentage, samples]) => <div key={category}><MetricBars rows={[[category, percentage]]} /><p className="coastal-footnote">{samples} linked cleanup {samples === 1 ? 'record' : 'records'} with this category above Small before cleaning.</p></div>)
           : <p className="subtle">No linked before-and-after band records yet.</p>}
-        <p className="coastal-footnote">The share of recorded linked cleanups that left this category above Small. This describes saved confirmations, not measured cleaning difficulty.</p>
+        <p className="coastal-footnote">The percentage is based on linked cleanup records, not litter-item counts. Quantity bands are volunteer estimates, not measured item counts or cleaning difficulty.</p>
       </WhiteCard>
       <WhiteCard><p className="eyebrow">How litter was handled</p><MetricBars rows={data.cleanup.handling} /><p className="coastal-footnote">Share of cleanup records, as recorded by participants.</p></WhiteCard>
       <WhiteCard><p className="eyebrow">Days until the next counted report</p>
@@ -252,7 +261,8 @@ function LiveInsightsScreen({ personalAction }: { personalAction: ReactNode }) {
           onClick={() => nav('/insights/cleanup-history?cleanup=' + cleanup.id)} />)}
         <p className="coastal-footnote">Time to the next report anywhere at this beach. A later report does not establish that litter returned at the cleaned spot.</p>
       </WhiteCard><GhostButton onClick={() => nav('/insights/cleanup-history')}>View Cleanup History</GhostButton>
-    </> : <DataUnavailable title="No cleanups recorded yet">Recorded cleanups from the last 90 days will appear here.</DataUnavailable>;
+      </> : <DataUnavailable title="No cleanups recorded yet">Recorded cleanups from the last 90 days will appear here.</DataUnavailable>}
+    </>;
   } else if (topic === 'cleanup-history') {
     const selected = params.get('cleanup');
     const cleanups = selected ? data.cleanup.history.filter(c => c.id === selected) : data.cleanup.history;
@@ -287,7 +297,7 @@ function LiveInsightsScreen({ personalAction }: { personalAction: ReactNode }) {
       <p className="eyebrow" style={{ marginTop: 20 }}>State / area</p><div className="filter-chips">
         {[...new Set(data.beaches.map(b => b.area.split(',').slice(-1)[0]?.trim() ?? b.area))].sort().map(region => <button key={region} aria-pressed={params.get('region') === region} onClick={() => update('region', params.get('region') === region ? '' : region)}>{region}</button>)}
       </div><p className="eyebrow">Band</p><div className="filter-chips">
-        {['Very high', 'High', 'Moderate', 'Low', 'Insufficient Data'].map(band => <button key={band} aria-pressed={params.get('band') === band} onClick={() => update('band', params.get('band') === band ? '' : band)}>{band}</button>)}
+        {['Severe', 'High', 'Moderate', 'Low', 'Insufficient Data'].map(band => <button key={band} aria-pressed={params.get('band') === band} onClick={() => update('band', params.get('band') === band ? '' : band)}>{band}</button>)}
       </div><label style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 20 }}>Needs Volunteers Only<input type="checkbox" checked={params.get('needs') === '1'} onChange={e => update('needs', e.target.checked ? '1' : '')} /></label>
       <PrimaryButton onClick={() => setFilters(false)}>Show Results</PrimaryButton>
     </Sheet>}
@@ -858,7 +868,7 @@ function PreviewInsightsScreen({ personalAction }: { personalAction: ReactNode }
           </div>
           <p className="eyebrow">Band</p>
           <div className="filter-chips">
-            {["Very high", "High", "Moderate", "Low", "Insufficient Data"].map(
+            {["Severe", "High", "Moderate", "Low", "Insufficient Data"].map(
               (s) => (
                 <button
                   key={s}

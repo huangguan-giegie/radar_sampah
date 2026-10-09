@@ -119,6 +119,7 @@ export default function MarineLifeScreen() {
 
 export function SpeciesScreen() {
   const { speciesId } = useParams();
+  const nav = useNavigate();
   const goBack = useAppBack("/marine-life");
   const s = content.species.find((s) => s.id === speciesId);
   if (!s)
@@ -177,6 +178,9 @@ export function SpeciesScreen() {
             </a>
           )}
         </section>
+        <GhostButton onClick={() => nav("/community/wildlife-help")}>
+          Hurt or stranded animal? Get help
+        </GhostButton>
         <PrimaryButton onClick={goBack}>Back</PrimaryButton>
       </div>
     </main>

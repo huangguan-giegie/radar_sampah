@@ -4,6 +4,7 @@ import { WhiteCard } from "./CoastalUI";
 import { iteration3Request } from "../iteration3Api";
 import type { WildlifeGuidance } from "../iteration3Personal";
 import { useAsyncData } from "../useAsyncData";
+import { mergeWildlifeGuidance } from "../wildlifeGuidance";
 export function CleanupGuide({ recorded = false, imageFree = false }: { recorded?: boolean; imageFree?: boolean }) {
   const dropOffName = guide.dropOffName && !guide.dropOffName.startsWith("[") ? guide.dropOffName : null;
   const checkedDate = guide.checkedDate && !guide.checkedDate.startsWith("[") ? guide.checkedDate : null;
@@ -108,17 +109,18 @@ export function CleanupGuide({ recorded = false, imageFree = false }: { recorded
 export function WildlifeGuide() {
   const nav = useNavigate();
   const { data: guidance } = useAsyncData(() => iteration3Request<WildlifeGuidance>('/wildlife-guidance'), [], null);
+  const effectiveGuidance = mergeWildlifeGuidance(guidance);
   return (
     <section>
       <p className="eyebrow">Wildlife-friendly cleanup</p>
       <WhiteCard>
-        {(guidance?.tips ?? guide.wildlife).slice(0, 3).map((text, i) => (
+        {effectiveGuidance.tips.slice(0, 3).map((text, i) => (
           <div key={text} className="wildlife-rule">
             <span>{i + 1}</span>
             <p>{text}</p>
           </div>
         ))}
-        {guidance && <p className="coastal-footnote">Reviewed {guidance.reviewDate} · {guidance.note}</p>}
+        <p className="coastal-footnote">Reviewed {effectiveGuidance.reviewDate} · {effectiveGuidance.note}</p>
         <button
           className="coastal-link-row"
           onClick={() => nav("/community/wildlife-help")}

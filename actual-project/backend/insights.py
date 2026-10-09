@@ -94,6 +94,7 @@ def build_insights(engine: Any, impl: Any, *, now: datetime | None = None,
 
     # Current stored status/value is authoritative. The database does not retain
     # historical edit versions, so prior bands are explicitly reconstructions.
+    reports = [r for r in reports if r.id not in impl.LEGACY_SEED_REPORT_IDS]
     report_by_id = {r.id: r for r in reports}
     reports = [r for r in reports if r.status == "Counted" and getattr(r, "deleted_at", None) is None]
     reports_by_beach: dict[str, list[Any]] = defaultdict(list)

@@ -73,6 +73,31 @@ def test_v3_partial_cleanup_uses_canonical_state_and_retry_identity(api):
         assert rows[-1].removed_counts is None
 
 
+def test_v3_cleanup_can_clear_a_category_and_keep_other_bands(api):
+    _, client = api
+    _, headers = signup(client)
+    photo = upload(client, headers)
+    created = client.post("/reports", headers=headers, json={
+        **report_payload(photo["photoKey"], quantities={"Plastic": "Large", "Glass": "Medium"}),
+    })
+    assert created.status_code == 201
+    target = created.get_json()["id"]
+
+    response = client.post("/cleanups", headers=headers, json={
+        "targetReportId": target,
+        "afterBands": {"Plastic": "None", "Glass": "Small"},
+        "handling": "Not recorded",
+        "idempotencyKey": "clear-plastic-keep-glass",
+    })
+
+    assert response.status_code == 201
+    assert response.get_json()["rows"] == [
+        {"category": "Plastic", "beforeBand": "Large", "afterBand": "None", "score": 3},
+        {"category": "Glass", "beforeBand": "Medium", "afterBand": "Small", "score": 1},
+    ]
+    assert client.get(f"/cleanup-targets?reportId={target}", headers=headers).get_json() == []
+
+
 @pytest.mark.parametrize("key", [None, "", " ", 123, "x" * 129])
 def test_v3_cleanup_requires_valid_idempotency_key(api, key):
     _, client = api

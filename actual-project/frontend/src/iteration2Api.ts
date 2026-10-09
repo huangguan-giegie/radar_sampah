@@ -20,7 +20,7 @@ import {
   type CleanupHandling,
   type CleanupTarget,
 } from './iteration2';
-import type { LitterCategory, QuantityBand } from './types';
+import type { CleanupAfterBand, LitterCategory } from './types';
 
 /** Keep the public event object viewer-scoped even if an older server responds
  * with participant identifier collections. Mock ledgers retain those fields
@@ -183,7 +183,7 @@ export async function submitCleanup(input: {
   participantId: string;
   targetReportId: string;
   eventId?: string | null;
-  afterBands: Partial<Record<LitterCategory, QuantityBand>>;
+  afterBands: Partial<Record<LitterCategory, CleanupAfterBand>>;
   handling: CleanupHandling;
   note?: string;
   idempotencyKey?: string;
@@ -201,7 +201,7 @@ export async function submitCleanup(input: {
   return cleanup;
 }
 
-export async function createAdminEventData(input: { beachId: string; date: string }): Promise<CleanupEvent> {
+export async function createAdminEventData(input: { beachId: string; date: string; meetingPoint?: string }): Promise<CleanupEvent> {
   if (USE_MOCK) return createAdminEvent(input);
   const result = publicEvent(await apiRequest<CleanupEvent>('/cleanup-events', 'POST', input));
   invalidateCleanupEventsCache();

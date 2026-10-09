@@ -16,7 +16,7 @@ import { getBeaches, USE_MOCK } from "../api";
 import { formatEventDate, formatEventTimeRange } from "../iteration2";
 import { fetchCleanupEvents, fetchLatestCleanupDates } from "../iteration2Api";
 import { useAsyncData } from "../useAsyncData";
-import { C } from "../theme";
+import { C, formatDate } from "../theme";
 import { eventIsAvailable, eventPhase, useEventClock } from "../eventAvailability";
 import content from "../content/coastalContent.json";
 import { beachNeedsVolunteers } from "../volunteerNeeds";
@@ -86,7 +86,7 @@ export default function CommunityScreen() {
   };
   const withoutEvent = needs && filter !== "Joined" ? beaches.filter(b =>
     (!selectedBeach || b.id === selectedBeach.id) && needsHelp(b) && !nextEvents.some(e => e.beachId === b.id) &&
-    (filter !== "Near Me" || !!position && distanceKm(position, b) <= 50)).sort((a, b) => volunteerPriority(b) - volunteerPriority(a)) : [];
+    (filter !== "Near Me" || !!position && distanceKm(position, b) <= 50)) : [];
   const needsBeachData = needs || filter === "Near Me";
   function chooseFilter(value: Filter) {
     const next = new URLSearchParams(search);
@@ -148,6 +148,28 @@ export default function CommunityScreen() {
     (all[e.date] ??= []).push(e);
     return all;
   }, {});
+  const latestReport = (beach: typeof beaches[number]) => beach.lastReportedAt ? formatDate(beach.lastReportedAt) : "No counted reports recorded";
+  const reasonsFor = (beach: typeof beaches[number], event?: typeof events[number]) => {
+    const reasons: string[] = [];
+    const cleanupAt = recentCleanups?.[beach.id];
+    const cleanupTime = cleanupAt ? Date.parse(cleanupAt) : NaN;
+    if (cleanupAt == null || Number.isFinite(cleanupTime) && now - cleanupTime >= 30 * 86400000) reasons.push("No cleanup recorded in the last 30 days");
+    if (event && event.participantCount < 3) reasons.push("Low sign-up for the next event");
+    return reasons;
+  };
+  const needsRows = needs ? [
+    ...filtered.map(event => ({ kind: "event" as const, event, beach: beaches.find(beach => beach.id === event.beachId)! })),
+    ...withoutEvent.map(beach => ({ kind: "beach" as const, beach })),
+  ].sort((a, b) => {
+    const eventA = a.kind === "event" ? a.event : undefined;
+    const eventB = b.kind === "event" ? b.event : undefined;
+    const priority = volunteerPriority(b.beach) - volunteerPriority(a.beach);
+    if (priority) return priority;
+    const reportA = Date.parse(a.beach.lastReportedAt ?? "") || 0;
+    const reportB = Date.parse(b.beach.lastReportedAt ?? "") || 0;
+    if (reportA !== reportB) return reportB - reportA;
+    return (eventA?.startsAt ?? "").localeCompare(eventB?.startsAt ?? "");
+  }) : [];
   return (
     <CoastalPage
       title={needs ? "Beaches Needing Help" : "Community Cleanups"}
@@ -229,7 +251,7 @@ export default function CommunityScreen() {
         </DataUnavailable>
       ) : needs && historyError ? (
         <DataUnavailable title="Couldn’t Load Cleanup History" retry={() => void refreshHistory()}>Please try again.</DataUnavailable>
-      ) : !filtered.length && !withoutEvent.length ? (
+      ) : !(needs ? needsRows.length : filtered.length) ? (
         <DataUnavailable
           title={
             filter === "Joined"
@@ -258,6 +280,24 @@ export default function CommunityScreen() {
             </>
           )}
         </DataUnavailable>
+      ) : needs ? (
+        <div className="event-list">
+          {needsRows.map(row => {
+            const event = row.kind === "event" ? row.event : undefined;
+            const beach = row.beach;
+            const reasons = reasonsFor(beach, event);
+            return event ? <button key={event.id} className="coastal-event" onClick={() => nav("/events/" + event.id)}>
+              <span className="event-thumb"><PlaceThumb image={beachPhoto(beach.id, beach.coverImageUrl)} lat={beach.lat} lng={beach.lng} size={72} focus={[0.64, 0.32]} /></span>
+              <span className="grow"><h3>{beach.name}</h3><p>{formatEventDate(event.date)} · {formatEventTimeRange(event.startsAt, event.endsAt)}</p><p>{reasons.join(" · ")}</p>
+                <p className="coastal-footnote">Latest counted report: {latestReport(beach)}</p>
+                <span className="event-tags"><span>{event.participantCount} joined</span><SeverityBadge band={beach.severity} /></span>
+              </span><ChevronRight color={C.navy} />
+            </button> : <WhiteCard key={beach.id}>
+              <LinkRow title={beach.name} subtitle={reasons.join(" · ")} trailing={<SeverityBadge band={beach.severity} />} onClick={() => nav("/beach/" + beach.id)} />
+              <p className="coastal-footnote">No upcoming cleanup · Latest counted report: {latestReport(beach)}</p>
+            </WhiteCard>;
+          })}
+        </div>
       ) : (
         Object.entries(grouped).map(([date, rows]) => (
           <section key={date}>
@@ -311,9 +351,6 @@ export default function CommunityScreen() {
           </section>
         ))
       )}
-      {needs && !loading && !beachesLoading && !historyLoading && !error && !beachesError && !historyError && withoutEvent.map(b => <WhiteCard key={b.id}>
-        <LinkRow title={b.name} subtitle="No upcoming cleanup · view this beach" trailing={<SeverityBadge band={b.severity} />} onClick={() => nav("/beach/" + b.id)} />
-      </WhiteCard>)}
       <p className="map-credit">Beach photos where available · other thumbnails show the location · map © OpenStreetMap contributors</p>
       {USE_MOCK && <p className="demo-label">Preview · example schedule</p>}
       {why && (
@@ -321,7 +358,7 @@ export default function CommunityScreen() {
           <WhiteCard>
             <h3>Available litter evidence</h3>
             <p className="subtle">
-              A beach is flagged at Moderate, High or Very high when it has no cleanup in the last 30 days, or fewer than 3 people have joined its next cleanup.
+              A beach with a Moderate, High or Severe band is flagged when it has no recorded cleanup in the last 30 days, or fewer than 3 people have joined its next available event. Each beach shows the reasons that apply.
             </p>
           </WhiteCard>
           <p className="subtle">

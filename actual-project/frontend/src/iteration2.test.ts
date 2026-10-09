@@ -43,6 +43,20 @@ describe('Iteration 2 date presentation', () => {
 });
 
 describe('Iteration 2 activity and cleanup ledger', () => {
+  it('clears a category with None, keeps other remaining bands, and marks the report resolved', () => {
+    const target = getCleanupTarget('morib')!;
+    const afterBands: Record<string, 'None' | 'Small'> = Object.fromEntries(Object.keys(target.remainingBands).map((category) => [category, 'None']));
+    afterBands.Metal = 'Small';
+    const expectedRemaining = Object.fromEntries(Object.keys(target.remainingBands).map((category) => [category, 'Small']));
+    const cleanup = completeCleanup({
+      participantId: '1637', targetReportId: target.reportId,
+      afterBands, handling: 'Not recorded',
+    });
+    expect(cleanup.rows.find((row) => row.category === 'Plastic')).toMatchObject({ beforeBand: 'Very Large', afterBand: 'None' });
+    expect(cleanup.remainingQuantities).toEqual(expectedRemaining);
+    expect(cleanup.resolved).toBe(true);
+  });
+
   it('generates four Saturday events only for beaches with a qualifying band', () => {
     const events = listCleanupEvents();
     expect(events).toHaveLength(12);
@@ -58,10 +72,11 @@ describe('Iteration 2 activity and cleanup ledger', () => {
   });
 
   it('creates at most one admin event for a beach and date', () => {
-    const first = createAdminEvent({ beachId: 'morib', date: '2030-01-02' });
+    const first = createAdminEvent({ beachId: 'morib', date: '2030-01-02', meetingPoint: '  Main car park entrance  ' });
     const second = createAdminEvent({ beachId: 'morib', date: '2030-01-02' });
     expect(second.id).toBe(first.id);
     expect(getCleanupEvent(first.id)?.source).toBe('admin');
+    expect(first.meetingPoint).toBe('Main car park entrance');
   });
 
   it('records lower quantity bands and allows a later partial cleanup', () => {

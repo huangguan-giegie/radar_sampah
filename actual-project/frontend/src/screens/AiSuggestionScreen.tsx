@@ -218,6 +218,11 @@ export default function AiSuggestionScreen() {
             </div>
 
             {Object.keys(editable).length === 0 && <Alert title="Choose at least one category" tone="caution">You can enter the categories and quantity bands manually.</Alert>}
+            {Object.keys(editable).length > 0 && Object.values(editable).every((quantity) => quantity === 'Small') && (
+              <Alert title="Small-only reports are not counted" tone="caution">
+                Choose Medium, Large or Very Large for at least one category. Your draft is kept while you make this change.
+              </Alert>
+            )}
             <PrimaryButton onClick={confirm} disabled={Object.keys(editable).length === 0}>Confirm suggestions</PrimaryButton>
             <GhostButton onClick={changeCategoryOrBand}>Change category or band</GhostButton>
             <TextButton onClick={keepManual}>Enter manually</TextButton>

@@ -65,14 +65,14 @@ def _json_map(value: Any) -> dict[str, Any]:
     return dict(parsed) if isinstance(parsed, dict) else {}
 
 
-def _valid_band_map(value: Any, impl: Any, *, allow_empty: bool) -> dict[str, str] | None:
+def _valid_band_map(value: Any, impl: Any, *, allow_empty: bool, allow_none: bool = False) -> dict[str, Any] | None:
     if not isinstance(value, dict):
         return None
     if not value and not allow_empty:
         return None
     normalised: dict[str, str] = {}
     for category, band in value.items():
-        if category not in impl.FRONTEND_CATEGORIES or band not in BAND_UNITS:
+        if category not in impl.FRONTEND_CATEGORIES or (band not in BAND_UNITS and not (allow_none and band == "None")):
             return None
         normalised[str(category)] = str(band)
     return normalised
@@ -455,7 +455,7 @@ def install_cleanup_route(application: Any, engine: Any, jwt_secret: str, impl: 
         if len(idempotency_key) > 128:
             return impl.error_response(400, "VALIDATION_FAILED", "idempotencyKey must be at most 128 characters.")
 
-        remaining_quantities = _valid_band_map(payload.get("remainingQuantities"), impl, allow_empty=True) if canonical_linked else None
+        remaining_quantities = _valid_band_map(payload.get("remainingQuantities"), impl, allow_empty=True, allow_none=True) if canonical_linked else None
         removed_quantities = _valid_band_map(payload.get("removedQuantities"), impl, allow_empty=False) if canonical_standalone else None
         removed_counts = impl.validate_item_counts(payload.get("removed", payload.get("removedCounts"))) if legacy_removed else None
         if canonical_linked and remaining_quantities is None:
@@ -522,13 +522,14 @@ def install_cleanup_route(application: Any, engine: Any, jwt_secret: str, impl: 
                     assert remaining_quantities is not None
                     # Omitted categories are unchanged, not removed. Persist
                     # the complete state so later scoring cannot lose them.
-                    remaining_quantities = {**before, **remaining_quantities}
-                    if any(category not in before for category in remaining_quantities):
+                    requested_after = remaining_quantities
+                    if any(category not in before for category in requested_after):
                         return impl.error_response(400, "VALIDATION_FAILED", "A cleanup cannot add a new litter category to its target.")
-                    if any(BAND_UNITS[band] > BAND_UNITS[before[category]] for category, band in remaining_quantities.items()):
+                    if any(band != "None" and BAND_UNITS[band] > BAND_UNITS[before[category]] for category, band in requested_after.items()):
                         return impl.error_response(409, "CLEANUP_STATE_INCREASED", "Remaining litter cannot increase during a cleanup.")
+                    remaining_quantities = {**before, **{category: "Small" if band == "None" else band for category, band in requested_after.items()}}
                     cleanup_score = sum(
-                        max(0, BAND_UNITS[before_band] - BAND_UNITS.get(remaining_quantities.get(category, before_band), 0))
+                        max(0, BAND_UNITS[before_band] - (0 if requested_after.get(category, before_band) == "None" else BAND_UNITS[requested_after.get(category, before_band)]))
                         for category, before_band in before.items()
                     )
                     if cleanup_score <= 0:
@@ -537,11 +538,11 @@ def install_cleanup_route(application: Any, engine: Any, jwt_secret: str, impl: 
                         {
                             "category": category,
                             "before": before_band,
-                            "after": remaining_quantities.get(category, before_band),
-                            "removedUnits": max(0, BAND_UNITS[before_band] - BAND_UNITS.get(remaining_quantities.get(category, before_band), 0)),
+                            "after": "None" if requested_after.get(category, before_band) == "None" else remaining_quantities.get(category, before_band),
+                            "removedUnits": max(0, BAND_UNITS[before_band] - (0 if requested_after.get(category, before_band) == "None" else BAND_UNITS[requested_after.get(category, before_band)])),
                         }
                         for category, before_band in before.items()
-                        if BAND_UNITS[before_band] != BAND_UNITS.get(remaining_quantities.get(category, before_band), 0)
+                        if requested_after.get(category, before_band) != before_band
                     ]
                 else:
                     # Deprecated exact-count compatibility for historical clients.
