@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import coastalContent from "../content/coastalContent.json";
 import { mediaForScientificName } from "../speciesMedia";
 
@@ -167,22 +167,42 @@ export function ModelSpeciesPicture({ name, scientificName, compact = false }: {
 }) {
   const [photo, setPhoto] = useState<SpeciesPhoto | null>(null);
   const [failed, setFailed] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     let active = true;
+    let requested = false;
     setPhoto(null);
     setFailed(false);
-    void speciesPhotoForModel(scientificName).then((result) => {
-      if (active) setPhoto(result);
-    });
-    return () => { active = false; };
+    const begin = () => {
+      if (requested) return;
+      requested = true;
+      void speciesPhotoForModel(scientificName).then(result => {
+        if (active) setPhoto(result);
+      });
+    };
+    // At most the visible species cards issue open-photography requests.
+    // Insights has 179 beach rows, so avoid a large simultaneous API burst.
+    const el = containerRef.current;
+    if (!el || typeof IntersectionObserver === "undefined") {
+      begin();
+      return () => { active = false; };
+    }
+    const observer = new IntersectionObserver(entries => {
+      if (entries.some(entry => entry.isIntersecting)) {
+        begin();
+        observer.disconnect();
+      }
+    }, { rootMargin: "300px" });
+    observer.observe(el);
+    return () => { active = false; observer.disconnect(); };
   }, [scientificName]);
   return (
-    <div className="model-species-media" style={{ width: "100%", height: compact ? "100%" : "auto" }}>
+    <div ref={containerRef} className="model-species-media" style={{ width: "100%", height: compact ? "100%" : "auto", position: "relative" }}>
       {photo && !failed
         ? <img src={photo.url} alt={name} loading="lazy" onError={() => setFailed(true)}
           style={{ width: "100%", height: compact ? "100%" : "auto", aspectRatio: compact ? undefined : "16 / 10", objectFit: "cover", borderRadius: 12 }} />
         : <AIGroupIllustration scientificName={scientificName} />}
-      <small className="coastal-footnote" style={{ display: "block", marginTop: compact ? 2 : 5, fontSize: compact ? 9.5 : undefined }}>
+      <small className="coastal-footnote" style={compact ? { position: "absolute", top: 4, left: 5, maxWidth: "90%", padding: "2px 4px", background: "rgba(255,255,255,.86)", borderRadius: 5, fontSize: 9, lineHeight: 1.2, zIndex: 1 } : { display: "block", marginTop: 5 }}>
         {photo && !failed
           ? <>{photo.credit} · {photo.licence}{!compact && photo.sourceUrl?.startsWith("https://") && <> · <a href={photo.sourceUrl} target="_blank" rel="noreferrer">Photo source ↗</a></>}</>
           : compact ? "AI illustration" : "AI-generated group illustration · not a verified species photo"}
