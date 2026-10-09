@@ -138,7 +138,7 @@ function WildlifeCoverage({ beaches }: { beaches: InsightsData['wildlife'] }) {
         }) : <span>{loading ? 'Checking model…' : 'No species suggestion available'}</span>}</span>
       </button>;
     })}
-    <p className="coastal-footnote">Model suggestions use frozen historical OBIS-derived scores from a marine grid within 15 km of each supplied reference coordinate. They are not occurrence probabilities, verified observations, or evidence of wildlife impact. Open a beach to inspect available sources and model details.</p>
+    <p className="coastal-footnote">Model suggestions use frozen historical OBIS-derived scores from a marine grid within 15 km of each supplied reference coordinate. They are not occurrence probabilities, verified observations, or evidence of wildlife impact. Open a beach for litter and habitat context; modelled species here are nearby-grid suggestions only.</p>
   </>;
 }
 
