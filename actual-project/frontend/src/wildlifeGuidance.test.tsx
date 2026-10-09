@@ -6,7 +6,7 @@ import { SpeciesScreen } from "./screens/MarineLifeScreen";
 import { WildlifeGuide } from "./components/CleanupGuide";
 import { iteration3Request } from "./iteration3Api";
 import type { WildlifeGuidance } from "./iteration3Personal";
-import content from "../../backend/data/wildlife_content.json";
+import { WILDLIFE_GUIDANCE_FALLBACK } from "./wildlifeGuidance";
 
 vi.mock("./iteration3Api", () => ({ iteration3Request: vi.fn() }));
 let view: ReactTestRenderer;
@@ -44,7 +44,7 @@ describe("wildlife help availability", () => {
   });
 
   it("retains bundled numbers when an older API response omits a phone", async () => {
-    const legacy = structuredClone(content.guidance) as WildlifeGuidance;
+    const legacy = structuredClone(WILDLIFE_GUIDANCE_FALLBACK) as WildlifeGuidance;
     delete legacy.authorities[1].phone;
     delete legacy.authorities[1].telephoneUri;
     vi.mocked(iteration3Request).mockResolvedValue(legacy);
