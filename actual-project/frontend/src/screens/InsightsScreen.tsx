@@ -31,6 +31,7 @@ import type { PersonalInsights } from "../iteration3Personal";
 import { getCoastalBeaches } from "../coastalData";
 import { PlaceThumb } from "../components/Visuals";
 import { beachPhoto, speciesPhoto } from "../visuals";
+import { ModelSpeciesPicture } from "../components/ModelSpeciesPicture";
 
 export function MetricBars({ rows }: { rows: [string, number][] }) {
   return (
@@ -134,7 +135,13 @@ function WildlifeCoverage({ beaches }: { beaches: InsightsData['wildlife'] }) {
         <span><strong>{beach.name}</strong><small>{habitat} · {beach.activeReports} active litter reports</small><small>{contextLabel}</small></span>
         <span className="wildlife-species">{names.length ? names.map(name => {
           const photo = speciesPhoto(name);
-          return <span key={name} className={photo ? 'has-photo' : undefined}>{photo && <img src={photo} alt="" loading="lazy" />}{name}</span>;
+          const prediction = !isPublished ? model?.species.find(item => item.name === name) : undefined;
+          return <span key={name} className={photo || prediction?.scientificName ? 'has-photo' : undefined}>
+            {prediction?.scientificName
+              ? <ModelSpeciesPicture name={name} scientificName={prediction.scientificName} compact />
+              : photo && <img src={photo} alt="" loading="lazy" />}
+            {name}
+          </span>;
         }) : <span>{loading ? 'Checking model…' : 'No species suggestion available'}</span>}</span>
       </button>;
     })}
