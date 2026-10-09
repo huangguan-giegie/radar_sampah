@@ -38,6 +38,14 @@ import { StaticMap } from "../components/Visuals";
 import { marineRecordDetails } from "../biodiversity";
 import { beachPhoto } from "../visuals";
 import { fetchInsights, type InsightsData } from "../insightsApi";
+import { iteration3Request } from "../iteration3Api";
+
+type BeachWildlifeContext = {
+  beachId: string;
+  sourceStatus: "published_reference" | "modelled" | "unavailable";
+  coordinateContext?: { distanceKm?: number } | null;
+  species: { id: string; name: string; scientificName?: string | null; evidenceType: string }[];
+};
 
 export default function CoastalBeachScreen() {
   const { beachId = "" } = useParams();
@@ -87,6 +95,13 @@ export default function CoastalBeachScreen() {
   const { data: insights, loading: trendLoading, error: trendError, refresh: refreshTrend } = useAsyncData<InsightsData | null>(
     () => previewOnly ? Promise.resolve(null) : fetchInsights(beachId),
     [beachId, reportsVersion, previewOnly],
+    null,
+  );
+  // New catalogue beaches do not have old frontend fixtures; request only this
+  // beach's nearby marine-grid context, not the 179-beach Insights panel.
+  const { data: wildlife, loading: wildlifeLoading, error: wildlifeError, refresh: refreshWildlife } = useAsyncData<BeachWildlifeContext | null>(
+    () => (previewOnly || fixture ? Promise.resolve(null) : iteration3Request<BeachWildlifeContext>("/beaches/" + encodeURIComponent(beachId) + "/wildlife")),
+    [beachId, previewOnly, fixture],
     null,
   );
   const b = detail ?? (previewOnly ? fixture : null);
@@ -298,48 +313,84 @@ export default function CoastalBeachScreen() {
           </SectionHeading>
           {(detail?.habitat || fixture?.habitat) && (
             <p className="subtle">
-              Habitat · {detail?.habitat ?? fixture?.habitat}
+              Habitat · {detail?.habitat === "Biodiversity information not yet available" ? "Not individually documented for this beach" : detail?.habitat ?? fixture?.habitat}
             </p>
           )}
-          <div className="coastal-grid-two" style={{ marginTop: 16 }}>
-            {species.slice(0, 2).map((s) => (
-              <button key={s.id} onClick={() => nav("/species/" + s.id)}>
-                <SpeciesPicture image={s.image} name={s.name} />
-                <strong>{s.name}</strong>
+          {fixture ? (
+            <>
+            <div className="coastal-grid-two" style={{ marginTop: 16 }}>
+              {species.slice(0, 2).map((s) => (
+                <button key={s.id} onClick={() => nav("/species/" + s.id)}>
+                  <SpeciesPicture image={s.image} name={s.name} />
+                  <strong>{s.name}</strong>
+                </button>
+              ))}
+              {species.length < 2 &&
+                regional
+                  .filter((r) => !species.some((s) => s.id === r.speciesId))
+                  .slice(0, 2 - species.length)
+                  .map((r, i) => (
+                    <button
+                      key={i}
+                      onClick={() =>
+                        nav(
+                          r.speciesId
+                            ? "/species/" + r.speciesId
+                            : "/marine-area/" + region + "?beach=" + beachId,
+                        )
+                      }
+                    >
+                      <SpeciesPicture image={marineRecordDetails(r).image} name={r.name} />
+                      <strong>{r.name}</strong>
+                    </button>
+                  ))}
+            </div>
+            <div className="section-heading" style={{ marginTop: 12 }}>
+              <p className="coastal-footnote">
+                Regional examples · not sightings
+              </p>
+              <button
+                onClick={() =>
+                  nav("/marine-area/" + region + "?beach=" + beachId)
+                }
+              >
+                Sources ↗
               </button>
-            ))}
-            {species.length < 2 &&
-              regional
-                .filter((r) => !species.some((s) => s.id === r.speciesId))
-                .slice(0, 2 - species.length)
-                .map((r, i) => (
-                  <button
-                    key={i}
-                    onClick={() =>
-                      nav(
-                        r.speciesId
-                          ? "/species/" + r.speciesId
-                          : "/marine-area/" + region + "?beach=" + beachId,
-                      )
-                    }
-                  >
-                    <SpeciesPicture image={marineRecordDetails(r).image} name={r.name} />
-                    <strong>{r.name}</strong>
-                  </button>
-                ))}
-          </div>
-          <div className="section-heading" style={{ marginTop: 12 }}>
-            <p className="coastal-footnote">
-              Regional examples · not sightings
-            </p>
-            <button
-              onClick={() =>
-                nav("/marine-area/" + region + "?beach=" + beachId)
-              }
-            >
-              Sources ↗
-            </button>
-          </div>
+            </div>
+            </>
+          ) : (
+            <>
+              {wildlifeLoading ? (
+                <p role="status" className="subtle">Loading nearby marine species suggestions…</p>
+              ) : wildlifeError ? (
+                <DataUnavailable title="Marine species context unavailable" retry={() => { void refreshWildlife(); }}>
+                  Could not load nearby marine-grid suggestions. Try again.
+                </DataUnavailable>
+              ) : wildlife?.species.length ? (
+                <div className="coastal-grid-two" style={{ marginTop: 16 }}>
+                  {wildlife.species.map((item) => (
+                    <WhiteCard key={item.id}>
+                      <strong>{item.name}</strong>
+                      {item.scientificName && item.scientificName.toLowerCase() !== item.name.toLowerCase() && (
+                        <p className="subtle"><i>{item.scientificName}</i></p>
+                      )}
+                      <p className="coastal-footnote">{item.evidenceType === "modelled" ? "Nearby marine-grid model suggestion" : "Published coastal reference"}</p>
+                    </WhiteCard>
+                  ))}
+                </div>
+              ) : (
+                <div className="dashed-empty">No nearby marine species suggestions available at this time.</div>
+              )}
+              <p className="coastal-footnote" style={{ marginTop: 12 }}>
+                {wildlife?.sourceStatus === "modelled"
+                  ? "Based on historical OBIS-derived marine-grid estimates within 15 km of this beach coordinate. These are not verified sightings, calibrated occurrence probabilities, or documentation of this beach’s habitat."
+                  : "Individual habitat and local sightings have not been documented for this beach."}
+              </p>
+              {wildlife?.sourceStatus === "modelled" && (
+                <a href="https://obis.org/" target="_blank" rel="noreferrer">Marine model reference: OBIS ↗</a>
+              )}
+            </>
+          )}
         </section>
         <section>
           <SectionHeading>Litter Composition</SectionHeading>
