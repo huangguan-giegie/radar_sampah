@@ -118,19 +118,35 @@ def test_predictions_and_catalog_do_not_write_coordinates_or_reports(api):
         assert (connection.execute(select(users_table)).all(), connection.execute(select(reports_table)).all()) == before
 
 
-def test_wildlife_insights_use_nearby_percentiles_and_only_working_card_links(api):
+def test_wildlife_insights_distinguish_published_references_and_nearby_predictions(api):
     app, client = api
     body = client.get("/insights/wildlife").get_json()
     cards = {row["scientificName"] for row in client.get("/species-cards").get_json()}
     beaches = {row["id"]: row for row in client.get("/beaches").get_json()}
     model = app.extensions["species_distribution_model"]
+    assert len(body["beaches"]) == len(beaches) == 179
     for row in body["beaches"]:
         beach = beaches[row["beachId"]]
-        result = model.predict_nearby_marine(beach["lat"], beach["lng"], top_k=40)
-        expected = [prediction for prediction in result["topPredictions"] if prediction["scientificName"] in cards][:2]
-        assert [item["scientificName"] for item in row["species"]] == [item["scientificName"] for item in expected]
-        assert row["modelCount"] == 40
-        assert row["coordinateContext"] == result["coordinateContext"]
-        for item, prediction in zip(row["species"], expected):
-            assert item["locationMatchScore"] == prediction["locationMatchScore"]
-            assert client.get("/species-cards/" + item["id"]).status_code == 200
+        if row["beachId"] in {"morib", "remis", "kelanang", "bagan"}:
+            result = model.predict_nearby_marine(beach["lat"], beach["lng"], top_k=40)
+            expected = [prediction for prediction in result["topPredictions"] if prediction["scientificName"] in cards][:2]
+            assert [item["scientificName"] for item in row["species"]] == [item["scientificName"] for item in expected]
+            assert row["coordinateContext"] == result["coordinateContext"]
+            for item, prediction in zip(row["species"], expected):
+                assert item["locationMatchScore"] == prediction["locationMatchScore"]
+                assert client.get("/species-cards/" + item["id"]).status_code == 200
+        elif beach["speciesNames"]:
+            assert row["sourceStatus"] == "published_reference"
+            assert row["coordinateContext"] is None
+            assert all(item["evidenceType"] == "published_reference" for item in row["species"])
+        else:
+            result = model.predict_nearby_marine(beach["lat"], beach["lng"], top_k=40)
+            expected = result["topPredictions"][:2]
+            assert row["sourceStatus"] == "modelled"
+            assert [item["scientificName"] for item in row["species"]] == [item["scientificName"] for item in expected]
+            assert row["coordinateContext"] == result["coordinateContext"]
+            assert row["modelCount"] == 40
+            for item, prediction in zip(row["species"], expected):
+                assert item["locationMatchScore"] == prediction["locationMatchScore"]
+                assert item["destination"] == "/beach/" + beach["id"]
+                assert item["evidenceType"] == "modelled"
