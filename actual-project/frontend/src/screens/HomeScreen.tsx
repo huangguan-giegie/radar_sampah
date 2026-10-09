@@ -26,7 +26,7 @@ import { useAsyncData } from "../useAsyncData";
 import { C } from "../theme";
 import { eventIsAvailable, useEventClock } from "../eventAvailability";
 import { iteration3Request } from "../iteration3Api";
-import { fallbackNextAction, type NextAction } from "../iteration3Personal";
+import { dismissedNextActionIds, dismissNextAction, fallbackNextAction, type NextAction } from "../iteration3Personal";
 import { PHOTOS } from "../visuals";
 import { closestSupportedBeach } from "../homeNearby";
 import type { BeachSummary } from "../types";
@@ -46,13 +46,15 @@ export default function HomeScreen() {
   const [nearbyBeachId, setNearbyBeachId] = useState<string | null>(null);
   const [locationMessage, setLocationMessage] = useState("");
   const [locating, setLocating] = useState(false);
+  const [dismissedActions, setDismissedActions] = useState<string[]>(() => dismissedNextActionIds());
   const { data: loadedAction } = useAsyncData(
     () => USE_MOCK
       ? Promise.resolve(fallbackNextAction(Boolean(user)))
       : iteration3Request<NextAction>('/recommendations/next-action'),
     [user?.participantId, reportsVersion], null,
   );
-  const nextAction = loadedAction ?? fallbackNextAction(Boolean(user));
+  const nextAction = (loadedAction ?? fallbackNextAction(Boolean(user)));
+  const visibleNextAction = nextAction && dismissedActions.includes(nextAction.id) ? null : nextAction;
   const now = useEventClock();
   const {
     data: beaches,
@@ -162,24 +164,25 @@ export default function HomeScreen() {
           <UserIcon size={28} color="white" />
         </button>
       </header>
-      {nextAction && (
+      {visibleNextAction && (
         <WhiteCard className="home-rule-suggestions">
           <p className="eyebrow">Next Action</p>
-          <h2>{nextAction.actionLabel}</h2>
-          <p className="subtle">{nextAction.reason}</p>
+          <h2>{visibleNextAction.actionLabel}</h2>
+          <p className="subtle">{visibleNextAction.reason}</p>
           <PrimaryButton onClick={() => {
-            if (nextAction.destination.type === 'report') {
+            if (visibleNextAction.destination.type === 'report') {
               if (hasDraftProgress(draft)) { setDraftChoice(true); return; }
               resetDraft();
               setLastSavedReport(null);
-              if (nextAction.destination.beachId) {
-                const targetBeach = beaches.find(item => item.id === nextAction.destination.beachId);
+              if (visibleNextAction.destination.beachId) {
+                const targetBeach = beaches.find(item => item.id === visibleNextAction.destination.beachId);
                 if (targetBeach) patchDraft({ beachId: targetBeach.id, beachName: targetBeach.name, locationSource: 'manual', coords: null });
               }
             }
-            nav(nextAction.destination.path);
-          }}>{nextAction.actionLabel}</PrimaryButton>
-          {nextAction.loginPrompt && <button onClick={() => nav(nextAction.loginPath ?? '/identity?next=/home')}>{nextAction.loginPrompt}</button>}
+            nav(visibleNextAction.destination.path);
+          }}>{visibleNextAction.actionLabel}</PrimaryButton>
+          <button type="button" className="home-dismiss" onClick={() => { dismissNextAction(visibleNextAction.id); setDismissedActions(previous => [...previous, visibleNextAction.id]); }}>Dismiss</button>
+          {visibleNextAction.loginPrompt && <button onClick={() => nav(visibleNextAction.loginPath ?? '/identity?next=/home')}>{visibleNextAction.loginPrompt}</button>}
         </WhiteCard>
       )}
       {(!beach || error) && (

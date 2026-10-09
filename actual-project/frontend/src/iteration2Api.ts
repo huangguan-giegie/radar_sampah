@@ -27,7 +27,7 @@ import type { CleanupAfterBand, LitterCategory } from './types';
  * internally, while UI consumers use only the three self booleans. */
 function publicEvent(value: CleanupEvent): CleanupEvent {
   const { joinedBy: _joinedBy, checkIns: _checkIns, attendanceBy: _attendanceBy, evidenceBy: _evidenceBy, reportEvidenceBy: _reportEvidenceBy, cleanupIds: _cleanupIds, ...safe } = value as CleanupEvent;
-  return safe as CleanupEvent;
+  return { ...safe, participantCount: typeof safe.participantCount === 'number' && safe.participantCount < 3 ? 'Fewer than 3' : safe.participantCount } as CleanupEvent;
 }
 
 function publicEvents(values: CleanupEvent[]): CleanupEvent[] {

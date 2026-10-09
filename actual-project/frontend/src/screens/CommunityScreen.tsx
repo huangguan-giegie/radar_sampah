@@ -24,6 +24,7 @@ import { PlaceThumb } from "../components/Visuals";
 import { beachPhoto } from "../visuals";
 
 type Filter = "All" | "Near Me" | "Joined";
+const participantCountValue = (value: number | "Fewer than 3") => value === "Fewer than 3" ? 0 : value;
 // Keep the last result only in this tab's memory so a detail-page return does not ask again.
 let lastPosition: { lat: number; lng: number } | null = null;
 
@@ -82,7 +83,7 @@ export default function CommunityScreen() {
     const event = nextEvents.find(item => item.beachId === beach.id);
     const last = recentCleanups?.[beach.id] ? Date.parse(recentCleanups[beach.id] as string) : NaN;
     const noRecentCleanup = recentCleanups?.[beach.id] == null || (Number.isFinite(last) && now - last >= 30 * 86400000);
-    return (severityRank[beach.severity ?? ""] ?? 0) + (noRecentCleanup ? 2 : 0) + (event && event.participantCount < 3 ? 1 : 0);
+    return (severityRank[beach.severity ?? ""] ?? 0) + (noRecentCleanup ? 2 : 0) + (event && participantCountValue(event.participantCount) < 3 ? 1 : 0);
   };
   const withoutEvent = needs && filter !== "Joined" ? beaches.filter(b =>
     (!selectedBeach || b.id === selectedBeach.id) && needsHelp(b) && !nextEvents.some(e => e.beachId === b.id) &&
@@ -154,7 +155,7 @@ export default function CommunityScreen() {
     const cleanupAt = recentCleanups?.[beach.id];
     const cleanupTime = cleanupAt ? Date.parse(cleanupAt) : NaN;
     if (cleanupAt == null || Number.isFinite(cleanupTime) && now - cleanupTime >= 30 * 86400000) reasons.push("No cleanup recorded in the last 30 days");
-    if (event && event.participantCount < 3) reasons.push("Low sign-up for the next event");
+    if (event && participantCountValue(event.participantCount) < 3) reasons.push("Low sign-up for the next event");
     return reasons;
   };
   const needsRows = needs ? [

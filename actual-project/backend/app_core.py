@@ -999,6 +999,10 @@ def distance_km(lat1: float, lng1: float, lat2: float, lng2: float) -> float:
     return 6371.0088 * 2 * math.asin(math.sqrt(min(1.0, haversine)))
 
 
+def public_participant_count(value: int) -> int | str:
+    return value if value >= 3 else "Fewer than 3"
+
+
 def quantity_band_from_storage(value: Any) -> str | None:
     """Read schema band codes and legacy text labels into the API vocabulary."""
     if isinstance(value, str):
@@ -1779,7 +1783,7 @@ def create_app(
                 "meetingPoint": getattr(event, "meeting_point", None),
                 "status": event.status,
                 "source": "weekly" if event.source == "scheduled" else "admin",
-                "participantCount": len(event_members),
+                "participantCount": public_participant_count(len(event_members)),
                 "checkedInCount": sum(member.location_passed for member in event_members),
                 "attendanceCount": sum(member.location_passed for member in event_members),
                 "joined": bool(viewer_member),

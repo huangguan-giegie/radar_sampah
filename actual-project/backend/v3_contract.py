@@ -51,6 +51,10 @@ def _beach(engine: Any, impl: Any, beach_id: str) -> dict[str, Any] | None:
     return next((item for item in impl.load_beaches(engine) if item["id"] == beach_id), None)
 
 
+def _public_count(value: int) -> int | str:
+    return value if value >= 3 else "Fewer than 3"
+
+
 def _event_payloads(engine: Any, impl: Any, events: list[Any], viewer_id: str | None, attendance_table: Any) -> list[dict[str, Any]]:
     if not events:
         return []
@@ -87,7 +91,7 @@ def _event_payloads(engine: Any, impl: Any, events: list[Any], viewer_id: str | 
             "meetingPoint": getattr(event, "meeting_point", None),
             "status": event.status,
             "source": "weekly" if event.source == "scheduled" else "admin",
-            "participantCount": len(event_members),
+            "participantCount": _public_count(len(event_members)),
             "attendanceCount": len(confirmed_by_event.get(event.id, set())),
             "joined": bool(viewer_member),
             "checkedIn": bool(viewer_member and viewer_member.location_passed),

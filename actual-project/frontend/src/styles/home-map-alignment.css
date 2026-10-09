@@ -9,7 +9,7 @@
 .home-next-action { border-top: 1px solid #0b216114; padding-top: 10px; }
 .home-next-action > button:first-child { font-weight: 650; color: #0b2161; font-size: 14px; }
 .home-next-action p { font-size: 12px; margin: 6px 0; }
-.home-next-action .home-dismiss { color: #5a6474; font-size: 11px; }
+.home-rule-suggestions .home-dismiss { color: #5a6474; font-size: 11px; }
 .beach-aligned .beach-body { gap: 26px; }
 .beach-aligned .beach-severity-card { width: 100%; text-align: left; box-shadow: 0 5px 14px #0b21610a; }
 .beach-aligned .beach-severity-card .coastal-footnote { margin-top: 10px; }

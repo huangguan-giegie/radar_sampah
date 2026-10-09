@@ -50,6 +50,10 @@ def _percentages(weighted: dict[str, float], order: list[str]) -> list[list[Any]
     return [[key, whole[key]] for key, _ in rows]
 
 
+def _public_count(value: int) -> int | str:
+    return value if value >= 3 else "Fewer than 3"
+
+
 def build_insights(engine: Any, impl: Any, *, now: datetime | None = None,
                    beach_id: str | None = None) -> dict[str, Any]:
     current = impl.utc_datetime(now or datetime.now(timezone.utc))
@@ -215,15 +219,16 @@ def build_insights(engine: Any, impl: Any, *, now: datetime | None = None,
             rows = [{"category": category, "removedBand": band} for category, band in removed.items()]
         recurrence = recurrence_by_cleanup.get(action.id)
         following = next((r for r in reports_by_beach[action.beach_id]
-                          if impl.utc_datetime(r.created_at) > impl.utc_datetime(action.created_at)), None)
+                          if recurrence and recurrence.get("followUpAt")
+                          and impl.contract_timestamp(r.created_at) == recurrence["followUpAt"]), None)
         history.append({
             "id": action.id, "beachId": action.beach_id, "beachName": beach_names.get(action.beach_id, action.beach_id),
             "eventId": action.event_id,
             "createdAt": impl.contract_timestamp(action.created_at), "handling": action.handling,
             "rows": rows, "linked": action.target_report_id is not None,
-            "nextReportedAt": impl.contract_timestamp(following.created_at) if following else None,
+            "nextReportedAt": recurrence["followUpAt"] if recurrence and recurrence.get("followUpAt") else None,
             "daysUntilNextReport": recurrence["intervalDays"] if recurrence and recurrence["intervalDays"] is not None else None,
-            "daysSinceCleanup": recurrence["daysSinceCleanup"] if recurrence and not following else None,
+            "daysSinceCleanup": recurrence["daysSinceCleanup"] if recurrence else None,
             "followUpStatus": recurrence["status"] if recurrence else "No follow-up report yet",
         })
     history.reverse()
@@ -238,7 +243,7 @@ def build_insights(engine: Any, impl: Any, *, now: datetime | None = None,
     participation = {}
     for key in ["all", *beach_ids]:
         includes = lambda pair: key == "all" or event_to_beach.get(pair[0]) == key
-        participation[key] = [sum(includes(p) for p in group) for group in (joined, attended, cleaned)]
+        participation[key] = [_public_count(sum(includes(p) for p in group)) for group in (joined, attended, cleaned)]
     rank = {"Low": 1, "Moderate": 2, "High": 3, "Severe": 4}
     comparable = [b for b in beach_rows if b["from"] is not None and b["to"] is not None]
     moved_up = sum(rank[b["to"]] > rank[b["from"]] for b in comparable)
@@ -248,7 +253,7 @@ def build_insights(engine: Any, impl: Any, *, now: datetime | None = None,
         "comparisonAt": impl.contract_timestamp(previous),
         "comparisonBasis": "Earlier bands are reconstructed from saved reports and dated cleanup records. Later report corrections or review changes can alter this comparison.",
         "overview": {"reports": sum(b["reports"] for b in beach_rows), "cleanups": len(recent_actions),
-                     "joined": len(joined), "needHelp": sum(b["needsHelp"] for b in beach_rows),
+                     "joined": _public_count(len(joined)), "needHelp": sum(b["needsHelp"] for b in beach_rows),
                      "registeredBeaches": len(beach_rows), "beachesWithReports": sum(b["activeReports"] > 0 for b in beach_rows),
                      "beachesWithBand": sum(b["to"] is not None for b in beach_rows)},
         "trendSummary": {"changed": moved_up + moved_down, "movedUp": moved_up, "movedDown": moved_down,

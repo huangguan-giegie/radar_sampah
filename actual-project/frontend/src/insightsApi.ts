@@ -45,7 +45,7 @@ export interface InsightsData {
   comparisonAt: string;
   comparisonBasis: string;
   overview: {
-    reports: number; cleanups: number; joined: number; needHelp: number;
+    reports: number; cleanups: number; joined: number | string; needHelp: number;
     registeredBeaches: number; beachesWithReports: number; beachesWithBand: number;
   };
   trendSummary: { changed: number; movedUp: number; movedDown: number; noBand: number; comparable: number };

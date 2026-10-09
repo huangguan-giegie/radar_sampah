@@ -65,6 +65,22 @@ export function saveSessionValue(key: string, value: string): void {
   try { sessionStorage.setItem(key, value); } catch { /* Continue core flows when storage is unavailable. */ }
 }
 
+const DISMISSED_NEXT_ACTIONS_KEY = 'radar-dismissed-next-actions';
+
+export function dismissedNextActionIds(): string[] {
+  try {
+    const value = JSON.parse(sessionStorage.getItem(DISMISSED_NEXT_ACTIONS_KEY) ?? '[]');
+    return Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : [];
+  } catch {
+    return [];
+  }
+}
+
+export function dismissNextAction(id: string): void {
+  const ids = dismissedNextActionIds();
+  if (!ids.includes(id)) saveSessionValue(DISMISSED_NEXT_ACTIONS_KEY, JSON.stringify([...ids, id]));
+}
+
 export function fallbackNextAction(loggedIn: boolean): NextAction {
   return loggedIn ? {
     id: 'report-fallback', actionLabel: 'Report litter', reasonCode: 'REPORT_LITTER',
