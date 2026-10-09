@@ -3,6 +3,7 @@ import { Info, SpeciesIcon } from './Icon';
 import { ErrorNote, Skeleton } from './ui';
 import { C, MONO } from '../theme';
 import { glyphForSpeciesCategory, mediaForScientificName } from '../speciesMedia';
+import { speciesPhotoReference } from '../visuals';
 import type { SpeciesDistributionResult, SpeciesPrediction } from '../types';
 
 export function decimalScoreLabel(value: number): string {
@@ -75,12 +76,15 @@ export function SpeciesModelCards({
         <div className="scroll-x" style={{ display: 'flex', gap: 12, paddingBottom: 6, margin: '0 -16px', paddingInline: 16, scrollSnapType: 'x proximity' }}>
           {cards.map((prediction) => {
             const media = mediaForScientificName(prediction.scientificName);
+            const photoReference = speciesPhotoReference(prediction.commonNameEn || prediction.scientificName);
+            const picture = media?.imageUrl ?? photoReference?.image ?? null;
+            const creditsUrl = media?.imageSourceUrl ?? photoReference?.creditsUrl ?? null;
             const glyph = glyphForSpeciesCategory(prediction.category ?? '');
             return (
               <article key={prediction.scientificName} data-species-card={prediction.scientificName} style={{ width: 226, flex: 'none', background: C.white, border: `1px solid ${C.line}`, borderRadius: 22, overflow: 'hidden', scrollSnapAlign: 'start', boxShadow: '0 10px 26px -24px rgba(11,33,97,.7)' }}>
-                <div style={{ height: 132, position: 'relative', overflow: 'hidden', background: media ? scene : C.tint }}>
-                  {media ? (
-                    <img src={media.imageUrl} alt={media.imageAlt} loading="lazy" style={{ width: '100%', height: '100%', display: 'block', objectFit: 'cover', objectPosition: media.imageObjectPosition ?? 'center' }} />
+                <div style={{ height: 132, position: 'relative', overflow: 'hidden', background: picture ? scene : C.tint }}>
+                  {picture ? (
+                    <img src={picture} alt={media?.imageAlt ?? (prediction.commonNameEn || prediction.scientificName) + ' · species reference photograph'} loading="lazy" style={{ width: '100%', height: '100%', display: 'block', objectFit: 'cover', objectPosition: media?.imageObjectPosition ?? 'center' }} />
                   ) : (
                     <div aria-hidden="true" style={{ height: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
                       {glyph ? <SpeciesIcon glyph={glyph} size={48} /> : <Info size={48} color={C.slate} />}
@@ -100,7 +104,7 @@ export function SpeciesModelCards({
                     <div style={{ marginTop: 7 }}>Raw relative score: {decimalScoreLabel(prediction.relativeOccurrenceScore)} (0–1)</div>
                     <div>{recordYearsLabel(prediction)}</div>
                     <div>Historical source records describe the model inputs, not a current beach observation.</div>
-                    {media && <div style={{ marginTop: 7 }}>Photo: <a href={media.imageSourceUrl} target="_blank" rel="noreferrer" style={{ color: C.slate, textDecoration: 'underline' }}>{media.imageAuthor}</a>{' · '}<a href={media.imageLicenseUrl} target="_blank" rel="noreferrer" style={{ color: C.slate, textDecoration: 'underline' }}>{media.imageLicense}</a></div>}
+                    {creditsUrl && <div style={{ marginTop: 7 }}>Photo reference: <a href={creditsUrl} target={creditsUrl.startsWith('https://') ? '_blank' : undefined} rel="noreferrer" style={{ color: C.slate, textDecoration: 'underline' }}>{media ? media.imageAuthor + ' · ' + media.imageLicense : 'Wikimedia Commons · photographer and licence'}</a></div>}
                   </details>
                 </div>
               </article>
@@ -113,6 +117,13 @@ export function SpeciesModelCards({
         <p>All species in this model package, including those without a recommendation. These are model results for the marine location above, not locally observed species.</p>
         {result.predictions.map((prediction) => (
           <div key={prediction.scientificName} style={{ padding: '10px 0', borderTop: `1px solid ${C.line}` }}>
+            {(() => {
+              const media = mediaForScientificName(prediction.scientificName);
+              const photo = speciesPhotoReference(prediction.commonNameEn || prediction.scientificName);
+              const url = media?.imageUrl ?? photo?.image;
+              return url ? <img src={url} alt={prediction.commonNameEn || prediction.scientificName}
+                loading="lazy" style={{ width: 72, height: 52, objectFit: 'cover', borderRadius: 9, marginBottom: 4 }} /> : null;
+            })()}
             <div style={{ fontWeight: 650, color: C.ink2 }}>{prediction.commonNameEn || prediction.scientificName}</div>
             <div style={{ fontStyle: 'italic' }}>{prediction.scientificName}</div>
             <div>Location match {locationMatchLabel(prediction.locationMatchScore)} · Raw relative score {decimalScoreLabel(prediction.relativeOccurrenceScore)}</div>
