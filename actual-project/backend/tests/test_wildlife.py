@@ -92,8 +92,18 @@ def test_risk_lookup_uses_only_approved_report_categories_and_cautious_sources(a
 def test_public_wildlife_panel_is_coarse_and_independent_of_attention(api):
     _, client = api
     body = client.get("/insights/wildlife").get_json()
-    assert len(body["beaches"]) == 4
+    catalogue = client.get("/beaches").get_json()
+    assert len(body["beaches"]) == len(catalogue) == 179
+    assert len({row["beachId"] for row in body["beaches"]}) == 179
+    assert len(client.get("/insights").get_json()["wildlife"]) == 179
     assert all(len(row["species"]) <= 2 for row in body["beaches"])
+    by_id = {row["beachId"]: row for row in body["beaches"]}
+    without_published = [beach for beach in catalogue if not beach["speciesNames"]]
+    assert len(without_published) == 78
+    assert all(by_id[beach["id"]]["sourceStatus"] == "modelled" for beach in without_published)
+    assert all(by_id[beach["id"]]["species"] for beach in without_published)
+    assert all(item["evidenceType"] == "modelled"
+               for beach in without_published for item in by_id[beach["id"]]["species"])
     assert not any(key in json.dumps(body) for key in ['"lat"', '"lng"', '"participantId"', '"reporterId"', '"attentionScore"'])
     assert "not probabilities" in body["note"]
 
