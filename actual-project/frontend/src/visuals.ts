@@ -36,6 +36,9 @@ const SPECIES_BY_NAME = new Map(
 // Habitat and group names used in the published reference lists.
 const GROUP_PHOTOS: Record<string, string> = {
   "mangrove habitat": PHOTOS.mangrove,
+  "mangrove belt": PHOTOS.mangrove,
+  "marine fish": "/species/ocellaris-clownfish.jpg", // representative group example, not species identification
+  "migratory shorebirds": PHOTOS.shorebirds,
   "mangrove fringe": PHOTOS.mangrove,
   mangroves: PHOTOS.mangrove,
   "seagrass patches": PHOTOS.seagrass,
