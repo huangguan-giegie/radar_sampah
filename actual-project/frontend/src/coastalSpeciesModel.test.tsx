@@ -26,6 +26,9 @@ vi.mock('./useAsyncData', () => ({
     data: load.toString().includes('fetchInsights') ? {
       asOf: '2026-10-05', comparisonAt: '2026-09-05',
       beaches: [{ id: 'kelanang', from: null, to: null, reportsPrevious30Days: 1, reportsLast30Days: 0, activeReports: 1, reports: 1 }],
+    } : load.toString().includes('/wildlife') ? {
+      beachId: 'kelanang', sourceStatus: 'published_reference',
+      species: [{ name: 'Thalassina kelanang', scientificName: 'Thalassina kelanang', evidenceType: 'published_reference' }],
     } : Array.isArray(initial) ? [] : {
       id: 'kelanang',
       name: 'Pantai Kelanang',
@@ -79,6 +82,8 @@ describe('teammate frontend v2 beach integration', () => {
     const html = renderBeach();
     expect(html).toContain('/images/coastal/thalassina-kelanang.jpg');
     expect(html).toContain('Thalassina kelanang');
+    expect(html).toContain('Published reference');
+    expect(html).toContain('Image credit &amp; licence');
     expect(html).not.toContain('Modelled Nearby Marine Species');
   });
 });
