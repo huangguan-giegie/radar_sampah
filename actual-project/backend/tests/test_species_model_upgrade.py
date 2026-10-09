@@ -1,4 +1,5 @@
 """Verify the integrated 40-model contract against the frozen reference matrix."""
+import json
 from pathlib import Path
 import sys
 
@@ -8,7 +9,7 @@ from sqlalchemy import select
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from api_tests_core import api
-from app import reports_table, users_table
+from app import reports_table, users_table, seed_reference_data
 
 ROOT = Path(__file__).resolve().parents[1] / "species_distribution"
 
@@ -120,6 +121,8 @@ def test_predictions_and_catalog_do_not_write_coordinates_or_reports(api):
 
 def test_wildlife_insights_distinguish_published_references_and_nearby_predictions(api):
     app, client = api
+    expanded = json.loads((Path(__file__).resolve().parents[1] / "data" / "expanded_beaches.json").read_text(encoding="utf-8"))
+    seed_reference_data(app.extensions["marine_engine"], expanded["beaches"])
     body = client.get("/insights/wildlife").get_json()
     cards = {row["scientificName"] for row in client.get("/species-cards").get_json()}
     beaches = {row["id"]: row for row in client.get("/beaches").get_json()}
