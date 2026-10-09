@@ -53,6 +53,7 @@ const GalleryScreen = lazy(() => import('./screens/GalleryScreen'));
 const InsightsScreen = lazy(() => import('./screens/InsightsScreen'));
 const MarineLifeScreen = lazy(() => import('./screens/MarineLifeScreen'));
 const SpeciesScreen = lazy(() => import('./screens/MarineLifeScreen').then(m => ({default:m.SpeciesScreen})));
+const ModelSpeciesScreen = lazy(() => import('./screens/ModelSpeciesScreen'));
 const HabitatScreen = lazy(() => import('./screens/MarineLifeScreen').then(m => ({default:m.HabitatScreen})));
 const MarineAreaScreen = lazy(() => import('./screens/MarineLifeScreen').then(m => ({default:m.MarineAreaScreen})));
 const PhotoCreditsScreen = lazy(() => import('./screens/PhotoCreditsScreen'));
@@ -185,7 +186,7 @@ export default function App() {
                                     ? 'Home'
                                     : 'Radar Sampah';
   const pageTitle = pathname.startsWith('/insights') ? 'Insights'
-    : pathname.startsWith('/species/') ? 'Species guide'
+    : pathname.startsWith('/species/') || pathname.startsWith('/model-species/') ? 'Species guide'
     : pathname.startsWith('/habitats') ? 'Coastal habitats'
     : pathname.startsWith('/marine-area') ? 'Marine life by area'
     : pathname === '/marine-life' ? 'Marine life'
@@ -239,6 +240,7 @@ export default function App() {
         <Route path="/insights/:topic/:beachId" element={<InsightsScreen />} />
         <Route path="/marine-life" element={<MarineLifeScreen />} />
         <Route path="/species/:speciesId" element={<SpeciesScreen />} />
+        <Route path="/model-species/:scientificKey" element={<ModelSpeciesScreen />} />
         <Route path="/habitats" element={<HabitatScreen />} />
         <Route path="/habitats/:habitatId" element={<HabitatScreen />} />
         <Route path="/marine-area" element={<MarineAreaScreen />} />
