@@ -159,7 +159,7 @@ def beach_risk_entries(engine: Any, impl: Any, beach_id: str) -> list[dict[str, 
     return result[:3]
 
 
-def wildlife_panel(application: Any, engine: Any, impl: Any) -> dict[str, Any]:
+def wildlife_panel(application: Any, engine: Any, impl: Any, beach_id: str | None = None) -> dict[str, Any]:
     """One row per registered beach, with published or explicitly modelled context.
 
     Published references and nearby-marine predictions are different evidence
@@ -170,13 +170,15 @@ def wildlife_panel(application: Any, engine: Any, impl: Any) -> dict[str, Any]:
     model = application.extensions.get("species_distribution_model")
     rows = []
     for beach in impl.load_beaches(engine):
-        beach_id = beach["id"]
+        if beach_id is not None and beach["id"] != beach_id:
+            continue
+        current_beach_id = beach["id"]
         published = beach.get("species") or []
         predictions = []
         result = {}
         # Curated beaches retain their published references. Only the four
         # pilot cards and beaches missing those references need model inference.
-        if model is not None and (beach_id in MVP_BEACHES or not published):
+        if model is not None and (current_beach_id in MVP_BEACHES or not published):
             lat, lng = beach.get("lat"), beach.get("lng")
             if isinstance(lat, (int, float)) and isinstance(lng, (int, float)):
                 key = (float(lat), float(lng))
@@ -190,7 +192,7 @@ def wildlife_panel(application: Any, engine: Any, impl: Any) -> dict[str, Any]:
 
         species = []
         source_status = "unavailable"
-        if beach_id in MVP_BEACHES:
+        if current_beach_id in MVP_BEACHES:
             for prediction in predictions:
                 card = cards.get(prediction.get("scientificName"))
                 if card is None:
@@ -219,7 +221,7 @@ def wildlife_panel(application: Any, engine: Any, impl: Any) -> dict[str, Any]:
                                "url": source["url"]},
                     "sources": [{"label": source.get("citation") or "Published coastal reference",
                                  "url": source["url"]}],
-                    "reviewDate": None, "destination": "/beach/" + beach_id,
+                    "reviewDate": None, "destination": "/beach/" + current_beach_id,
                     "evidenceType": "published_reference",
                 })
                 if len(species) == 2:
@@ -235,12 +237,12 @@ def wildlife_panel(application: Any, engine: Any, impl: Any) -> dict[str, Any]:
                     "locationMatchScore": prediction.get("locationMatchScore"),
                     "source": {"label": "OBIS-derived marine-grid model", "url": "https://obis.org/"},
                     "sources": prediction.get("sources", []),
-                    "reviewDate": None, "destination": "/beach/" + beach_id,
+                    "reviewDate": None, "destination": "/beach/" + current_beach_id,
                     "evidenceType": "modelled",
                 })
             source_status = "modelled" if species else "unavailable"
         rows.append({
-            "beachId": beach_id, "beachName": beach["name"], "species": species,
+            "beachId": current_beach_id, "beachName": beach["name"], "species": species,
             "coordinateContext": result.get("coordinateContext"),
             "modelCount": result.get("modelCount"), "modelVersion": result.get("modelVersion"),
             "ecologicalNote": "Published context or nearby marine-grid estimates; not beach sightings or measured wildlife impact.",
@@ -359,6 +361,12 @@ def install_wildlife(application: Any, engine: Any, impl: Any, jwt_secret: str |
             recorded = False
         return jsonify({"cardId": card_id, "completed": True, "recorded": recorded})
 
+    def beach_wildlife(beach_id: str):
+        result = wildlife_panel(application, engine, impl, beach_id=beach_id)
+        if not result["beaches"]:
+            return impl.error_response(404, "NOT_FOUND", "Beach not found.")
+        return jsonify(result["beaches"][0])
+
     def beach_risks(beach_id: str):
         if not any(beach["id"] == beach_id for beach in impl.load_beaches(engine)):
             return impl.error_response(404, "NOT_FOUND", "Beach not found.")
@@ -374,6 +382,7 @@ def install_wildlife(application: Any, engine: Any, impl: Any, jwt_secret: str |
     application.add_url_rule("/beaches/<beach_id>/wildlife-risks", "read_beach_wildlife_risks", beach_risks)
     application.add_url_rule("/wildlife-guidance", "read_wildlife_guidance", lambda: jsonify(wildlife_guidance()))
     application.add_url_rule("/insights/wildlife", "read_insights_wildlife", lambda: jsonify(wildlife_panel(application, engine, impl)))
+    application.add_url_rule("/beaches/<beach_id>/wildlife", "read_beach_wildlife", beach_wildlife)
 
     @application.after_request
     def attach_wildlife_event_guidance(response: Any):
