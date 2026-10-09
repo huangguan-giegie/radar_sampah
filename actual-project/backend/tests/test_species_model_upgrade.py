@@ -125,7 +125,8 @@ def test_wildlife_insights_distinguish_published_references_and_nearby_predictio
     seed_reference_data(app.extensions["marine_engine"], expanded["beaches"])
     body = client.get("/insights/wildlife").get_json()
     cards = {row["scientificName"] for row in client.get("/species-cards").get_json()}
-    beaches = {row["id"]: row for row in client.get("/beaches").get_json()}
+    from app import load_beaches
+    beaches = {row["id"]: row for row in load_beaches(app.extensions["marine_engine"])}
     model = app.extensions["species_distribution_model"]
     assert len(body["beaches"]) == len(beaches) == 179
     for row in body["beaches"]:
