@@ -943,6 +943,43 @@
   font-size: 11px;
   color: #5a6474;
 }
+/* Species cards carry a separate licence link so provenance never gets hidden
+   inside the click target that opens the species guide. */
+.coastal-grid-two > .wildlife-photo-card {
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid var(--coastal-line);
+  background: white;
+  min-width: 0;
+}
+.wildlife-photo-card > button {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  background: transparent;
+  padding: 0;
+  text-align: left;
+  align-items: stretch;
+}
+.wildlife-photo-card > button > strong {
+  font-size: 14px;
+  color: #0b2161;
+  padding: 12px 12px 4px;
+}
+.wildlife-photo-card > button > small {
+  color: #5a6474;
+  font-size: 11px;
+  line-height: 1.45;
+  padding: 0 12px 8px;
+}
+.wildlife-photo-card > a {
+  display: block;
+  font-size: 11px;
+  color: #325e91;
+  text-decoration: underline;
+  padding: 0 12px 12px;
+}
+
 .species-image {
   width: 100%;
   height: 140px;
