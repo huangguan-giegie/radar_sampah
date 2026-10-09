@@ -70,6 +70,7 @@ export default function CleanupScreen() {
   );
   const [category, setCategory] = useState<LitterCategory | null>(null);
   const [after, setAfter] = useState<QuantityBand | null>(null);
+  const [afterBands, setAfterBands] = useState<Partial<Record<LitterCategory, QuantityBand>>>({});
   const [step, setStep] = useState<"linked" | "amount" | "ai">("linked");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -94,6 +95,19 @@ export default function CleanupScreen() {
           (c) => CLEANUP_BAND_UNITS[target!.remainingBands[c]!] > 1,
         ) ?? categories[0]);
   const before = selected ? target?.remainingBands[selected] : undefined;
+  const selectedAfter = selected ? afterBands[selected] ?? after : after;
+  const chooseAfterFor = (item: LitterCategory, value: QuantityBand | null) => {
+    if (item === selected) setAfter(value);
+    setAfterBands((previous) => {
+      const next = { ...previous };
+      if (value) next[item] = value;
+      else delete next[item];
+      return next;
+    });
+  };
+  const chooseAfter = (value: QuantityBand | null) => {
+    if (selected) chooseAfterFor(selected, value);
+  };
   useEffect(() => {
     operation.current += 1;
     busyRef.current = false;
@@ -110,6 +124,7 @@ export default function CleanupScreen() {
     const saved = readCleanupDraft(scope, target);
     setCategory(saved.category);
     setAfter(saved.after);
+    setAfterBands(saved.afterBands ?? (saved.category && saved.after ? { [saved.category]: saved.after } : {}));
     setStep(saved.step);
     setPhoto(saved.photo);
     setSuggestion(saved.suggestion);
@@ -120,9 +135,9 @@ export default function CleanupScreen() {
   useEffect(() => {
     if (!target || restoredContext !== context || loading) return;
     writeCleanupDraft(scope, target, {
-      category, after, step, photo, suggestion, idempotencyKey: key.current,
+      category, after, afterBands, step, photo, suggestion, idempotencyKey: key.current,
     });
-  }, [scope, context, restoredContext, loading, category, after, step, photo, suggestion]);
+  }, [scope, context, restoredContext, loading, category, after, afterBands, step, photo, suggestion]);
   useEffect(() => {
     if (!photo) {
       setPhotoUrl(null);
@@ -176,7 +191,7 @@ export default function CleanupScreen() {
   }
   async function save() {
     if (busyRef.current) return;
-    if (!after) {
+    if (!after && !Object.keys(afterBands).length) {
       setStep("amount");
       return;
     }
@@ -185,18 +200,21 @@ export default function CleanupScreen() {
     const submissionKey = key.current;
     setError(null);
     try {
-      const afterBands = confirmedCleanupBands(
-        target.remainingBands,
-        selected,
-        after,
-      );
+      const submittedBands = { ...target.remainingBands };
+      for (const [item, value] of Object.entries(afterBands) as [LitterCategory, QuantityBand][]) {
+        Object.assign(submittedBands, confirmedCleanupBands(target.remainingBands, item, value));
+      }
+      if (Object.entries(submittedBands).every(([item, value]) => value === target.remainingBands[item as LitterCategory])) {
+        setStep("amount");
+        return;
+      }
       setBusy(true);
       busyRef.current = true;
       const cleanup = await submitCleanup({
         participantId: user.participantId,
         targetReportId: target.reportId,
         eventId,
-        afterBands,
+        afterBands: submittedBands,
         handling: "Not recorded",
         idempotencyKey: submissionKey,
       });
@@ -345,11 +363,11 @@ export default function CleanupScreen() {
             <button
               className="amount-option"
               role="radio"
-              aria-checked={after === b}
+              aria-checked={selectedAfter === b}
               disabled={busy}
               key={b}
               onClick={() => {
-                setAfter(b);
+                chooseAfter(b);
                 setStep("linked");
                 setError(null);
               }}
@@ -427,7 +445,7 @@ export default function CleanupScreen() {
         <PrimaryButton
           disabled={busy || !suggestion}
           onClick={() => {
-            setAfter(suggestion);
+            chooseAfter(suggestion);
             setStep("linked");
             setPhoto(null);
             setError(null);
@@ -481,48 +499,36 @@ export default function CleanupScreen() {
             <small>Counted litter report</small>
           </span>
         </div>
-        {categories.length > 1 ? (
-          <label
-            style={{
-              display: "block",
-              marginTop: 16,
-              fontSize: 12,
-              color: C.muted,
-            }}
-          >
-            Litter type
-            <select
-              aria-label="Litter type"
-              value={selected}
-              disabled={busy}
-              onChange={(e) => {
-                setCategory(e.target.value as LitterCategory);
-                setAfter(null);
-                setPhoto(null);
-                setSuggestion(null);
-                setError(null);
-              }}
-              style={{
-                display: "block",
-                width: "100%",
-                marginTop: 7,
-                padding: 11,
-                border: "1px solid #dde3ec",
-                borderRadius: 12,
-                fontSize: 16,
-                fontWeight: 650,
-                color: C.navy,
-                background: "white",
-              }}
-            >
-              {categories.map((c) => (
-                <option key={c}>{c}</option>
-              ))}
-            </select>
-          </label>
-        ) : (
-          <h2 style={{ marginTop: 16 }}>{selected}</h2>
-        )}
+        <div style={{ display: "grid", gap: 10, marginTop: 16 }}>
+          <p className="eyebrow" style={{ margin: 0 }}>Remaining amount for each litter type</p>
+          {categories.map((item) => {
+            const itemBefore = target.remainingBands[item]!;
+            return (
+              <label key={item} style={{ display: "grid", gap: 6, fontSize: 12, color: C.muted }}>
+                <span>{item} · before cleanup {itemBefore}</span>
+                <select
+                  aria-label={`${item} remaining amount`}
+                  value={afterBands[item] ?? ""}
+                  disabled={busy}
+                  onChange={(e) => {
+                    const value = e.target.value as QuantityBand | "";
+                    setCategory(item);
+                    chooseAfterFor(item, value || null);
+                    setPhoto(null);
+                    setSuggestion(null);
+                    setError(null);
+                  }}
+                  style={{ width: "100%", padding: 11, border: "1px solid #dde3ec", borderRadius: 12, fontSize: 16, fontWeight: 650, color: C.navy, background: "white" }}
+                >
+                  <option value="">Choose amount left</option>
+                  {QUANTITY_BANDS
+                    .filter((band) => CLEANUP_BAND_UNITS[band] < CLEANUP_BAND_UNITS[itemBefore])
+                    .map((band) => <option key={band} value={band}>{band} · {QUANTITY_DESC[band]}</option>)}
+                </select>
+              </label>
+            );
+          })}
+        </div>
         <div className="band-comparison">
           <div>
             <small>Before cleanup</small>
@@ -532,11 +538,11 @@ export default function CleanupScreen() {
           <div>
             <small>Left after cleanup</small>
             <button
-              className={"band-pill " + (after ? "after" : "choose")}
+              className={"band-pill " + (selectedAfter ? "after" : "choose")}
               disabled={busy}
               onClick={() => setStep("amount")}
             >
-              {after ?? "Choose Amount"}
+              {selectedAfter ?? "Choose Amount"}
             </button>
           </div>
         </div>

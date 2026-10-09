@@ -325,6 +325,7 @@ export default function AccountScreen() {
         <LinkRow
           title="Sign Out"
           onClick={async () => {
+            if (!window.confirm("Have you saved your participant ID and recovery token? You need them to restore this profile.")) return;
             await signOut();
             nav("/welcome", { replace: true });
           }}

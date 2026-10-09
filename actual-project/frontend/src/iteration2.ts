@@ -13,6 +13,8 @@ export interface CleanupEvent {
   date: string;
   startsAt: string;
   endsAt: string;
+  /** Optional moderator-provided place where volunteers should meet. */
+  meetingPoint?: string | null;
   status: EventStatus;
   source: 'weekly' | 'admin';
   participantCount: number;

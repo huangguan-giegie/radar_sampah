@@ -77,9 +77,16 @@ export default function CommunityScreen() {
   );
   const nextEvents = [...events].filter(e => eventIsAvailable(e, now)).sort((a, b) => a.startsAt.localeCompare(b.startsAt));
   const needsHelp = (b: typeof beaches[number]) => beachNeedsVolunteers(b, recentCleanups?.[b.id], nextEvents.find(e => e.beachId === b.id)?.participantCount, now);
+  const volunteerPriority = (beach: typeof beaches[number]) => {
+    const severityRank = { Severe: 4, High: 3, Moderate: 2, Low: 0 } as Record<string, number>;
+    const event = nextEvents.find(item => item.beachId === beach.id);
+    const last = recentCleanups?.[beach.id] ? Date.parse(recentCleanups[beach.id] as string) : NaN;
+    const noRecentCleanup = recentCleanups?.[beach.id] == null || (Number.isFinite(last) && now - last >= 30 * 86400000);
+    return (severityRank[beach.severity ?? ""] ?? 0) + (noRecentCleanup ? 2 : 0) + (event && event.participantCount < 3 ? 1 : 0);
+  };
   const withoutEvent = needs && filter !== "Joined" ? beaches.filter(b =>
     (!selectedBeach || b.id === selectedBeach.id) && needsHelp(b) && !nextEvents.some(e => e.beachId === b.id) &&
-    (filter !== "Near Me" || !!position && distanceKm(position, b) <= 50)) : [];
+    (filter !== "Near Me" || !!position && distanceKm(position, b) <= 50)).sort((a, b) => volunteerPriority(b) - volunteerPriority(a)) : [];
   const needsBeachData = needs || filter === "Near Me";
   function chooseFilter(value: Filter) {
     const next = new URLSearchParams(search);
@@ -131,6 +138,11 @@ export default function CommunityScreen() {
       if (filter === "Near Me")
         return !!position && !!b && distanceKm(position, b) <= 50;
       return true;
+    }).sort((a, b) => {
+      if (!needs) return a.startsAt.localeCompare(b.startsAt);
+      const beachA = beaches.find(item => item.id === a.beachId);
+      const beachB = beaches.find(item => item.id === b.beachId);
+      return (beachB ? volunteerPriority(beachB) : 0) - (beachA ? volunteerPriority(beachA) : 0);
     });
   const grouped = filtered.reduce<Record<string, typeof events>>((all, e) => {
     (all[e.date] ??= []).push(e);

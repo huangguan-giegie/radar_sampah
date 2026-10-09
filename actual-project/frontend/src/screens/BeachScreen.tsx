@@ -395,6 +395,13 @@ export default function BeachScreen() {
             </div>
           </div>
         )}
+        <button
+          type="button"
+          onClick={() => nav('/insights/trends/' + encodeURIComponent(beachId))}
+          style={{ display: 'block', marginTop: 14, color: C.navy, fontSize: 12.5, fontWeight: 700, textAlign: 'left' }}
+        >
+          See whether this beach improved or worsened in the last 30 days →
+        </button>
       </GlassPanel>
 
       <div className="measure" style={{ padding: '20px 16px calc(var(--safe-bottom) + 36px)', display: 'flex', flexDirection: 'column', gap: 22 }}>

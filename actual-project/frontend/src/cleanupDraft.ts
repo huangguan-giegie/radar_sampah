@@ -4,6 +4,7 @@ import type { LitterCategory, QuantityBand } from "./types";
 export type CleanupDraft = {
   category: LitterCategory | null;
   after: QuantityBand | null;
+  afterBands?: Partial<Record<LitterCategory, QuantityBand>>;
   step: "linked" | "amount" | "ai";
   photo: File | null;
   suggestion: QuantityBand | null;
@@ -26,7 +27,7 @@ export function readCleanupDraft(scope: string, target: CleanupTarget): CleanupD
   const saved = drafts.get(scope);
   if (saved?.target === version) return saved.value;
   const value: CleanupDraft = {
-    category: null, after: null, step: "linked", photo: null,
+    category: null, after: null, afterBands: {}, step: "linked", photo: null,
     suggestion: null, idempotencyKey: crypto.randomUUID(),
   };
   drafts.set(scope, { target: version, value });
