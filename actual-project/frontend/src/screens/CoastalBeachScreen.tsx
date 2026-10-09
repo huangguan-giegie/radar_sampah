@@ -36,7 +36,7 @@ import { useAppBack } from "../navigation";
 import { eventIsAvailable, useEventClock } from "../eventAvailability";
 import { StaticMap } from "../components/Visuals";
 import { marineRecordDetails } from "../biodiversity";
-import { beachPhoto, speciesPhoto } from "../visuals";
+import { beachPhoto, speciesPhotoReference } from "../visuals";
 import { fetchInsights, type InsightsData } from "../insightsApi";
 
 type BeachWildlifeSpecies = { name: string; scientificName?: string | null; evidenceType: string; source?: { url: string } };
@@ -325,14 +325,21 @@ export default function CoastalBeachScreen() {
               {currentSpecies.map((item, i) => {
                 const guide = content.species.find(s => s.name.toLowerCase() === item.name.toLowerCase() ||
                   (item.scientificName && s.subtitle.toLowerCase().includes(item.scientificName.toLowerCase())));
+                const photo = speciesPhotoReference(item.name);
                 return (
-                  <button key={item.scientificName ?? item.name ?? String(i)}
-                    onClick={() => nav(guide ? "/species/" + guide.id : "/insights/wildlife")}>
-                    <SpeciesPicture image={speciesPhoto(item.name)} name={item.name} />
-                    <strong>{item.name}</strong>
-                    <small>{item.scientificName && item.scientificName !== item.name ? <em>{item.scientificName}</em> : null}
-                      {item.evidenceType === "modelled" ? " · Modelled nearby" : " · Published reference"}</small>
-                  </button>
+                  <div className="wildlife-photo-card" key={item.scientificName ?? item.name ?? String(i)}>
+                    <button onClick={() => nav(guide ? "/species/" + guide.id : "/insights/wildlife")}>
+                      <SpeciesPicture image={photo?.image ?? null} name={item.name} />
+                      <strong>{item.name}</strong>
+                      <small>{item.scientificName && item.scientificName !== item.name ? <em>{item.scientificName}</em> : null}
+                        {item.evidenceType === "modelled" ? " · Modelled nearby" : " · Published reference"}</small>
+                    </button>
+                    {photo?.creditsUrl && (
+                      <a href={photo.creditsUrl} target="_blank" rel="noopener noreferrer" title={photo.note}>
+                        Image credit & licence ↗
+                      </a>
+                    )}
+                  </div>
                 );
               })}
             </div>
