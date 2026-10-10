@@ -300,9 +300,7 @@ export default function App() {
         <Route path="/reports/:reportId" element={<RequireAuth><ReportDetailScreen /></RequireAuth>} />
         <Route path="/account" element={<RequireAuth><AccountScreen /></RequireAuth>} />
 
-        {/* Anything we do not recognise goes home rather than showing a blank
-            page. replace, so the broken URL does not sit in the history and
-            trap the user on the back button. */}
+        {/* Keep mistyped or outdated URLs visible with a useful 404 screen. */}
         <Route path="*" element={<NotFoundScreen />} />
       </Routes>
       </Suspense>
