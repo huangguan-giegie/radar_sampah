@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { apiRequest, getBeach, USE_MOCK } from "../api";
 import content from "../content/coastalContent.json";
 import { useApp } from "../AppContext";
@@ -44,6 +44,7 @@ type BeachWildlife = { beachId: string; sourceStatus: string; species: BeachWild
 export default function CoastalBeachScreen() {
   const { beachId = "" } = useParams();
   const nav = useNavigate();
+  const location = useLocation();
   const now = useEventClock();
   const [params] = useSearchParams();
   const fixture = content.beaches.find((b) => b.id === beachId);
@@ -156,7 +157,11 @@ export default function CoastalBeachScreen() {
     : hasWildlifeContext && wildlife?.sourceStatus === "published_reference"
       ? "Published coastal reference · not confirmed beach sightings"
       : "Published coastal references from the map, not confirmed sightings at this beach";
-  const goMap = () => nav(region ? "/map?region=" + encodeURIComponent(region) : "/map");
+  const goMap = () => {
+    const mapParams = new URLSearchParams(region ? { region } : {});
+    if (location.state?.fromMarineMap) { mapParams.set('marine', 'on'); mapParams.set('beach', beachId); }
+    nav('/map' + (mapParams.size ? '?' + mapParams.toString() : ''));
+  };
   return (
     <main className="screen scroll-y coastal-screen beach-detail-screen">
       <header className={"coastal-beach-hero" + (!image && heroLat != null ? " has-map" : "")}>

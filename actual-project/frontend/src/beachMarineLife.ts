@@ -24,10 +24,18 @@ export type BeachMarineCard = {
 const normalize = (value: string) => value.trim().toLowerCase().replace(/[^a-z0-9]+/g, '');
 const PILOT_BEACHES = new Set(['morib', 'remis', 'kelanang', 'bagan']);
 
+export function beachMarineReferences(beachId: string) {
+  const beach = content.beaches.find(item => item.id === beachId);
+  const region = content.regions.find(item => item.id === beach?.region);
+  const pinIndices = new Set((MARINE_PIN_REFERENCES[beach?.region ?? ''] ?? [])
+    .filter(([, id]) => id === beachId).map(([index]) => index));
+  return (region?.records ?? []).filter((record, index) => pinIndices.has(index)
+    || (beach && normalize(record.place) === normalize(beach.name))).map(marineRecordDetails);
+}
+
 /** Keep map references tied to their named place, then add API evidence once per species. */
 export function beachMarineCards(beachId: string, wildlife: readonly BeachWildlifeSpecies[] = []): BeachMarineCard[] {
   const beach = content.beaches.find(item => item.id === beachId);
-  const region = content.regions.find(item => item.id === beach?.region);
   const cards = new Map<string, BeachMarineCard>();
   const addReference = (speciesId: string | null, place?: string) => {
     const guide = content.species.find(item => item.id === speciesId);
@@ -42,13 +50,7 @@ export function beachMarineCards(beachId: string, wildlife: readonly BeachWildli
   // The four original beaches have individually curated species. Expanded
   // preview lists contain regional examples, so use their named map records.
   if (beach && PILOT_BEACHES.has(beachId)) beach.species.forEach(id => addReference(id, beach.name));
-  const pinIndices = new Set((MARINE_PIN_REFERENCES[beach?.region ?? ''] ?? [])
-    .filter(([, id]) => id === beachId).map(([index]) => index));
-  region?.records.forEach((record, index) => {
-    if (pinIndices.has(index) || (beach && normalize(record.place) === normalize(beach.name))) {
-      addReference(marineRecordDetails(record).speciesId, record.place);
-    }
-  });
+  beachMarineReferences(beachId).forEach(record => addReference(record.speciesId, record.place));
 
   for (const item of wildlife) {
     const guide = content.species.find(candidate => normalize(candidate.name) === normalize(item.name) ||
