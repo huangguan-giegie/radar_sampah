@@ -65,4 +65,14 @@ describe('production Insights scope and count labels', () => {
     expect(markup).toContain('Active reports · latest 90 days');
     expect(markup).toContain('not litter-item counts');
   });
+  it('distinguishes missing follow-up, a same-day report and a one-day report', () => {
+    expect(render('/insights/cleanup')).toContain('1 day since cleanup');
+    const cleanup = state.data.cleanup.history[0];
+    cleanup.nextReportedAt = '2026-10-04T15:00:00Z';
+    cleanup.daysUntilNextReport = 0;
+    expect(render('/insights/cleanup')).toContain('Next report the same day');
+    cleanup.daysUntilNextReport = 1;
+    expect(render('/insights/cleanup')).toContain('Next report after 1 day');
+    expect(render('/insights/cleanup')).not.toContain('1 days');
+  });
 });

@@ -16,6 +16,7 @@
 .map-search-form .coastal-search { margin: 0; min-height: 43px; border: 1px solid var(--coastal-line); }
 .map-search-form input { width: 100%; min-width: 0; font-size: 13px; }
 .map-overlay-toggle { display: flex; justify-content: flex-end; }
+.design-map-header > .map-overlay-toggle { margin-top: 0; }
 .map-overlay-toggle button { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; min-height: 28px; color: var(--coastal-navy); }
 .map-overlay-toggle button span { background: #e1eee6; border-radius: 8px; padding: 3px 7px; font-weight: 700; }
 .map-overlay-toggle button[aria-pressed=false] span { background: #e9edf3; }
@@ -25,10 +26,8 @@
 .map-search-results small { display: block; color: #5a6474; margin-top: 4px; font-size: 11px; }
 .marine-overlay-pin { display: block; width: 36px; height: 36px; margin: 4px; overflow: hidden; border: 2px solid white; border-radius: 50%; background: #e1eee6; color: #086d73; box-shadow: 0 3px 9px #0b216155; }
 .marine-overlay-pin img { width: 100%; height: 100%; object-fit: cover; }
-.beach-map-label > span { background: white; border: 1px solid; font-weight: 700; }
-.beach-map-label.compact { height: 38px; gap: 2px; }
-.beach-map-label.compact > span { font-size: 10px; line-height: 13px; }
-.beach-map-label.compact small { font-size: 8px; }
+.beach-map-label, .beach-map-label.compact { height: 44px; justify-content: center; gap: 0; }
+.beach-map-label > span, .beach-map-label.compact > span { display: flex; align-items: center; justify-content: center; width: 100%; min-height: 36px; padding: 5px 7px; border: 1px solid #ffffffc9; border-radius: 7px; font-size: 11px; line-height: 13px; font-weight: 750; text-align: center; white-space: normal; overflow-wrap: anywhere; }
 .coastal-map-marker:focus-visible { outline: 3px solid #14317e; outline-offset: 3px; border-radius: 8px; }
 .marine-map-link { color: var(--coastal-navy); font-size: 13px; font-weight: 650; margin-top: -12px; }
 .borneo-inset > .borneo-report-counts { position: absolute; z-index: 801; inset: 10px 7px auto; display: flex; justify-content: space-between; pointer-events: none; }
@@ -72,7 +71,22 @@
 .share-image-options button[aria-label] { color: white; font-size: 18px; }
 .cleanup-share-preview { display: block; width: min(100%, 275px); margin: 0 auto 18px; border-radius: 15px; box-shadow: 0 5px 20px #0b216126; }
 .cleanup-share-actions { display: grid; gap: 10px; }
+.not-found-actions { display: grid; gap: 12px; margin-top: 24px; }
+.ai-amount-row { grid-template-columns: minmax(0, 1fr) 124px; }
+.ai-amount-row select { width: 100%; min-width: 0; padding: 10px 26px 10px 10px; font-size: 14px; }
+.beach-detail-screen .coastal-beach-hero { height: 214px; }
+.beach-wildlife-location { margin: 10px 0 6px; color: var(--coastal-navy); font-size: 13px; font-weight: 650; }
+.beach-nearby-marine { scroll-margin-top: 20px; }
+.beach-nearby-marine .wildlife-photo-card strong { overflow-wrap: anywhere; }
+@media (max-width: 600px) {
+  .wildlife-beach-card > span:first-child { align-items: flex-start; flex-direction: column; gap: 6px; }
+  .wildlife-beach-card > span:first-child > * { min-width: 0; overflow-wrap: anywhere; }
+  .wildlife-beach-card small { line-height: 1.5; }
+}
 @media (max-height: 740px) {
+  .design-map-header { padding-top: 8px; padding-bottom: 6px; gap: 4px; }
+  .design-map-header .coastal-search { min-height: 38px; }
+  .coastal-map .map-bottom-card { padding-block: 8px; }
   .coastal-map .map-controls { flex-direction: row; align-items: center; bottom: 12px; }
   .coastal-map .map-controls .icon-button { width: 44px; height: 44px; }
   .coastal-map .map-full-overview { bottom: 12px; }

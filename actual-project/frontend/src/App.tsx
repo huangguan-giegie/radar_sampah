@@ -24,6 +24,7 @@ import IdentityScreen from './screens/IdentityScreen';
 import HomeScreen from './screens/HomeScreen';
 const MapScreen = lazy(() => import('./screens/MapScreen'));
 const BeachScreen = lazy(() => import('./screens/CoastalBeachScreen'));
+const NotFoundScreen = lazy(() => import('./screens/NotFoundScreen'));
 import MethodScreen from './screens/MethodScreen';
 import PhotoScreen from './screens/PhotoScreen';
 import GpsScreen from './screens/GpsScreen';
@@ -302,7 +303,7 @@ export default function App() {
         {/* Anything we do not recognise goes home rather than showing a blank
             page. replace, so the broken URL does not sit in the history and
             trap the user on the back button. */}
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<NotFoundScreen />} />
       </Routes>
       </Suspense>
 

@@ -1,5 +1,14 @@
 import type { SeverityBand } from "./types";
 
+/** One beach row uses its earliest eligible event, regardless of API ordering. */
+export function nextEventPerBeach<T extends { beachId: string; startsAt: string }>(events: readonly T[]): T[] {
+  const byBeach = new Map<string, T>();
+  for (const event of [...events].sort((a, b) => a.startsAt.localeCompare(b.startsAt))) {
+    if (!byBeach.has(event.beachId)) byBeach.set(event.beachId, event);
+  }
+  return [...byBeach.values()];
+}
+
 /** H15 prototype rule; missing/invalid timestamps never establish an old cleanup. */
 export function beachNeedsVolunteers(
   beach: { severity: SeverityBand | null; insufficientData?: boolean },

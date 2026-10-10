@@ -69,7 +69,7 @@ describe('attentionStateFor', () => {
     expect(attentionStateFor(null, true, validReports)).toEqual({
       markerLabel: 'INSUFFICIENT DATA',
       pageLabel: 'Insufficient data',
-      detail: `${validReports} counted ${reportWord} · At least 3 counted reports are required for a band`,
+      detail: `${validReports} counted ${reportWord} · At least 3 counted reports are required for a rating`,
       hasBand: false,
     });
   });

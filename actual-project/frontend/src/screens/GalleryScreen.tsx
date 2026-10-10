@@ -112,15 +112,14 @@ export default function GalleryScreen() {
               <div style={{ height: 150, background: C.tint, display: 'grid', placeItems: 'center', color: C.muted, fontSize: 13 }}>Photo unavailable</div>
             )}
             <div style={{ padding: 16 }}>
-              <strong style={{ display: 'block', fontSize: 14, color: C.ink2 }}>Report {photo.reportId.toUpperCase()}</strong>
+              <strong style={{ display: 'block', fontSize: 14, color: C.ink2 }}>Reported {formatDate(photo.reportedAt)}</strong>
               <span style={{ display: 'block', marginTop: 4, fontSize: 12, color: C.muted }}>{photo.currentState === 'resolved' ? 'Resolved report photo · retained for history' : 'Active report photo'}</span>
-              <span style={{ display: 'block', marginTop: 5, fontSize: 10.5, color: C.dim }}>{formatDate(photo.reportedAt)}</span>
             </div>
           </article>
         ))}
 
         {cleanupTarget ? (
-          <PrimaryButton onClick={() => nav(`/cleanup/${beachId}`)}>Clean up {cleanupTarget.reportId.toUpperCase()}</PrimaryButton>
+          <PrimaryButton onClick={() => nav(`/cleanup/${beachId}`)}>Log a cleanup here</PrimaryButton>
         ) : (
           <GhostButton onClick={() => nav(`/beach/${beachId}`)}>Back to beach</GhostButton>
         )}

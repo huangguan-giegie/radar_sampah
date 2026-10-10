@@ -18,14 +18,23 @@ describe('recurrence evidence', () => {
   });
   it('preserves same-day zero intervals and labels only sufficiently evidenced medians', () => {
     const html = renderToStaticMarkup(<RecurrenceEvidence evidence={{ ...base, intervalDays: 0, status: '0 days until next Counted report', medianDays: 2, provisional: true }} />);
-    expect(html).toContain('0 days until next Counted report');
-    expect(html).toContain('Provisional median recurrence interval: 2 days');
+    expect(html).toContain('Next report the same day');
+    expect(html).not.toContain('0 days until');
+    expect(html).toContain('Early estimate: the next counted report was typically recorded after 2 days');
     const insufficient = renderToStaticMarkup(<RecurrenceEvidence evidence={{ ...base, medianDays: 0, provisional: false }} />);
-    expect(insufficient).not.toContain('Provisional median');
+    expect(insufficient).not.toContain('Early estimate');
   });
   it('omits the section when no cleanup exists and keeps superseded-cleanup wording', () => {
     expect(renderToStaticMarkup(<RecurrenceEvidence evidence={null} />)).toBe('');
     const html = renderToStaticMarkup(<RecurrenceEvidence evidence={{ ...base, status: 'No follow-up report before the next cleanup' }} />);
     expect(html).toContain('No follow-up report before the next cleanup');
+  });
+  it('uses singular days while preserving the distinction between missing and zero-day follow-up', () => {
+    const html = renderToStaticMarkup(<RecurrenceEvidence evidence={{ ...base, daysSinceCleanup: 1, intervalDays: 1 }} />);
+    expect(html).toContain('Next report after 1 day');
+    expect(html).toContain('1 day since the recorded cleanup');
+    expect(html).not.toContain('1 days');
+    const missing = renderToStaticMarkup(<RecurrenceEvidence evidence={base} />);
+    expect(missing).not.toContain('Next report the same day');
   });
 });

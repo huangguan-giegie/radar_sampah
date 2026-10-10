@@ -203,7 +203,7 @@ export default function AiSuggestionScreen() {
               </div>
               <div style={{ display: 'grid', gap: 11, marginTop: 16 }}>
                 {(Object.keys(editable) as LitterCategory[]).map((category) => (
-                  <label key={category} className="i2-quantity-row">
+                  <label key={category} className="i2-quantity-row ai-amount-row">
                     <span style={{ fontSize: 13.5, fontWeight: 700 }}>{category}</span>
                     <select className="i2-field" aria-label={`${category} suggested amount`} value={editable[category]} onChange={(event) => {
                       const next = { ...editable, [category]: event.target.value as QuantityBand };

@@ -9,6 +9,7 @@ import { SeverityBadge } from '../components/ds';
 import type { SeverityBand, SpeciesCoordinateContext } from '../types';
 import { C, formatDate } from '../theme';
 import '../styles/reference-pages.css';
+import { daysLabel, recurrenceEstimate, recurrenceStatus } from '../recurrenceCopy';
 
 type PublicCount = number | 'Fewer than 3';
 type Beach = {
@@ -133,7 +134,7 @@ export default function LiveInsightsScreen() {
           <p className="coastal-footnote">Largest share of weighted reported composition: {beach.leadingCategories.join(' and ') || 'Insufficient data'}</p>
           <Shares rows={beach.composition} />
           {monthly && <><p className="eyebrow">Monthly reporting activity</p><div className="coastal-bars" role="img" aria-label={data.trends.monthlyReports.months.map((month, i) => `${month}: ${monthly.counts[i]} reports`).join(', ')}>{monthly.counts.map((count, i) => <div key={i}><small>{count}</small><i style={{ height: Math.min(count * 10, 100) }} /><small>{data.trends.monthlyReports.months[i].slice(5)}</small></div>)}</div><p className="coastal-footnote">{data.trends.monthlyReports.caption}</p></>}
-          {recurrence && <p>{recurrence.status}{recurrence.medianDays !== null ? ` · Provisional median: ${recurrence.medianDays} days` : ''}</p>}
+          {recurrence && <p>{recurrenceStatus(recurrence.status, recurrence.intervalDays)}{recurrence.medianDays !== null ? ' · ' + recurrenceEstimate(recurrence.medianDays) : ''}</p>}
         </WhiteCard>;
       })}
       {(topic === 'cleanup' || topic === 'cleanup-history') && <>
@@ -141,7 +142,7 @@ export default function LiveInsightsScreen() {
         {!data.cleanup.recent.length && <DataUnavailable title={data.cleanup.emptyState ?? 'Not enough cleanups recorded yet.'} />}
         <WhiteCard><h3>Hardest-to-clear categories</h3>{data.cleanup.hardestToClear.eligible ? <Shares rows={data.cleanup.hardestToClear.categories} /> : <p>{data.cleanup.hardestToClear.emptyState}</p>}<p className="coastal-footnote">Categories included in at least three cleanups. Remaining above Small after cleanup.</p></WhiteCard>
         <WhiteCard><h3>Handling status</h3>{data.cleanup.handling.eligible ? data.cleanup.handling.statuses.map(row => <p key={row.status}>{row.status}: {row.percentage}% ({row.count})</p>) : <p>{data.cleanup.handling.emptyState}</p>}<p className="coastal-footnote">{data.cleanup.handling.label}</p></WhiteCard>
-        {data.cleanup.recurrence.beaches.map(row => <WhiteCard key={row.beachId}><h3>{data.beaches.find(beach => beach.id === row.beachId)?.name}</h3><p>{row.status} · {row.daysSinceCleanup} days since cleanup</p>{row.medianDays !== null && <p>Provisional median: {row.medianDays} days</p>}<p className="coastal-footnote">{row.evidenceNote}</p></WhiteCard>)}
+        {data.cleanup.recurrence.beaches.map(row => <WhiteCard key={row.beachId}><h3>{data.beaches.find(beach => beach.id === row.beachId)?.name}</h3><p>{recurrenceStatus(row.status, row.intervalDays)} · {daysLabel(row.daysSinceCleanup)} since cleanup</p>{row.medianDays !== null && <p>{recurrenceEstimate(row.medianDays)}</p>}<p className="coastal-footnote">{row.evidenceNote}</p></WhiteCard>)}
       </>}
       {topic === 'participation' && <><SummaryCard eyebrow="Joining to cleanup · last 90 days">{data.participation.steps.map(step => <div key={step.key}><p>{step.label}: <strong>{step.count}</strong></p>{step.beaches?.map(row => <p key={row.beachId} className="coastal-footnote">{data.beaches.find(beach => beach.id === row.beachId)?.name}: {row.count}</p>)}</div>)}{data.participation.conversions.map((conversion, i) => <div key={i}><p>{conversion.from} → {conversion.to}: {conversion.percentage === null ? 'Insufficient data' : `${conversion.percentage}%`}</p>{conversion.beaches?.map(row => <p key={row.beachId}>{data.beaches.find(beach => beach.id === row.beachId)?.name}: {row.percentage}%</p>)}</div>)}<p className="coastal-footnote">{data.participation.caption}</p></SummaryCard><p className="coastal-footnote">Small counts are withheld. Beach breakdowns are shown only when every beach meets the minimum of three.</p></>}
       {topic === 'evidence' && (data.evidence?.beaches.length ? <>

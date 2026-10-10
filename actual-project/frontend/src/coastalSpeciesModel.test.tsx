@@ -58,7 +58,10 @@ describe('teammate frontend v2 beach integration', () => {
     expect(appSource).toContain("const BeachScreen = lazy(() => import('./screens/CoastalBeachScreen'));");
     expect(appSource).toContain('<Route path="/beach/:beachId" element={<BeachScreen />}');
     const html = renderBeach();
-    expect(html).toContain('Marine Life &amp; Habitat');
+    expect(html).toContain('Nearby Marine Life');
+    expect(html).toContain('Coastal context for Pantai Kelanang');
+    expect(html.indexOf('Nearby Marine Life')).toBeLessThan(html.indexOf('What You Can Do Here'));
+    expect(html.indexOf('Nearby Marine Life')).toBeLessThan(html.indexOf('Litter Gallery'));
     expect(html).toContain('Species Guide');
   });
 

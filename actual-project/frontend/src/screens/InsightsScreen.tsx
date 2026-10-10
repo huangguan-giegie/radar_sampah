@@ -32,6 +32,7 @@ import { getCoastalBeaches } from "../coastalData";
 import { PlaceThumb } from "../components/Visuals";
 import { beachPhoto, speciesPhoto } from "../visuals";
 import { PHOTOS } from '../visuals';
+import { daysLabel, nextReportLabel } from "../recurrenceCopy";
 import { personalInsightsPreview } from '../personalInsightsPreview';
 
 export function MetricBars({ rows }: { rows: [string, number][] }) {
@@ -90,7 +91,7 @@ export default function InsightsScreen() {
             <div className="personal-insight-risk"><p className="eyebrow">May affect</p><strong>{section.facts.speciesGroups?.join(' · ')}</strong><small>{section.facts.riskType}</small></div>
             <p className="coastal-footnote">General research · no local harm shown</p>
           </> : section.id === 'since_cleanup' && section.facts ? <>
-            <div className="personal-cleanup-fact"><div><strong>{section.facts.intervalDays ?? section.facts.daysSinceCleanup ?? '—'}</strong><small>DAYS</small></div><div><b>{section.facts.beachName}</b><p className="subtle">{section.facts.intervalDays != null ? 'From your cleanup to the next counted report' : 'Since your recorded cleanup'}</p></div></div>
+            <div className="personal-cleanup-fact"><div><strong>{section.facts.intervalDays ?? section.facts.daysSinceCleanup ?? '—'}</strong><small>{(section.facts.intervalDays ?? section.facts.daysSinceCleanup) === 1 ? 'DAY' : 'DAYS'}</small></div><div><b>{section.facts.beachName}</b><p className="subtle">{section.facts.intervalDays != null ? 'From your cleanup to the next counted report' : 'Since your recorded cleanup'}</p></div></div>
             {section.facts.intervalDays == null && <p className="coastal-footnote">{section.facts.followUpStatus ?? 'No follow-up report yet'}</p>}
             <p className="coastal-footnote">Community reporting, not measured litter return</p>
           </> : section.id === 'persistent_litter' && section.facts ? <>
@@ -136,7 +137,7 @@ function WildlifeCoverage({ beaches }: { beaches: InsightsData['wildlife'] }) {
     <p className="coastal-footnote">All registered beaches are listed. Published reference species and coordinate-based nearby marine-grid model suggestions are separate kinds of evidence; neither confirms sightings at these beaches.</p>
     {loading && <p className="coastal-footnote">Loading nearby marine-grid context for beaches without published references…</p>}
     {error && <DataUnavailable title="Modelled biodiversity temporarily unavailable" retry={() => { void refresh(); }}>Published references are still shown. The modelled suggestions could not be loaded.</DataUnavailable>}
-    {!loading && unavailableCount > 0 && <p className="coastal-footnote">{unavailableCount} beaches have no currently available species suggestion. This is not evidence that wildlife is absent.</p>}
+    {!loading && unavailableCount > 0 && <p className="coastal-footnote">{unavailableCount} {unavailableCount === 1 ? 'beach has' : 'beaches have'} no currently available species suggestion. This is not evidence that wildlife is absent.</p>}
     {beaches.map(beach => {
       const model = byBeach.get(beach.beachId);
       const isPublished = beach.species.length > 0;
@@ -267,7 +268,7 @@ function LiveInsightsScreen({ personalAction }: { personalAction: ReactNode }) {
       <SummaryCard eyebrow={`30-day comparison · ${data.overview.registeredBeaches} beaches`} value={data.trendSummary.changed} description="beaches changed attention level">
         <SummaryStats items={[{ label: 'Moved up', value: data.trendSummary.movedUp }, { label: 'Moved down', value: data.trendSummary.movedDown }, { label: 'Not yet rated', value: data.trendSummary.noBand }]} />
       </SummaryCard>
-      <p className="coastal-footnote">{data.trendSummary.comparable} beaches have comparable attention levels in both windows. {data.comparisonBasis}</p>
+      <p className="coastal-footnote">{data.trendSummary.comparable} {data.trendSummary.comparable === 1 ? 'beach has' : 'beaches have'} comparable attention levels in both windows. {data.comparisonBasis}</p>
       <div className="search-row"><label className="coastal-search"><Search /><input aria-label="Search Beaches" placeholder="Search Beaches" value={search} onChange={e => update('q', e.target.value)} /></label>
         <button className="icon-button" aria-label="Filters" onClick={() => setFilters(true)}><BarChart size={19} /></button>
       </div>
@@ -320,7 +321,7 @@ function LiveInsightsScreen({ personalAction }: { personalAction: ReactNode }) {
       <WhiteCard><p className="eyebrow">How litter was handled</p><MetricBars rows={data.cleanup.handling} /><p className="coastal-footnote">Share of cleanup records, as recorded by participants.</p></WhiteCard>
       <WhiteCard><p className="eyebrow">Days until the next counted report</p>
         {data.cleanup.history.slice(0, 5).map(cleanup => <LinkRow key={cleanup.id} title={cleanup.beachName}
-          subtitle={`Cleaned ${formatDate(cleanup.createdAt)} · ${cleanup.nextReportedAt ? `${cleanup.daysUntilNextReport} days until next report` : `${cleanup.followUpStatus ?? 'No follow-up report yet'} · ${cleanup.daysSinceCleanup} days since cleanup`}`}
+          subtitle={`Cleaned ${formatDate(cleanup.createdAt)} · ${cleanup.nextReportedAt ? nextReportLabel(cleanup.daysUntilNextReport) : `${cleanup.followUpStatus ?? 'No follow-up report yet'} · ${daysLabel(cleanup.daysSinceCleanup)} since cleanup`}`}
           onClick={() => nav('/insights/cleanup-history?cleanup=' + cleanup.id)} />)}
         <p className="coastal-footnote">Time to the next report anywhere at this beach. A later report does not establish that litter returned at the cleaned spot.</p>
       </WhiteCard><GhostButton onClick={() => nav('/insights/cleanup-history')}>View Cleanup History</GhostButton>

@@ -87,7 +87,7 @@ export function attentionStateFor(
     return {
       markerLabel: 'INSUFFICIENT DATA',
       pageLabel: 'Insufficient data',
-      detail: `${validReports} counted ${word} · At least ${minimum} counted reports are required for a band`,
+      detail: `${validReports} counted ${word} · At least ${minimum} counted reports are required for a rating`,
       hasBand: false,
     } as const;
   }
