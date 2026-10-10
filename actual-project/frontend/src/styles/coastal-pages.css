@@ -700,7 +700,8 @@
 .borneo-habitats button:nth-child(2){transform:translateY(-5px)}
 .borneo-habitats button:nth-child(3){transform:translateY(-10px)}
 .wildlife-beach-card{display:flex;flex-direction:column;gap:12px;width:100%;padding:18px 16px;background:white;border-radius:24px;text-align:left;color:#252d2c}
-.wildlife-beach-card>span:first-child{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:15px}
+/* Name, habitat and model context stack: side by side they squeezed into three narrow columns on phones. */
+.wildlife-beach-card>span:first-child{display:flex;flex-direction:column;align-items:flex-start;gap:4px;font-size:15px}
 .wildlife-beach-card small{color:#63707e;font-size:12px}
 .wildlife-species{display:flex;gap:7px;flex-wrap:wrap}
 .wildlife-species>span{padding:7px 11px;border:1px solid #d9dee5;border-radius:30px;font-size:12px}

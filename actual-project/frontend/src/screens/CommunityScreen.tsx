@@ -22,6 +22,7 @@ import content from "../content/coastalContent.json";
 import { beachNeedsVolunteers } from "../volunteerNeeds";
 import { PlaceThumb } from "../components/Visuals";
 import { beachPhoto } from "../visuals";
+import { compareCleanupStart, nearestCleanupPerBeach } from "../nextCleanupEvent";
 
 type Filter = "All" | "Near Me" | "Joined";
 const participantCountValue = (value: number | "Fewer than 3") => value === "Fewer than 3" ? 0 : value;
@@ -76,7 +77,7 @@ export default function CommunityScreen() {
     () => needs && beaches.length ? fetchLatestCleanupDates(beaches.map(b => b.id)) : Promise.resolve({} as Record<string, string | null>),
     [needs, beaches, reportsVersion], {} as Record<string, string | null>,
   );
-  const nextEvents = [...events].filter(e => eventIsAvailable(e, now)).sort((a, b) => a.startsAt.localeCompare(b.startsAt));
+  const nextEvents = [...events].filter(e => eventIsAvailable(e, now)).sort(compareCleanupStart);
   const needsHelp = (b: typeof beaches[number]) => beachNeedsVolunteers(b, recentCleanups?.[b.id], nextEvents.find(e => e.beachId === b.id)?.participantCount, now);
   const volunteerPriority = (beach: typeof beaches[number]) => {
     const severityRank = { Severe: 4, High: 3, Moderate: 2, Low: 0 } as Record<string, number>;
@@ -140,7 +141,7 @@ export default function CommunityScreen() {
         return !!position && !!b && distanceKm(position, b) <= 50;
       return true;
     }).sort((a, b) => {
-      if (!needs) return a.startsAt.localeCompare(b.startsAt);
+      if (!needs) return compareCleanupStart(a, b);
       const beachA = beaches.find(item => item.id === a.beachId);
       const beachB = beaches.find(item => item.id === b.beachId);
       return (beachB ? volunteerPriority(beachB) : 0) - (beachA ? volunteerPriority(beachA) : 0);
@@ -158,8 +159,10 @@ export default function CommunityScreen() {
     if (event && participantCountValue(event.participantCount) < 3) reasons.push("Low sign-up for the next event");
     return reasons;
   };
+  // One row per beach: weekly events would otherwise list the same beach once per Saturday.
+  const nextEventPerBeach = nearestCleanupPerBeach(filtered);
   const needsRows = needs ? [
-    ...filtered.map(event => ({ kind: "event" as const, event, beach: beaches.find(beach => beach.id === event.beachId)! })),
+    ...nextEventPerBeach.map(event => ({ kind: "event" as const, event, beach: beaches.find(beach => beach.id === event.beachId)! })),
     ...withoutEvent.map(beach => ({ kind: "beach" as const, beach })),
   ].sort((a, b) => {
     const eventA = a.kind === "event" ? a.event : undefined;
@@ -169,7 +172,7 @@ export default function CommunityScreen() {
     const reportA = Date.parse(a.beach.lastReportedAt ?? "") || 0;
     const reportB = Date.parse(b.beach.lastReportedAt ?? "") || 0;
     if (reportA !== reportB) return reportB - reportA;
-    return (eventA?.startsAt ?? "").localeCompare(eventB?.startsAt ?? "");
+    return eventA && eventB ? compareCleanupStart(eventA, eventB) : (eventA ? -1 : eventB ? 1 : 0);
   }) : [];
   return (
     <CoastalPage
@@ -289,7 +292,7 @@ export default function CommunityScreen() {
             const reasons = reasonsFor(beach, event);
             return event ? <button key={event.id} className="coastal-event" onClick={() => nav("/events/" + event.id)}>
               <span className="event-thumb"><PlaceThumb image={beachPhoto(beach.id, beach.coverImageUrl)} lat={beach.lat} lng={beach.lng} size={72} focus={[0.64, 0.32]} /></span>
-              <span className="grow"><h3>{beach.name}</h3><p>{formatEventDate(event.date)} · {formatEventTimeRange(event.startsAt, event.endsAt)}</p><p>{reasons.join(" · ")}</p>
+              <span className="grow"><h3>{beach.name}</h3><p>Next cleanup: {formatEventDate(event.date)} · {formatEventTimeRange(event.startsAt, event.endsAt)}</p><p>{reasons.join(" · ")}</p>
                 <p className="coastal-footnote">Latest counted report: {latestReport(beach)}</p>
                 <span className="event-tags"><span>{event.participantCount} joined</span><SeverityBadge band={beach.severity} /></span>
               </span><ChevronRight color={C.navy} />

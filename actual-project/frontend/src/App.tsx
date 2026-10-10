@@ -22,6 +22,7 @@ import { BackButton } from './components/ui';
 import WelcomeScreen from './screens/WelcomeScreen';
 import IdentityScreen from './screens/IdentityScreen';
 import HomeScreen from './screens/HomeScreen';
+import NotFoundScreen from './screens/NotFoundScreen';
 const MapScreen = lazy(() => import('./screens/MapScreen'));
 const BeachScreen = lazy(() => import('./screens/CoastalBeachScreen'));
 import MethodScreen from './screens/MethodScreen';
@@ -299,10 +300,8 @@ export default function App() {
         <Route path="/reports/:reportId" element={<RequireAuth><ReportDetailScreen /></RequireAuth>} />
         <Route path="/account" element={<RequireAuth><AccountScreen /></RequireAuth>} />
 
-        {/* Anything we do not recognise goes home rather than showing a blank
-            page. replace, so the broken URL does not sit in the history and
-            trap the user on the back button. */}
-        <Route path="*" element={<Navigate to="/" replace />} />
+        {/* Keep mistyped or outdated URLs visible with a useful 404 screen. */}
+        <Route path="*" element={<NotFoundScreen />} />
       </Routes>
       </Suspense>
 
