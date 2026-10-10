@@ -202,6 +202,8 @@ export default function MapScreen() {
     const size = map.getSize();
     // Keep the circle on the actual beach coordinate, with space for its caption.
     map.panBy([point.x - size.x / 2, point.y - (size.y - 50) / 2], { animate: false });
+    // Leaflet mutates the map ref outside React: refresh the radial overlay position after panning.
+    setViewRevision(value => value + 1);
   }, [ready, selectedBeachId, viewSize]);
   useEffect(() => {
     const map = mapRef.current;
