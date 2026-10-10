@@ -1,4 +1,3 @@
-import { useNavigate } from "react-router-dom";
 import { CLEANUP_GUIDE as guide } from "../content/cleanupGuide";
 import { WhiteCard } from "./CoastalUI";
 import { iteration3Request } from "../iteration3Api";
@@ -107,7 +106,6 @@ export function CleanupGuide({ recorded = false, imageFree = false }: { recorded
   );
 }
 export function WildlifeGuide() {
-  const nav = useNavigate();
   const { data: guidance } = useAsyncData(() => iteration3Request<WildlifeGuidance>('/wildlife-guidance'), [], null);
   const effectiveGuidance = mergeWildlifeGuidance(guidance);
   return (
@@ -121,15 +119,7 @@ export function WildlifeGuide() {
           </div>
         ))}
         <p className="coastal-footnote">Reviewed {effectiveGuidance.reviewDate} · {effectiveGuidance.note}</p>
-        <button
-          className="coastal-link-row"
-          onClick={() => nav("/community/wildlife-help")}
-        >
-          <strong className="grow" style={{ fontSize: 13 }}>
-            Hurt or stranded animal? See who to call
-          </strong>
-          <span>›</span>
-        </button>
+
       </WhiteCard>
     </section>
   );

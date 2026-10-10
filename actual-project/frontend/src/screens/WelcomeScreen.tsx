@@ -1,6 +1,6 @@
 // The welcome screen. Its one job is to offer two doors:
 //
-//   "See What's Out There"  -> the map, with no account at all
+//   "See What's Out There"  -> the home page, with no account at all
 //   "Count Me In"           -> get a participant number, then the home page
 //
 // Looking comes first on purpose. Asking a stranger to sign up before they
@@ -80,7 +80,7 @@ export default function WelcomeScreen() {
         }}
       >
         <i style={{ width: 6, height: 6, borderRadius: 3, background: C.lime, display: 'block' }} />
-        SELANGOR · STRAIT OF MALACCA
+        SDG 14 · LIFE BELOW WATER
       </div>
 
       <div
@@ -106,13 +106,12 @@ export default function WelcomeScreen() {
           can count for something.
         </div>
         <div style={{ fontSize: 14.5, lineHeight: 1.55, color: 'rgba(232,238,245,.82)', maxWidth: 310 }}>
-          Radar Sampah helps communities report beach litter, see which beaches need help,
-          and understand how cleaner shores support marine biodiversity.
+          Explore Malaysia’s beaches. Report litter. Care for marine life.
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 8 }}>
           <button
             type="button"
-            onClick={() => nav('/map')}
+            onClick={() => nav('/home')}
             className="press"
             style={{
               height: 56,

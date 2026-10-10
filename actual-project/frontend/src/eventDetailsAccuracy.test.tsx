@@ -44,13 +44,13 @@ describe('event detail accuracy', () => {
     expect(markup).not.toContain('<strong>Meeting point:</strong> Selangor coast');
   });
 
-  it('labels the count as event records and waits for the request before showing zero', () => {
+  it('removes the duplicate beach-context card while keeping the activity invitation', () => {
     state.cleanupLoading = true;
-    const loading = renderEvent();
-    expect(loading).toContain('Loading event records');
-    expect(loading).not.toContain('0 recorded cleanups for this event');
+    expect(renderEvent()).not.toContain('BEACH CONTEXT');
     state.cleanupLoading = false;
     state.cleanupCount = 2;
-    expect(renderEvent()).toContain('2 recorded cleanups for this event');
+    const markup = renderEvent();
+    expect(markup).not.toContain('recorded cleanups for this event');
+    expect(markup).toContain('Share Event Invitation');
   });
 });

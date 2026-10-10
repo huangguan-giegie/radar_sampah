@@ -68,7 +68,7 @@ export function regionalMarinePins(regionId: string, beaches: readonly LocatedBe
     const position = beaches.find(b => b.id === beachId) ?? CATALOGUE_MAP_LOCATIONS[beachId];
     const location = hasMapCoordinates(position) ? position : CATALOGUE_MAP_LOCATIONS[beachId];
     const record = region?.records[index];
-    return record && hasMapCoordinates(location) ? [{ id: `${regionId}-${index}`, regionId, index, caption,
+    return record && hasMapCoordinates(location) ? [{ id: `${regionId}-${index}`, regionId, beachId, index, caption,
       record: marineRecordDetails(record), lat: location.lat, lng: location.lng }] : [];
   });
 }

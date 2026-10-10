@@ -17,6 +17,11 @@ export type PersonalInsights = {
     reviewDate?: string;
     action: { label: string; path: string };
     aiAssisted: boolean;
+    facts?: {
+      category?: string; reportCount?: number; riskType?: string; speciesGroups?: string[];
+      beachName?: string; intervalDays?: number | null; daysSinceCleanup?: number; followUpStatus?: string;
+      includedCleanupCount?: number; remainingCleanupCount?: number; remainingRate?: number;
+    };
   }[];
   emptyStateMessage?: string;
   links: { map: string; insights: string };
@@ -87,8 +92,8 @@ export function fallbackNextAction(loggedIn: boolean): NextAction {
     reason: 'A litter report can add community evidence for a supported beach.',
     destination: { type: 'report', path: '/report/photo' },
   } : {
-    id: 'guest-fallback', actionLabel: 'Find a beach cleanup', reasonCode: 'GUEST',
-    reason: 'Explore available beach cleanup events.', destination: { type: 'event_list', path: '/community' },
-    loginPrompt: 'Log in for a personal next step', loginPath: '/identity?next=/home',
+    id: 'guest-account', actionLabel: 'Create Your Account', reasonCode: 'GUEST',
+    reason: 'Get an anonymous ID to record reports and cleanups.',
+    destination: { type: 'account', path: '/identity?next=/home' },
   };
 }

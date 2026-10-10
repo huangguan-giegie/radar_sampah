@@ -1,0 +1,72 @@
+.design-home .coastal-page { gap: 20px; }
+.design-home .home-beach-body { padding: 14px; }
+.home-next-step { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 5px 0 14px; }
+.home-next-step h2 { margin: 4px 0 6px; font-size: 18px; line-height: 1.2; }
+.home-next-step .eyebrow { margin: 0; font-size: 10px; }
+.home-next-step .subtle { margin: 0; font-size: 12px; line-height: 1.45; }
+.home-next-step > button { width: auto; padding-inline: 14px; font-size: 12px; white-space: normal; max-width: 155px; box-shadow: none; }
+.home-next-step + .button-pair { border-top: 1px solid var(--coastal-line); padding-top: 12px; }
+.design-home .home-location-button { min-height: 36px; font-size: 12px; padding: 7px 11px; margin-bottom: 12px; }
+.design-home .marine-banner { height: 185px; }
+.design-home .marine-banner img { object-position: 58% center; }
+.design-map-header { display: grid; gap: 9px; padding: 16px 16px 10px; }
+.design-map-header > div:first-child { justify-content: space-between; }
+.design-map-header h1 { font-size: 22px; margin: 0; }
+.map-search-form { margin: 0; min-width: 0; }
+.map-search-form .coastal-search { margin: 0; min-height: 43px; border: 1px solid var(--coastal-line); }
+.map-search-form input { width: 100%; min-width: 0; font-size: 13px; }
+.map-overlay-toggle { display: flex; justify-content: flex-end; }
+.map-overlay-toggle button { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; min-height: 28px; color: var(--coastal-navy); }
+.map-overlay-toggle button span { background: #e1eee6; border-radius: 8px; padding: 3px 7px; font-weight: 700; }
+.map-overlay-toggle button[aria-pressed=false] span { background: #e9edf3; }
+.map-search-results { position: absolute; z-index: 1500; top: 116px; left: 16px; right: 16px; padding: 13px; max-height: 42vh; overflow-y: auto; background: white; border: 1px solid var(--coastal-line); border-radius: 16px; box-shadow: 0 12px 30px #0b216126; }
+.map-search-results > button { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; padding: 12px 0; border-bottom: 1px solid var(--coastal-line); text-align: left; }
+.map-search-results strong { font-size: 14px; display: block; }
+.map-search-results small { display: block; color: #5a6474; margin-top: 4px; font-size: 11px; }
+.marine-overlay-pin { display: block; width: 30px; height: 30px; overflow: hidden; border: 2px solid white; border-radius: 50%; background: #e1eee6; color: #086d73; box-shadow: 0 3px 9px #0b216155; }
+.marine-overlay-pin img { width: 100%; height: 100%; object-fit: cover; }
+.beach-map-label { border-width: 1px; border-style: solid; }
+.borneo-inset > .borneo-report-counts { position: absolute; z-index: 801; inset: 10px 7px auto; display: flex; justify-content: space-between; pointer-events: none; }
+.borneo-report-counts span { display: grid; justify-items: center; gap: 2px; font-size: 8px; color: var(--coastal-navy); font-weight: 650; }
+.borneo-report-counts b { width: 26px; height: 26px; display: grid; place-items: center; border: 2px solid #98a4b5; border-radius: 50%; background: var(--coastal-navy); color: white; font-size: 10px; }
+.beach-report-meta { display: grid; gap: 5px; text-align: right; }
+.beach-report-meta small { font-size: 10px; }
+.beach-trend-link { display: block; margin-top: 8px; }
+.personal-subtitle { margin-top: -8px; font-size: 12px; }
+.personal-insight-card { padding: 17px; border: 1px solid var(--coastal-line); border-radius: 22px; }
+.personal-card-header { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; }
+.personal-card-header .eyebrow { margin: 0; font-size: 11px; }
+.personal-icon { display: grid; place-items: center; width: 32px; height: 32px; flex: none; border-radius: 10px; background: var(--coastal-navy); color: #b8ff36; }
+.personal-litter-fact { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.personal-litter-fact strong { font-size: 24px; color: var(--coastal-navy); display: block; }
+.personal-litter-fact small { font-size: 12px; color: #5a6474; display: block; margin-top: 5px; }
+.personal-litter-fact img { width: 76px; height: 76px; object-fit: cover; border-radius: 16px; }
+.personal-insight-risk { background: var(--coastal-navy); border-radius: 14px; padding: 14px; color: white; margin: 14px 0; }
+.personal-insight-risk .eyebrow { color: #b8ff36; margin: 0 0 7px; }
+.personal-insight-risk strong { display: block; font-size: 14px; }
+.personal-insight-risk small { display: block; color: #ffffffb8; font-size: 12px; margin-top: 5px; }
+.personal-cleanup-fact { display: grid; grid-template-columns: 85px minmax(0, 1fr); gap: 16px; align-items: center; }
+.personal-cleanup-fact > div:first-child { border-right: 1px solid var(--coastal-line); }
+.personal-cleanup-fact strong { display: block; font-size: 44px; color: var(--coastal-navy); }
+.personal-cleanup-fact small { font-size: 11px; letter-spacing: .1em; }
+.personal-source { font-size: 11px; line-height: 1.5; }
+.personal-insight-card .coastal-link-row { border-top: 1px solid var(--coastal-line); border-bottom: 0; margin-top: 14px; padding: 13px 0 0; }
+.personal-footer-actions { display: grid; gap: 10px; margin-top: 8px; }
+.invitation-photo { width: 100%; height: 160px; object-fit: cover; border-radius: 15px; margin-bottom: 16px; }
+.event-invitation h2 { font-size: 25px; }
+.event-invitation > button { margin-top: 10px; }
+.share-image-options { display: flex; align-items: center; gap: 10px; border: 0; padding: 0; margin: 0 0 15px; }
+.share-image-options legend { font-size: 12px; color: #5a6474; margin-bottom: 8px; }
+.share-image-options button { min-width: 44px; height: 42px; border-radius: 12px; background: #edf1f5; border: 2px solid transparent; padding: 8px 12px; color: var(--coastal-navy); font-size: 12px; }
+.share-image-options button[aria-pressed=true] { border-color: #b8ff36; box-shadow: 0 0 0 1px var(--coastal-navy); }
+.share-image-options button[aria-label] { color: white; font-size: 18px; }
+.cleanup-share-preview { display: block; width: min(100%, 275px); margin: 0 auto 18px; border-radius: 15px; box-shadow: 0 5px 20px #0b216126; }
+@media (max-width: 360px) {
+  .home-next-step { grid-template-columns: minmax(0, 1fr); gap: 9px; }
+  .home-next-step > button { justify-self: start; max-width: none; }
+  .design-map-header { padding-inline: 12px; }
+  .design-map-header h1 { font-size: 20px; }
+  .map-bottom-card > div { gap: 8px; }
+  .map-bottom-card button { font-size: 12px; padding-inline: 12px; }
+  .beach-report-meta small { font-size: 9px; }
+}

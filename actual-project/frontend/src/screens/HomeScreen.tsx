@@ -19,14 +19,11 @@ import {
 } from "../components/ui";
 import { SeverityBadge } from "../components/ds";
 import { hasDraftProgress, resumePath } from "../flowRules";
-import { fetchCleanupEvents } from "../iteration2Api";
 import { fetchInsights } from "../insightsApi";
-import { formatEventDate } from "../iteration2";
 import { useAsyncData } from "../useAsyncData";
 import { C } from "../theme";
-import { eventIsAvailable, useEventClock } from "../eventAvailability";
 import { iteration3Request } from "../iteration3Api";
-import { dismissedNextActionIds, dismissNextAction, fallbackNextAction, type NextAction } from "../iteration3Personal";
+import { fallbackNextAction, type NextAction } from "../iteration3Personal";
 import { PHOTOS } from "../visuals";
 import { closestSupportedBeach } from "../homeNearby";
 import type { BeachSummary } from "../types";
@@ -42,20 +39,18 @@ export default function HomeScreen() {
     reportsVersion,
   } = useApp();
   const [draftChoice, setDraftChoice] = useState(false);
+  const [pendingReport, setPendingReport] = useState<NextAction['destination'] | null>(null);
   const [chooseCleanupBeach, setChooseCleanupBeach] = useState(false);
   const [nearbyBeachId, setNearbyBeachId] = useState<string | null>(null);
   const [locationMessage, setLocationMessage] = useState("");
   const [locating, setLocating] = useState(false);
-  const [dismissedActions, setDismissedActions] = useState<string[]>(() => dismissedNextActionIds());
   const { data: loadedAction } = useAsyncData(
     () => USE_MOCK
       ? Promise.resolve(fallbackNextAction(Boolean(user)))
       : iteration3Request<NextAction>('/recommendations/next-action'),
     [user?.participantId, reportsVersion], null,
   );
-  const nextAction = (loadedAction ?? fallbackNextAction(Boolean(user)));
-  const visibleNextAction = nextAction && dismissedActions.includes(nextAction.id) ? null : nextAction;
-  const now = useEventClock();
+  const nextAction = user ? loadedAction ?? fallbackNextAction(true) : fallbackNextAction(false);
   const {
     data: beaches,
     loading,
@@ -106,33 +101,40 @@ export default function HomeScreen() {
     [beach?.id, reportsVersion],
     null,
   );
-  const { data: events } = useAsyncData(
-    () => fetchCleanupEvents(user?.participantId),
-    [user?.participantId, reportsVersion],
-    [],
-  );
-  const event = events.find(
-    (e) => e.beachId === beach?.id && eventIsAvailable(e, now),
-  );
   const dominant = detail?.composition
     ?.slice()
     .sort((a, b) => b.percentage - a.percentage)[0];
-  const beginReport = () => {
+  const beginReport = (destination?: NextAction['destination']) => {
     resetDraft();
     setLastSavedReport(null);
-    nav("/report/photo");
+    const target = beaches.find(item => item.id === destination?.beachId);
+    if (target) patchDraft({ beachId: target.id, beachName: target.name, locationSource: 'manual', coords: null });
+    nav(destination?.path ?? "/report/photo");
   };
   const exploreBeaches = () => nav("/map?panel=beaches", { state: { fromHome: true } });
+  const nextStep = () => {
+    if (nextAction.destination.type === 'report') {
+      if (hasDraftProgress(draft)) { setPendingReport(nextAction.destination); setDraftChoice(true); return; }
+      beginReport(nextAction.destination);
+      return;
+    }
+    nav(nextAction.destination.path);
+  };
+  const nextActionCard = <section className="home-next-step" aria-label="Next Action">
+    <div><p className="eyebrow">Next Action</p><h2>{nextAction.actionLabel}</h2><p className="subtle">{nextAction.reason}</p></div>
+    <PrimaryButton height={44} onClick={nextStep} trailingArrow style={{ width: 'auto', maxWidth: 155, padding: '10px 14px', fontSize: 12, boxShadow: 'none' }}>{nextAction.actionLabel}</PrimaryButton>
+  </section>;
   const h = new Date().getHours();
   return (
-    <CoastalPage>
+    <CoastalPage className="design-home">
       {draftChoice && (
         <DraftChoiceDialog
-          onCancel={() => setDraftChoice(false)}
+          onCancel={() => { setDraftChoice(false); setPendingReport(null); }}
           onResume={() => nav(resumePath(draft))}
           onStartNew={() => {
             setDraftChoice(false);
-            beginReport();
+            beginReport(pendingReport ?? undefined);
+            setPendingReport(null);
           }}
         />
       )}
@@ -164,27 +166,7 @@ export default function HomeScreen() {
           <UserIcon size={28} color="white" />
         </button>
       </header>
-      {visibleNextAction && (
-        <WhiteCard className="home-rule-suggestions">
-          <p className="eyebrow">Next Action</p>
-          <h2>{visibleNextAction.actionLabel}</h2>
-          <p className="subtle">{visibleNextAction.reason}</p>
-          <PrimaryButton onClick={() => {
-            if (visibleNextAction.destination.type === 'report') {
-              if (hasDraftProgress(draft)) { setDraftChoice(true); return; }
-              resetDraft();
-              setLastSavedReport(null);
-              if (visibleNextAction.destination.beachId) {
-                const targetBeach = beaches.find(item => item.id === visibleNextAction.destination.beachId);
-                if (targetBeach) patchDraft({ beachId: targetBeach.id, beachName: targetBeach.name, locationSource: 'manual', coords: null });
-              }
-            }
-            nav(visibleNextAction.destination.path);
-          }}>{visibleNextAction.actionLabel}</PrimaryButton>
-          <button type="button" className="home-dismiss" onClick={() => { dismissNextAction(visibleNextAction.id); setDismissedActions(previous => [...previous, visibleNextAction.id]); }}>Dismiss</button>
-          {visibleNextAction.loginPrompt && <button onClick={() => nav(visibleNextAction.loginPath ?? '/identity?next=/home')}>{visibleNextAction.loginPrompt}</button>}
-        </WhiteCard>
-      )}
+      {(!beach || error) && <WhiteCard>{nextActionCard}</WhiteCard>}
       {(!beach || error) && (
         <GhostButton height={44} onClick={exploreBeaches}>
           Explore Beaches
@@ -195,9 +177,10 @@ export default function HomeScreen() {
           title="Report Litter"
           subtitle="Take a photo"
           icon={<Camera color={C.navy} size={18} />}
-          onClick={() =>
-            hasDraftProgress(draft) ? setDraftChoice(true) : beginReport()
-          }
+          onClick={() => {
+            if (hasDraftProgress(draft)) { setPendingReport(null); setDraftChoice(true); }
+            else beginReport();
+          }}
         />
         <ActionTile
           title="Join Cleanup"
@@ -252,36 +235,7 @@ export default function HomeScreen() {
               {locating ? "Finding nearest beach…" : nearbyBeachId ? "Update Nearby Beach" : "Find Nearest Beach"}
             </button>
             {locationMessage && <p className="coastal-footnote" role="status">{locationMessage}</p>}
-            <h2>
-              {user && event
-                ? (event.joined ? "View your " : "Join ") +
-                  beach.name +
-                  "’s cleanup on " +
-                  formatEventDate(event.date) +
-                  "."
-                : "Find a Beach Cleanup"}
-            </h2>
-            <p>
-              {user ? (
-                event ? (
-                  "Litter reports and an upcoming activity make this a good next step for you."
-                ) : (
-                  "Explore the coast and see where your next report could help."
-                )
-              ) : (
-                <button onClick={() => nav("/identity?next=/home")}>
-                  Log in for a personal next step.
-                </button>
-              )}
-            </p>
-            <PrimaryButton
-              onClick={() =>
-                nav(user && event ? "/events/" + event.id : "/community")
-              }
-              trailingArrow
-            >
-              {user && event ? "View Event" : "View Events"}
-            </PrimaryButton>
+            {nextActionCard}
             <div className="button-pair">
               <GhostButton height={44} onClick={exploreBeaches}>
                 See Other Beaches
@@ -303,7 +257,7 @@ export default function HomeScreen() {
         onClick={() => nav("/marine-life")}
       >
         <img
-          src="/species/green-sea-turtle.jpg"
+          src="/images/coastal/marine-life-feedback.png"
           alt="Green sea turtle swimming underwater"
         />
         <div>
@@ -312,7 +266,7 @@ export default function HomeScreen() {
             <br />
             Marine Life
           </strong>
-          <span>Meet the Species →</span>
+          <span>Explore marine biodiversity →</span>
         </div>
       </button>
       <WhiteCard>

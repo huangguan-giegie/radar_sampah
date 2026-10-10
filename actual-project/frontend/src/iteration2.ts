@@ -468,6 +468,11 @@ export function eventCleanups(eventId: string): CleanupAction[] {
   return readStore().cleanups.filter((cleanup) => cleanup.eventId === eventId);
 }
 
+/** The local preview uses the same ownership scope as the live personal endpoint. */
+export function personalCleanupRecords(participantId: string): CleanupAction[] {
+  return readStore().cleanups.filter(cleanup => cleanup.participantId === participantId);
+}
+
 /** A cleanup supplies event evidence for result pages; check-in records attendance. */
 export function hasEventEvidence(eventId: string, participantId: string): boolean {
   const event = getCleanupEvent(eventId);

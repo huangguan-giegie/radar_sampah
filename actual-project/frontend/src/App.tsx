@@ -261,6 +261,7 @@ export default function App() {
         <Route path="/events/:eventId" element={<EventScreen />} />
         <Route path="/events/:eventId/result" element={<EventResultScreen />} />
         <Route path="/share/events/:eventId" element={<SharedEventScreen />} />
+        <Route path="/j/:eventId" element={<SharedEventScreen />} />
         <Route path="/share/:token" element={<SharedItemScreen />} />
         <Route path="/events/:eventId/check-in" element={<RequireAuth><CheckInScreen /></RequireAuth>} />
         <Route path="/cleanup/:beachId" element={<RequireAuth><CleanupScreen /></RequireAuth>} />

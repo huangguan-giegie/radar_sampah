@@ -14,21 +14,20 @@ import {
 import { GhostButton, PrimaryButton } from "../components/ui";
 import { ChevronLeft as ArrowLeft, Search, SpeciesIcon } from "../components/Icon";
 import { SeverityBadge } from "../components/ds";
-import { severityLabel } from "../theme";
+import { severityLabel, SEVERITY } from "../theme";
 import type { SeverityBand } from "../types";
-import content from "../content/coastalContent.json";
 import { BORNEO_VIEW_BOUNDS, getViewBounds, groupMapPoints, PENINSULA_VIEW_BOUNDS } from "../mapGeometry";
 import { getLocatedMapBeaches, PRIMARY_MAP_BEACHES } from "../mapCatalogue";
 import { placeMapLabels } from "../mapLabels";
-import { marineAreaPath, originBeachId, overviewMarinePins, regionalMarinePins, withBeach } from "../biodiversity";
-import { MarineRecordCard } from "../components/MarineRecordCard";
+import { originBeachId, overviewMarinePins, regionalMarinePins } from "../biodiversity";
+import { searchBeaches, borneoReportCounts } from "../beachSearch";
 const COLORS: Record<string, string> = {
   Low: "#6e9d80",
   Moderate: "#d5a04f",
   High: "#ce6b45",
   Severe: "#b84a3f",
 };
-function BorneoInset({ onClick, onHabitat }: { onClick: () => void; onHabitat?: () => void }) {
+function BorneoInset({ onClick, counts }: { onClick: () => void; counts: ReturnType<typeof borneoReportCounts> }) {
   const { elRef, mapRef, ready } = useLeafletMap({
     center: [4, 114.5],
     zoom: 4,
@@ -42,11 +41,9 @@ function BorneoInset({ onClick, onHabitat }: { onClick: () => void; onHabitat?: 
     <div className="borneo-inset">
       <div ref={elRef} />
       <button className="borneo-inset-open" aria-label="Sabah & Sarawak" onClick={onClick}><strong>Sabah & Sarawak ↗</strong></button>
-      {onHabitat && <span className="borneo-habitats">
-        <button aria-label="Kuching Wetlands · Mangrove" onClick={onHabitat}><SpeciesIcon glyph="mangrove" size={18} /></button>
-        <button aria-label="Lawas · Seagrass" onClick={onHabitat}><SpeciesIcon glyph="grass" size={18} /></button>
-        <button aria-label="Sandakan · Mangrove" onClick={onHabitat}><SpeciesIcon glyph="mangrove" size={18} /></button>
-      </span>}
+      <div className="borneo-report-counts" aria-label={`Sabah ${counts.sabah} reports, Sarawak ${counts.sarawak} reports`}>
+        <span><b>{counts.sarawak}</b>Sarawak</span><span><b>{counts.sabah}</b>Sabah</span>
+      </div>
     </div>
   );
 }
@@ -54,7 +51,7 @@ export default function MapScreen() {
   const nav = useNavigate();
   const [params, setParams] = useSearchParams();
   const regionId = params.get("region") ?? "";
-  const layer = params.get("layer") === "bio" ? "bio" : "litter";
+  const layer = params.get("marine") === "off" ? "litter" : "bio";
   const region = REGIONS.find((r) => r.id === regionId);
   const { reportsVersion, offline } = useApp();
   const [zoom, setZoom] = useState(6);
@@ -65,9 +62,9 @@ export default function MapScreen() {
   const userMoved = useRef(false);
   const fittedRegion = useRef<string | null>(null);
   const beachId = originBeachId(params.get("beach"), regionId || undefined);
-  type Panel = "key" | "beaches" | "regions" | "about" | "record";
+  type Panel = "key" | "beaches" | "regions";
   const panel = params.get("panel");
-  const sheet = ["key", "beaches", "regions", "about", "record"].includes(panel ?? "")
+  const sheet = ["key", "beaches", "regions"].includes(panel ?? "")
     ? panel as Panel : null;
   const search = params.get("q") ?? "";
   const setSheet = (value: Panel | null, ids: string[] | null = null) => {
@@ -76,7 +73,7 @@ export default function MapScreen() {
     const next = new URLSearchParams(previous);
     if (value) next.set("panel", value);
     else next.delete("panel");
-    if (value !== "record") next.delete("record");
+    next.delete("record");
     if (ids) next.delete("q");
     return next;
     }, { replace: true });
@@ -108,19 +105,11 @@ export default function MapScreen() {
     : beaches, [beaches, regionId]);
   const locatedBeaches = useMemo(() => getLocatedMapBeaches(areaBeaches, USE_MOCK), [areaBeaches]);
   const marinePins = useMemo(() => regionalMarinePins(regionId, locatedBeaches), [regionId, locatedBeaches]);
-  const selectedRecord = marinePins.find(p => p.id === params.get("record"));
-  const visible = areaBeaches.filter((b) =>
-    (!clusterIds || clusterIds.includes(b.id)) &&
-    (b.name + " " + b.area).toLowerCase().includes(search.toLowerCase()),
-  );
+  const visible = search.trim() ? searchBeaches(beaches, search) : areaBeaches.filter(b => !clusterIds || clusterIds.includes(b.id));
   const setRegion = useCallback((id: string) => {
     setClusterIds(null);
-    setParams({
-      ...(layer === "bio" ? { layer: "bio" } : {}),
-      ...(id ? { region: id } : {}),
-      ...(layer === "bio" && originBeachId(beachId ?? null, id || undefined) ? { beach: beachId! } : {}),
-    });
-  }, [layer, setParams, beachId]);
+    setParams({ ...(id ? { region: id } : {}), ...(layer === 'litter' ? { marine: 'off' } : {}) });
+  }, [layer, setParams]);
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !ready) return;
@@ -213,49 +202,7 @@ export default function MapScreen() {
       pin.getElement()?.setAttribute("aria-label", label);
       return pin;
     };
-    if (layer === "bio") {
-      const pins = region ? marinePins.map(p => ({ ...p, name: p.record.name, place: p.record.place, image: p.record.image, speciesId: p.record.speciesId }))
-        : overviewMarinePins(locatedBeaches).map(p => ({ ...p, place: "" }));
-      const size = map.getSize();
-      const compact = size.y < 360;
-      const containerRect = map.getContainer().getBoundingClientRect();
-      const obstacles = Array.from(map.getContainer().parentElement?.querySelectorAll(".map-hint, .map-controls, .map-full-overview, .borneo-inset") ?? []).map(el => {
-        const rect = el.getBoundingClientRect();
-        return { x: rect.left - containerRect.left, y: rect.top - containerRect.top, width: rect.width, height: rect.height };
-      });
-      const labels = placeMapLabels(pins.map(p => ({ id: p.id, name: p.name, preferred: true, ...map.latLngToContainerPoint([p.lat, p.lng]) })),
-        { width: size.x, height: size.y, obstacles, compact, labelHeight: compact ? 54 : region ? 94 : 74 });
-      const openPin = (id: string, destination: string, speciesId: string | null) => {
-        if (!region) { nav(marineAreaPath(destination, speciesId, originBeachId(beachId ?? null, destination))); return; }
-        setParams(previous => {
-          const next = new URLSearchParams(previous);
-          next.set("panel", "record"); next.set("record", id);
-          return next;
-        }, { replace: true });
-      };
-      // Keep all source locations tappable even where a short viewport cannot fit every label.
-      for (const p of pins) marker(p.lat, p.lng, p.name + (p.place ? " · " + p.place : ""),
-        '<span class="marine-coast-dot"></span>', () => openPin(p.id, p.regionId, p.speciesId), [22, 22]);
-      for (const placed of labels) {
-        const p = pins.find(pin => pin.id === placed.id)!;
-        const point = map.latLngToContainerPoint([p.lat, p.lng]);
-        const end = L.point(Math.max(placed.x, Math.min(point.x, placed.x + placed.width)), Math.max(placed.y, Math.min(point.y, placed.y + placed.height)));
-        L.polyline([[p.lat, p.lng], map.containerPointToLatLng(end)], { color: "#536779", weight: 1, opacity: .6, interactive: false }).addTo(group);
-        const node = document.createElement("div");
-        node.className = "marine-map-pin" + (region ? " regional" : "") + (compact ? " compact" : "");
-        const photo = document.createElement(p.image ? "img" : "span");
-        photo.className = "marine-map-photo";
-        if (photo instanceof HTMLImageElement) { photo.src = p.image!; photo.alt = ""; }
-        else photo.textContent = "≈";
-        const text = document.createElement("span"); text.className = "marine-map-text";
-        const name = document.createElement("b"); name.textContent = p.name;
-        text.append(name);
-        if (p.place) { const place = document.createElement("small"); place.textContent = p.place; text.append(place); }
-        node.append(photo, text);
-        marker(p.lat, p.lng, p.name + (p.place ? " · " + p.place : ""), node.outerHTML, () => openPin(p.id, p.regionId, p.speciesId),
-          [placed.width, placed.height], [point.x - placed.x, point.y - placed.y], 1000);
-      }
-    } else if (!region) {
+    if (!region) {
       for (const r of REGIONS) {
         if (r.id === "borneo") continue; // Borneo has its own inset in the overview.
         const rows = beaches.filter((b) => b.region === r.id);
@@ -282,7 +229,7 @@ export default function MapScreen() {
           [diameter, diameter],
         );
       }
-    } else if (layer === "litter") {
+    } else if (region) {
       const preferred = new Set(PRIMARY_MAP_BEACHES[region.id] ?? []);
       const size = map.getSize();
       const compactLabels = size.y < 360;
@@ -338,6 +285,8 @@ export default function MapScreen() {
         node.className = "beach-map-label" + (compactLabels ? " compact" : "");
         const label = document.createElement("span");
         label.textContent = b.name;
+        label.style.color = b.severity ? SEVERITY[b.severity].text : "#586070";
+        node.style.borderColor = COLORS[b.severity ?? ""] ?? "#98a4b5";
         if (b.name.length > 24) label.style.fontSize = "9px";
         const band = document.createElement("small");
         band.textContent = b.severity ? severityLabel(b.severity) : "Insufficient data";
@@ -357,61 +306,53 @@ export default function MapScreen() {
         );
       }
     }
+    if (layer === 'bio') {
+      const overlays = region ? marinePins.map(pin => ({ ...pin, name: pin.record.name, image: pin.record.image }))
+        : overviewMarinePins(locatedBeaches);
+      for (const pin of overlays) {
+        const node = document.createElement('span');
+        node.className = 'marine-overlay-pin';
+        if (pin.image) {
+          const photo = document.createElement('img'); photo.src = pin.image; photo.alt = ''; node.append(photo);
+        } else node.textContent = '≈';
+        const selectedBeach = 'beachId' in pin && beaches.find(beach => beach.id === pin.beachId);
+        marker(pin.lat, pin.lng, pin.name + ' · coastal reference', node.outerHTML,
+          () => selectedBeach ? nav('/beach/' + selectedBeach.id) : setRegion(pin.regionId), [30, 30], [15, -10], 1100);
+      }
+    }
     return () => {
       group.remove();
     };
   }, [ready, regionId, layer, beaches, zoom, viewSize, viewRevision, nav, setRegion, marinePins, beachId]);
   return (
     <main className="screen coastal-map">
-      <header className="map-coastal-header">
+      <header className="map-coastal-header design-map-header">
         <div>
-          {region && (
-            <button
-              className="icon-button"
-              aria-label="Full map"
-              onClick={() => setRegion("")}
-            >
-              <ArrowLeft size={18} />
-            </button>
-          )}
-          <h1>{layer === "bio" ? "Explore the Coast" : "Choose a Beach"}</h1>
+          {region && <button className="icon-button" aria-label="Full map" onClick={() => setRegion('')}><ArrowLeft size={18} /></button>}
+          <h1>Choose a Beach</h1>
+          <button className="map-pill" onClick={() => setSheet('key')}>Key</button>
         </div>
-        <div>
-          <div className="coastal-segments">
-            {["litter", "bio"].map((l) => (
-              <button
-                key={l}
-                aria-pressed={layer === l}
-                onClick={() => {
-                  if (l === "litter" && layer === "bio" && beachId) { nav("/beach/" + beachId); return; }
-                  setParams({
-                    ...(regionId ? { region: regionId } : {}),
-                    ...(l === "bio" ? { layer: "bio" } : {}),
-                    ...(beachId ? { beach: beachId } : {}),
-                  });
-                }}
-              >
-                {l === "litter" ? "Litter" : "Biodiversity"}
-              </button>
-            ))}
-          </div>
-          {layer === "litter" && <button className="map-pill" onClick={() => setSheet("key")}>
-            Key
-          </button>}
-          {layer === "bio" && <button className="map-pill" onClick={() => setSheet("about")}>About</button>}
-        </div>
+        <form className="map-search-form" role="search" onSubmit={event => { event.preventDefault(); setSheet('beaches'); }}>
+          <label className="coastal-search"><Search /><input type="search" aria-label="Search all beaches" placeholder="Search beaches in all regions" value={search} onChange={event => setSearch(event.target.value)} /></label>
+        </form>
+        <div className="map-overlay-toggle"><button aria-pressed={layer === 'bio'} onClick={() => setParams(previous => {
+          const next = new URLSearchParams(previous); if (layer === 'bio') next.set('marine', 'off'); else next.delete('marine'); next.delete('layer'); return next;
+        }, { replace: true })}><SpeciesIcon glyph="turtle" size={17} />Marine life overlay <span>{layer === 'bio' ? 'On' : 'Off'}</span></button></div>
       </header>
+      {search.trim() && sheet !== 'beaches' && <section className="map-search-results" aria-label="Beach search results">
+        {loading ? <p role="status">Loading beaches…</p> : error ? <DataUnavailable title="Could not load beaches" retry={() => void refresh()}>{error}</DataUnavailable> : <>
+          <p className="eyebrow">{visible.length} matches · all regions</p>
+          {visible.slice(0, 30).map(beach => <button key={beach.id} onClick={() => nav('/beach/' + beach.id)}>
+            <span><strong style={{ color: beach.severity ? SEVERITY[beach.severity].text : '#586070' }}>{beach.name}</strong><small>{beach.area}</small></span><SeverityBadge band={beach.severity} />
+          </button>)}
+          {!visible.length && <p>No matching beaches</p>}
+          {visible.length > 30 && <GhostButton height={42} onClick={() => setSheet('beaches')}>View All {visible.length} Results</GhostButton>}
+        </>}
+      </section>}
+
       <div className="coastal-map-viewport">
       <div ref={elRef} className="coastal-map-canvas" aria-label="Interactive coast map" />
-      <div className="map-hint">
-        {loading
-          ? "Loading the coast…"
-          : region
-            ? region.name +
-              " · " +
-              (layer === "bio" ? "tap a record" : "tap a beach")
-            : layer === "bio" ? "Published records · tap to explore" : "Report counts · tap a region"}
-      </div>
+      <div className="map-hint">{loading ? 'Loading the coast…' : region ? region.name + ' · tap a beach' : 'Report counts · tap a region'}</div>
       <div className="map-controls">
         <button className="map-pill" onClick={() => setSheet("regions")}>
           Regions
@@ -433,7 +374,7 @@ export default function MapScreen() {
           −
         </button>
       </div>
-      {!region && <BorneoInset onClick={() => setRegion("borneo")} onHabitat={layer === "bio" ? () => nav("/marine-area/borneo") : undefined} />}
+      {!region && <BorneoInset onClick={() => setRegion("borneo")} counts={borneoReportCounts(beaches)} />}
       {region && <button className="map-pill map-full-overview" onClick={() => setRegion("")}>Full Map</button>}
       </div>
       <div className="map-bottom-card">
@@ -447,64 +388,19 @@ export default function MapScreen() {
         )}
         <div>
           <span>
-            <strong>
-              {region?.name ??
-                (layer === "bio"
-                  ? "Marine Life by Area"
-                  : "Report Counts View")}
-            </strong>
-            <small>
-              {loading ? "Loading beaches…" : layer === "bio"
-                ? (region ? (content.regions.find(r => r.id === region.id)?.records.length ?? 0) + " records · " : "Published records · ") + "not live sightings"
-                : region
-                  ? areaBeaches.length +
-                    " beaches · " +
-                    areaBeaches.reduce((n, b) => n + b.validReports, 0) +
-                    " reports"
-                  : beaches.length + " beaches · Explore Malaysia’s coast"}
-            </small>
+            <strong>{region?.name ?? 'Malaysia’s Coast'}</strong>
+            <small>{loading ? 'Loading beaches…' : region ? `${areaBeaches.length} beaches · ${areaBeaches.reduce((n, beach) => n + beach.validReports, 0)} reports` : `${beaches.length} beaches · tap a region`}</small>
           </span>
-          <PrimaryButton
-            height={43}
-            onClick={() =>
-              layer === "bio"
-                ? nav(withBeach("/marine-area/" + (regionId || ""), beachId))
-                : region
-                  ? setSheet("beaches")
-                  : nav("/insights/trends")
-            }
-          >
-            {layer === "bio"
-              ? "See Marine Life"
-              : region
-                ? "See Beaches"
-                : "View Insights"}
-          </PrimaryButton>
+          <PrimaryButton height={43} onClick={() => setSheet('beaches')}>Search Beaches</PrimaryButton>
         </div>
-        {region &&
-          layer === "litter" &&
-          locatedBeaches.length < areaBeaches.length && (
-            <p className="coastal-footnote">
-              {locatedBeaches.length ? "More beaches in the list. Pins show available locations." : "Beach locations pending. Browse the beach list."}
-            </p>
-          )}
-        {USE_MOCK && layer === "litter" && <p className="demo-label">Preview · example counts</p>}
+        {region && locatedBeaches.length < areaBeaches.length && <p className="coastal-footnote">More beaches are available in the list.</p>}
+        {USE_MOCK && <p className="demo-label">Preview · example counts</p>}
       </div>
-      {sheet === "record" && selectedRecord && <Sheet title="Marine record" onClose={() => setSheet(null)}>
-        <MarineRecordCard record={selectedRecord.record} beachId={beachId} preview />
-        <p className="coastal-footnote">{selectedRecord.caption}</p>
-        <PrimaryButton onClick={() => nav(withBeach("/marine-area/" + regionId, beachId))}>See Marine Life in This Area</PrimaryButton>
-        <GhostButton onClick={() => setSheet(null)}>Back to Map</GhostButton>
-      </Sheet>}
-      {sheet === "about" && <Sheet title="About this map" onClose={() => setSheet(null)}>
-        <p className="subtle">Explore published species and habitat records around Malaysia’s coast. Photos illustrate species; pins show the area of a record, not live animal locations.</p>
-        <PrimaryButton onClick={() => setSheet(null)}>Got It</PrimaryButton>
-      </Sheet>}
-      {sheet === "key" && layer === "litter" && (
+      {sheet === "key" && (
         <Sheet title="Map Key" onClose={() => setSheet(null)}>
           <p className="subtle">
             Numbers show counted reports in this view. The ring shows the
-            highest available litter band in that region.
+            highest available attention level in that region. Beach names use their own level. Small photos show coastal references, not live sightings.
           </p>
           {Object.entries(COLORS).map(([label, color]) => (
             <div className="legend-row" key={label}>
@@ -517,7 +413,7 @@ export default function MapScreen() {
             Insufficient data
           </div>
           <p className="subtle">
-            No band does not mean a clean beach. Biodiversity records describe
+            An unrated beach is not necessarily clean. Marine-life references describe
             published sources, not live sightings.
           </p>
           <PrimaryButton
@@ -543,13 +439,13 @@ export default function MapScreen() {
         </Sheet>
       )}
       {sheet === "beaches" && (
-        <Sheet title={region?.name ?? "Beaches"} onClose={() => setSheet(null)}>
+        <Sheet title={search.trim() ? "Search All Beaches" : region?.name ?? "All Beaches"} onClose={() => setSheet(null)}>
           <label className="coastal-search">
             <Search />
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search beaches"
+              placeholder="Search beaches in all regions"
               aria-label="Search beaches"
             />
           </label>
@@ -562,7 +458,7 @@ export default function MapScreen() {
               {visible.map((beach) => (
                 <section key={beach.id} className="map-beach-list-row">
                   <div>
-                    <button onClick={() => nav("/beach/" + beach.id)}>{beach.name}</button>
+                    <button style={{ color: beach.severity ? SEVERITY[beach.severity].text : "#586070" }} onClick={() => nav("/beach/" + beach.id)}>{beach.name}</button>
                     <SeverityBadge band={beach.severity} label={beach.severity ? undefined : "Insufficient Data"} />
                   </div>
                   <p className="coastal-footnote">{beach.area} · {beach.validReports} counted reports</p>

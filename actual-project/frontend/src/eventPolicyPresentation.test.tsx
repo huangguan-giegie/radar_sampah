@@ -38,35 +38,26 @@ beforeEach(() => {
   state.loading = false; state.error = null; state.source = 'weekly';
 });
 
-describe('planned cleanup and current beach context', () => {
-  it('shows the current Low band and keeps the planned activity available', () => {
+describe('planned cleanup remains usable without the removed context card', () => {
+  it('keeps an existing Low-attention activity available', () => {
     const html = renderEvent();
-    expect(html).toContain('Current Beach Attention: <strong>Low</strong>');
-    expect(html).toContain('already planned activities and registrations remain');
+    expect(html).not.toContain('BEACH CONTEXT');
+    expect(html).not.toContain('Weekly cleanups are scheduled');
     expect(html).toContain('Join This Cleanup');
   });
-
-  it('shows insufficient data and explains that it pauses new automatic scheduling', () => {
+  it('does not hide an existing activity when current beach data is insufficient', () => {
     state.severity = null; state.insufficientData = true; state.validReports = 0;
-    const html = renderEvent();
-    expect(html).toContain('Current Beach Attention: <strong>Insufficient data</strong>');
-    expect(html).toContain('Low or insufficient data pauses new scheduling');
+    expect(renderEvent()).toContain('Join This Cleanup');
   });
-
-  it('does not apply the weekly eligibility explanation to a moderator activity', () => {
+  it('keeps moderator activities available too', () => {
     state.source = 'admin';
-    const html = renderEvent();
-    expect(html).toContain('Current Beach Attention');
-    expect(html).not.toContain('Weekly cleanups are scheduled');
+    expect(renderEvent()).toContain('Join This Cleanup');
   });
-
-  it('keeps beach context loading and failure distinct from an insufficient-data band', () => {
+  it('keeps the invitation usable through a beach-data loading or failure state', () => {
     state.loading = true;
-    expect(renderEvent()).toContain('Loading current Beach Attention');
+    expect(renderEvent()).toContain('Share Event Invitation');
     state.loading = false; state.error = 'Offline';
-    const html = renderEvent();
-    expect(html).toContain('Current Beach Attention could not be loaded');
-    expect(html).toContain('Retry beach data');
-    expect(html).not.toContain('Current Beach Attention:');
+    expect(renderEvent()).toContain('Join This Cleanup');
+    expect(renderEvent()).not.toContain('Current Beach Attention:');
   });
 });

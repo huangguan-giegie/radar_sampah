@@ -1075,9 +1075,9 @@
           "url": "https://www.fisheries.noaa.gov/topic/marine-life-viewing-guidelines"
         }
       ],
-      "credit": "Photo · Green sea turtle · Christoph Schuetzenhofer · CC BY-SA 3.0",
-      "image": "/images/coastal/green-turtle.jpg",
-      "photoSource": "https://commons.wikimedia.org/wiki/File:Chelonia_mydas_2005-06-11_Andaman_sea.jpg",
+      "credit": "Photo supplied by the project team · sea-turtle group example",
+      "image": "/images/coastal/marine-life-feedback.png",
+      "photoSource": "/images/coastal/marine-life-feedback.png",
       "category": "animal",
       "reviewDate": "2026-10-05"
     },
@@ -1301,9 +1301,9 @@
           "url": "https://www.jircas.go.jp/en/publication/research_results/2014_c09"
         }
       ],
-      "credit": "Photo · Blood cockle · Al Kordesch · CC0 1.0",
-      "image": "/images/coastal/blood-cockle.jpg",
-      "photoSource": "https://commons.wikimedia.org/wiki/File:Tegillarca_granosa_360013509.jpg",
+      "credit": "Photo · Nick Hobgood · CC BY-SA 3.0 · giant clam, representative shellfish group example",
+      "image": "/images/coastal/coastal-shellfish-clam.jpg",
+      "photoSource": "https://commons.wikimedia.org/wiki/File:Tridacna_crocea.jpg",
       "category": "animal",
       "reviewDate": "2026-10-05"
     },
@@ -4741,6 +4741,12 @@
       "image": "/images/coastal/rhizophora-stylosa.jpg",
       "source": "https://commons.wikimedia.org/wiki/File:Rhizophora_stylosa.jpg",
       "credit": "Photo · CRCHF · CC BY-SA 3.0 · resized; displayed crop"
+    },
+    {
+      "name": "Coastal shellfish · clam group example",
+      "image": "/images/coastal/coastal-shellfish-clam.jpg",
+      "credit": "Nick Hobgood · CC BY-SA 3.0 · representative clam example",
+      "source": "https://commons.wikimedia.org/wiki/File:Tridacna_crocea.jpg"
     }
   ]
 }

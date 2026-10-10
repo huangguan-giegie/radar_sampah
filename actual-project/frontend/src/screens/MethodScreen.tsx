@@ -69,7 +69,7 @@ function warnIfRuleDiffers(remote: ScoringMethod) {
 // the real setting instead of being typed out again as prose.
 const limitations = (m: ScoringMethod) => [
   'More visits means more reports, not more litter.',
-  'Size bands are estimates, not measured area.',
+  'Amounts are estimates, not measured area.',
   `Conditions move faster than a ${m.windowDays}-day window can show.`,
   'This is reported litter, not water quality, ecology or safety.',
   'Biodiversity context is not part of this score.',
@@ -198,7 +198,7 @@ export default function MethodScreen() {
 
 
         <div>
-          <Label style={{ marginBottom: 11 }}>BANDS</Label>
+          <Label style={{ marginBottom: 11 }}>ATTENTION LEVELS</Label>
           <div style={{ background: C.white, border: `1px solid ${C.line}`, borderRadius: 22, overflow: 'hidden' }}>
             {/* The four bands with their exact ranges and their real colours -
                 the same colours the map uses, from the same source, so the

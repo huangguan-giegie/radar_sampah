@@ -31,6 +31,8 @@ import type { PersonalInsights } from "../iteration3Personal";
 import { getCoastalBeaches } from "../coastalData";
 import { PlaceThumb } from "../components/Visuals";
 import { beachPhoto, speciesPhoto } from "../visuals";
+import { PHOTOS } from '../visuals';
+import { personalInsightsPreview } from '../personalInsightsPreview';
 
 export function MetricBars({ rows }: { rows: [string, number][] }) {
   return (
@@ -60,7 +62,7 @@ export default function InsightsScreen() {
     return next;
   }, { replace: true });
   const { data: personal, loading, error, refresh } = useAsyncData(
-    () => user && personalOpen ? iteration3Request<PersonalInsights>('/personal-insights') : Promise.resolve(null),
+    () => user && personalOpen ? USE_MOCK ? personalInsightsPreview(user.participantId) : iteration3Request<PersonalInsights>('/personal-insights') : Promise.resolve(null),
     [user?.participantId, reportsVersion, personalOpen],
     null,
   );
@@ -71,29 +73,40 @@ export default function InsightsScreen() {
     {USE_MOCK ? <PreviewInsightsScreen personalAction={personalAction} /> : <LiveInsightsScreen personalAction={personalAction} />}
     {personalOpen && user && <Sheet title="Your Insights" onClose={() => setPersonalOpen(false)}>
       <p className="eyebrow">Private · only you see this</p>
+      {USE_MOCK && <p className="demo-label">Preview · your local example records</p>}
+      {personal?.sections.length ? <p className="subtle personal-subtitle">{personal.sections.length} {personal.sections.length === 1 ? 'section' : 'sections'} · from your own records</p> : null}
       {loading ? <p role="status">Loading your insights…</p> : error ? (
         <DataUnavailable title="Your insights could not be loaded" retry={() => void refresh()}>
           Please try again to load your personal insights.
         </DataUnavailable>
       ) : personal?.sections.length ? personal.sections.map(section => (
-        <WhiteCard key={section.id}>
-          <p className="eyebrow">{section.title}</p>
+        <WhiteCard key={section.id} className="personal-insight-card">
+          <header className="personal-card-header"><span className="personal-icon">{section.id === 'litter_wildlife' ? <SpeciesIcon glyph="turtle" size={18} color={C.lime} /> : <BarChart size={18} color={C.lime} />}</span><p className="eyebrow">{section.title}</p></header>
           {section.aiAssisted && <p className="coastal-footnote">AI-assisted</p>}
-          <p className="subtle">{section.text}</p>
-          {section.sources.map(source => <p className="coastal-footnote" key={source.url}>
+          {section.id === 'litter_wildlife' && section.facts ? <>
+            <div className="personal-litter-fact"><div><p className="subtle">Top category in your reports</p><strong>{section.facts.category}</strong><small>{section.facts.reportCount} counted reports</small></div><img src={PHOTOS.turtle} alt="Sea turtle · species example" /></div>
+            <div className="personal-insight-risk"><p className="eyebrow">May affect</p><strong>{section.facts.speciesGroups?.join(' · ')}</strong><small>{section.facts.riskType}</small></div>
+            <p className="coastal-footnote">General research · no local harm shown</p>
+          </> : section.id === 'since_cleanup' && section.facts ? <>
+            <div className="personal-cleanup-fact"><div><strong>{section.facts.intervalDays ?? section.facts.daysSinceCleanup ?? '—'}</strong><small>DAYS</small></div><div><b>{section.facts.beachName}</b><p className="subtle">{section.facts.intervalDays != null ? 'From your cleanup to the next counted report' : 'Since your recorded cleanup'}</p></div></div>
+            {section.facts.intervalDays == null && <p className="coastal-footnote">{section.facts.followUpStatus ?? 'No follow-up report yet'}</p>}
+            <p className="coastal-footnote">Community reporting, not measured litter return</p>
+          </> : section.id === 'persistent_litter' && section.facts ? <>
+            <p className="personal-insight-fact">{section.facts.category}</p><p className="subtle">{section.text || `Remained above Small in ${section.facts.remainingCleanupCount} of ${section.facts.includedCleanupCount} eligible cleanups.`}</p>
+          </> : <p className="subtle">{section.text}</p>}
+          {section.sources.map(source => <p className="coastal-footnote personal-source" key={source.url}>
             <a href={source.url} target={source.url.startsWith('https://') ? '_blank' : undefined} rel="noreferrer">{source.label}</a>
             {section.reviewDate && ' · Reviewed ' + section.reviewDate}
           </p>)}
-          <PrimaryButton onClick={() => nav(section.action.path)}>{section.action.label}</PrimaryButton>
+          <LinkRow title={section.action.label} onClick={() => nav(section.action.path)} />
         </WhiteCard>
       )) : (
         <DataUnavailable title="Your Insights">
           {personal?.emptyStateMessage ?? 'Report litter or finish a cleanup to unlock personal insights.'}
         </DataUnavailable>
       )}
-      <GhostButton onClick={() => { setPersonalOpen(false); nav('/insights'); }}>View Beach Insights</GhostButton>
-      <GhostButton style={{ marginTop: 16 }} onClick={() => { setPersonalOpen(false); nav(personal?.links.map ?? '/map'); }}>Open the map</GhostButton>
-      <GhostButton style={{ marginTop: 16 }} onClick={() => nav('/reports')}>My Reports</GhostButton>
+      <div className="personal-footer-actions"><PrimaryButton height={48} onClick={() => { setPersonalOpen(false); nav('/insights'); }}>View Beach Insights</PrimaryButton>
+      <GhostButton height={48} onClick={() => { setPersonalOpen(false); nav(personal?.links.map ?? '/map'); }}>Open the map</GhostButton></div>
     </Sheet>}
   </>;
 }
@@ -184,8 +197,8 @@ function LiveInsightsScreen({ personalAction }: { personalAction: ReactNode }) {
     {cleanup.rows.length ? cleanup.rows.map(row => <div className="coastal-link-row" key={row.category}>
       <strong className="grow">{row.category}</strong>
       <small>{row.beforeBand ? `${row.beforeBand} → ${row.afterBand}` : row.removedBand}</small>
-    </div>) : <p className="subtle">This historical record has no saved quantity bands.</p>}
-    <p className="coastal-footnote">{cleanup.linked ? 'Participant-confirmed bands for the linked report.' : 'This cleanup is not linked to a target report and does not change another report’s rating.'}</p>
+    </div>) : <p className="subtle">This historical record has no saved amounts.</p>}
+    <p className="coastal-footnote">{cleanup.linked ? 'Participant-confirmed amounts for the linked report.' : 'This cleanup is not linked to a target report and does not change another report’s rating.'}</p>
     <p className="coastal-footnote">Handling · {cleanup.handling}</p>
   </WhiteCard>;
   let body: ReactNode;
@@ -197,17 +210,16 @@ function LiveInsightsScreen({ personalAction }: { personalAction: ReactNode }) {
       <SummaryCard eyebrow={`Last ${data.windowDays} days · ${data.overview.registeredBeaches} beaches`} value={data.overview.reports} description="counted reports received">
         <SummaryStats items={[{ label: 'Cleanups', value: data.overview.cleanups }, { label: 'Joined', value: data.overview.joined }, { label: 'Need help', value: data.overview.needHelp }]} />
       </SummaryCard>
-      <p className="coastal-footnote">{data.overview.beachesWithReports} beaches have active reports · {data.overview.beachesWithBand} have at least 3 active reports and a band. Joining counts person-event records.</p>
       <p className="eyebrow" style={{ margin: '2px 0 -4px' }}>Beach updates</p>
       {changed.length ? changed.slice(0, 8).map(beach => <WhiteCard key={beach.id} className="update-card">
         <button className="coastal-link-row" onClick={() => nav('/insights/trends/' + beach.id)}>
           {thumbnail(beach)}<span className="grow"><strong>{beach.name}</strong>{bands(beach)}<small>Compared with {formatDate(data.comparisonAt)}</small></span><span>›</span>
         </button>
-      </WhiteCard>) : <DataUnavailable title="No comparable band changes yet">Two report windows with at least 3 active reports are needed to compare a beach’s bands.</DataUnavailable>}
+      </WhiteCard>) : <DataUnavailable title="No comparable changes yet">Two report windows with at least 3 active reports are needed to compare a beach’s attention levels.</DataUnavailable>}
       {changed.length > 0 && mapCredit}
       <p className="eyebrow" style={{ margin: '2px 0 -4px' }}>Explore insights</p>
       <div className="action-grid five">
-        <ActionTile title="Trends" subtitle="Band changes" icon={<BarChart size={19} />} onClick={() => nav('/insights/trends')} />
+        <ActionTile title="Trends" subtitle="Attention changes" icon={<BarChart size={19} />} onClick={() => nav('/insights/trends')} />
         <ActionTile title="Cleanup" subtitle="Results" icon={<Check color={C.navy} />} onClick={() => nav('/insights/cleanup')} />
         <ActionTile title="Participation" subtitle="Who joined" icon={<CommunityIcon size={19} />} onClick={() => nav('/insights/participation')} />
         <ActionTile title="Wildlife" subtitle="Reference context" icon={<SpeciesIcon glyph="grass" size={20} />} onClick={() => nav('/insights/wildlife')} />
@@ -220,11 +232,11 @@ function LiveInsightsScreen({ personalAction }: { personalAction: ReactNode }) {
     body = beach ? <>
       <SummaryCard eyebrow={beach.area} description={beach.name} />
       <WhiteCard>
-        <p className="eyebrow">Band · compared with 30 days ago</p>
+        <p className="eyebrow">Attention · compared with 30 days ago</p>
         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: C.muted }}><span>{formatDate(data.comparisonAt)}</span><span>{formatDate(data.asOf)}</span></div>
         <div className="update-bands" style={{ margin: '14px 0' }}>{bands(beach)}</div>
         <p className="subtle">{beach.reportsLast30Days} counted reports received in the last 30 days · {beach.reportsPrevious30Days} in the previous 30 days.</p>
-        <p className="coastal-footnote">Each band uses the median of active report scores in its latest 90 days. Fewer than 3 active reports means Insufficient Data.</p>
+        <p className="coastal-footnote">Each attention level uses the median of active report scores in its latest 90 days. Fewer than 3 active reports means Insufficient Data.</p>
         <p className="coastal-footnote">{data.comparisonBasis}</p>
       </WhiteCard>
       <WhiteCard>
@@ -237,7 +249,7 @@ function LiveInsightsScreen({ personalAction }: { personalAction: ReactNode }) {
       <WhiteCard><p className="eyebrow">Current litter by category</p>
         {beach.composition.length ? <MetricBars rows={beach.composition} /> : <p className="subtle">No active litter reports in this window.</p>}
         {beach.composition.length > 0 && <p className="subtle">Largest share of weighted reported composition: {beach.composition[0][0]} ({beach.composition[0][1]}%).</p>}
-        <p className="coastal-footnote">Weighted share of reported quantity bands from {beach.activeReports} active reports in the last 90 days.</p>
+        <p className="coastal-footnote">Weighted share of reported amounts from {beach.activeReports} active reports in the last 90 days.</p>
       </WhiteCard>
       <PrimaryButton onClick={() => nav('/community?beach=' + beach.id)}>Find a Cleanup Here</PrimaryButton>
       <GhostButton onClick={() => nav('/beach/' + beach.id)}>Open Beach Page</GhostButton>
@@ -250,10 +262,10 @@ function LiveInsightsScreen({ personalAction }: { personalAction: ReactNode }) {
     const rows = data.beaches.filter(b => (!region || b.area.includes(region)) && (!band || (b.to ? severityLabel(b.to) : 'Insufficient Data') === band)
       && (!needs || b.needsHelp) && b.name.toLowerCase().includes(search.toLowerCase()));
     body = <>
-      <SummaryCard eyebrow={`30-day comparison · ${data.overview.registeredBeaches} beaches`} value={data.trendSummary.changed} description="beaches changed band">
-        <SummaryStats items={[{ label: 'Moved up', value: data.trendSummary.movedUp }, { label: 'Moved down', value: data.trendSummary.movedDown }, { label: 'No band yet', value: data.trendSummary.noBand }]} />
+      <SummaryCard eyebrow={`30-day comparison · ${data.overview.registeredBeaches} beaches`} value={data.trendSummary.changed} description="beaches changed attention level">
+        <SummaryStats items={[{ label: 'Moved up', value: data.trendSummary.movedUp }, { label: 'Moved down', value: data.trendSummary.movedDown }, { label: 'Not yet rated', value: data.trendSummary.noBand }]} />
       </SummaryCard>
-      <p className="coastal-footnote">{data.trendSummary.comparable} beaches have comparable bands in both windows. {data.comparisonBasis}</p>
+      <p className="coastal-footnote">{data.trendSummary.comparable} beaches have comparable attention levels in both windows. {data.comparisonBasis}</p>
       <div className="search-row"><label className="coastal-search"><Search /><input aria-label="Search Beaches" placeholder="Search Beaches" value={search} onChange={e => update('q', e.target.value)} /></label>
         <button className="icon-button" aria-label="Filters" onClick={() => setFilters(true)}><BarChart size={19} /></button>
       </div>
@@ -295,13 +307,13 @@ function LiveInsightsScreen({ personalAction }: { personalAction: ReactNode }) {
       </select>
       {latest ? <>
       <SummaryCard eyebrow={`Latest cleanup · ${formatDate(latest.createdAt)}`} description={latest.beachName}>
-        <h2 style={{ color: 'white' }}>Cleanup Recorded</h2><SummaryStats items={[{ label: 'Cleanup records · last 90 days', value: data.cleanup.total }, { label: 'With linked bands', value: data.cleanup.evaluatedCleanups }]} />
+        <h2 style={{ color: 'white' }}>Cleanup Recorded</h2><SummaryStats items={[{ label: 'Cleanup records · last 90 days', value: data.cleanup.total }, { label: 'Linked report updates', value: data.cleanup.evaluatedCleanups }]} />
       </SummaryCard>
       <p className="coastal-footnote">Active reports · latest 90 days: {data.beaches.reduce((sum, beach) => sum + beach.activeReports, 0)}. Counted report submissions received · last 90 days: {data.overview.reports}. Resolved reports remain in submission history but not the active rating count.</p>
       <WhiteCard><p className="eyebrow">Litter still above Small after cleanup</p>
         {data.cleanup.remaining.length ? data.cleanup.remaining.map(([category, percentage, samples]) => <div key={category}><MetricBars rows={[[category, percentage]]} /><p className="coastal-footnote">{samples} linked cleanup {samples === 1 ? 'record' : 'records'} with this category above Small before cleaning.</p></div>)
-          : <p className="subtle">No linked before-and-after band records yet.</p>}
-        <p className="coastal-footnote">The percentage is based on linked cleanup records, not litter-item counts. Quantity bands are volunteer estimates, not measured item counts or cleaning difficulty.</p>
+          : <p className="subtle">No linked before-and-after amount records yet.</p>}
+        <p className="coastal-footnote">The percentage is based on linked cleanup records, not litter-item counts. Recorded amounts are volunteer estimates, not measured item counts or cleaning difficulty.</p>
       </WhiteCard>
       <WhiteCard><p className="eyebrow">How litter was handled</p><MetricBars rows={data.cleanup.handling} /><p className="coastal-footnote">Share of cleanup records, as recorded by participants.</p></WhiteCard>
       <WhiteCard><p className="eyebrow">Days until the next counted report</p>
@@ -337,7 +349,7 @@ function LiveInsightsScreen({ personalAction }: { personalAction: ReactNode }) {
       <button onClick={() => setParams(previous => { const next = new URLSearchParams(previous); ['region', 'band', 'needs'].forEach(k => next.delete(k)); return next; }, { replace: true })} style={{ color: C.navy }}>Reset</button>
       <p className="eyebrow" style={{ marginTop: 20 }}>State / area</p><div className="filter-chips">
         {[...new Set(data.beaches.map(b => b.area.split(',').slice(-1)[0]?.trim() ?? b.area))].sort().map(region => <button key={region} aria-pressed={params.get('region') === region} onClick={() => update('region', params.get('region') === region ? '' : region)}>{region}</button>)}
-      </div><p className="eyebrow">Band</p><div className="filter-chips">
+      </div><p className="eyebrow">Attention</p><div className="filter-chips">
         {['Severe', 'High', 'Moderate', 'Low', 'Insufficient Data'].map(band => <button key={band} aria-pressed={params.get('band') === band} onClick={() => update('band', params.get('band') === band ? '' : band)}>{band}</button>)}
       </div><label style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 20 }}>Needs Volunteers Only<input type="checkbox" checked={params.get('needs') === '1'} onChange={e => update('needs', e.target.checked ? '1' : '')} /></label>
       <PrimaryButton onClick={() => setFilters(false)}>Show Results</PrimaryButton>
@@ -491,7 +503,7 @@ function PreviewInsightsScreen({ personalAction }: { personalAction: ReactNode }
         <div className="action-grid five">
           <ActionTile
             title="Trends"
-            subtitle="Band changes"
+            subtitle="Attention changes"
             icon={<BarChart size={19} />}
             onClick={() => nav("/insights/trends")}
           />
@@ -529,7 +541,7 @@ function PreviewInsightsScreen({ personalAction }: { personalAction: ReactNode }
       <>
         <SummaryCard eyebrow={b.area} description={b.name} />
         <WhiteCard>
-          <p className="eyebrow">Band · 30-day change</p>
+          <p className="eyebrow">Attention · 30-day change</p>
           <div
             style={{
               display: "flex",
@@ -549,7 +561,7 @@ function PreviewInsightsScreen({ personalAction }: { personalAction: ReactNode }
           <p className="subtle">
             {b.id === "bagan"
               ? "Up from Moderate. 4 counted reports in the last 30 days, up from 2."
-              : "A band describes the reports received, not a verified condition of the whole beach."}
+              : "An attention level describes the reports received, not a verified condition of the whole beach."}
           </p>
         </WhiteCard>
         {b.id === "bagan" && (
@@ -623,13 +635,13 @@ function PreviewInsightsScreen({ personalAction }: { personalAction: ReactNode }
         <SummaryCard
           eyebrow="30-day change · 4 pilot beaches"
           value="2"
-          description="beaches changed band"
+          description="beaches changed attention level"
         >
           <SummaryStats
             items={[
               { label: "Moved up", value: 1 },
               { label: "Moved down", value: 1 },
-              { label: "No band yet", value: 1 },
+              { label: "Not yet rated", value: 1 },
             ]}
           />
         </SummaryCard>
@@ -695,7 +707,7 @@ function PreviewInsightsScreen({ personalAction }: { personalAction: ReactNode }
         </GhostButton>
         {dataState === "insufficient" && (
           <DataUnavailable title="More reports needed">
-            At least 3 counted reports are needed to calculate a litter band.
+            At least 3 counted reports are needed to calculate a litter rating.
           </DataUnavailable>
         )}
         {demo}
@@ -907,7 +919,7 @@ function PreviewInsightsScreen({ personalAction }: { personalAction: ReactNode }
               ),
             )}
           </div>
-          <p className="eyebrow">Band</p>
+          <p className="eyebrow">Attention</p>
           <div className="filter-chips">
             {["Severe", "High", "Moderate", "Low", "Insufficient Data"].map(
               (s) => (

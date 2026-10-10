@@ -20,6 +20,7 @@ import './styles/iteration2.css';
 import './styles/iteration3.css';
 import './styles/coastal-pages.css';
 import './styles/visuals.css';
+import './styles/design-feedback.css';
 
 // Outside the router and the provider on purpose: a throw from either of them
 // is exactly the case where the page would otherwise go blank, and a boundary
