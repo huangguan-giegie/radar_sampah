@@ -1,8 +1,13 @@
 import { describe, expect, it } from 'vitest';
+import marineDirectorySource from './screens/MarineLifeScreen.tsx?raw';
 import { marineLayerEnabled, marineLayerParams, radialPoints, radialSpecies, selectMapBeach, mapMarineCards } from './mapMarineSelection';
 import type { BeachMarineCard } from './beachMarineLife';
 
 describe('shared map marine-life workflow', () => {
+  it('opens the map from the Marine Life directory with its overlay enabled', () => {
+    expect(marineDirectorySource).toContain('nav("/map?marine=on")');
+    expect(marineLayerEnabled(new URLSearchParams('marine=on'))).toBe(true);
+  });
   it('links existing habitats only where a beach has a matching published record', () => {
     const morib = mapMarineCards('morib');
     expect(morib.find(card => card.kind === 'habitat')?.destination).toBe('/habitats/morib-mudflat?beach=morib');
