@@ -158,8 +158,14 @@ export default function CommunityScreen() {
     if (event && participantCountValue(event.participantCount) < 3) reasons.push("Low sign-up for the next event");
     return reasons;
   };
+  // One row per beach: weekly events would otherwise list the same beach once per Saturday.
+  const nextEventPerBeach = Object.values(filtered.reduce<Record<string, typeof events[number]>>((all, e) => {
+    const current = all[e.beachId];
+    if (!current || e.startsAt.localeCompare(current.startsAt) < 0) all[e.beachId] = e;
+    return all;
+  }, {}));
   const needsRows = needs ? [
-    ...filtered.map(event => ({ kind: "event" as const, event, beach: beaches.find(beach => beach.id === event.beachId)! })),
+    ...nextEventPerBeach.map(event => ({ kind: "event" as const, event, beach: beaches.find(beach => beach.id === event.beachId)! })),
     ...withoutEvent.map(beach => ({ kind: "beach" as const, beach })),
   ].sort((a, b) => {
     const eventA = a.kind === "event" ? a.event : undefined;
@@ -289,7 +295,7 @@ export default function CommunityScreen() {
             const reasons = reasonsFor(beach, event);
             return event ? <button key={event.id} className="coastal-event" onClick={() => nav("/events/" + event.id)}>
               <span className="event-thumb"><PlaceThumb image={beachPhoto(beach.id, beach.coverImageUrl)} lat={beach.lat} lng={beach.lng} size={72} focus={[0.64, 0.32]} /></span>
-              <span className="grow"><h3>{beach.name}</h3><p>{formatEventDate(event.date)} · {formatEventTimeRange(event.startsAt, event.endsAt)}</p><p>{reasons.join(" · ")}</p>
+              <span className="grow"><h3>{beach.name}</h3><p>Next cleanup: {formatEventDate(event.date)} · {formatEventTimeRange(event.startsAt, event.endsAt)}</p><p>{reasons.join(" · ")}</p>
                 <p className="coastal-footnote">Latest counted report: {latestReport(beach)}</p>
                 <span className="event-tags"><span>{event.participantCount} joined</span><SeverityBadge band={beach.severity} /></span>
               </span><ChevronRight color={C.navy} />

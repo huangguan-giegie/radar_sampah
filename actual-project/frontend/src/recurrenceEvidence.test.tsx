@@ -14,14 +14,16 @@ describe('recurrence evidence', () => {
     expect(html).toContain('No follow-up report yet');
     expect(html).toContain('4 days since the recorded cleanup');
     expect(html).toContain('does not mean the beach is clean');
-    expect(html).not.toContain('Provisional median');
+    expect(html).not.toContain('Provisional estimate');
   });
   it('preserves same-day zero intervals and labels only sufficiently evidenced medians', () => {
     const html = renderToStaticMarkup(<RecurrenceEvidence evidence={{ ...base, intervalDays: 0, status: '0 days until next Counted report', medianDays: 2, provisional: true }} />);
     expect(html).toContain('0 days until next Counted report');
-    expect(html).toContain('Provisional median recurrence interval: 2 days');
+    expect(html).toContain('Provisional estimate: litter is usually reported again 2 days after a cleanup.');
     const insufficient = renderToStaticMarkup(<RecurrenceEvidence evidence={{ ...base, medianDays: 0, provisional: false }} />);
-    expect(insufficient).not.toContain('Provisional median');
+    expect(insufficient).not.toContain('Provisional estimate');
+    const sameDay = renderToStaticMarkup(<RecurrenceEvidence evidence={{ ...base, medianDays: 0, provisional: true }} />);
+    expect(sameDay).toContain('reported again on the same day as a cleanup');
   });
   it('omits the section when no cleanup exists and keeps superseded-cleanup wording', () => {
     expect(renderToStaticMarkup(<RecurrenceEvidence evidence={null} />)).toBe('');

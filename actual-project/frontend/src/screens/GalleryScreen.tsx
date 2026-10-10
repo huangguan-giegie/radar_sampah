@@ -19,11 +19,12 @@ export default function GalleryScreen() {
   const { beachId = '' } = useParams();
   const nav = useNavigate();
   const goBack = useAppBack(`/beach/${beachId}`);
-  const [name, setName] = useState('Beach');
+  const fixture = content.beaches.find(b => b.id === beachId);
+  // No placeholder name: "Beach" showed while the beach was still loading.
+  const [name, setName] = useState(fixture?.name ?? '');
   const [photos, setPhotos] = useState<LitterGalleryEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
-  const fixture = content.beaches.find(b => b.id === beachId);
   const previewOnly = USE_MOCK && !!fixture && !['morib', 'bagan', 'remis', 'kelanang'].includes(beachId);
 
   function load() {
@@ -76,7 +77,7 @@ export default function GalleryScreen() {
         </div>
         <div>
           <h1 className="i2-title">Litter gallery</h1>
-          <p className="i2-subtitle">{name}</p>
+          {name && <p className="i2-subtitle">{name}</p>}
           {/* Kept: the photos are public, so the page says up front that no
               exact position comes with them. */}
           <p className="i2-subtitle" style={{ marginTop: 2 }}>Beach-level location only.</p>
@@ -107,20 +108,20 @@ export default function GalleryScreen() {
         {!loading && !failed && photos.map((photo) => (
           <article key={photo.reportId} className="i2-card" style={{ overflow: 'hidden', padding: 0 }}>
             {photo.photoUrl ? (
-              <img src={litterGalleryPhotoUrl(photo.photoUrl)} alt={`Reported litter at ${name}`} style={{ display: 'block', width: '100%', height: 190, objectFit: 'cover' }} />
+              <img src={litterGalleryPhotoUrl(photo.photoUrl)} alt={`Reported litter at ${name}`} loading="lazy" decoding="async" style={{ display: 'block', width: '100%', height: 190, objectFit: 'cover', background: C.tint }} />
             ) : (
               <div style={{ height: 150, background: C.tint, display: 'grid', placeItems: 'center', color: C.muted, fontSize: 13 }}>Photo unavailable</div>
             )}
             <div style={{ padding: 16 }}>
-              <strong style={{ display: 'block', fontSize: 14, color: C.ink2 }}>Report {photo.reportId.toUpperCase()}</strong>
-              <span style={{ display: 'block', marginTop: 4, fontSize: 12, color: C.muted }}>{photo.currentState === 'resolved' ? 'Resolved report photo · retained for history' : 'Active report photo'}</span>
-              <span style={{ display: 'block', marginTop: 5, fontSize: 10.5, color: C.dim }}>{formatDate(photo.reportedAt)}</span>
+              {/* Visitors recognise a date, not an internal report ID. */}
+              <strong style={{ display: 'block', fontSize: 14, color: C.ink2 }}>Reported {formatDate(photo.reportedAt)}</strong>
+              <span style={{ display: 'block', marginTop: 4, fontSize: 12, color: C.muted }}>{photo.currentState === 'resolved' ? 'Resolved report · photo kept for history' : 'Active report'}</span>
             </div>
           </article>
         ))}
 
         {cleanupTarget ? (
-          <PrimaryButton onClick={() => nav(`/cleanup/${beachId}`)}>Clean up {cleanupTarget.reportId.toUpperCase()}</PrimaryButton>
+          <PrimaryButton onClick={() => nav(`/cleanup/${beachId}`)}>Log a cleanup here</PrimaryButton>
         ) : (
           <GhostButton onClick={() => nav(`/beach/${beachId}`)}>Back to beach</GhostButton>
         )}

@@ -51,6 +51,11 @@ export function MetricBars({ rows }: { rows: [string, number][] }) {
     </>
   );
 }
+
+const dayCount = (days: number | null) => `${days ?? '—'} ${days === 1 ? 'day' : 'days'}`;
+// "0 days until next report" read as an error; a same-day report is said in words.
+const nextReportPhrase = (days: number | null) => days == null ? 'next report recorded' : days === 0 ? 'next report the same day' : `${dayCount(days)} until next report`;
+
 export default function InsightsScreen() {
   const nav = useNavigate();
   const [params, setParams] = useSearchParams();
@@ -136,7 +141,7 @@ function WildlifeCoverage({ beaches }: { beaches: InsightsData['wildlife'] }) {
     <p className="coastal-footnote">All registered beaches are listed. Published reference species and coordinate-based nearby marine-grid model suggestions are separate kinds of evidence; neither confirms sightings at these beaches.</p>
     {loading && <p className="coastal-footnote">Loading nearby marine-grid context for beaches without published references…</p>}
     {error && <DataUnavailable title="Modelled biodiversity temporarily unavailable" retry={() => { void refresh(); }}>Published references are still shown. The modelled suggestions could not be loaded.</DataUnavailable>}
-    {!loading && unavailableCount > 0 && <p className="coastal-footnote">{unavailableCount} beaches have no currently available species suggestion. This is not evidence that wildlife is absent.</p>}
+    {!loading && unavailableCount > 0 && <p className="coastal-footnote">{unavailableCount} {unavailableCount === 1 ? 'beach has' : 'beaches have'} no currently available species suggestion. This is not evidence that wildlife is absent.</p>}
     {beaches.map(beach => {
       const model = byBeach.get(beach.beachId);
       const isPublished = beach.species.length > 0;
@@ -320,7 +325,7 @@ function LiveInsightsScreen({ personalAction }: { personalAction: ReactNode }) {
       <WhiteCard><p className="eyebrow">How litter was handled</p><MetricBars rows={data.cleanup.handling} /><p className="coastal-footnote">Share of cleanup records, as recorded by participants.</p></WhiteCard>
       <WhiteCard><p className="eyebrow">Days until the next counted report</p>
         {data.cleanup.history.slice(0, 5).map(cleanup => <LinkRow key={cleanup.id} title={cleanup.beachName}
-          subtitle={`Cleaned ${formatDate(cleanup.createdAt)} · ${cleanup.nextReportedAt ? `${cleanup.daysUntilNextReport} days until next report` : `${cleanup.followUpStatus ?? 'No follow-up report yet'} · ${cleanup.daysSinceCleanup} days since cleanup`}`}
+          subtitle={`Cleaned ${formatDate(cleanup.createdAt)} · ${cleanup.nextReportedAt ? nextReportPhrase(cleanup.daysUntilNextReport) : `${cleanup.followUpStatus ?? 'No follow-up report yet'} · ${dayCount(cleanup.daysSinceCleanup)} since cleanup`}`}
           onClick={() => nav('/insights/cleanup-history?cleanup=' + cleanup.id)} />)}
         <p className="coastal-footnote">Time to the next report anywhere at this beach. A later report does not establish that litter returned at the cleaned spot.</p>
       </WhiteCard><GhostButton onClick={() => nav('/insights/cleanup-history')}>View Cleanup History</GhostButton>

@@ -167,7 +167,8 @@
 
 .i2-quantity-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 92px;
+  /* Wide enough for "Very Large" plus the select arrow; 92px cut "Medium" to "Mediur". */
+  grid-template-columns: minmax(0, 1fr) 128px;
   gap: 10px;
   align-items: center;
   padding: 11px 0;
