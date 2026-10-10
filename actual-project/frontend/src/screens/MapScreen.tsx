@@ -22,10 +22,10 @@ import { placeMapLabels, placeMapPhotos } from "../mapLabels";
 import { marineAreaPath, overviewMarinePins, regionalMarinePins } from "../biodiversity";
 import { searchBeaches, borneoReportCounts } from "../beachSearch";
 const COLORS: Record<string, string> = {
-  Low: "#6e9d80",
-  Moderate: "#d5a04f",
-  High: "#ce6b45",
-  Severe: "#b84a3f",
+  Low: "#92ce55",
+  Moderate: "#e7bb51",
+  High: "#f08a38",
+  Severe: "#c20e19",
 };
 function BorneoInset({ onClick, counts }: { onClick: () => void; counts: ReturnType<typeof borneoReportCounts> }) {
   const { elRef, mapRef, ready } = useLeafletMap({
@@ -215,7 +215,8 @@ export default function MapScreen() {
       const diameter = size.y < 360 ? 30 : 42;
       return { x: point.x - diameter / 2, y: point.y - diameter / 2, width: diameter, height: diameter };
     });
-    const photos = placeMapPhotos(overlays.map(pin => ({ id: pin.id, ...map.latLngToContainerPoint([pin.lat, pin.lng]) })),
+    const photoPoints = overlays.map(pin => ({ id: pin.id, ...map.latLngToContainerPoint([pin.lat, pin.lng]) }));
+    let photos = region ? [] : placeMapPhotos(photoPoints,
       { width: size.x, height: size.y, obstacles: [...controls, ...countObstacles] });
     if (!region) {
       for (const r of REGIONS) {
@@ -228,7 +229,7 @@ export default function MapScreen() {
           (n, b) => Math.max(n, levels.indexOf(b.severity ?? "")),
           -1,
         );
-        const colour = COLORS[levels[highest]] ?? "#98a4b5";
+        const colour = COLORS[levels[highest]] ?? "#70757c";
         const label = count;
         const diameter = map.getSize().y < 360 ? 30 : 42;
         marker(
@@ -247,14 +248,16 @@ export default function MapScreen() {
     } else if (region) {
       const preferred = new Set(PRIMARY_MAP_BEACHES[region.id] ?? []);
       const compactLabels = size.y < 360;
-      const obstacles = [...controls, ...photos];
+      // Beach selection is the main task; fit names before the optional photos.
+      const obstacles = controls;
       const labels = placeMapLabels(locatedBeaches
         .filter(b => preferred.has(b.id) || zoom >= region.zoom + 1)
         .map(b => ({ id: b.id, name: b.name, preferred: preferred.has(b.id), ...map.latLngToContainerPoint([b.lat, b.lng]) })),
-        { width: size.x, height: size.y, obstacles, compact: compactLabels, labelHeight: compactLabels ? 38 : 42 });
+        { width: size.x, height: size.y, obstacles, compact: compactLabels, labelHeight: 44 });
+      photos = placeMapPhotos(photoPoints, { width: size.x, height: size.y, obstacles: [...controls, ...labels] });
       const labelled = new Set(labels.map(label => label.id));
       const displayDot = (b: typeof locatedBeaches[number]) => marker(b.lat, b.lng, b.name,
-        `<span class="beach-coast-dot" style="background:${COLORS[b.severity ?? ""] ?? "#98a4b5"}"></span>`,
+        `<span class="beach-coast-dot" style="background:${COLORS[b.severity ?? ""] ?? "#70757c"}"></span>`,
         () => nav("/beach/" + b.id), [24, 24]);
 
       // Main prototype beaches always keep their own coastal dots and names.
@@ -295,18 +298,13 @@ export default function MapScreen() {
         node.className = "beach-map-label" + (compactLabels ? " compact" : "");
         const label = document.createElement("span");
         label.textContent = b.name;
-        label.style.color = b.severity ? SEVERITY[b.severity].text : "#586070";
-        label.style.borderColor = COLORS[b.severity ?? ""] ?? "#98a4b5";
-        const band = document.createElement("small");
-        band.textContent = b.severity ? severityLabel(b.severity) : "Insufficient data";
-        const dot = document.createElement("i");
-        dot.style.background = COLORS[b.severity ?? ""] ?? "#98a4b5";
-        band.prepend(dot);
-        node.append(band, label);
+        label.style.color = !b.severity || b.severity === 'Severe' ? '#fff' : '#172b35';
+        label.style.background = COLORS[b.severity ?? ""] ?? "#70757c";
+        node.append(label);
         marker(
           b.lat,
           b.lng,
-          b.name,
+          b.name + ' · ' + (b.severity ? severityLabel(b.severity) : 'Insufficient data') + ' · Beach and nearby marine life',
           node.outerHTML,
           () => nav("/beach/" + b.id),
           [placed.width, placed.height],
@@ -414,7 +412,7 @@ export default function MapScreen() {
         <Sheet title="Map Key" onClose={() => setSheet(null)}>
           <p className="subtle">
             Numbers show counted reports in this view. The ring shows the
-            highest available attention level in that region. Beach names use their own level. Tap a small photo for its marine-life introduction. Photos show coastal references, not live sightings.
+            highest available attention level in that region. Each beach name is a coloured button showing its own level. Tap a beach name for its details and nearby marine life, or a photo for a species guide.
           </p>
           {Object.entries(COLORS).map(([label, color]) => (
             <div className="legend-row" key={label}>
@@ -423,7 +421,7 @@ export default function MapScreen() {
             </div>
           ))}
           <div className="legend-row">
-            <i style={{ background: "#98a4b5" }} />
+            <i style={{ background: "#70757c" }} />
             Insufficient data
           </div>
           <p className="subtle">

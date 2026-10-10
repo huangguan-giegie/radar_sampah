@@ -36,11 +36,9 @@ import type { SeverityBand } from "../types";
 import { useAppBack } from "../navigation";
 import { eventIsAvailable, useEventClock } from "../eventAvailability";
 import { StaticMap } from "../components/Visuals";
-import { marineRecordDetails } from "../biodiversity";
-import { beachPhoto, speciesPhotoReference } from "../visuals";
-import { modelSpeciesDestination } from "../modelSpeciesNavigation";
+import { beachPhoto } from "../visuals";
+import { beachMarineCards, type BeachWildlifeSpecies } from "../beachMarineLife";
 
-type BeachWildlifeSpecies = { name: string; scientificName?: string | null; evidenceType: string; source?: { url: string } };
 type BeachWildlife = { beachId: string; sourceStatus: string; species: BeachWildlifeSpecies[]; coordinateContext?: { distanceKm: number } | null };
 
 export default function CoastalBeachScreen() {
@@ -90,11 +88,7 @@ export default function CoastalBeachScreen() {
     null,
   );
   const { data: wildlife, loading: wildlifeLoading, error: wildlifeError, refresh: refreshWildlife } = useAsyncData<BeachWildlife | null>(
-    () => previewOnly ? Promise.resolve(null) : USE_MOCK ? getBeach(beachId).then(beach => ({
-      beachId, sourceStatus: 'preview', species: (beach?.species ?? []).map(species => ({
-        name: species.name, scientificName: species.scientificName, evidenceType: 'published_reference',
-      })),
-    })) : apiRequest<BeachWildlife>(`/beaches/${encodeURIComponent(beachId)}/wildlife`, "GET", undefined, 45_000, false),
+    () => USE_MOCK ? Promise.resolve(null) : apiRequest<BeachWildlife>(`/beaches/${encodeURIComponent(beachId)}/wildlife`, "GET", undefined, 45_000, false),
     [beachId, previewOnly],
     null,
   );
@@ -152,24 +146,19 @@ export default function CoastalBeachScreen() {
   const image = beachPhoto(beachId, detail?.coverImageUrl ?? fixture?.image);
   const heroLat = detail?.lat ?? null;
   const heroLng = detail?.lng ?? null;
-  const region = fixture?.region ?? "selangor";
-  const species = (fixture?.species ?? [])
-    .map((id) => content.species.find((s) => s.id === id))
-    .filter((s) => !!s);
-  const regional = content.regions.find((r) => r.id === region)?.records ?? [];
+  const region = detail?.region ?? fixture?.region ?? "";
   const hasDocumentedHabitat = Boolean((detail?.habitat ?? fixture?.habitat) && (detail?.habitat ?? fixture?.habitat) !== "Biodiversity information not yet available");
-  const currentSpecies = wildlife?.species ?? [];
-  const hasWildlifeContext = wildlife !== null;
-  const showLegacyExamples = previewOnly || (Boolean(wildlifeError) && !wildlifeLoading);
+  const hasWildlifeContext = wildlife?.beachId === beachId;
+  const currentSpecies = hasWildlifeContext ? wildlife.species : [];
+  const marineCards = beachMarineCards(beachId, currentSpecies);
   const wildlifeEvidenceNote = hasWildlifeContext && wildlife?.sourceStatus === "modelled"
     ? `Nearby OBIS-derived marine-grid suggestions${wildlife.coordinateContext ? ` · ${wildlife.coordinateContext.distanceKm.toFixed(1)} km to reference cell` : ""} · Not confirmed beach sightings or occurrence probabilities`
     : hasWildlifeContext && wildlife?.sourceStatus === "published_reference"
       ? "Published coastal reference · not confirmed beach sightings"
-      : wildlife?.sourceStatus === 'preview' ? "Preview reference species · not sightings"
-      : showLegacyExamples ? "Regional examples · not sightings" : "No verified species observations are claimed";
-  const goMap = () => nav("/map?region=" + region);
+      : "Published coastal references from the map, not confirmed sightings at this beach";
+  const goMap = () => nav(region ? "/map?region=" + encodeURIComponent(region) : "/map");
   return (
-    <main className="screen scroll-y coastal-screen">
+    <main className="screen scroll-y coastal-screen beach-detail-screen">
       <header className={"coastal-beach-hero" + (!image && heroLat != null ? " has-map" : "")}>
         {image ? <img src={image} alt={b.name} /> : heroLat != null && heroLng != null && (
           <StaticMap lat={heroLat} lng={heroLng} zoom={12} focus={[0.72, 0.46]} reach={[640, 254]} />
@@ -192,38 +181,11 @@ export default function CoastalBeachScreen() {
         </div>
       </header>
       <div className="coastal-page measure beach-body">
-        <section>
-          <SectionHeading
-            action="View All →"
-            onAction={() => nav("/beach/" + beachId + "/gallery")}
-          >
-            Litter Gallery
-          </SectionHeading>
-          <p className="subtle">Public reports from this beach</p>
-          {gallery.length ? (
-            <div className="beach-gallery">
-              {gallery.map((g) => (
-                <button
-                  key={g.reportId}
-                  onClick={() => nav("/beach/" + beachId + "/gallery")}
-                >
-                  <img
-                    src={litterGalleryPhotoUrl(g.photoUrl)}
-                    alt="Reported beach litter"
-                  />
-                  <span>{formatDate(g.reportedAt)}</span>
-                </button>
-              ))}
-            </div>
-          ) : (
-            <div className="dashed-empty">No public report photos yet.</div>
-          )}
-        </section>
         <WhiteCard>
           <div className="beach-band-header">
             <p className="eyebrow">Litter Severity</p>
             <div className="beach-report-meta">
-              <small>{b.validReports} active reports · latest 90 days</small>
+              <small>{b.validReports} active {b.validReports === 1 ? 'report' : 'reports'} · latest 90 days</small>
               <small>{detail?.lastReportedAt ? 'Last reported ' + formatDate(detail.lastReportedAt) : (fixture?.reported ?? 'No recent report')}</small>
             </div>
           </div>
@@ -262,6 +224,71 @@ export default function CoastalBeachScreen() {
           </button>
           </div>
         </WhiteCard>
+        <section className="beach-nearby-marine" aria-label="Nearby marine life">
+          <SectionHeading
+            action="Species Guide →"
+            onAction={() => nav("/marine-life")}
+          >
+            Nearby Marine Life
+          </SectionHeading>
+
+          <p className="beach-wildlife-location">Coastal context for {b.name}</p>
+          <p className="subtle">
+            {hasDocumentedHabitat
+              ? `Habitat · ${detail?.habitat ?? fixture?.habitat}`
+              : "Habitat · Not individually documented for this beach"}
+          </p>
+          {wildlifeLoading && !USE_MOCK && <p className="coastal-footnote" role="status">Loading available marine-life context…</p>}
+          {wildlifeError && !USE_MOCK && (
+            <DataUnavailable title="Wildlife context temporarily unavailable" retry={() => { void refreshWildlife(); }}>
+              Please retry to load the marine-life information for this beach.
+            </DataUnavailable>
+          )}
+          {marineCards.length > 0 && (
+            <div className="coastal-grid-two" style={{ marginTop: 16 }}>
+              {marineCards.map(item => (
+                  <div className="wildlife-photo-card" key={item.id}>
+                    <button onClick={() => nav(item.destination)}>
+                      <SpeciesPicture image={item.image} name={item.name} />
+                      <strong>{item.name}</strong>
+                      {item.scientificName && item.scientificName !== item.name && <small><em>{item.scientificName}</em></small>}
+                      {item.referencePlace && <small>Reference area · {item.referencePlace}</small>}
+                    </button>
+                    <div className="marine-source-labels">
+                      {item.published && <span>Published reference</span>}
+                      {item.modelled && <span className="model-source">OBIS · Modelled nearby</span>}
+                    </div>
+                    {item.image && (
+                      <a href={item.creditsUrl} target="_blank" rel="noopener noreferrer">
+                        Image credit & licence ↗
+                      </a>
+                    )}
+                  </div>
+              ))}
+            </div>
+          )}
+          {!marineCards.length && !wildlifeLoading && !wildlifeError && <p className="coastal-footnote">Species information is currently unavailable for this beach. This does not mean marine life is absent.</p>}
+          <p className="coastal-footnote">Coastal references and model estimates are not confirmed sightings.{USE_MOCK ? ' Preview · model results are not loaded.' : ''}</p>
+          <div className="wildlife-evidence-actions">
+            <button
+              type="button"
+              className="wildlife-evidence-help"
+              aria-label="About wildlife evidence"
+              title="About wildlife evidence"
+              aria-haspopup="dialog"
+              onClick={() => setShowWildlifeEvidenceInfo(true)}
+            >
+              ?
+            </button>
+            <button
+              type="button"
+              className="wildlife-evidence-link"
+              onClick={() => nav(hasWildlifeContext ? "/insights/wildlife" : "/marine-area/" + region + "?beach=" + beachId)}
+            >
+              {hasWildlifeContext ? "Wildlife sources ↗" : "Sources ↗"}
+            </button>
+          </div>
+        </section>
         <section>
           <SectionHeading>What You Can Do Here</SectionHeading>
           <div className="action-grid" style={{ marginTop: 16 }}>
@@ -291,88 +318,30 @@ export default function CoastalBeachScreen() {
         </section>
         <section>
           <SectionHeading
-            action="Species Guide →"
-            onAction={() => nav("/marine-life")}
+            action="View All →"
+            onAction={() => nav("/beach/" + beachId + "/gallery")}
           >
-            Marine Life & Habitat
+            Litter Gallery
           </SectionHeading>
-
-          <p className="subtle">
-            {hasDocumentedHabitat
-              ? `Habitat · ${detail?.habitat ?? fixture?.habitat}`
-              : "Habitat · Not individually documented for this beach"}
-          </p>
-          {wildlifeLoading && !previewOnly && <p className="coastal-footnote" role="status">Loading available marine-life context…</p>}
-          {wildlifeError && !previewOnly && (
-            <DataUnavailable title="Wildlife context temporarily unavailable" retry={() => { void refreshWildlife(); }}>
-              Regional examples are shown below as a fallback, not sightings at this beach.
-            </DataUnavailable>
-          )}
-          {hasWildlifeContext && currentSpecies.length > 0 && (
-            <div className="coastal-grid-two" style={{ marginTop: 16 }}>
-              {currentSpecies.map((item, i) => {
-                const guide = content.species.find(s => s.name.toLowerCase() === item.name.toLowerCase() ||
-                  (item.scientificName && s.subtitle.toLowerCase().includes(item.scientificName.toLowerCase())));
-                const photo = speciesPhotoReference(item.name);
-                const modelIntro = item.evidenceType === "modelled"
-                  ? modelSpeciesDestination(item.scientificName, beachId) : null;
-                return (
-                  <div className="wildlife-photo-card" key={item.scientificName ?? item.name ?? String(i)}>
-                    <button onClick={() => nav(guide ? "/species/" + guide.id : modelIntro ?? "/insights/wildlife")}>
-                      <SpeciesPicture image={photo?.image ?? null} name={item.name} />
-                      <strong>{item.name}</strong>
-                      <small>{item.scientificName && item.scientificName !== item.name ? <em>{item.scientificName}</em> : null}
-                        {item.evidenceType === "modelled" ? " · Modelled nearby" : " · Published reference"}</small>
-                    </button>
-                    {photo?.creditsUrl && (
-                      <a href={photo.creditsUrl} target="_blank" rel="noopener noreferrer" title={photo.note}>
-                        Image credit & licence ↗
-                      </a>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          )}
-          {hasWildlifeContext && !currentSpecies.length && <p className="coastal-footnote">Species information is currently unavailable for this beach.</p>}
-          {showLegacyExamples && (
-            <div className="coastal-grid-two" style={{ marginTop: 16 }}>
-              {species.slice(0, 2).map((s) => (
-                <button key={s.id} onClick={() => nav("/species/" + s.id)}>
-                  <SpeciesPicture image={s.image} name={s.name} />
-                  <strong>{s.name}</strong>
+          <p className="subtle">Public reports from this beach</p>
+          {gallery.length ? (
+            <div className="beach-gallery">
+              {gallery.map((g) => (
+                <button
+                  key={g.reportId}
+                  onClick={() => nav("/beach/" + beachId + "/gallery")}
+                >
+                  <img
+                    src={litterGalleryPhotoUrl(g.photoUrl)}
+                    alt="Reported beach litter"
+                  />
+                  <span>{formatDate(g.reportedAt)}</span>
                 </button>
               ))}
-              {species.length < 2 && regional
-                .filter((r) => !species.some((s) => s.id === r.speciesId))
-                .slice(0, 2 - species.length)
-                .map((r, i) => (
-                  <button key={i} onClick={() => nav(r.speciesId ? "/species/" + r.speciesId : "/marine-area/" + region + "?beach=" + beachId)}>
-                    <SpeciesPicture image={marineRecordDetails(r).image} name={r.name} />
-                    <strong>{r.name}</strong>
-                  </button>
-                ))}
             </div>
+          ) : (
+            <div className="dashed-empty">No public report photos yet.</div>
           )}
-          <div className="wildlife-evidence-actions">
-            <button
-              type="button"
-              className="wildlife-evidence-help"
-              aria-label="About wildlife evidence"
-              title="About wildlife evidence"
-              aria-haspopup="dialog"
-              onClick={() => setShowWildlifeEvidenceInfo(true)}
-            >
-              ?
-            </button>
-            <button
-              type="button"
-              className="wildlife-evidence-link"
-              onClick={() => nav(hasWildlifeContext ? "/insights/wildlife" : "/marine-area/" + region + "?beach=" + beachId)}
-            >
-              {hasWildlifeContext ? "Wildlife sources ↗" : "Sources ↗"}
-            </button>
-          </div>
         </section>
         <section>
           <SectionHeading>Litter Composition</SectionHeading>

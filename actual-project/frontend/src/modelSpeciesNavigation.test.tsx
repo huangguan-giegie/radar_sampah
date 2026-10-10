@@ -2,7 +2,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import appSource from './App.tsx?raw';
-import beachSource from './screens/CoastalBeachScreen.tsx?raw';
+import { beachMarineCards } from './beachMarineLife';
 import { findModelSpecies, modelSpeciesDestination, scientificNameKey } from './modelSpeciesNavigation';
 import type { SpeciesCatalog } from './types';
 
@@ -54,8 +54,13 @@ describe('beach wildlife species introduction navigation', () => {
     expect(modelSpeciesDestination('Pomacanthus annularis', beach))
       .toBe('/model-species/pomacanthus-annularis?beach=bs-pasir-panjang-9');
     expect(appSource).toContain('<Route path="/model-species/:scientificKey" element={<ModelSpeciesScreen />}');
-    expect(beachSource).toContain('modelSpeciesDestination(item.scientificName, beachId)');
-    expect(beachSource).toContain('modelIntro ?? "/insights/wildlife"');
+    const cards = beachMarineCards(beach, [greenfish, angelfish].map(species => ({
+      name: species.commonNameEn, scientificName: species.scientificName, evidenceType: 'modelled',
+    })));
+    expect(cards.map(card => card.destination)).toEqual([
+      '/model-species/stichopus-chloronotus?beach=bs-pasir-panjang-9',
+      '/model-species/pomacanthus-annularis?beach=bs-pasir-panjang-9',
+    ]);
   });
 
   it('renders the Greenfish introduction, its photo, original source and careful evidence label', () => {
