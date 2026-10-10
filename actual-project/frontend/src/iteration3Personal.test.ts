@@ -16,6 +16,6 @@ describe('private personal insight sessions', () => {
 
   it('recommendation failures preserve usable guest and report destinations', () => {
     expect(fallbackNextAction(true).destination.path).toBe('/report/photo');
-    expect(fallbackNextAction(false).destination.path).toBe('/community');
+    expect(fallbackNextAction(false).destination.path).toBe('/identity?next=/home');
   });
 });

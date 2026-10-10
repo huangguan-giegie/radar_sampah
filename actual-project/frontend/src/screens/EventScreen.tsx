@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowRight, Check, ChevronRight, Clock, Pin } from '../components/Icon';
-import { EmptyState, InfoChip, SectionLabel } from '../components/ds';
+import { Check, ChevronRight, Clock, Pin } from '../components/Icon';
+import { EmptyState, SectionLabel } from '../components/ds';
 import { BackButton, GhostButton, PrimaryButton, TextButton } from '../components/ui';
 import { useApp } from '../AppContext';
-import { createIteration2ShareLink, getBeach, getIteration2MyCleanups, USE_MOCK } from '../api';
+import { getBeach, getIteration2MyCleanups, USE_MOCK } from '../api';
+import { eventInvitationPath, eventInvitationText } from '../eventInvitation';
 import {
   formatEventDate,
   formatEventTimeRange,
@@ -12,7 +13,7 @@ import {
   getCleanupEvent,
 } from '../iteration2';
 import { fetchCleanupEvent, joinCleanupEventData, leaveCleanupEventData } from '../iteration2Api';
-import { attentionStateFor, C } from '../theme';
+import { C } from '../theme';
 import type { BeachDetail } from '../types';
 import { useAsyncData } from '../useAsyncData';
 import { CleanupGuide, WildlifeGuide } from '../components/CleanupGuide';
@@ -40,8 +41,8 @@ export default function EventScreen() {
     [eventId, user?.participantId],
     getCleanupEvent(eventId),
   );
-  const { data: cleanups, loading: cleanupsLoading, error: cleanupsError, refresh: refreshCleanups } = useAsyncData(() => fetchEventCleanups(eventId), [eventId, reportsVersion], []);
-  const { data: beach, loading: beachLoading, error: beachError, refresh: refreshBeach } = useAsyncData<BeachDetail | null>(
+  const { data: cleanups } = useAsyncData(() => fetchEventCleanups(eventId), [eventId, reportsVersion], []);
+  const { data: beach } = useAsyncData<BeachDetail | null>(
     () => event ? getBeach(event.beachId) : Promise.resolve(null),
     [event?.beachId, reportsVersion], null,
   );
@@ -52,17 +53,6 @@ export default function EventScreen() {
     [eventId, user?.participantId, reportsVersion], [],
   );
   const cleanupRecorded = Boolean(user && ownCleanups.some(cleanup => cleanup.eventId === eventId));
-  const [sharePath, setSharePath] = useState<string | null>(null);
-
-  useEffect(() => {
-    let active = true;
-    setSharePath(null);
-    if (USE_MOCK) return;
-    createIteration2ShareLink({ eventId })
-      .then((link) => { if (active) setSharePath(link.path); })
-      .catch(() => { if (active) setSharePath(null); });
-    return () => { active = false; };
-  }, [eventId]);
 
   if (loading && !event) {
     return <div className="screen scroll-y"><div className="measure i2-page"><BackButton onClick={goBack} /><EmptyState title="Loading activity…" body="Checking the latest shared activity details." /></div></div>;
@@ -121,9 +111,8 @@ export default function EventScreen() {
     }
   }
 
-  const shareUrl = sharePath ? new URL(sharePath, window.location.origin).toString() : '';
-  const shareText = `${event.beachName} cleanup · ${formatEventDate(event.date)}`;
-  const whatsapp = `https://wa.me/?text=${encodeURIComponent(`${shareText}\n${shareUrl}`)}`;
+  const shareUrl = new URL(eventInvitationPath(event.id), typeof window === 'undefined' ? 'http://localhost' : window.location.origin).toString();
+  const whatsapp = `https://wa.me/?text=${encodeURIComponent(eventInvitationText(event, shareUrl))}`;
 
   const participation = [
     { label: 'Join', done: joined },
@@ -179,9 +168,6 @@ export default function EventScreen() {
               </div>
             ))}
           </div>
-          <InfoChip color={attendanceRecorded ? C.green : C.muted} background={attendanceRecorded ? C.greenBg : undefined} style={{ marginTop: 12 }}>
-            {attendanceRecorded ? 'Attendance recorded' : joined ? 'Attendance not recorded' : 'Not joined'}
-          </InfoChip>
         </div>
 
         <div className="i2-action-stack">
@@ -203,37 +189,14 @@ export default function EventScreen() {
           )}
         </div>
 
-        <div className="i2-card">
-          <SectionLabel size="sm">BEACH CONTEXT</SectionLabel>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, marginTop: 10 }}>
-            <div>
-              <strong style={{ display: 'block', color: C.ink2, fontSize: 14.5 }}>{event.beachName}</strong>
-              <span style={{ display: 'block', marginTop: 4, color: C.muted, fontSize: 11.5 }}>{event.area}</span>
-            </div>
-            <InfoChip>{cleanupsLoading ? 'Loading event records…' : cleanupsError ? 'Event records unavailable' : `${cleanups.length} recorded cleanups for this event`}</InfoChip>
-          </div>
-          {cleanupsError && <div><p className="coastal-footnote">Could not load cleanup records for this event.</p><TextButton onClick={() => void refreshCleanups()}>Retry event records</TextButton></div>}
-          {beachLoading ? <p className="coastal-footnote" role="status">Loading current Beach Attention…</p> : beachError ? (
-            <div>
-              <p className="coastal-footnote">Current Beach Attention could not be loaded.</p>
-              <TextButton onClick={() => void refreshBeach()}>Retry beach data</TextButton>
-            </div>
-          ) : beach && (
-            <p className="coastal-footnote">Current Beach Attention: <strong>{attentionStateFor(beach.severity, beach.insufficientData, beach.validReports).pageLabel}</strong></p>
-          )}
-          {event.source === 'weekly' && <p className="coastal-footnote">Weekly cleanups are scheduled for Moderate, High or Severe Beach Attention. Low or insufficient data pauses new scheduling; already planned activities and registrations remain.</p>}
-          <GhostButton onClick={() => nav(`/beach/${event.beachId}`)} style={{ marginTop: 12 }}>View beach data <ArrowRight color={C.navy} /></GhostButton>
-        </div>
-
         <CleanupGuide recorded={cleanupRecorded} />
         <WildlifeGuide />
         <div className="i2-card">
-          <SectionLabel size="sm">SHARE</SectionLabel>
-          <a href={shareUrl ? whatsapp : undefined} target="_blank" rel="noreferrer" aria-disabled={!shareUrl} className="btn-primary press event-share-details">Share Event Details</a>
-          {USE_MOCK && <p className="coastal-footnote">Public sharing is available when connected to the shared service.</p>}
+          <SectionLabel size="sm">INVITE OTHERS</SectionLabel>
+          <p className="subtle">Share the date, time and a link to this activity.</p>
+          <a href={whatsapp} target="_blank" rel="noreferrer" className="btn-primary press event-share-details">Share Event Invitation</a>
         </div>
 
-        <GhostButton onClick={() => sharePath && nav(sharePath)} disabled={!sharePath}>Open public sharing page</GhostButton>
         {joined && available && !attendanceRecorded && !cleanupRecorded && <TextButton onClick={leave} disabled={updating}>Leave Event</TextButton>}
       </div>
     </div>

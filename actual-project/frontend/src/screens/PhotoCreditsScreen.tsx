@@ -4,6 +4,7 @@ import { CoastalPage, WhiteCard } from "../components/CoastalUI";
 const imageLicenseUrls = Object.fromEntries(
   Object.values(photoOverrides).map((media) => [media.image, media.imageLicenseUrl]),
 );
+imageLicenseUrls['/images/coastal/coastal-shellfish-clam.jpg'] = 'https://creativecommons.org/licenses/by-sa/3.0/';
 const cleanupCredits = [
   ["volunteers", "Petty Officer 1st Class NPASEWest Hawaii", "Public domain"],
   ["gloves", "Roman Kraft", "CC0"],
@@ -79,6 +80,7 @@ export default function PhotoCreditsScreen() {
           Full credits and original photo links ↗
         </a>
       </WhiteCard>
+      <WhiteCard><h2>Marine Life banner</h2><p className="subtle">Image supplied by the project team in the design feedback.</p></WhiteCard>
     </CoastalPage>
   );
 }

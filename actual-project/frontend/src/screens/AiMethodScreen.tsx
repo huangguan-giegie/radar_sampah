@@ -53,7 +53,7 @@ export default function AiMethodScreen() {
         <div className="i2-card">
           <SectionLabel size="sm">CATEGORY &amp; SIZE</SectionLabel>
           <p style={{ margin: '8px 0 0', color: C.muted, fontSize: 12.5, lineHeight: 1.55 }}>
-            Category means litter type. Quantity uses Small, Medium, Large or Very Large. A new report with only Small bands is not counted as active evidence; Small is still used to record what remains after cleanup.
+            Category means litter type. Quantity uses Small, Medium, Large or Very Large. A new report with all amounts marked Small is not counted as active evidence; Small is still used to record what remains after cleanup.
           </p>
         </div>
 
@@ -71,7 +71,7 @@ export default function AiMethodScreen() {
             <ModelRow label="DATASETS" value="SEA · TACO" />
           </div>
           <p style={{ margin: '10px 0 0', color: C.dim, fontSize: 11.5, lineHeight: 1.55 }}>
-            Small or hidden litter may be missed. You can choose the category and band yourself. Exact item counts are not collected.
+            Small or hidden litter may be missed. You can choose the litter type and amount yourself. Exact item counts are not collected.
           </p>
         </div>
       </div>

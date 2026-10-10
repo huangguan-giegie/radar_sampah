@@ -186,6 +186,7 @@ export default function App() {
                                     ? 'Home'
                                     : 'Radar Sampah';
   const pageTitle = pathname.startsWith('/insights') ? 'Insights'
+    : pathname.startsWith('/j/') ? 'Cleanup invitation'
     : pathname.startsWith('/species/') || pathname.startsWith('/model-species/') ? 'Species guide'
     : pathname.startsWith('/habitats') ? 'Coastal habitats'
     : pathname.startsWith('/marine-area') ? 'Marine life by area'
@@ -261,6 +262,7 @@ export default function App() {
         <Route path="/events/:eventId" element={<EventScreen />} />
         <Route path="/events/:eventId/result" element={<EventResultScreen />} />
         <Route path="/share/events/:eventId" element={<SharedEventScreen />} />
+        <Route path="/j/:eventId" element={<SharedEventScreen />} />
         <Route path="/share/:token" element={<SharedItemScreen />} />
         <Route path="/events/:eventId/check-in" element={<RequireAuth><CheckInScreen /></RequireAuth>} />
         <Route path="/cleanup/:beachId" element={<RequireAuth><CleanupScreen /></RequireAuth>} />

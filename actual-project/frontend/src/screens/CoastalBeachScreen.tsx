@@ -39,7 +39,6 @@ import { StaticMap } from "../components/Visuals";
 import { marineRecordDetails } from "../biodiversity";
 import { beachPhoto, speciesPhotoReference } from "../visuals";
 import { modelSpeciesDestination } from "../modelSpeciesNavigation";
-import { fetchInsights, type InsightsData } from "../insightsApi";
 
 type BeachWildlifeSpecies = { name: string; scientificName?: string | null; evidenceType: string; source?: { url: string } };
 type BeachWildlife = { beachId: string; sourceStatus: string; species: BeachWildlifeSpecies[]; coordinateContext?: { distanceKm: number } | null };
@@ -90,13 +89,12 @@ export default function CoastalBeachScreen() {
     [beachId, reportsVersion],
     null,
   );
-  const { data: insights, loading: trendLoading, error: trendError, refresh: refreshTrend } = useAsyncData<InsightsData | null>(
-    () => previewOnly ? Promise.resolve(null) : fetchInsights(beachId),
-    [beachId, reportsVersion, previewOnly],
-    null,
-  );
   const { data: wildlife, loading: wildlifeLoading, error: wildlifeError, refresh: refreshWildlife } = useAsyncData<BeachWildlife | null>(
-    () => previewOnly ? Promise.resolve(null) : apiRequest<BeachWildlife>(`/beaches/${encodeURIComponent(beachId)}/wildlife`, "GET", undefined, 45_000, false),
+    () => previewOnly ? Promise.resolve(null) : USE_MOCK ? getBeach(beachId).then(beach => ({
+      beachId, sourceStatus: 'preview', species: (beach?.species ?? []).map(species => ({
+        name: species.name, scientificName: species.scientificName, evidenceType: 'published_reference',
+      })),
+    })) : apiRequest<BeachWildlife>(`/beaches/${encodeURIComponent(beachId)}/wildlife`, "GET", undefined, 45_000, false),
     [beachId, previewOnly],
     null,
   );
@@ -155,7 +153,6 @@ export default function CoastalBeachScreen() {
   const heroLat = detail?.lat ?? null;
   const heroLng = detail?.lng ?? null;
   const region = fixture?.region ?? "selangor";
-  const trend = insights?.beaches.find((row) => row.id === beachId);
   const species = (fixture?.species ?? [])
     .map((id) => content.species.find((s) => s.id === id))
     .filter((s) => !!s);
@@ -168,6 +165,7 @@ export default function CoastalBeachScreen() {
     ? `Nearby OBIS-derived marine-grid suggestions${wildlife.coordinateContext ? ` · ${wildlife.coordinateContext.distanceKm.toFixed(1)} km to reference cell` : ""} · Not confirmed beach sightings or occurrence probabilities`
     : hasWildlifeContext && wildlife?.sourceStatus === "published_reference"
       ? "Published coastal reference · not confirmed beach sightings"
+      : wildlife?.sourceStatus === 'preview' ? "Preview reference species · not sightings"
       : showLegacyExamples ? "Regional examples · not sightings" : "No verified species observations are claimed";
   const goMap = () => nav("/map?region=" + region);
   return (
@@ -224,7 +222,10 @@ export default function CoastalBeachScreen() {
         <WhiteCard>
           <div className="beach-band-header">
             <p className="eyebrow">Litter Severity</p>
-            <small>{b.validReports} active reports · latest 90 days</small>
+            <div className="beach-report-meta">
+              <small>{b.validReports} active reports · latest 90 days</small>
+              <small>{detail?.lastReportedAt ? 'Last reported ' + formatDate(detail.lastReportedAt) : (fixture?.reported ?? 'No recent report')}</small>
+            </div>
           </div>
           <div
             className="beach-band-value"
@@ -249,39 +250,18 @@ export default function CoastalBeachScreen() {
               />
             )}
           </div>
-          <p className="beach-freshness">
-            ●{" "}
-            {detail?.lastReportedAt
-              ? "Reported " + formatDate(detail.lastReportedAt)
-              : (fixture?.reported ?? "Not recently reported")}
-          </p>
           {!attention.hasBand && (
             <p className="coastal-footnote">{attention.detail}</p>
           )}
-          <button className="coastal-footnote" onClick={() => nav("/method")}>
+          <div className="beach-rating-links">
+          <button onClick={() => nav("/method")}>
             How it’s rated →
           </button>
+          <button onClick={() => nav('/insights/trends/' + beachId)}>
+            See changes over time →
+          </button>
+          </div>
         </WhiteCard>
-        <section>
-          <SectionHeading action="View Trend →" onAction={() => nav("/insights/trends/" + beachId)}>
-            30-day Band Change
-          </SectionHeading>
-          {trendLoading ? <p role="status">Loading band comparison…</p> : trendError ? (
-            <DataUnavailable title="Band comparison unavailable" retry={() => { void refreshTrend(); }}>{trendError}</DataUnavailable>
-          ) : !trend ? <DataUnavailable title="Beach trend not found" /> : trend.from && trend.to ? (
-            <WhiteCard>
-              <p className="eyebrow">Compared {formatDate(insights?.comparisonAt ?? "")} with {formatDate(insights?.asOf ?? "")}</p>
-              <p className="update-bands"><strong>{trend.from}</strong><span>→</span><strong>{trend.to}</strong></p>
-              <p className="coastal-footnote">{trend.reportsPrevious30Days} counted report submissions in the earlier 30 days · {trend.reportsLast30Days} in the latest 30 days. Bands use active reports in each 90-day window.</p>
-            </WhiteCard>
-          ) : (
-            <div className="dashed-empty">
-              <strong>Insufficient Data</strong>
-              <p>At least 3 active reports are needed in both 90-day windows for a band comparison.</p>
-              <p className="coastal-footnote">{trend.reportsPrevious30Days} counted submissions in the earlier 30 days · {trend.reportsLast30Days} in the latest 30 days. Report totals are not active-rating counts.</p>
-            </div>
-          )}
-        </section>
         <section>
           <SectionHeading>What You Can Do Here</SectionHeading>
           <div className="action-grid" style={{ marginTop: 16 }}>

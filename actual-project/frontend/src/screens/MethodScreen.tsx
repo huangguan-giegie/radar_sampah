@@ -69,7 +69,7 @@ function warnIfRuleDiffers(remote: ScoringMethod) {
 // the real setting instead of being typed out again as prose.
 const limitations = (m: ScoringMethod) => [
   'More visits means more reports, not more litter.',
-  'Size bands are estimates, not measured area.',
+  'Amounts are estimates, not measured area.',
   `Conditions move faster than a ${m.windowDays}-day window can show.`,
   'This is reported litter, not water quality, ecology or safety.',
   'Biodiversity context is not part of this score.',
@@ -126,7 +126,7 @@ export default function MethodScreen() {
             SAME FOR ALL BEACHES
           </div>
           <div style={{ fontSize: 29, fontWeight: 640, letterSpacing: '-.7px', marginTop: 8, lineHeight: 1.1 }}>
-            How the severity band is decided
+            How the severity level is decided
           </div>
           {/* One line, as in the Iteration 2 prototype. The AI card further
               down explains what "only suggests" means, and the limitations
@@ -198,7 +198,7 @@ export default function MethodScreen() {
 
 
         <div>
-          <Label style={{ marginBottom: 11 }}>BANDS</Label>
+          <Label style={{ marginBottom: 11 }}>ATTENTION LEVELS</Label>
           <div style={{ background: C.white, border: `1px solid ${C.line}`, borderRadius: 22, overflow: 'hidden' }}>
             {/* The four bands with their exact ranges and their real colours -
                 the same colours the map uses, from the same source, so the
@@ -243,7 +243,7 @@ export default function MethodScreen() {
                   rating means absence of evidence. Read the other way round,
                   our own data would be used to call an unmonitored beach
                   clean. */}
-              No band is never the same as a clean beach.
+              An unrated beach is not necessarily clean.
             </div>
           </div>
         </div>

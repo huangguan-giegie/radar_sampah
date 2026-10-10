@@ -90,14 +90,14 @@ export default function RecordScreen() {
       >
         <div>
           <h1 className="i2-title">{draft.editingReportId ? 'Correct your report' : 'What did you find?'}</h1>
-          <p className="i2-subtitle">Select every category and choose a quantity band.</p>
+          <p className="i2-subtitle">Select each litter type and choose its amount.</p>
         </div>
         {draft.aiModelState === 'ready' && draft.aiDecision !== 'manual' && Object.keys(quantities).length > 0 && (
           <AiSuggestionHelp context="report" suggestions={quantities} />
         )}
         {(draft.aiModelState === 'empty' || draft.aiModelState === 'unavailable') && (
           <div style={{ padding: 13, borderRadius: 14, background: C.tint, color: C.slate, fontSize: 12 }}>
-            <Alert /> AI could not provide a supported suggestion. Select the category and quantity band manually.
+            <Alert /> AI could not provide a supported suggestion. Select the litter type and amount manually.
           </div>
         )}
 
@@ -136,7 +136,7 @@ export default function RecordScreen() {
         {/* Four fixed bands as buttons, never a number field: the report
             records how much, not an exact item count. */}
         {picked.map((category) => (
-          <div key={category} role="group" aria-label={`${category} quantity band`}>
+          <div key={category} role="group" aria-label={`${category} amount`}>
             <SectionLabel size="sm">QUANTITY BAND · {category.toUpperCase()}</SectionLabel>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 7, marginTop: 10 }}>
               {BANDS.map((band) => {
@@ -181,7 +181,7 @@ export default function RecordScreen() {
             </div>
             {showErrors && !quantities[category] && (
               <div id={`${category}-band-error`} role="alert" style={{ color: C.red, fontSize: 12, marginTop: 6 }}>
-                Choose a quantity band for {category}.
+                Choose an amount for {category}.
               </div>
             )}
           </div>

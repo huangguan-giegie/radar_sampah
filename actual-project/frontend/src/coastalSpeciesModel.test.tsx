@@ -70,12 +70,12 @@ describe('teammate frontend v2 beach integration', () => {
     expect(html).toContain('Log Cleanup');
   });
 
-  it('shows an honest insufficient-data 30-day band comparison with a trend destination', () => {
+  it('keeps the trend destination without the removed technical comparison block', () => {
     const html = renderBeach();
-    expect(html).toContain('30-day Band Change');
+    expect(html).not.toContain('30-day Band Change');
+    expect(html).toContain('See changes over time');
     expect(html).toContain('Insufficient Data');
-    expect(html).toContain('At least 3 active reports are needed in both 90-day windows');
-    expect(html).toContain('View Trend');
+    expect(html).not.toContain('At least 3 active reports are needed in both 90-day windows');
   });
 
   it('keeps the wildlife explanation behind a help button and insets the sources link on phones', () => {

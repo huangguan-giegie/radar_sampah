@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useNavigate, useParams } from "react-router-dom";
 import {
   CoastalPage,
@@ -10,9 +11,11 @@ import { cleanupDoneDestination } from "../cleanupFlow";
 import { fetchCleanup } from "../iteration2Api";
 import { useAsyncData } from "../useAsyncData";
 import { RecurrenceEvidence } from "../components/RecurrenceEvidence";
+import { CleanupShareSheet } from '../components/CleanupShareSheet';
 export default function CleanupResultScreen() {
   const { cleanupId = "" } = useParams();
   const nav = useNavigate();
+  const [sharing, setSharing] = useState(false);
   const {
     data: cleanup,
     loading,
@@ -54,17 +57,17 @@ export default function CleanupResultScreen() {
       </div>
       <WhiteCard>
         <p className="eyebrow">What changed</p>
-        {cleanup.rows.map((row) => (
+            {cleanup.rows.map((row) => (
           <div key={row.category}>
             <h2 style={{ fontSize: 19 }}>{row.category}</h2>
             <div className="band-comparison">
               <div>
-                <small>Before</small>
-                <span className="band-pill">{row.beforeBand ?? "—"}</span>
+                <small>{row.beforeBand ? 'Before' : 'Category'}</small>
+                <span className="band-pill">{row.beforeBand ?? row.category}</span>
               </div>
               <span>→</span>
               <div>
-                <small>After cleanup</small>
+                <small>{row.beforeBand ? 'After cleanup' : 'Collected'}</small>
                 <span className="band-pill after">
                   {row.afterBand ?? row.removedBand ?? "—"}
                 </span>
@@ -80,13 +83,14 @@ export default function CleanupResultScreen() {
       <WhiteCard>
         <h3>What this means</h3>
         <p className="subtle">
-          Your cleanup is recorded. The remaining amount updates the linked
-          report. A later report helps track changes in beach condition.
+          {cleanup.targetReportId ? 'Your recorded amounts update the linked report. A later report helps track beach conditions.' : 'Your collected amounts are recorded. This cleanup is not linked to an earlier report.'}
         </p>
         <p className="coastal-footnote">
           These records do not prove the beach is clean.
         </p>
       </WhiteCard>
+      <PrimaryButton height={46} onClick={() => setSharing(true)}>Share Cleanup Result</PrimaryButton>
+      {sharing && <CleanupShareSheet cleanup={cleanup} onClose={() => setSharing(false)} />}
       <PrimaryButton
         onClick={() => nav("/beach/" + encodeURIComponent(cleanup.beachId), { replace: true })}
         trailingArrow

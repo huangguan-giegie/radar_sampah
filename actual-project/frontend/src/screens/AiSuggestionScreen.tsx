@@ -160,7 +160,7 @@ export default function AiSuggestionScreen() {
         <div>
           <SectionLabel size="sm">AI SUGGESTION · REVIEW BEFORE SAVING</SectionLabel>
           <h1 className="i2-title" style={{ marginTop: 7 }}>{title}</h1>
-          <p className="i2-subtitle">You decide the final categories and quantity bands. A suggestion is never submitted on its own.</p>
+          <p className="i2-subtitle">You decide the final litter types and amounts. A suggestion is never submitted on its own.</p>
         </div>
 
         {loading ? (
@@ -217,14 +217,14 @@ export default function AiSuggestionScreen() {
               </div>
             </div>
 
-            {Object.keys(editable).length === 0 && <Alert title="Choose at least one category" tone="caution">You can enter the categories and quantity bands manually.</Alert>}
+            {Object.keys(editable).length === 0 && <Alert title="Choose at least one category" tone="caution">You can enter the litter types and amounts manually.</Alert>}
             {Object.keys(editable).length > 0 && Object.values(editable).every((quantity) => quantity === 'Small') && (
               <Alert title="Small-only reports are not counted" tone="caution">
                 Choose Medium, Large or Very Large for at least one category. Your draft is kept while you make this change.
               </Alert>
             )}
             <PrimaryButton onClick={confirm} disabled={Object.keys(editable).length === 0}>Confirm suggestions</PrimaryButton>
-            <GhostButton onClick={changeCategoryOrBand}>Change category or band</GhostButton>
+            <GhostButton onClick={changeCategoryOrBand}>Change type or amount</GhostButton>
             <TextButton onClick={keepManual}>Enter manually</TextButton>
           </>
         ) : result?.modelState === 'unreadable' ? (
@@ -245,7 +245,7 @@ export default function AiSuggestionScreen() {
             <p style={{ margin: 0, color: C.muted, fontSize: 13, lineHeight: 1.55 }}>
               The AI couldn't tell what litter this is.
               <br />
-              Your photo and beach are still here. You can enter the categories and quantity bands manually.
+              Your photo and beach are still here. You can enter the litter types and amounts manually.
             </p>
             <PrimaryButton onClick={() => continueManually('empty')}>Select Manually</PrimaryButton>
           </>

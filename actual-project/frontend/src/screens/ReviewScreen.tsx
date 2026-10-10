@@ -235,7 +235,7 @@ export default function ReviewScreen() {
         {showSmallOnly && greenNote('Small-only reports are not counted and will not be saved.')}
         {showSmallOnly && (
           <Alert title="Choose a larger quantity before submitting" tone="caution">
-            Small records the smallest band, but the current reporting rule needs
+            Small records the lowest amount, but the current reporting rule needs
             at least one Medium, Large or Very Large category to save a report.
           </Alert>
         )}
@@ -270,7 +270,7 @@ export default function ReviewScreen() {
 
         {showSmallOnly ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
-            <PrimaryButton onClick={() => backToDetails()}>Change size band</PrimaryButton>
+            <PrimaryButton onClick={() => backToDetails()}>Change amount</PrimaryButton>
             {/* The draft is left as it is, so the photo and beach are still
                 there if the user comes back to report something bigger. */}
             <TextButton onClick={() => nav(`/beach/${draft.beachId}`)}>Back to beach</TextButton>
@@ -291,7 +291,7 @@ export default function ReviewScreen() {
                 {!busy && <ArrowRight />}
               </PrimaryButton>
               <TextButton onClick={backToDetails} disabled={busy}>
-                {draft.aiDecision === 'confirmed' ? 'Change category or band' : 'Back to details'}
+                {draft.aiDecision === 'confirmed' ? 'Change type or amount' : 'Back to details'}
               </TextButton>
             </div>
           </>
