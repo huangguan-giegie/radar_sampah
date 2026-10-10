@@ -44,7 +44,7 @@ export function radialSpecies<T extends BeachMarineCard>(cards: readonly T[]) {
 
 export function radialPoints(count: number) {
   const angles = count === 2 ? [-150, -30] : Array.from({ length: count }, (_, i) => -90 + i * 360 / count);
-  return angles.map(angle => ({ x: 140 + 104 * Math.cos(angle * Math.PI / 180), y: 140 + 104 * Math.sin(angle * Math.PI / 180) }));
+  return angles.map(angle => ({ x: 140 + 112 * Math.cos(angle * Math.PI / 180), y: 140 + 112 * Math.sin(angle * Math.PI / 180) }));
 }
 
 export function regionMarineReferenceCount(regionId: string) {

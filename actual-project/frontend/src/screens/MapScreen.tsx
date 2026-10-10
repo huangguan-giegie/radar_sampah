@@ -366,7 +366,7 @@ export default function MapScreen() {
         <form className="map-search-form" role="search" onSubmit={event => { event.preventDefault(); setSheet('beaches'); }}>
           <label className="coastal-search"><Search /><input type="search" aria-label="Search all beaches" placeholder="Search beaches in all regions" value={search} onChange={event => setSearch(event.target.value)} /></label>
         </form>
-        <div className="map-overlay-toggle"><span className="map-base-layer">● Litter always on</span><button aria-pressed={layer === 'bio'} onClick={() => setParams(previous => marineLayerParams(previous, layer !== 'bio'), { replace: true })}><SpeciesIcon glyph="turtle" size={17} />Marine life <span>{layer === 'bio' ? 'On' : 'Off'}</span></button></div>
+        <div className="map-overlay-toggle"><span className="map-base-layer"><i aria-hidden="true" />Litter always on</span><button aria-pressed={layer === 'bio'} onClick={() => setParams(previous => marineLayerParams(previous, layer !== 'bio'), { replace: true })}><SpeciesIcon glyph="turtle" size={18} />Marine life <span className="map-layer-state">{layer === 'bio' ? 'On' : 'Off'}</span><span className="map-layer-switch" aria-hidden="true"><i /></span></button></div>
       </header>
       {search.trim() && sheet !== 'beaches' && <section className="map-search-results" aria-label="Beach search results">
         {loading ? <p role="status">Loading beaches…</p> : error ? <DataUnavailable title="Could not load beaches" retry={() => void refresh()}>{error}</DataUnavailable> : <>
@@ -428,10 +428,10 @@ export default function MapScreen() {
         )}
         <div>
           <span>
-            <strong>{region ? (loading ? region.name : `${areaBeaches.length} beaches`) : 'Malaysia’s Coast'}</strong>
-            <small>{loading ? 'Loading beaches…' : region ? `${areaBeaches.reduce((n, beach) => n + beach.validReports, 0)} counted reports` : `${beaches.length} beaches · tap a region`}</small>
+            <strong>{selectedBeach ? 'Nearby marine life' : region ? (loading ? region.name : `${areaBeaches.length} beaches`) : 'Malaysia’s Coast'}</strong>
+            <small>{selectedBeach ? selectedBeach.name : loading ? 'Loading beaches…' : region ? `${areaBeaches.reduce((n, beach) => n + beach.validReports, 0)} counted reports` : `${beaches.length} beaches · tap a region`}</small>
           </span>
-          <PrimaryButton height={44} style={{ width: 'auto', paddingInline: 12, fontSize: 12, boxShadow: 'none' }} onClick={() => setSheet('beaches')}>Search Beaches</PrimaryButton>
+          <PrimaryButton height={44} style={{ width: 'auto', paddingInline: 14, fontSize: 12, boxShadow: 'none' }} onClick={() => setSheet('beaches')}>Beach list</PrimaryButton>
         </div>
         {region && locatedBeaches.length < areaBeaches.length && <p className="coastal-footnote">More beaches are available in the list.</p>}
         {layer === 'bio' && <p className="coastal-footnote map-photo-hint">{selectedBeach ? (marineCards.length ? 'Centre → beach details · outer icons → guides' : 'Tap the centre for beach details.') : region ? 'Tap a beach to explore nearby marine life.' : 'Choose a region, then tap a beach.'}</p>}
