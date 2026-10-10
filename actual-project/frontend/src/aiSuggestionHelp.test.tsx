@@ -28,7 +28,7 @@ describe('AI suggestion help', () => {
     );
 
     expect(html).toContain('Metal — Large');
-    expect(html).toContain('suggested quantity band');
+    expect(html).toContain('suggested amount');
     expect(html).toContain('not verification');
     expect(html).toContain('confirm or edit');
   });

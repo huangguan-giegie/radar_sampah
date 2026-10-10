@@ -186,6 +186,7 @@ export default function App() {
                                     ? 'Home'
                                     : 'Radar Sampah';
   const pageTitle = pathname.startsWith('/insights') ? 'Insights'
+    : pathname.startsWith('/j/') ? 'Cleanup invitation'
     : pathname.startsWith('/species/') || pathname.startsWith('/model-species/') ? 'Species guide'
     : pathname.startsWith('/habitats') ? 'Coastal habitats'
     : pathname.startsWith('/marine-area') ? 'Marine life by area'

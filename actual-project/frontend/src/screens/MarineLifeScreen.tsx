@@ -62,8 +62,8 @@ export default function MarineLifeScreen() {
             {name}
           </button>
         ))}
-        <button onClick={() => nav("/map?layer=bio")}>Biodiversity Map</button>
       </div>
+      <button className="marine-map-link" onClick={() => nav("/map")}>Explore on Map →</button>
       <label className="coastal-search">
         <Search />
         <input

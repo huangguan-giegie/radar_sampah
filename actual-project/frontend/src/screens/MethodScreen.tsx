@@ -126,7 +126,7 @@ export default function MethodScreen() {
             SAME FOR ALL BEACHES
           </div>
           <div style={{ fontSize: 29, fontWeight: 640, letterSpacing: '-.7px', marginTop: 8, lineHeight: 1.1 }}>
-            How the severity band is decided
+            How the severity level is decided
           </div>
           {/* One line, as in the Iteration 2 prototype. The AI card further
               down explains what "only suggests" means, and the limitations
@@ -243,7 +243,7 @@ export default function MethodScreen() {
                   rating means absence of evidence. Read the other way round,
                   our own data would be used to call an unmonitored beach
                   clean. */}
-              No band is never the same as a clean beach.
+              An unrated beach is not necessarily clean.
             </div>
           </div>
         </div>

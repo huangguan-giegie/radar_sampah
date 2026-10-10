@@ -2,7 +2,7 @@ import { C } from '../theme';
 import type { QuantityByCategory } from '../types';
 
 export const AI_SUGGESTION_HELP_COPY =
-  'AI maps supported litter categories in the photo and suggests a quantity band for each one. This is an AI suggestion, not verification. You must confirm or edit every suggestion. AI does not determine Beach Attention and does not prove cleanup success.';
+  'AI maps supported litter categories in the photo and suggests an amount for each one. This is an AI suggestion, not verification. You must confirm or edit every suggestion. AI does not determine Beach Attention and does not prove cleanup success.';
 
 type AiSuggestionHelpProps = {
   context: 'report' | 'cleanup';
@@ -59,12 +59,12 @@ export function AiSuggestionHelp({ context, suggestions }: AiSuggestionHelpProps
       <div style={{ padding: '0 11px 11px', fontSize: 11.5, lineHeight: 1.55 }}>
         <p style={{ margin: '0 0 7px' }}>
           {context === 'cleanup'
-            ? 'For this after-cleanup photo, AI mapped supported litter categories and suggested quantity bands.'
-            : 'For this report photo, AI mapped supported litter categories and suggested quantity bands.'}
+            ? 'For this after-cleanup photo, AI mapped supported litter categories and suggested amounts.'
+            : 'For this report photo, AI mapped supported litter categories and suggested amounts.'}
         </p>
         {rows.length > 0 && (
           <p style={{ margin: '0 0 7px', fontWeight: 700 }}>
-            AI suggested quantity band{rows.length === 1 ? '' : 's'}: {rows.join(' · ')}
+            AI suggested amount{rows.length === 1 ? '' : 's'}: {rows.join(' · ')}
           </p>
         )}
         <p style={{ margin: 0 }}>{AI_SUGGESTION_HELP_COPY}</p>

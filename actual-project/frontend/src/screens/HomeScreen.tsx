@@ -166,8 +166,8 @@ export default function HomeScreen() {
           <UserIcon size={28} color="white" />
         </button>
       </header>
-      {(!beach || error) && <WhiteCard>{nextActionCard}</WhiteCard>}
-      {(!beach || error) && (
+      {!loading && (!beach || error) && <WhiteCard>{nextActionCard}</WhiteCard>}
+      {!loading && (!beach || error) && (
         <GhostButton height={44} onClick={exploreBeaches}>
           Explore Beaches
         </GhostButton>
@@ -196,7 +196,10 @@ export default function HomeScreen() {
         />
       </div>
       {loading && !beach ? (
-        <Skeleton h={340} />
+        <div>
+          <Skeleton h={280} />
+          <GhostButton height={44} style={{ marginTop: 14 }} onClick={exploreBeaches}>Explore Beaches</GhostButton>
+        </div>
       ) : error ? (
         <DataUnavailable
           title="Could not load beaches"

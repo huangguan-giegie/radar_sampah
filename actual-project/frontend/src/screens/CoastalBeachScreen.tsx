@@ -253,12 +253,14 @@ export default function CoastalBeachScreen() {
           {!attention.hasBand && (
             <p className="coastal-footnote">{attention.detail}</p>
           )}
-          <button className="coastal-footnote" onClick={() => nav("/method")}>
+          <div className="beach-rating-links">
+          <button onClick={() => nav("/method")}>
             How it’s rated →
           </button>
-          <button className="coastal-footnote beach-trend-link" onClick={() => nav('/insights/trends/' + beachId)}>
+          <button onClick={() => nav('/insights/trends/' + beachId)}>
             See changes over time →
           </button>
+          </div>
         </WhiteCard>
         <section>
           <SectionHeading>What You Can Do Here</SectionHeading>

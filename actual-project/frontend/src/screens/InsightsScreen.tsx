@@ -72,9 +72,11 @@ export default function InsightsScreen() {
   return <>
     {USE_MOCK ? <PreviewInsightsScreen personalAction={personalAction} /> : <LiveInsightsScreen personalAction={personalAction} />}
     {personalOpen && user && <Sheet title="Your Insights" onClose={() => setPersonalOpen(false)}>
+      <div className="personal-insights-intro">
       <p className="eyebrow">Private · only you see this</p>
       {USE_MOCK && <p className="demo-label">Preview · your local example records</p>}
       {personal?.sections.length ? <p className="subtle personal-subtitle">{personal.sections.length} {personal.sections.length === 1 ? 'section' : 'sections'} · from your own records</p> : null}
+      </div>
       {loading ? <p role="status">Loading your insights…</p> : error ? (
         <DataUnavailable title="Your insights could not be loaded" retry={() => void refresh()}>
           Please try again to load your personal insights.

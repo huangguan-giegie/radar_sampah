@@ -30,6 +30,38 @@ const GRID_STEP = 12;
 const compareId = (a: string, b: string) => a < b ? -1 : a > b ? 1 : 0;
 const labelWidth = (name: string, maximum = 156) => Math.min(maximum, Math.max(100, Math.ceil(name.length * 6.2 + 22)));
 
+/** Keep photo tap targets clear of map controls and each other at phone sizes. */
+export function placeMapPhotos(
+  points: readonly { id: string; x: number; y: number }[],
+  { width, height, obstacles = [] }: MapLabelLayoutOptions,
+): PlacedMapLabel[] {
+  const size = 44;
+  if (!Number.isFinite(width) || !Number.isFinite(height) || width < size + MARGIN * 2 || height < size + MARGIN * 2) return [];
+  const placed: PlacedMapLabel[] = [];
+  for (const point of points) {
+    if (!Number.isFinite(point.x) || !Number.isFinite(point.y) || point.x < 0 || point.x > width || point.y < 0 || point.y > height) continue;
+    const rect = (x: number, y: number) => ({
+      id: point.id, x: Math.max(MARGIN, Math.min(width - size - MARGIN, x)),
+      y: Math.max(MARGIN, Math.min(height - size - MARGIN, y)), width: size, height: size,
+    });
+    const fits = (candidate: PlacedMapLabel) => ![...obstacles, ...placed].some(other => overlaps(candidate, other));
+    const nearby = [rect(point.x - 22, point.y + 6), rect(point.x - 22, point.y - 50),
+      rect(point.x + 6, point.y - 22), rect(point.x - 50, point.y - 22)].find(fits);
+    if (nearby) { placed.push(nearby); continue; }
+    const candidates: PlacedMapLabel[] = [];
+    for (let x = MARGIN; x + size <= width - MARGIN; x += GRID_STEP) {
+      for (let y = MARGIN; y + size <= height - MARGIN; y += GRID_STEP) {
+        const candidate = rect(x, y);
+        if (fits(candidate)) candidates.push(candidate);
+      }
+    }
+    candidates.sort((a, b) => (a.x + 22 - point.x) ** 2 + (a.y + 22 - point.y) ** 2
+      - (b.x + 22 - point.x) ** 2 - (b.y + 22 - point.y) ** 2);
+    if (candidates[0]) placed.push(candidates[0]);
+  }
+  return placed;
+}
+
 function overlaps(a: MapLabelRect, b: MapLabelRect): boolean {
   return a.x < b.x + b.width + GAP && a.x + a.width + GAP > b.x &&
     a.y < b.y + b.height + GAP && a.y + a.height + GAP > b.y;

@@ -48,7 +48,9 @@ export function CleanupShareSheet({ cleanup, onClose }: { cleanup: CleanupAction
     </fieldset>
     {preview ? <img className="cleanup-share-preview" src={preview.url} alt={'Share image showing the recorded cleanup at ' + cleanup.beachName} /> : !error && <p role="status">Creating your image…</p>}
     {error && <p role="alert">{error}</p>}
+    <div className="cleanup-share-actions">
     <PrimaryButton height={46} disabled={!preview || busy} onClick={() => void share()}>{busy ? 'Opening Share…' : 'Share Image'}</PrimaryButton>
     <GhostButton height={44} disabled={!preview} onClick={download}>Save Image</GhostButton>
+    </div>
   </Sheet>;
 }

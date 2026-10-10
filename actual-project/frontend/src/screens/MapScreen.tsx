@@ -18,8 +18,8 @@ import { severityLabel, SEVERITY } from "../theme";
 import type { SeverityBand } from "../types";
 import { BORNEO_VIEW_BOUNDS, getViewBounds, groupMapPoints, PENINSULA_VIEW_BOUNDS } from "../mapGeometry";
 import { getLocatedMapBeaches, PRIMARY_MAP_BEACHES } from "../mapCatalogue";
-import { placeMapLabels } from "../mapLabels";
-import { originBeachId, overviewMarinePins, regionalMarinePins } from "../biodiversity";
+import { placeMapLabels, placeMapPhotos } from "../mapLabels";
+import { marineAreaPath, overviewMarinePins, regionalMarinePins } from "../biodiversity";
 import { searchBeaches, borneoReportCounts } from "../beachSearch";
 const COLORS: Record<string, string> = {
   Low: "#6e9d80",
@@ -61,7 +61,6 @@ export default function MapScreen() {
   const [clusterIds, setClusterIds] = useState<string[] | null>(null);
   const userMoved = useRef(false);
   const fittedRegion = useRef<string | null>(null);
-  const beachId = originBeachId(params.get("beach"), regionId || undefined);
   type Panel = "key" | "beaches" | "regions";
   const panel = params.get("panel");
   const sheet = ["key", "beaches", "regions"].includes(panel ?? "")
@@ -202,6 +201,22 @@ export default function MapScreen() {
       pin.getElement()?.setAttribute("aria-label", label);
       return pin;
     };
+    const size = map.getSize();
+    const containerRect = map.getContainer().getBoundingClientRect();
+    const controls = Array.from(map.getContainer().parentElement?.querySelectorAll(".map-hint, .map-controls, .map-full-overview, .borneo-inset") ?? []).map(el => {
+      const rect = el.getBoundingClientRect();
+      return { x: rect.left - containerRect.left, y: rect.top - containerRect.top, width: rect.width, height: rect.height };
+    });
+    const overlays = layer !== 'bio' ? [] : region
+      ? marinePins.map(pin => ({ ...pin, name: pin.record.name, image: pin.record.image, speciesId: pin.record.speciesId }))
+      : overviewMarinePins(locatedBeaches);
+    const countObstacles = region ? [] : REGIONS.filter(r => r.id !== 'borneo').map(r => {
+      const point = map.latLngToContainerPoint([r.lat, r.lng]);
+      const diameter = size.y < 360 ? 30 : 42;
+      return { x: point.x - diameter / 2, y: point.y - diameter / 2, width: diameter, height: diameter };
+    });
+    const photos = placeMapPhotos(overlays.map(pin => ({ id: pin.id, ...map.latLngToContainerPoint([pin.lat, pin.lng]) })),
+      { width: size.x, height: size.y, obstacles: [...controls, ...countObstacles] });
     if (!region) {
       for (const r of REGIONS) {
         if (r.id === "borneo") continue; // Borneo has its own inset in the overview.
@@ -231,17 +246,12 @@ export default function MapScreen() {
       }
     } else if (region) {
       const preferred = new Set(PRIMARY_MAP_BEACHES[region.id] ?? []);
-      const size = map.getSize();
       const compactLabels = size.y < 360;
-      const containerRect = map.getContainer().getBoundingClientRect();
-      const obstacles = Array.from(map.getContainer().parentElement?.querySelectorAll(".map-hint, .map-controls, .map-full-overview") ?? []).map(el => {
-        const rect = el.getBoundingClientRect();
-        return { x: rect.left - containerRect.left, y: rect.top - containerRect.top, width: rect.width, height: rect.height };
-      });
+      const obstacles = [...controls, ...photos];
       const labels = placeMapLabels(locatedBeaches
         .filter(b => preferred.has(b.id) || zoom >= region.zoom + 1)
         .map(b => ({ id: b.id, name: b.name, preferred: preferred.has(b.id), ...map.latLngToContainerPoint([b.lat, b.lng]) })),
-        { width: size.x, height: size.y, obstacles, compact: compactLabels });
+        { width: size.x, height: size.y, obstacles, compact: compactLabels, labelHeight: compactLabels ? 38 : 42 });
       const labelled = new Set(labels.map(label => label.id));
       const displayDot = (b: typeof locatedBeaches[number]) => marker(b.lat, b.lng, b.name,
         `<span class="beach-coast-dot" style="background:${COLORS[b.severity ?? ""] ?? "#98a4b5"}"></span>`,
@@ -286,8 +296,7 @@ export default function MapScreen() {
         const label = document.createElement("span");
         label.textContent = b.name;
         label.style.color = b.severity ? SEVERITY[b.severity].text : "#586070";
-        node.style.borderColor = COLORS[b.severity ?? ""] ?? "#98a4b5";
-        if (b.name.length > 24) label.style.fontSize = "9px";
+        label.style.borderColor = COLORS[b.severity ?? ""] ?? "#98a4b5";
         const band = document.createElement("small");
         band.textContent = b.severity ? severityLabel(b.severity) : "Insufficient data";
         const dot = document.createElement("i");
@@ -307,23 +316,27 @@ export default function MapScreen() {
       }
     }
     if (layer === 'bio') {
-      const overlays = region ? marinePins.map(pin => ({ ...pin, name: pin.record.name, image: pin.record.image }))
-        : overviewMarinePins(locatedBeaches);
       for (const pin of overlays) {
+        const placed = photos.find(photo => photo.id === pin.id);
+        if (!placed) continue;
+        const point = map.latLngToContainerPoint([pin.lat, pin.lng]);
+        L.polyline([[pin.lat, pin.lng], map.containerPointToLatLng([placed.x + 22, placed.y + 22])],
+          { color: '#536779', weight: 1, opacity: .6, interactive: false }).addTo(group);
         const node = document.createElement('span');
         node.className = 'marine-overlay-pin';
         if (pin.image) {
           const photo = document.createElement('img'); photo.src = pin.image; photo.alt = ''; node.append(photo);
         } else node.textContent = '≈';
-        const selectedBeach = 'beachId' in pin && beaches.find(beach => beach.id === pin.beachId);
-        marker(pin.lat, pin.lng, pin.name + ' · coastal reference', node.outerHTML,
-          () => selectedBeach ? nav('/beach/' + selectedBeach.id) : setRegion(pin.regionId), [30, 30], [15, -10], 1100);
+        const destination = pin.speciesId ? '/species/' + pin.speciesId : marineAreaPath(pin.regionId, null);
+        const action = pin.speciesId ? 'View introduction' : 'Explore marine life';
+        marker(pin.lat, pin.lng, pin.name + ' · ' + action + ' · coastal reference', node.outerHTML,
+          () => nav(destination), [44, 44], [point.x - placed.x, point.y - placed.y], 1100);
       }
     }
     return () => {
       group.remove();
     };
-  }, [ready, regionId, layer, beaches, zoom, viewSize, viewRevision, nav, setRegion, marinePins, beachId]);
+  }, [ready, regionId, layer, beaches, zoom, viewSize, viewRevision, nav, setRegion, marinePins]);
   return (
     <main className="screen coastal-map">
       <header className="map-coastal-header design-map-header">
@@ -388,19 +401,20 @@ export default function MapScreen() {
         )}
         <div>
           <span>
-            <strong>{region?.name ?? 'Malaysia’s Coast'}</strong>
-            <small>{loading ? 'Loading beaches…' : region ? `${areaBeaches.length} beaches · ${areaBeaches.reduce((n, beach) => n + beach.validReports, 0)} reports` : `${beaches.length} beaches · tap a region`}</small>
+            <strong>{region ? (loading ? region.name : `${areaBeaches.length} beaches`) : 'Malaysia’s Coast'}</strong>
+            <small>{loading ? 'Loading beaches…' : region ? `${areaBeaches.reduce((n, beach) => n + beach.validReports, 0)} counted reports` : `${beaches.length} beaches · tap a region`}</small>
           </span>
-          <PrimaryButton height={43} onClick={() => setSheet('beaches')}>Search Beaches</PrimaryButton>
+          <PrimaryButton height={44} style={{ width: 'auto', paddingInline: 12, fontSize: 12, boxShadow: 'none' }} onClick={() => setSheet('beaches')}>Search Beaches</PrimaryButton>
         </div>
         {region && locatedBeaches.length < areaBeaches.length && <p className="coastal-footnote">More beaches are available in the list.</p>}
+        {layer === 'bio' && <p className="coastal-footnote map-photo-hint">Photos open species guides.</p>}
         {USE_MOCK && <p className="demo-label">Preview · example counts</p>}
       </div>
       {sheet === "key" && (
         <Sheet title="Map Key" onClose={() => setSheet(null)}>
           <p className="subtle">
             Numbers show counted reports in this view. The ring shows the
-            highest available attention level in that region. Beach names use their own level. Small photos show coastal references, not live sightings.
+            highest available attention level in that region. Beach names use their own level. Tap a small photo for its marine-life introduction. Photos show coastal references, not live sightings.
           </p>
           {Object.entries(COLORS).map(([label, color]) => (
             <div className="legend-row" key={label}>

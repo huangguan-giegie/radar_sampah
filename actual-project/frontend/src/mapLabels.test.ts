@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { placeMapLabels, type MapLabelPoint, type MapLabelRect } from "./mapLabels";
+import { placeMapLabels, placeMapPhotos, type MapLabelPoint, type MapLabelRect } from "./mapLabels";
 
 const point = (id: string, x: number, y: number, preferred = true, name = `Pantai ${id}`): MapLabelPoint =>
   ({ id, x, y, preferred, name });
@@ -17,6 +17,38 @@ function expectWithinViewport(labels: MapLabelRect[], width: number, height: num
     for (const other of labels.slice(index + 1)) expect(overlaps(label, other)).toBe(false);
   });
 }
+
+describe("marine photo tap targets", () => {
+  it("keeps coastal photos clear of nearby controls and report counts on a small phone", () => {
+    const obstacles = [
+      { x: 14, y: 12, width: 205, height: 32 },
+      { x: 132, y: 206, width: 176, height: 44 },
+      { x: 14, y: 206, width: 80, height: 44 },
+      { x: 145, y: 116, width: 30, height: 30 },
+    ];
+    const photos = placeMapPhotos([point('turtle', 172, 214), point('coral', 160, 130)],
+      { width: 320, height: 262, obstacles });
+    expect(photos.map(photo => photo.id)).toEqual(['turtle', 'coral']);
+    expectWithinViewport(photos, 320, 262);
+    for (const photo of photos) {
+      expect(photo.width).toBeGreaterThanOrEqual(44);
+      for (const obstacle of obstacles) expect(overlaps(photo, obstacle)).toBe(false);
+    }
+    const labels = placeMapLabels([point('beach', 172, 214)],
+      { width: 320, height: 262, obstacles: [...obstacles, ...photos], compact: true });
+    expect(labels).toHaveLength(1);
+    for (const photo of photos) expect(overlaps(labels[0], photo)).toBe(false);
+  });
+
+  it("keeps edge photos visible without bringing offscreen or invalid records into the view", () => {
+    const photos = placeMapPhotos([point('edge', 318, 1), point('outside', -30, 120), point('invalid', NaN, 50)],
+      { width: 320, height: 262 });
+    expect(photos.map(photo => photo.id)).toEqual(['edge']);
+    expectWithinViewport(photos, 320, 262);
+    expect(placeMapPhotos([point('blocked', 50, 50)], { width: 100, height: 100,
+      obstacles: [{ x: 0, y: 0, width: 100, height: 100 }] })).toEqual([]);
+  });
+});
 
 describe("map label placement", () => {
   it("keeps all seven preferred beach names even among many nearby optional points", () => {

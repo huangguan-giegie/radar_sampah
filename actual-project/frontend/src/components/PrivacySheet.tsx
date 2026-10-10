@@ -9,7 +9,7 @@ import { GhostButton } from './ui';
 // because it is the one they would object to if they found out later.
 const POINTS = [
   'Suggest the correct beach',
-  'Check nearby category and band matches',
+  'Check nearby litter type and amount matches',
 ];
 
 /**
