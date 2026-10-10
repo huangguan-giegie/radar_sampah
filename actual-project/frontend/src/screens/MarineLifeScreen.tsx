@@ -63,7 +63,7 @@ export default function MarineLifeScreen() {
           </button>
         ))}
       </div>
-      <button className="marine-map-link" onClick={() => nav("/map")}>Explore on Map →</button>
+      <button className="marine-map-link" onClick={() => nav("/map?marine=on")}>Explore on Map →</button>
       <label className="coastal-search">
         <Search />
         <input
